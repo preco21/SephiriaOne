@@ -58,7 +58,7 @@ namespace SephiriaOne
                     submit.AddListener(original);
                 }
 
-                Debug.Log("[SephiriaOne] Chat commands bound: /fountain, /choices, /stats");
+                Debug.Log("[SephiriaOne] Chat commands bound: /fountain, /choices, /stats, /mod");
             }
             catch (Exception exception)
             {
@@ -78,9 +78,10 @@ namespace SephiriaOne
             FountainParseResult result = FountainCommand.Parse(input.text, out FountainCommand command, out string error);
             ChoiceParseResult choices = ChoiceCommand.Parse(input.text, out ChoiceCommand choiceCommand, out string choiceError);
             StatParseResult stats = StatCommand.Parse(input.text, out StatCommand statCommand, out string statError);
+            PresetAction preset = PresetCommand.Parse(input.text, out string presetError);
             bool fountain = result != FountainParseResult.NotCommand;
             bool choice = choices != ChoiceParseResult.NotCommand;
-            if (!fountain && !choice && stats == StatParseResult.NotCommand)
+            if (!fountain && !choice && stats == StatParseResult.NotCommand && preset == PresetAction.NotCommand)
             {
                 return;
             }
@@ -89,6 +90,25 @@ namespace SephiriaOne
             // Clear before any work so even rejected commands stay local.
             input.text = "";
             chat.Close();
+            if (preset != PresetAction.NotCommand)
+            {
+                if (preset == PresetAction.Help || preset == PresetAction.Invalid)
+                    Reply(presetError, preset == PresetAction.Help ? Color.cyan : Color.yellow);
+                else
+                {
+                    try
+                    {
+                        bool success = SessionSettings.TryExecutePreset(preset, out string[] messages);
+                        foreach (string message in messages) Reply(message, success ? Color.cyan : Color.yellow);
+                    }
+                    catch (Exception exception)
+                    {
+                        Debug.LogError($"[SephiriaOne] Preset command failed: {exception}");
+                        Reply("Preset command failed. Check Player.log for details.", Color.red);
+                    }
+                }
+                return;
+            }
             if (stats == StatParseResult.List)
             {
                 foreach (StatDefinition stat in StatCatalog.All)

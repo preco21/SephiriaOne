@@ -18,6 +18,9 @@ contributions from character-stat commands, preserving native equipment/buffs.
 Since `0.9.0`, resets also clear the selected retained session settings, so future
 joiners no longer receive those adjustments. Other categories and command
 families remain active; see [session inheritance](session-inheritance.md).
+Since `0.10.0`, an explicitly saved preset is a separate snapshot. Reset does not
+alter it: run `/mod save` after resetting to update the saved copy, or `/mod forget`
+to remove it. See [preset commands](session-preset.md).
 
 Reset means the state without this addon's commands, preserving native upgrades,
 equipment, and later independent stat changes. It does not mean zero Fountain

@@ -15,5 +15,9 @@
     <Compile Include="../../SephiriaOne/CharacterStats.cs" Link="CharacterStats.cs" />
     <Compile Include="../../SephiriaOne/SessionPolicy.cs" Link="SessionPolicy.cs" />
     <Compile Include="../../SephiriaOne/SessionSettings.cs" Link="SessionSettings.cs" />
+    <Compile Include="../../SephiriaOne/SessionPreset.cs" Link="SessionPreset.cs" />
+    <Compile Include="../../SephiriaOne/PresetCommand.cs" Link="PresetCommand.cs" />
+    <Compile Include="../../SephiriaOne/PresetStore.cs" Link="PresetStore.cs" />
+    <Compile Include="../../SephiriaOne/SessionPresetCommands.cs" Link="SessionPresetCommands.cs" />
   </ItemGroup>
 </Project>

@@ -13,6 +13,9 @@
     <Compile Include="../../SephiriaOne/StatCommand.cs" Link="StatCommand.cs" />
     <Compile Include="../../SephiriaOne/StatPlan.cs" Link="StatPlan.cs" />
     <Compile Include="../../SephiriaOne/SessionPolicy.cs" Link="SessionPolicy.cs" />
+    <Compile Include="../../SephiriaOne/SessionPreset.cs" Link="SessionPreset.cs" />
+    <Compile Include="../../SephiriaOne/PresetCommand.cs" Link="PresetCommand.cs" />
+    <Compile Include="../../SephiriaOne/PresetStore.cs" Link="PresetStore.cs" />
     <Compile Include="../../SephiriaOne/ChoiceTranspilers.cs" Link="ChoiceTranspilers.cs" />
     <PackageReference Include="Lib.Harmony" Version="2.4.2" />
   </ItemGroup>

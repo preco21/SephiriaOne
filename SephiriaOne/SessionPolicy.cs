@@ -52,7 +52,7 @@ namespace SephiriaOne
         }
     }
 
-    internal sealed class SessionPolicy
+    internal sealed partial class SessionPolicy
     {
         private readonly struct Setting
         {

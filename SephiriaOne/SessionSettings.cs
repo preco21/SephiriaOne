@@ -12,9 +12,9 @@ namespace SephiriaOne
         private void OnDisable() => SessionSettings.Stop();
     }
 
-    internal static class SessionSettings
+    internal static partial class SessionSettings
     {
-        private static readonly SessionPolicy policy = new SessionPolicy();
+        private static SessionPolicy policy = new SessionPolicy();
         private static readonly SessionJoinTracker joins = new SessionJoinTracker();
         private static DungeonManager dungeon;
         private static bool enabled;
@@ -24,6 +24,7 @@ namespace SephiriaOne
         public static void Start()
         {
             Stop();
+            store = new PresetStore(System.IO.Path.Combine(Application.persistentDataPath, "SephiriaOne", "session-preset.txt"));
             enabled = true;
             HorayModAPI.OnStartSessionServerside += OnStartSession;
         }
@@ -36,6 +37,7 @@ namespace SephiriaOne
             policy.Clear();
             joins.SetSession(null);
             dungeon = null;
+            store = null;
         }
 
         private static void OnStartSession(bool isSaved)
@@ -79,6 +81,7 @@ namespace SephiriaOne
             {
                 policy.Clear();
                 restoreFountainLimit = false;
+                if (current) LoadPreset();
             }
             dungeon = current;
             if (!dungeon) return false;

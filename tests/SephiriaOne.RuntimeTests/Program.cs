@@ -2,6 +2,7 @@ using Mirror;
 using SephiriaOne;
 
 int checks = 0;
+string testDataRoot = Path.Combine(Path.GetTempPath(), "SephiriaOne-runtime-" + Guid.NewGuid().ToString("N"));
 void Check(bool condition, string scenario)
 {
     if (!condition) throw new Exception(scenario);
@@ -26,6 +27,7 @@ PlayerSpawner Start()
     DungeonManager.Instance = new DungeonManager();
     NetworkServer.active = true;
     ChoiceFeature.Available = true;
+    UnityEngine.Application.persistentDataPath = Path.Combine(testDataRoot, Guid.NewGuid().ToString("N"));
     SessionSettings.Start();
     return Add(1, itemChoices: 2);
 }
@@ -273,4 +275,90 @@ RestartLobby();
 SessionSettings.Synchronize();
 Check(Carryover(host) == 100 && Points(host) == 100, "Existing contribution marker can restore carryover after policy memory is cleared");
 
+bool Mod(PresetAction action, out string[] messages) => SessionSettings.TryExecutePreset(action, out messages);
+string PresetPath() => Path.Combine(UnityEngine.Application.persistentDataPath, "SephiriaOne", "session-preset.txt");
+void RestartHost()
+{
+    SessionSettings.Stop();
+    PlayerSpawner.MultiplayerList.Clear();
+    DungeonManager.Instance = new DungeonManager();
+    SessionSettings.Start();
+}
+
+host = Start();
+Check(Fountain("100") && Stats("luck +10") && Choices("item 5"), "Prepare all families for a saved preset");
+Check(Mod(PresetAction.Status, out var messages) && string.Join("\n", messages).Contains("stats luck offset 10") &&
+    string.Join("\n", messages).Contains("luck=15") && string.Join("\n", messages).Contains("Fountain=100"),
+    "Status reports retained intent and actual current player values");
+Check(!File.Exists(PresetPath()), "Status does not implicitly save a preset");
+Check(Mod(PresetAction.Save, out _) && File.Exists(PresetPath()), "Explicit save stores all active settings");
+Check(Stats("luck +5") && Stats("luck reset"), "Current-session edits and resets remain possible after saving");
+Check(File.ReadAllText(PresetPath()).Contains("stats luck offset 10"), "Commands and resets do not silently overwrite saved snapshot");
+RestartHost();
+host = Add(8, luck: 20, points: 2);
+host.PlayerAvatar.Inventory.canBroadcast = 0;
+SessionSettings.Synchronize();
+Check(Value(host) == 20 && Points(host) == 2, "Saved settings wait for host initialization");
+host.PlayerAvatar.Inventory.canBroadcast = 1;
+SessionSettings.Synchronize();
+Check(Value(host) == 30 && Points(host) == 100 && Value(host, "EXTRAITEMCHOICES") == 5,
+    "New hosted session automatically restores saved policy against new native baseline");
+SessionSettings.Synchronize();
+Check(Value(host) == 30, "Saved relative settings do not stack on following frames");
+guest = Add(9, luck: 7, points: 9);
+Check(Mod(PresetAction.Status, out messages) && Value(guest) == 7 && Points(guest) == 9,
+    "Status stays read-only even with a pending joining player");
+SessionSettings.Synchronize();
+Check(Value(guest) == 17 && Points(guest) == 100, "Late guest inherits automatically loaded preset");
+Check(Mod(PresetAction.Status, out messages) && messages.Any(x => x.Contains("Player #9")), "Status covers each ready player");
+Check(Stats("luck +3"), "Change active policy after loading saved copy");
+RestartLobby();
+SessionSettings.Synchronize();
+Check(Value(host) == 33 && Value(guest) == 20 && Carryover(guest) == 100,
+    "Same-host lobby restart neither reloads saved copy nor reapplies offsets");
+SessionSettings.Stop();
+SessionSettings.Start();
+SessionSettings.Synchronize();
+Check(Value(host) == 30 && Value(guest) == 17, "Reloaded preset replaces existing contributions without stacking");
+Check(Mod(PresetAction.Forget, out _) && !File.Exists(PresetPath()) && Value(host) == 30, "Forget removes disk preset only");
+RestartHost();
+host = Add(10, luck: 21);
+SessionSettings.Synchronize();
+Check(Value(host) == 21 && Points(host) == 4, "Forgotten preset does not apply on next host start");
+
+Check(Stats("luck +10") && Mod(PresetAction.Save, out _), "Prepare authority and overwrite checks");
+NetworkServer.active = false;
+string savedBeforeGuest = File.ReadAllText(PresetPath());
+Check(!Mod(PresetAction.Save, out _) && !Mod(PresetAction.Forget, out _) && !Mod(PresetAction.Status, out _) &&
+    File.ReadAllText(PresetPath()) == savedBeforeGuest, "Guests cannot edit host settings or present a misleading host status");
+SessionSettings.Synchronize();
+NetworkServer.active = true;
+RestartHost();
+host = Add(11, luck: 25);
+SessionSettings.Synchronize();
+Check(Value(host) == 35, "Host can load the preset after leaving a client session");
+Check(Stats("reset") && Mod(PresetAction.Save, out _), "Saving after reset explicitly replaces the saved settings");
+RestartHost();
+host = Add(12, luck: 22);
+SessionSettings.Synchronize();
+Check(Value(host) == 22, "Saved empty preset makes no automatic adjustments");
+
+File.WriteAllText(PresetPath(), "SephiriaOne preset v1\nstats luck set 100\nbroken");
+UnityEngine.Debug.Warnings.Clear();
+RestartHost();
+host = Add(13, luck: 6);
+SessionSettings.Synchronize();
+SessionSettings.Synchronize();
+Check(Value(host) == 6 && UnityEngine.Debug.Warnings.Count == 1, "Bad saved file applies nothing and warns once per hosted session");
+Check(Mod(PresetAction.Forget, out _), "Malformed preset can be removed through the command");
+Check(Stats("luck set 11") && Mod(PresetAction.Save, out _), "Save valid but multiplier-dependent target");
+RestartHost();
+host = Add(14, luck: 5);
+host.PlayerAvatar.customStatsAmp["LUCK"] = 100;
+SessionSettings.Synchronize();
+Check(Value(host) == 5, "Incompatible saved preset uses existing atomic player rejection");
+SessionSettings.Stop();
+Check(!Mod(PresetAction.Save, out _), "Unloaded controller cannot write a preset");
+
+if (Directory.Exists(testDataRoot)) Directory.Delete(testDataRoot, true);
 Console.WriteLine($"Passed {checks} runtime command/session integration checks using game API fixtures.");

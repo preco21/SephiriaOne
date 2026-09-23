@@ -7,6 +7,7 @@ namespace UnityEngine
         public static implicit operator bool(Object value) => !ReferenceEquals(value, null);
     }
     public class MonoBehaviour : Object { }
+    public static class Application { public static string persistentDataPath; }
     public readonly struct Color
     {
         public static readonly Color green = new();

@@ -20,16 +20,19 @@ user's gradient through native name synchronization; their own names are unchang
   families are independent. Setting Fountain/luck to zero remains a set operation.
 - Failed commands do not change retained settings. Existing command validation,
   host authority, stat units, and exact multiplier handling remain in force.
-- Retention starts with commands issued by this version. It does not reconstruct
-  settings from older versions, saves, or a previous addon load.
+- Retention uses commands issued in the current session or, since `0.10.0`, an
+  explicitly [saved addon preset](session-preset.md). It does not reconstruct
+  set-versus-relative intent from older versions or native game saves.
 
 Settings survive floor changes and native in-host run restarts while the same
 server and dungeon instance exist. Existing avatars do not receive another copy
 on a run restart. Since `0.9.1`, the SDK session-start event also schedules a
 [Fountain carryover limit repair](fountain-run-restart.md) after the game reloads
 dungeon constants, without replaying point/stat/choice adjustments.
-Settings clear when the server stops, the dungeon instance changes,
-or the addon unloads. They are not written to the profile or disk. A reconnect
+Active settings clear when the server stops, the dungeon instance changes,
+or the addon unloads. `/mod save` writes a separate addon preset for future hosted
+sessions; it does not edit the game profile. Without a saved preset, a new hosted
+session starts without retained adjustments. A reconnect
 with a new avatar inherits once against that avatar's restored native baseline;
 any existing contribution markers are removed before applying the retained
 setting, preventing duplicate adjustments if native state already contains them.

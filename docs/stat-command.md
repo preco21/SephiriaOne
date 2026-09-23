@@ -8,6 +8,9 @@ batch. Use native synchronized custom stats so guests do not need this addon.
 Each command makes a one-time adjustment per avatar. Since `0.9.0`, successful
 commands are retained in memory and applied once to newly ready players in the
 same hosted session; see [session inheritance](session-inheritance.md).
+Since `0.10.0`, `/mod status` shows current values and tracked adjustments for all
+ready players, and `/mod save` stores active settings for future hosted sessions.
+See [status and preset commands](session-preset.md) for saving and removal.
 
 Examples: `/stats luck +10`, `/stats luck -5`, `/stats luck set 100`,
 `/stats luck reset`, and `/stats reset` (all supported stats). `/stats list` lists
