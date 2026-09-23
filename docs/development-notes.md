@@ -9,22 +9,25 @@ can change independently of that installed game version.
 
 ## Current status
 
-SephiriaOne is a minimal C# addon using Sephiria's built-in HorayMod API. It logs
-when loaded, when the databases are ready, and when its unload callback runs.
-No gameplay feature has been implemented or selected yet.
+SephiriaOne is a C# addon using Sephiria's built-in HorayMod API. Version `0.2.0`
+colors the local player's name blue in the character/stats panel and the existing
+overhead nameplate. It also logs loading, database readiness, and unloading.
+The first feature is cosmetic; gameplay rules are unchanged.
 
 | Area | Status and evidence |
 | --- | --- |
 | Project | Visual Studio solution and `netstandard2.1` class library exist. |
 | Compiler | .NET SDK `10.0.401` is installed and was used successfully. |
 | Release build | `dotnet build SephiriaOne.slnx --configuration Release --nologo` completed with 0 warnings and 0 errors. |
+| Debug build | `dotnet build SephiriaOne.slnx --configuration Debug --nologo -p:DeployMod=false` also passed for `0.2.0` with 0 warnings and 0 errors. |
 | Automatic deployment | The build invokes `scripts/Deploy-Mod.ps1` after the MSBuild `Build` target. |
 | Visual Studio command | Added the `Deploy Mod` launch profile. Its command was verified with evaluated Release properties and matching deployed hashes; Debug path resolution was also checked. The IDE dropdown has not been tested interactively. |
 | Missing addon folder | Deployment created `AddOns\SephiriaOne` during verification. |
 | Existing addon folder | Running deployment again succeeded. |
-| Deployed content | SHA-256 comparisons confirmed the deployed DLL and metadata match the Release output; rechecked while writing this document. |
-| In-game loading | Pending. The inspected `Player.log` contains no SephiriaOne load or database-ready messages. File deployment does not establish that the game executed the addon. |
-| Gameplay and multiplayer testing | Pending. |
+| Deployed content | SHA-256 comparisons confirmed the deployed `0.2.0` DLL and metadata match the Release output. No game DLLs were copied into build output. |
+| In-game loading | The user confirmed `0.1.0` loaded. `Player.log` also contains `[SephiriaOne] Loaded v0.1.0`, the AddOnLoader success entry, and `[SephiriaOne] All databases ready`. |
+| Blue name feature | Implemented in `0.2.0`; in-game visual verification of this new version is pending. See [design and verification steps](blue-player-name.md). |
+| Multiplayer testing | Pending. The color override is local to this client and checks player ownership. |
 
 ## History
 
@@ -58,6 +61,9 @@ All stages below occurred during the initial 2026-09-23 session.
     [AGENTS.md](../AGENTS.md), using Conventional Commits for completed work.
 11. Added a `Deploy Mod` launch profile so deployment can be run from Visual
     Studio's Start dropdown using the selected Debug or Release output.
+12. Confirmed the `0.1.0` load and database-ready messages in `Player.log`, matching
+    the user's successful in-game check. Inspected the name-label UI types and
+    implemented blue local character/stats and existing overhead names for `0.2.0`.
 
 The repository already contained commits `c793844` (Git configuration files) and
 `736b305` (initial project files). The scaffold adjustments and deployment work
@@ -74,7 +80,8 @@ commits are recorded in Git history. The configured remote is
 | Build SDK | .NET `10.0.401` |
 | Mod target framework | `netstandard2.1` |
 | Mod assembly / namespace | `SephiriaOne` |
-| Mod version / author | `0.1.0` / `preco21` |
+| Mod version / author | `0.2.0` / `preco21` |
+| Game version reported by the confirmed load log | `1.0.33` |
 | Game directory | `C:\Program Files (x86)\Steam\steamapps\common\Sephiria` |
 | Game managed assemblies | `<GameDir>\Sephiria_Data\Managed` |
 | Addon directory | `<GameDir>\AddOns\SephiriaOne` |
@@ -96,6 +103,7 @@ SephiriaOne/
   SephiriaOne/
     SephiriaOne.csproj
     Entry.cs
+    LocalPlayerNameColor.cs
     metadata.json
     Properties/
       launchSettings.json
@@ -103,15 +111,22 @@ SephiriaOne/
   scripts/
     Deploy-Mod.ps1
   docs/
+    blue-player-name.md
     development-notes.md
 ```
 
 - [Project configuration](../SephiriaOne/SephiriaOne.csproj) references the installed
-  `Assembly-CSharp.dll` and `UnityEngine.CoreModule.dll`. Both use
+  `Assembly-CSharp.dll`, `UnityEngine.CoreModule.dll`, `Mirror.dll`,
+  `Unity.TextMeshPro.dll`, and `UnityEngine.UI.dll`. All use
   `<Private>false</Private>`, preventing those game references from being copied
   into build output. `metadata.json` is copied with `PreserveNewest`.
 - [Entry point](../SephiriaOne/Entry.cs) subscribes to `OnAllDatabasesReady` in
-  `OnModLoaded()` and unsubscribes in `OnModUnloaded()`.
+  `OnModLoaded()` and unsubscribes in `OnModUnloaded()`. It also owns a persistent
+  name-color controller, which is disabled and destroyed on unload.
+- [Name color controller](../SephiriaOne/LocalPlayerNameColor.cs) colors only
+  `UI_StatsPanel.characterNameText` and the owned player's `WorldUserName` blue.
+  It preserves alpha and restores original text color settings on disconnect,
+  rebinding, or unload. It does not make hidden nameplates visible.
 - [Metadata](../SephiriaOne/metadata.json) names `SephiriaOne.dll` and
   `SephiriaOne.Entry` as the assembly and entry class.
 - [Visual Studio launch profile](../SephiriaOne/Properties/launchSettings.json)
@@ -381,18 +396,20 @@ requirement for a native HorayMod addon.
 ## Next verification steps
 
 1. Launch Sephiria and enter the town/lobby or a run; the title screen alone is
-   insufficient for the documented addon-loading workflow.
-2. Inspect `Player.log` for both expected entries:
+   insufficient for the documented addon-loading workflow. Fully restart to load
+   the new `0.2.0` binary.
+2. Inspect `Player.log` for these expected entries:
 
    ```text
-   [SephiriaOne] Loaded v0.1.0
+   [SephiriaOne] Loaded v0.2.0
    [SephiriaOne] All databases ready
+   [SephiriaOne] Blue local player name applied (#0000FF)
    ```
 
-3. Record the result here, including any `AddOnLoader` or exception messages if
-   either entry is missing. Confirm runtime behavior before describing the mod as
-   successfully loaded in-game.
-4. Select one small gameplay or UI feature, identify its API hook, and inspect
-   only the relevant game types and reference implementation.
-5. Test the feature in isolation, across session transitions, and with RaidRaid.
-   Add host/client testing when the feature affects multiplayer behavior.
+3. Follow the [blue-name visual checks](blue-player-name.md#in-game-verification)
+   and record the result. The confirmed `0.1.0` lifecycle does not establish that
+   the new color renders correctly.
+4. Test panel reopening, scene/session transitions, and coexistence with RaidRaid.
+   In multiplayer, check both host and client ownership and other players' colors.
+5. Once the cosmetic feature is verified, select the next small feature and
+   inspect only its relevant game types and reference implementation.
