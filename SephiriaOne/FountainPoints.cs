@@ -84,6 +84,51 @@ namespace SephiriaOne
         internal static void ApplyPlan(DungeonManager dungeon, IReadOnlyList<PlayerAvatar> players, FountainPlan plan)
         {
             // Manual commands and inherited settings use the same validated writes.
+            ApplyLimit(dungeon, plan);
+            for (int i = 0; i < players.Count; i++)
+            {
+                players[i].Inventory.NetworkdimensionPocket = plan.Points[i];
+                if (plan.Contributions[i] == 0) players[i].customStats.Remove(ContributionKey);
+                else players[i].customStats[ContributionKey] = plan.Contributions[i];
+            }
+        }
+
+        // Returns false only while native player/dungeon initialization is pending.
+        // Rebuild the cap reset markers without replaying any points command.
+        internal static bool RestoreCarryoverLimit(DungeonManager dungeon, bool hasRetainedSetting)
+        {
+            if (!NetworkServer.active || !dungeon || !dungeon.isServer ||
+                !dungeon.constValueDictionary.TryGetValue(LimitKey, out int limit)) return false;
+            var balances = new List<int>();
+            var contributions = new List<int>();
+            bool allReady = true;
+            foreach (PlayerSpawner spawner in PlayerSpawner.MultiplayerList)
+            {
+                if (!spawner || !spawner.isServer || spawner.netId == 0) continue;
+                if (!SessionSettings.IsReady(spawner)) { allReady = false; continue; }
+                PlayerAvatar player = spawner.PlayerAvatar;
+                player.customStats.TryGetValue(ContributionKey, out int contribution);
+                if (!hasRetainedSetting && contribution == 0) continue;
+                balances.Add(player.Inventory.dimensionPocket);
+                contributions.Add(contribution);
+            }
+            if (balances.Count == 0) return allReady;
+            int? original = dungeon.constValueDictionary.TryGetValue(OriginalLimitKey, out int first) ? first : (int?)null;
+            int? applied = dungeon.constValueDictionary.TryGetValue(AppliedLimitKey, out int last) ? last : (int?)null;
+            if (!new FountainCommand(FountainOperation.Add, 0).TryPlanTracked(balances, contributions, limit,
+                original, applied, out FountainPlan plan, out string error))
+            {
+                UnityEngine.Debug.LogWarning("[SephiriaOne] Could not restore Fountain carryover limit after lobby restart: " + error);
+                return true;
+            }
+            if (plan.Limit != limit)
+                UnityEngine.Debug.Log($"[SephiriaOne] Restored Fountain carryover limit after lobby restart: {limit} -> {plan.Limit}.");
+            ApplyLimit(dungeon, plan);
+            return allReady;
+        }
+
+        private static void ApplyLimit(DungeonManager dungeon, FountainPlan plan)
+        {
             if (dungeon.constValueDictionary[LimitKey] != plan.Limit)
             {
                 dungeon.constValueDictionary[LimitKey] = plan.Limit;
@@ -97,13 +142,6 @@ namespace SephiriaOne
             {
                 dungeon.constValueDictionary.Remove(OriginalLimitKey);
                 dungeon.constValueDictionary.Remove(AppliedLimitKey);
-            }
-
-            for (int i = 0; i < players.Count; i++)
-            {
-                players[i].Inventory.NetworkdimensionPocket = plan.Points[i];
-                if (plan.Contributions[i] == 0) players[i].customStats.Remove(ContributionKey);
-                else players[i].customStats[ContributionKey] = plan.Contributions[i];
             }
         }
     }

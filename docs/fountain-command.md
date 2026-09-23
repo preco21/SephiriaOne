@@ -74,7 +74,9 @@ edit profile files, grant items directly, or keep enforcing a value every frame.
 Normal game stat changes can subsequently adjust the capacity. New players and
 replacement avatars inherit the active session setting once. Existing avatars
 retain their point adjustment until reset or replaced. The raised session limit is
-reset by the game's normal dungeon initialization. Unloading the addon removes
+reset by the game's normal dungeon initialization; since `0.9.1`, the addon
+[restores it after lobby restart](fountain-run-restart.md) to cover active adjusted
+points without applying the point command again. Unloading the addon removes
 the command listener but does not undo an already applied points command.
 Use `/fountain reset` to undo adjustments tracked from `0.6.0` onward. Players
 with no tracked adjustment are unchanged, and repeated reset is harmless.

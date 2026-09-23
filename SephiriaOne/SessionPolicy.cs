@@ -67,6 +67,7 @@ namespace SephiriaOne
         private readonly Dictionary<string, int> choices = new Dictionary<string, int>();
         private readonly Dictionary<StatDefinition, Setting> stats = new Dictionary<StatDefinition, Setting>();
         public bool HasChanges => fountain.HasValue || choices.Count != 0 || stats.Count != 0;
+        public bool HasFountainSetting => fountain.HasValue;
 
         // Call only after a host command succeeds. Failed requests never become policy.
         public void Record(FountainCommand command)

@@ -19,19 +19,31 @@ namespace SephiriaOne
         private static DungeonManager dungeon;
         private static bool enabled;
         private static bool synchronizing;
+        private static bool restoreFountainLimit;
 
         public static void Start()
         {
             Stop();
             enabled = true;
+            HorayModAPI.OnStartSessionServerside += OnStartSession;
         }
 
         public static void Stop()
         {
             enabled = false;
+            HorayModAPI.OnStartSessionServerside -= OnStartSession;
+            restoreFountainLimit = false;
             policy.Clear();
             joins.SetSession(null);
             dungeon = null;
+        }
+
+        private static void OnStartSession(bool isSaved)
+        {
+            // NewGame reloads dungeon constants before reinitializing the same
+            // avatars. Defer to LateUpdate so their native inventory is ready.
+            if (enabled && NetworkServer.active && dungeon && ReferenceEquals(dungeon, DungeonManager.Instance))
+                restoreFountainLimit = true;
         }
 
         public static bool IsReady(PlayerSpawner spawner)
@@ -63,7 +75,11 @@ namespace SephiriaOne
             if (synchronizing) return dungeon;
             DungeonManager current = enabled && NetworkServer.active ? DungeonManager.Instance : null;
             if (!current || !current.isServer || current.netId == 0) current = null;
-            if (joins.SetSession(current)) policy.Clear();
+            if (joins.SetSession(current))
+            {
+                policy.Clear();
+                restoreFountainLimit = false;
+            }
             dungeon = current;
             if (!dungeon) return false;
 
@@ -99,6 +115,8 @@ namespace SephiriaOne
                         Report($"Session settings could not finish applying to player {player.netId}. Check Player.log and use explicit commands to reset/configure the group.", false);
                     }
                 }
+                if (restoreFountainLimit)
+                    restoreFountainLimit = !FountainPoints.RestoreCarryoverLimit(dungeon, policy.HasFountainSetting);
             }
             finally { synchronizing = false; }
             return true;

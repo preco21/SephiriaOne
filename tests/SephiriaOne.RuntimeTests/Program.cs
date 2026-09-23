@@ -149,4 +149,128 @@ var afterUnload = Add(4, luck: 15);
 SessionSettings.Synchronize();
 Check(Value(afterUnload) == 15 && !Stats("luck 100"), "Unloaded controller cannot apply or retain commands");
 
+// Native NewGame clears/reloads dungeon constants while keeping these avatars.
+// Its SDK event fires before synchronous avatar reinitialization; LateUpdate
+// runs afterwards, before the players enter the next run and items are granted.
+void RestartLobby(int nativeLimit = 12)
+{
+    DungeonManager.Instance.constValueDictionary.Clear();
+    DungeonManager.Instance.constValueDictionary[FountainPoints.LimitKey] = nativeLimit;
+    HorayModAPI.StartSession();
+}
+int Carryover(PlayerSpawner player) => Math.Min(Points(player), DungeonManager.Instance.constValueDictionary[FountainPoints.LimitKey]);
+
+host = Start();
+guest = Add(2, points: 9);
+Check(Fountain("+100") && Stats("luck +10") && Choices("all 5"), "Prepare first-run settings for distinct players");
+Check(Carryover(host) == 104 && Carryover(guest) == 109, "First run honors increased Fountain capacity");
+RestartLobby();
+SessionSettings.Synchronize();
+Check(Carryover(host) == 104 && Carryover(guest) == 109, "Second run restores carryover cap without another command");
+Check(Points(host) == 104 && Points(guest) == 109 && Value(host, FountainPoints.ContributionKey) == 100 &&
+    Value(host) == 15 && Value(host, "EXTRAITEMCHOICES") == 7, "Restart repairs the cap without replaying any player adjustment");
+Check(DungeonManager.Instance.constValueDictionary[FountainPoints.OriginalLimitKey] == 12 &&
+    DungeonManager.Instance.constValueDictionary[FountainPoints.AppliedLimitKey] == 109, "Restart records the new lobby limit for reset");
+SessionSettings.Synchronize();
+Check(Points(guest) == 109, "Later frames do not stack Fountain points");
+RestartLobby(15);
+SessionSettings.Synchronize();
+Check(Carryover(guest) == 109 && DungeonManager.Instance.constValueDictionary[FountainPoints.OriginalLimitKey] == 15,
+    "Third run preserves allowance and tracks the latest native cap");
+Check(Fountain("reset") && Points(host) == 4 && Points(guest) == 9 &&
+    DungeonManager.Instance.constValueDictionary[FountainPoints.LimitKey] == 15, "Reset after multiple runs restores points and latest native cap");
+RestartLobby();
+SessionSettings.Synchronize();
+Check(DungeonManager.Instance.constValueDictionary[FountainPoints.LimitKey] == 12, "Reset prevents cap restoration on future runs");
+
+host = Start();
+Check(Fountain("100"), "Prepare absolute target before restart");
+RestartLobby();
+host.PlayerAvatar.Inventory.canBroadcast = 0;
+SessionSettings.Synchronize();
+Check(DungeonManager.Instance.constValueDictionary[FountainPoints.LimitKey] == 12, "Wait for inventory reinitialization before repairing cap");
+host.PlayerAvatar.Inventory.canBroadcast = 1;
+host.PlayerAvatar.Inventory.dimensionPocket += 2;
+SessionSettings.Synchronize();
+Check(Carryover(host) == 102 && Value(host, FountainPoints.ContributionKey) == 96,
+    "Deferred restoration respects native point changes without re-enforcing the old target");
+DungeonManager.Instance.constValueDictionary[FountainPoints.LimitKey] = 50;
+SessionSettings.Synchronize();
+Check(DungeonManager.Instance.constValueDictionary[FountainPoints.LimitKey] == 50,
+    "Completed restart repair does not continuously overwrite independent cap changes");
+RestartLobby(150);
+SessionSettings.Synchronize();
+Check(DungeonManager.Instance.constValueDictionary[FountainPoints.LimitKey] == 150 &&
+    !DungeonManager.Instance.constValueDictionary.ContainsKey(FountainPoints.OriginalLimitKey), "Higher native cap stays unclaimed");
+Check(Fountain("reset") && Points(host) == 6 && DungeonManager.Instance.constValueDictionary[FountainPoints.LimitKey] == 150,
+    "Reset preserves native additive points and an independently higher cap");
+
+host = Start();
+host.PlayerAvatar.Inventory.dimensionPocket = 20;
+Check(Fountain("20"), "Set equal to native points still raises the carryover cap");
+RestartLobby();
+SessionSettings.Synchronize();
+Check(Carryover(host) == 20 && Value(host, FountainPoints.ContributionKey) == 0,
+    "Retained set with zero contribution still repairs its carryover cap");
+RestartLobby();
+SessionSettings.Stop();
+SessionSettings.Synchronize();
+Check(DungeonManager.Instance.constValueDictionary[FountainPoints.LimitKey] == 12, "Unload cancels pending restart repair");
+HorayModAPI.StartSession();
+SessionSettings.Synchronize();
+Check(DungeonManager.Instance.constValueDictionary[FountainPoints.LimitKey] == 12, "SDK event after unload cannot repair the cap");
+
+host = Start();
+Check(Fountain("100"), "Prepare restart authority check");
+NetworkServer.active = false;
+RestartLobby();
+SessionSettings.Synchronize();
+Check(DungeonManager.Instance.constValueDictionary[FountainPoints.LimitKey] == 12, "Client cannot restore host carryover limit");
+NetworkServer.active = true;
+PlayerSpawner.MultiplayerList.Clear();
+host = Add(7);
+HorayModAPI.StartSession();
+SessionSettings.Synchronize();
+Check(Carryover(host) == 4 && DungeonManager.Instance.constValueDictionary[FountainPoints.LimitKey] == 12,
+    "Stopped server does not retain restart settings into the next hosted session");
+
+host = Start();
+guest = Add(2, points: 9);
+Check(Fountain("+100"), "Prepare players with different restart readiness");
+RestartLobby();
+guest.PlayerAvatar.Inventory.canBroadcast = 0;
+SessionSettings.Synchronize();
+Check(Carryover(host) == 104, "An initializing guest does not block the ready host's cap repair");
+guest.PlayerAvatar.Inventory.canBroadcast = 1;
+guest.PlayerAvatar.Inventory.dimensionPocket += 3;
+SessionSettings.Synchronize();
+Check(Carryover(guest) == 112, "Repair includes the guest's final native points once ready");
+Check(Fountain("reset") && Points(host) == 4 && Points(guest) == 12 &&
+    DungeonManager.Instance.constValueDictionary[FountainPoints.LimitKey] == 12, "Staged repair preserves both reset baselines");
+
+host = Start();
+host.PlayerAvatar.Inventory.dimensionPocket = 25;
+Check(Stats("luck +10"), "Prepare session without Fountain commands");
+RestartLobby();
+SessionSettings.Synchronize();
+Check(DungeonManager.Instance.constValueDictionary[FountainPoints.LimitKey] == 12,
+    "Unmodified Fountain points do not raise the native cap without an addon setting or marker");
+
+host = Start();
+Check(Fountain("100"), "Prepare reset during restart frame");
+RestartLobby();
+Check(Fountain("reset") && Points(host) == 4 && DungeonManager.Instance.constValueDictionary[FountainPoints.LimitKey] == 12,
+    "Reset before first LateUpdate clears the restarted cap and retained setting");
+SessionSettings.Synchronize();
+Check(DungeonManager.Instance.constValueDictionary[FountainPoints.LimitKey] == 12, "No delayed repair overrides the restart-frame reset");
+
+host = Start();
+Check(Fountain("100"), "Prepare existing tracked adjustment before addon reload");
+SessionSettings.Stop();
+SessionSettings.Start();
+SessionSettings.Synchronize();
+RestartLobby();
+SessionSettings.Synchronize();
+Check(Carryover(host) == 100 && Points(host) == 100, "Existing contribution marker can restore carryover after policy memory is cleared");
+
 Console.WriteLine($"Passed {checks} runtime command/session integration checks using game API fixtures.");

@@ -25,7 +25,10 @@ user's gradient through native name synchronization; their own names are unchang
 
 Settings survive floor changes and native in-host run restarts while the same
 server and dungeon instance exist. Existing avatars do not receive another copy
-on a run restart. Settings clear when the server stops, the dungeon instance changes,
+on a run restart. Since `0.9.1`, the SDK session-start event also schedules a
+[Fountain carryover limit repair](fountain-run-restart.md) after the game reloads
+dungeon constants, without replaying point/stat/choice adjustments.
+Settings clear when the server stops, the dungeon instance changes,
 or the addon unloads. They are not written to the profile or disk. A reconnect
 with a new avatar inherits once against that avatar's restored native baseline;
 any existing contribution markers are removed before applying the retained

@@ -30,7 +30,9 @@ store the net adjustment in a namespaced player custom-stat marker. Track the
 original and last-written session limit in namespaced dungeon constant entries.
 Reset only lowers the limit if it still matches the last value written by this
 addon; preserve a subsequent independent limit change. Dungeon initialization
-clears the limit markers with the dungeon constant dictionary. Point-contribution
+clears the limit markers with the dungeon constant dictionary. Since `0.9.1`,
+[lobby-restart repair](fountain-run-restart.md) records the newly loaded native
+limit when raising it again, so reset restores that lobby's baseline. Point-contribution
 markers belong to the avatar's custom-stat dictionary: they remain valid while
 that avatar and its inventory retain the point adjustment, including native
 additive stat changes. A new avatar starts without that marker or adjustment.

@@ -75,6 +75,12 @@ public sealed class GameLogWriter : UnityEngine.Object
     public void WriteLog(string message, UnityEngine.Color color) { }
 }
 
+public static class HorayModAPI
+{
+    public static event Action<bool> OnStartSessionServerside;
+    public static void StartSession(bool isSaved = false) => OnStartSessionServerside?.Invoke(isSaved);
+}
+
 namespace SephiriaOne
 {
     internal static class ChoiceFeature { public static bool Available = true; }
