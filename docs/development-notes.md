@@ -19,6 +19,7 @@ No gameplay feature has been implemented or selected yet.
 | Compiler | .NET SDK `10.0.401` is installed and was used successfully. |
 | Release build | `dotnet build SephiriaOne.slnx --configuration Release --nologo` completed with 0 warnings and 0 errors. |
 | Automatic deployment | The build invokes `scripts/Deploy-Mod.ps1` after the MSBuild `Build` target. |
+| Visual Studio command | Added the `Deploy Mod` launch profile. Its command was verified with evaluated Release properties and matching deployed hashes; Debug path resolution was also checked. The IDE dropdown has not been tested interactively. |
 | Missing addon folder | Deployment created `AddOns\SephiriaOne` during verification. |
 | Existing addon folder | Running deployment again succeeded. |
 | Deployed content | SHA-256 comparisons confirmed the deployed DLL and metadata match the Release output; rechecked while writing this document. |
@@ -55,6 +56,8 @@ All stages below occurred during the initial 2026-09-23 session.
 9. Renamed the local branch from `master` to `main` at the user's request.
 10. Recorded the user's automatic commit-and-push workflow in
     [AGENTS.md](../AGENTS.md), using Conventional Commits for completed work.
+11. Added a `Deploy Mod` launch profile so deployment can be run from Visual
+    Studio's Start dropdown using the selected Debug or Release output.
 
 The repository already contained commits `c793844` (Git configuration files) and
 `736b305` (initial project files). The scaffold adjustments and deployment work
@@ -94,6 +97,8 @@ SephiriaOne/
     SephiriaOne.csproj
     Entry.cs
     metadata.json
+    Properties/
+      launchSettings.json
     bin/Release/netstandard2.1/
   scripts/
     Deploy-Mod.ps1
@@ -109,6 +114,9 @@ SephiriaOne/
   `OnModLoaded()` and unsubscribes in `OnModUnloaded()`.
 - [Metadata](../SephiriaOne/metadata.json) names `SephiriaOne.dll` and
   `SephiriaOne.Entry` as the assembly and entry class.
+- [Visual Studio launch profile](../SephiriaOne/Properties/launchSettings.json)
+  exposes `Deploy Mod` in the Start dropdown and passes the active project's
+  `TargetPath` and `GameDir` to the deployment script.
 - [Deployment script](../scripts/Deploy-Mod.ps1) accepts optional `BinaryPath` and
   `GameDir` parameters. Without `BinaryPath`, it checks the project's
   `bin\Release\netstandard2.1\SephiriaOne.dll`, then the equivalent Debug path.
@@ -145,6 +153,28 @@ Visual Studio builds use the same MSBuild target. Press `Ctrl+Shift+B` to build;
 use Rebuild Solution if Visual Studio skips an unchanged project and deployment
 needs to run again. The deployment target excludes design-time builds and applies
 to both Debug and Release configurations when the build target executes.
+
+To run deployment as a Visual Studio command:
+
+1. Open `SephiriaOne.slnx`. If necessary, right-click the `SephiriaOne` project
+   and choose **Set as Startup Project**.
+2. Choose **Debug** or **Release** in the configuration dropdown, then select
+   **Deploy Mod** in the dropdown beside the Start button.
+3. Press **Ctrl+F5** (**Debug > Start Without Debugging**).
+
+The profile launches Windows PowerShell and runs `scripts/Deploy-Mod.ps1`. It
+passes the selected configuration's exact DLL path and the project's `GameDir`,
+so an existing Release DLL does not override the selected Debug build. Visual
+Studio normally builds before starting; if that setting is disabled, build first.
+The existing post-build target may also deploy during that build; both invocations
+copy the same files. The profile still runs when Visual Studio skips an unchanged
+build. It deploys files and does not launch the game.
+
+This solution uses an
+[executable launch profile](https://github.com/dotnet/project-system/blob/main/docs/launch-profiles.md).
+Visual Studio's
+[`tasks.vs.json` tasks](https://learn.microsoft.com/en-us/visualstudio/ide/customize-build-and-debug-tasks-in-visual-studio)
+are for Open Folder mode rather than this solution workflow.
 
 Build without deployment:
 

@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Deploy Mod": {
+      "commandName": "Executable",
+      "executablePath": "%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "commandLineArgs": "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"$(MSBuildProjectDirectory)\\..\\scripts\\Deploy-Mod.ps1\" -BinaryPath \"$(TargetPath)\" -GameDir \"$(GameDir)\"",
+      "workingDirectory": "$(MSBuildProjectDirectory)\\.."
+    }
+  }
+}
