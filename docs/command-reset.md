@@ -15,6 +15,10 @@ Version `0.7.0` also adds `/stats luck reset` (or another supported stat) and
 contributions from character-stat commands, preserving native equipment/buffs.
 `/stats luck 0` sets luck to zero; it is not a reset. See [stat commands](stat-command.md).
 
+Since `0.9.0`, resets also clear the selected retained session settings, so future
+joiners no longer receive those adjustments. Other categories and command
+families remain active; see [session inheritance](session-inheritance.md).
+
 Reset means the state without this addon's commands, preserving native upgrades,
 equipment, and later independent stat changes. It does not mean zero Fountain
 points or a fixed candidate count. Repeated reset is harmless. `/choices all 0`

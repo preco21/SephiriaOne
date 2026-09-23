@@ -29,9 +29,9 @@ namespace SephiriaOne
         public FountainOperation Operation { get; }
         public int Amount { get; }
 
-        public const string Usage = "Host only: /fountain 100 (set), /fountain +10 (add), /fountain -5 (subtract). Also: /fountain set|add|sub N. /fountain reset restores points without our adjustments.";
+        public const string Usage = "Host only, current and joining players: /fountain 100 (set), /fountain +10 (add), /fountain -5 (subtract). Also: /fountain set|add|sub N. /fountain reset restores points and clears the retained setting.";
 
-        private FountainCommand(FountainOperation operation, int amount)
+        internal FountainCommand(FountainOperation operation, int amount)
         {
             Operation = operation;
             Amount = amount;

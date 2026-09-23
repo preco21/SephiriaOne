@@ -5,7 +5,9 @@
 Add `/stats` to the existing local chat interceptor. Match Fountain's authority:
 solo/host only, changing all currently spawned players after validating the entire
 batch. Use native synchronized custom stats so guests do not need this addon.
-The command is a one-time adjustment, not a permanent override or a saved preset.
+Each command makes a one-time adjustment per avatar. Since `0.9.0`, successful
+commands are retained in memory and applied once to newly ready players in the
+same hosted session; see [session inheritance](session-inheritance.md).
 
 Examples: `/stats luck +10`, `/stats luck -5`, `/stats luck set 100`,
 `/stats luck reset`, and `/stats reset` (all supported stats). `/stats list` lists
@@ -47,7 +49,8 @@ Track the signed net base-stat adjustment in `SEPHIRIAONE_STAT_<NATIVE_KEY>`.
 Reset subtracts only that contribution, preserving later additive equipment/buff
 changes. Reset bypasses command limits and amplification checks so native values
 can be restored. Zero is a set value, not a reset. Markers live with the avatar;
-new avatars and later joiners do not inherit a preset. Unloading does not undo
+new avatars and later joiners inherit the active session settings once. Reset
+also clears the corresponding retained setting. Unloading does not undo
 these adjustments, matching Fountain; reset explicitly before unloading if wanted.
 Independent absolute overwrites of the same base stat cannot be reconstructed.
 

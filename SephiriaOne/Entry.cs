@@ -6,6 +6,7 @@ namespace SephiriaOne
     {
         private LocalPlayerNameColor nameColor;
         private ModChatCommands chatCommands;
+        private SessionSettingsController sessionSettings;
 
         protected override void OnModLoaded()
         {
@@ -15,6 +16,7 @@ namespace SephiriaOne
             {
                 var controller = new GameObject("SephiriaOne.Controllers");
                 Object.DontDestroyOnLoad(controller);
+                sessionSettings = controller.AddComponent<SessionSettingsController>();
                 nameColor = controller.AddComponent<LocalPlayerNameColor>();
                 chatCommands = controller.AddComponent<ModChatCommands>();
             }
@@ -30,6 +32,11 @@ namespace SephiriaOne
         protected override void OnModUnloaded()
         {
             HorayModAPI.OnAllDatabasesReady -= OnDatabasesReady;
+            if (sessionSettings)
+            {
+                sessionSettings.enabled = false;
+                sessionSettings = null;
+            }
             if (chatCommands)
             {
                 chatCommands.enabled = false;

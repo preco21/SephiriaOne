@@ -15,6 +15,7 @@ namespace SephiriaOne
                 message = "Only the host can change everyone's character stats.";
                 return false;
             }
+            if (!SessionSettings.Prepare(out message)) return false;
 
             var players = new List<PlayerAvatar>();
             var owners = new List<PlayerAvatar>();
@@ -24,7 +25,7 @@ namespace SephiriaOne
             {
                 if (!spawner || !spawner.isServer || spawner.netId == 0) continue;
                 PlayerAvatar player = spawner.PlayerAvatar;
-                if (!player || !player.isServer || player.netId == 0)
+                if (!SessionSettings.IsReady(spawner))
                 {
                     message = "A player is still initializing. Wait a moment and retry; nobody was changed.";
                     return false;
@@ -54,6 +55,7 @@ namespace SephiriaOne
                 if (updates[i].Contribution == 0) player.customStats.Remove(stat.Marker);
                 else player.customStats[stat.Marker] = updates[i].Contribution;
             }
+            SessionSettings.Remember(command);
 
             string name = command.Stat == null ? "all supported stats" : command.Stat.Name;
             if (command.Operation == StatOperation.Reset)

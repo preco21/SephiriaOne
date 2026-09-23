@@ -43,6 +43,7 @@ Console.WriteLine($"Passed {NameGradientTests.Run()} name gradient checks.");
 Console.WriteLine($"Passed {FountainCommandTests.Run()} Fountain command checks.");
 Console.WriteLine($"Passed {FountainResetTests.Run()} Fountain reset checks.");
 Console.WriteLine($"Passed {StatCommandTests.Run()} character stat command checks.");
+Console.WriteLine($"Passed {SessionPolicyTests.Run()} session inheritance checks.");
 Console.WriteLine($"Passed {ChoiceCommandTests.Run()} candidate command checks.");
 Console.WriteLine($"Passed {ChoiceTranspilerTests.Run()} candidate generation guard checks.");
 if (args.Length == 2) GameChoiceCompatibilityTests.Run(args[0], args[1]);

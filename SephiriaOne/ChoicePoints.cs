@@ -7,7 +7,7 @@ namespace SephiriaOne
 {
     internal static class ChoicePoints
     {
-        private static readonly string[] Keys = { "EXTRAITEMCHOICES", "EXTRAWEAPONCHOICES", "EXTRAMIRACLECHOICES" };
+        private static readonly string[] Keys = ChoiceCommand.Keys;
         private const string MarkerPrefix = "SEPHIRIAONE_";
 
         private readonly struct Update
@@ -34,6 +34,7 @@ namespace SephiriaOne
                 message = "Candidate commands are unavailable. Check Player.log for the compatibility error.";
                 return false;
             }
+            if (!SessionSettings.Prepare(out message)) return false;
 
             var players = new HashSet<PlayerAvatar>();
             var updates = new List<Update>();
@@ -41,7 +42,7 @@ namespace SephiriaOne
             {
                 if (!spawner || !spawner.isServer || spawner.netId == 0) continue;
                 PlayerAvatar player = spawner.PlayerAvatar;
-                if (!player || !player.isServer || player.netId == 0)
+                if (!SessionSettings.IsReady(spawner))
                 {
                     message = "A player is still initializing. Retry in a moment; nobody was changed.";
                     return false;
@@ -73,6 +74,9 @@ namespace SephiriaOne
                 if (update.Applied == 0) update.Player.customStats.Remove(MarkerPrefix + update.Key);
                 else update.Player.customStats[MarkerPrefix + update.Key] = update.Applied;
             }
+            var recorded = new HashSet<string>();
+            foreach (Update update in updates)
+                if (recorded.Add(update.Key)) SessionSettings.RememberChoice(update.Key, update.Applied);
             string action = command.IsReset ? "Reset addon bonuses for" : "Updated";
             message = $"{action} {command.Target.ToString().ToLowerInvariant()} extra choices for {players.Count} player(s). Applies to new offers and normal rerolls; available content limits the count.";
             return true;

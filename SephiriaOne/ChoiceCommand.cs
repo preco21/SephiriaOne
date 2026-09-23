@@ -16,9 +16,10 @@ namespace SephiriaOne
         public int Amount { get; }
         public bool IsReset => Operation == ChoiceOperation.Reset || (Operation == ChoiceOperation.Set && Amount == 0);
         public const int MaximumExtra = 20;
-        public const string Usage = "Host only: /choices all|item|weapon|miracle 5, +2, -1, or set|add|sub N. Extra choices: 0..20. Reset: /choices reset or /choices item|weapon|miracle reset.";
+        internal static readonly string[] Keys = { "EXTRAITEMCHOICES", "EXTRAWEAPONCHOICES", "EXTRAMIRACLECHOICES" };
+        public const string Usage = "Host only, current and joining players: /choices all|item|weapon|miracle 5, +2, -1, or set|add|sub N. Extra choices: 0..20. Reset: /choices reset or /choices item|weapon|miracle reset.";
 
-        private ChoiceCommand(ChoiceTarget target, ChoiceOperation operation, int amount)
+        internal ChoiceCommand(ChoiceTarget target, ChoiceOperation operation, int amount)
         {
             Target = target;
             Operation = operation;

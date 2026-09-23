@@ -72,9 +72,9 @@ namespace SephiriaOne
         public StatDefinition? Stat { get; }
         public StatOperation Operation { get; }
         public decimal Amount { get; }
-        public const string Usage = "Host only, all current players: /stats luck 100, +10, -5, or set|add|sub N. Reset: /stats luck reset or /stats reset. Names/units: /stats list.";
+        public const string Usage = "Host only, current and joining players: /stats luck 100, +10, -5, or set|add|sub N. Reset: /stats luck reset or /stats reset. Names/units: /stats list.";
 
-        private StatCommand(StatDefinition? stat, StatOperation operation, decimal amount)
+        internal StatCommand(StatDefinition? stat, StatOperation operation, decimal amount)
         {
             Stat = stat;
             Operation = operation;

@@ -5,10 +5,10 @@ namespace SephiriaOne
 {
     internal static class FountainPoints
     {
-        private const string LimitKey = "DIMENSIONPOCKETLIMIT";
-        private const string ContributionKey = "SEPHIRIAONE_FOUNTAINPOINTS";
-        private const string OriginalLimitKey = "SEPHIRIAONE_FOUNTAIN_ORIGINALLIMIT";
-        private const string AppliedLimitKey = "SEPHIRIAONE_FOUNTAIN_APPLIEDLIMIT";
+        internal const string LimitKey = "DIMENSIONPOCKETLIMIT";
+        internal const string ContributionKey = "SEPHIRIAONE_FOUNTAINPOINTS";
+        internal const string OriginalLimitKey = "SEPHIRIAONE_FOUNTAIN_ORIGINALLIMIT";
+        internal const string AppliedLimitKey = "SEPHIRIAONE_FOUNTAIN_APPLIEDLIMIT";
 
         public static bool TryExecute(FountainCommand command, out string message)
         {
@@ -18,6 +18,8 @@ namespace SephiriaOne
                 message = "Only the host can change everyone's Wishing Fountain points.";
                 return false;
             }
+
+            if (!SessionSettings.Prepare(out message)) return false;
 
             DungeonManager dungeon = DungeonManager.Instance;
             if (!dungeon || !dungeon.isServer || !dungeon.constValueDictionary.TryGetValue(LimitKey, out int limit))
@@ -40,7 +42,7 @@ namespace SephiriaOne
 
                 PlayerAvatar player = spawner.PlayerAvatar;
                 GridInventory inventory = player ? player.Inventory : null;
-                if (!player || !player.isServer || player.netId == 0 || !inventory || !inventory.isServer || inventory.netId == 0)
+                if (!SessionSettings.IsReady(spawner))
                 {
                     message = "A player is still initializing. Wait a moment and retry; nobody was changed.";
                     return false;
@@ -63,9 +65,26 @@ namespace SephiriaOne
                 return false;
             }
 
-            // Validate the entire batch first, including carryover capacity. Both
-            // writes use the game's existing synchronization for unmodified guests.
-            if (plan.Limit != limit)
+            ApplyPlan(dungeon, players, plan);
+            SessionSettings.Remember(command);
+            int minimum = int.MaxValue;
+            int maximum = 0;
+            for (int i = 0; i < inventories.Count; i++)
+            {
+                minimum = System.Math.Min(minimum, plan.Points[i]);
+                maximum = System.Math.Max(maximum, plan.Points[i]);
+            }
+
+            string points = minimum == maximum ? minimum.ToString() : $"{minimum}..{maximum}";
+            string action = command.Operation == FountainOperation.Reset ? "Reset addon adjustments to" : "Updated";
+            message = $"{action} Wishing Fountain points for {inventories.Count} player(s). Points now: {points}. Reopen the Fountain panel.";
+            return true;
+        }
+
+        internal static void ApplyPlan(DungeonManager dungeon, IReadOnlyList<PlayerAvatar> players, FountainPlan plan)
+        {
+            // Manual commands and inherited settings use the same validated writes.
+            if (dungeon.constValueDictionary[LimitKey] != plan.Limit)
             {
                 dungeon.constValueDictionary[LimitKey] = plan.Limit;
             }
@@ -80,21 +99,12 @@ namespace SephiriaOne
                 dungeon.constValueDictionary.Remove(AppliedLimitKey);
             }
 
-            int minimum = int.MaxValue;
-            int maximum = 0;
-            for (int i = 0; i < inventories.Count; i++)
+            for (int i = 0; i < players.Count; i++)
             {
-                inventories[i].NetworkdimensionPocket = plan.Points[i];
+                players[i].Inventory.NetworkdimensionPocket = plan.Points[i];
                 if (plan.Contributions[i] == 0) players[i].customStats.Remove(ContributionKey);
                 else players[i].customStats[ContributionKey] = plan.Contributions[i];
-                minimum = System.Math.Min(minimum, plan.Points[i]);
-                maximum = System.Math.Max(maximum, plan.Points[i]);
             }
-
-            string points = minimum == maximum ? minimum.ToString() : $"{minimum}..{maximum}";
-            string action = command.Operation == FountainOperation.Reset ? "Reset addon adjustments to" : "Updated";
-            message = $"{action} Wishing Fountain points for {inventories.Count} player(s). Points now: {points}. Reopen the Fountain panel.";
-            return true;
         }
     }
 }

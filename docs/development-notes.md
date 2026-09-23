@@ -9,26 +9,26 @@ can change independently of that installed game version.
 
 ## Current status
 
-SephiriaOne is a C# addon using Sephiria's built-in HorayMod API. Version `0.8.0`
-adds a per-letter player-name gradient from `#408af1` to `#a8d7fa`, sampling the
-midpoint color for each letter locally and in the synchronized multiplayer name.
-Host-only `/stats` commands set, add, subtract, and reset luck and nine other
-character stats for all current players. Existing `/choices` and `/fountain`
-commands adjust extra item, anvil weapon-upgrade, and miracle candidates or
-Wishing Fountain points, preserving normal upgrades when reset. The addon uses
-native synchronization while multiplayer is active and logs its lifecycle.
+SephiriaOne is a C# addon using Sephiria's built-in HorayMod API. Version `0.9.0`
+retains successful host `/fountain`, `/choices`, and `/stats` settings for newly
+joined players in the same multiplayer session. Each ready avatar inherits once;
+resets also remove retained settings. See [session inheritance](session-inheritance.md).
+The addon keeps its per-letter name gradient from `#408af1` to `#a8d7fa`, ten
+supported character stats, extra item/anvil/miracle candidates, and Wishing
+Fountain points. Gameplay changes use native server synchronization and preserve
+normal upgrades when reset. This version was built and tested without deployment.
 
 | Area | Status and evidence |
 | --- | --- |
 | Project | Visual Studio solution and `netstandard2.1` class library exist. |
 | Compiler | .NET SDK `10.0.401` is installed and was used successfully. |
-| Release build | `dotnet build SephiriaOne.slnx --configuration Release --nologo` completed with 0 warnings and 0 errors. |
-| Debug build | `dotnet build SephiriaOne.slnx --configuration Debug --nologo -p:DeployMod=false` also passed for `0.8.0` with 0 warnings and 0 errors. |
+| Release build | `dotnet build SephiriaOne.slnx --configuration Release --nologo -p:DeployMod=false` passed for `0.9.0` with 0 warnings and 0 errors. |
+| Debug build | `dotnet build SephiriaOne.slnx --configuration Debug --nologo -p:DeployMod=false` passed for `0.9.0` with 0 warnings and 0 errors. |
 | Automatic deployment | The build invokes `scripts/Deploy-Mod.ps1` after the MSBuild `Build` target. |
 | Visual Studio command | Added the `Deploy Mod` launch profile. Its command was verified with evaluated Release properties and matching deployed hashes; Debug path resolution was also checked. The IDE dropdown has not been tested interactively. |
 | Missing addon folder | Deployment created `AddOns\SephiriaOne` during verification. |
 | Existing addon folder | Running deployment again succeeded. |
-| Deployed content | The `0.8.0` DLL and metadata match Release output by SHA-256; assembly version is `0.8.0.0`. Harmony and its license are embedded in the mod DLL; no game DLLs are distributed. |
+| Deployed content | `0.9.0` was not deployed, as requested. Installed DLL and metadata SHA-256 hashes remain unchanged from the start of this task. Release output is `0.9.0.0`, with Harmony and its license embedded; no game DLLs are distributed. |
 | In-game loading | The user confirmed `0.1.0` loaded. `Player.log` also contains `[SephiriaOne] Loaded v0.1.0`, the AddOnLoader success entry, and `[SephiriaOne] All databases ready`. |
 | Name gradient | `0.8.0` replaces solid blue with per-letter midpoint colors from `#408af1` to `#a8d7fa` on the character/stats panel, existing overhead label, and synchronized multiplayer name. See [design and verification steps](name-gradient.md). |
 | Multiplayer verification | 21 portable synchronization and 37 gradient/label-restoration checks pass; the native command and serialized rich-text label settings were inspected. A live second-client visual check is still pending. |
@@ -39,6 +39,8 @@ native synchronization while multiplayer is active and logs its lifecycle.
 | Reset commands | `/choices reset`, `/choices item reset` (also `weapon`/`miracle`), and `/fountain reset` remove tracked addon adjustments while preserving native bonuses. See [reset semantics and checks](command-reset.md). |
 | Character stats | `/stats luck +10`, `/stats luck -5`, `/stats luck set 100`, `/stats luck reset`, and `/stats reset` use native synchronized stats. `/stats list` shows supported names and display units. See [commands and findings](stat-command.md). |
 | Stat verification | 117 portable checks cover parsing, unit scaling, exact amplified targets, whole-batch rejection, overflow, and reset tracking. Live host/guest UI and gameplay checks remain pending. |
+| Joining players | Successful settings apply once after native avatar/inventory initialization, including reconnects with a new avatar. Host-only commands and native synchronization support unmodified guests. |
+| Inheritance verification | 43 policy checks and 38 command/session integration checks pass; 391 checks pass across both suites. Installed-game candidate guards and embedded dependency checks pass. Game API fixtures do not establish live Unity/network behavior. |
 
 ## History
 
@@ -100,6 +102,12 @@ Stages 1–14 occurred on 2026-09-23; candidate expansion continued on 2026-09-2
     the requested endpoints and per-letter midpoint sampling. Reused native
     multiplayer name transport and added local text caching/restoration, legacy
     formatting normalization, Unicode handling, and portable regression checks.
+19. Added session inheritance in `0.9.0`. Inspected native player initialization,
+    shared readiness checks across commands, and retained successful host settings
+    for new avatars. Added relative/absolute policy composition, reset removal,
+    arrival-frame handling, and once-per-avatar tracking. All 391 automated checks
+    and both builds passed. At the user's request, disabled deployment for these
+    builds and verified that installed addon files were unchanged.
 
 The repository already contained commits `c793844` (Git configuration files) and
 `736b305` (initial project files). The scaffold adjustments and deployment work
@@ -116,7 +124,7 @@ commits are recorded in Git history. The configured remote is
 | Build SDK | .NET `10.0.401` |
 | Mod target framework | `netstandard2.1` |
 | Mod assembly / namespace | `SephiriaOne` |
-| Mod version / author | `0.8.0` / `preco21` |
+| Mod version / author | `0.9.0` / `preco21` |
 | Game version reported by the confirmed load log | `1.0.33` |
 | Game directory | `C:\Program Files (x86)\Steam\steamapps\common\Sephiria` |
 | Game managed assemblies | `<GameDir>\Sephiria_Data\Managed` |
@@ -150,6 +158,8 @@ SephiriaOne/
     ModChatCommands.cs
     MultiplayerNameColor.cs
     NetworkNameState.cs
+    SessionPolicy.cs
+    SessionSettings.cs
     metadata.json
     Properties/
       launchSettings.json
@@ -158,12 +168,14 @@ SephiriaOne/
     Deploy-Mod.ps1
   tests/
     SephiriaOne.Tests/
+    SephiriaOne.RuntimeTests/
   docs/
     blue-player-name.md
     choice-command.md
     command-reset.md
     development-notes.md
     fountain-command.md
+    session-inheritance.md
     third-party-notices.md
 ```
 
@@ -177,8 +189,8 @@ SephiriaOne/
   and license are embedded in the addon DLL.
 - [Entry point](../SephiriaOne/Entry.cs) subscribes to `OnAllDatabasesReady` in
   `OnModLoaded()` and unsubscribes in `OnModUnloaded()`. It also owns a persistent
-  controller object for name colors and chat commands. Both components are
-  disabled on unload before the object is destroyed. Candidate contributions
+  controller object for name colors, chat commands, and session settings. Components
+  are disabled on unload before the object is destroyed. Candidate contributions
   are removed before unpatching this addon's generation guards.
 - [Name color controller](../SephiriaOne/LocalPlayerNameColor.cs) colors only
   `UI_StatsPanel.characterNameText` and the owned player's `WorldUserName` blue.
@@ -190,7 +202,7 @@ SephiriaOne/
   run snapshots can contain the formatted runtime name. See the feature notes
   for restoration behavior and [portable checks](../tests/SephiriaOne.Tests/Program.cs).
 - [Chat controller](../SephiriaOne/ModChatCommands.cs) consumes the local
-  `/fountain` and `/choices` commands, reports feedback in the local game log, and leaves
+  `/fountain`, `/choices`, and `/stats` commands, reports feedback in the local game log, and leaves
   normal chat to the game's handler. The [runtime service](../SephiriaOne/FountainPoints.cs)
   accepts commands only on the host, validates all player balances first, and
   updates native synchronized capacity and carryover limits. The
@@ -199,6 +211,11 @@ SephiriaOne/
   and player before changing native synchronized stats. Namespaced contribution
   markers preserve bonuses from other sources. [Generation guards](../SephiriaOne/ChoiceSafety.cs)
   bound exhausted pools without replacing the game's rewards or networking.
+- [Session settings controller](../SephiriaOne/SessionSettings.cs) waits for native
+  player initialization, plans all inherited families before writing, and uses
+  the same native fields and markers as explicit commands. Its portable
+  [policy](../SephiriaOne/SessionPolicy.cs) records successful commands and clears
+  retained settings on reset, server/dungeon replacement, or unload.
 - [Metadata](../SephiriaOne/metadata.json) names `SephiriaOne.dll` and
   `SephiriaOne.Entry` as the assembly and entry class.
 - [Visual Studio launch profile](../SephiriaOne/Properties/launchSettings.json)
@@ -470,13 +487,13 @@ requirement for a native HorayMod addon.
 
 ## Next verification steps
 
-1. Launch Sephiria and enter the town/lobby or a run; the title screen alone is
-   insufficient for the documented addon-loading workflow. Fully restart to load
-   the new `0.8.0` binary.
+1. Manually install the `0.9.0` Release DLL and adjacent metadata when ready;
+   this task did not deploy them. Fully restart Sephiria and enter the town/lobby
+   or a run; the title screen alone is insufficient for addon loading.
 2. Inspect `Player.log` for these expected entries:
 
    ```text
-   [SephiriaOne] Loaded v0.8.0
+   [SephiriaOne] Loaded v0.9.0
    [SephiriaOne] All databases ready
    [SephiriaOne] Local player name gradient applied (#408af1 -> #a8d7fa)
    [SephiriaOne] Chat commands bound: /fountain, /choices, /stats
@@ -500,3 +517,6 @@ requirement for a native HorayMod addon.
 8. Follow the [character-stat live checks](stat-command.md#live-verification),
    including decimal critical chance, total attack speed, distinct baselines,
    buffs/equipment changing between command and reset, and an unmodified guest.
+9. Follow the [late-join checks](session-inheritance.md#live-checks), including
+   absolute and relative commands, resets before joining, reconnects, arrival-frame
+   commands, incompatible guest stats, and leaving/restarting the hosted session.

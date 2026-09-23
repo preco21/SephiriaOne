@@ -2,6 +2,8 @@
 
 Implemented in `0.5.0` on 2026-09-24 (Asia/Seoul).
 Explicit reset commands added in `0.6.0`; see [reset behavior](command-reset.md).
+Since `0.9.0`, active extra-candidate settings also apply once to newly ready
+players; see [session inheritance](session-inheritance.md).
 
 ## Design and scope
 
@@ -62,7 +64,8 @@ choice count is naturally limited by the available eligible content.
 Use the existing synchronized stats, recording this addon's contribution in
 namespaced keys in the same dictionary. Updating only the difference preserves
 bonuses from equipment and other game systems, while dictionary resets also
-discard the contribution markers. All writes originate from local host input.
+discard the contribution markers. Writes originate from local host commands
+and the retained host settings when new avatars become ready.
 
 Two narrow Harmony transpilers add exhaustion guards to item and miracle loops.
 Item generation also has a bounded retry count for a depleted available rarity.
@@ -75,8 +78,8 @@ A stats-only implementation would retain the exhaustion failures. Replacing
 reward generation would duplicate the game's selection and networking rules.
 The chosen small guards address the observed failure while keeping those rules.
 
-Bonuses are runtime changes for current players, not profile upgrades. Repeat
-the command for late joiners or replacement avatars. Unloading removes this
+Bonuses are runtime changes, not profile upgrades. Late joiners and replacement
+avatars inherit the active extra-candidate settings once. Unloading removes this
 addon's contributions before removing its patches. No generated offers are
 rerolled for free or deleted as a side effect of changing a setting.
 

@@ -6,6 +6,11 @@ Add host-only chat commands that set or adjust Wishing Fountain points for every
 currently spawned player. Solo play also runs a local server. Unmodified guests
 receive the resulting points through the game's existing synchronization.
 
+Since `0.9.0`, newly ready players also inherit the active Fountain setting once:
+set commands retain an absolute target, while add/subtract without a prior set
+retain an offset against each player's own starting points. Reset clears the
+retained setting. See [session inheritance](session-inheritance.md).
+
 | Command | Effect |
 | --- | --- |
 | `/fountain 100` or `/fountain set 100` | Set each player's points to 100. |
@@ -67,8 +72,8 @@ local game log; guests should reopen their Fountain panel to see the new capacit
 This changes runtime point capacity; it does not buy or rewrite passive upgrades,
 edit profile files, grant items directly, or keep enforcing a value every frame.
 Normal game stat changes can subsequently adjust the capacity. New players and
-replacement avatars need the command again. Existing avatars retain their point
-adjustment until reset or replaced. The raised session limit is
+replacement avatars inherit the active session setting once. Existing avatars
+retain their point adjustment until reset or replaced. The raised session limit is
 reset by the game's normal dungeon initialization. Unloading the addon removes
 the command listener but does not undo an already applied points command.
 Use `/fountain reset` to undo adjustments tracked from `0.6.0` onward. Players
