@@ -68,14 +68,14 @@ internal static class SessionPolicyTests
             "Joining player does not copy the host's stats");
         policy.Record(Stat("luck set 100"));
         policy.Record(Stat("luck +10"));
-        Check(policy.TryPlan(Snapshot(), out plan, out _) && Write(plan, "LUCK").Raw == 110 &&
-            Write(plan, "LUCK").Contribution == 105, "Stat set and delta compose to absolute target");
+        Check(policy.TryPlan(Snapshot(), out plan, out _) && Write(plan, "LUCK").Raw == 15 &&
+            Write(plan, "LUCK").Contribution == 10, "Relative stat command after set starts a new offset from native baseline");
         Check(policy.TryPlan(Snapshot(raw: new() { ["LUCK"] = 115, ["SEPHIRIAONE_STAT_LUCK"] = 100 }), out plan, out _) &&
-            Write(plan, "LUCK").Raw == 110 && Write(plan, "LUCK").Contribution == 95,
+            Write(plan, "LUCK").Raw == 25 && Write(plan, "LUCK").Contribution == 10,
             "Stat inheritance replaces existing addon adjustment, preserving reset baseline");
         Check(policy.TryPlan(Snapshot(bonus: new() { ["LUCK"] = 5 }, amplifiers: new() { ["LUCK"] = 100 }), out plan, out _) &&
-            Write(plan, "LUCK").Raw == 50 && Write(plan, "LUCK").Contribution == 45,
-            "Inherited absolute stat compensates for guest bonus and multiplier");
+            Write(plan, "LUCK").Raw == 10 && Write(plan, "LUCK").Contribution == 5,
+            "Inherited relative stat compensates for guest bonus and multiplier");
         policy.Record(Stat("critical +1.25"));
         Check(policy.TryPlan(Snapshot(), out plan, out _) && Write(plan, "CRITICAL").Raw == 125,
             "Inherited decimal stat uses display units");
@@ -131,8 +131,8 @@ internal static class SessionPolicyTests
         policy.Clear();
         policy.Record(Stat("luck 0"));
         policy.Record(Stat("luck -5"));
-        Check(!policy.TryPlan(Snapshot(), out plan, out _) && plan.Stats.Count == 0,
-            "A negative absolute stat target cannot become a positive set value");
+        Check(policy.TryPlan(Snapshot(), out plan, out _) && Write(plan, "LUCK").Raw == 0,
+            "Subtract after a zero set switches to the native baseline rather than making a negative absolute target");
 
         var tracker = new SessionJoinTracker();
         object firstSession = new();

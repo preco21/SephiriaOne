@@ -4,15 +4,19 @@
 
 Version 0.9.0 remembers successful host `/fountain`, `/choices`, and `/stats`
 commands in memory for the hosted session. Newly ready avatars inherit the active
-settings once. Existing avatars are not continuously overridden or given the same
-bonus again. Names retain their existing ownership: newcomers see the addon
+settings once. Since `0.11.0`, relative character-stat offsets are also maintained
+when native inputs change, without stacking the bonus. Other settings remain
+one-time adjustments. Names retain their existing ownership: newcomers see the addon
 user's gradient through native name synchronization; their own names are unchanged.
 
-- Fountain and character-stat `set` establishes an absolute target for newcomers.
-  Subsequent add/subtract commands adjust that target. Without a preceding set,
-  add/subtract commands accumulate an offset applied to each newcomer's own
-  native starting value. Example: `luck +10`, then `luck -3`, gives a new player
-  seven additional luck; `luck set 100`, then `luck +10`, sets new players to 110.
+- Character-stat add/subtract commands accumulate an offset applied to each
+  player's own native stats, including current equipment and buffs. `luck +10`,
+  then `luck -3`, gives seven additional luck. `luck set 100`, then `luck +10`,
+  switches to native +10. Live commands, inheritance, saved presets, and automatic
+  maintenance share the same planner. See [relative-stat consistency](relative-stat-consistency.md).
+- Fountain `set` establishes an absolute target for newcomers; subsequent
+  add/subtract commands adjust that target. Without a preceding set, Fountain
+  deltas accumulate an offset applied to each newcomer's native starting points.
 - Choice settings remember the extra-candidate contribution per category, leaving
   the newcomer's equipment bonuses intact.
 - Reset removes both current tracked contributions and that selection's retained

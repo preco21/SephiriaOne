@@ -35,6 +35,7 @@ namespace SephiriaOne
             HorayModAPI.OnStartSessionServerside -= OnStartSession;
             restoreFountainLimit = false;
             policy.Clear();
+            relativeStats.Clear();
             joins.SetSession(null);
             dungeon = null;
             store = null;
@@ -80,6 +81,7 @@ namespace SephiriaOne
             if (joins.SetSession(current))
             {
                 policy.Clear();
+                relativeStats.Clear();
                 restoreFountainLimit = false;
                 if (current) LoadPreset();
             }
@@ -93,7 +95,12 @@ namespace SephiriaOne
                 {
                     if (!IsReady(spawner)) continue;
                     PlayerAvatar player = spawner.PlayerAvatar;
-                    if (!joins.TryBegin(player.netId, true) || !policy.HasChanges) continue;
+                    if (!joins.TryBegin(player.netId, true))
+                    {
+                        MaintainRelativeStats(player);
+                        continue;
+                    }
+                    if (!policy.HasChanges) continue;
                     try
                     {
                         SessionPlayerSnapshot snapshot = Capture(player);
@@ -110,6 +117,7 @@ namespace SephiriaOne
                             if (write.Contribution == 0) player.customStats.Remove(write.Marker);
                             else player.customStats[write.Marker] = write.Contribution;
                         }
+                        TrackRelativeStats(player, null);
                         Report($"Applied active session settings to joining player {player.netId}.", true);
                     }
                     catch (Exception exception)
@@ -137,7 +145,13 @@ namespace SephiriaOne
         }
 
         public static void Remember(FountainCommand command) => policy.Record(command);
-        public static void Remember(StatCommand command) => policy.Record(command);
+        public static bool TryPlanStats(StatCommand command, IReadOnlyList<StatSnapshot> values,
+            out StatUpdate[] updates, out string error) => policy.TryPlanStatCommand(command, values, out updates, out error);
+        public static void Remember(StatCommand command, IReadOnlyList<PlayerAvatar> players)
+        {
+            policy.Record(command);
+            foreach (PlayerAvatar player in players) TrackRelativeStats(player, command.Stat);
+        }
         public static void RememberChoice(string key, int contribution) => policy.RecordChoice(key, contribution);
 
         private static void Report(string message, bool success)

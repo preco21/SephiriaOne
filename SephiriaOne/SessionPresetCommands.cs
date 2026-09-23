@@ -61,7 +61,8 @@ namespace SephiriaOne
                 {
                     player.customStats.TryGetValue(stat.Marker, out int contribution);
                     string value = stat.Display(player.GetCustomStatUnsafe(stat.Key)).ToString("0.##", CultureInfo.InvariantCulture);
-                    stats.Add(stat.Name + "=" + value + (contribution == 0 ? "" : " (base adjustment " + Signed(contribution) + ")"));
+                    stats.Add(stat.Name + "=" + value + (contribution == 0 ? "" : " (base adjustment " + Signed(contribution) + ")") +
+                        (sameSession && IsRelativeStatSuspended(player, stat) ? " (relative offset suspended)" : ""));
                 }
                 lines.Add(label + string.Join(", ", stats) + ". Units: /stats list.");
                 var choices = new List<string>();

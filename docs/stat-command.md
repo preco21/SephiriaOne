@@ -5,9 +5,11 @@
 Add `/stats` to the existing local chat interceptor. Match Fountain's authority:
 solo/host only, changing all currently spawned players after validating the entire
 batch. Use native synchronized custom stats so guests do not need this addon.
-Each command makes a one-time adjustment per avatar. Since `0.9.0`, successful
-commands are retained in memory and applied once to newly ready players in the
-same hosted session; see [session inheritance](session-inheritance.md).
+Since `0.11.0`, add/subtract commands accumulate a displayed offset from each
+character's native stats, excluding this addon's contribution. The host maintains
+that offset when equipment, buffs, or multipliers change. Absolute `set` remains
+a one-time adjustment per avatar. Successful commands are retained in memory and
+inherited by newly ready players; see [session inheritance](session-inheritance.md).
 Since `0.10.0`, `/mod status` shows current values and tracked adjustments for all
 ready players, and `/mod save` stores active settings for future hosted sessions.
 See [status and preset commands](session-preset.md) for saving and removal.
@@ -41,12 +43,23 @@ health, mana capacity, movement speed, and converted elemental damage are exclud
 they have different storage or calculation paths. Choices and Fountain retain
 their existing commands.
 
-Set/add/subtract target the current effective numeric stat, including calculated
-bonuses and amplification, then solve for the required integer base-stat change.
+`+10` then `+5` means native +15. `set 100` then `+10` switches back to native +10.
+Native means the character's current value without this addon's tracked raw
+contribution, including ordinary equipment and buffs, rather than a fixed snapshot
+from session start. Canceling the net offset restores the exact raw baseline.
+Set/add/subtract solve for the required integer base-stat change after accounting
+for calculated bonuses and amplification.
 Reject an exact target that integer rounding cannot represent; never silently
 approximate or replace the player's multiplier. Reject non-positive multipliers
 and native integer overflow. A range or representability failure for one player
 rejects the whole batch before any write.
+
+After a successful relative adjustment, changed native inputs trigger host-side
+recalculation in `LateUpdate`. If the requested offset becomes unrepresentable or
+outside the command bounds, remove only its addon contribution, warn once, and
+retry when inputs change. `/mod status` marks it as suspended. A failed initial
+inheritance remains rejected until an explicit command succeeds. See the
+[relative-stat audit](relative-stat-consistency.md) for arithmetic and limitations.
 
 Track the signed net base-stat adjustment in `SEPHIRIAONE_STAT_<NATIVE_KEY>`.
 Reset subtracts only that contribution, preserving later additive equipment/buff

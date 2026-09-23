@@ -87,9 +87,7 @@ namespace SephiriaOne
                 return;
             }
             if (command.Stat == null) throw new ArgumentException("A stat is required.", nameof(command));
-            stats.TryGetValue(command.Stat, out Setting current);
-            Setting next = command.Operation == StatOperation.Set ? new Setting(true, command.Amount) :
-                current.Add(command.Operation == StatOperation.Add ? command.Amount : -command.Amount);
+            Setting next = NextStatSetting(command);
             if (next.Empty) stats.Remove(command.Stat);
             else stats[command.Stat] = next;
         }
@@ -147,16 +145,11 @@ namespace SephiriaOne
             {
                 StatDefinition stat = entry.Key;
                 Setting setting = entry.Value;
-                long baseline = (long)SessionPlayerSnapshot.Read(player.Raw, stat.Key) - SessionPlayerSnapshot.Read(player.Raw, stat.Marker);
-                error = "The joining player's native stat baseline would overflow.";
-                if (baseline < int.MinValue || baseline > int.MaxValue) return false;
-                var command = new StatCommand(stat, setting.Absolute ? StatOperation.Set :
-                    setting.Value < 0 ? StatOperation.Subtract : StatOperation.Add,
-                    setting.Absolute ? setting.Value : Math.Abs(setting.Value));
-                var snapshot = new StatSnapshot(stat, (int)baseline, 0, SessionPlayerSnapshot.Read(player.Bonus, stat.Key),
+                var snapshot = new StatSnapshot(stat, SessionPlayerSnapshot.Read(player.Raw, stat.Key),
+                    SessionPlayerSnapshot.Read(player.Raw, stat.Marker), SessionPlayerSnapshot.Read(player.Bonus, stat.Key),
                     SessionPlayerSnapshot.Read(player.Amplifiers, stat.Key));
-                if (!StatPlanner.TryPlan(command, new[] { snapshot }, out StatUpdate[] updates, out error)) return false;
-                writes.Add(new SessionStatWrite(stat.Key, stat.Marker, updates[0].Raw, updates[0].Contribution));
+                if (!TryPlanStatSetting(setting, snapshot, out StatUpdate update, out error)) return false;
+                writes.Add(new SessionStatWrite(stat.Key, stat.Marker, update.Raw, update.Contribution));
             }
             plan = new SessionPlan(fountainPlan, writes);
             error = "";

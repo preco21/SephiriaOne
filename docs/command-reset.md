@@ -21,6 +21,9 @@ families remain active; see [session inheritance](session-inheritance.md).
 Since `0.10.0`, an explicitly saved preset is a separate snapshot. Reset does not
 alter it: run `/mod save` after resetting to update the saved copy, or `/mod forget`
 to remove it. See [preset commands](session-preset.md).
+Since `0.11.0`, a stat reset also stops automatic relative-offset maintenance.
+Canceling a relative offset to zero restores the exact raw native baseline,
+including when the current multiplier has several rounded raw representations.
 
 Reset means the state without this addon's commands, preserving native upgrades,
 equipment, and later independent stat changes. It does not mean zero Fountain

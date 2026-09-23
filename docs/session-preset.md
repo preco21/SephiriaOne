@@ -15,10 +15,14 @@ feedback remain local. Guests receive gameplay changes through native sync.
 
 After exiting and launching the game again, host a session. Each ready player
 gets 100 Fountain points, five extra candidates in each category, and ten luck
-above their own starting value. `/mod status` shows the active and saved copies
+above their own native value. Since `0.11.0`, the host maintains relative stat
+offsets after gear/buff changes. `/mod status` shows the active and saved copies
 separately, plus current player values. Player labels use native network IDs.
 Stat totals use the displayed units from `/stats list`; any `base adjustment`
 shown in parentheses is the tracked raw base-stat contribution used for reset.
+If changed multipliers cannot represent a relative offset, status labels it as
+suspended. Saving still records the requested offset, which may be rejected for
+an incompatible player when inherited in a future session.
 
 To change the saved copy, issue new commands and run `/mod save` again. To stop
 future automatic loading, run `/mod forget`. To also undo the current adjustments,
@@ -41,6 +45,11 @@ absolute, a net add/subtract remains relative to each player's native baseline,
 and choices retain their extra contribution. Status labels distinguish these
 retained settings from effective current values and base-stat contribution
 markers. A set equal to a native value is still an active setting.
+For character stats, an add/subtract command after `set` switches to a new relative
+offset; subsequent deltas accumulate. Older presets retain their explicit stored
+mode and amount: `set 110` stays absolute, while `offset 10` is now maintained
+automatically. The preset format is unchanged. See the
+[relative-stat audit](relative-stat-consistency.md).
 
 One explicit snapshot is sufficient; named presets and continuous autosave are
 outside this change. Resets and subsequent commands affect only the current

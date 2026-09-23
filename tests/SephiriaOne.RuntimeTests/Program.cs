@@ -360,5 +360,130 @@ Check(Value(host) == 5, "Incompatible saved preset uses existing atomic player r
 SessionSettings.Stop();
 Check(!Mod(PresetAction.Save, out _), "Unloaded controller cannot write a preset");
 
+// Relative commands must agree with inheritance even after native multipliers
+// change. Compare players with the same baseline but different arrival times.
+host = Start();
+Check(Stats("luck +10"), "Prepare relative offset before native multiplier change");
+host.PlayerAvatar.customStatsAmp["LUCK"] = 100;
+SessionSettings.Synchronize();
+Check(host.PlayerAvatar.GetCustomStatUnsafe("LUCK") == 20, "Native multiplier change automatically preserves displayed native luck plus ten");
+Check(Stats("luck +10"), "Second relative command succeeds after multiplier change");
+guest = Add(2, luck: 5);
+guest.PlayerAvatar.customStatsAmp["LUCK"] = 100;
+SessionSettings.Synchronize();
+Check(host.PlayerAvatar.GetCustomStatUnsafe("LUCK") == guest.PlayerAvatar.GetCustomStatUnsafe("LUCK"),
+    "Existing and joining characters with the same native baseline receive the same relative adjustment");
+Check(host.PlayerAvatar.GetCustomStatUnsafe("LUCK") == 30 && Value(host, "SEPHIRIAONE_STAT_LUCK") == 10,
+    "Cumulative displayed +20 is planned from native displayed 10, not previously amplified addon points");
+Check(Mod(PresetAction.Save, out _), "Save recomposed relative offset");
+RestartHost();
+host = Add(3, luck: 5);
+host.PlayerAvatar.customStatsAmp["LUCK"] = 100;
+SessionSettings.Synchronize();
+Check(host.PlayerAvatar.GetCustomStatUnsafe("LUCK") == 30, "Saved relative policy agrees with live command planning");
+
+host = Start();
+host.PlayerAvatar.customStatsAmp["LUCK"] = -50;
+Check(Stats("luck +1") && Stats("luck -1"), "Cancel a relative adjustment under fractional multiplier");
+Check(Value(host) == 5 && Value(host, "SEPHIRIAONE_STAT_LUCK") == 0,
+    "Canceling offsets restores exact raw baseline rather than a rounded equivalent");
+
+host = Start();
+guest = Add(2, luck: 20);
+Check(Stats("luck set 100") && Stats("luck +10"), "Relative command switches from absolute mode");
+Check(Value(host) == 15 && Value(guest) == 30, "Set-to-relative switch uses each character's own baseline");
+Check(Stats("luck +5") && Stats("luck -3") && Value(host) == 17 && Value(guest) == 32,
+    "Subsequent relative commands accumulate a net plus twelve");
+Check(Mod(PresetAction.Save, out _) && File.ReadAllText(PresetPath()).Contains("stats luck offset 12"),
+    "Saved setting records relative mode after switching from set");
+guest.PlayerAvatar.customStats["LUCK"] += 4;
+guest.PlayerAvatar.calculatedBonusStats["LUCK"] = 3;
+guest.PlayerAvatar.customStatsAmp["LUCK"] = 100;
+SessionSettings.Synchronize();
+Check(guest.PlayerAvatar.GetCustomStatUnsafe("LUCK") == 66 && Value(host) == 17,
+    "Native raw, equipment bonus and amplifier changes retain per-player baseline plus offset");
+Check(Stats("luck reset") && Value(host) == 5 && Value(guest) == 24 &&
+    guest.PlayerAvatar.GetCustomStatUnsafe("LUCK") == 54, "Reset after automatic maintenance restores native raw and amplified stats");
+guest.PlayerAvatar.customStatsAmp["LUCK"] = 0;
+SessionSettings.Synchronize();
+Check(Value(guest) == 24, "Reset stops automatic maintenance");
+
+host = Start();
+Check(Stats("luck +1"), "Prepare exact offset before incompatible multiplier");
+host.PlayerAvatar.customStatsAmp["LUCK"] = 100;
+UnityEngine.Debug.Warnings.Clear();
+SessionSettings.Synchronize();
+Check(Value(host) == 5 && Value(host, "SEPHIRIAONE_STAT_LUCK") == 0 && UnityEngine.Debug.Warnings.Count == 1,
+    "Unrepresentable relative offset suspends only addon contribution and warns once");
+Check(Mod(PresetAction.Status, out var suspendedStatus) && suspendedStatus.Any(line => line.Contains("relative offset suspended")),
+    "Status distinguishes suspended offsets from currently applied values");
+Check(Mod(PresetAction.Save, out _) && File.ReadAllText(PresetPath()).Contains("stats luck offset 1"),
+    "Saving a suspended offset retains desired command intent");
+SessionSettings.Synchronize();
+Check(Value(host) == 5 && UnityEngine.Debug.Warnings.Count == 1, "Suspended offset does not retry or warn on unchanged frames");
+host.PlayerAvatar.calculatedBonusStats["LUCK"] = 1;
+SessionSettings.Synchronize();
+Check(UnityEngine.Debug.Warnings.Count == 1 && Value(host) == 5, "Continuing incompatibility preserves native changes without warning spam");
+host.PlayerAvatar.customStatsAmp["LUCK"] = 0;
+SessionSettings.Synchronize();
+Check(Value(host) == 6 && host.PlayerAvatar.GetCustomStatUnsafe("LUCK") == 7,
+    "A changed compatible multiplier resumes the offset against updated native bonuses");
+Check(Stats("luck set 100"), "Absolute command replaces relative maintenance");
+host.PlayerAvatar.customStatsAmp["LUCK"] = 100;
+SessionSettings.Synchronize();
+Check(host.PlayerAvatar.GetCustomStatUnsafe("LUCK") == 200, "Absolute set remains a one-time adjustment");
+
+host = Start();
+Check(Stats("critical +1.25") && Stats("attackspeed +10"), "Prepare decimal and display-offset stats");
+host.PlayerAvatar.customStatsAmp["CRITICAL"] = 25;
+host.PlayerAvatar.customStatsAmp["ATTACKSPEED"] = 100;
+SessionSettings.Synchronize();
+Check(host.PlayerAvatar.GetCustomStatUnsafe("CRITICAL") == 125 && host.PlayerAvatar.GetCustomStatUnsafe("ATTACKSPEED") == 10,
+    "Automatic maintenance respects fractional display units and attack-speed display offset");
+
+host = Start();
+Check(Stats("luck +10"), "Prepare maintenance lifecycle guards");
+host.PlayerAvatar.Inventory.canBroadcast = 0;
+host.PlayerAvatar.customStatsAmp["LUCK"] = 100;
+SessionSettings.Synchronize();
+Check(Value(host) == 15, "Do not maintain relative stats during inventory initialization");
+host.PlayerAvatar.Inventory.canBroadcast = 1;
+SessionSettings.Synchronize();
+Check(Value(host) == 10, "Resume relative maintenance once inventory is ready");
+SessionSettings.Stop();
+host.PlayerAvatar.customStatsAmp["LUCK"] = 0;
+SessionSettings.Synchronize();
+Check(Value(host) == 10, "Unload disables automatic stat writes");
+
+host = Start();
+Check(Stats("luck +1"), "Prepare relative inheritance rejection");
+guest = Add(2);
+guest.PlayerAvatar.customStatsAmp["LUCK"] = 100;
+SessionSettings.Synchronize();
+guest.PlayerAvatar.customStatsAmp["LUCK"] = 0;
+SessionSettings.Synchronize();
+Check(Value(guest) == 5 && Value(host) == 6, "Initially rejected relative inheritance is not silently retried on native changes");
+Check(Stats("luck +1") && Value(guest) == 7 && Value(host) == 7, "Explicit relative command enrolls previously rejected guest with full net offset");
+guest.PlayerAvatar.customStatsAmp["LUCK"] = 100;
+SessionSettings.Synchronize();
+Check(Value(guest) == 6 && guest.PlayerAvatar.GetCustomStatUnsafe("LUCK") == 12,
+    "Successful explicit command enables future guest maintenance");
+Check(Stats("reset"), "Reset-all cancels every relative registration");
+guest.PlayerAvatar.customStatsAmp["LUCK"] = 0;
+SessionSettings.Synchronize();
+Check(Value(guest) == 5 && Value(host) == 5, "Reset-all cannot be undone by later multiplier changes");
+
+host = Start();
+Check(Stats("luck +10"), "Prepare relative policy before avatar native-state reset");
+host.PlayerAvatar.customStats.Clear();
+host.PlayerAvatar.customStats["LUCK"] = 20;
+SessionSettings.Synchronize();
+Check(Value(host) == 30 && Value(host, "SEPHIRIAONE_STAT_LUCK") == 10,
+    "Replacing both native stats and their markers recomputes against new character baseline");
+NetworkServer.active = false;
+host.PlayerAvatar.customStatsAmp["LUCK"] = 100;
+SessionSettings.Synchronize();
+Check(Value(host) == 30, "Automatic maintenance never writes without server authority");
+
 if (Directory.Exists(testDataRoot)) Directory.Delete(testDataRoot, true);
 Console.WriteLine($"Passed {checks} runtime command/session integration checks using game API fixtures.");

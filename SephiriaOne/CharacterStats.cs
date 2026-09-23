@@ -44,7 +44,7 @@ namespace SephiriaOne
                 }
             }
 
-            if (!StatPlanner.TryPlan(command, snapshots, out StatUpdate[] updates, out message)) return false;
+            if (!SessionSettings.TryPlanStats(command, snapshots, out StatUpdate[] updates, out message)) return false;
             // No writes until every selected stat on every player has been validated.
             // Mirror's existing SyncDictionary carries both values and reset markers.
             for (int i = 0; i < updates.Length; i++)
@@ -55,7 +55,7 @@ namespace SephiriaOne
                 if (updates[i].Contribution == 0) player.customStats.Remove(stat.Marker);
                 else player.customStats[stat.Marker] = updates[i].Contribution;
             }
-            SessionSettings.Remember(command);
+            SessionSettings.Remember(command, players);
 
             string name = command.Stat == null ? "all supported stats" : command.Stat.Name;
             if (command.Operation == StatOperation.Reset)
