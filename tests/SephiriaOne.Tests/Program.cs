@@ -40,3 +40,7 @@ Equal(null, state.Next("Bob", "", true), "Missing profile name does not rename t
 
 Console.WriteLine($"Passed {checks} multiplayer name synchronization checks.");
 Console.WriteLine($"Passed {FountainCommandTests.Run()} Fountain command checks.");
+Console.WriteLine($"Passed {ChoiceCommandTests.Run()} candidate command checks.");
+Console.WriteLine($"Passed {ChoiceTranspilerTests.Run()} candidate generation guard checks.");
+if (args.Length == 2) GameChoiceCompatibilityTests.Run(args[0], args[1]);
+else if (args.Length != 0) throw new ArgumentException("Optional arguments: <game Managed directory> <built addon DLL>");

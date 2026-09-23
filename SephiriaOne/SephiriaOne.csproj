@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>SephiriaOne</AssemblyName>
-    <Version>0.4.0</Version>
+    <Version>0.5.0</Version>
     <RootNamespace>SephiriaOne</RootNamespace>
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>disable</Nullable>
@@ -11,6 +11,12 @@
     <GameDir Condition="'$(GameDir)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Sephiria</GameDir>
     <GameManagedDir>$(GameDir)\Sephiria_Data\Managed</GameManagedDir>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Lib.Harmony" Version="2.4.2" GeneratePathProperty="true" ExcludeAssets="runtime" PrivateAssets="all" />
+    <EmbeddedResource Include="$(PkgLib_Harmony)\lib\net472\0Harmony.dll" LogicalName="SephiriaOne.Dependencies.0Harmony.dll" />
+    <EmbeddedResource Include="$(PkgLib_Harmony)\LICENSE" LogicalName="SephiriaOne.Dependencies.Harmony.LICENSE" />
+  </ItemGroup>
 
   <ItemGroup>
     <Reference Include="Assembly-CSharp">

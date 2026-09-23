@@ -6,7 +6,7 @@ using UnityEngine.Events;
 
 namespace SephiriaOne
 {
-    public sealed class FountainChatCommands : MonoBehaviour
+    public sealed class ModChatCommands : MonoBehaviour
     {
         private UI_ChatInput chat;
         private TMP_InputField input;
@@ -58,13 +58,13 @@ namespace SephiriaOne
                     submit.AddListener(original);
                 }
 
-                Debug.Log("[SephiriaOne] Fountain chat command ready: /fountain");
+                Debug.Log("[SephiriaOne] Chat commands bound: /fountain, /choices");
             }
             catch (Exception exception)
             {
                 Unbind();
                 bindingUnsupported = true;
-                Debug.LogError($"[SephiriaOne] Fountain command unavailable; chat API changed: {exception}");
+                Debug.LogError($"[SephiriaOne] Chat commands unavailable; chat API changed: {exception}");
             }
         }
 
@@ -76,7 +76,9 @@ namespace SephiriaOne
             }
 
             FountainParseResult result = FountainCommand.Parse(input.text, out FountainCommand command, out string error);
-            if (result == FountainParseResult.NotCommand)
+            ChoiceParseResult choices = ChoiceCommand.Parse(input.text, out ChoiceCommand choiceCommand, out string choiceError);
+            bool fountain = result != FountainParseResult.NotCommand;
+            if (!fountain && choices == ChoiceParseResult.NotCommand)
             {
                 return;
             }
@@ -85,27 +87,29 @@ namespace SephiriaOne
             // Clear before any work so even rejected commands stay local.
             input.text = "";
             chat.Close();
-            if (result == FountainParseResult.Help)
+            if (result == FountainParseResult.Help || choices == ChoiceParseResult.Help)
             {
-                Reply(FountainCommand.Usage, Color.cyan);
+                Reply(fountain ? FountainCommand.Usage : ChoiceCommand.Usage, Color.cyan);
                 return;
             }
 
-            if (result == FountainParseResult.Invalid)
+            if (result == FountainParseResult.Invalid || choices == ChoiceParseResult.Invalid)
             {
-                Reply(error, Color.yellow);
+                Reply(fountain ? error : choiceError, Color.yellow);
                 return;
             }
 
             try
             {
-                bool success = FountainPoints.TryExecute(command, out string message);
+                string message;
+                bool success = fountain ? FountainPoints.TryExecute(command, out message) :
+                    ChoicePoints.TryExecute(choiceCommand, out message);
                 Reply(message, success ? Color.green : Color.yellow);
             }
             catch (Exception exception)
             {
-                Debug.LogError($"[SephiriaOne] Fountain command failed: {exception}");
-                Reply("Fountain command failed. Check Player.log for details.", Color.red);
+                Debug.LogError($"[SephiriaOne] Chat command failed: {exception}");
+                Reply("Command failed. Check Player.log for details.", Color.red);
             }
         }
 

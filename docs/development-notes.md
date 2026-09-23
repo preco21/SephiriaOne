@@ -1,6 +1,6 @@
 # SephiriaOne development notes
 
-Recorded: 2026-09-23 (Asia/Seoul).
+Recorded: 2026-09-23; updated: 2026-09-24 (Asia/Seoul).
 
 This document records the project history, current implementation, and modding
 findings collected during the initial investigation. Installed-game observations
@@ -9,9 +9,10 @@ can change independently of that installed game version.
 
 ## Current status
 
-SephiriaOne is a C# addon using Sephiria's built-in HorayMod API. Version `0.4.0`
-adds host-only `/fountain` chat commands to set, add, or subtract Wishing Fountain
-points for all currently spawned players in solo and multiplayer. It also colors
+SephiriaOne is a C# addon using Sephiria's built-in HorayMod API. Version `0.5.0`
+adds host-only `/choices` commands for extra item, anvil weapon-upgrade, and
+miracle candidates for all currently spawned players. It retains `/fountain`
+commands to set, add, or subtract Wishing Fountain points. It also colors
 the local player's name blue, publishes blue name formatting through the game's
 native synchronization while multiplayer is active, and logs its lifecycle.
 
@@ -20,21 +21,23 @@ native synchronization while multiplayer is active, and logs its lifecycle.
 | Project | Visual Studio solution and `netstandard2.1` class library exist. |
 | Compiler | .NET SDK `10.0.401` is installed and was used successfully. |
 | Release build | `dotnet build SephiriaOne.slnx --configuration Release --nologo` completed with 0 warnings and 0 errors. |
-| Debug build | `dotnet build SephiriaOne.slnx --configuration Debug --nologo -p:DeployMod=false` also passed for `0.4.0` with 0 warnings and 0 errors. |
+| Debug build | `dotnet build SephiriaOne.slnx --configuration Debug --nologo -p:DeployMod=false` also passed for `0.5.0` with 0 warnings and 0 errors. |
 | Automatic deployment | The build invokes `scripts/Deploy-Mod.ps1` after the MSBuild `Build` target. |
 | Visual Studio command | Added the `Deploy Mod` launch profile. Its command was verified with evaluated Release properties and matching deployed hashes; Debug path resolution was also checked. The IDE dropdown has not been tested interactively. |
 | Missing addon folder | Deployment created `AddOns\SephiriaOne` during verification. |
 | Existing addon folder | Running deployment again succeeded. |
-| Deployed content | SHA-256 comparisons confirmed the deployed `0.4.0` DLL and metadata match Release output. Assembly version is `0.4.0.0`; no game DLLs were copied into the output. |
+| Deployed content | The `0.5.0` DLL and metadata match Release output by SHA-256; assembly version is `0.5.0.0`. Harmony and its license are embedded in the mod DLL; no game DLLs are distributed. |
 | In-game loading | The user confirmed `0.1.0` loaded. `Player.log` also contains `[SephiriaOne] Loaded v0.1.0`, the AddOnLoader success entry, and `[SephiriaOne] All databases ready`. |
 | Blue name feature | `0.2.0` added local colors; `0.3.0` adds native multiplayer name synchronization. See [design and verification steps](blue-player-name.md). |
 | Multiplayer verification | 21 portable synchronization checks pass; the native command and serialized rich-text label settings were inspected. A live second-client visual check is still pending. |
 | Wishing Fountain commands | `/fountain 100`, `/fountain +10`, and `/fountain -5` update every current player's capacity through native server synchronization. The host installs the addon; guests can use the base game. See [commands, findings, and live checks](fountain-command.md). |
 | Fountain verification | 40 portable parser/planner checks pass, including whole-batch rejection of invalid results. Code review found no actionable issues. Live chat interception, guest UI, and item carryover remain unverified. |
+| Candidate commands | `/choices all 5`, `/choices item +2`, `/choices weapon -1`, and `/choices miracle 5` change this addon's extra-candidate contribution using synchronized native stats. See [design and commands](choice-command.md). |
+| Candidate verification | 48 command checks and 8 generation-guard checks pass. Both guard transformations match the installed game methods. Unity patch installation, live peer behavior, and expanded panel navigation still require game testing. |
 
 ## History
 
-All stages below occurred during the initial 2026-09-23 session.
+Stages 1–14 occurred on 2026-09-23; candidate expansion continued on 2026-09-24.
 
 1. Investigated native AddOns development using the user's Xetsumei GitHub and
    Nexus Mods links. The initial workspace was
@@ -75,6 +78,11 @@ All stages below occurred during the initial 2026-09-23 session.
     session limits, and local chat submission. Added host-only set/add/subtract
     commands for every current player in `0.4.0`, with native synchronization,
     validation before writes, 40 portable checks, and a reviewed Release build.
+15. Used SephiriaChoiceExpander's description as a behavior reference. Located
+    the three native extra-choice stats, their synchronization, and cached offer
+    behavior. Added `/choices`, contribution tracking, and generation guards for
+    exhausted candidate pools. Embedded pinned Harmony and its license, keeping
+    the existing two-file deployment layout for `0.5.0`.
 
 The repository already contained commits `c793844` (Git configuration files) and
 `736b305` (initial project files). The scaffold adjustments and deployment work
@@ -91,7 +99,7 @@ commits are recorded in Git history. The configured remote is
 | Build SDK | .NET `10.0.401` |
 | Mod target framework | `netstandard2.1` |
 | Mod assembly / namespace | `SephiriaOne` |
-| Mod version / author | `0.4.0` / `preco21` |
+| Mod version / author | `0.5.0` / `preco21` |
 | Game version reported by the confirmed load log | `1.0.33` |
 | Game directory | `C:\Program Files (x86)\Steam\steamapps\common\Sephiria` |
 | Game managed assemblies | `<GameDir>\Sephiria_Data\Managed` |
@@ -114,10 +122,15 @@ SephiriaOne/
   SephiriaOne/
     SephiriaOne.csproj
     Entry.cs
-    FountainChatCommands.cs
+    ChoiceCommand.cs
+    ChoiceFeature.cs
+    ChoicePoints.cs
+    ChoiceSafety.cs
+    ChoiceTranspilers.cs
     FountainCommand.cs
     FountainPoints.cs
     LocalPlayerNameColor.cs
+    ModChatCommands.cs
     MultiplayerNameColor.cs
     NetworkNameState.cs
     metadata.json
@@ -130,8 +143,10 @@ SephiriaOne/
     SephiriaOne.Tests/
   docs/
     blue-player-name.md
+    choice-command.md
     development-notes.md
     fountain-command.md
+    third-party-notices.md
 ```
 
 - [Project configuration](../SephiriaOne/SephiriaOne.csproj) references the installed
@@ -139,10 +154,14 @@ SephiriaOne/
   `Unity.TextMeshPro.dll`, and `UnityEngine.UI.dll`. All use
   `<Private>false</Private>`, preventing those game references from being copied
   into build output. `metadata.json` is copied with `PreserveNewest`.
+  NuGet restores pinned `Lib.Harmony 2.4.2`; its .NET Standard reference facade
+  supplies compile-time types, while its Mono-compatible .NET Framework runtime
+  and license are embedded in the addon DLL.
 - [Entry point](../SephiriaOne/Entry.cs) subscribes to `OnAllDatabasesReady` in
   `OnModLoaded()` and unsubscribes in `OnModUnloaded()`. It also owns a persistent
-  controller object for name colors and Fountain commands. Both components are
-  disabled on unload before the object is destroyed.
+  controller object for name colors and chat commands. Both components are
+  disabled on unload before the object is destroyed. Candidate contributions
+  are removed before unpatching this addon's generation guards.
 - [Name color controller](../SephiriaOne/LocalPlayerNameColor.cs) colors only
   `UI_StatsPanel.characterNameText` and the owned player's `WorldUserName` blue.
   It preserves alpha and restores original text color settings on disconnect,
@@ -152,12 +171,16 @@ SephiriaOne/
   player while multiplayer is active. The profile name is read-only; native host
   run snapshots can contain the formatted runtime name. See the feature notes
   for restoration behavior and [portable checks](../tests/SephiriaOne.Tests/Program.cs).
-- [Fountain chat controller](../SephiriaOne/FountainChatCommands.cs) consumes the
-  local `/fountain` command, reports feedback in the local game log, and leaves
+- [Chat controller](../SephiriaOne/ModChatCommands.cs) consumes the local
+  `/fountain` and `/choices` commands, reports feedback in the local game log, and leaves
   normal chat to the game's handler. The [runtime service](../SephiriaOne/FountainPoints.cs)
   accepts commands only on the host, validates all player balances first, and
   updates native synchronized capacity and carryover limits. The
   [parser and planner](../SephiriaOne/FountainCommand.cs) have portable tests.
+- [Candidate service](../SephiriaOne/ChoicePoints.cs) plans every selected category
+  and player before changing native synchronized stats. Namespaced contribution
+  markers preserve bonuses from other sources. [Generation guards](../SephiriaOne/ChoiceSafety.cs)
+  bound exhausted pools without replacing the game's rewards or networking.
 - [Metadata](../SephiriaOne/metadata.json) names `SephiriaOne.dll` and
   `SephiriaOne.Entry` as the assembly and entry class.
 - [Visual Studio launch profile](../SephiriaOne/Properties/launchSettings.json)
@@ -172,6 +195,7 @@ SephiriaOne/
   the destination. It derives the addon folder name from the binary filename,
   creates missing directories, and overwrites those two destination files.
   It does not copy PDBs, game assemblies, dependencies, or asset directories.
+  The Harmony dependency is already embedded in the mod DLL.
 
 The .NET SDK runs the compiler. The compiled addon targets .NET Standard 2.1
 because it runs inside Unity's managed runtime. These are separate settings.
@@ -389,6 +413,7 @@ The observations below describe the repositories as inspected on the recorded da
 | [MiraModBase](https://github.com/Mira090/MiraModBase) | Bootstrap implementation explaining the extra loader DLL and explicit dependency loading used by Mira's distributions. |
 | [Mira's Item Mod blog post](https://note.com/mira090/n/n6069655525d8) | Author's explanation of mechanics and balance decisions. Useful context for the source, rather than an SDK tutorial. |
 | [Sephiria on Nexus Mods](https://www.nexusmods.com/games/sephiria) | Distribution and user-facing installation reference. Individual mods may use different loading approaches. |
+| [SephiriaChoiceExpander](https://www.nexusmods.com/sephiria/mods/19) | Describes five extra item, weapon, and miracle candidates with configurable amounts. Its BepInEx-based distribution is not used by this native addon. |
 | [DiceTalentMod on Nexus](https://www.nexusmods.com/sephiria/mods/18) | Concrete native AddOns packaging and session-load/logging instructions. |
 
 Mira's projects contain developer-specific reference paths, including Harmony
@@ -401,8 +426,8 @@ requirement for a native HorayMod addon.
 
 - Prefer the official events and database APIs for supported changes. Add a
   narrowly scoped [Harmony patch](https://harmony.pardeike.net/v2/articles/intro.html)
-  when the required behavior lacks an appropriate hook. The starter project does
-  not currently reference or ship Harmony.
+  when the required behavior lacks an appropriate hook. Version `0.5.0` embeds
+  Harmony `2.4.2` for two candidate-exhaustion guards; see [notices](third-party-notices.md).
 - Treat dependency loading and packaging as explicit work when adding libraries.
   The current deployment script only handles the starter DLL and metadata.
 - Keep content IDs and saved-state keys stable across releases. Test an existing
@@ -429,14 +454,15 @@ requirement for a native HorayMod addon.
 
 1. Launch Sephiria and enter the town/lobby or a run; the title screen alone is
    insufficient for the documented addon-loading workflow. Fully restart to load
-   the new `0.4.0` binary.
+   the new `0.5.0` binary.
 2. Inspect `Player.log` for these expected entries:
 
    ```text
-   [SephiriaOne] Loaded v0.4.0
+   [SephiriaOne] Loaded v0.5.0
    [SephiriaOne] All databases ready
    [SephiriaOne] Blue local player name applied (#0000FF)
-   [SephiriaOne] Fountain chat command ready: /fountain
+   [SephiriaOne] Chat commands bound: /fountain, /choices
+   [SephiriaOne] Candidate commands ready: /choices (extra choices 0..20)
    ```
 
 3. Follow the [blue-name multiplayer checks](blue-player-name.md#required-live-multiplayer-check)
@@ -447,3 +473,6 @@ requirement for a native HorayMod addon.
 5. Follow the [Fountain live checks](fountain-command.md#verification), including
    host-only access, all-player updates, reopening the panel, carryover above 12,
    invalid-command rejection, and normal chat behavior.
+6. Follow the [candidate live checks](choice-command.md#live-verification) with
+   an unmodified guest. Inspect `Player.log` for Harmony compatibility errors and
+   check exhausted pools, rerolls, and navigation of expanded panels.

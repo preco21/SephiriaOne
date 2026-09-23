@@ -5,17 +5,18 @@ namespace SephiriaOne
     public sealed class Entry : HorayModBase
     {
         private LocalPlayerNameColor nameColor;
-        private FountainChatCommands fountainCommands;
+        private ModChatCommands chatCommands;
 
         protected override void OnModLoaded()
         {
             HorayModAPI.OnAllDatabasesReady += OnDatabasesReady;
+            ChoiceFeature.Initialize();
             if (!nameColor)
             {
                 var controller = new GameObject("SephiriaOne.Controllers");
                 Object.DontDestroyOnLoad(controller);
                 nameColor = controller.AddComponent<LocalPlayerNameColor>();
-                fountainCommands = controller.AddComponent<FountainChatCommands>();
+                chatCommands = controller.AddComponent<ModChatCommands>();
             }
 
             Debug.Log($"[SephiriaOne] Loaded v{metadata.modVersion}");
@@ -29,11 +30,13 @@ namespace SephiriaOne
         protected override void OnModUnloaded()
         {
             HorayModAPI.OnAllDatabasesReady -= OnDatabasesReady;
-            if (fountainCommands)
+            if (chatCommands)
             {
-                fountainCommands.enabled = false;
-                fountainCommands = null;
+                chatCommands.enabled = false;
+                chatCommands = null;
             }
+
+            ChoiceFeature.Shutdown();
 
             if (nameColor)
             {
