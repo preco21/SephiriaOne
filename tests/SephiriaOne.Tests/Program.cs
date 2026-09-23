@@ -39,3 +39,4 @@ Equal(null, state.Next("", "Bob", true), "Uninitialized network name waits for g
 Equal(null, state.Next("Bob", "", true), "Missing profile name does not rename the player");
 
 Console.WriteLine($"Passed {checks} multiplayer name synchronization checks.");
+Console.WriteLine($"Passed {FountainCommandTests.Run()} Fountain command checks.");

@@ -7,5 +7,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../../SephiriaOne/NetworkNameState.cs" Link="NetworkNameState.cs" />
+    <Compile Include="../../SephiriaOne/FountainCommand.cs" Link="FountainCommand.cs" />
   </ItemGroup>
 </Project>

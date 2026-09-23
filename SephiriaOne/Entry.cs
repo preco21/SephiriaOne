@@ -5,15 +5,17 @@ namespace SephiriaOne
     public sealed class Entry : HorayModBase
     {
         private LocalPlayerNameColor nameColor;
+        private FountainChatCommands fountainCommands;
 
         protected override void OnModLoaded()
         {
             HorayModAPI.OnAllDatabasesReady += OnDatabasesReady;
             if (!nameColor)
             {
-                var controller = new GameObject("SephiriaOne.NameColor");
+                var controller = new GameObject("SephiriaOne.Controllers");
                 Object.DontDestroyOnLoad(controller);
                 nameColor = controller.AddComponent<LocalPlayerNameColor>();
+                fountainCommands = controller.AddComponent<FountainChatCommands>();
             }
 
             Debug.Log($"[SephiriaOne] Loaded v{metadata.modVersion}");
@@ -27,6 +29,12 @@ namespace SephiriaOne
         protected override void OnModUnloaded()
         {
             HorayModAPI.OnAllDatabasesReady -= OnDatabasesReady;
+            if (fountainCommands)
+            {
+                fountainCommands.enabled = false;
+                fountainCommands = null;
+            }
+
             if (nameColor)
             {
                 // Restore labels immediately; Unity destroys the object later.

@@ -9,26 +9,28 @@ can change independently of that installed game version.
 
 ## Current status
 
-SephiriaOne is a C# addon using Sephiria's built-in HorayMod API. Version `0.3.0`
-colors the local player's name blue and publishes blue name formatting through
-the game's native synchronization while multiplayer is active. It also logs
-loading, database readiness, and unloading.
-The first feature is cosmetic; gameplay rules are unchanged.
+SephiriaOne is a C# addon using Sephiria's built-in HorayMod API. Version `0.4.0`
+adds host-only `/fountain` chat commands to set, add, or subtract Wishing Fountain
+points for all currently spawned players in solo and multiplayer. It also colors
+the local player's name blue, publishes blue name formatting through the game's
+native synchronization while multiplayer is active, and logs its lifecycle.
 
 | Area | Status and evidence |
 | --- | --- |
 | Project | Visual Studio solution and `netstandard2.1` class library exist. |
 | Compiler | .NET SDK `10.0.401` is installed and was used successfully. |
 | Release build | `dotnet build SephiriaOne.slnx --configuration Release --nologo` completed with 0 warnings and 0 errors. |
-| Debug build | `dotnet build SephiriaOne.slnx --configuration Debug --nologo -p:DeployMod=false` also passed for `0.3.0` with 0 warnings and 0 errors. |
+| Debug build | `dotnet build SephiriaOne.slnx --configuration Debug --nologo -p:DeployMod=false` also passed for `0.4.0` with 0 warnings and 0 errors. |
 | Automatic deployment | The build invokes `scripts/Deploy-Mod.ps1` after the MSBuild `Build` target. |
 | Visual Studio command | Added the `Deploy Mod` launch profile. Its command was verified with evaluated Release properties and matching deployed hashes; Debug path resolution was also checked. The IDE dropdown has not been tested interactively. |
 | Missing addon folder | Deployment created `AddOns\SephiriaOne` during verification. |
 | Existing addon folder | Running deployment again succeeded. |
-| Deployed content | SHA-256 comparisons confirmed the deployed `0.3.0` DLL and metadata match Release output. Assembly version is `0.3.0.0`; no game DLLs were copied into the output. |
+| Deployed content | SHA-256 comparisons confirmed the deployed `0.4.0` DLL and metadata match Release output. Assembly version is `0.4.0.0`; no game DLLs were copied into the output. |
 | In-game loading | The user confirmed `0.1.0` loaded. `Player.log` also contains `[SephiriaOne] Loaded v0.1.0`, the AddOnLoader success entry, and `[SephiriaOne] All databases ready`. |
 | Blue name feature | `0.2.0` added local colors; `0.3.0` adds native multiplayer name synchronization. See [design and verification steps](blue-player-name.md). |
 | Multiplayer verification | 21 portable synchronization checks pass; the native command and serialized rich-text label settings were inspected. A live second-client visual check is still pending. |
+| Wishing Fountain commands | `/fountain 100`, `/fountain +10`, and `/fountain -5` update every current player's capacity through native server synchronization. The host installs the addon; guests can use the base game. See [commands, findings, and live checks](fountain-command.md). |
+| Fountain verification | 40 portable parser/planner checks pass, including whole-batch rejection of invalid results. Code review found no actionable issues. Live chat interception, guest UI, and item carryover remain unverified. |
 
 ## History
 
@@ -69,6 +71,10 @@ All stages below occurred during the initial 2026-09-23 session.
     Inspected the native name command, serialization, and shipped text-label assets.
     Added multiplayer-only color formatting, plain-name restoration, and portable
     synchronization checks for `0.3.0`.
+14. Inspected Wishing Fountain capacity, server-side item granting, synchronized
+    session limits, and local chat submission. Added host-only set/add/subtract
+    commands for every current player in `0.4.0`, with native synchronization,
+    validation before writes, 40 portable checks, and a reviewed Release build.
 
 The repository already contained commits `c793844` (Git configuration files) and
 `736b305` (initial project files). The scaffold adjustments and deployment work
@@ -85,7 +91,7 @@ commits are recorded in Git history. The configured remote is
 | Build SDK | .NET `10.0.401` |
 | Mod target framework | `netstandard2.1` |
 | Mod assembly / namespace | `SephiriaOne` |
-| Mod version / author | `0.3.0` / `preco21` |
+| Mod version / author | `0.4.0` / `preco21` |
 | Game version reported by the confirmed load log | `1.0.33` |
 | Game directory | `C:\Program Files (x86)\Steam\steamapps\common\Sephiria` |
 | Game managed assemblies | `<GameDir>\Sephiria_Data\Managed` |
@@ -108,6 +114,9 @@ SephiriaOne/
   SephiriaOne/
     SephiriaOne.csproj
     Entry.cs
+    FountainChatCommands.cs
+    FountainCommand.cs
+    FountainPoints.cs
     LocalPlayerNameColor.cs
     MultiplayerNameColor.cs
     NetworkNameState.cs
@@ -122,6 +131,7 @@ SephiriaOne/
   docs/
     blue-player-name.md
     development-notes.md
+    fountain-command.md
 ```
 
 - [Project configuration](../SephiriaOne/SephiriaOne.csproj) references the installed
@@ -131,7 +141,8 @@ SephiriaOne/
   into build output. `metadata.json` is copied with `PreserveNewest`.
 - [Entry point](../SephiriaOne/Entry.cs) subscribes to `OnAllDatabasesReady` in
   `OnModLoaded()` and unsubscribes in `OnModUnloaded()`. It also owns a persistent
-  name-color controller, which is disabled and destroyed on unload.
+  controller object for name colors and Fountain commands. Both components are
+  disabled on unload before the object is destroyed.
 - [Name color controller](../SephiriaOne/LocalPlayerNameColor.cs) colors only
   `UI_StatsPanel.characterNameText` and the owned player's `WorldUserName` blue.
   It preserves alpha and restores original text color settings on disconnect,
@@ -141,6 +152,12 @@ SephiriaOne/
   player while multiplayer is active. The profile name is read-only; native host
   run snapshots can contain the formatted runtime name. See the feature notes
   for restoration behavior and [portable checks](../tests/SephiriaOne.Tests/Program.cs).
+- [Fountain chat controller](../SephiriaOne/FountainChatCommands.cs) consumes the
+  local `/fountain` command, reports feedback in the local game log, and leaves
+  normal chat to the game's handler. The [runtime service](../SephiriaOne/FountainPoints.cs)
+  accepts commands only on the host, validates all player balances first, and
+  updates native synchronized capacity and carryover limits. The
+  [parser and planner](../SephiriaOne/FountainCommand.cs) have portable tests.
 - [Metadata](../SephiriaOne/metadata.json) names `SephiriaOne.dll` and
   `SephiriaOne.Entry` as the assembly and entry class.
 - [Visual Studio launch profile](../SephiriaOne/Properties/launchSettings.json)
@@ -392,7 +409,8 @@ requirement for a native HorayMod addon.
   save when adding persistent content, and use a backed-up save for development.
 - Separate server-authoritative gameplay changes from local UI and visual effects.
   Matching content definitions and network prefab identifiers may be needed on
-  every participant. No multiplayer compatibility has been established for this project.
+  every participant. The existing features use the game's own synchronized fields
+  and commands to support unmodified guests; live multiplayer verification is pending.
 - Do not assume an added `[SyncVar]` attribute will work in an ordinary DLL build.
   Mirror synchronization requires the appropriate generated or explicit code.
   Mira's [Charm_Kill_Luck example](https://github.com/Mira090/MiraItemMod/blob/master/MiraItemMod/Items/Charm_Kill_Luck.cs)
@@ -411,13 +429,14 @@ requirement for a native HorayMod addon.
 
 1. Launch Sephiria and enter the town/lobby or a run; the title screen alone is
    insufficient for the documented addon-loading workflow. Fully restart to load
-   the new `0.3.0` binary.
+   the new `0.4.0` binary.
 2. Inspect `Player.log` for these expected entries:
 
    ```text
-   [SephiriaOne] Loaded v0.3.0
+   [SephiriaOne] Loaded v0.4.0
    [SephiriaOne] All databases ready
    [SephiriaOne] Blue local player name applied (#0000FF)
+   [SephiriaOne] Fountain chat command ready: /fountain
    ```
 
 3. Follow the [blue-name multiplayer checks](blue-player-name.md#required-live-multiplayer-check)
@@ -425,5 +444,6 @@ requirement for a native HorayMod addon.
    the new color renders correctly.
 4. Test panel reopening, scene/session transitions, and coexistence with RaidRaid.
    In multiplayer, check both host and client ownership and other players' colors.
-5. Once the cosmetic feature is verified, select the next small feature and
-   inspect only its relevant game types and reference implementation.
+5. Follow the [Fountain live checks](fountain-command.md#verification), including
+   host-only access, all-player updates, reopening the panel, carryover above 12,
+   invalid-command rejection, and normal chat behavior.
