@@ -9,9 +9,10 @@ can change independently of that installed game version.
 
 ## Current status
 
-SephiriaOne is a C# addon using Sephiria's built-in HorayMod API. Version `0.2.0`
-colors the local player's name blue in the character/stats panel and the existing
-overhead nameplate. It also logs loading, database readiness, and unloading.
+SephiriaOne is a C# addon using Sephiria's built-in HorayMod API. Version `0.3.0`
+colors the local player's name blue and publishes blue name formatting through
+the game's native synchronization while multiplayer is active. It also logs
+loading, database readiness, and unloading.
 The first feature is cosmetic; gameplay rules are unchanged.
 
 | Area | Status and evidence |
@@ -19,15 +20,15 @@ The first feature is cosmetic; gameplay rules are unchanged.
 | Project | Visual Studio solution and `netstandard2.1` class library exist. |
 | Compiler | .NET SDK `10.0.401` is installed and was used successfully. |
 | Release build | `dotnet build SephiriaOne.slnx --configuration Release --nologo` completed with 0 warnings and 0 errors. |
-| Debug build | `dotnet build SephiriaOne.slnx --configuration Debug --nologo -p:DeployMod=false` also passed for `0.2.0` with 0 warnings and 0 errors. |
+| Debug build | `dotnet build SephiriaOne.slnx --configuration Debug --nologo -p:DeployMod=false` also passed for `0.3.0` with 0 warnings and 0 errors. |
 | Automatic deployment | The build invokes `scripts/Deploy-Mod.ps1` after the MSBuild `Build` target. |
 | Visual Studio command | Added the `Deploy Mod` launch profile. Its command was verified with evaluated Release properties and matching deployed hashes; Debug path resolution was also checked. The IDE dropdown has not been tested interactively. |
 | Missing addon folder | Deployment created `AddOns\SephiriaOne` during verification. |
 | Existing addon folder | Running deployment again succeeded. |
-| Deployed content | SHA-256 comparisons confirmed the deployed `0.2.0` DLL and metadata match the Release output. No game DLLs were copied into build output. |
+| Deployed content | SHA-256 comparisons confirmed the deployed `0.3.0` DLL and metadata match Release output. Assembly version is `0.3.0.0`; no game DLLs were copied into the output. |
 | In-game loading | The user confirmed `0.1.0` loaded. `Player.log` also contains `[SephiriaOne] Loaded v0.1.0`, the AddOnLoader success entry, and `[SephiriaOne] All databases ready`. |
-| Blue name feature | Implemented in `0.2.0`; in-game visual verification of this new version is pending. See [design and verification steps](blue-player-name.md). |
-| Multiplayer testing | Pending. The color override is local to this client and checks player ownership. |
+| Blue name feature | `0.2.0` added local colors; `0.3.0` adds native multiplayer name synchronization. See [design and verification steps](blue-player-name.md). |
+| Multiplayer verification | 21 portable synchronization checks pass; the native command and serialized rich-text label settings were inspected. A live second-client visual check is still pending. |
 
 ## History
 
@@ -64,6 +65,10 @@ All stages below occurred during the initial 2026-09-23 session.
 12. Confirmed the `0.1.0` load and database-ready messages in `Player.log`, matching
     the user's successful in-game check. Inspected the name-label UI types and
     implemented blue local character/stats and existing overhead names for `0.2.0`.
+13. Expanded the feature at the user's request to reach other multiplayer clients.
+    Inspected the native name command, serialization, and shipped text-label assets.
+    Added multiplayer-only color formatting, plain-name restoration, and portable
+    synchronization checks for `0.3.0`.
 
 The repository already contained commits `c793844` (Git configuration files) and
 `736b305` (initial project files). The scaffold adjustments and deployment work
@@ -80,7 +85,7 @@ commits are recorded in Git history. The configured remote is
 | Build SDK | .NET `10.0.401` |
 | Mod target framework | `netstandard2.1` |
 | Mod assembly / namespace | `SephiriaOne` |
-| Mod version / author | `0.2.0` / `preco21` |
+| Mod version / author | `0.3.0` / `preco21` |
 | Game version reported by the confirmed load log | `1.0.33` |
 | Game directory | `C:\Program Files (x86)\Steam\steamapps\common\Sephiria` |
 | Game managed assemblies | `<GameDir>\Sephiria_Data\Managed` |
@@ -104,12 +109,16 @@ SephiriaOne/
     SephiriaOne.csproj
     Entry.cs
     LocalPlayerNameColor.cs
+    MultiplayerNameColor.cs
+    NetworkNameState.cs
     metadata.json
     Properties/
       launchSettings.json
     bin/Release/netstandard2.1/
   scripts/
     Deploy-Mod.ps1
+  tests/
+    SephiriaOne.Tests/
   docs/
     blue-player-name.md
     development-notes.md
@@ -127,6 +136,11 @@ SephiriaOne/
   `UI_StatsPanel.characterNameText` and the owned player's `WorldUserName` blue.
   It preserves alpha and restores original text color settings on disconnect,
   rebinding, or unload. It does not make hidden nameplates visible.
+- [Multiplayer name synchronization](../SephiriaOne/MultiplayerNameColor.cs)
+  publishes blue name tags through `PlayerAvatar.SetPlayerName` for the owned
+  player while multiplayer is active. The profile name is read-only; native host
+  run snapshots can contain the formatted runtime name. See the feature notes
+  for restoration behavior and [portable checks](../tests/SephiriaOne.Tests/Program.cs).
 - [Metadata](../SephiriaOne/metadata.json) names `SephiriaOne.dll` and
   `SephiriaOne.Entry` as the assembly and entry class.
 - [Visual Studio launch profile](../SephiriaOne/Properties/launchSettings.json)
@@ -397,16 +411,16 @@ requirement for a native HorayMod addon.
 
 1. Launch Sephiria and enter the town/lobby or a run; the title screen alone is
    insufficient for the documented addon-loading workflow. Fully restart to load
-   the new `0.2.0` binary.
+   the new `0.3.0` binary.
 2. Inspect `Player.log` for these expected entries:
 
    ```text
-   [SephiriaOne] Loaded v0.2.0
+   [SephiriaOne] Loaded v0.3.0
    [SephiriaOne] All databases ready
    [SephiriaOne] Blue local player name applied (#0000FF)
    ```
 
-3. Follow the [blue-name visual checks](blue-player-name.md#in-game-verification)
+3. Follow the [blue-name multiplayer checks](blue-player-name.md#required-live-multiplayer-check)
    and record the result. The confirmed `0.1.0` lifecycle does not establish that
    the new color renders correctly.
 4. Test panel reopening, scene/session transitions, and coexistence with RaidRaid.

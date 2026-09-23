@@ -7,6 +7,7 @@ namespace SephiriaOne
     {
         private readonly BlueNameLabel characterName = new BlueNameLabel();
         private readonly BlueNameLabel overheadName = new BlueNameLabel();
+        private readonly MultiplayerNameColor multiplayerName = new MultiplayerNameColor();
         private PlayerSpawner loggedPlayer;
 
         private void LateUpdate()
@@ -20,6 +21,8 @@ namespace SephiriaOne
                 RestoreLabels();
                 return;
             }
+
+            multiplayerName.Update(player);
 
             UI_StatsPanel panel = ui.GetElement<UI_StatsPanel>();
             characterName.Apply(panel ? panel.characterNameText : null);
@@ -41,6 +44,7 @@ namespace SephiriaOne
         {
             characterName.Restore();
             overheadName.Restore();
+            multiplayerName.Restore();
             loggedPlayer = null;
         }
 

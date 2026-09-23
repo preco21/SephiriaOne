@@ -1,72 +1,121 @@
-# Blue local player name
+# Blue player name
 
-## Design
+## Behavior in 0.3.0
 
-The requested behavior is a blue (`#0000FF`) local character name in both the
-character/stats panel and the existing overhead nameplate. This is a local UI
-effect. It does not rename the character or change saved or networked name data.
-Other players' labels, chat, and Steam lobby names are outside this feature.
+The local character/stats name and existing overhead nameplate use blue
+(`#0000FF`). While another player is in the session, the mod also publishes a
+formatted character name through Sephiria's existing name synchronization. This
+is intended to display blue on unmodified clients as well as modded clients.
+The existing local overhead label remains hidden when the game hides it.
 
-Inspection of Sephiria 1.0.33 identified these existing public references:
+Only the owned player's character name is changed. Other players' names and the
+Steam account/lobby nickname are unaffected. The mod restores the plain runtime
+name when the player is alone again. On unload it also requests restoration if
+the player is still owned and the network connection is ready. Restoration
+cannot be sent after disconnect or loss of authority.
 
-- `UIManager.connectedPlayer` is assigned when the local player's UI connects.
-- `UI_StatsPanel.characterNameText` displays that player's character name.
-- `PlayerSpawner.WorldUserName` holds the existing overhead label.
-- `PlayerSpawner.isOwned` distinguishes the local player from remote players.
+The `SaveManager.Current` profile key `PlayerName` is read, never written. The
+game's own run snapshots save `PlayerAvatar.Name` in `Player{index}Name`, so a
+host's snapshot can contain the color markup while multiplayer is active. The
+mod does not rewrite existing saves. Normal session initialization reads the
+plain profile name again. This distinction matters when inspecting run data.
 
-Use one addon-owned `MonoBehaviour` to update those two text components in
-`LateUpdate`. Rebind when the UI or player changes, preserve the current alpha,
-and restore the original RGB and text color settings on disconnect or unload.
-Override embedded color tags and disable vertex gradients on these labels to
-keep the requested color uniform. Text content and visibility stay game-managed;
-in this game version the local overhead label is normally hidden.
+## Inspected game behavior
 
-A direct component update uses the installed game's public fields and requires
-no additional runtime library. A Harmony patch would add dependency loading for
-this small change. Adding rich-text tags to the player's name would affect name
-data used by networking and saves, so it is not used.
+The local installation reports Sephiria `1.0.33` / Unity `6000.3.21f1`.
 
-## Implementation plan
+- `UIManager.connectedPlayer` identifies the locally connected player UI;
+  `PlayerSpawner.isOwned` and `PlayerAvatar.isOwned` guard local ownership.
+- `UI_StatsPanel.characterNameText` and `PlayerSpawner.WorldUserName` are the
+  original local UI targets from `0.2.0`.
+- `PlayerLocalDataStorage.OnStartAuthority` obtains the character's name from
+  `SaveManager.Current.GetString("PlayerName", "HOST")` for session setup.
+- `PlayerAvatar.SetPlayerName` updates `NetworkplayerNameSource` on the server
+  or invokes the game's existing `CmdSetPlayerName` when called by a client.
+  That reliable command requires authority and its server handler assigns the
+  synchronized name. Both initial and incremental serialization include it.
+- `UI_MultiplayerHUD` copies the synchronized name into remote overhead labels
+  and party HP-bar labels. Its name refresh runs every other four-second tick,
+  so allow approximately eight seconds for those displays to refresh.
+- `UI_OtherCharacterPanel` reads the selected player's synchronized name when
+  opened. Reopen it after a name update to refresh its text.
 
-1. Add `LocalPlayerNameColor.cs` for local-player selection, label coloring,
-   rebinding, and restoration. Avoid scene-wide text searches and name matching.
-2. Create a persistent controller from `Entry.OnModLoaded`; disable and destroy
-   it in `OnModUnloaded`. Retain the confirmed lifecycle log messages.
-3. Reference the installed `Mirror`, `Unity.TextMeshPro`, and `UnityEngine.UI`
-   assemblies with `Private=false`; update the addon version to `0.2.0`.
-4. Build Debug and Release against the installed game, inspect the resulting
-   references, and compare deployed DLL/metadata hashes with Release output.
-5. Review ownership checks and cleanup, update development notes, then commit
-   and push using the authorized repository workflow.
+The installed assets were inspected read-only using UnityPy `1.25.3` and
+TypeTreeGeneratorAPI in a temporary research directory. These exact serialized
+fields all have rich text enabled, color-tag overriding disabled, and vertex
+gradients disabled:
 
-## Build and review results
+| Component field | Asset |
+| --- | --- |
+| `PlayerSpawner.worldUserNamePrefab` | `sharedassets0.assets` |
+| `UI_MultiplayerHPBar.playerNameText` | `sharedassets0.assets` |
+| `UI_MultiplayerInDungeonUserIcon.nameText` | `sharedassets2.assets` |
+| `UI_OtherCharacterPanel.characterNameText` | `level2` |
 
-Completed on 2026-09-23:
+These settings and the inspected synchronization path support using
+`<color=#0000FF>CharacterName</color>` without adding a receiver mod or custom
+network protocol. See Unity's [color-tag documentation](https://docs.unity3d.com/Packages/com.unity.textmeshpro@4.0/manual/RichTextColor.html)
+and Mirror's [authority documentation](https://mirror-networking.gitbook.io/docs/manual/guides/authority).
+Other mods or future game versions can change these assumptions. Chat may strip
+formatting; it is not one of the requested nameplate targets.
 
-- Debug and Release builds succeeded with zero warnings and zero errors.
-- The automatic Release deployment copied the DLL and metadata to
-  `AddOns\SephiriaOne`; SHA-256 comparisons confirmed both files match the output.
-- Deployed metadata reports `0.2.0`, and the compiled assembly reports `0.2.0.0`.
-- Compiled references use the installed game assemblies. No extra DLLs were
-  copied into Release output.
-- Static review checked the local ownership path, label rebinding, transparency,
-  destroyed-object handling, and unload cleanup without finding concrete issues.
+## Implementation
 
-## In-game verification
+- `LocalPlayerNameColor.cs` retains the local text-color overrides. It preserves
+  transparency, rebinds existing labels, and restores original color settings.
+- `MultiplayerNameColor.cs` reads the plain profile name, checks ownership and
+  network readiness, and calls the native name update. It uses the same
+  `MultiplayerList.Count > 1` threshold as the game's rename UI, which disables
+  renaming in multiplayer. Publishing only in multiplayer avoids feeding markup
+  into the solo rename input's character limit.
+- `NetworkNameState.cs` tracks pending desired names. It avoids duplicate
+  commands while waiting for synchronization, handles stale responses and name
+  changes, and queues a plain name if a color request is still in flight when
+  multiplayer ends. Only this mod's own outer color wrappers are normalized.
+- The version is `0.3.0`. No additional runtime library, network message type,
+  game assembly modification, or Harmony patch is required.
 
-Build and file checks cannot prove Unity rendering. After restarting the game:
+## Automated verification
 
-1. Enter town or a run, then open the character/stats panel. The character name
-   should be blue and the rest of the panel should retain its normal colors.
-2. Check `Player.log` for `[SephiriaOne] Loaded v0.2.0`, the database-ready message,
-   and `[SephiriaOne] Blue local player name applied (#0000FF)`.
-3. If the existing local overhead nameplate is visible, confirm it is blue.
-   This mod deliberately does not make a hidden nameplate visible.
-4. Reopen the panel, change floors, return to the title screen, and enter again.
-   Verify the name stays blue and no exceptions appear.
-5. In multiplayer, confirm other players' labels retain their colors. The
-   override runs on this client; it does not advertise a color to other clients.
+On 2026-09-23, all 21 synchronization checks passed. Debug and Release builds
+completed with zero warnings and errors. Release deployed successfully; DLL and
+metadata hashes match the build output, and no game DLLs were copied. A separate
+static review found no critical or important issues. Live peer rendering remains
+unverified.
 
-The earlier `0.1.0` lifecycle was confirmed in-game by the user and by inspecting
-`Player.log`. Visual verification of the new color and multiplayer checks remain
-pending until the new build is run.
+Run the portable synchronization checks without loading Unity:
+
+```powershell
+dotnet run --project .\tests\SephiriaOne.Tests --configuration Release
+```
+
+The checks exercise joining, leaving, delayed responses, superseded requests,
+server name resets, repeated sessions, Unicode names, duplicate wrappers, and
+uninitialized data. They test request decisions, not network transport or Unity
+rendering. Build the addon against the installed game separately:
+
+```powershell
+dotnet build .\SephiriaOne.slnx --configuration Debug -p:DeployMod=false
+dotnet build .\SephiriaOne.slnx --configuration Release
+```
+
+## Required live multiplayer check
+
+The earlier `0.1.0` load and database callbacks were confirmed in-game. The new
+multiplayer rendering has not been observed on a second client.
+
+1. Restart Sephiria with `0.3.0`, enter town, and confirm the local character-panel
+   name is blue. The profile name and solo rename input should remain plain text.
+2. Host a session and have a second player join without this addon. Confirm
+   `Player.log` reports `[SephiriaOne] Multiplayer blue name synchronized (#0000FF)`.
+   That message confirms the synchronized local value, not the peer's rendering.
+3. Allow about eight seconds. On the other client, check the character's overhead
+   name and party HP-bar name, then open its character-details panel. The character
+   name should be blue; Steam nickname suffixes and other players stay unchanged.
+4. Repeat with the addon user joining a host without the addon. Check a late join,
+   floor changes, leaving/rejoining, and a full game restart.
+5. Return to solo play and reopen the rename input. Check that the name has no
+   color markup and that the saved profile `PlayerName` remains unchanged.
+6. If testing live addon unload, do it while connected and allow UI refresh time
+   for other clients to see the restored plain name. Do not assume unload runs
+   after the connection has already closed.
