@@ -1,5 +1,10 @@
 # Blue player name
 
+This records the solid-blue implementation introduced in 0.2.0/0.3.0. Version
+0.8.0 replaces it with a [per-letter name gradient](name-gradient.md) from
+`#408af1` to `#a8d7fa`, retaining the ownership and native multiplayer transport
+described here. Use the gradient document for current behavior and live checks.
+
 ## Behavior in 0.3.0
 
 The local character/stats name and existing overhead nameplate use blue

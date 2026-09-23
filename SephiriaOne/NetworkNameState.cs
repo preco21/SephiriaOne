@@ -1,14 +1,12 @@
 #nullable enable
 
-using System;
-
 namespace SephiriaOne
 {
     internal sealed class NetworkNameState
     {
-        private const string Prefix = "<color=#0000FF>";
-        private const string Suffix = "</color>";
         private string? pendingName;
+        private string? gradientSource;
+        public string? GradientName { get; private set; }
 
         public string? Next(string observedName, string plainName, bool multiplayer)
         {
@@ -17,7 +15,13 @@ namespace SephiriaOne
                 return null;
             }
 
-            string desiredName = multiplayer ? Blue(plainName) : Plain(plainName);
+            plainName = Plain(plainName);
+            if (gradientSource != plainName)
+            {
+                gradientSource = plainName;
+                GradientName = Gradient(plainName);
+            }
+            string desiredName = multiplayer ? GradientName! : plainName;
             if (observedName == desiredName && (pendingName == null || pendingName == desiredName))
             {
                 pendingName = null;
@@ -36,23 +40,15 @@ namespace SephiriaOne
             return desiredName;
         }
 
-        public static string Blue(string name) => Prefix + Plain(name) + Suffix;
+        public static string Gradient(string name) => NameGradient.Format(name);
 
-        public static string Plain(string name)
-        {
-            while (name.Length >= Prefix.Length + Suffix.Length &&
-                name.StartsWith(Prefix, StringComparison.Ordinal) &&
-                name.EndsWith(Suffix, StringComparison.Ordinal))
-            {
-                name = name.Substring(Prefix.Length, name.Length - Prefix.Length - Suffix.Length);
-            }
-
-            return name;
-        }
+        public static string Plain(string name) => NameGradient.Plain(name);
 
         public void Reset()
         {
             pendingName = null;
+            gradientSource = null;
+            GradientName = null;
         }
     }
 }

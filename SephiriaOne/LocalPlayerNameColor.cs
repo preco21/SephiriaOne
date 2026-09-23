@@ -5,8 +5,8 @@ namespace SephiriaOne
 {
     public sealed class LocalPlayerNameColor : MonoBehaviour
     {
-        private readonly BlueNameLabel characterName = new BlueNameLabel();
-        private readonly BlueNameLabel overheadName = new BlueNameLabel();
+        private readonly GradientNameLabel characterName = new GradientNameLabel();
+        private readonly GradientNameLabel overheadName = new GradientNameLabel();
         private readonly MultiplayerNameColor multiplayerName = new MultiplayerNameColor();
         private PlayerSpawner loggedPlayer;
 
@@ -31,7 +31,7 @@ namespace SephiriaOne
             if (loggedPlayer != player && panel && panel.characterNameText)
             {
                 loggedPlayer = player;
-                Debug.Log("[SephiriaOne] Blue local player name applied (#0000FF)");
+                Debug.Log("[SephiriaOne] Local player name gradient applied (#408af1 -> #a8d7fa)");
             }
         }
 
@@ -48,10 +48,12 @@ namespace SephiriaOne
             loggedPlayer = null;
         }
 
-        private sealed class BlueNameLabel
+        private sealed class GradientNameLabel
         {
+            private readonly GradientNameText text = new GradientNameText();
             private TMP_Text target;
             private Color originalColor;
+            private bool originalRichText;
             private bool originalOverrideColorTags;
             private bool originalEnableVertexGradient;
 
@@ -64,6 +66,7 @@ namespace SephiriaOne
                     if (target)
                     {
                         originalColor = target.color;
+                        originalRichText = target.richText;
                         originalOverrideColorTags = target.overrideColorTags;
                         originalEnableVertexGradient = target.enableVertexGradient;
                     }
@@ -74,22 +77,27 @@ namespace SephiriaOne
                     return;
                 }
 
-                // Preserve game-controlled fades and never alter the name text.
-                Color blue = new Color(0f, 0f, 1f, target.color.a);
-                if (target.color != blue)
+                // Let the same per-letter tags render locally and on peers.
+                // Keep game-controlled alpha, including fades during UI changes.
+                Color white = new Color(1f, 1f, 1f, target.color.a);
+                if (target.color != white)
                 {
-                    target.color = blue;
+                    target.color = white;
                 }
 
-                if (!target.overrideColorTags)
+                if (!target.richText) target.richText = true;
+                if (target.overrideColorTags)
                 {
-                    target.overrideColorTags = true;
+                    target.overrideColorTags = false;
                 }
 
                 if (target.enableVertexGradient)
                 {
                     target.enableVertexGradient = false;
                 }
+
+                string formatted = text.Apply(target.text ?? "");
+                if (target.text != formatted) target.text = formatted;
             }
 
             public void Restore()
@@ -98,9 +106,13 @@ namespace SephiriaOne
                 {
                     target.color = new Color(originalColor.r, originalColor.g,
                         originalColor.b, target.color.a);
+                    target.richText = originalRichText;
                     target.overrideColorTags = originalOverrideColorTags;
                     target.enableVertexGradient = originalEnableVertexGradient;
+                    string restored = text.Restore(target.text ?? "");
+                    if (target.text != restored) target.text = restored;
                 }
+                else text.Restore("");
 
                 target = null;
             }

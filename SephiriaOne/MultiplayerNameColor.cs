@@ -41,10 +41,10 @@ namespace SephiriaOne
             if (multiplayer)
             {
                 restoreRequired = true;
-                if (!loggedSynchronization && observedName == NetworkNameState.Blue(plainName))
+                if (!loggedSynchronization && observedName == state.GradientName)
                 {
                     loggedSynchronization = true;
-                    Debug.Log("[SephiriaOne] Multiplayer blue name synchronized (#0000FF)");
+                    Debug.Log("[SephiriaOne] Multiplayer name gradient synchronized (#408af1 -> #a8d7fa)");
                 }
             }
             else
