@@ -1,6 +1,7 @@
 # Candidate choice commands
 
 Implemented in `0.5.0` on 2026-09-24 (Asia/Seoul).
+Explicit reset commands added in `0.6.0`; see [reset behavior](command-reset.md).
 
 ## Design and scope
 
@@ -21,6 +22,8 @@ base count. No bonus applies until a command is issued.
 | `/choices weapon -1` | Subtract one from this addon's weapon bonus. |
 | `/choices miracle set 5` | Set this addon's miracle bonus to five. |
 | `/choices all 0` | Remove this addon's bonuses, retaining other stat sources. |
+| `/choices reset` or `/choices all reset` | Restore all three categories without this addon's bonuses. |
+| `/choices item reset` | Restore one category; also supports `weapon` and `miracle`. |
 | `/choices` | Show usage. |
 
 `set`, `add`, `sub`, and `subtract` are accepted with unsigned amounts, just as
@@ -29,6 +32,9 @@ insensitive; only the exact command token is consumed. Bonus values and resultin
 effective extra-choice stats must be between 0 and 20. Invalid input, arithmetic
 overflow, non-host execution, or an initializing player rejects the whole batch
 before any writes.
+Reset and set-to-zero remove only the recorded addon contribution, so expansion
+bounds do not prevent restoring native stats outside `0..20`. Reset remains
+available if the candidate generation guards could not initialize.
 
 The command applies to newly generated rewards and normal rerolls. Reopening an
 already generated offer does not generate new candidates. Weapon choices mean
@@ -70,7 +76,7 @@ reward generation would duplicate the game's selection and networking rules.
 The chosen small guards address the observed failure while keeping those rules.
 
 Bonuses are runtime changes for current players, not profile upgrades. Repeat
-the command for late joiners or newly initialized avatars. Unloading removes this
+the command for late joiners or replacement avatars. Unloading removes this
 addon's contributions before removing its patches. No generated offers are
 rerolled for free or deleted as a side effect of changing a setting.
 

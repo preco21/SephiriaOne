@@ -29,7 +29,7 @@ namespace SephiriaOne
                 message = "Only the host can change everyone's candidate choices.";
                 return false;
             }
-            if (!ChoiceFeature.Available)
+            if (!ChoiceFeature.Available && !command.IsReset)
             {
                 message = "Candidate commands are unavailable. Check Player.log for the compatibility error.";
                 return false;
@@ -73,7 +73,8 @@ namespace SephiriaOne
                 if (update.Applied == 0) update.Player.customStats.Remove(MarkerPrefix + update.Key);
                 else update.Player.customStats[MarkerPrefix + update.Key] = update.Applied;
             }
-            message = $"Updated {command.Target.ToString().ToLowerInvariant()} extra choices for {players.Count} player(s). Applies to new offers and normal rerolls; available content limits the count.";
+            string action = command.IsReset ? "Reset addon bonuses for" : "Updated";
+            message = $"{action} {command.Target.ToString().ToLowerInvariant()} extra choices for {players.Count} player(s). Applies to new offers and normal rerolls; available content limits the count.";
             return true;
         }
 

@@ -1,6 +1,6 @@
 # Third-party notices
 
-SephiriaOne `0.5.0` embeds the unmodified `net472/0Harmony.dll` from
+SephiriaOne `0.5.0` and later embed the unmodified `net472/0Harmony.dll` from
 [Lib.Harmony 2.4.2](https://www.nuget.org/packages/Lib.Harmony/2.4.2), the
 dependency-merged build supplied by the [Harmony project](https://github.com/pardeike/Harmony).
 The package's license is also embedded as

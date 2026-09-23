@@ -7,14 +7,29 @@ using System.Globalization;
 namespace SephiriaOne
 {
     internal enum FountainParseResult { NotCommand, Help, Invalid, Valid }
-    internal enum FountainOperation { Set, Add, Subtract }
+    internal enum FountainOperation { Set, Add, Subtract, Reset }
+
+    internal sealed class FountainPlan
+    {
+        public int[] Points { get; }
+        public int[] Contributions { get; }
+        public int Limit { get; }
+        public int? OriginalLimit { get; }
+        public int? AppliedLimit { get; }
+
+        public FountainPlan(int[] points, int[] contributions, int limit, int? originalLimit, int? appliedLimit)
+        {
+            Points = points; Contributions = contributions; Limit = limit;
+            OriginalLimit = originalLimit; AppliedLimit = appliedLimit;
+        }
+    }
 
     internal readonly struct FountainCommand
     {
         public FountainOperation Operation { get; }
         public int Amount { get; }
 
-        public const string Usage = "Host only: /fountain 100 (set), /fountain +10 (add), /fountain -5 (subtract). Also: /fountain set|add|sub N.";
+        public const string Usage = "Host only: /fountain 100 (set), /fountain +10 (add), /fountain -5 (subtract). Also: /fountain set|add|sub N. /fountain reset restores points without our adjustments.";
 
         private FountainCommand(FountainOperation operation, int amount)
         {
@@ -35,6 +50,11 @@ namespace SephiriaOne
             if (parts.Length == 1)
             {
                 return FountainParseResult.Help;
+            }
+            if (parts.Length == 2 && parts[1].Equals("reset", StringComparison.OrdinalIgnoreCase))
+            {
+                command = new FountainCommand(FountainOperation.Reset, 0);
+                return FountainParseResult.Valid;
             }
 
             FountainOperation operation = FountainOperation.Set;
@@ -81,33 +101,58 @@ namespace SephiriaOne
 
         public bool TryPlan(IReadOnlyList<int> balances, int currentLimit, out int[] updated, out int updatedLimit, out string error)
         {
-            updated = Array.Empty<int>();
-            updatedLimit = currentLimit;
-            error = "";
-            if (balances.Count == 0)
-            {
-                error = "No active players are ready. Enter town or a run first.";
-                return false;
-            }
+            bool valid = TryPlanTracked(balances, new int[balances.Count], currentLimit, null, null, out FountainPlan plan, out error);
+            updated = plan.Points;
+            updatedLimit = plan.Limit;
+            return valid;
+        }
 
-            var planned = new int[balances.Count];
-            int plannedLimit = currentLimit;
+        public bool TryPlanTracked(IReadOnlyList<int> balances, IReadOnlyList<int> contributions,
+            int currentLimit, int? originalLimit, int? appliedLimit, out FountainPlan plan, out string error)
+        {
+            plan = new FountainPlan(Array.Empty<int>(), Array.Empty<int>(), currentLimit, originalLimit, appliedLimit);
+            error = "No active players are ready. Enter town or a run first.";
+            if (balances.Count == 0) return false;
+            error = "Fountain reset tracking is inconsistent. Nobody was changed.";
+            if (balances.Count != contributions.Count || currentLimit < 0 || originalLimit.HasValue != appliedLimit.HasValue ||
+                (originalLimit.HasValue && (originalLimit.Value < 0 || appliedLimit.GetValueOrDefault() < originalLimit.Value))) return false;
+
+            var points = new int[balances.Count];
+            var offsets = new int[balances.Count];
+            int nextLimit = currentLimit;
+            bool reset = Operation == FountainOperation.Reset;
             for (int i = 0; i < balances.Count; i++)
             {
-                long value = Operation == FountainOperation.Set ? Amount :
+                long value = reset ? (long)balances[i] - contributions[i] :
+                    Operation == FountainOperation.Set ? Amount :
                     (long)balances[i] + (Operation == FountainOperation.Add ? (long)Amount : -(long)Amount);
-                if (value < 0 || value > int.MaxValue)
+                long offset = reset ? 0 : (long)contributions[i] + value - balances[i];
+                if (value < 0 || value > int.MaxValue || offset < int.MinValue || offset > int.MaxValue)
                 {
-                    error = "A player's resulting Fountain points would be outside 0..2147483647. Nobody was changed.";
+                    error = "A player's Fountain points or reset adjustment would exceed its supported range. Nobody was changed.";
                     return false;
                 }
-
-                planned[i] = (int)value;
-                plannedLimit = Math.Max(plannedLimit, planned[i]);
+                points[i] = (int)value;
+                offsets[i] = (int)offset;
+                if (!reset) nextLimit = Math.Max(nextLimit, points[i]);
             }
 
-            updated = planned;
-            updatedLimit = plannedLimit;
+            int? nextOriginal = originalLimit;
+            int? nextApplied = appliedLimit;
+            if (reset)
+            {
+                // A different current value belongs to the game or another mod.
+                if (appliedLimit.HasValue && currentLimit == appliedLimit.Value) nextLimit = originalLimit.GetValueOrDefault();
+                nextOriginal = null;
+                nextApplied = null;
+            }
+            else if (nextLimit != currentLimit)
+            {
+                if (!appliedLimit.HasValue || currentLimit != appliedLimit.Value) nextOriginal = currentLimit;
+                nextApplied = nextLimit;
+            }
+            plan = new FountainPlan(points, offsets, nextLimit, nextOriginal, nextApplied);
+            error = "";
             return true;
         }
     }

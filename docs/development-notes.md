@@ -9,10 +9,11 @@ can change independently of that installed game version.
 
 ## Current status
 
-SephiriaOne is a C# addon using Sephiria's built-in HorayMod API. Version `0.5.0`
-adds host-only `/choices` commands for extra item, anvil weapon-upgrade, and
-miracle candidates for all currently spawned players. It retains `/fountain`
-commands to set, add, or subtract Wishing Fountain points. It also colors
+SephiriaOne is a C# addon using Sephiria's built-in HorayMod API. Version `0.6.0`
+adds explicit reset operations to the host-only `/choices` and `/fountain`
+commands. These adjust extra item, anvil weapon-upgrade, and miracle candidates
+or Wishing Fountain points for all current players, preserving normal upgrades
+when reset. It also colors
 the local player's name blue, publishes blue name formatting through the game's
 native synchronization while multiplayer is active, and logs its lifecycle.
 
@@ -21,19 +22,20 @@ native synchronization while multiplayer is active, and logs its lifecycle.
 | Project | Visual Studio solution and `netstandard2.1` class library exist. |
 | Compiler | .NET SDK `10.0.401` is installed and was used successfully. |
 | Release build | `dotnet build SephiriaOne.slnx --configuration Release --nologo` completed with 0 warnings and 0 errors. |
-| Debug build | `dotnet build SephiriaOne.slnx --configuration Debug --nologo -p:DeployMod=false` also passed for `0.5.0` with 0 warnings and 0 errors. |
+| Debug build | `dotnet build SephiriaOne.slnx --configuration Debug --nologo -p:DeployMod=false` also passed for `0.6.0` with 0 warnings and 0 errors. |
 | Automatic deployment | The build invokes `scripts/Deploy-Mod.ps1` after the MSBuild `Build` target. |
 | Visual Studio command | Added the `Deploy Mod` launch profile. Its command was verified with evaluated Release properties and matching deployed hashes; Debug path resolution was also checked. The IDE dropdown has not been tested interactively. |
 | Missing addon folder | Deployment created `AddOns\SephiriaOne` during verification. |
 | Existing addon folder | Running deployment again succeeded. |
-| Deployed content | The `0.5.0` DLL and metadata match Release output by SHA-256; assembly version is `0.5.0.0`. Harmony and its license are embedded in the mod DLL; no game DLLs are distributed. |
+| Deployed content | The `0.6.0` DLL and metadata match Release output by SHA-256; assembly version is `0.6.0.0`. Harmony and its license are embedded in the mod DLL; no game DLLs are distributed. |
 | In-game loading | The user confirmed `0.1.0` loaded. `Player.log` also contains `[SephiriaOne] Loaded v0.1.0`, the AddOnLoader success entry, and `[SephiriaOne] All databases ready`. |
 | Blue name feature | `0.2.0` added local colors; `0.3.0` adds native multiplayer name synchronization. See [design and verification steps](blue-player-name.md). |
 | Multiplayer verification | 21 portable synchronization checks pass; the native command and serialized rich-text label settings were inspected. A live second-client visual check is still pending. |
 | Wishing Fountain commands | `/fountain 100`, `/fountain +10`, and `/fountain -5` update every current player's capacity through native server synchronization. The host installs the addon; guests can use the base game. See [commands, findings, and live checks](fountain-command.md). |
-| Fountain verification | 40 portable parser/planner checks pass, including whole-batch rejection of invalid results. Code review found no actionable issues. Live chat interception, guest UI, and item carryover remain unverified. |
+| Fountain verification | 44 command checks and 20 reset checks pass, including whole-batch rejection and restoration of distinct player values. Live chat interception, guest UI, and item carryover remain unverified. |
 | Candidate commands | `/choices all 5`, `/choices item +2`, `/choices weapon -1`, and `/choices miracle 5` change this addon's extra-candidate contribution using synchronized native stats. See [design and commands](choice-command.md). |
-| Candidate verification | 48 command checks and 8 generation-guard checks pass. Both guard transformations match the installed game methods. Unity patch installation, live peer behavior, and expanded panel navigation still require game testing. |
+| Candidate verification | 63 command checks and 8 generation-guard checks pass. Both guard transformations match the installed game methods. Unity patch installation, live peer behavior, and expanded panel navigation still require game testing. |
+| Reset commands | `/choices reset`, `/choices item reset` (also `weapon`/`miracle`), and `/fountain reset` remove tracked addon adjustments while preserving native bonuses. See [reset semantics and checks](command-reset.md). |
 
 ## History
 
@@ -83,6 +85,10 @@ Stages 1–14 occurred on 2026-09-23; candidate expansion continued on 2026-09-2
     behavior. Added `/choices`, contribution tracking, and generation guards for
     exhausted candidate pools. Embedded pinned Harmony and its license, keeping
     the existing two-file deployment layout for `0.5.0`.
+16. Added explicit reset commands in `0.6.0`. Tracked Fountain adjustments and
+    cap changes, preserving later native stat changes and independent cap
+    replacements. Extended candidate resets to restore native stats outside the
+    expansion limit and remain available if patch initialization fails.
 
 The repository already contained commits `c793844` (Git configuration files) and
 `736b305` (initial project files). The scaffold adjustments and deployment work
@@ -99,7 +105,7 @@ commits are recorded in Git history. The configured remote is
 | Build SDK | .NET `10.0.401` |
 | Mod target framework | `netstandard2.1` |
 | Mod assembly / namespace | `SephiriaOne` |
-| Mod version / author | `0.5.0` / `preco21` |
+| Mod version / author | `0.6.0` / `preco21` |
 | Game version reported by the confirmed load log | `1.0.33` |
 | Game directory | `C:\Program Files (x86)\Steam\steamapps\common\Sephiria` |
 | Game managed assemblies | `<GameDir>\Sephiria_Data\Managed` |
@@ -144,6 +150,7 @@ SephiriaOne/
   docs/
     blue-player-name.md
     choice-command.md
+    command-reset.md
     development-notes.md
     fountain-command.md
     third-party-notices.md
@@ -454,11 +461,11 @@ requirement for a native HorayMod addon.
 
 1. Launch Sephiria and enter the town/lobby or a run; the title screen alone is
    insufficient for the documented addon-loading workflow. Fully restart to load
-   the new `0.5.0` binary.
+   the new `0.6.0` binary.
 2. Inspect `Player.log` for these expected entries:
 
    ```text
-   [SephiriaOne] Loaded v0.5.0
+   [SephiriaOne] Loaded v0.6.0
    [SephiriaOne] All databases ready
    [SephiriaOne] Blue local player name applied (#0000FF)
    [SephiriaOne] Chat commands bound: /fountain, /choices
@@ -476,3 +483,6 @@ requirement for a native HorayMod addon.
 6. Follow the [candidate live checks](choice-command.md#live-verification) with
    an unmodified guest. Inspect `Player.log` for Harmony compatibility errors and
    check exhausted pools, rerolls, and navigation of expanded panels.
+7. Follow the [reset live checks](command-reset.md#live-checks), including
+   distinct player defaults, repeated reset, per-category reset, and host-only
+   multiplayer use. Fountain commands from earlier versions lack reset tracking.

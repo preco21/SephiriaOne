@@ -7,15 +7,16 @@ namespace SephiriaOne
     [Flags]
     internal enum ChoiceTarget { Item = 1, Weapon = 2, Miracle = 4, All = 7 }
     internal enum ChoiceParseResult { NotCommand, Help, Invalid, Valid }
-    internal enum ChoiceOperation { Set, Add, Subtract }
+    internal enum ChoiceOperation { Set, Add, Subtract, Reset }
 
     internal readonly struct ChoiceCommand
     {
         public ChoiceTarget Target { get; }
         public ChoiceOperation Operation { get; }
         public int Amount { get; }
+        public bool IsReset => Operation == ChoiceOperation.Reset || (Operation == ChoiceOperation.Set && Amount == 0);
         public const int MaximumExtra = 20;
-        public const string Usage = "Host only: /choices all|item|weapon|miracle 5, +2, -1, or set|add|sub N. Extra choices: 0..20. Use all 0 to reset.";
+        public const string Usage = "Host only: /choices all|item|weapon|miracle 5, +2, -1, or set|add|sub N. Extra choices: 0..20. Reset: /choices reset or /choices item|weapon|miracle reset.";
 
         private ChoiceCommand(ChoiceTarget target, ChoiceOperation operation, int amount)
         {
@@ -32,6 +33,11 @@ namespace SephiriaOne
             if (parts.Length == 0 || !parts[0].Equals("/choices", StringComparison.OrdinalIgnoreCase))
                 return ChoiceParseResult.NotCommand;
             if (parts.Length == 1) return ChoiceParseResult.Help;
+            if (parts.Length == 2 && parts[1].Equals("reset", StringComparison.OrdinalIgnoreCase))
+            {
+                command = new ChoiceCommand(ChoiceTarget.All, ChoiceOperation.Reset, 0);
+                return ChoiceParseResult.Valid;
+            }
 
             error = Usage;
             if (parts.Length != 3 && parts.Length != 4) return ChoiceParseResult.Invalid;
@@ -47,6 +53,12 @@ namespace SephiriaOne
 
             ChoiceOperation operation = ChoiceOperation.Set;
             string amountText = parts[parts.Length - 1];
+            if (parts.Length == 3 && amountText.Equals("reset", StringComparison.OrdinalIgnoreCase))
+            {
+                command = new ChoiceCommand(target, ChoiceOperation.Reset, 0);
+                error = "";
+                return ChoiceParseResult.Valid;
+            }
             if (parts.Length == 4)
             {
                 switch (parts[2].ToLowerInvariant())
@@ -78,11 +90,20 @@ namespace SephiriaOne
             updatedApplied = applied;
             error = "The addon's bonus and each resulting extra-choice stat must stay within 0..20. Nobody was changed.";
             if (applied < 0 || applied > MaximumExtra) return false;
-            long nextApplied = Operation == ChoiceOperation.Set ? Amount :
+            long nextApplied = IsReset ? 0 : Operation == ChoiceOperation.Set ? Amount :
                 (long)applied + (Operation == ChoiceOperation.Add ? Amount : -Amount);
             if (nextApplied < 0 || nextApplied > MaximumExtra) return false;
             long nextRaw = (long)raw - applied + nextApplied;
             if (nextRaw < int.MinValue || nextRaw > int.MaxValue) return false;
+            if (IsReset)
+            {
+                // Removing our contribution must not impose expansion limits on
+                // stats supplied by the game or another addon.
+                updatedRaw = (int)nextRaw;
+                updatedApplied = 0;
+                error = "";
+                return true;
+            }
 
             // UnitAvatar adds the base and calculated bonuses, multiplies as int,
             // then converts to float and truncates. Check before its int operations.

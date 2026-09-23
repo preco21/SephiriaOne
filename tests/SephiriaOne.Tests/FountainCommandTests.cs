@@ -73,6 +73,10 @@ internal static class FountainCommandTests
         Check(maximum.TryPlan(new[] { 1 }, 12, out results, out limit, out _) &&
             results[0] == int.MaxValue && limit == int.MaxValue, "Maximum integer is supported without planner overflow");
         Check(original.SequenceEqual(new[] { 4, 8, 12 }), "Failed batch does not mutate input balances");
+        Check(FountainCommand.Parse(" /FOUNTAIN ReSeT ", out var reset, out var resetError) == FountainParseResult.Valid &&
+            reset.Operation.ToString() == "Reset" && resetError.Length == 0, "Recognize explicit Fountain reset");
+        foreach (string text in new[] { "/fountain reset 5", "/fountain reset extra", "/fountain reset +1 extra" })
+            Check(FountainCommand.Parse(text, out _, out _) == FountainParseResult.Invalid, "Reset rejects arguments: " + text);
         return checks;
     }
 }

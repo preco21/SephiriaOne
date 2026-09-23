@@ -56,6 +56,20 @@ internal static class ChoiceCommandTests
         Check(!set.TryPlan(0, 0, int.MaxValue, 0, out _, out _, out _), "Reject native sum overflow");
         Check(!set.TryPlan(0, 0, 100000000, 0, out _, out _, out _), "Reject native multiplication overflow");
         Check(!set.TryPlan(-20, 0, 0, 0, out _, out _, out _), "Reject negative effective candidates");
+        foreach (var test in new (string Text, ChoiceTarget Target)[] {
+            ("/choices reset", ChoiceTarget.All), (" /CHOICES ALL RESET ", ChoiceTarget.All),
+            ("/choices item reset", ChoiceTarget.Item), ("/choices weapon reset", ChoiceTarget.Weapon),
+            ("/choices miracle reset", ChoiceTarget.Miracle) })
+            Check(ChoiceCommand.Parse(test.Text, out var parsed, out _) == ChoiceParseResult.Valid &&
+                parsed.Target == test.Target && parsed.Operation.ToString() == "Reset", "Reset syntax: " + test.Text);
+        foreach (string text in new[] { "/choices reset 5", "/choices all reset 5", "/choices item reset extra", "/choices reset all", "/choices other reset" })
+            Check(ChoiceCommand.Parse(text, out _, out _) == ChoiceParseResult.Invalid, "Reject extra reset arguments: " + text);
+        ChoiceCommand.Parse("/choices reset", out var explicitReset, out _);
+        Check(explicitReset.TryPlan(9, 5, 0, 0, out raw, out applied, out _) && raw == 4 && applied == 0, "Explicit reset retains equipment changes");
+        Check(explicitReset.TryPlan(30, 5, 0, 0, out raw, out applied, out _) && raw == 25 && applied == 0, "Reset permits the original native stat above the expansion limit");
+        Check(explicitReset.TryPlan(4, 0, int.MaxValue, int.MaxValue, out raw, out applied, out _) && raw == 4 && applied == 0, "Unmodified reset does not depend on unrelated modifier arithmetic");
+        Check(reset.TryPlan(30, 5, 0, 0, out raw, out applied, out _) && raw == 25 && applied == 0, "Set zero has the same restoration behavior");
+        Check(!explicitReset.TryPlan(int.MinValue, 5, 0, 0, out raw, out applied, out _) && raw == int.MinValue && applied == 5, "Unsafe restoration leaves state unchanged");
         return checks;
     }
 }

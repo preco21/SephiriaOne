@@ -11,6 +11,7 @@ receive the resulting points through the game's existing synchronization.
 | `/fountain 100` or `/fountain set 100` | Set each player's points to 100. |
 | `/fountain +10` or `/fountain add 10` | Add 10 to each player's current points. |
 | `/fountain -5` or `/fountain sub 5` | Subtract 5 from each player's current points. |
+| `/fountain reset` | Remove this addon's point adjustments and restore the session limit it raised. |
 | `/fountain` | Show usage. |
 
 Names are case-insensitive. Amounts are whole numbers. Validate every resulting
@@ -40,6 +41,9 @@ local game log; guests should reopen their Fountain panel to see the new capacit
   it can consume recognized commands by clearing the field. Normal messages
   continue through the game's existing handler.
 - Fountain panels cache capacity when opened. Reopen them after changing points.
+- Since `0.6.0`, namespaced synchronized markers record this addon's signed
+  point adjustments and original/last-written session limit. Reset preserves
+  native stat changes and independently replaced limits; see [reset behavior](command-reset.md).
 
 ## Implementation plan
 
@@ -63,9 +67,13 @@ local game log; guests should reopen their Fountain panel to see the new capacit
 This changes runtime point capacity; it does not buy or rewrite passive upgrades,
 edit profile files, grant items directly, or keep enforcing a value every frame.
 Normal game stat changes can subsequently adjust the capacity. New players and
-newly initialized sessions need the command again. The raised session limit is
+replacement avatars need the command again. Existing avatars retain their point
+adjustment until reset or replaced. The raised session limit is
 reset by the game's normal dungeon initialization. Unloading the addon removes
 the command listener but does not undo an already applied points command.
+Use `/fountain reset` to undo adjustments tracked from `0.6.0` onward. Players
+with no tracked adjustment are unchanged, and repeated reset is harmless.
+Normal upgrades are preserved; reset does not set everyone to zero or 12.
 
 Items selected through the normal Fountain UI can be saved by the game as usual.
 Reducing points does not delete previously selected items or items already
@@ -90,7 +98,7 @@ Run portable tests with:
 dotnet run --project .\tests\SephiriaOne.Tests --configuration Release
 ```
 
-Live checks after restarting with `0.4.0`:
+Live checks after restarting with the current build:
 
 1. In solo town, send `/fountain 100`, then reopen the Fountain and check its
    allowance. Check `/fountain +10` and `/fountain -5` relative to that value.
@@ -104,6 +112,10 @@ Live checks after restarting with `0.4.0`:
    commands.
 5. Reopen chat several times and check each command executes exactly once.
    Test title/session transitions and addon unload for listener cleanup.
+6. Record each player's initial points, apply several commands, then use
+   `/fountain reset`. Confirm each player regains their own normal value and the
+   original carryover cap returns. Test repeated reset and a native stat change
+   between the first command and reset.
 
 Portable tests and builds cannot verify Unity event ordering, peer UI rendering,
 or actual item carryover. Those checks require running the game.
