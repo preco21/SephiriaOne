@@ -109,7 +109,9 @@ SephiriaOne/
   `OnModLoaded()` and unsubscribes in `OnModUnloaded()`.
 - [Metadata](../SephiriaOne/metadata.json) names `SephiriaOne.dll` and
   `SephiriaOne.Entry` as the assembly and entry class.
-- [Deployment script](../scripts/Deploy-Mod.ps1) takes `BinaryPath` and `GameDir`.
+- [Deployment script](../scripts/Deploy-Mod.ps1) requires `BinaryPath` and accepts
+  an optional `GameDir`, defaulting to
+  `C:\Program Files (x86)\Steam\steamapps\common\Sephiria`.
   It requires the binary and adjacent `metadata.json` to exist before creating
   the destination. It derives the addon folder name from the binary filename,
   creates missing directories, and overwrites those two destination files.
@@ -154,14 +156,17 @@ Use a different installed game directory for both assembly references and deploy
 dotnet build .\SephiriaOne.slnx --configuration Release '-p:GameDir=D:\SteamLibrary\steamapps\common\Sephiria'
 ```
 
-Deploy an existing build without compiling again:
+Deploy an existing build to the default game directory without compiling again:
 
 ```powershell
 powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass `
   -File .\scripts\Deploy-Mod.ps1 `
-  -BinaryPath .\SephiriaOne\bin\Release\netstandard2.1\SephiriaOne.dll `
-  -GameDir 'C:\Program Files (x86)\Steam\steamapps\common\Sephiria'
+  -BinaryPath .\SephiriaOne\bin\Release\netstandard2.1\SephiriaOne.dll
 ```
+
+Append `-GameDir 'D:\SteamLibrary\steamapps\common\Sephiria'` to override the
+script's default. Automated builds continue to pass the project's `GameDir`
+explicitly so their reference and deployment paths remain consistent.
 
 The script stops on errors. A missing source file, locked destination, or lack of
 write permission causes deployment to fail; an MSBuild invocation reports that

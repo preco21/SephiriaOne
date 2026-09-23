@@ -2,8 +2,7 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$BinaryPath,
 
-    [Parameter(Mandatory = $true)]
-    [string]$GameDir
+    [string]$GameDir = 'C:\Program Files (x86)\Steam\steamapps\common\Sephiria'
 )
 
 $ErrorActionPreference = 'Stop'
