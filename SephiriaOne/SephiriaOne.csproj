@@ -2,7 +2,37 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <Nullable>enable</Nullable>
+    <AssemblyName>SephiriaOne</AssemblyName>
+    <RootNamespace>SephiriaOne</RootNamespace>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+
+    <GameDir Condition="'$(GameDir)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Sephiria</GameDir>
+    <GameManagedDir>$(GameDir)\Sephiria_Data\Managed</GameManagedDir>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(GameManagedDir)\Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(GameManagedDir)\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="metadata.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <!-- Set DeployMod=false to build without copying files into the game. -->
+  <Target Name="DeployModToGame" AfterTargets="Build"
+          Condition="'$(DesignTimeBuild)' != 'true' and '$(DeployMod)' != 'false'">
+    <Exec Command="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\scripts\Deploy-Mod.ps1&quot; -BinaryPath &quot;$(TargetPath)&quot; -GameDir &quot;$(GameDir)&quot;" />
+  </Target>
 
 </Project>
