@@ -3,6 +3,9 @@
 ###############################################################################
 * text=auto
 
+# Keep C# source files on LF line endings, including Windows checkouts.
+*.cs text eol=lf
+
 ###############################################################################
 # Set default behavior for command prompt diff.
 #
