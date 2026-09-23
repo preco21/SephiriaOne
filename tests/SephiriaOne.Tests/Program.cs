@@ -41,6 +41,7 @@ Equal(null, state.Next("Bob", "", true), "Missing profile name does not rename t
 Console.WriteLine($"Passed {checks} multiplayer name synchronization checks.");
 Console.WriteLine($"Passed {FountainCommandTests.Run()} Fountain command checks.");
 Console.WriteLine($"Passed {FountainResetTests.Run()} Fountain reset checks.");
+Console.WriteLine($"Passed {StatCommandTests.Run()} character stat command checks.");
 Console.WriteLine($"Passed {ChoiceCommandTests.Run()} candidate command checks.");
 Console.WriteLine($"Passed {ChoiceTranspilerTests.Run()} candidate generation guard checks.");
 if (args.Length == 2) GameChoiceCompatibilityTests.Run(args[0], args[1]);

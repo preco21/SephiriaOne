@@ -9,11 +9,11 @@ can change independently of that installed game version.
 
 ## Current status
 
-SephiriaOne is a C# addon using Sephiria's built-in HorayMod API. Version `0.6.0`
-adds explicit reset operations to the host-only `/choices` and `/fountain`
-commands. These adjust extra item, anvil weapon-upgrade, and miracle candidates
-or Wishing Fountain points for all current players, preserving normal upgrades
-when reset. It also colors
+SephiriaOne is a C# addon using Sephiria's built-in HorayMod API. Version `0.7.0`
+adds host-only `/stats` commands to set, add, subtract, and reset luck and nine
+other character stats for all current players. Existing `/choices` and `/fountain`
+commands adjust extra item, anvil weapon-upgrade, and miracle candidates or
+Wishing Fountain points, preserving normal upgrades when reset. It also colors
 the local player's name blue, publishes blue name formatting through the game's
 native synchronization while multiplayer is active, and logs its lifecycle.
 
@@ -22,12 +22,12 @@ native synchronization while multiplayer is active, and logs its lifecycle.
 | Project | Visual Studio solution and `netstandard2.1` class library exist. |
 | Compiler | .NET SDK `10.0.401` is installed and was used successfully. |
 | Release build | `dotnet build SephiriaOne.slnx --configuration Release --nologo` completed with 0 warnings and 0 errors. |
-| Debug build | `dotnet build SephiriaOne.slnx --configuration Debug --nologo -p:DeployMod=false` also passed for `0.6.0` with 0 warnings and 0 errors. |
+| Debug build | `dotnet build SephiriaOne.slnx --configuration Debug --nologo -p:DeployMod=false` also passed for `0.7.0` with 0 warnings and 0 errors. |
 | Automatic deployment | The build invokes `scripts/Deploy-Mod.ps1` after the MSBuild `Build` target. |
 | Visual Studio command | Added the `Deploy Mod` launch profile. Its command was verified with evaluated Release properties and matching deployed hashes; Debug path resolution was also checked. The IDE dropdown has not been tested interactively. |
 | Missing addon folder | Deployment created `AddOns\SephiriaOne` during verification. |
 | Existing addon folder | Running deployment again succeeded. |
-| Deployed content | The `0.6.0` DLL and metadata match Release output by SHA-256; assembly version is `0.6.0.0`. Harmony and its license are embedded in the mod DLL; no game DLLs are distributed. |
+| Deployed content | The `0.7.0` DLL and metadata match Release output by SHA-256; assembly version is `0.7.0.0`. Harmony and its license are embedded in the mod DLL; no game DLLs are distributed. |
 | In-game loading | The user confirmed `0.1.0` loaded. `Player.log` also contains `[SephiriaOne] Loaded v0.1.0`, the AddOnLoader success entry, and `[SephiriaOne] All databases ready`. |
 | Blue name feature | `0.2.0` added local colors; `0.3.0` adds native multiplayer name synchronization. See [design and verification steps](blue-player-name.md). |
 | Multiplayer verification | 21 portable synchronization checks pass; the native command and serialized rich-text label settings were inspected. A live second-client visual check is still pending. |
@@ -36,6 +36,8 @@ native synchronization while multiplayer is active, and logs its lifecycle.
 | Candidate commands | `/choices all 5`, `/choices item +2`, `/choices weapon -1`, and `/choices miracle 5` change this addon's extra-candidate contribution using synchronized native stats. See [design and commands](choice-command.md). |
 | Candidate verification | 63 command checks and 8 generation-guard checks pass. Both guard transformations match the installed game methods. Unity patch installation, live peer behavior, and expanded panel navigation still require game testing. |
 | Reset commands | `/choices reset`, `/choices item reset` (also `weapon`/`miracle`), and `/fountain reset` remove tracked addon adjustments while preserving native bonuses. See [reset semantics and checks](command-reset.md). |
+| Character stats | `/stats luck +10`, `/stats luck -5`, `/stats luck set 100`, `/stats luck reset`, and `/stats reset` use native synchronized stats. `/stats list` shows supported names and display units. See [commands and findings](stat-command.md). |
+| Stat verification | 117 portable checks cover parsing, unit scaling, exact amplified targets, whole-batch rejection, overflow, and reset tracking. Live host/guest UI and gameplay checks remain pending. |
 
 ## History
 
@@ -89,6 +91,10 @@ Stages 1–14 occurred on 2026-09-23; candidate expansion continued on 2026-09-2
     cap changes, preserving later native stat changes and independent cap
     replacements. Extended candidate resets to restore native stats outside the
     expansion limit and remain available if patch initialization fails.
+17. Added `/stats` in `0.7.0` after inspecting native stat arithmetic and the
+    character-panel formatter. Supported ten numeric stats using displayed units,
+    host-only changes for every current player, exact multiplier-aware planning,
+    and tracked resets that preserve independent additive stat changes.
 
 The repository already contained commits `c793844` (Git configuration files) and
 `736b305` (initial project files). The scaffold adjustments and deployment work
@@ -105,7 +111,7 @@ commits are recorded in Git history. The configured remote is
 | Build SDK | .NET `10.0.401` |
 | Mod target framework | `netstandard2.1` |
 | Mod assembly / namespace | `SephiriaOne` |
-| Mod version / author | `0.6.0` / `preco21` |
+| Mod version / author | `0.7.0` / `preco21` |
 | Game version reported by the confirmed load log | `1.0.33` |
 | Game directory | `C:\Program Files (x86)\Steam\steamapps\common\Sephiria` |
 | Game managed assemblies | `<GameDir>\Sephiria_Data\Managed` |
@@ -461,14 +467,14 @@ requirement for a native HorayMod addon.
 
 1. Launch Sephiria and enter the town/lobby or a run; the title screen alone is
    insufficient for the documented addon-loading workflow. Fully restart to load
-   the new `0.6.0` binary.
+   the new `0.7.0` binary.
 2. Inspect `Player.log` for these expected entries:
 
    ```text
-   [SephiriaOne] Loaded v0.6.0
+   [SephiriaOne] Loaded v0.7.0
    [SephiriaOne] All databases ready
    [SephiriaOne] Blue local player name applied (#0000FF)
-   [SephiriaOne] Chat commands bound: /fountain, /choices
+   [SephiriaOne] Chat commands bound: /fountain, /choices, /stats
    [SephiriaOne] Candidate commands ready: /choices (extra choices 0..20)
    ```
 
@@ -486,3 +492,6 @@ requirement for a native HorayMod addon.
 7. Follow the [reset live checks](command-reset.md#live-checks), including
    distinct player defaults, repeated reset, per-category reset, and host-only
    multiplayer use. Fountain commands from earlier versions lack reset tracking.
+8. Follow the [character-stat live checks](stat-command.md#live-verification),
+   including decimal critical chance, total attack speed, distinct baselines,
+   buffs/equipment changing between command and reset, and an unmodified guest.

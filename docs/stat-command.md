@@ -1,0 +1,108 @@
+# Character stat commands
+
+## Design
+
+Add `/stats` to the existing local chat interceptor. Match Fountain's authority:
+solo/host only, changing all currently spawned players after validating the entire
+batch. Use native synchronized custom stats so guests do not need this addon.
+The command is a one-time adjustment, not a permanent override or a saved preset.
+
+Examples: `/stats luck +10`, `/stats luck -5`, `/stats luck set 100`,
+`/stats luck reset`, and `/stats reset` (all supported stats). `/stats list` lists
+supported names and units. Bare numbers mean set; `add`, `sub`, and `subtract`
+are also accepted. Explicit amounts are unsigned; shorthand `-N` means subtract.
+
+Values use the selected character-panel metric, including its normal offset.
+Critical chance and evasion rating support two decimal places; the others use
+whole numbers. Evasion rating is not the derived dodge percentage. Bounds below
+are addon command limits, not claims about game balance or universal game caps.
+
+| Name | Native key | Command/display units | Allowed resulting value |
+| --- | --- | --- | --- |
+| luck | LUCK | Luck points | 0..10000 |
+| defense | DAMAGEREDUCTION | Defense points, not damage reduction percent | 0..10000 |
+| attackspeed | ATTACKSPEED | Total attack speed percent (100 is normal) | 1..1000 |
+| critical | CRITICAL | Critical chance percent | 0..100 |
+| criticaldamage | CRITICALDAMAGEBONUS | Bonus critical damage percent (50 is native default) | 0..10000 |
+| evasion | EVASION | Evasion rating (not dodge chance) | 0..100 |
+| cooldown | COOLDOWNRECOVERYSPEED | Cooldown recovery stat points | 0..10000 |
+| mpregen | MPREGEN | MP regeneration stat points | 0..10000 |
+| negotiation | NEGOTIATION | Negotiation points | 0..10000 |
+| truedamage | TRUEDAMAGE | True damage points | 0..10000 |
+
+Aliases: `crit`, `critdamage`, `armor`, `attack-speed`, `crit-chance`,
+`crit-damage`, `cooldownrecovery`, and `mp-regen`. Arbitrary native keys, flags,
+health, mana capacity, movement speed, and converted elemental damage are excluded:
+they have different storage or calculation paths. Choices and Fountain retain
+their existing commands.
+
+Set/add/subtract target the current effective numeric stat, including calculated
+bonuses and amplification, then solve for the required integer base-stat change.
+Reject an exact target that integer rounding cannot represent; never silently
+approximate or replace the player's multiplier. Reject non-positive multipliers
+and native integer overflow. A range or representability failure for one player
+rejects the whole batch before any write.
+
+Track the signed net base-stat adjustment in `SEPHIRIAONE_STAT_<NATIVE_KEY>`.
+Reset subtracts only that contribution, preserving later additive equipment/buff
+changes. Reset bypasses command limits and amplification checks so native values
+can be restored. Zero is a set value, not a reset. Markers live with the avatar;
+new avatars and later joiners do not inherit a preset. Unloading does not undo
+these adjustments, matching Fountain; reset explicitly before unloading if wanted.
+Independent absolute overwrites of the same base stat cannot be reconstructed.
+
+## Installed-game findings
+
+Inspected Sephiria 1.0.33 on 2026-09-24 using the temporary ILSpy installation.
+Assembly fingerprint is recorded in development-notes.md. No game source or DLLs
+are included in this repository.
+
+- `UnitAvatar.customStats`, `calculatedBonusStats`, and `customStatsAmp` are native
+  synchronized dictionaries. `GetRawStatUnsafe` adds base and calculated bonus,
+  multiplies by `100 + amplifier` using integer arithmetic, converts to float,
+  divides by 100, and truncates to an integer.
+- `AvatarStatsHooker` displays luck/defense/cooldown/MP regeneration/negotiation/
+  true damage directly; critical and evasion divide by 100; attack speed adds
+  100; critical damage adds 50. Evasion has a separate logarithmic dodge metric.
+- `UI_StatsPanel` subscribes to custom-stat and calculated-bonus changes. Gameplay
+  reads the same native stats. A live peer check is still required to establish
+  observed UI refresh and gameplay behavior on another machine.
+- The four elemental damage keys use a separate conversion formula, which is
+  why they are not exposed by this command.
+
+## Implementation plan
+
+1. Add portable parser/catalog/planner tests for commands, units, aliases, exact
+   amplified targets, mixed player values, batch rejection, overflow, and resets.
+   Run tests to confirm the missing implementation fails.
+2. Add `StatCommand.cs` (parsing/catalog) and `StatPlan.cs` (pure batch planning).
+   Link them into the existing test harness and make the tests pass.
+3. Add `CharacterStats.cs` for host authorization, ready-player collection,
+   native dictionary writes, contribution markers, and local result messages.
+   Extend `ModChatCommands.cs`; bump the project/metadata to 0.7.0.
+4. Run portable tests, Debug/Release builds, installed-game compatibility checks,
+   code review, and deployment hash checks. Record outcomes and remaining live
+   checks, then commit and push the focused change using Conventional Commits.
+
+## Live verification
+
+Fully restart after updating. Record different player baselines, then try luck
+set/add/subtract/reset with an unmodified guest. Verify both character panels and
+luck-dependent gameplay. Test critical +5, attackspeed set 150, and evasion +1.5.
+Change equipment between a command and reset; repeat reset and reset-all. Test
+guest rejection, normal chat, malformed commands, an unrepresentable amplified
+target, session transitions, and a joining player. Confirm other command families
+and blue names still work. Live results have not yet been recorded.
+
+## Verification results
+
+On 2026-09-24, 117 character-stat checks passed, alongside all 156 existing checks
+(273 total). Debug and Release builds completed with zero warnings/errors.
+Installed-game candidate-guard compatibility checks and the embedded Harmony
+runtime/license check also passed, covering the unchanged candidate feature.
+An independent code review found no actionable issues.
+
+Release 0.7.0 was deployed to `AddOns\SephiriaOne`. Both deployed files matched
+their build-output SHA-256 hashes; the DLL assembly version is `0.7.0.0`.
+These checks do not execute Unity gameplay, chat input, or remote clients. The
+live checks above remain necessary after fully restarting the game.

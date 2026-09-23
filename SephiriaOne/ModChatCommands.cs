@@ -58,7 +58,7 @@ namespace SephiriaOne
                     submit.AddListener(original);
                 }
 
-                Debug.Log("[SephiriaOne] Chat commands bound: /fountain, /choices");
+                Debug.Log("[SephiriaOne] Chat commands bound: /fountain, /choices, /stats");
             }
             catch (Exception exception)
             {
@@ -77,8 +77,10 @@ namespace SephiriaOne
 
             FountainParseResult result = FountainCommand.Parse(input.text, out FountainCommand command, out string error);
             ChoiceParseResult choices = ChoiceCommand.Parse(input.text, out ChoiceCommand choiceCommand, out string choiceError);
+            StatParseResult stats = StatCommand.Parse(input.text, out StatCommand statCommand, out string statError);
             bool fountain = result != FountainParseResult.NotCommand;
-            if (!fountain && choices == ChoiceParseResult.NotCommand)
+            bool choice = choices != ChoiceParseResult.NotCommand;
+            if (!fountain && !choice && stats == StatParseResult.NotCommand)
             {
                 return;
             }
@@ -87,15 +89,22 @@ namespace SephiriaOne
             // Clear before any work so even rejected commands stay local.
             input.text = "";
             chat.Close();
-            if (result == FountainParseResult.Help || choices == ChoiceParseResult.Help)
+            if (stats == StatParseResult.List)
             {
-                Reply(fountain ? FountainCommand.Usage : ChoiceCommand.Usage, Color.cyan);
+                foreach (StatDefinition stat in StatCatalog.All)
+                    Reply($"{stat.Name}: {stat.Minimum}..{stat.Maximum} {stat.Unit}; " +
+                        (stat.Scale == 100 ? "up to 2 decimal places." : "whole numbers."), Color.cyan);
+                return;
+            }
+            if (result == FountainParseResult.Help || choices == ChoiceParseResult.Help || stats == StatParseResult.Help)
+            {
+                Reply(fountain ? FountainCommand.Usage : choice ? ChoiceCommand.Usage : StatCommand.Usage, Color.cyan);
                 return;
             }
 
-            if (result == FountainParseResult.Invalid || choices == ChoiceParseResult.Invalid)
+            if (result == FountainParseResult.Invalid || choices == ChoiceParseResult.Invalid || stats == StatParseResult.Invalid)
             {
-                Reply(fountain ? error : choiceError, Color.yellow);
+                Reply(fountain ? error : choice ? choiceError : statError, Color.yellow);
                 return;
             }
 
@@ -103,7 +112,8 @@ namespace SephiriaOne
             {
                 string message;
                 bool success = fountain ? FountainPoints.TryExecute(command, out message) :
-                    ChoicePoints.TryExecute(choiceCommand, out message);
+                    choice ? ChoicePoints.TryExecute(choiceCommand, out message) :
+                    CharacterStats.TryExecute(statCommand, out message);
                 Reply(message, success ? Color.green : Color.yellow);
             }
             catch (Exception exception)

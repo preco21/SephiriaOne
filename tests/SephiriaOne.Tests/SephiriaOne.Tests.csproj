@@ -9,6 +9,8 @@
     <Compile Include="../../SephiriaOne/NetworkNameState.cs" Link="NetworkNameState.cs" />
     <Compile Include="../../SephiriaOne/FountainCommand.cs" Link="FountainCommand.cs" />
     <Compile Include="../../SephiriaOne/ChoiceCommand.cs" Link="ChoiceCommand.cs" />
+    <Compile Include="../../SephiriaOne/StatCommand.cs" Link="StatCommand.cs" />
+    <Compile Include="../../SephiriaOne/StatPlan.cs" Link="StatPlan.cs" />
     <Compile Include="../../SephiriaOne/ChoiceTranspilers.cs" Link="ChoiceTranspilers.cs" />
     <PackageReference Include="Lib.Harmony" Version="2.4.2" />
   </ItemGroup>

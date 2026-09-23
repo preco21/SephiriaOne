@@ -10,6 +10,11 @@ Version `0.6.0` adds explicit host-only reset commands for all current players:
 - `/fountain reset`: remove the net points adjustment made by this addon and
   restore the session carryover limit that it increased.
 
+Version `0.7.0` also adds `/stats luck reset` (or another supported stat) and
+`/stats reset` / `/stats all reset`. These remove only the tracked base-stat
+contributions from character-stat commands, preserving native equipment/buffs.
+`/stats luck 0` sets luck to zero; it is not a reset. See [stat commands](stat-command.md).
+
 Reset means the state without this addon's commands, preserving native upgrades,
 equipment, and later independent stat changes. It does not mean zero Fountain
 points or a fixed candidate count. Repeated reset is harmless. `/choices all 0`
