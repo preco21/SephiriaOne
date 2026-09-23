@@ -109,9 +109,11 @@ SephiriaOne/
   `OnModLoaded()` and unsubscribes in `OnModUnloaded()`.
 - [Metadata](../SephiriaOne/metadata.json) names `SephiriaOne.dll` and
   `SephiriaOne.Entry` as the assembly and entry class.
-- [Deployment script](../scripts/Deploy-Mod.ps1) requires `BinaryPath` and accepts
-  an optional `GameDir`, defaulting to
-  `C:\Program Files (x86)\Steam\steamapps\common\Sephiria`.
+- [Deployment script](../scripts/Deploy-Mod.ps1) accepts optional `BinaryPath` and
+  `GameDir` parameters. Without `BinaryPath`, it checks the project's
+  `bin\Release\netstandard2.1\SephiriaOne.dll`, then the equivalent Debug path.
+  Discovery is relative to the script location, independent of the working directory.
+  `GameDir` defaults to `C:\Program Files (x86)\Steam\steamapps\common\Sephiria`.
   It requires the binary and adjacent `metadata.json` to exist before creating
   the destination. It derives the addon folder name from the binary filename,
   creates missing directories, and overwrites those two destination files.
@@ -160,13 +162,18 @@ Deploy an existing build to the default game directory without compiling again:
 
 ```powershell
 powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass `
-  -File .\scripts\Deploy-Mod.ps1 `
-  -BinaryPath .\SephiriaOne\bin\Release\netstandard2.1\SephiriaOne.dll
+  -File .\scripts\Deploy-Mod.ps1
 ```
 
+The script prefers Release whenever that DLL exists, even if Debug is newer.
+It falls back to Debug when the Release DLL is absent. If neither exists, it
+reports that a build or explicit path is required; it does not build automatically.
+Append `-BinaryPath '<path-to-built-dll>'` to select a particular output instead.
+The selected DLL must have `metadata.json` beside it.
+
 Append `-GameDir 'D:\SteamLibrary\steamapps\common\Sephiria'` to override the
-script's default. Automated builds continue to pass the project's `GameDir`
-explicitly so their reference and deployment paths remain consistent.
+script's default. Automated builds continue to pass the exact `TargetPath` and
+project `GameDir` explicitly, so they deploy the configuration just built.
 
 The script stops on errors. A missing source file, locked destination, or lack of
 write permission causes deployment to fail; an MSBuild invocation reports that
