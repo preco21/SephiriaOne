@@ -9,6 +9,10 @@ can change independently of that installed game version.
 
 ## Current status
 
+The [shared synchronization architecture proposal](synchronization-architecture.md)
+describes a coordinator for lifecycle observation, ordered reconciliation, and
+registered UI bindings. It is a design proposal; runtime behavior remains unchanged.
+
 SephiriaOne is a C# addon using Sephiria's built-in HorayMod API. Version `0.11.1`
 repairs Fountain caps after native loadout changes and reconciles ready state
 immediately before item granting. The [lifecycle audit](sync-lifecycle-audit.md)
