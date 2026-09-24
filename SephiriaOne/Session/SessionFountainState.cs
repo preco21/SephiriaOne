@@ -10,7 +10,7 @@ namespace SephiriaOne
         private static bool IsFountainEnrolled(PlayerAvatar player) => fountainPlayers.Contains(player) ||
             (player.customStats.TryGetValue(FountainPoints.ContributionKey, out int contribution) && contribution != 0);
 
-        private static object CaptureFountain(PlayerAvatar player)
+        private static (bool, GridInventory, int, int) CaptureFountain(PlayerAvatar player)
         {
             bool enrolled = IsFountainEnrolled(player);
             player.customStats.TryGetValue(FountainPoints.ContributionKey, out int contribution);

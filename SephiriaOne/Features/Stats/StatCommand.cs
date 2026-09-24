@@ -17,13 +17,14 @@ namespace SephiriaOne
         public int Minimum { get; }
         public int Maximum { get; }
         public string Unit { get; }
-        public string Marker => "SEPHIRIAONE_STAT_" + Key;
+        public string Marker { get; }
 
         public StatDefinition(string name, string key, string unit, int scale = 1,
             int offset = 0, int minimum = 0, int maximum = 10000)
         {
             Name = name;
             Key = key;
+            Marker = "SEPHIRIAONE_STAT_" + key;
             Unit = unit;
             Scale = scale;
             Offset = offset;

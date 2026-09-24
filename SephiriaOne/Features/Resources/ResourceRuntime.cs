@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Runtime.CompilerServices;
 using Mirror;
 using UnityEngine;
 
@@ -16,11 +16,18 @@ namespace SephiriaOne
             public readonly int Owned;
             public Applied(string intent, int owned) { Intent = intent; Owned = owned; }
         }
-        private static readonly Dictionary<PlayerAvatar, Dictionary<ResourceKind, Applied>> applied =
-            new Dictionary<PlayerAvatar, Dictionary<ResourceKind, Applied>>(ReferenceComparer<PlayerAvatar>.Instance);
-        private static readonly Dictionary<PlayerAvatar, Dictionary<ResourceKind, Applied>> restored =
-            new Dictionary<PlayerAvatar, Dictionary<ResourceKind, Applied>>(ReferenceComparer<PlayerAvatar>.Instance);
-        public static void Clear() { applied.Clear(); restored.Clear(); }
+        // Early consumers can run before SessionSettings tracks an avatar. A
+        // disconnect in that window has no normal Forget callback; do not own
+        // the avatar's lifetime merely because we recorded an early write.
+        private static ConditionalWeakTable<PlayerAvatar, Dictionary<ResourceKind, Applied>> applied =
+            new ConditionalWeakTable<PlayerAvatar, Dictionary<ResourceKind, Applied>>();
+        private static ConditionalWeakTable<PlayerAvatar, Dictionary<ResourceKind, Applied>> restored =
+            new ConditionalWeakTable<PlayerAvatar, Dictionary<ResourceKind, Applied>>();
+        public static void Clear()
+        {
+            applied = new ConditionalWeakTable<PlayerAvatar, Dictionary<ResourceKind, Applied>>();
+            restored = new ConditionalWeakTable<PlayerAvatar, Dictionary<ResourceKind, Applied>>();
+        }
         public static void Forget(PlayerAvatar player) { applied.Remove(player); restored.Remove(player); }
         public static bool TryGetSetting(ResourceKind kind, out ResourceSetting setting)
         {
@@ -31,7 +38,7 @@ namespace SephiriaOne
 
         public static void AcceptRestored(PlayerAvatar player, ResourceKind kind, string intent = "")
         {
-            if (!restored.TryGetValue(player, out var values)) restored[player] = values = new Dictionary<ResourceKind, Applied>();
+            var values = restored.GetOrCreateValue(player);
             player.customStats.TryGetValue(ResourceCatalog.Get(kind).Marker, out int owned);
             values[kind] = new Applied(intent, owned);
             if (applied.TryGetValue(player, out var previous)) previous.Remove(kind);
@@ -47,7 +54,7 @@ namespace SephiriaOne
         }
         private static void Accept(PlayerAvatar player, ResourceKind kind)
         {
-            if (!applied.TryGetValue(player, out var values)) applied[player] = values = new Dictionary<ResourceKind, Applied>();
+            var values = applied.GetOrCreateValue(player);
             player.customStats.TryGetValue(ResourceCatalog.Get(kind).Marker, out int owned);
             values[kind] = new Applied(SessionSettings.ResourcePolicy.Intent(kind), owned);
             if (restored.TryGetValue(player, out var pending)) pending.Remove(kind);
@@ -117,19 +124,14 @@ namespace SephiriaOne
             return true;
         }
 
-        public static object Observe(PlayerAvatar player)
+        public static ((string, bool, ResourceSnapshot) Slots, (string, bool, ResourceSnapshot) Talents,
+            (string, bool, ResourceSnapshot) Fruit) Observe(PlayerAvatar player) =>
+            (Observe(player, ResourceKind.Slots), Observe(player, ResourceKind.Talents), Observe(player, ResourceKind.Fruit));
+
+        private static (string, bool, ResourceSnapshot) Observe(PlayerAvatar player, ResourceKind kind)
         {
-            var key = new StringBuilder();
-            foreach (var definition in ResourceCatalog.All)
-            {
-                if (definition.StartingOnly || !SessionSettings.ResourcePolicy.TryGetIntent(definition.Kind, out _)) continue;
-                var value = ResourceNative.Capture(player, definition.Kind);
-                key.Append(definition.Name).Append(SessionSettings.ResourcePolicy.Intent(definition.Kind)).Append(':').Append(ResourceFeature.IsAvailable(definition.Kind))
-                    .Append(':').Append(value.Raw).Append(':').Append(value.Owned).Append(':').Append(value.Bonus)
-                    .Append(':').Append(value.Amplifier).Append(':').Append(value.DisplayOffset)
-                    .Append(':').Append(value.MinimumSafe).Append(':').Append(value.Busy).Append(';');
-            }
-            return key.ToString();
+            if (!SessionSettings.ResourcePolicy.TryGetIntent(kind, out _)) return default;
+            return (SessionSettings.ResourcePolicy.Intent(kind), ResourceFeature.IsAvailable(kind), ResourceNative.Capture(player, kind));
         }
 
         public static ReconcileResult Maintain(HostPlayer subject)

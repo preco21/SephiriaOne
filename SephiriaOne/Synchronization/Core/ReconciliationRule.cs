@@ -1,5 +1,6 @@
 #nullable enable
 using System;
+using System.Collections.Generic;
 
 namespace SephiriaOne
 {
@@ -42,17 +43,48 @@ namespace SephiriaOne
         public SyncDomain Outputs { get; }
         public ReconcileMode Mode { get; }
         internal Func<T, bool> IsReady { get; }
-        internal Func<T, object> Observe { get; }
+        internal Func<IReconciliationObservation<T>> CreateObservation { get; }
         internal Func<T, ReconcileResult> Apply { get; }
 
         public ReconciliationRule(string id, SyncDomain inputs, SyncDomain outputs, ReconcileMode mode,
             Func<T, bool> isReady, Func<T, object> observe, Func<T, ReconcileResult> apply)
+            : this(id, inputs, outputs, mode, isReady, () => new Observation<object>(observe), apply)
+        { if (observe == null) throw new ArgumentNullException(nameof(observe)); }
+
+        // Each subject owns its cursor. Value snapshots stay typed instead of
+        // boxing on every unchanged frame; equality still includes every input.
+        public static ReconciliationRule<T> ObserveValue<TValue>(string id, SyncDomain inputs, SyncDomain outputs, ReconcileMode mode,
+            Func<T, bool> isReady, Func<T, TValue> observe, Func<T, ReconcileResult> apply)
+        {
+            if (observe == null) throw new ArgumentNullException(nameof(observe));
+            return new ReconciliationRule<T>(id, inputs, outputs, mode, isReady, () => new Observation<TValue>(observe), apply);
+        }
+
+        private ReconciliationRule(string id, SyncDomain inputs, SyncDomain outputs, ReconcileMode mode,
+            Func<T, bool> isReady, Func<IReconciliationObservation<T>> createObservation, Func<T, ReconcileResult> apply)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("A rule ID is required.", nameof(id));
             Id = id; Inputs = inputs; Outputs = outputs; Mode = mode;
             IsReady = isReady ?? throw new ArgumentNullException(nameof(isReady));
-            Observe = observe ?? throw new ArgumentNullException(nameof(observe));
+            CreateObservation = createObservation;
             Apply = apply ?? throw new ArgumentNullException(nameof(apply));
         }
+
+        private sealed class Observation<TValue> : IReconciliationObservation<T>
+        {
+            private readonly Func<T, TValue> capture;
+            private TValue previous = default!;
+            private bool observed;
+            public Observation(Func<T, TValue> capture) { this.capture = capture; }
+            public bool Capture(T subject)
+            {
+                TValue current = capture(subject);
+                bool changed = !observed || !EqualityComparer<TValue>.Default.Equals(current, previous);
+                previous = current; observed = true;
+                return changed;
+            }
+        }
     }
+
+    internal interface IReconciliationObservation<T> { bool Capture(T subject); }
 }

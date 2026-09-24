@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace SephiriaOne
 {
-    internal readonly struct StatSnapshot
+    internal readonly struct StatSnapshot : IEquatable<StatSnapshot>
     {
         public StatDefinition Stat { get; }
         public int Raw { get; }
@@ -20,6 +20,10 @@ namespace SephiriaOne
             Bonus = bonus;
             Amplifier = amplifier;
         }
+        public bool Equals(StatSnapshot other) => ReferenceEquals(Stat, other.Stat) && Raw == other.Raw &&
+            Contribution == other.Contribution && Bonus == other.Bonus && Amplifier == other.Amplifier;
+        public override bool Equals(object? other) => other is StatSnapshot value && Equals(value);
+        public override int GetHashCode() => HashCode.Combine(Stat, Raw, Contribution, Bonus, Amplifier);
     }
 
     internal readonly struct StatUpdate

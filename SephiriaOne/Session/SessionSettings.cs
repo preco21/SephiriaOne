@@ -27,20 +27,23 @@ namespace SephiriaOne
         private static Action recovered;
         private static bool criticalFresh = true;
         private static readonly Dictionary<string, bool> boundaries = new Dictionary<string, bool>();
+        // Synchronize's reentrancy guard gives one owner to these scratch buffers.
+        private static readonly HashSet<PlayerAvatar> activePlayers = new HashSet<PlayerAvatar>(ReferenceComparer<PlayerAvatar>.Instance);
+        private static readonly List<HostPlayer> departedPlayers = new List<HostPlayer>();
 
         private static ReconciliationCoordinator<HostPlayer> CreatePlayerCoordinator()
         {
             var result = new ReconciliationCoordinator<HostPlayer>();
-            result.Register(new ReconciliationRule<HostPlayer>("session-inheritance", SyncDomain.Identity,
+            result.Register(ReconciliationRule<HostPlayer>.ObserveValue("session-inheritance", SyncDomain.Identity,
                 SyncDomain.Stats | SyncDomain.Choices | SyncDomain.Fountain | SyncDomain.Resources, ReconcileMode.Once,
                 subject => subject.IsReady, subject => subject.Id, Inherit));
-            result.Register(new ReconciliationRule<HostPlayer>("resources", SyncDomain.Resources,
+            result.Register(ReconciliationRule<HostPlayer>.ObserveValue("resources", SyncDomain.Resources,
                 SyncDomain.Resources, ReconcileMode.OnChange, subject => subject.IsReady,
                 subject => ResourceRuntime.Observe(subject.Player), ResourceRuntime.Maintain));
-            result.Register(new ReconciliationRule<HostPlayer>("fountain-multiplier", SyncDomain.Fountain,
+            result.Register(ReconciliationRule<HostPlayer>.ObserveValue("fountain-multiplier", SyncDomain.Fountain,
                 SyncDomain.Fountain, ReconcileMode.OnChange, subject => subject.IsReady,
                 subject => (policy.HasFountainMultiplier, CaptureFountain(subject.Player)), MaintainFountainMultiplier));
-            result.Register(new ReconciliationRule<HostPlayer>("fountain-capacity", SyncDomain.Fountain,
+            result.Register(ReconciliationRule<HostPlayer>.ObserveValue("fountain-capacity", SyncDomain.Fountain,
                 SyncDomain.Limits, ReconcileMode.OnChange, subject => subject.IsReady,
                 subject => CaptureFountain(subject.Player), subject =>
                 {
@@ -54,7 +57,7 @@ namespace SephiriaOne
         private static ReconciliationCoordinator<DungeonManager> CreateSessionCoordinator()
         {
             var result = new ReconciliationCoordinator<DungeonManager>();
-            result.Register(new ReconciliationRule<DungeonManager>("fountain-carryover", SyncDomain.Limits,
+            result.Register(ReconciliationRule<DungeonManager>.ObserveValue("fountain-carryover", SyncDomain.Limits,
                 SyncDomain.None, ReconcileMode.OnChange,
                 current => enabled && NetworkServer.active && current && ReferenceEquals(current, dungeon),
                 current => (runGeneration, restoreFountainLimit), current =>
@@ -192,7 +195,7 @@ namespace SephiriaOne
             try
             {
                 bool playersFresh = true;
-                var active = new HashSet<PlayerAvatar>(ReferenceComparer<PlayerAvatar>.Instance);
+                var active = activePlayers;
                 foreach (PlayerSpawner spawner in PlayerSpawner.MultiplayerList)
                 {
                     if (!spawner || !spawner.isServer || !spawner.PlayerAvatar) continue;
@@ -209,14 +212,14 @@ namespace SephiriaOne
                     if (subject.IsReady) playersFresh &= MaintainRelativeStats(player);
                     if (failedBatch != null) break;
                 }
-                var departed = new List<HostPlayer>();
+                var departed = departedPlayers;
                 foreach (var subject in subjects.Values) if (!active.Contains(subject.Player)) departed.Add(subject);
                 if (failedBatch == null)
                     foreach (HostPlayer subject in departed) { Forget(subject); subjects.Remove(subject.Player); }
                 if (failedBatch == null) criticalFresh = session.Reconcile(dungeon) && playersFresh;
                 return true;
             }
-            finally { synchronizing = false; }
+            finally { activePlayers.Clear(); departedPlayers.Clear(); synchronizing = false; }
         }
 
         public static bool EnsureFresh() => Synchronize() && failedBatch == null && criticalFresh;

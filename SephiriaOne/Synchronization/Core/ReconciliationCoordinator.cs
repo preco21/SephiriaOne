@@ -10,13 +10,13 @@ namespace SephiriaOne
     {
         private sealed class Record
         {
-            public object? Observation;
-            public bool Observed;
+            public readonly IReconciliationObservation<T> Observation;
             public bool Attempted;
             public long Requested;
             public long Handled;
             public long Revision;
             public ReconcileResult Result = ReconcileResult.Waiting("Not observed yet.");
+            public Record(IReconciliationObservation<T> observation) { Observation = observation; }
         }
 
         private readonly List<ReconciliationRule<T>> rules = new List<ReconciliationRule<T>>();
@@ -50,7 +50,7 @@ namespace SephiriaOne
             if (!subjects.TryGetValue(subject, out var records))
             { records = new Dictionary<string, Record>(); subjects.Add(subject, records); }
             foreach (var rule in rules)
-                if (!records.ContainsKey(rule.Id)) records.Add(rule.Id, new Record());
+                if (!records.ContainsKey(rule.Id)) records.Add(rule.Id, new Record(rule.CreateObservation()));
             return records;
         }
 
@@ -66,8 +66,8 @@ namespace SephiriaOne
         {
             var rule = rules.Find(value => value.Id == id) ?? throw new ArgumentException("Unknown rule: " + id);
             Record record = Records(subject)[id];
-            record.Observation = rule.Observe(subject);
-            record.Observed = true; record.Attempted = true;
+            record.Observation.Capture(subject);
+            record.Attempted = true;
             record.Handled = record.Requested;
             record.Result = ReconcileResult.Applied(); record.Revision++;
         }
@@ -101,17 +101,15 @@ namespace SephiriaOne
                                 record.Handled = requested;
                                 continue;
                             }
-                            object before = rule.Observe(subject);
-                            if (record.Observed && Equals(before, record.Observation) && requested == record.Handled &&
+                            bool changed = record.Observation.Capture(subject);
+                            if (!changed && requested == record.Handled &&
                                 record.Result.State != ReconcileState.WaitingForReadiness) continue;
-                            record.Observation = before;
-                            record.Observed = true;
                             record.Result = rule.Apply(subject);
                             record.Attempted = record.Result.State != ReconcileState.WaitingForReadiness;
                             record.Revision++;
                             // Keep newer invalidation counters, including those raised by Apply.
                             record.Handled = requested;
-                            record.Observation = rule.Observe(subject);
+                            record.Observation.Capture(subject);
                         }
                         catch (Exception error)
                         {
@@ -119,7 +117,7 @@ namespace SephiriaOne
                             record.Attempted = true;
                             record.Handled = requested;
                             // Observe may itself fail. Preserve its previous snapshot safely.
-                            try { record.Observation = rule.Observe(subject); record.Observed = true; } catch { }
+                            try { record.Observation.Capture(subject); } catch { }
                         }
                     }
                     bool pending = false;
@@ -144,6 +142,14 @@ namespace SephiriaOne
                     if (records.TryGetValue(rule.Id, out var record))
                         result.Add(new ReconciliationStatus(rule.Id, record.Result, record.Revision));
             return result;
+        }
+
+        public bool TryGetResult(T subject, string id, out ReconcileResult result)
+        {
+            if (subjects.TryGetValue(subject, out var records) && records.TryGetValue(id, out var record))
+            { result = record.Result; return true; }
+            result = default;
+            return false;
         }
 
         public void Forget(T subject) => subjects.Remove(subject);

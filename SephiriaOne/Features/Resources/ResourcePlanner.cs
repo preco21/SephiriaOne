@@ -3,7 +3,7 @@ using System;
 
 namespace SephiriaOne
 {
-    internal readonly struct ResourceSnapshot
+    internal readonly struct ResourceSnapshot : IEquatable<ResourceSnapshot>
     {
         public ResourceDefinition Definition { get; }
         public int Raw { get; }
@@ -17,6 +17,11 @@ namespace SephiriaOne
             int displayOffset = 0, int minimumSafe = 0, bool busy = false)
         { Definition = definition; Raw = raw; Owned = owned; Bonus = bonus; Amplifier = amplifier;
             DisplayOffset = displayOffset; MinimumSafe = minimumSafe; Busy = busy; }
+        public bool Equals(ResourceSnapshot other) => ReferenceEquals(Definition, other.Definition) && Raw == other.Raw &&
+            Owned == other.Owned && Bonus == other.Bonus && Amplifier == other.Amplifier && DisplayOffset == other.DisplayOffset &&
+            MinimumSafe == other.MinimumSafe && Busy == other.Busy;
+        public override bool Equals(object? other) => other is ResourceSnapshot value && Equals(value);
+        public override int GetHashCode() => HashCode.Combine(Definition, Raw, Owned, Bonus, Amplifier, DisplayOffset, MinimumSafe, Busy);
     }
     internal readonly struct ResourceUpdate
     {

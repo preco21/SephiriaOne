@@ -54,6 +54,12 @@ bool Choices(string args)
     return ChoicePoints.TryExecute(command, out _);
 }
 
+if (args.Length == 1 && (args[0] == "--perf" || args[0] == "--perf-check"))
+{
+    PerformanceProbe.Run(Start, Add, args[0] == "--perf-check");
+    return;
+}
+
 var host = Start();
 Check(Fountain("+10") && Stats("luck +10") && Choices("all 5"), "Host commands succeed before first LateUpdate");
 Check(Points(host) == 14 && Value(host) == 15 && Value(host, "EXTRAITEMCHOICES") == 7, "Current host receives one adjustment");
@@ -745,6 +751,7 @@ SettingsControlsTests.Run(Check, Start, Add);
 MultiplierRuntimeTests.Run(Check, Start, Add);
 ResourceRuntimeTests.Run(Check, Start, Add);
 ReentryRuntimeTests.Run(Check, Start, Add);
+NameRuntimeTests.Run(Check, Start, Add);
 Check(SettingsActions.IsCommand("/resources slots +6"), "Resource command family is recognized by shared controls");
 
 if (Directory.Exists(testDataRoot)) Directory.Delete(testDataRoot, true);

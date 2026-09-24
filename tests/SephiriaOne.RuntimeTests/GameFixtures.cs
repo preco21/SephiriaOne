@@ -8,6 +8,7 @@ namespace UnityEngine
     }
     public class MonoBehaviour : Object { }
     public static class Application { public static string persistentDataPath; }
+    public static class Time { public static float unscaledTime; }
     public readonly struct Color
     {
         public static readonly Color green = new();
@@ -26,6 +27,7 @@ namespace UnityEngine
 namespace Mirror
 {
     public static class NetworkServer { public static bool active; }
+    public static class NetworkClient { public static bool active = true, ready = true; }
     public sealed class NetworkConnectionToClient { public bool isReady = true; }
 }
 
@@ -58,6 +60,9 @@ public sealed class PlayerSpawner : UnityEngine.Object
 
 public sealed class PlayerAvatar : UnityEngine.Object
 {
+    public bool isClient = true;
+    public readonly List<string> NameRequests = new();
+    public void SetPlayerName(string value) => NameRequests.Add(value);
     public bool isServer = true;
     public uint netId;
     public UnityEngine.Object Race = new();
@@ -151,7 +156,7 @@ public sealed class SaveData
     public void SetInt(string key, int value) => Values[key] = value;
     public void SetString(string key, string value) => Values[key] = value;
 }
-public static class SaveManager { public static SaveData CurrentRun = new(); }
+public static class SaveManager { public static SaveData CurrentRun = new(), Current = new(); }
 
 public sealed class DungeonManager : UnityEngine.Object
 {

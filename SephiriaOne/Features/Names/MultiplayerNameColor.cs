@@ -9,6 +9,8 @@ namespace SephiriaOne
         private readonly ReconciliationCoordinator<MultiplayerNameColor> coordinator = new ReconciliationCoordinator<MultiplayerNameColor>();
         private PlayerAvatar player;
         private string plainName;
+        private string profileSource, diagnosticDetail, diagnosticText;
+        private ReconcileState diagnosticState;
         private bool restoreRequired;
         private bool multiplayer;
         private bool profileAvailable;
@@ -16,7 +18,7 @@ namespace SephiriaOne
 
         public MultiplayerNameColor()
         {
-            coordinator.Register(new ReconciliationRule<MultiplayerNameColor>("owned-name", SyncDomain.Identity | SyncDomain.Names,
+            coordinator.Register(ReconciliationRule<MultiplayerNameColor>.ObserveValue("owned-name", SyncDomain.Identity | SyncDomain.Names,
                 SyncDomain.None, ReconcileMode.OnChange, self => self.CanSend() && self.profileAvailable && !string.IsNullOrEmpty(self.player.playerNameSource),
                 self => (self.player.playerNameSource, self.plainName, self.multiplayer, self.state.RetryToken(Time.unscaledTime)),
                 self => self.Publish()));
@@ -28,11 +30,19 @@ namespace SephiriaOne
             if (player != avatar) { Restore(); player = avatar; }
             string profileName = SaveManager.Current?.GetString("PlayerName", "");
             profileAvailable = !string.IsNullOrEmpty(profileName);
-            if (profileAvailable) plainName = NetworkNameState.Plain(profileName);
+            if (profileAvailable && profileSource != profileName)
+            { profileSource = profileName; plainName = NetworkNameState.Plain(profileName); }
             multiplayer = PlayerSpawner.MultiplayerList.Count > 1;
             coordinator.Reconcile(this);
-            foreach (var result in coordinator.Describe(this))
-                if (result.State != ReconcileState.Applied) Status = "native name " + result.State + ": " + result.Detail;
+            if (coordinator.TryGetResult(this, "owned-name", out var result) && result.State != ReconcileState.Applied)
+            {
+                if (diagnosticText == null || diagnosticState != result.State || diagnosticDetail != result.Detail)
+                {
+                    diagnosticState = result.State; diagnosticDetail = result.Detail;
+                    diagnosticText = "native name " + result.State + ": " + result.Detail;
+                }
+                Status = diagnosticText;
+            }
         }
 
         private ReconcileResult Publish()
@@ -56,6 +66,7 @@ namespace SephiriaOne
             if (restoreRequired && CanSend() && !string.IsNullOrEmpty(plainName)) player.SetPlayerName(plainName);
             player = null;
             plainName = null;
+            profileSource = diagnosticDetail = diagnosticText = null;
             restoreRequired = false;
             profileAvailable = false;
             Status = "waiting for owned avatar";

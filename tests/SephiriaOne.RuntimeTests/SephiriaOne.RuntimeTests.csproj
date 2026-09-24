@@ -6,6 +6,9 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../SephiriaOne/Features/Names/MultiplayerNameColor.cs" Link="Source/Features/Names/MultiplayerNameColor.cs" />
+    <Compile Include="../../SephiriaOne/Features/Names/NetworkNameState.cs" Link="Source/Features/Names/NetworkNameState.cs" />
+    <Compile Include="../../SephiriaOne/Features/Names/NameGradient.cs" Link="Source/Features/Names/NameGradient.cs" />
     <Compile Include="../../SephiriaOne/Features/Resources/Resource*.cs" Exclude="../../SephiriaOne/Features/Resources/ResourceFeature.cs" Link="Source/Features/Resources/%(Filename)%(Extension)" />
     <Compile Include="../../SephiriaOne/Features/Resources/Budgets/ResourceBudgets.cs" Link="Source/Features/Resources/Budgets/ResourceBudgets.cs" />
     <Compile Include="../../SephiriaOne/Features/Resources/Budgets/TalentResourceCheckpoint.cs" Link="Source/Features/Resources/Budgets/TalentResourceCheckpoint.cs" />

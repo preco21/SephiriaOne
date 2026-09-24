@@ -16,9 +16,9 @@ namespace SephiriaOne
         public int Minimum { get; }
         public int Maximum { get; }
         public bool StartingOnly => Kind == ResourceKind.Dice || Kind == ResourceKind.Leaves;
-        public string Marker => "SEPHIRIAONE_RESOURCE_" + Name.ToUpperInvariant();
+        public string Marker { get; }
         public ResourceDefinition(ResourceKind kind, string name, string label, int minimum, int maximum)
-        { Kind = kind; Name = name; Label = label; Minimum = minimum; Maximum = maximum; }
+        { Kind = kind; Name = name; Label = label; Minimum = minimum; Maximum = maximum; Marker = "SEPHIRIAONE_RESOURCE_" + name.ToUpperInvariant(); }
     }
     internal static class ResourceCatalog
     {
@@ -32,7 +32,7 @@ namespace SephiriaOne
         });
         public static ResourceDefinition Get(ResourceKind kind)
         {
-            foreach (var item in All) if (item.Kind == kind) return item;
+            for (int i = 0; i < All.Count; i++) if (All[i].Kind == kind) return All[i];
             throw new ArgumentOutOfRangeException(nameof(kind));
         }
         public static ResourceDefinition? Find(string name)

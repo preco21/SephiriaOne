@@ -166,5 +166,25 @@ internal static class ResourceRuntimeTests
         guest.PlayerAvatar.Inventory.inventoryMatrix[new ItemPosition { x = 5, y = 4 }] = new NewItemOwnInstance();
         check(!Command("slots reset") && host.PlayerAvatar.Inventory.CurrentInventoryStorage == 30 &&
             guest.PlayerAvatar.Inventory.inventoryMatrix.Count == 1, "Occupied trailing slot blocks whole-party reduction before native resize");
+
+        start();
+        check(Command("talents +5"), "Prepare early resource ownership before tracking");
+        WeakReference abandoned = AbandonBeforeSynchronization(add, false);
+        GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
+        check(!abandoned.IsAlive, "Aborted early join is not retained by applied resource cache");
+        abandoned = AbandonBeforeSynchronization(add, true);
+        GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
+        check(!abandoned.IsAlive, "Aborted restored join is not retained by resource checkpoint cache");
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private static WeakReference AbandonBeforeSynchronization(Func<uint, int, int, int, PlayerSpawner> add, bool restored)
+    {
+        var pending = add(999, 7, 4, 0);
+        pending.connectionToClient.isReady = false;
+        if (restored) ResourceRuntime.AcceptRestored(pending.PlayerAvatar, ResourceKind.Talents, "old-checkpoint");
+        else ResourceRuntime.ApplyEarly(pending.PlayerAvatar, ResourceKind.Talents);
+        PlayerSpawner.MultiplayerList.Remove(pending);
+        return new WeakReference(pending.PlayerAvatar);
     }
 }

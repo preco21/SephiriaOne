@@ -9,6 +9,11 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.15.2` reduces steady synchronization allocations with typed observations,
+cached immutable keys, reusable temporary collections and cached name diagnostics.
+Per-frame polling and native-read safety guards remain active. See the measured
+[performance review](performance-review.md) and its fixture/live-profiling limits.
+
 Version `0.15.1` audits [repeated full-quit/reconnect](session-reentry-review.md).
 Inventory/talent checkpoints distinguish their applied command from current host
 intent, honor offline resets safely, and preserve saved native gains as part of

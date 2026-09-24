@@ -17,7 +17,7 @@ namespace SephiriaOne
         private static ReconciliationCoordinator<RelativeTarget> CreateRelativeCoordinator()
         {
             var result = new ReconciliationCoordinator<RelativeTarget>();
-            result.Register(new ReconciliationRule<RelativeTarget>("relative-stat", SyncDomain.Stats, SyncDomain.None,
+            result.Register(ReconciliationRule<RelativeTarget>.ObserveValue("relative-stat", SyncDomain.Stats, SyncDomain.None,
                 ReconcileMode.OnChange, target => subjects.TryGetValue(target.Player, out HostPlayer subject) && subject.IsReady,
                 target => CaptureStat(target.Player, target.Stat), ApplyRelative));
             return result;

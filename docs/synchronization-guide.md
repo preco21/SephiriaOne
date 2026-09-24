@@ -52,7 +52,11 @@ Changing retained intent does not reapply unrelated settings.
 3. Register maintenance with `ReconciliationCoordinator<T>`. Declare typed
    `SyncDomain` inputs/outputs, readiness, an immutable observation with exact
    equality, and an apply function returning a `ReconcileResult`. Dependencies
-   sort at registration; cycles and duplicate IDs fail immediately.
+   sort at registration; cycles and duplicate IDs fail immediately. Use
+   `ReconciliationRule<T>.ObserveValue` for frequently polled values and implement
+   `IEquatable<TSnapshot>` on custom value snapshots. Include every planner input;
+   do not substitute a lossy hash or mutate a retained observation object.
+   `TryGetResult` reads a single outcome without allocating a diagnostic list.
 4. Scope subjects by object lifetime, and call `Forget` on departure and `Clear`
    at teardown. Keep one-time inheritance separate from continuing maintenance.
    `AcceptObservation` is only for separately validated command/recovery work,
@@ -66,6 +70,10 @@ Changing retained intent does not reapply unrelated settings.
 
 The coordinator is independent of Unity. Existing tests register synthetic
 dependent rules without adding feature branches to its core.
+
+Version `0.15.2` removes repeated boxing/string construction from unchanged
+observations without changing polling cadence or native-read guards. See the
+[performance measurements and allocation checks](performance-review.md).
 `OnChange` rules capture their post-write observation, coalesce invalidations,
 and bound reentrant processing to four passes. Nested flushes report unavailable.
 `Once` rules do not silently retry a rejected enrollment after a native edit.
