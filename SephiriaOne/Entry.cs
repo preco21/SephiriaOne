@@ -15,6 +15,7 @@ namespace SephiriaOne
             ChoiceFeature.Initialize();
             SessionBoundaryFeature.Initialize();
             ResourceFeature.Initialize();
+            DisconnectDiagnosticsFeature.Initialize();
             if (!nameColor)
             {
                 var controller = new GameObject("SephiriaOne.Controllers");
@@ -38,6 +39,7 @@ namespace SephiriaOne
             // Keep controllers/guards available if verified cleanup needs recovery.
             ChoiceFeature.Shutdown();
             ResourceFeature.Shutdown();
+            DisconnectDiagnosticsFeature.Shutdown();
             if (settingsPanel)
             {
                 settingsPanel.enabled = false;

@@ -17,7 +17,7 @@ per-frame synchronization, native-read guards, host authority and command semant
 
 The repository workflow commits and pushes the verified changes together.
 
-The probe runs real addon synchronization over four game API fixtures, with 100
+The original probe ran real addon synchronization over four game API fixtures, with 100
 raw entries and 24 occupied slots per player, after 2,000 warm-up ticks. The active
 case enables ten relative stats, Fountain multiplier, choices and three live
 resources. It measures 10,000 unchanged ticks using per-thread allocation counters.
@@ -33,7 +33,9 @@ dotnet run --project tests/SephiriaOne.RuntimeTests -c Release -p:DeployMod=fals
 dotnet run --project tests/SephiriaOne.RuntimeTests -c Release -p:DeployMod=false -- --perf-check
 ```
 
-The allocation check allows 1 KiB per unchanged four-player tick; it does not assert
+As of 0.15.3 the probe uses **five players**, matching the disconnect investigation;
+the historical four-player measurements below are unchanged. The allocation
+check still allows 1 KiB per unchanged tick and does not assert
 wall-clock timing. Unity/Mirror transport and rendering costs require live profiling.
 
 ## Changes in 0.15.2

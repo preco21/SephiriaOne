@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
 using Mirror;
@@ -12,6 +13,11 @@ namespace SephiriaOne
         private static Harmony harmony;
         public static bool Available { get; private set; }
 
+        private sealed class TalentLoadRejectedException : InvalidOperationException
+        {
+            public TalentLoadRejectedException(string message, Exception inner) : base(message, inner) { }
+        }
+
         public static void Install()
         {
             if (harmony != null) return;
@@ -20,6 +26,8 @@ namespace SephiriaOne
             {
                 Patch(instance, typeof(PlayerAvatar), nameof(PlayerAvatar.LoadPassiveStatOnServer),
                     new[] { typeof(PlayerAvatar.PassiveStatSaveData[]) }, nameof(BeforeTalentLoad));
+                instance.Patch(FindTalentCommand(),
+                    finalizer: new HarmonyMethod(typeof(ResourceBudgetHooks), nameof(EndTalentCommand)));
                 Patch(instance, typeof(DungeonManager), nameof(DungeonManager.LoadStageAndMove),
                     new[] { typeof(string) }, nameof(BeforeFirstDeparture), nameof(GuardFruitRead));
                 var save = AccessTools.DeclaredMethod(typeof(PlayerSpawner), nameof(PlayerSpawner.SaveCurrentSessionData), Type.EmptyTypes);
@@ -74,8 +82,38 @@ namespace SephiriaOne
                 ResourceRuntime.Report(message);
                 // Returning false would let CmdSetDefaultPlayerData continue initialization
                 // with an empty/partial talent state, which a later native save can persist.
+                if (error is InvalidOperationException) throw new TalentLoadRejectedException(message, error);
                 throw new InvalidOperationException(message, error);
             }
+        }
+
+        private static MethodInfo FindTalentCommand()
+        {
+            MethodInfo found = null;
+            foreach (MethodInfo method in AccessTools.GetDeclaredMethods(typeof(PlayerAvatar)))
+            {
+                if (!method.Name.StartsWith("UserCode_CmdLoadPassiveStat__", StringComparison.Ordinal)) continue;
+                var parameters = method.GetParameters();
+                if (found != null || method.IsStatic || method.ReturnType != typeof(void) || parameters.Length != 1 ||
+                    parameters[0].ParameterType != typeof(PlayerAvatar.PassiveStatSaveData[]))
+                    throw new MissingMethodException("The native standalone talent command changed.");
+                found = method;
+            }
+            return found ?? throw new MissingMethodException("The native standalone talent command is unavailable.");
+        }
+
+        private static Exception EndTalentCommand(PlayerAvatar __instance, Exception __exception)
+        {
+            // This woven command only loads a menu preset. Let a recognized addon
+            // refusal unwind it without reaching Mirror's disconnect-on-exception
+            // handler. Initial CmdSetDefaultPlayerData must still abort on refusal:
+            // catching there would permit partially initialized data to be saved.
+            // Exceptions from the command/native loader body keep their behavior.
+            if (!(__exception is TalentLoadRejectedException)) return __exception;
+            // A diagnostic/UI failure must not replace the refusal with another
+            // exception that Mirror would treat as a malformed remote command.
+            try { ResourceRuntime.ReportTalentRejection(__instance.netId); } catch { }
+            return null;
         }
 
         private static void AfterSave(PlayerSpawner __instance)

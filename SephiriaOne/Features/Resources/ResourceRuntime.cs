@@ -36,6 +36,14 @@ namespace SephiriaOne
         }
         public static void Report(string message) => Debug.LogWarning("[SephiriaOne] " + message);
 
+        public static void ReportTalentRejection(uint playerId)
+        {
+            string text = "[SephiriaOne] Player #" + playerId + " talent preset was not applied. Any preceding native menu reset remains in effect. " +
+                "Choose a loadout within the budget or raise it before retrying; the addon did not disconnect the player.";
+            Debug.LogWarning(text);
+            if (GameLogWriter.Instance) GameLogWriter.Instance.WriteLog(text, Color.yellow);
+        }
+
         public static void AcceptRestored(PlayerAvatar player, ResourceKind kind, string intent = "")
         {
             var values = restored.GetOrCreateValue(player);

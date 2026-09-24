@@ -752,6 +752,7 @@ MultiplierRuntimeTests.Run(Check, Start, Add);
 ResourceRuntimeTests.Run(Check, Start, Add);
 ReentryRuntimeTests.Run(Check, Start, Add);
 NameRuntimeTests.Run(Check, Start, Add);
+DisconnectRuntimeTests.Run(Check, Start, Add);
 Check(SettingsActions.IsCommand("/resources slots +6"), "Resource command family is recognized by shared controls");
 
 if (Directory.Exists(testDataRoot)) Directory.Delete(testDataRoot, true);

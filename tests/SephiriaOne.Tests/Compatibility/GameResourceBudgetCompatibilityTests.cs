@@ -33,6 +33,13 @@ internal static class GameResourceBudgetCompatibilityTests
         if (load == null || !load.IsPublic || load.ReturnType != typeof(void) ||
             savedTalent.GetField("id")?.FieldType != typeof(ulong) || savedTalent.GetField("point")?.FieldType != typeof(int))
             throw new Exception("The native saved-talent boundary changed.");
+        Type budgetHooks = addon.GetType("SephiriaOne.ResourceBudgetHooks", true)!;
+        MethodInfo command = (MethodInfo)AccessTools.DeclaredMethod(budgetHooks, "FindTalentCommand").Invoke(null, null)!;
+        var body = PatchProcessor.GetOriginalInstructions(command).ToList();
+        var calls = body.Where(i => i.operand is MethodInfo).ToList();
+        if (command.Name != "UserCode_CmdLoadPassiveStat__PassiveStatSaveData[]" ||
+            calls.Count != 1 || !calls[0].Calls(load))
+            throw new Exception("Standalone talent command is no longer a single native load; rejection handling needs review.");
         Console.WriteLine("Verified installed-game talent, fruit, inventory capacity and notification contracts.");
     }
 

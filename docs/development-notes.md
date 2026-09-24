@@ -1,6 +1,6 @@
 # SephiriaOne development notes
 
-Recorded: 2026-09-23; updated: 2026-09-24 (Asia/Seoul).
+Recorded: 2026-09-23; updated: 2026-09-25 (Asia/Seoul).
 
 This document records the project history, current implementation, and modding
 findings collected during the initial investigation. Installed-game observations
@@ -8,6 +8,13 @@ apply to the assembly fingerprint below. Reference repositories and documentatio
 can change independently of that installed game version.
 
 ## Current status
+
+Version `0.15.3` investigates [two multiplayer disconnects](disconnect-investigation.md).
+Their cause remains unconfirmed. A separate live talent-preset rejection no longer
+escapes into Mirror's disconnect handler; initial save-restoration guards remain.
+Event-only diagnostics record Steam close reasons and raw sync context before
+teardown, with no network messages or reconciliation. Five-player departure/re-entry
+and unchanged-write coverage was added. This version has not been deployed.
 
 Version `0.15.2` reduces steady synchronization allocations with typed observations,
 cached immutable keys, reusable temporary collections and cached name diagnostics.

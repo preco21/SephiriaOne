@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>SephiriaOne</AssemblyName>
-    <Version>0.15.2</Version>
+    <Version>0.15.3</Version>
     <RootNamespace>SephiriaOne</RootNamespace>
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>disable</Nullable>
@@ -31,6 +31,15 @@
 
     <Reference Include="Mirror">
       <HintPath>$(GameManagedDir)\Mirror.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <Reference Include="FizzySteamworks">
+      <HintPath>$(GameManagedDir)\FizzySteamworks.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="com.rlabrecque.steamworks.net">
+      <HintPath>$(GameManagedDir)\com.rlabrecque.steamworks.net.dll</HintPath>
       <Private>false</Private>
     </Reference>
 

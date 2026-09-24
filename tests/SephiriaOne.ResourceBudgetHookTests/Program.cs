@@ -29,6 +29,36 @@ Check("Fruit recovery refuses newly committed selections before raw write", () =
 
 Check("Hooks install and native saved load sees raised budget before its body", () => { ResourceBudgetHooks.Install(); Assert(ResourceBudgetHooks.Available, "Hooks unavailable"); var p = new PlayerAvatar(); ResourceRuntime.Managed.Add(ResourceKind.Talents); ResourceRuntime.Apply = (player, kind, minimum) => player.maxPassivePoint = minimum; p.LoadPassiveStatOnServer(new[] { Pick(1, 10) }); Assert(p.NativeLoadCalls == 1 && p.maxPassivePoint == 10, "Budget not applied before load"); });
 Check("Unsafe managed talent load throws before native selections mutate", () => { var p = new PlayerAvatar(); ResourceRuntime.Managed.Add(ResourceKind.Talents); Throws(() => p.LoadPassiveStatOnServer(new[] { Pick(1, 10) })); Assert(p.NativeLoadCalls == 0 && ResourceRuntime.Messages.Count > 0, "Load continued or no error reported"); });
+Check("Live talent command rejects an over-budget preset without escaping to Mirror", () =>
+{
+    var p = new PlayerAvatar(); ResourceRuntime.Managed.Add(ResourceKind.Talents);
+    p.passiveStats[2] = 2;
+    p.ReceiveTalentCommand(new[] { Pick(1, 10) });
+    Assert(p.NativeLoadCalls == 0 && p.passiveStats[2] == 2 && ResourceRuntime.Messages.Count > 0,
+        "Rejected live load mutated selections or was not reported");
+    p.ReceiveTalentCommand(new[] { Pick(1, 2) });
+    Assert(p.NativeLoadCalls == 1, "A rejected command blocked a later valid request");
+});
+Check("Native exceptions still escape the standalone talent command", () =>
+{
+    var p = new PlayerAvatar { BeforeNativeLoad = () => throw new InvalidOperationException("native failure") };
+    Throws(() => p.ReceiveTalentCommand(new[] { Pick(1, 2) }));
+    Assert(p.NativeLoadCalls == 0, "Unexpected native failure swallowed");
+});
+Check("Unexpected guard failure still escapes the standalone talent command", () =>
+{
+    var p = new PlayerAvatar(); ResourceRuntime.Managed.Add(ResourceKind.Talents);
+    ResourceRuntime.Apply = (_, _, _) => throw new NullReferenceException("unexpected guard failure");
+    Throws(() => p.ReceiveTalentCommand(new[] { Pick(1, 2) }));
+    Assert(p.NativeLoadCalls == 0, "Unexpected prefix failure continued into native load");
+});
+Check("Live talent rejection preserves unresolved write recovery", () =>
+{
+    var p = new PlayerAvatar(); ResourceRuntime.Managed.Add(ResourceKind.Talents);
+    ResourceRuntime.Apply = (_, _, _) => { SessionSettings.ResourceWritesBlocked = true; throw new InvalidOperationException("partial write requires recovery"); };
+    p.ReceiveTalentCommand(new[] { Pick(1, 2) });
+    Assert(SessionSettings.ResourceWritesBlocked && p.NativeLoadCalls == 0, "Rejection cleared fault or loaded a partial budget");
+});
 Check("Unmanaged native talent load is unchanged", () => { var p = new PlayerAvatar(); p.LoadPassiveStatOnServer(new[] { Pick(1, 10) }); Assert(p.NativeLoadCalls == 1, "Vanilla native load blocked"); });
 Check("Managed fruit zero with a selected piece blocks native grant entirely", () => { var p = new PlayerAvatar(); Piece(p); p.customStats["FRUITCOUNT"] = -6; Connect(p); ResourceRuntime.Managed.Add(ResourceKind.Fruit); var d = new DungeonManager(); Throws(() => d.LoadStageAndMove("dungeon")); Assert(d.NativeCalls == 0, "Native first piece leaked at zero"); });
 Check("Managed fruit zero empty composition is valid", () => { var p = new PlayerAvatar(); p.customStats["FRUITCOUNT"] = -6; Connect(p); ResourceRuntime.Managed.Add(ResourceKind.Fruit); var d = new DungeonManager(); d.LoadStageAndMove("dungeon"); Assert(d.NativeCalls == 1, "Empty zero grant blocked"); });

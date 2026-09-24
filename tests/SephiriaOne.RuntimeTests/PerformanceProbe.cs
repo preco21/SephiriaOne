@@ -13,7 +13,7 @@ internal static class PerformanceProbe
         foreach (bool active in new[] { false, true })
         {
             start();
-            for (uint i = 2; i <= 4; i++) add(i, (int)i * 3, (int)i, 0);
+            for (uint i = 2; i <= 5; i++) add(i, (int)i * 3, (int)i, 0);
             foreach (var spawner in PlayerSpawner.MultiplayerList)
             {
                 for (int i = 0; i < 100; i++) spawner.PlayerAvatar.customStats["native-fixture-" + i] = i;
@@ -33,7 +33,7 @@ internal static class PerformanceProbe
             for (int i = 0; i < iterations; i++) SessionSettings.Synchronize();
             double us = Stopwatch.GetElapsedTime(time).TotalMicroseconds / iterations;
             double allocated = (GC.GetAllocatedBytesForCurrentThread() - before) / (double)iterations;
-            Console.WriteLine($"Four players / {(active ? "all active" : "no settings")}: {allocated:F0} bytes/tick, {us:F2} us/tick ({iterations} iterations)");
+            Console.WriteLine($"Five players / {(active ? "all active" : "no settings")}: {allocated:F0} bytes/tick, {us:F2} us/tick ({iterations} iterations)");
             if (checkBudget && allocated > 1024)
                 throw new Exception("Unchanged synchronization exceeds the 1 KiB/tick allocation budget.");
         }
