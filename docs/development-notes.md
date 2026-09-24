@@ -9,6 +9,11 @@ can change independently of that installed game version.
 
 ## Current status
 
+Investigated [five additional resource/capacity settings](resource-settings-investigation.md):
+initial dice, inventory slots, talent points, fruit-skewer points and initial
+leaves. All have native host-to-guest paths, but need phase-aware grant/load
+handling and safe reductions. This is research only; runtime remains `0.13.0`.
+
 Version `0.13.0` adds a [host settings control panel](control-panel.md), opened
 from the pause menu or `/mod ui`. Stats, Fountain, choices, presets and status
 share validated actions and read-only snapshots with chat. The panel uses native
@@ -210,6 +215,12 @@ Stages 1–14 occurred on 2026-09-23; candidate expansion continued on 2026-09-2
     after native callback failures and a clear unavailable-choice message. See the
     [implementation record](control-panel-implementation.md) for verification.
     No deployment or live Unity/multiplayer test was performed.
+30. Investigated five resource/capacity controls against the installed assembly.
+    Distinguished initial grants from spendable balances, traced early inventory
+    and talent restore hazards, verified native budget/resize transport, and
+    documented local-profile/menu limits and the two-phase starting-leaf grant.
+    Proposed shared resource definitions and initialization boundaries; no
+    runtime code, addon build, game execution, save modification or deployment occurred.
 
 The repository already contained commits `c793844` (Git configuration files) and
 `736b305` (initial project files). The scaffold adjustments and deployment work
