@@ -283,7 +283,7 @@ new known-field consumers or changed hook signatures for review; it cannot prove
 semantic UI coverage. Unity rendering and transport still require live tests with
 host, modded guest, and unmodified guest across repeated runs.
 
-Extend `/mod status` with intent revision, per-player application outcome,
+Extend `/one status` with intent revision, per-player application outcome,
 suspension/rejection/fault reason, critical-hook availability, and local UI
 coverage. Logging records transitions rather than repeating the same warning
 every frame. Successful native writes must not be labeled "all peers rendered".

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../SephiriaOne/Features/Resources/Starting/*.cs" Link="Source/Starting/%(Filename)%(Extension)" />
+    <Compile Include="../../SephiriaOne/Features/Resources/ResourceCommand.cs" Link="Source/ResourceCommand.cs" />
+    <Compile Include="../../SephiriaOne/Features/Resources/ResourcePolicy.cs" Link="Source/ResourcePolicy.cs" />
+    <Compile Include="../../SephiriaOne/Controls/RelativeMultiplier.cs" Link="Source/RelativeMultiplier.cs" />
+    <PackageReference Include="Lib.Harmony" Version="2.4.2" />
+  </ItemGroup>
+</Project>

@@ -1,7 +1,7 @@
 # Host settings panel
 
 Added in `0.13.0`. In a hosted town or run, open the pause menu and click
-**SephiriaOne** in its upper-right corner, or enter **`/mod ui`** in chat.
+**SephiriaOne** in its upper-right corner, or enter **`/one ui`** in chat.
 Close with **X** or the game's existing Escape/cancel action. No new hotkey or
 binding is installed. The first version uses mouse controls and keyboard entry;
 full gamepad navigation is not implemented.
@@ -17,6 +17,7 @@ effects use the same native synchronization as the existing commands.
 | Stats | Select one of the ten supported stats with the arrows, enter an amount, then Set, Add or Subtract. Reset selected or all stats. Current per-player values use the stat's displayed units. |
 | Fountain | Set, add or subtract whole-number points for everyone; reset the addon adjustment. Shows current capacity and tracked contribution per player. |
 | Choices | Select all, item, weapon or miracle. Set/add/subtract **extra** candidates, or reset selected/all categories. Shows current effective native extra-choice stats. |
+| Resources | Select dice, inventory slots, talents, fruit-skewer budget or leaves. Set/add/subtract, `xN`, and selected/all resets. Dice/leaves show current balance separately from the next fresh starting allowance. |
 | Presets | Save current applied settings, forget the saved copy, or refresh it from disk. Active intent and saved intent are shown separately. |
 | Status | Current intent, player values, revisions, synchronization outcomes, native name status and fault details. Scroll for the complete readout. |
 
@@ -45,7 +46,9 @@ Save stores applied intent, excluding any text still in the amount field.
 Forget removes only the saved copy. Resets affect the current session; save again
 to replace a saved preset, or forget it to stop automatic loading in future hosted
 sessions. Automatic-load rules are unchanged; presets containing multipliers
-use v2 while older setting types retain v1 compatibility.
+use v2, resource presets use v3, and older setting types retain v1 compatibility.
+See [resource semantics and safe reductions](resource-command.md). Since 0.15.0,
+`/one` replaces the old generic `/mod` token, which is no longer intercepted.
 
 The name gradient remains automatic, fixed at `#408af1` to `#a8d7fa` and read-only.
 The panel does not add color settings or style platform lobby names. See the

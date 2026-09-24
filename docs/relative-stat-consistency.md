@@ -95,7 +95,7 @@ no deployment script ran. Fixtures use isolated temporary preset paths and do no
 exercise Unity or a live Mirror connection.
 
 For live verification after manual installation, host with an unmodified guest
-whose native luck differs. Compare `/mod status` and both character panels after
+whose native luck differs. Compare `/one status` and both character panels after
 `+10`, `+5`, `set 100`, and `+10`. Equip/remove multiplier gear and native bonuses,
 join/reconnect another guest, restart a run, and reset. Save, fully restart, and
 repeat. Test an unrepresentable offset for one player: verify one warning, native

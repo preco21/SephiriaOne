@@ -94,7 +94,7 @@ namespace SephiriaOne
         {
             error = "Only the host can open session settings.";
             if (!NetworkServer.active) return false;
-            error = "Settings UI is not ready. Enter town or a run, then try /mod ui again.";
+            error = "Settings UI is not ready. Enter town or a run, then try /one ui again.";
             if (!current || !current.enabled || !current.manager || !current.manager.connectedPlayer ||
                 !current.pause || !current.pause.ParentRoot || !current.font) return false;
             if (current.cleanupPending)

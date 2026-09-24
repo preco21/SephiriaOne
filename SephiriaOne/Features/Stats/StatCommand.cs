@@ -72,7 +72,7 @@ namespace SephiriaOne
         public StatDefinition? Stat { get; }
         public StatOperation Operation { get; }
         public decimal Amount { get; }
-        public const string Usage = "Host only, current and joining players: /stats luck 100, +10, -5, x3, or set|add|sub N. xN targets each player's native displayed stat times N; repeated xN replaces the factor. Deltas accumulate; a delta after Set or xN starts a new native offset. " + RelativeMultiplier.Usage + " Reset: /stats luck reset or /stats reset. Names/units: /stats list. Active values: /mod status. Save: /mod save.";
+        public const string Usage = "Host only, current and joining players: /stats luck 100, +10, -5, x3, or set|add|sub N. xN targets each player's native displayed stat times N; repeated xN replaces the factor. Deltas accumulate; a delta after Set or xN starts a new native offset. " + RelativeMultiplier.Usage + " Reset: /stats luck reset or /stats reset. Names/units: /stats list. Active values: /one status. Save: /one save.";
 
         internal StatCommand(StatDefinition? stat, StatOperation operation, decimal amount)
         {

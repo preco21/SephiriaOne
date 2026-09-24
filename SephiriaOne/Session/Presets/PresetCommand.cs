@@ -7,13 +7,13 @@ namespace SephiriaOne
 
     internal static class PresetCommand
     {
-        public const string Usage = "Host only: /mod status shows active settings and player values; /mod save saves them for future hosted sessions; /mod forget removes the saved preset without changing this session.";
+        public const string Usage = "Host only: /one status shows active settings and player values; /one save saves them for future hosted sessions; /one forget removes the saved preset without changing this session.";
 
         public static PresetAction Parse(string? text, out string error)
         {
             error = Usage;
             string[] parts = (text ?? "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length == 0 || !parts[0].Equals("/mod", StringComparison.OrdinalIgnoreCase)) return PresetAction.NotCommand;
+            if (parts.Length == 0 || !parts[0].Equals("/one", StringComparison.OrdinalIgnoreCase)) return PresetAction.NotCommand;
             if (parts.Length == 1) return PresetAction.Help;
             if (parts.Length != 2) return PresetAction.Invalid;
             switch (parts[1].ToLowerInvariant())

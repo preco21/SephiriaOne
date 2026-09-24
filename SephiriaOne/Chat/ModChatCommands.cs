@@ -58,7 +58,7 @@ namespace SephiriaOne
                     submit.AddListener(original);
                 }
 
-                Debug.Log("[SephiriaOne] Chat commands bound: /fountain, /choices, /stats, /mod");
+                Debug.Log("[SephiriaOne] Chat commands bound: /fountain, /choices, /stats, /resources, /one");
             }
             catch (Exception exception)
             {

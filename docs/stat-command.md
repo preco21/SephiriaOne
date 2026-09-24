@@ -10,8 +10,8 @@ character's native stats, excluding this addon's contribution. The host maintain
 that offset when equipment, buffs, or multipliers change. Absolute `set` remains
 a one-time adjustment per avatar. Successful commands are retained in memory and
 inherited by newly ready players; see [session inheritance](session-inheritance.md).
-Since `0.10.0`, `/mod status` shows current values and tracked adjustments for all
-ready players, and `/mod save` stores active settings for future hosted sessions.
+Since `0.10.0`, `/one status` shows current values and tracked adjustments for all
+ready players, and `/one save` stores active settings for future hosted sessions.
 See [status and preset commands](session-preset.md) for saving and removal.
 
 Examples: `/stats luck +10`, `/stats luck -5`, `/stats luck set 100`,
@@ -64,7 +64,7 @@ rejects the whole batch before any write.
 After a successful relative adjustment, changed native inputs trigger host-side
 recalculation in `LateUpdate`. If the requested offset becomes unrepresentable or
 outside the command bounds, remove only its addon contribution, warn once, and
-retry when inputs change. `/mod status` marks it as suspended. A failed initial
+retry when inputs change. `/one status` marks it as suspended. A failed initial
 inheritance remains rejected until an explicit command succeeds. See the
 [relative-stat audit](relative-stat-consistency.md) for arithmetic and limitations.
 

@@ -71,7 +71,7 @@ internal static class MultiplierRuntimeTests
         host.PlayerAvatar.Inventory.dimensionPocket += 1;
         SessionSettings.Synchronize();
         check(Points(host) == 9, "Compatible native change automatically resumes Fountain multiplier");
-        check(Do("/stats luck x3") && Do("/mod save"), "Explicit preset saves retained multipliers");
+        check(Do("/stats luck x3") && Do("/one save"), "Explicit preset saves retained multipliers");
         SessionSettings.Stop();
         PlayerSpawner.MultiplayerList.Clear();
         DungeonManager.Instance = new DungeonManager();

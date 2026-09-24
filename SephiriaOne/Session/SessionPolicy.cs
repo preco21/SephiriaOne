@@ -68,7 +68,8 @@ namespace SephiriaOne
         private Setting? fountain;
         private readonly Dictionary<string, int> choices = new Dictionary<string, int>();
         private readonly Dictionary<StatDefinition, Setting> stats = new Dictionary<StatDefinition, Setting>();
-        public bool HasChanges => fountain.HasValue || choices.Count != 0 || stats.Count != 0;
+        public ResourcePolicy Resources { get; } = new ResourcePolicy();
+        public bool HasChanges => fountain.HasValue || choices.Count != 0 || stats.Count != 0 || Resources.HasChanges;
         public bool HasFountainSetting => fountain.HasValue;
         public bool HasFountainMultiplier => fountain.HasValue && fountain.Value.Multiplier;
 
@@ -108,6 +109,7 @@ namespace SephiriaOne
             fountain = null;
             choices.Clear();
             stats.Clear();
+            Resources.Clear();
         }
 
         public bool TryPlan(SessionPlayerSnapshot player, out SessionPlan plan, out string error)

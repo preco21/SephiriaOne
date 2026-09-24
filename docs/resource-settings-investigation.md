@@ -4,6 +4,10 @@ Investigated 2026-09-24 against addon `0.13.0` and installed Sephiria `1.0.33`.
 This is a feasibility report and proposed design. No runtime feature was added,
 game executed, save changed, addon build run or addon deployed.
 
+Follow-up: implemented in `0.15.0`; see [resource controls](resource-command.md).
+The user confirmed future starting grants only for dice/leaves. The historical
+proposal below records the original investigation, not current implementation status.
+
 ## Conclusion and scope
 
 All five requested settings have native paths that can affect unmodified guests

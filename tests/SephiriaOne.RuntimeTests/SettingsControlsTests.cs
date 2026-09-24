@@ -29,19 +29,19 @@ internal static class SettingsControlsTests
             "Shared dispatcher runs the existing stats service");
         check(Execute("/stats armor 12").Success && Value(host, "DAMAGEREDUCTION") == 12,
             "Shared dispatcher preserves parser aliases");
-        check(Execute("/mod save").Success && File.Exists(SavedPath()), "Shared dispatcher saves presets");
-        check(Execute("/mod status").Success && Execute("/mod forget").Success && !File.Exists(SavedPath()),
+        check(Execute("/one save").Success && File.Exists(SavedPath()), "Shared dispatcher saves presets");
+        check(Execute("/one status").Success && Execute("/one forget").Success && !File.Exists(SavedPath()),
             "Shared dispatcher routes status and forget presets");
 
         var guest = add(2, 7, 9, 3);
         int writes = host.PlayerAvatar.customStats.Writes + guest.PlayerAvatar.customStats.Writes;
-        foreach (string local in new[] { " /FoUnTaIn nope", "/choices", "/stats unknown", "/mod ui", "/mod unknown" })
+        foreach (string local in new[] { " /FoUnTaIn nope", "/choices", "/stats unknown", "/one ui", "/one unknown" })
             check(IsCommand(local), "Pure command recognition reserves each complete local prefix: " + local);
-        foreach (string unknown in new[] { null, "", "ordinary chat", "/fountains 1", "/choices-extra", "/stats1", "/modded" })
+        foreach (string unknown in new[] { null, "", "ordinary chat", "/fountains 1", "/choices-extra", "/stats1", "/modded", "/mod ui", "/mod status", "/mod save" })
             check(!IsCommand(unknown), "Pure command recognition leaves other chat alone");
         check(writes == host.PlayerAvatar.customStats.Writes + guest.PlayerAvatar.customStats.Writes && Value(guest) == 7,
             "Pure recognition makes no game writes or pending-join synchronization");
-        foreach (string invalid in new[] { "/fountain NaN", "/choices item 21", "/stats luck nope", "/mod invalid", "/mod ui extra" })
+        foreach (string invalid in new[] { "/fountain NaN", "/choices item 21", "/stats luck nope", "/one invalid", "/one ui extra" })
         {
             action = Execute(invalid);
             check(action.Recognized && !action.Success && !action.OpenPanel && action.Messages.Count > 0,
@@ -57,12 +57,12 @@ internal static class SettingsControlsTests
         }
 
         NetworkServer.active = false;
-        foreach (string denied in new[] { "/fountain 10", "/choices item 3", "/stats luck 12", "/mod save", "/mod status", "/mod forget", "/mod ui" })
+        foreach (string denied in new[] { "/fountain 10", "/choices item 3", "/stats luck 12", "/one save", "/one status", "/one forget", "/one ui" })
         {
             action = Execute(denied);
             check(action.Recognized && !action.Success && !action.OpenPanel, "Shared dispatcher rejects guests: " + denied);
         }
-        foreach (string local in new[] { "/fountain", "/choices", "/stats", "/stats list", "/mod help" })
+        foreach (string local in new[] { "/fountain", "/choices", "/stats", "/stats list", "/one help" })
         {
             action = Execute(local);
             check(action.Recognized && action.Success && !action.OpenPanel && action.Messages.Count > 0,
@@ -74,12 +74,12 @@ internal static class SettingsControlsTests
         host = start();
         int loggedErrors = UnityEngine.Debug.Errors.Count;
         host.PlayerAvatar.BeforeRead = key => throw new InvalidOperationException("simulated status read failure");
-        action = Execute("/mod status");
+        action = Execute("/one status");
         check(action.Recognized && !action.Success && !action.OpenPanel &&
             action.Messages[0] == "Preset command failed. Check Player.log for details." && UnityEngine.Debug.Errors.Count == loggedErrors + 1,
             "Shared dispatcher catches a service exception once and returns the existing failure text");
         host.PlayerAvatar.BeforeRead = null;
-        action = Execute(" /MOD UI ");
+        action = Execute(" /one UI ");
         check(action.Recognized && action.Success && action.OpenPanel,
             "Host UI action is a panel request without preparing the session");
         var snapshot = Snapshot();
@@ -172,15 +172,15 @@ internal static class SettingsControlsTests
         Directory.CreateDirectory(Path.GetDirectoryName(SavedPath()));
         File.WriteAllText(SavedPath(), "corrupt external preset");
         check(Snapshot().SavedValid, "Polling snapshots reuse the saved file cache");
-        check(!Snapshot(true).SavedValid && !Execute("/mod status").Success,
+        check(!Snapshot(true).SavedValid && !Execute("/one status").Success,
             "Explicit refresh and status expose malformed saved data");
-        check(Execute("/stats luck +3").Success && Execute("/mod save").Success && Snapshot().SavedValid &&
+        check(Execute("/stats luck +3").Success && Execute("/one save").Success && Snapshot().SavedValid &&
             Lines(Snapshot()).Any(line => line.Contains("Saved for future hosted sessions: stats luck offset 3")),
             "Save invalidates cached saved validity and content");
         File.WriteAllText(SavedPath(), "corrupt external preset again");
-        check(Snapshot().SavedValid && !Execute("/mod status").Success && !Snapshot().SavedValid,
+        check(Snapshot().SavedValid && !Execute("/one status").Success && !Snapshot().SavedValid,
             "Status explicitly refreshes and shares the saved cache with polling");
-        check(Execute("/mod forget").Success && Snapshot().SavedValid &&
+        check(Execute("/one forget").Success && Snapshot().SavedValid &&
             Lines(Snapshot()).Any(line => line.StartsWith("Saved preset: none.")), "Forget invalidates the saved file cache");
 
         snapshot = Snapshot();
@@ -214,9 +214,9 @@ internal static class SettingsControlsTests
         SessionSettings.Synchronize();
         snapshot = Snapshot(true);
         check(Active(snapshot)?.Count == 0 && Saved(snapshot)?.Count == 0 &&
-            SavedSummary(snapshot) == "Saved preset: none. Use /mod save to store active settings.",
+            SavedSummary(snapshot) == "Saved preset: none. Use /one save to store active settings.",
             "Preset view exposes explicit empty retained policies and a missing-file summary");
-        check(Execute("/stats luck +10").Success && Execute("/mod save").Success,
+        check(Execute("/stats luck +10").Success && Execute("/one save").Success,
             "Prepare matching applied and saved preset views");
         var savedTen = Snapshot();
         check(Active(savedTen).SequenceEqual(new[] { "stats luck offset 10" }) &&
@@ -242,12 +242,12 @@ internal static class SettingsControlsTests
         check(!snapshot.SavedValid && Saved(snapshot).Count == 0 &&
             SavedSummary(snapshot) == "Invalid saved preset; no saved settings were applied." &&
             Lines(snapshot).Contains(SavedSummary(snapshot)), "Invalid saved data exposes no misleading retained settings");
-        check(Execute("/mod save").Success && Saved(Snapshot()).SequenceEqual(new[] { "stats luck offset 15" }),
+        check(Execute("/one save").Success && Saved(Snapshot()).SequenceEqual(new[] { "stats luck offset 15" }),
             "Saving invalidates the policy view cache");
-        check(Execute("/mod forget").Success && Saved(Snapshot()).Count == 0 &&
-            SavedSummary(Snapshot()) == "Saved preset: none. Use /mod save to store active settings.",
+        check(Execute("/one forget").Success && Saved(Snapshot()).Count == 0 &&
+            SavedSummary(Snapshot()) == "Saved preset: none. Use /one save to store active settings.",
             "Forgetting clears the saved policy view and summary");
-        check(Execute("/stats reset").Success && Execute("/mod save").Success &&
+        check(Execute("/stats reset").Success && Execute("/one save").Success &&
             Active(Snapshot()).Count == 0 && Saved(Snapshot()).Count == 0 &&
             SavedSummary(Snapshot()) == "Saved for future hosted sessions: empty (no adjustments).",
             "An explicitly saved empty policy is distinguished from no saved file");

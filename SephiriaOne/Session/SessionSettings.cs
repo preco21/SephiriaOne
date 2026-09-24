@@ -32,8 +32,11 @@ namespace SephiriaOne
         {
             var result = new ReconciliationCoordinator<HostPlayer>();
             result.Register(new ReconciliationRule<HostPlayer>("session-inheritance", SyncDomain.Identity,
-                SyncDomain.Stats | SyncDomain.Choices | SyncDomain.Fountain, ReconcileMode.Once,
+                SyncDomain.Stats | SyncDomain.Choices | SyncDomain.Fountain | SyncDomain.Resources, ReconcileMode.Once,
                 subject => subject.IsReady, subject => subject.Id, Inherit));
+            result.Register(new ReconciliationRule<HostPlayer>("resources", SyncDomain.Resources,
+                SyncDomain.Resources, ReconcileMode.OnChange, subject => subject.IsReady,
+                subject => ResourceRuntime.Observe(subject.Player), ResourceRuntime.Maintain));
             result.Register(new ReconciliationRule<HostPlayer>("fountain-multiplier", SyncDomain.Fountain,
                 SyncDomain.Fountain, ReconcileMode.OnChange, subject => subject.IsReady,
                 subject => (policy.HasFountainMultiplier, CaptureFountain(subject.Player)), MaintainFountainMultiplier));
@@ -77,6 +80,7 @@ namespace SephiriaOne
         {
             policy.Clear();
             relativeStats.Clear(); relative.Clear();
+            ResourceRuntime.Clear();
             fountainPlayers.Clear(); subjects.Clear(); players.Clear(); session.Clear();
             restoreFountainLimit = false; runGeneration = 0; intentRevision = 0;
             failedBatch = null; failedFeature = null; failedReason = null; recovered = null; criticalFresh = true;
@@ -125,7 +129,7 @@ namespace SephiriaOne
         public static bool Commit(string feature, StateWriteBatch batch, Action remember, out string message)
         {
             if (failedBatch != null || applyingCommand || synchronizing)
-            { message = "Another state write is faulted or still processing. Inspect /mod status before retrying."; return false; }
+            { message = "Another state write is faulted or still processing. Inspect /one status before retrying."; return false; }
             applyingCommand = true;
             try
             {
@@ -164,9 +168,11 @@ namespace SephiriaOne
             Report(message + " Maintenance is paused; use reset for explicit recovery.", false);
         }
 
-        public static bool Synchronize()
+        internal static ResourcePolicy ResourcePolicy => policy.Resources;
+        internal static bool ResourceWritesBlocked => failedBatch != null || applyingCommand;
+        internal static long ResourceGeneration => runGeneration;
+        internal static bool EnsureResourceScope()
         {
-            if (synchronizing || applyingCommand) return false;
             DungeonManager current = enabled && NetworkServer.active ? DungeonManager.Instance : null;
             if (!current || !current.isServer || current.netId == 0) current = null;
             if (!ReferenceEquals(dungeon, current))
@@ -174,7 +180,13 @@ namespace SephiriaOne
                 ClearScope(); dungeon = current; epoch++;
                 if (current) LoadPreset();
             }
-            if (!dungeon) return false;
+            return dungeon;
+        }
+
+        public static bool Synchronize()
+        {
+            if (synchronizing || applyingCommand) return false;
+            if (!EnsureResourceScope()) return false;
             if (failedBatch != null) return true;
             synchronizing = true;
             try
@@ -220,7 +232,7 @@ namespace SephiriaOne
                 failedReason = "Critical synchronization exception: " + error.Message;
             }
             if (!fresh && (!boundaries.TryGetValue(consumer, out bool previous) || previous))
-                Report(consumer + " could not establish fresh addon state; native behavior continues. Inspect /mod status.", false);
+                Report(consumer + " could not establish fresh addon state; native behavior continues. Inspect /one status.", false);
             boundaries[consumer] = fresh;
         }
 
@@ -228,6 +240,7 @@ namespace SephiriaOne
         {
             players.Forget(subject);
             ForgetRelativeStats(subject.Player);
+            ResourceRuntime.Forget(subject.Player);
             fountainPlayers.Remove(subject.Player);
         }
 
@@ -246,6 +259,8 @@ namespace SephiriaOne
             if (plan.Fountain != null) NativeStateWrites.Fountain(batch, dungeon, new[] { player }, plan.Fountain);
             foreach (SessionStatWrite write in plan.Stats)
                 NativeStateWrites.Stat(batch, player, write.Key, write.Marker, write.Raw, write.Contribution);
+            if (!ResourceRuntime.TryAppend(player, batch, out Action rememberResources, out error))
+                return ReconcileResult.Rejected(error);
             if (!batch.TryCommit(out error))
             {
                 if (batch.MayHaveWritten)
@@ -255,6 +270,7 @@ namespace SephiriaOne
                     {
                         if (plan.Fountain != null) fountainPlayers.Add(player);
                         TrackRelativeStats(player, null);
+                        rememberResources();
                         players.AcceptObservation(subject, "session-inheritance");
                     };
                     return ReconcileResult.Faulted(error);
@@ -263,6 +279,7 @@ namespace SephiriaOne
             }
             if (plan.Fountain != null) fountainPlayers.Add(player);
             TrackRelativeStats(player, null);
+            rememberResources();
             Report($"Applied active session settings to joining player {player.netId}.", true);
             return ReconcileResult.Applied();
         }

@@ -104,8 +104,35 @@ namespace SephiriaOne
                     choiceDescriptions.Add(names[i] + "=" + value + " (addon " + Signed(contribution) + ")");
                 }
                 lines.Add(label + "extra choices: " + string.Join(", ", choiceDescriptions));
+                var resources = new Dictionary<string, string>();
+                foreach (var definition in ResourceCatalog.All)
+                {
+                    string description;
+                    try
+                    {
+                        var value = ResourceNative.Capture(player, definition.Kind);
+                        if (!ResourcePlanner.TryValue(value, true, out int native) || !ResourcePlanner.TryValue(value, false, out int total))
+                            description = "Native arithmetic unavailable.";
+                        else if (definition.StartingOnly)
+                        {
+                            int target = native;
+                            bool valid = !sameSession || !policy.Resources.TryGet(definition.Kind, out ResourceSetting setting) ||
+                                setting.TryTarget(native, definition.Minimum, definition.Maximum, out target, out _);
+                            int balance = definition.Kind == ResourceKind.Dice ? player.rerollDice : player.currentMoney;
+                            description = "Current balance " + balance + "; next fresh start " + (valid ? target.ToString() : "invalid") +
+                                " (native " + native + "). Grants already begun stay unchanged.";
+                        }
+                        else description = "Total " + total + " (native " + native + ", addon " + Signed(value.Owned) +
+                            "); " + (definition.Kind == ResourceKind.Slots ? "minimum safe capacity " : "allocated/selected ") + value.MinimumSafe +
+                            (value.Busy ? "; guest menu pending" : "");
+                    }
+                    catch (System.Exception error) { description = "Unavailable: " + error.Message; }
+                    if (!ResourceFeature.IsAvailable(definition.Kind)) description += " " + ResourceFeature.UnavailableReason(definition.Kind);
+                    resources.Add(definition.Name, description);
+                    lines.Add(label + definition.Label + ": " + description);
+                }
                 currentPlayers.Add(new PlayerSettingsSnapshot(player.netId, player.playerNameSource,
-                    player.Inventory.dimensionPocket, fountainOffset, stats, choices));
+                    player.Inventory.dimensionPocket, fountainOffset, stats, choices, resources));
             }
             if (currentPlayers.Count == 0) lines.Add("No ready players; current values are unavailable.");
             if (unavailable.Length == 0)
@@ -116,11 +143,11 @@ namespace SephiriaOne
             SavedPresetSnapshot saved = ReadSavedPreset(refreshSaved);
             IReadOnlyList<string> savedSettings = saved.Valid && saved.Exists ? saved.Policy.DescribeSettings() : Array.Empty<string>();
             string savedSummary = !saved.Valid ? saved.Error : !saved.Exists ?
-                "Saved preset: none. Use /mod save to store active settings." :
+                "Saved preset: none. Use /one save to store active settings." :
                 "Saved for future hosted sessions: " + (saved.Policy.HasChanges ?
                     string.Join("; ", savedSettings) : "empty (no adjustments).");
             lines.Add(savedSummary);
-            lines.Add("Current values include native bonuses; base adjustments are tracked raw stat units. Commands and resets change the active session; /mod save updates the saved copy.");
+            lines.Add("Current values include native bonuses; base adjustments are tracked raw stat units. Commands and resets change the active session; /one save updates the saved copy.");
 
             return new SettingsSnapshot(sameSession ? dungeon : null, epoch, runGeneration, intentRevision, host,
                 unavailable.Length == 0, canSave, canForget, ChoiceFeature.Available, saved.Valid, unavailable, fault,

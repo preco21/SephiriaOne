@@ -10,6 +10,7 @@ namespace SephiriaOne
         internal const int MaximumPresetLength = 4096;
         private const string PresetHeader = "SephiriaOne preset v1";
         private const string MultiplierPresetHeader = "SephiriaOne preset v2";
+        private const string ResourcePresetHeader = "SephiriaOne preset v3";
         private static readonly string[] ChoiceNames = { "item", "weapon", "miracle" };
 
         public IReadOnlyList<string> DescribeSettings()
@@ -23,6 +24,7 @@ namespace SephiriaOne
                     lines.Add("choices " + ChoiceNames[i] + " " + extra.ToString(CultureInfo.InvariantCulture));
             foreach (StatDefinition stat in StatCatalog.All)
                 if (stats.TryGetValue(stat, out Setting setting)) lines.Add("stats " + stat.Name + " " + Describe(setting));
+            lines.AddRange(Resources.Describe());
             return lines;
         }
 
@@ -30,7 +32,7 @@ namespace SephiriaOne
         {
             bool multiplier = HasFountainMultiplier;
             foreach (Setting setting in stats.Values) multiplier |= setting.Multiplier;
-            return (multiplier ? MultiplierPresetHeader : PresetHeader) + "\n" +
+            return (Resources.HasChanges ? ResourcePresetHeader : multiplier ? MultiplierPresetHeader : PresetHeader) + "\n" +
                 (HasChanges ? string.Join("\n", DescribeSettings()) + "\n" : "");
         }
 
@@ -40,8 +42,9 @@ namespace SephiriaOne
             error = "Invalid saved preset; no saved settings were applied.";
             if (text == null || text.Length > MaximumPresetLength) return false;
             string[] lines = text.Replace("\r\n", "\n").Split('\n');
-            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader)) return false;
-            bool allowMultiplier = lines[0] == MultiplierPresetHeader;
+            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader)) return false;
+            bool allowResources = lines[0] == ResourcePresetHeader;
+            bool allowMultiplier = lines[0] != PresetHeader;
             var pending = new SessionPolicy();
             var seen = new HashSet<string>(StringComparer.Ordinal);
             for (int i = 1; i < lines.Length; i++)
@@ -59,6 +62,25 @@ namespace SephiriaOne
                     continue;
                 }
                 bool isFountain = parts[0] == "fountain";
+                if (parts[0] == "resources")
+                {
+                    if (!allowResources || parts.Length != 4) return false;
+                    ResourceDefinition? definition = ResourceCatalog.Find(parts[1]);
+                    if (definition == null || definition.Name != parts[1] || !seen.Add("resources " + parts[1])) return false;
+                    ResourceMode resourceMode;
+                    if (parts[2] == "multiplier")
+                    { if (!RelativeMultiplier.IsValid(value)) return false; resourceMode = ResourceMode.Multiplier; }
+                    else
+                    {
+                        if (value != decimal.Truncate(value)) return false;
+                        if (parts[2] == "set")
+                        { if (value < definition.Minimum || value > definition.Maximum) return false; resourceMode = ResourceMode.Set; }
+                        else if (parts[2] == "offset") resourceMode = ResourceMode.Offset;
+                        else return false;
+                    }
+                    pending.Resources.Set(definition.Kind, new ResourceSetting(resourceMode, value));
+                    continue;
+                }
                 if (!(isFountain && parts.Length == 3) && !(parts[0] == "stats" && parts.Length == 4)) return false;
                 string mode = parts[parts.Length - 2];
                 bool multiplier = mode == "multiplier";

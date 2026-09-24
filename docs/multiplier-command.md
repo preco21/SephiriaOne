@@ -8,8 +8,8 @@ joining players receive native synchronized changes; guests need no addon.
 /stats attackspeed x2
 /stats critical x1.5
 /fountain x2
-/mod status
-/mod save
+/one status
+/one save
 ```
 
 `xN` targets **each player's current native value times N**, excluding this
@@ -58,16 +58,16 @@ reconciliation, covering immediate run entry and restarts on reused avatars.
 
 If a later native change makes a target out of range or unrepresentable, the
 addon removes its contribution when the baseline can be safely restored and
-marks the setting suspended. It retries when inputs change. `/mod status` and
+marks the setting suspended. It retries when inputs change. `/one status` and
 the panel show retained factors, current values and synchronization outcomes.
 They do not apply settings while being read. Partial writes retain the existing
 journal and block further mutations until explicit family reset recovers them.
 
-`/mod save` stores **factors**, not each player's calculated totals. Multiplier
+`/one save` stores **factors**, not each player's calculated totals. Multiplier
 presets use `SephiriaOne preset v2` with `multiplier N` rows. Existing v1 presets
 remain supported; saving only older setting types still produces v1. Older
 addon versions cannot read v2. Reset affects this session only: save again or
-use `/mod forget` to change future-session loading.
+use `/one forget` to change future-session loading.
 
 Native guest UI caches remain unchanged; reopen the Fountain or affected native
 panel if needed. Independent overwrites of the same native field cannot be

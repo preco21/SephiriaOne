@@ -14,6 +14,7 @@ namespace SephiriaOne
             HorayModAPI.OnAllDatabasesReady += OnDatabasesReady;
             ChoiceFeature.Initialize();
             SessionBoundaryFeature.Initialize();
+            ResourceFeature.Initialize();
             if (!nameColor)
             {
                 var controller = new GameObject("SephiriaOne.Controllers");
@@ -36,6 +37,7 @@ namespace SephiriaOne
         {
             // Keep controllers/guards available if verified cleanup needs recovery.
             ChoiceFeature.Shutdown();
+            ResourceFeature.Shutdown();
             if (settingsPanel)
             {
                 settingsPanel.enabled = false;

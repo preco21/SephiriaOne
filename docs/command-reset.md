@@ -19,7 +19,7 @@ Since `0.9.0`, resets also clear the selected retained session settings, so futu
 joiners no longer receive those adjustments. Other categories and command
 families remain active; see [session inheritance](session-inheritance.md).
 Since `0.10.0`, an explicitly saved preset is a separate snapshot. Reset does not
-alter it: run `/mod save` after resetting to update the saved copy, or `/mod forget`
+alter it: run `/one save` after resetting to update the saved copy, or `/one forget`
 to remove it. See [preset commands](session-preset.md).
 Since `0.11.0`, a stat reset also stops automatic relative-offset maintenance.
 Canceling a relative offset to zero restores the exact raw native baseline,

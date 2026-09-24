@@ -61,7 +61,7 @@ target scope would be a separate feature.
 | Choices | Item, weapon, miracle or all; extra amount; Set, Add, Subtract; category/all reset | Uses `ChoicePoints.TryExecute`. Values mean extra candidates, not total candidates. Addon contribution is 0..20 with native resulting-value checks; existing offers remain cached. |
 | Stats | Stat selector or rows generated from `StatCatalog.All`; amount; Set, Add, Subtract; stat/all reset | Uses `CharacterStats.TryExecute`. Units, precision and limits come from the catalog/shared validation. Relative deltas accumulate from each player's own native stats; adding after set switches to relative mode. |
 | Preset | Save current settings; Forget saved preset; active/saved summaries | Save persists applied intent, not field drafts. Forget removes only the saved copy. Loading remains automatic for the next hosted session; there is no existing manual Load action. |
-| Status | Ready-player count, per-player effective values, retained intent and waiting/suspended/faulted reasons | Read-only, matching `/mod status`. Do not label local native readback as confirmed guest rendering. Show family recovery resets when partial-write recovery requires them. |
+| Status | Ready-player count, per-player effective values, retained intent and waiting/suspended/faulted reasons | Read-only, matching `/one status`. Do not label local native readback as confirmed guest rendering. Show family recovery resets when partial-write recovery requires them. |
 | Name gradient | Current fixed colors and native publication status | Gradient is currently automatic and hard-coded, with no name command, toggle or saved color setting. A first panel can report it without implying it is configurable. |
 
 Supported stats: luck, defense, attack speed, critical chance, critical damage,
@@ -102,7 +102,7 @@ Session state --> read-only typed snapshot --> panel and chat status formatting
    policy, per-player values, feature availability, recovery state, name status
    and saved-preset summary. Do not parse human-readable status strings or the
    serialized preset text to populate controls.
-3. Share that snapshot with `/mod status`. Reading must not call reconciliation,
+3. Share that snapshot with `/one status`. Reading must not call reconciliation,
    enroll a newcomer, restore a cap, or otherwise mutate state. Existing status
    also reads the preset file; cache/refresh that portion on opening or explicit
    inspection/save/forget, not every rendered frame.
@@ -121,7 +121,7 @@ Actual names can follow implementation constraints.
 
 ## Entry point, lifecycle and packaging
 
-- Propose a **SephiriaOne** button in the in-session pause menu plus `/mod ui`
+- Propose a **SephiriaOne** button in the in-session pause menu plus `/one ui`
   as a fallback entry point. The pause-menu prefab's layout and navigation have
   not been inspected yet, so exact button placement remains implementation work.
   An optional hotkey needs a conflict check against native bindings.

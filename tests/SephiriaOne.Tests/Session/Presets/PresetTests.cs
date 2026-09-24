@@ -12,6 +12,8 @@ internal static class PresetTests
             checks++;
         }
         const string header = "SephiriaOne preset v1\n";
+        Check(PresetCommand.Parse("/one status", out _) == PresetAction.Status &&
+            PresetCommand.Parse("/mod status", out _) == PresetAction.NotCommand, "Addon namespace replaces the generic command without alias");
         var policy = new SessionPolicy();
         policy.Record(new FountainCommand(FountainOperation.Set, 100));
         policy.Record(new FountainCommand(FountainOperation.Add, 5));
@@ -44,7 +46,7 @@ internal static class PresetTests
         Check(policy.ToPresetText() == header + "choices weapon 2\nchoices miracle 3\n", "Reset families stay out of saved data");
         foreach (string invalid in new[]
         {
-            "", "SephiriaOne preset v3\n", header + "unknown set 1", header + "choices armor 3",
+            "", "SephiriaOne preset v4\n", header + "unknown set 1", header + "choices armor 3",
             header + "fountain set 1\nfountain offset 2", header + "stats luck set 10\nstats luck offset 1",
             header + "choices item 1\nchoices item 2", header + "stats unknown set 10", header + "stats luck arbitrary 10",
             header + "fountain set -1", header + "fountain offset 2147483648", header + "fountain set 1.5",
@@ -65,13 +67,13 @@ internal static class PresetTests
 
         Check(PresetCommand.Parse("ordinary chat", out _) == PresetAction.NotCommand &&
             PresetCommand.Parse("/modish status", out _) == PresetAction.NotCommand, "Exact mod command token only");
-        Check(PresetCommand.Parse("/MOD STATUS", out _) == PresetAction.Status &&
-            PresetCommand.Parse("/mod save", out _) == PresetAction.Save && PresetCommand.Parse("/mod forget", out _) == PresetAction.Forget,
+        Check(PresetCommand.Parse("/one STATUS", out _) == PresetAction.Status &&
+            PresetCommand.Parse("/one save", out _) == PresetAction.Save && PresetCommand.Parse("/one forget", out _) == PresetAction.Forget,
             "Case-insensitive preset commands parse");
-        Check(PresetCommand.Parse("/mod", out _) == PresetAction.Help && PresetCommand.Parse("/mod help", out _) == PresetAction.Help,
+        Check(PresetCommand.Parse("/one", out _) == PresetAction.Help && PresetCommand.Parse("/one help", out _) == PresetAction.Help,
             "Preset help is available");
-        Check(PresetCommand.Parse("/mod save extra", out _) == PresetAction.Invalid &&
-            PresetCommand.Parse("/mod delete", out _) == PresetAction.Invalid, "Invalid preset commands reject extra arguments");
+        Check(PresetCommand.Parse("/one save extra", out _) == PresetAction.Invalid &&
+            PresetCommand.Parse("/one delete", out _) == PresetAction.Invalid, "Invalid preset commands reject extra arguments");
 
         string root = Path.Combine(Path.GetTempPath(), "SephiriaOne-preset-tests-" + Guid.NewGuid().ToString("N"));
         try

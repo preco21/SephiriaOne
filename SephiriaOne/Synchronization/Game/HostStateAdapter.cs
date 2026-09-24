@@ -56,10 +56,13 @@ namespace SephiriaOne
         private readonly List<HostPlayerSnapshot> snapshots = new List<HostPlayerSnapshot>();
         private readonly Dictionary<string, int> constants;
         private readonly object constantsObject;
+        private readonly object run;
+        private readonly long runGeneration;
 
         public HostCommandContext(DungeonManager dungeon, IReadOnlyList<HostPlayer> subjects)
         {
             Dungeon = dungeon; Subjects = subjects;
+            run = SaveManager.CurrentRun; runGeneration = SessionSettings.ResourceGeneration;
             foreach (HostPlayer subject in subjects)
             { Players.Add(subject.Player); snapshots.Add(new HostPlayerSnapshot(subject.Player)); }
             constantsObject = dungeon.constValueDictionary;
@@ -70,6 +73,7 @@ namespace SephiriaOne
         {
             if (!NetworkServer.active || !Dungeon || !ReferenceEquals(Dungeon, DungeonManager.Instance) || !Dungeon.isServer) return false;
             if (!ReferenceEquals(constantsObject, Dungeon.constValueDictionary)) return false;
+            if (!ReferenceEquals(run, SaveManager.CurrentRun) || runGeneration != SessionSettings.ResourceGeneration) return false;
             foreach (HostPlayer subject in Subjects)
                 if (!subject.IsReady || !PlayerSpawner.MultiplayerList.Contains(subject.Spawner)) return false;
             foreach (HostPlayerSnapshot snapshot in snapshots) if (!snapshot.SameObjects()) return false;

@@ -36,6 +36,9 @@ public sealed class PlayerSpawner : UnityEngine.Object
     public uint netId;
     public Mirror.NetworkConnectionToClient connectionToClient = new();
     public PlayerAvatar PlayerAvatar = new();
+    public PlayerLocalDataStorage LocalDataStorage = new();
+    public string playerGuid = "fixture-player";
+    public int currentPlayerIdxForSave;
     public int LastFountainAllowance;
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
     public void AddDimensionPocketItemsOnServer(int[] items) => LastFountainAllowance =
@@ -51,6 +54,13 @@ public sealed class PlayerAvatar : UnityEngine.Object
     public string currentFloorGuid = "town";
     public GridInventory Inventory = new();
     public int maxPassivePoint = 5;
+    public int NetworkmaxPassivePoint { set => maxPassivePoint = value; }
+    public readonly Dictionary<ulong, int> passiveStats = new();
+    public struct PassiveStatSaveData { public ulong id; public int point; }
+    public PlayerSpawner spawner;
+    public PlayerLocalDataStorage localDataStorage;
+    public bool isOwned;
+    public int maxRerollDice = 3, rerollDice = 3, currentMoney, StartingLeaves = 100;
     public readonly FixtureStats customStats = new();
     public readonly Dictionary<string, int> calculatedBonusStats = new();
     public readonly Dictionary<string, int> customStatsAmp = new();
@@ -80,12 +90,48 @@ public sealed class FixtureStats : Dictionary<string, int>, IDictionary<string, 
 
 public sealed class GridInventory : UnityEngine.Object
 {
+    public byte Width = 6;
+    public short CurrentInventoryStorage = 24;
+    public readonly Dictionary<ItemPosition, NewItemOwnInstance> inventoryMatrix = new();
+    public readonly List<ItemPosition> mysticPositions = new();
+    public readonly List<object> engravings = new(), fixedEngravingsOnServer = new();
+    public void AddStorage(short amount) => CurrentInventoryStorage += amount;
+    public struct ItemDropBonusData { public string categoryName; public float weight; }
     public bool isServer = true;
     public uint netId;
     public int canBroadcast = 1;
     public int dimensionPocket;
     public int NetworkdimensionPocket { set => dimensionPocket = value; }
 }
+
+public struct ItemPosition { public sbyte x, y; }
+public sealed class NewItemOwnInstance { }
+public sealed class UIManager : UnityEngine.Object
+{
+    public static UIManager Instance;
+    public T GetElement<T>() where T : new() => new T();
+}
+public sealed class UI_NewItemPicker : UnityEngine.Object { public bool CurrentAny; }
+public sealed class UI_NewItemPicker_Controller : UnityEngine.Object { public bool CurrentAny; }
+
+public sealed class PlayerLocalDataStorage : UnityEngine.Object
+{
+    public bool preparingUIThings, doingSomeUIThings;
+    public int adaptiveItemDropBonus;
+    public readonly List<GridInventory.ItemDropBonusData> fruitSkewerBonus = new();
+}
+public sealed class PassiveEntity : UnityEngine.Object { public ulong id; public int maxLevel = 100; }
+public static class PassiveDatabase
+{
+    public static readonly List<PassiveEntity> All = new();
+    public static IEnumerable<PassiveEntity> GetAll() => All;
+}
+public static class KeywordDatabase
+{
+    public static int FruitDefault = 6;
+    public static int GetConstValue(string key) => key == "fruitSkewerDefaultCount" ? FruitDefault : 0;
+}
+public static class SaveManager { public static object CurrentRun = new(); }
 
 public sealed class DungeonManager : UnityEngine.Object
 {
@@ -111,5 +157,17 @@ namespace SephiriaOne
 {
     internal static class ChoiceFeature { public static bool Available = true; }
     internal static class SessionBoundaryFeature { public static bool Available = true; }
+    internal static class ResourceFeature
+    {
+        public static bool Available = true;
+        public static bool IsAvailable(ResourceKind kind) => Available;
+        public static string UnavailableReason(ResourceKind kind) => "Fixture guard unavailable.";
+    }
+    // Grant-hook behavior is exercised separately with the actual hook code.
+    internal static class StartingResourceHooks
+    {
+        public static int NativeDice(PlayerAvatar player) => player.maxRerollDice - player.customStats.GetValueOrDefault(ResourceCatalog.Get(ResourceKind.Dice).Marker);
+        public static int NativeLeaves(PlayerAvatar player) => player.StartingLeaves;
+    }
     internal static class MultiplayerNameController { public static string Diagnostics => "fixture: rendering unverified"; }
 }

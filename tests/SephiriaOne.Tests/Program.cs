@@ -51,6 +51,8 @@ Console.WriteLine($"Passed {StatCommandTests.Run()} character stat command check
 Console.WriteLine($"Passed {SessionPolicyTests.Run()} session inheritance checks.");
 Console.WriteLine($"Passed {RelativeStatPolicyTests.Run()} relative stat consistency checks.");
 Console.WriteLine($"Passed {MultiplierCommandTests.Run()} native-baseline multiplier checks.");
+Console.WriteLine($"Passed {ResourcePolicyTests.Run()} resource policy checks.");
+Console.WriteLine($"Passed {StartingResourceTests.Run()} starting resource checks.");
 Console.WriteLine($"Passed {PresetTests.Run()} preset parser/storage checks.");
 Console.WriteLine($"Passed {ChoiceCommandTests.Run()} candidate command checks.");
 Console.WriteLine($"Passed {ChoiceTranspilerTests.Run()} candidate generation guard checks.");

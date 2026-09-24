@@ -1,0 +1,171 @@
+using System.Runtime.CompilerServices;
+public class NativeObject { public static implicit operator bool(NativeObject x) => x != null; }
+public class UnitAvatar : NativeObject
+{
+    public GridInventory Inventory = new();
+    public readonly Dictionary<string, int> customStats = new(), calculatedBonusStats = new(), customStatsAmp = new();
+    public int GetCustomStatUnsafe(string key) => (int)((float)((customStats.GetValueOrDefault(key) + calculatedBonusStats.GetValueOrDefault(key)) * (100 + customStatsAmp.GetValueOrDefault(key))) / 100f);
+}
+public class PlayerAvatar : UnitAvatar
+{
+    public PlayerSpawner spawner;
+    public struct PassiveStatSaveData { public ulong id; public int point; }
+    public bool isServer = true, isOwned;
+    public uint netId = 1;
+    public int maxPassivePoint = 5;
+    public Action AfterCapWrite;
+    public int NetworkmaxPassivePoint { get => maxPassivePoint; set { maxPassivePoint = value; AfterCapWrite?.Invoke(); } }
+    public readonly Dictionary<ulong, int> passiveStats = new();
+    public PlayerLocalDataStorage localDataStorage = new();
+    public int NativeLoadCalls, NativeSpendCalls;
+    [MethodImpl(MethodImplOptions.NoInlining)] public void LoadPassiveStatOnServer(PassiveStatSaveData[] data) { NativeLoadCalls++; }
+    [MethodImpl(MethodImplOptions.NoInlining)] private void AddPassiveStatOnServer(ulong id, int amount, bool fromSave) { NativeSpendCalls++; }
+}
+public class PlayerLocalDataStorage : NativeObject
+{
+    public bool preparingUIThings, doingSomeUIThings;
+    public int adaptiveItemDropBonus;
+    public readonly List<GridInventory.ItemDropBonusData> fruitSkewerBonus = new();
+}
+public class GridInventory : NativeObject
+{
+    public struct ItemDropBonusData { public string categoryName; public int weight; }
+    public bool isServer = true;
+    public uint netId = 1;
+    public UnitAvatar UnitAvatar;
+    public short CurrentInventoryStorage = 24;
+    public byte Width = 6;
+    public readonly Dictionary<ItemPosition, NewItemOwnInstance> inventoryMatrix = new();
+    public readonly List<ItemPosition> mysticPositions = new();
+    public readonly List<NativeObject> engravings = new(), fixedEngravingsOnServer = new();
+    public int StorageWrites;
+    public Action AfterStorageWrite;
+    public void AddStorage(short add) { CurrentInventoryStorage += add; StorageWrites++; AfterStorageWrite?.Invoke(); }
+}
+public readonly record struct ItemPosition(sbyte x, sbyte y);
+public class NewItemOwnInstance { }
+public class PlayerSpawner : NativeObject
+{
+    public static readonly List<PlayerSpawner> MultiplayerList = new();
+    public PlayerAvatar PlayerAvatar;
+    public PlayerLocalDataStorage LocalDataStorage => PlayerAvatar.localDataStorage;
+    public string playerGuid = "player-guid";
+    public int currentPlayerIdxForSave;
+    public bool isServer = true;
+    public uint netId = 1;
+    public int ReadSlots, SaveCalls;
+    public bool Ready = true;
+    public Action BeforeInitializeRead;
+    public PlayerSpawner(PlayerAvatar p) { PlayerAvatar = p; p.spawner = this; p.Inventory.UnitAvatar = p; MultiplayerList.Add(this); }
+    [MethodImpl(MethodImplOptions.NoInlining)] private bool Initialize(int weaponId, string costumeName, string skinID, int loadingScreen)
+    { ReadSlots = 0; BeforeInitializeRead?.Invoke(); for (int i = 0; i < PlayerAvatar.Inventory.CurrentInventoryStorage; i++) ReadSlots++; return true; }
+    public bool RunInitialize() => Initialize(0, "", "", 0);
+    [MethodImpl(MethodImplOptions.NoInlining)] public void SaveCurrentSessionData() { SaveCalls++; }
+}
+public class SaveData
+{
+    public readonly Dictionary<string, object> Values = new();
+    public bool ContainsKey(string key) => Values.ContainsKey(key);
+    public int GetInt(string key, int fallback) => Values.TryGetValue(key, out var value) ? (int)value : fallback;
+    public string GetString(string key, string fallback) => Values.TryGetValue(key, out var value) ? (string)value : fallback;
+    public void SetInt(string key, int value) => Values[key] = value;
+    public void SetString(string key, string value) => Values[key] = value;
+}
+public static class SaveManager { public static SaveData CurrentRun = new(); }
+public class UI_NewItemPicker : NativeObject { public bool CurrentAny; }
+public class UI_NewItemPicker_Controller : NativeObject { public bool CurrentAny; }
+public class UIManager : NativeObject
+{
+    public static UIManager Instance;
+    public UI_NewItemPicker Mouse = new(); public UI_NewItemPicker_Controller Controller = new();
+    public T GetElement<T>() where T : class => (typeof(T) == typeof(UI_NewItemPicker) ? (object)Mouse : Controller) as T;
+}
+public class PassiveEntity : NativeObject { public ulong id; public int maxLevel = 20; }
+public static class PassiveDatabase
+{
+    public static SortedDictionary<ulong, PassiveEntity> data = new();
+    public static IEnumerable<PassiveEntity> GetAll() => data.Values;
+    public static PassiveEntity Find(ulong id) => data.GetValueOrDefault(id);
+}
+public static class KeywordDatabase { public static int FruitBase = 6; public static int GetConstValue(string key) => FruitBase; }
+public class DungeonManager : NativeObject
+{
+    public bool isServer = true, isRunStarted;
+    public int NativeCalls;
+    public Action BeforeFruitRead;
+    public int LastFruitTotal;
+    [MethodImpl(MethodImplOptions.NoInlining)] public void LoadStageAndMove(string stageName)
+    {
+        NativeCalls++;
+        if (isRunStarted) return;
+        foreach (var connection in Mirror.NetworkServer.connections)
+        {
+            PlayerAvatar player = connection.Value.identity.GetComponent<PlayerAvatar>();
+            BeforeFruitRead?.Invoke();
+            LastFruitTotal = KeywordDatabase.GetConstValue("fruitSkewerDefaultCount") + player.GetCustomStatUnsafe("FRUITCOUNT");
+        }
+    }
+}
+namespace Mirror
+{
+    public static class NetworkServer { public static bool active = true; public static readonly Dictionary<int, NetworkConnectionToClient> connections = new(); }
+    public class NetworkConnectionToClient { public NetworkIdentity identity; }
+    public class NetworkIdentity : NativeObject { public PlayerAvatar Player; public T GetComponent<T>() where T : class => Player as T; }
+}
+namespace SephiriaOne
+{
+    internal static class SessionSettings
+    {
+        public static int Faults;
+        public static bool ResourceWritesBlocked;
+        public static long ResourceGeneration;
+        public static void RecordFault(string feature, StateWriteBatch batch, string error) { Faults++; ResourceWritesBlocked = true; }
+    }
+    internal static class HostStateAdapter
+    {
+        public static bool IsReady(PlayerSpawner spawner) => spawner.Ready && spawner.PlayerAvatar.Inventory != null;
+    }
+    internal enum ResourceKind { Dice, Slots, Talents, Fruit, Leaves }
+    internal sealed class ResourceDefinition
+    {
+        public ResourceKind Kind; public string Name, Marker; public int Minimum, Maximum;
+    }
+    internal static class ResourceCatalog
+    {
+        private static readonly ResourceDefinition Talent = new() { Kind = ResourceKind.Talents, Name = "Talents", Marker = "TALENTMARKER", Minimum = 0, Maximum = 1000 };
+        private static readonly ResourceDefinition Fruit = new() { Kind = ResourceKind.Fruit, Name = "Fruit", Marker = "FRUITMARKER", Minimum = 0, Maximum = 100 };
+        private static readonly ResourceDefinition Slots = new() { Kind = ResourceKind.Slots, Name = "Slots", Marker = "SLOTMARKER", Minimum = 6, Maximum = 96 };
+        public static ResourceDefinition Get(ResourceKind kind) => kind == ResourceKind.Talents ? Talent : kind == ResourceKind.Slots ? Slots : Fruit;
+    }
+    internal readonly struct ResourceSnapshot
+    {
+        public ResourceSnapshot(ResourceDefinition definition, int raw, int owned, int bonus = 0, int amplifier = 0, int displayOffset = 0, int minimumSafe = 0, bool busy = false)
+        { Definition = definition; Raw = raw; Owned = owned; Bonus = bonus; Amplifier = amplifier; DisplayOffset = displayOffset; MinimumSafe = minimumSafe; Busy = busy; }
+        public ResourceDefinition Definition { get; } public int Raw { get; } public int Owned { get; } public int Bonus { get; } public int Amplifier { get; } public int DisplayOffset { get; } public int MinimumSafe { get; } public bool Busy { get; }
+    }
+    internal readonly struct ResourceUpdate
+    {
+        public ResourceUpdate(ResourceDefinition definition, int raw, int owned, int target) { Definition = definition; Raw = raw; Owned = owned; Target = target; }
+        public ResourceDefinition Definition { get; } public int Raw { get; } public int Owned { get; } public int Target { get; }
+    }
+    internal readonly struct ResourceSetting { }
+    internal static class ResourceRuntime
+    {
+        public static readonly HashSet<ResourceKind> Managed = new();
+        public static readonly List<string> Messages = new();
+        public static Action<PlayerAvatar, ResourceKind, int> Apply;
+        public static int Calls;
+        public static int Restored;
+        public static void AcceptRestored(PlayerAvatar player, ResourceKind kind) { Restored++; }
+        public static void ApplyEarly(PlayerAvatar player, ResourceKind kind, int requiredMinimum = 0) { Calls++; Apply?.Invoke(player, kind, requiredMinimum); }
+        public static bool TryGetSetting(ResourceKind kind, out ResourceSetting setting) { setting = default; return Managed.Contains(kind); }
+        public static void Report(string text) => Messages.Add(text);
+    }
+    internal static class NativeStateWrites
+    {
+        public static void Dictionary(StateWriteBatch batch, IDictionary<string, int> values, string key, int? target)
+        { batch.Add<int?>(key, () => values.TryGetValue(key, out int value) ? value : null, value => { if (value.HasValue) values[key] = value.Value; else values.Remove(key); }, target); }
+        public static void Stat(StateWriteBatch batch, PlayerAvatar player, string key, string marker, int raw, int contribution)
+        { Dictionary(batch, player.customStats, key, raw); Dictionary(batch, player.customStats, marker, contribution == 0 ? null : contribution); }
+    }
+}

@@ -12,6 +12,9 @@ PlayerSpawner Add(uint id, int luck = 5, int points = 4, int itemChoices = 0)
 {
     var spawner = new PlayerSpawner { netId = id };
     spawner.PlayerAvatar.netId = id;
+    spawner.PlayerAvatar.spawner = spawner;
+    spawner.PlayerAvatar.localDataStorage = spawner.LocalDataStorage;
+    spawner.PlayerAvatar.isOwned = id == 1;
     spawner.PlayerAvatar.Inventory.netId = id;
     spawner.PlayerAvatar.Inventory.dimensionPocket = points;
     spawner.PlayerAvatar.customStats["LUCK"] = luck;
@@ -27,6 +30,7 @@ PlayerSpawner Start()
     DungeonManager.Instance = new DungeonManager();
     NetworkServer.active = true;
     ChoiceFeature.Available = true;
+    ResourceFeature.Available = true;
     UnityEngine.Application.persistentDataPath = Path.Combine(testDataRoot, Guid.NewGuid().ToString("N"));
     SessionSettings.Start();
     return Add(1, itemChoices: 2);
@@ -738,6 +742,8 @@ foreach (bool useCommand in new[] { false, true })
 
 SettingsControlsTests.Run(Check, Start, Add);
 MultiplierRuntimeTests.Run(Check, Start, Add);
+ResourceRuntimeTests.Run(Check, Start, Add);
+Check(SettingsActions.IsCommand("/resources slots +6"), "Resource command family is recognized by shared controls");
 
 if (Directory.Exists(testDataRoot)) Directory.Delete(testDataRoot, true);
 Console.WriteLine($"Passed {checks} runtime command/session integration checks using game API fixtures.");

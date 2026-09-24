@@ -14,8 +14,8 @@ and automatic stat-panel refresh from `0.12.0`/`0.12.1` have been removed.
 | Character stats | Native synchronized stat changes, cumulative relative offsets, multiplier maintenance, resets and saved presets. |
 | Extra item, weapon and miracle choices | Native synchronized extra-choice stats used by subsequent native generation. Existing offers are not regenerated. |
 | Host's character-name gradient | Owned `PlayerAvatar.SetPlayerName` publishes the formatted runtime name to the native `playerNameSource` SyncVar. Guests do not need a custom addon protocol to receive it. |
-| Commands, status and preset controls | Local controls for those native effects; these are retained as supporting tools. `/mod status` does not acknowledge delivery or rendering on another client. |
-| Host settings panel (0.13.0) | Pause-menu button or `/mod ui` exposes the same native-effect services. Guests do not need the panel or a custom network protocol. |
+| Commands, status and preset controls | Local controls for those native effects; these are retained as supporting tools. `/one status` does not acknowledge delivery or rendering on another client. |
+| Host settings panel (0.13.0) | Pause-menu button or `/one ui` exposes the same native-effect services. Guests do not need the panel or a custom network protocol. |
 
 The shared reconciliation coordinator, host snapshots, journaled writes, readback,
 fault recovery and critical native read guards remain in use across gameplay

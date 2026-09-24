@@ -16,7 +16,7 @@ namespace SephiriaOne
             }
             if (!exists) return;
             policy = saved;
-            Report("Loaded saved preset for this hosted session. Use /mod status to inspect it.", true);
+            Report("Loaded saved preset for this hosted session. Use /one status to inspect it.", true);
         }
 
         public static bool TryExecutePreset(PresetAction action, out string[] messages)
@@ -36,7 +36,7 @@ namespace SephiriaOne
             if (action != PresetAction.Save) { messages = new[] { PresetCommand.Usage }; return false; }
             if (!Prepare(out string failure)) { messages = new[] { failure }; return false; }
             if (failedBatch != null)
-            { messages = new[] { "Resolve the faulted " + failedFeature + " write before saving. Inspect /mod status." }; return false; }
+            { messages = new[] { "Resolve the faulted " + failedFeature + " write before saving. Inspect /one status." }; return false; }
             bool saved = store.TrySave(policy, out string saveError);
             InvalidateSavedPresetSnapshot();
             messages = new[] { saved ? "Saved current session settings for future hosted sessions: " + store.FilePath : saveError };

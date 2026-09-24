@@ -11,13 +11,15 @@ namespace SephiriaOne
         public int FountainContribution { get; }
         public IReadOnlyDictionary<string, decimal> Stats { get; }
         public IReadOnlyDictionary<string, int> ExtraChoices { get; }
+        public IReadOnlyDictionary<string, string> Resources { get; }
 
         public PlayerSettingsSnapshot(uint id, string name, int fountainPoints, int fountainContribution,
-            IDictionary<string, decimal> stats, IDictionary<string, int> extraChoices)
+            IDictionary<string, decimal> stats, IDictionary<string, int> extraChoices, IDictionary<string, string> resources = null)
         {
             Id = id; Name = name; FountainPoints = fountainPoints; FountainContribution = fountainContribution;
             Stats = new ReadOnlyDictionary<string, decimal>(new Dictionary<string, decimal>(stats));
             ExtraChoices = new ReadOnlyDictionary<string, int>(new Dictionary<string, int>(extraChoices));
+            Resources = new ReadOnlyDictionary<string, string>(resources == null ? new Dictionary<string, string>() : new Dictionary<string, string>(resources));
         }
     }
 

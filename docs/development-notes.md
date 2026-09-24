@@ -9,6 +9,19 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.15.0` adds [five resource controls](resource-command.md), shared command,
+panel, preset and synchronization support, native grant/load guards, and saved-run
+capacity/budget checkpoints. `/one` replaces the generic `/mod` command namespace;
+the old token is passed through for other addons. See the
+[implementation/review record](resource-settings-implementation.md). Resources
+use v3 presets; v1/v2 remain readable.
+
+The reported Resources warning was traced to a HarmonyX runtime lacking
+`LoadsConstant(CodeInstruction, string)`. Starting-grant transpilers now inspect
+string-load opcodes directly, and compatibility groups install independently.
+The [bond-artifact investigation](bond-artifact-fountain-investigation.md) found
+that stock guests filter those items locally; no host-only menu toggle was added.
+
 Version `0.14.0` adds [native-baseline multipliers](multiplier-command.md) to
 stats and Fountain (`x3` or `set x3`). Each player's own native displayed value
 is multiplied; factors replace prior adjustments, follow native changes and
@@ -19,10 +32,10 @@ the same syntax. Choices remain extra-count commands and reject multipliers.
 Investigated [five additional resource/capacity settings](resource-settings-investigation.md):
 initial dice, inventory slots, talent points, fruit-skewer points and initial
 leaves. All have native host-to-guest paths, but need phase-aware grant/load
-handling and safe reductions. Those five controls remain research only.
+handling and safe reductions. They are implemented in `0.15.0` as described above.
 
 Version `0.13.0` adds a [host settings control panel](control-panel.md), opened
-from the pause menu or `/mod ui`. Stats, Fountain, choices, presets and status
+from the pause menu or `/one ui`. Stats, Fountain, choices, presets and status
 share validated actions and read-only snapshots with chat. The panel uses native
 UI focus/cancel handling and clears stale session/run drafts. No hotkeys were
 added; the first version uses mouse controls and keyboard input. Live rendering
@@ -40,7 +53,7 @@ The [shared synchronization architecture](synchronization-architecture.md)
 introduced in `0.12.0` remains across Fountain, stats, choices and owned name publication.
 Commands share readiness, snapshots, journaled writes, readback, and fault recovery.
 See the [extension guide](synchronization-guide.md) and
-[compatibility inventory](presentation-compatibility.md). `/mod status` now
+[compatibility inventory](presentation-compatibility.md). `/one status` now
 reports revisions, rule outcomes, critical boundaries, and partial-write journals.
 
 SephiriaOne is a C# addon using Sephiria's built-in HorayMod API. Version `0.11.1`
@@ -50,7 +63,7 @@ records event coverage and remaining native UI/cache limitations. Version `0.11.
 made relative stat commands cumulative from each character's native baseline,
 switched a delta after `set` back to relative mode, and maintained displayed offsets
 after gear/buff changes. See the [consistency audit](relative-stat-consistency.md).
-`/mod status`, `/mod save`, and `/mod forget` inspect current adjustments
+`/one status`, `/one save`, and `/one forget` inspect current adjustments
 and explicitly save one preset for future hosted sessions. See
 [commands and persistence behavior](session-preset.md). It also repairs the
 Fountain carryover limit after returning to the lobby, so later runs
@@ -89,8 +102,8 @@ normal upgrades when reset. This version was built and tested without deployment
 | Joining players | Successful settings apply once after native avatar/inventory initialization, including reconnects with a new avatar. Host-only commands and native synchronization support unmodified guests. |
 | Automated verification | 665 portable checks and 316 runtime command/session checks pass (981 total). Covers existing gameplay/policy behavior plus shared controls, snapshots, drafts and exceptional UI cleanup. Nine native lifecycle paths, native UI stack/cancel, name transport, both candidate guards and embedded dependencies pass inspection. Fixtures do not establish live Unity/network behavior. |
 | Lifecycle audit | Native preset/costume/passive/hard-mode changes, buffs, floors, restart, joins, rejection, unload and persistence were traced. Fountain cap gaps fixed; native open-panel/cached-anvil limitations remain. See [findings and live checklist](sync-lifecycle-audit.md). |
-| Status and persistence | `/mod status` shows intent, current values, scope/rule revisions, waiting/rejected/suspended/faulted outcomes, journals and native name synchronization status. `/mod save` stores all three families and rejects unresolved partial writes; `/mod forget` removes only that saved copy. Automatic loading occurs once per new hosted session. |
-| Host settings panel | Pause-menu button or `/mod ui`; explicit actions, current player values, separate active/saved summaries and status. Shared command services preserve native effects for unmodified guests. No new hotkeys, gamepad navigation or live-rendering claim. |
+| Status and persistence | `/one status` shows intent, current values, scope/rule revisions, waiting/rejected/suspended/faulted outcomes, journals and native name synchronization status. `/one save` stores all three families and rejects unresolved partial writes; `/one forget` removes only that saved copy. Automatic loading occurs once per new hosted session. |
+| Host settings panel | Pause-menu button or `/one ui`; explicit actions, current player values, separate active/saved summaries and status. Shared command services preserve native effects for unmodified guests. No new hotkeys, gamepad navigation or live-rendering claim. |
 | Shared settings controls | Both chat and UI use `SettingsActions`; immutable snapshots never process pending joins or mutate gameplay. Cached saved-file reads have explicit refresh and save/forget/lifecycle invalidation. See [panel architecture and tests](control-panel-implementation.md). |
 
 ## History
@@ -216,7 +229,7 @@ Stages 1–14 occurred on 2026-09-23; candidate expansion continued on 2026-09-2
     Recorded native integration evidence, UI options, semantic constraints and
     verification checkpoints. No runtime changes, build or deployment occurred.
 29. Implemented the recommended host panel in `0.13.0`, using fresh native
-    uGUI/TMP controls and a pause-menu button plus `/mod ui`. Extracted reusable
+    uGUI/TMP controls and a pause-menu button plus `/one ui`. Extracted reusable
     action dispatch and immutable read-only snapshots for chat and UI; added
     separate active/saved summaries, cached preset inspection, fault-recovery
     controls and stale-draft protection. Review led to membership-based cleanup
@@ -350,7 +363,7 @@ command semantics while sharing lifecycle and mutation infrastructure.
   run snapshots can contain the formatted runtime name. See the feature notes
   for restoration behavior and [portable checks](../tests/SephiriaOne.Tests/Program.cs).
 - [Chat controller](../SephiriaOne/Chat/ModChatCommands.cs) consumes the local
-  `/fountain`, `/choices`, `/stats`, and `/mod` commands, reports feedback in the local game log, and leaves
+  `/fountain`, `/choices`, `/stats`, and `/one` commands, reports feedback in the local game log, and leaves
   normal chat to the game's handler. The [runtime service](../SephiriaOne/Features/Fountain/FountainPoints.cs)
   accepts commands only on the host, validates all player balances first, and
   updates native synchronized capacity and carryover limits. The
@@ -643,7 +656,7 @@ requirement for a native HorayMod addon.
    ```text
    [SephiriaOne] Loaded v0.14.0
    [SephiriaOne] All databases ready
-   [SephiriaOne] Chat commands bound: /fountain, /choices, /stats, /mod
+   [SephiriaOne] Chat commands bound: /fountain, /choices, /stats, /one
    [SephiriaOne] Candidate commands ready: /choices (extra choices 0..20)
    ```
 
@@ -679,7 +692,7 @@ requirement for a native HorayMod addon.
 13. Follow the [full lifecycle checklist](sync-lifecycle-audit.md#verification-and-live-checklist),
     including native presets, costume changes, passive resets, hard-mode points,
     immediate run entry after a capacity change, and cached UI limitations.
-14. Inspect `/mod status` and follow the [host-only compatibility checks](presentation-compatibility.md#verification).
+14. Inspect `/one status` and follow the [host-only compatibility checks](presentation-compatibility.md#verification).
     Confirm lobby platform names keep their native appearance and character-name
     consumers use their native refresh timing. Use the [shared synchronization guide](synchronization-guide.md)
     for fault recovery and future features.

@@ -100,7 +100,7 @@ can regenerate an offer, alter selections or grant an item. See the
 
 ## Diagnostics and recovery
 
-`/mod status` is read-only: it does not process pending joins or write game state.
+`/one status` is read-only: it does not process pending joins or write game state.
 It shows session epoch, run generation, intent revision, rule outcomes and
 reasons, relative suspension, critical-hook availability, last boundary results,
 native name synchronization status, and any before/target/readback journal.
@@ -125,6 +125,19 @@ Candidate unload cleanup retains its journal on failure and leaves controllers
 and generation guards available for recovery; retry never subtracts twice.
 
 ## Verification and remaining limits
+
+Resource settings reuse this coordinator, shared host command journal, preset
+codec and observational snapshot. `ResourceRuntime` tracks successful enrollment
+per avatar/resource kind; a rejected combined inheritance does not leak into
+resource-only maintenance. Starting grants and pre-item/pre-talent restoration
+use separate native boundary adapters, since normal ready-player reconciliation
+is too late. See [implementation/review](resource-settings-implementation.md).
+
+Shared command journals now capture native run-save identity and run generation.
+Early resource journals also capture network IDs, spawner/storage/inventory and
+stat dictionary lifetimes. Destructive native writers revalidate occupancy and
+allocation immediately before each write, including recovery. Preflight checks
+alone do not protect replay after the user changes native selections.
 
 Portable/runtime tests cover ordinary commands, distinct baselines, presets,
 restarts, delayed readiness, reused IDs, missed/duplicate/reentrant changes,

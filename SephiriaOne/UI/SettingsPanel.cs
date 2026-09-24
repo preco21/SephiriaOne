@@ -18,7 +18,7 @@ namespace SephiriaOne
         private TMP_InputField amount;
         private PanelTextScroll readout;
         private Button resetOne, resetAll, save, forget;
-        private int page, statIndex, choiceIndex;
+        private int page, statIndex, choiceIndex, resourceIndex;
         private PanelControlLifetime<UIBase> lifetime;
         private static readonly string[] Choices = { "all", "item", "weapon", "miracle" };
         private static readonly IReadOnlyDictionary<string, string> StatNames = new Dictionary<string, string>
@@ -46,11 +46,11 @@ namespace SephiriaOne
             var close = widgets.Button(window, "X", 563, 10, 23, 23, Close);
             defaultSelectable = close.gameObject;
             availability = widgets.Text(window, "Availability", "", 16, 54, 568, 22, 10);
-            string[] pages = { "Stats", "Fountain", "Choices", "Presets", "Status" };
+            string[] pages = { "Stats", "Fountain", "Choices", "Resources", "Presets", "Status" };
             for (int i = 0; i < pages.Length; i++)
             {
                 int target = i;
-                widgets.Button(window, pages[i], 16 + 114 * i, 80, 108, 22, () => SelectPage(target));
+                widgets.Button(window, pages[i], 16 + 95 * i, 80, 89, 22, () => SelectPage(target));
             }
             feedback = widgets.Text(window, "Feedback", "Choose an action to apply. Native menus and offers refresh normally.", 16, 282, 568, 40, 10);
             SelectPage(0);
@@ -102,23 +102,24 @@ namespace SephiriaOne
                 float scale = Mathf.Min(1, Mathf.Min(rootRect.rect.width / 640f, rootRect.rect.height / 360f));
                 window.localScale = Vector3.one * Mathf.Max(0.1f, scale);
             }
-            bool choicesReady = page != 2 || snapshot.ChoicesAvailable;
+            bool choicesReady = page == 2 ? snapshot.ChoicesAvailable : page != 3 || ResourceFeature.IsAvailable(ResourceCatalog.All[resourceIndex].Kind);
             availability.text = !snapshot.CanMutate ? snapshot.AvailabilityReason : !choicesReady ?
-                "Extra-choice controls unavailable: compatibility checks failed. Reset remains available; see Player.log." :
+                (page == 3 ? ResourceFeature.UnavailableReason(ResourceCatalog.All[resourceIndex].Kind) :
+                "Extra-choice compatibility guard failed. Reset remains available; see Player.log.") :
                 snapshot.Players.Count + " ready player(s). Changes apply when you press an action button.";
             availability.color = snapshot.CanMutate && choicesReady ? PanelWidgets.Muted : (Color)new Color32(255, 200, 122, 255);
             foreach (var button in changeButtons) button.interactable = snapshot.CanMutate && choicesReady;
             if (amount) amount.interactable = snapshot.CanMutate && choicesReady;
             // Full-family reset is intentionally available for the existing recovery path.
-            string family = page == 0 ? "stats" : page == 1 ? "fountain" : "choices";
+            string family = page == 0 ? "stats" : page == 1 ? "fountain" : page == 3 ? "resources" : "choices";
             bool recovery = snapshot.HostActive && snapshot.SessionIdentity != null &&
                 (snapshot.FaultedFeature == family || snapshot.FaultedFeature == "inheritance");
             if (resetAll) resetAll.interactable = snapshot.CanMutate || recovery;
             if (resetOne) resetOne.interactable = snapshot.CanMutate;
             if (save) save.interactable = snapshot.CanSave;
             if (forget) forget.interactable = snapshot.CanForget;
-            if (page < 3) readout.SetText(PlayerValues(snapshot));
-            else if (page == 3) readout.SetText(PresetValues(snapshot));
+            if (page < 4) readout.SetText(PlayerValues(snapshot));
+            else if (page == 4) readout.SetText(PresetValues(snapshot));
             else readout.SetText("Automatic name gradient: #408af1 -> #a8d7fa\n" +
                 "Host's native multiplayer character name; colors are fixed.\n\n" + string.Join("\n\n", snapshot.Lines));
         }
@@ -129,13 +130,13 @@ namespace SephiriaOne
             amount = null; resetOne = resetAll = save = forget = null;
             if (pageRoot) { pageRoot.gameObject.SetActive(false); Destroy(pageRoot.gameObject); }
             pageRoot = PanelWidgets.Rect(window, "Page", 0, 110, 600, 162);
-            if (page < 3) BuildEditor();
+            if (page < 4) BuildEditor();
             else
             {
-                if (page == 3)
+                if (page == 4)
                 {
-                    save = widgets.Button(pageRoot, "Save current settings", 16, 0, 182, 24, () => Execute("/mod save", true));
-                    forget = widgets.Button(pageRoot, "Forget saved preset", 207, 0, 180, 24, () => Execute("/mod forget", false));
+                    save = widgets.Button(pageRoot, "Save current settings", 16, 0, 182, 24, () => Execute("/one save", true));
+                    forget = widgets.Button(pageRoot, "Forget saved preset", 207, 0, 180, 24, () => Execute("/one forget", false));
                     widgets.Button(pageRoot, "Refresh saved copy", 396, 0, 188, 24, RefreshSaved);
                     widgets.Text(pageRoot, "SavedHelp", "Save stores applied settings for future hosted sessions. Unapplied input is excluded.", 16, 28, 568, 19, 9);
                     readout = widgets.Scroll(pageRoot, 16, 50, 568, 112);
@@ -157,7 +158,7 @@ namespace SephiriaOne
                 widgets.Button(pageRoot, "<", 16, 0, 24, 23, () => MoveSelection(-1));
                 widgets.Button(pageRoot, ">", 265, 0, 24, 23, () => MoveSelection(1));
             }
-            selection = widgets.Text(pageRoot, "Selection", "", page == 1 ? 16 : 47, 1, 212, 24, 14);
+            selection = widgets.Text(pageRoot, "Selection", "", page == 1 ? 16 : 47, 1, 212, 24, page == 3 ? 12 : 14);
             units = widgets.Text(pageRoot, "Units", "", 16, 29, 273, 21, 9);
             amount = widgets.Input(pageRoot, 16, 56, 97, draft.Edit);
             string[] operations = { "set", "add", "sub" };
@@ -170,6 +171,7 @@ namespace SephiriaOne
             }
             string help = page == 0 ? "Set accepts x3 = each native stat times 3; x1 restores native. Add/subtract start a new offset after Set or xN." :
                 page == 1 ? "Set accepts x3 = each native allowance times 3; x1 restores native. Add/subtract after xN start a new offset." :
+                page == 3 ? "Set accepts xN = native baseline times N. Dice/leaves: future starts only. Set budgets preserve later native gains; unsafe reductions are rejected." :
                 "Amounts are extra candidates, not totals. Existing offers stay cached; new offers use the updated stats.";
             widgets.Text(pageRoot, "Help", help, 16, 88, 273, 46, 9);
             if (page == 1)
@@ -177,8 +179,8 @@ namespace SephiriaOne
             else
             {
                 resetOne = widgets.Button(pageRoot, "Reset selected", 16, 137, 132, 25, () => Execute(Prefix() + " reset", true));
-                resetAll = widgets.Button(pageRoot, page == 0 ? "Reset all stats" : "Reset all choices", 156, 137, 133, 25,
-                    () => Execute(page == 0 ? "/stats reset" : "/choices reset", true));
+                resetAll = widgets.Button(pageRoot, page == 0 ? "Reset all stats" : page == 3 ? "Reset all resources" : "Reset all choices", 156, 137, 133, 25,
+                    () => Execute(page == 0 ? "/stats reset" : page == 3 ? "/resources reset" : "/choices reset", true));
             }
             widgets.Text(pageRoot, "Players", "Current player values  ·  scroll for more", 312, 0, 272, 22, 10).color = PanelWidgets.Muted;
             readout = widgets.Scroll(pageRoot, 312, 26, 272, 136);
@@ -188,6 +190,7 @@ namespace SephiriaOne
         private void MoveSelection(int delta)
         {
             if (page == 0) statIndex = (statIndex + delta + StatCatalog.All.Count) % StatCatalog.All.Count;
+            else if (page == 3) resourceIndex = (resourceIndex + delta + ResourceCatalog.All.Count) % ResourceCatalog.All.Count;
             else choiceIndex = (choiceIndex + delta + Choices.Length) % Choices.Length;
             draft.Clear(); ClearInput(); UpdateSelection(); Refresh(SessionSettings.ReadSnapshot());
         }
@@ -201,10 +204,17 @@ namespace SephiriaOne
                 units.text = stat.Unit + "  |  " + stat.Minimum + ".." + stat.Maximum + (stat.Scale == 100 ? "  |  2 decimal places" : "  |  whole numbers");
             }
             else if (page == 1) { selection.text = "Wishing Fountain"; units.text = "Whole-number points. Each resulting balance must be valid."; }
+            else if (page == 3)
+            {
+                var definition = ResourceCatalog.All[resourceIndex];
+                selection.text = definition.Label;
+                units.text = definition.Minimum + ".." + definition.Maximum + " whole numbers | " + (definition.StartingOnly ? "future starts" : "all players");
+            }
             else { selection.text = Choices[choiceIndex] == "all" ? "All choice categories" : Choices[choiceIndex] + " choices"; units.text = "Extra candidates: 0..20. Native multipliers still apply."; }
         }
 
-        private string Prefix() => page == 0 ? "/stats " + StatCatalog.All[statIndex].Name : page == 1 ? "/fountain" : "/choices " + Choices[choiceIndex];
+        private string Prefix() => page == 0 ? "/stats " + StatCatalog.All[statIndex].Name : page == 1 ? "/fountain" :
+            page == 3 ? "/resources " + ResourceCatalog.All[resourceIndex].Name : "/choices " + Choices[choiceIndex];
 
         private void Execute(string command, bool requiresScope)
         {
@@ -244,6 +254,8 @@ namespace SephiriaOne
                     if (player.Stats.TryGetValue(stat.Name, out decimal value)) text.Append(value.ToString("0.##", CultureInfo.InvariantCulture)).Append(' ').Append(stat.Unit);
                 }
                 else if (page == 1) text.Append(player.FountainPoints).Append(" points (addon ").Append(player.FountainContribution.ToString("+0;-0;0", CultureInfo.InvariantCulture)).Append(')');
+                else if (page == 3)
+                { if (player.Resources.TryGetValue(ResourceCatalog.All[resourceIndex].Name, out string value)) text.Append(value); }
                 else foreach (var choice in player.ExtraChoices)
                     if (choiceIndex == 0 || choice.Key == Choices[choiceIndex]) text.Append(choice.Key).Append(": ").Append(choice.Value).Append(" extra  ");
                 text.AppendLine().AppendLine();

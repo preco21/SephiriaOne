@@ -4,9 +4,15 @@ Added in `0.10.0`. Only the host needs the addon; preset commands and their
 feedback remain local. Guests receive gameplay changes through native sync.
 
 Since `0.13.0`, the [host settings panel](control-panel.md) provides the same
-save/forget/status operations through `/mod ui` or the pause-menu button.
+save/forget/status operations through `/one ui` or the pause-menu button.
 Its Presets tab separates active intent from the saved copy; saving excludes
 unapplied input. It introduced no automatic-save rule.
+
+In `0.15.0`, the commands move from `/mod` to `/one` with no old alias, to avoid
+collisions with other addons. Presets containing [resources](resource-command.md)
+use v3 and retain Set/Offset/Multiplier intent. v1/v2 files remain supported.
+Run checkpoints preserving inventory/talent capacity and spent starting grants
+are separate from the explicit future-session preset.
 
 Since `0.14.0`, [native-baseline factors](multiplier-command.md) are saved as
 `multiplier N` rather than calculated totals. A preset containing a factor uses
@@ -25,14 +31,14 @@ transitions and cached UI limitations.
 /fountain set 100
 /choices all 5
 /stats luck +10
-/mod status
-/mod save
+/one status
+/one save
 ```
 
 After exiting and launching the game again, host a session. Each ready player
 gets 100 Fountain points, five extra candidates in each category, and ten luck
 above their own native value. Since `0.11.0`, the host maintains relative stat
-offsets after gear/buff changes. `/mod status` shows the active and saved copies
+offsets after gear/buff changes. `/one status` shows the active and saved copies
 separately, plus current player values. Player labels use native network IDs.
 Stat totals use the displayed units from `/stats list`; any `base adjustment`
 shown in parentheses is the tracked raw base-stat contribution used for reset.
@@ -40,9 +46,9 @@ If changed multipliers cannot represent a relative offset, status labels it as
 suspended. Saving still records the requested offset, which may be rejected for
 an incompatible player when inherited in a future session.
 
-To change the saved copy, issue new commands and run `/mod save` again. To stop
-future automatic loading, run `/mod forget`. To also undo the current adjustments,
-use `/fountain reset`, `/choices reset`, and `/stats reset`. These resets alone
+To change the saved copy, issue new commands and run `/one save` again. To stop
+future automatic loading, run `/one forget`. To also undo the current adjustments,
+use `/fountain reset`, `/choices reset`, `/stats reset`, and `/resources reset`. These resets alone
 do not erase the saved preset.
 
 ## Design
@@ -52,15 +58,15 @@ critical-read availability, native name synchronization status, and partial-writ
 journals. Saving is blocked
 while native writes are faulted. See [diagnostics and recovery](synchronization-guide.md#diagnostics-and-recovery).
 
-Add host-only local chat commands for all three gameplay families:
+Host-only local chat commands cover all gameplay families:
 
-- `/mod status`: show retained session adjustments, current adjusted values for
+- `/one status`: show retained session adjustments, current adjusted values for
   each ready player, and the saved preset for future hosted sessions.
-- `/mod save`: explicitly replace one saved preset with the current retained
-  Fountain, choice, and character-stat settings.
-- `/mod forget`: remove the saved preset without changing the current session.
-- `/mod` or `/mod help`: show usage.
-- `/mod ui`: open the host settings panel while in town or a run.
+- `/one save`: explicitly replace one saved preset with the current retained
+  Fountain, choice, character-stat, and resource settings.
+- `/one forget`: remove the saved preset without changing the current session.
+- `/one` or `/one help`: show usage.
+- `/one ui`: open the host settings panel while in town or a run.
 
 Preserve command intent rather than capturing equipment: a retained set remains
 absolute, a net add/subtract remains relative to each player's native baseline,
@@ -75,7 +81,7 @@ automatically. Those modes remain compatible with v1. See the
 
 One explicit snapshot is sufficient; named presets and continuous autosave are
 outside this change. Resets and subsequent commands affect only the current
-session until another `/mod save`. Saving an empty session is valid; `/mod forget`
+session until another `/one save`. Saving an empty session is valid; `/one forget`
 removes the file. Existing unsupported/legacy adjustments cannot be reconstructed
 as set-versus-relative intent and must be reissued before saving.
 
@@ -96,7 +102,7 @@ per-player planning rejects incompatible multipliers/underflow atomically.
 
 ## Implementation plan
 
-- [x] Add pure policy export/import, bounded versioned codec, and `/mod` parser.
+- [x] Add pure policy export/import, bounded versioned codec, and `/one` parser.
   Test composed set/relative history, all categories, decimals, zero targets,
   resets, malformed/duplicate/unknown fields, bounds, and invariant culture.
 - [x] Add isolated file storage with atomic replacement and explicit deletion.
@@ -132,4 +138,4 @@ when replacement fails.
 Live Unity checks remain pending: manually install the new DLL/metadata, restart,
 run the example above, and verify status lines in the game log. Exit fully and
 host again with an unmodified guest; verify values before and after returning to
-the lobby. Test `/mod forget` and an explicit reset followed by `/mod save`.
+the lobby. Test `/one forget` and an explicit reset followed by `/one save`.

@@ -34,7 +34,7 @@ on a run restart. Since `0.9.1`, the SDK session-start event also schedules a
 [Fountain carryover limit repair](fountain-run-restart.md) after the game reloads
 dungeon constants, without replaying point/stat/choice adjustments.
 Active settings clear when the server stops, the dungeon instance changes,
-or the addon unloads. `/mod save` writes a separate addon preset for future hosted
+or the addon unloads. `/one save` writes a separate addon preset for future hosted
 sessions; it does not edit the game profile. Without a saved preset, a new hosted
 session starts without retained adjustments. A reconnect
 with a new avatar inherits once against that avatar's restored native baseline;

@@ -33,7 +33,8 @@ namespace SephiriaOne
             return prefix.Equals("/fountain", StringComparison.OrdinalIgnoreCase) ||
                 prefix.Equals("/choices", StringComparison.OrdinalIgnoreCase) ||
                 prefix.Equals("/stats", StringComparison.OrdinalIgnoreCase) ||
-                prefix.Equals("/mod", StringComparison.OrdinalIgnoreCase);
+                prefix.Equals("/resources", StringComparison.OrdinalIgnoreCase) ||
+                prefix.Equals("/one", StringComparison.OrdinalIgnoreCase);
         }
 
         public static SettingsActionResult Execute(string command)
@@ -43,7 +44,7 @@ namespace SephiriaOne
             try
             {
                 string[] parts = (command ?? "").Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length == 2 && parts[0].Equals("/mod", StringComparison.OrdinalIgnoreCase) &&
+                if (parts.Length == 2 && parts[0].Equals("/one", StringComparison.OrdinalIgnoreCase) &&
                     parts[1].Equals("ui", StringComparison.OrdinalIgnoreCase))
                 {
                     bool host = NetworkServer.active;
@@ -54,16 +55,24 @@ namespace SephiriaOne
                 FountainParseResult fountain = FountainCommand.Parse(command, out FountainCommand fountainCommand, out string fountainError);
                 ChoiceParseResult choice = ChoiceCommand.Parse(command, out ChoiceCommand choiceCommand, out string choiceError);
                 StatParseResult stat = StatCommand.Parse(command, out StatCommand statCommand, out string statError);
+                ResourceParseResult resource = ResourceCommand.Parse(command, out ResourceCommand resourceCommand, out string resourceError);
                 PresetAction preset = PresetCommand.Parse(command, out string presetError);
                 isPreset = preset != PresetAction.NotCommand;
                 recognized = isPreset || fountain != FountainParseResult.NotCommand ||
-                    choice != ChoiceParseResult.NotCommand || stat != StatParseResult.NotCommand;
+                    choice != ChoiceParseResult.NotCommand || stat != StatParseResult.NotCommand || resource != ResourceParseResult.NotCommand;
                 if (!recognized) return new SettingsActionResult(false, false, false, Array.Empty<string>());
+                if (resource != ResourceParseResult.NotCommand)
+                {
+                    if (resource == ResourceParseResult.Help) return Reply(true, ResourceCommand.Usage);
+                    if (resource == ResourceParseResult.Invalid) return Reply(false, resourceError);
+                    bool success = ResourceRuntime.TryExecute(resourceCommand, out string resourceMessage);
+                    return Reply(success, resourceMessage);
+                }
 
                 if (isPreset)
                 {
                     if (preset == PresetAction.Help)
-                        return Reply(true, presetError + " /mod ui opens the host settings panel.");
+                        return Reply(true, presetError + " /one ui opens the host settings panel.");
                     if (preset == PresetAction.Invalid) return Reply(false, presetError);
                     bool success = SessionSettings.TryExecutePreset(preset, out string[] messages);
                     return new SettingsActionResult(true, success, false, messages);

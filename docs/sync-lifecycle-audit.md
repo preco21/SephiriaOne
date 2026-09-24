@@ -31,7 +31,7 @@ presets, and native loadouts. Game fingerprint: [development notes](development-
 
 The grant guard has independent Harmony ownership and error handling. It shares
 the existing embedded pinned runtime with candidate patches. If installation
-fails, frame polling remains active and `/mod status` reports the missing guard.
+fails, frame polling remains active and `/one status` reports the missing guard.
 Unload removes the guard and clears tracking. Tests install/remove the actual
 prefix on a fixture method and inspect its installed-game target signature.
 
@@ -51,7 +51,7 @@ prefix on a fixture method and inspect its installed-game target signature.
 | Saved native run resumed | Profile, passives, costume, inventory and saved effects restore before readiness. Addon saved policy loads once per host scope. Native saves do not reconstruct addon set-versus-relative intent. |
 | Late join/reconnect/new avatar | Once-per-avatar inheritance uses the new avatar's baseline; subtract restored markers before applying settings. A same-frame first Fountain grant also checks readiness. |
 | Inheritance rejected | Validate the entire per-avatar plan before writes, apply none, warn once. Do not enroll rejected Fountain/stats; a successful explicit command can enroll them later. |
-| `/mod save`, `/mod forget`, preset file edit | Saved addon policy is an explicit separate snapshot. Save/forget do not reapply current stats; reset does not erase the file. No live file reload: a new host/dungeon scope loads it. |
+| `/one save`, `/one forget`, preset file edit | Saved addon policy is an explicit separate snapshot. Save/forget do not reapply current stats; reset does not erase the file. No live file reload: a new host/dungeon scope loads it. |
 | Server stop/new dungeon/host-to-client transition | Clear active policy, joins, observations and Fountain enrollment. Only hosts load saved policy and calculate/write gameplay changes. |
 | Unload/reload | Stop maintenance, restore names, remove candidate contributions and patches. Stats/Fountain retain their existing adjustments until reset/session end, as previously documented. Saved-policy reload uses markers to avoid stacking. |
 | Rename/join/leave/avatar replacement | Native preset does not edit PlayerName. Name code follows the current profile, reliable acknowledgment state and avatar rebinding; rich text is never saved to the profile. |
@@ -72,7 +72,7 @@ refresh arbitrary UI or rebuild an anvil cache on an unmodified guest.
   Inspection indicates a combined update can refresh with the old amplifier,
   and an amplifier-only update can miss refresh entirely. Native values still
   replicate; reopening the panel reads them again. This is a source-based finding,
-  pending live remote reproduction. `/mod status` reads current host values.
+  pending live remote reproduction. `/one status` reads current host values.
 - **Generated offers stay cached.** Item lists are generated on the server and
   synchronized, with connection ownership checks; miracle lists are server-cached
   per player identity; anvil lists are local caches from synced stats. Restored

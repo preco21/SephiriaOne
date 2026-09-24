@@ -5,7 +5,7 @@
 > the recommended design from `control-panel-investigation.md`.
 
 **Goal:** An in-session host panel for existing Fountain, choices, stats and preset
-commands, reached from the pause menu or `/mod ui`, with live read-only status.
+commands, reached from the pause menu or `/one ui`, with live read-only status.
 
 **Architecture:** Both chat and UI call a validated action dispatcher; session
 code exposes an immutable snapshot. A code-built uGUI/TMP `UIBase` participates in
@@ -20,18 +20,18 @@ fault recovery, cumulative relative stats and native baseline resets. Keep C# LF
 
 - [x] Add `Controls/SettingsActions.cs` with `Execute(string command)` returning
   `SettingsActionResult` (`Recognized`, `Success`, `OpenPanel`, `Messages`).
-  Delegate to current parsers/services; help/list remain local, `/mod ui` is
+  Delegate to current parsers/services; help/list remain local, `/one ui` is
   host-only, unknown chat remains unrecognized. Catch command exceptions once.
 - [x] Add immutable `SettingsSnapshot`/`PlayerSettingsSnapshot` DTOs under
   `Controls/` and `SessionSettings.ReadSnapshot(bool refreshSaved = false)` in
   `Session/SessionSettingsSnapshot.cs`. Expose host readiness, session object,
   epoch/run/revision, fault family, saved validity, typed player values and
   formatted status lines. Reading never calls Prepare/Synchronize or writes.
-- [x] Share snapshot formatting with `/mod status`. Cache saved-preset reads
+- [x] Share snapshot formatting with `/one status`. Cache saved-preset reads
   between explicit refresh/open/save/forget; invalidate on controller lifecycle.
   Keep existing status semantics and strings used by regression tests.
 - [x] Add runtime regressions for dispatcher parity, rejected guests/invalid
-  input, `/mod ui`, read-only pending joins, immutable snapshots, saved-cache
+  input, `/one ui`, read-only pending joins, immutable snapshots, saved-cache
   refresh, native value changes, fault recovery, and old-session identity.
 
 Exact integration contract:
@@ -64,7 +64,7 @@ SettingsSnapshot SessionSettings.ReadSnapshot(bool refreshSaved = false);
   service checks remain authoritative. Clear successful delta input. Save acts
   only on applied intent; explain that drafts are excluded.
 - [x] Route chat through the shared dispatcher and invoke the controller for
-  `/mod ui`. Keep unknown chat and native submission behavior intact.
+  `/one ui`. Keep unknown chat and native submission behavior intact.
 - [x] Own UI stack lifetime explicitly: close before disposal, prevent repeated
   registration, disable interaction during transitions/authority loss, and
   preserve existing failed-unload recovery ordering. Do not change timeScale.
