@@ -6,23 +6,23 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../../SephiriaOne/FountainCommand.cs" Link="FountainCommand.cs" />
-    <Compile Include="../../SephiriaOne/FountainPoints.cs" Link="FountainPoints.cs" />
-    <Compile Include="../../SephiriaOne/ChoiceCommand.cs" Link="ChoiceCommand.cs" />
-    <Compile Include="../../SephiriaOne/ChoicePoints.cs" Link="ChoicePoints.cs" />
-    <Compile Include="../../SephiriaOne/StatCommand.cs" Link="StatCommand.cs" />
-    <Compile Include="../../SephiriaOne/StatPlan.cs" Link="StatPlan.cs" />
-    <Compile Include="../../SephiriaOne/CharacterStats.cs" Link="CharacterStats.cs" />
-    <Compile Include="../../SephiriaOne/SessionPolicy.cs" Link="SessionPolicy.cs" />
-    <Compile Include="../../SephiriaOne/SessionStatPolicy.cs" Link="SessionStatPolicy.cs" />
-    <Compile Include="../../SephiriaOne/SessionSettings.cs" Link="SessionSettings.cs" />
-    <Compile Include="../../SephiriaOne/SessionRelativeStats.cs" Link="SessionRelativeStats.cs" />
-    <Compile Include="../../SephiriaOne/SessionFountainState.cs" Link="SessionFountainState.cs" />
-    <Compile Include="../../SephiriaOne/SessionBoundaryHooks.cs" Link="SessionBoundaryHooks.cs" />
+    <Compile Include="../../SephiriaOne/Features/Fountain/FountainCommand.cs" Link="Source/Features/Fountain/FountainCommand.cs" />
+    <Compile Include="../../SephiriaOne/Features/Fountain/FountainPoints.cs" Link="Source/Features/Fountain/FountainPoints.cs" />
+    <Compile Include="../../SephiriaOne/Features/Choices/ChoiceCommand.cs" Link="Source/Features/Choices/ChoiceCommand.cs" />
+    <Compile Include="../../SephiriaOne/Features/Choices/ChoicePoints.cs" Link="Source/Features/Choices/ChoicePoints.cs" />
+    <Compile Include="../../SephiriaOne/Features/Stats/StatCommand.cs" Link="Source/Features/Stats/StatCommand.cs" />
+    <Compile Include="../../SephiriaOne/Features/Stats/StatPlan.cs" Link="Source/Features/Stats/StatPlan.cs" />
+    <Compile Include="../../SephiriaOne/Features/Stats/CharacterStats.cs" Link="Source/Features/Stats/CharacterStats.cs" />
+    <Compile Include="../../SephiriaOne/Session/SessionPolicy.cs" Link="Source/Session/SessionPolicy.cs" />
+    <Compile Include="../../SephiriaOne/Session/SessionStatPolicy.cs" Link="Source/Session/SessionStatPolicy.cs" />
+    <Compile Include="../../SephiriaOne/Session/SessionSettings.cs" Link="Source/Session/SessionSettings.cs" />
+    <Compile Include="../../SephiriaOne/Session/SessionRelativeStats.cs" Link="Source/Session/SessionRelativeStats.cs" />
+    <Compile Include="../../SephiriaOne/Session/SessionFountainState.cs" Link="Source/Session/SessionFountainState.cs" />
+    <Compile Include="../../SephiriaOne/Session/SessionBoundaryHooks.cs" Link="Source/Session/SessionBoundaryHooks.cs" />
     <PackageReference Include="Lib.Harmony" Version="2.4.2" />
-    <Compile Include="../../SephiriaOne/SessionPreset.cs" Link="SessionPreset.cs" />
-    <Compile Include="../../SephiriaOne/PresetCommand.cs" Link="PresetCommand.cs" />
-    <Compile Include="../../SephiriaOne/PresetStore.cs" Link="PresetStore.cs" />
-    <Compile Include="../../SephiriaOne/SessionPresetCommands.cs" Link="SessionPresetCommands.cs" />
+    <Compile Include="../../SephiriaOne/Session/Presets/SessionPreset.cs" Link="Source/Session/Presets/SessionPreset.cs" />
+    <Compile Include="../../SephiriaOne/Session/Presets/PresetCommand.cs" Link="Source/Session/Presets/PresetCommand.cs" />
+    <Compile Include="../../SephiriaOne/Session/Presets/PresetStore.cs" Link="Source/Session/Presets/PresetStore.cs" />
+    <Compile Include="../../SephiriaOne/Session/Presets/SessionPresetCommands.cs" Link="Source/Session/Presets/SessionPresetCommands.cs" />
   </ItemGroup>
 </Project>

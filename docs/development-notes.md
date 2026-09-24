@@ -146,6 +146,11 @@ Stages 1–14 occurred on 2026-09-23; candidate expansion continued on 2026-09-2
     and documented native stat-panel/anvil caches. Independent review caught the
     rejected-player enrollment issue; regression and re-review passed after repair.
     All 792 checks and both builds passed without deployment.
+24. Grouped 27 production source files by feature, session/presets, chat and shared
+    infrastructure, and mirrored those groups for 11 portable test files. Updated
+    linked-source paths and docs while preserving namespaces and every moved
+    source file's contents. All 792 checks and both builds passed; version remains
+    `0.11.1`, with no deployment. See [module structure](module-structure.md).
 
 The repository already contained commits `c793844` (Git configuration files) and
 `736b305` (initial project files). The scaffold adjustments and deployment work
@@ -185,24 +190,25 @@ SephiriaOne/
   SephiriaOne/
     SephiriaOne.csproj
     Entry.cs
-    ChoiceCommand.cs
-    ChoiceFeature.cs
-    ChoicePoints.cs
-    ChoiceSafety.cs
-    ChoiceTranspilers.cs
-    FountainCommand.cs
-    FountainPoints.cs
-    LocalPlayerNameColor.cs
-    ModChatCommands.cs
-    MultiplayerNameColor.cs
-    NetworkNameState.cs
-    SessionPolicy.cs
-    SessionSettings.cs
-    SessionPreset.cs
-    SessionPresetCommands.cs
-    PresetCommand.cs
-    PresetStore.cs
     metadata.json
+    Chat/
+      ModChatCommands.cs
+    Features/
+      Choices/
+      Fountain/
+      Names/
+      Stats/
+    Infrastructure/
+      HarmonyRuntime.cs
+    Session/
+      SessionPolicy.cs
+      SessionSettings.cs
+      ...
+      Presets/
+        PresetCommand.cs
+        PresetStore.cs
+        SessionPreset.cs
+        SessionPresetCommands.cs
     Properties/
       launchSettings.json
     bin/Release/netstandard2.1/
@@ -210,18 +216,27 @@ SephiriaOne/
     Deploy-Mod.ps1
   tests/
     SephiriaOne.Tests/
+      Compatibility/
+      Features/
+      Session/Presets/
     SephiriaOne.RuntimeTests/
   docs/
     blue-player-name.md
     choice-command.md
     command-reset.md
     development-notes.md
+    module-structure.md
     fountain-command.md
     fountain-run-restart.md
     session-inheritance.md
     session-preset.md
     third-party-notices.md
 ```
+
+Source and portable tests are grouped by feature. See
+[module structure](module-structure.md) for responsibilities and source-link
+conventions. This folder refactor preserves namespaces, runtime behavior, and
+version `0.11.1`.
 
 - [Project configuration](../SephiriaOne/SephiriaOne.csproj) references the installed
   `Assembly-CSharp.dll`, `UnityEngine.CoreModule.dll`, `Mirror.dll`,
@@ -236,29 +251,29 @@ SephiriaOne/
   controller object for name colors, chat commands, and session settings. Components
   are disabled on unload before the object is destroyed. Candidate contributions
   are removed before unpatching this addon's generation guards.
-- [Name color controller](../SephiriaOne/LocalPlayerNameColor.cs) colors only
+- [Name color controller](../SephiriaOne/Features/Names/LocalPlayerNameColor.cs) colors only
   `UI_StatsPanel.characterNameText` and the owned player's `WorldUserName` blue.
   It preserves alpha and restores original text color settings on disconnect,
   rebinding, or unload. It does not make hidden nameplates visible.
-- [Multiplayer name synchronization](../SephiriaOne/MultiplayerNameColor.cs)
+- [Multiplayer name synchronization](../SephiriaOne/Features/Names/MultiplayerNameColor.cs)
   publishes blue name tags through `PlayerAvatar.SetPlayerName` for the owned
   player while multiplayer is active. The profile name is read-only; native host
   run snapshots can contain the formatted runtime name. See the feature notes
   for restoration behavior and [portable checks](../tests/SephiriaOne.Tests/Program.cs).
-- [Chat controller](../SephiriaOne/ModChatCommands.cs) consumes the local
+- [Chat controller](../SephiriaOne/Chat/ModChatCommands.cs) consumes the local
   `/fountain`, `/choices`, `/stats`, and `/mod` commands, reports feedback in the local game log, and leaves
-  normal chat to the game's handler. The [runtime service](../SephiriaOne/FountainPoints.cs)
+  normal chat to the game's handler. The [runtime service](../SephiriaOne/Features/Fountain/FountainPoints.cs)
   accepts commands only on the host, validates all player balances first, and
   updates native synchronized capacity and carryover limits. The
-  [parser and planner](../SephiriaOne/FountainCommand.cs) have portable tests.
-- [Candidate service](../SephiriaOne/ChoicePoints.cs) plans every selected category
+  [parser and planner](../SephiriaOne/Features/Fountain/FountainCommand.cs) have portable tests.
+- [Candidate service](../SephiriaOne/Features/Choices/ChoicePoints.cs) plans every selected category
   and player before changing native synchronized stats. Namespaced contribution
-  markers preserve bonuses from other sources. [Generation guards](../SephiriaOne/ChoiceSafety.cs)
+  markers preserve bonuses from other sources. [Generation guards](../SephiriaOne/Features/Choices/ChoiceSafety.cs)
   bound exhausted pools without replacing the game's rewards or networking.
-- [Session settings controller](../SephiriaOne/SessionSettings.cs) waits for native
+- [Session settings controller](../SephiriaOne/Session/SessionSettings.cs) waits for native
   player initialization, plans all inherited families before writing, and uses
   the same native fields and markers as explicit commands. Its portable
-  [policy](../SephiriaOne/SessionPolicy.cs) records successful commands and clears
+  [policy](../SephiriaOne/Session/SessionPolicy.cs) records successful commands and clears
   retained settings on reset, server/dungeon replacement, or unload.
 - [Metadata](../SephiriaOne/metadata.json) names `SephiriaOne.dll` and
   `SephiriaOne.Entry` as the assembly and entry class.

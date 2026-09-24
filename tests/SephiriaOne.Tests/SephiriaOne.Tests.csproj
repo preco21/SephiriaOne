@@ -6,18 +6,18 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../../SephiriaOne/NetworkNameState.cs" Link="NetworkNameState.cs" />
-    <Compile Include="../../SephiriaOne/NameGradient.cs" Link="NameGradient.cs" />
-    <Compile Include="../../SephiriaOne/FountainCommand.cs" Link="FountainCommand.cs" />
-    <Compile Include="../../SephiriaOne/ChoiceCommand.cs" Link="ChoiceCommand.cs" />
-    <Compile Include="../../SephiriaOne/StatCommand.cs" Link="StatCommand.cs" />
-    <Compile Include="../../SephiriaOne/StatPlan.cs" Link="StatPlan.cs" />
-    <Compile Include="../../SephiriaOne/SessionPolicy.cs" Link="SessionPolicy.cs" />
-    <Compile Include="../../SephiriaOne/SessionStatPolicy.cs" Link="SessionStatPolicy.cs" />
-    <Compile Include="../../SephiriaOne/SessionPreset.cs" Link="SessionPreset.cs" />
-    <Compile Include="../../SephiriaOne/PresetCommand.cs" Link="PresetCommand.cs" />
-    <Compile Include="../../SephiriaOne/PresetStore.cs" Link="PresetStore.cs" />
-    <Compile Include="../../SephiriaOne/ChoiceTranspilers.cs" Link="ChoiceTranspilers.cs" />
+    <Compile Include="../../SephiriaOne/Features/Names/NetworkNameState.cs" Link="Source/Features/Names/NetworkNameState.cs" />
+    <Compile Include="../../SephiriaOne/Features/Names/NameGradient.cs" Link="Source/Features/Names/NameGradient.cs" />
+    <Compile Include="../../SephiriaOne/Features/Fountain/FountainCommand.cs" Link="Source/Features/Fountain/FountainCommand.cs" />
+    <Compile Include="../../SephiriaOne/Features/Choices/ChoiceCommand.cs" Link="Source/Features/Choices/ChoiceCommand.cs" />
+    <Compile Include="../../SephiriaOne/Features/Stats/StatCommand.cs" Link="Source/Features/Stats/StatCommand.cs" />
+    <Compile Include="../../SephiriaOne/Features/Stats/StatPlan.cs" Link="Source/Features/Stats/StatPlan.cs" />
+    <Compile Include="../../SephiriaOne/Session/SessionPolicy.cs" Link="Source/Session/SessionPolicy.cs" />
+    <Compile Include="../../SephiriaOne/Session/SessionStatPolicy.cs" Link="Source/Session/SessionStatPolicy.cs" />
+    <Compile Include="../../SephiriaOne/Session/Presets/SessionPreset.cs" Link="Source/Session/Presets/SessionPreset.cs" />
+    <Compile Include="../../SephiriaOne/Session/Presets/PresetCommand.cs" Link="Source/Session/Presets/PresetCommand.cs" />
+    <Compile Include="../../SephiriaOne/Session/Presets/PresetStore.cs" Link="Source/Session/Presets/PresetStore.cs" />
+    <Compile Include="../../SephiriaOne/Features/Choices/ChoiceTranspilers.cs" Link="Source/Features/Choices/ChoiceTranspilers.cs" />
     <PackageReference Include="Lib.Harmony" Version="2.4.2" />
   </ItemGroup>
 </Project>
