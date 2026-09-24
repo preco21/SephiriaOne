@@ -47,6 +47,15 @@ native/other-mod limit. After the pending repair finishes, stop enforcing the
 cap so independent later changes remain possible. Clear pending work and detach
 the event on unload; clear it on server/dungeon replacement too.
 
+## Extension in 0.11.1
+
+The [broader lifecycle audit](sync-lifecycle-audit.md) covers native capacity
+changes between runs and reconciliation immediately before native item granting.
+Only successfully enrolled players or existing markers participate in cap repair;
+negative capacity does not block another player's allowance. Unchanged inputs
+preserve independent cap edits. The current repair log is
+`[SephiriaOne] Reconciled Fountain carryover limit: <old> -> <new>.`
+
 ## Verification
 
 - Added the SDK event boundary to the existing game API fixtures. The second-run

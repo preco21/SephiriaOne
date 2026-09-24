@@ -12,6 +12,7 @@ namespace SephiriaOne
         {
             HorayModAPI.OnAllDatabasesReady += OnDatabasesReady;
             ChoiceFeature.Initialize();
+            SessionBoundaryFeature.Initialize();
             if (!nameColor)
             {
                 var controller = new GameObject("SephiriaOne.Controllers");
@@ -44,6 +45,7 @@ namespace SephiriaOne
             }
 
             ChoiceFeature.Shutdown();
+            SessionBoundaryFeature.Shutdown();
 
             if (nameColor)
             {

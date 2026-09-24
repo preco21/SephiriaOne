@@ -47,6 +47,8 @@ namespace SephiriaOne
             bool sameSession = dungeon && ReferenceEquals(dungeon, DungeonManager.Instance);
             IReadOnlyList<string> active = sameSession ? policy.DescribeSettings() : new string[0];
             lines.Add("Active session settings: " + (active.Count == 0 ? "none." : string.Join("; ", active)));
+            if (!SessionBoundaryFeature.Available)
+                lines.Add("Fountain grant synchronization guard is unavailable; frame polling remains active. Check Player.log.");
             int ready = 0;
             foreach (PlayerSpawner spawner in PlayerSpawner.MultiplayerList)
             {

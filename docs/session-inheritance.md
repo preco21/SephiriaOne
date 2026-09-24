@@ -58,7 +58,9 @@ server inventory with `canBroadcast > 0`. Native inventory restoration decreases
 that counter until completion. The same readiness check guards manual commands.
 
 There is no dedicated player-ready event in the inspected HorayMod API. This
-feature requires no additional Harmony patch or custom network message. Native
+inheritance feature requires no custom network message. Since `0.11.1`, a narrow
+Harmony prefix also reconciles ready state before Fountain granting; see the
+[lifecycle audit](sync-lifecycle-audit.md). Native
 SyncDictionary/SyncVar writes deliver the inherited values to unmodified guests.
 Before a host command, pending ready newcomers are processed first, so a command
 entered in their arrival frame cannot skip earlier settings or double an offset.

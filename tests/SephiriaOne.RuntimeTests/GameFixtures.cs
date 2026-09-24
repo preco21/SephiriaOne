@@ -35,6 +35,10 @@ public sealed class PlayerSpawner : UnityEngine.Object
     public uint netId;
     public Mirror.NetworkConnectionToClient connectionToClient = new();
     public PlayerAvatar PlayerAvatar = new();
+    public int LastFountainAllowance;
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    public void AddDimensionPocketItemsOnServer(int[] items) => LastFountainAllowance =
+        Math.Min(PlayerAvatar.Inventory.dimensionPocket, DungeonManager.Instance.constValueDictionary["DIMENSIONPOCKETLIMIT"]);
 }
 
 public sealed class PlayerAvatar : UnityEngine.Object
@@ -45,6 +49,7 @@ public sealed class PlayerAvatar : UnityEngine.Object
     public string playerNameSource = "Player";
     public string currentFloorGuid = "town";
     public GridInventory Inventory = new();
+    public int maxPassivePoint = 5;
     public readonly Dictionary<string, int> customStats = new();
     public readonly Dictionary<string, int> calculatedBonusStats = new();
     public readonly Dictionary<string, int> customStatsAmp = new();
@@ -85,4 +90,5 @@ public static class HorayModAPI
 namespace SephiriaOne
 {
     internal static class ChoiceFeature { public static bool Available = true; }
+    internal static class SessionBoundaryFeature { public static bool Available = true; }
 }

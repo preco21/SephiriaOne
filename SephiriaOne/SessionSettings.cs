@@ -36,6 +36,8 @@ namespace SephiriaOne
             restoreFountainLimit = false;
             policy.Clear();
             relativeStats.Clear();
+            fountainState.Clear();
+            fountainPlayers.Clear();
             joins.SetSession(null);
             dungeon = null;
             store = null;
@@ -82,6 +84,8 @@ namespace SephiriaOne
             {
                 policy.Clear();
                 relativeStats.Clear();
+                fountainState.Clear();
+                fountainPlayers.Clear();
                 restoreFountainLimit = false;
                 if (current) LoadPreset();
             }
@@ -95,6 +99,7 @@ namespace SephiriaOne
                 {
                     if (!IsReady(spawner)) continue;
                     PlayerAvatar player = spawner.PlayerAvatar;
+                    ObserveFountain(player);
                     if (!joins.TryBegin(player.netId, true))
                     {
                         MaintainRelativeStats(player);
@@ -110,7 +115,11 @@ namespace SephiriaOne
                             continue;
                         }
                         // All families are planned before writing any inherited value.
-                        if (plan.Fountain != null) FountainPoints.ApplyPlan(dungeon, new[] { player }, plan.Fountain);
+                        if (plan.Fountain != null)
+                        {
+                            FountainPoints.ApplyPlan(dungeon, new[] { player }, plan.Fountain);
+                            fountainPlayers.Add(player.netId);
+                        }
                         foreach (SessionStatWrite write in plan.Stats)
                         {
                             if (SessionPlayerSnapshot.Read(snapshot.Raw, write.Key) != write.Raw) player.customStats[write.Key] = write.Raw;
@@ -118,6 +127,7 @@ namespace SephiriaOne
                             else player.customStats[write.Marker] = write.Contribution;
                         }
                         TrackRelativeStats(player, null);
+                        ObserveFountain(player, false);
                         Report($"Applied active session settings to joining player {player.netId}.", true);
                     }
                     catch (Exception exception)
@@ -127,7 +137,7 @@ namespace SephiriaOne
                     }
                 }
                 if (restoreFountainLimit)
-                    restoreFountainLimit = !FountainPoints.RestoreCarryoverLimit(dungeon, policy.HasFountainSetting);
+                    restoreFountainLimit = !FountainPoints.RestoreCarryoverLimit(dungeon, fountainPlayers);
             }
             finally { synchronizing = false; }
             return true;
@@ -144,7 +154,18 @@ namespace SephiriaOne
                 player.Inventory.dimensionPocket, contribution, limit, original, applied, ChoiceFeature.Available);
         }
 
-        public static void Remember(FountainCommand command) => policy.Record(command);
+        public static void Remember(FountainCommand command)
+        {
+            policy.Record(command);
+            foreach (PlayerSpawner spawner in PlayerSpawner.MultiplayerList)
+            {
+                if (!IsReady(spawner)) continue;
+                PlayerAvatar player = spawner.PlayerAvatar;
+                if (policy.HasFountainSetting) fountainPlayers.Add(player.netId);
+                else fountainPlayers.Remove(player.netId);
+                ObserveFountain(player, false);
+            }
+        }
         public static bool TryPlanStats(StatCommand command, IReadOnlyList<StatSnapshot> values,
             out StatUpdate[] updates, out string error) => policy.TryPlanStatCommand(command, values, out updates, out error);
         public static void Remember(StatCommand command, IReadOnlyList<PlayerAvatar> players)

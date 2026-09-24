@@ -78,7 +78,7 @@ namespace SephiriaOne
             foreach (Update update in updates)
                 if (recorded.Add(update.Key)) SessionSettings.RememberChoice(update.Key, update.Applied);
             string action = command.IsReset ? "Reset addon bonuses for" : "Updated";
-            message = $"{action} {command.Target.ToString().ToLowerInvariant()} extra choices for {players.Count} player(s). Applies to new offers and normal rerolls; available content limits the count.";
+            message = $"{action} {command.Target.ToString().ToLowerInvariant()} extra choices for {players.Count} player(s). Use new offers; existing offers stay cached. An already opened anvil can hide reroll after an increase.";
             return true;
         }
 

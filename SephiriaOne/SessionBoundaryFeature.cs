@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace SephiriaOne
 {
-    internal static class ChoiceFeature
+    internal static class SessionBoundaryFeature
     {
         public static bool Available { get; private set; }
 
@@ -13,29 +13,27 @@ namespace SephiriaOne
             try
             {
                 HarmonyRuntime.EnsureLoaded();
-                InstallGuards();
+                Install();
                 Available = true;
-                Debug.Log("[SephiriaOne] Candidate commands ready: /choices (extra choices 0..20)");
+                Debug.Log("[SephiriaOne] Fountain grant synchronization guard ready.");
             }
             catch (Exception exception)
             {
                 Available = false;
-                Debug.LogError("[SephiriaOne] Candidate commands unavailable: " + exception);
+                Debug.LogError("[SephiriaOne] Fountain grant synchronization guard unavailable; frame polling remains active: " + exception);
             }
         }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private static void InstallGuards() => ChoiceSafety.Install();
 
         public static void Shutdown()
         {
             if (!Available) return;
-            ChoicePoints.RemoveContributions();
-            RemoveGuards();
+            Uninstall();
             Available = false;
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private static void RemoveGuards() => ChoiceSafety.Uninstall();
+        private static void Install() => SessionBoundaryHooks.Install();
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void Uninstall() => SessionBoundaryHooks.Uninstall();
     }
 }

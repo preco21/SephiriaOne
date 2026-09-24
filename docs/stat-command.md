@@ -86,6 +86,9 @@ are included in this repository.
 - `UI_StatsPanel` subscribes to custom-stat and calculated-bonus changes. Gameplay
   reads the same native stats. A live peer check is still required to establish
   observed UI refresh and gameplay behavior on another machine.
+  The `0.11.1` [lifecycle audit](sync-lifecycle-audit.md) found that open panels
+  do not subscribe to amplifier changes; reopening may be required despite
+  correctly synchronized underlying values.
 - The four elemental damage keys use a separate conversion formula, which is
   why they are not exposed by this command.
 

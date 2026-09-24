@@ -485,5 +485,133 @@ host.PlayerAvatar.customStatsAmp["LUCK"] = 100;
 SessionSettings.Synchronize();
 Check(Value(host) == 30, "Automatic maintenance never writes without server authority");
 
+host = Start();
+guest = Add(2, points: 9);
+Check(Fountain("+100"), "Prepare Fountain bonus before native preset/costume changes");
+SessionSettings.Synchronize();
+guest.PlayerAvatar.Inventory.dimensionPocket += 8;
+SessionSettings.Synchronize();
+Check(Points(guest) == 117 && Carryover(guest) == 117 && Value(guest, FountainPoints.ContributionKey) == 100,
+    "Native Fountain capacity increases also raise the server carryover cap without replaying points");
+Check(Fountain("reset") && Points(guest) == 17 && Points(host) == 4 &&
+    DungeonManager.Instance.constValueDictionary[FountainPoints.LimitKey] == 12,
+    "Reset after native capacity changes preserves the new baseline and original cap");
+
+host = Start();
+Check(Fountain("+100"), "Prepare same-frame native change before Fountain item grant");
+SessionBoundaryHooks.Install();
+host.PlayerAvatar.Inventory.dimensionPocket += 8;
+host.AddDimensionPocketItemsOnServer(Array.Empty<int>());
+Check(host.LastFountainAllowance == 112, "Fountain grant sees native capacity changes before the next LateUpdate");
+SessionBoundaryHooks.Uninstall();
+
+host = Start();
+guest = Add(2, points: 9);
+Check(Fountain("0"), "Prepare native point removal after absolute Fountain set");
+host.PlayerAvatar.Inventory.dimensionPocket -= 3;
+guest.PlayerAvatar.Inventory.dimensionPocket += 30;
+SessionSettings.Synchronize();
+Check(Points(host) == -3 && Carryover(guest) == 30, "A native negative capacity cannot block another player's carryover repair");
+Check(Fountain("reset") && Points(host) == 1 && Points(guest) == 39, "Reset preserves native point changes after a negative intermediate capacity");
+
+// Match native costume/passive replacement: remove/apply only native effects.
+host = Start();
+guest = Add(2, luck: 20, points: 9, itemChoices: 3);
+Check(Stats("luck +10") && Choices("all 5") && Fountain("+100"), "Prepare all families for native loadout replacement");
+host.PlayerAvatar.customStats["LUCK"] -= 3;
+host.PlayerAvatar.Inventory.dimensionPocket -= 2;
+SessionSettings.Synchronize();
+Check(Value(host) == 12 && Value(host, "SEPHIRIAONE_STAT_LUCK") == 10, "Native passive removal preserves relative offset and raw baseline");
+host.PlayerAvatar.customStats["LUCK"] += 6;
+host.PlayerAvatar.calculatedBonusStats["LUCK"] = 2;
+host.PlayerAvatar.customStatsAmp["LUCK"] = 100;
+host.PlayerAvatar.customStats["EXTRAITEMCHOICES"] += 2;
+host.PlayerAvatar.Inventory.dimensionPocket += 10;
+SessionSettings.Synchronize();
+Check(host.PlayerAvatar.GetCustomStatUnsafe("LUCK") == 30 && Value(guest) == 30,
+    "Native costume/passive and multiplier replacement keeps independent baselines");
+Check(Value(host, "EXTRAITEMCHOICES") == 9 && Value(host, "SEPHIRIAONE_EXTRAITEMCHOICES") == 5 &&
+    Points(host) == 112 && Carryover(host) == 112, "Native loadout changes preserve candidate contribution and Fountain allowance");
+host.PlayerAvatar.customStatsAmp["EXTRAITEMCHOICES"] = 100;
+SessionSettings.Synchronize();
+Check(host.PlayerAvatar.GetCustomStatUnsafe("EXTRAITEMCHOICES") == 18 && Value(host, "SEPHIRIAONE_EXTRAITEMCHOICES") == 5,
+    "Candidate bonus remains raw additive and follows native amplification");
+host.PlayerAvatar.maxPassivePoint += 3;
+SessionSettings.Synchronize();
+Check(host.PlayerAvatar.GetCustomStatUnsafe("LUCK") == 30, "Awarding unspent hard-mode passive points does not change a stat");
+host.PlayerAvatar.customStats["LUCK"] += 3;
+SessionSettings.Synchronize();
+Check(host.PlayerAvatar.GetCustomStatUnsafe("LUCK") == 36 && Value(guest) == 30,
+    "Spending native passive points updates only the owner's baseline");
+host.PlayerAvatar.currentFloorGuid = "next-floor";
+host.PlayerAvatar.customStatsAmp["LUCK"] = 0;
+SessionSettings.Synchronize();
+Check(host.PlayerAvatar.GetCustomStatUnsafe("LUCK") == 23, "Buff expiration after floor/death transition keeps native value plus offset");
+Check(Stats("reset") && Choices("reset") && Fountain("reset") && Value(host) == 11 && Points(host) == 12 &&
+    Value(host, "EXTRAITEMCHOICES") == 4, "Reset after native loadout edits restores updated baselines");
+
+host = Start();
+Check(Stats("luck set 100"), "Prepare one-time set before native menu edit");
+host.PlayerAvatar.customStats["LUCK"] += 3;
+SessionSettings.Synchronize();
+Check(Value(host) == 103 && Stats("luck reset") && Value(host) == 8, "Absolute set stays one-time; reset retains later native edits");
+
+SessionBoundaryHooks.Install();
+SessionBoundaryHooks.Install();
+host = Start();
+Check(Fountain("+100") && Stats("luck +10") && Choices("all 5"), "Prepare settings before a guest's first grant");
+guest = Add(2, luck: 20, points: 9);
+guest.AddDimensionPocketItemsOnServer(Array.Empty<int>());
+Check(guest.LastFountainAllowance == 109 && Value(guest) == 30 && Value(guest, "EXTRAWEAPONCHOICES") == 5,
+    "Pre-grant synchronization inherits all settings for a ready guest once");
+guest.PlayerAvatar.Inventory.canBroadcast = 0;
+guest.PlayerAvatar.Inventory.dimensionPocket += 8;
+guest.AddDimensionPocketItemsOnServer(Array.Empty<int>());
+Check(guest.LastFountainAllowance == 109, "Grant hook respects inventory initialization guard");
+guest.PlayerAvatar.Inventory.canBroadcast = 1;
+guest.AddDimensionPocketItemsOnServer(Array.Empty<int>());
+Check(guest.LastFountainAllowance == 117 && Value(guest) == 30, "Grant hook resumes after initialization without stacking stats");
+DungeonManager.Instance.constValueDictionary[FountainPoints.LimitKey] = 50;
+guest.AddDimensionPocketItemsOnServer(Array.Empty<int>());
+Check(guest.LastFountainAllowance == 50, "Unchanged inputs preserve an independent cap replacement");
+RestartLobby();
+guest.AddDimensionPocketItemsOnServer(Array.Empty<int>());
+Check(guest.LastFountainAllowance == 117, "Run restart is reconciled before grant without LateUpdate");
+SessionSettings.Stop();
+DungeonManager.Instance.constValueDictionary[FountainPoints.LimitKey] = 12;
+guest.AddDimensionPocketItemsOnServer(Array.Empty<int>());
+Check(guest.LastFountainAllowance == 12, "Grant hook is inert after controller unload");
+host = Start();
+Check(Fountain("+100"), "Prepare guard authority check");
+NetworkServer.active = false;
+host.PlayerAvatar.Inventory.dimensionPocket += 8;
+host.AddDimensionPocketItemsOnServer(Array.Empty<int>());
+Check(host.LastFountainAllowance == 104, "Grant hook never adjusts client-side state");
+SessionBoundaryHooks.Uninstall();
+SessionBoundaryHooks.Uninstall();
+host = Start();
+Check(Fountain("+100"), "Prepare hook removal check");
+host.PlayerAvatar.Inventory.dimensionPocket += 8;
+host.AddDimensionPocketItemsOnServer(Array.Empty<int>());
+Check(host.LastFountainAllowance == 104, "Uninstall removes the grant hook");
+
+host = Start();
+Check(Fountain("20") && Stats("luck 11"), "Prepare rejected newcomer eligibility check");
+guest = Add(2, points: 25);
+guest.PlayerAvatar.customStatsAmp["LUCK"] = 100;
+SessionSettings.Synchronize();
+Check(Points(guest) == 25 && Value(guest, FountainPoints.ContributionKey) == 0 &&
+    DungeonManager.Instance.constValueDictionary[FountainPoints.LimitKey] == 20,
+    "Rejected inheritance does not enroll a newcomer for Fountain cap maintenance");
+host.PlayerAvatar.Inventory.dimensionPocket += 2;
+SessionSettings.Synchronize();
+Check(DungeonManager.Instance.constValueDictionary[FountainPoints.LimitKey] == 22,
+    "An enrolled player's native change excludes rejected players from cap planning");
+Check(Fountain("25"), "Explicit Fountain command enrolls a previously rejected guest even with zero contribution");
+guest.PlayerAvatar.Inventory.dimensionPocket += 3;
+SessionSettings.Synchronize();
+Check(DungeonManager.Instance.constValueDictionary[FountainPoints.LimitKey] == 28,
+    "Successful zero-contribution set remains eligible for later native capacity changes");
+
 if (Directory.Exists(testDataRoot)) Directory.Delete(testDataRoot, true);
 Console.WriteLine($"Passed {checks} runtime command/session integration checks using game API fixtures.");

@@ -3,6 +3,11 @@
 Added in `0.10.0`. Only the host needs the addon; preset commands and their
 feedback remain local. Guests receive gameplay changes through native sync.
 
+Native in-game loadout presets are separate from this addon file. Applying one
+does not replace the retained addon policy; its equipment/passive effects update
+native baselines. See the [lifecycle audit](sync-lifecycle-audit.md) for these
+transitions and cached UI limitations.
+
 ## Usage
 
 ```text

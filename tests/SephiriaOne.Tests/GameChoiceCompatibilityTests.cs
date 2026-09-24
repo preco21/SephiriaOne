@@ -15,6 +15,7 @@ internal static class GameChoiceCompatibilityTests
         };
         var game = Assembly.LoadFrom(Path.Combine(managed, "Assembly-CSharp.dll"));
         var addon = Assembly.LoadFrom(Path.GetFullPath(addonPath));
+        GameLifecycleCompatibilityTests.Run(game, addon);
         var guards = addon.GetType("SephiriaOne.ChoiceSafety", throwOnError: true)!;
         foreach (var target in new[] { ("Sephirite", "GenerateItems", "CanRollItem"), ("MiracleSelector2", "GenerateMiracles", "LimitMiracles") })
         {

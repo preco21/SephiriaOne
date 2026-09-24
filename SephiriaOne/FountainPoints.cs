@@ -95,7 +95,7 @@ namespace SephiriaOne
 
         // Returns false only while native player/dungeon initialization is pending.
         // Rebuild the cap reset markers without replaying any points command.
-        internal static bool RestoreCarryoverLimit(DungeonManager dungeon, bool hasRetainedSetting)
+        internal static bool RestoreCarryoverLimit(DungeonManager dungeon, ISet<uint> configuredPlayers)
         {
             if (!NetworkServer.active || !dungeon || !dungeon.isServer ||
                 !dungeon.constValueDictionary.TryGetValue(LimitKey, out int limit)) return false;
@@ -108,8 +108,11 @@ namespace SephiriaOne
                 if (!SessionSettings.IsReady(spawner)) { allReady = false; continue; }
                 PlayerAvatar player = spawner.PlayerAvatar;
                 player.customStats.TryGetValue(ContributionKey, out int contribution);
-                if (!hasRetainedSetting && contribution == 0) continue;
-                balances.Add(player.Inventory.dimensionPocket);
+                if (!configuredPlayers.Contains(player.netId) && contribution == 0) continue;
+                // Native status removal after a low absolute set may make a
+                // player's capacity negative. They need no allowance; do not let
+                // that block repairing everyone else's cap or rewrite their points.
+                balances.Add(System.Math.Max(0, player.Inventory.dimensionPocket));
                 contributions.Add(contribution);
             }
             if (balances.Count == 0) return allReady;
@@ -118,11 +121,11 @@ namespace SephiriaOne
             if (!new FountainCommand(FountainOperation.Add, 0).TryPlanTracked(balances, contributions, limit,
                 original, applied, out FountainPlan plan, out string error))
             {
-                UnityEngine.Debug.LogWarning("[SephiriaOne] Could not restore Fountain carryover limit after lobby restart: " + error);
+                UnityEngine.Debug.LogWarning("[SephiriaOne] Could not reconcile Fountain carryover limit: " + error);
                 return true;
             }
             if (plan.Limit != limit)
-                UnityEngine.Debug.Log($"[SephiriaOne] Restored Fountain carryover limit after lobby restart: {limit} -> {plan.Limit}.");
+                UnityEngine.Debug.Log($"[SephiriaOne] Reconciled Fountain carryover limit: {limit} -> {plan.Limit}.");
             ApplyLimit(dungeon, plan);
             return allReady;
         }

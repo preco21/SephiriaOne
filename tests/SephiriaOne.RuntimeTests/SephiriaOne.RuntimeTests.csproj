@@ -17,6 +17,9 @@
     <Compile Include="../../SephiriaOne/SessionStatPolicy.cs" Link="SessionStatPolicy.cs" />
     <Compile Include="../../SephiriaOne/SessionSettings.cs" Link="SessionSettings.cs" />
     <Compile Include="../../SephiriaOne/SessionRelativeStats.cs" Link="SessionRelativeStats.cs" />
+    <Compile Include="../../SephiriaOne/SessionFountainState.cs" Link="SessionFountainState.cs" />
+    <Compile Include="../../SephiriaOne/SessionBoundaryHooks.cs" Link="SessionBoundaryHooks.cs" />
+    <PackageReference Include="Lib.Harmony" Version="2.4.2" />
     <Compile Include="../../SephiriaOne/SessionPreset.cs" Link="SessionPreset.cs" />
     <Compile Include="../../SephiriaOne/PresetCommand.cs" Link="PresetCommand.cs" />
     <Compile Include="../../SephiriaOne/PresetStore.cs" Link="PresetStore.cs" />

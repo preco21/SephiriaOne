@@ -43,6 +43,12 @@ already generated offer does not generate new candidates. Weapon choices mean
 **anvil upgrade candidates**, not additional weapons on town stands. The native
 choice count is naturally limited by the available eligible content.
 
+The `0.11.1` [lifecycle audit](sync-lifecycle-audit.md) confirms native costume/
+passive changes preserve raw candidate contributions, which scale with native
+multipliers. It also found a native anvil UI edge: increasing choices after
+opening an anvil can hide its reroll button while keeping its old shorter list.
+Use a fresh anvil; the host addon does not invalidate a guest's cached offers.
+
 ## Installed-game findings
 
 - `Sephirite.GenerateItems` uses `EXTRAITEMCHOICES`; ordinary rewards start at
