@@ -44,6 +44,7 @@ Console.WriteLine($"Passed {StateWriteBatchTests.Run()} shared write-batch check
 Console.WriteLine($"Passed {PresentationRegistryTests.Run()} presentation registry checks.");
 Console.WriteLine($"Passed {NetworkNameRetryTests.Run()} name retry checks.");
 Console.WriteLine($"Passed {NamePresentationTests.Run()} name presentation checks.");
+Console.WriteLine($"Passed {NameStyleDirectoryTests.Run()} platform name identity checks.");
 Console.WriteLine($"Passed {NameLabelPresenterTests.Run()} name rendering-state checks.");
 Console.WriteLine($"Passed {NameGradientTests.Run()} name gradient checks.");
 Console.WriteLine($"Passed {FountainCommandTests.Run()} Fountain command checks.");

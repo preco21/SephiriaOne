@@ -10,6 +10,7 @@ namespace SephiriaOne
     {
         private readonly PresentationRegistry registry = new PresentationRegistry();
         private readonly MultiplayerNameColor multiplayerName = new MultiplayerNameColor();
+        private readonly NameStyleDirectory styles = new NameStyleDirectory();
         private readonly HashSet<TMP_Text> overhead = new HashSet<TMP_Text>();
         private bool installed;
         public static string Diagnostics { get; private set; } = "presentation not initialized";
@@ -28,7 +29,7 @@ namespace SephiriaOne
             }
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private void InstallHooks() => NamePresentationHooks.Install(registry);
+        private void InstallHooks() => NamePresentationHooks.Install(registry, styles);
         [MethodImpl(MethodImplOptions.NoInlining)]
         private void RemoveHooks() => NamePresentationHooks.Uninstall();
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -42,16 +43,21 @@ namespace SephiriaOne
             if (player && player.isOwned) multiplayerName.Update(player);
             else multiplayerName.Restore();
 
+            styles.Clear();
+            var seen = new HashSet<PlayerSpawner>();
             var current = new HashSet<TMP_Text>();
             foreach (PlayerSpawner subject in PlayerSpawner.MultiplayerList)
             {
-                if (!subject || !subject.WorldUserName) continue;
+                if (!subject || !seen.Add(subject)) continue;
+                ObserveStyle(subject);
+                if (!subject.WorldUserName) continue;
                 TMP_Text label = subject.WorldUserName;
                 current.Add(label);
                 if (overhead.Add(label)) registry.Register(label, new NameLabelBinding(label,
                     () => Character(subject ? subject.PlayerAvatar : null)));
             }
             // Solo avatar is not guaranteed to have entered MultiplayerList yet.
+            if (player && seen.Add(player)) ObserveStyle(player);
             if (player && player.WorldUserName)
             {
                 var label = player.WorldUserName;
@@ -63,6 +69,11 @@ namespace SephiriaOne
                 if (!current.Contains(label)) { registry.Remove(label); overhead.Remove(label); }
             registry.Tick();
             Diagnostics = multiplayerName.Status + "; " + (installed ? HookStatus() : "native UI hooks unavailable");
+        }
+        private void ObserveStyle(PlayerSpawner subject)
+        {
+            PlayerAvatar avatar = subject.PlayerAvatar;
+            styles.Observe(subject.steamID, avatar ? avatar.playerNameSource : null, subject.isOwned || (avatar && avatar.isOwned));
         }
         private static NameView Character(UnitAvatar avatar)
         {
@@ -77,6 +88,7 @@ namespace SephiriaOne
             installed = false;
             registry.Clear();
             overhead.Clear();
+            styles.Clear();
             multiplayerName.Restore();
             Diagnostics = "presentation disabled";
         }

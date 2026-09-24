@@ -29,5 +29,15 @@ namespace SephiriaOne
             string shown = $"{roomLabel}: {room}\n{hostLabel}: {(own ? NameGradient.Format(host ?? "") : host)}\n{chapterLabel}: {chapter}";
             return new NameView(shown.TrimEnd(), own, plain.TrimEnd(), preserveBaseColor: true);
         }
+
+        public static NameView Party(string? nativeName, string? nickname, string open, string close, bool own)
+        {
+            if (string.IsNullOrEmpty(nativeName)) return new NameView(null, false);
+            NameView character = Character(nativeName, own);
+            bool styled = own || NameStyleDirectory.IsStyled(nativeName);
+            string suffix = string.IsNullOrEmpty(nickname) ? "" : open + nickname + close;
+            string shownSuffix = string.IsNullOrEmpty(nickname) ? "" : open + (styled ? NameGradient.Format(nickname!) : nickname) + close;
+            return new NameView(character.Text + shownSuffix, styled, character.PlainText + suffix, preserveBaseColor: true);
+        }
     }
 }

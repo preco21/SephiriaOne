@@ -16,6 +16,7 @@ namespace SephiriaOne
         bool RichText { get; set; }
         bool OverrideColorTags { get; set; }
         bool EnableVertexGradient { get; set; }
+        void UpdateLayout();
     }
     // Portable rendering ownership logic; TMP is an adapter, so tests exercise
     // the exact text/color/settings mutations rather than only the formatter.
@@ -36,11 +37,20 @@ namespace SephiriaOne
         }
         public ReconcileResult Refresh()
         {
+            var before = LayoutState();
+            ReconcileResult result = RefreshCore();
+            if (!before.Equals(LayoutState())) label.UpdateLayout();
+            return result;
+        }
+        private (string, bool, bool, bool) LayoutState() =>
+            (label.Text, label.RichText, label.OverrideColorTags, label.EnableVertexGradient);
+        private ReconcileResult RefreshCore()
+        {
             NameView value = source();
-            if (value.Text == null) { Restore(); return ReconcileResult.Waiting("subject identity unavailable"); }
+            if (value.Text == null) { RestoreCore(); return ReconcileResult.Waiting("subject identity unavailable"); }
             if (!value.Styled)
             {
-                Restore();
+                RestoreCore();
                 if (label.Text != value.Text) label.Text = value.Text;
                 return ReconcileResult.Applied();
             }
@@ -77,6 +87,13 @@ namespace SephiriaOne
             return ReconcileResult.Applied();
         }
         public void Restore()
+        {
+            if (!label.IsAlive) { styled = false; return; }
+            var before = LayoutState();
+            RestoreCore();
+            if (!before.Equals(LayoutState())) label.UpdateLayout();
+        }
+        private void RestoreCore()
         {
             if (label.IsAlive && styled)
             {
