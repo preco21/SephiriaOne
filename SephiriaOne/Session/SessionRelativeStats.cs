@@ -87,7 +87,7 @@ namespace SephiriaOne
             }
             if (success) return ReconcileResult.Applied();
             if (!IsRelativeStatSuspended(player, stat))
-                Report($"Relative {stat.Name} offset suspended for player {player.netId}: {error.Replace(" Nobody was changed.", "")} {recovery} It will retry when native stat inputs change.", false);
+                Report($"Relative {stat.Name} setting suspended for player {player.netId}: {error.Replace(" Nobody was changed.", "")} {recovery} It will retry when native stat inputs change.", false);
             return ReconcileResult.Suspended(error + " " + recovery);
         }
 

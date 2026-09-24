@@ -168,8 +168,8 @@ namespace SephiriaOne
                 changeButtons.Add(widgets.Button(pageRoot, labels[i], 120 + 57 * i, 56, 53, 25,
                     () => Execute(Prefix() + " " + op + " " + draft.Text, true)));
             }
-            string help = page == 0 ? "Add/subtract accumulate from each character's native stats. Adding after Set switches to relative mode." :
-                page == 1 ? "Changes points for everyone. Reset removes addon adjustments while preserving native changes." :
+            string help = page == 0 ? "Set accepts x3 = each native stat times 3; x1 restores native. Add/subtract start a new offset after Set or xN." :
+                page == 1 ? "Set accepts x3 = each native allowance times 3; x1 restores native. Add/subtract after xN start a new offset." :
                 "Amounts are extra candidates, not totals. Existing offers stay cached; new offers use the updated stats.";
             widgets.Text(pageRoot, "Help", help, 16, 88, 273, 46, 9);
             if (page == 1)

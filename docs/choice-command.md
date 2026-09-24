@@ -17,6 +17,10 @@ uses our own code and the installed game's APIs.
 The number means **additional choices**, not a replacement for each reward's
 base count. No bonus applies until a command is issued.
 
+The `xN` syntax introduced for [stats and Fountain](multiplier-command.md) is
+explicitly unsupported here: native extra-choice baselines are normally zero,
+and total offer sizes depend on the generator. Use ordinary Set/Add/Subtract.
+
 | Command | Effect for every currently spawned player |
 | --- | --- |
 | `/choices all 5` | Set this addon's bonus to five for all three categories. |

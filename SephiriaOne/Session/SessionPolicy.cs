@@ -57,9 +57,11 @@ namespace SephiriaOne
         private readonly struct Setting
         {
             public bool Absolute { get; }
+            public bool Multiplier { get; }
             public decimal Value { get; }
-            public bool Empty => !Absolute && Value == 0;
-            public Setting(bool absolute, decimal value) { Absolute = absolute; Value = value; }
+            public bool Empty => Multiplier ? Value == 1 : !Absolute && Value == 0;
+            public Setting(bool absolute, decimal value, bool multiplier = false)
+            { Absolute = absolute; Value = value; Multiplier = multiplier; }
             public Setting Add(decimal delta) => new Setting(Absolute, Value + delta);
         }
 
@@ -68,13 +70,13 @@ namespace SephiriaOne
         private readonly Dictionary<StatDefinition, Setting> stats = new Dictionary<StatDefinition, Setting>();
         public bool HasChanges => fountain.HasValue || choices.Count != 0 || stats.Count != 0;
         public bool HasFountainSetting => fountain.HasValue;
+        public bool HasFountainMultiplier => fountain.HasValue && fountain.Value.Multiplier;
 
         // Call only after a host command succeeds. Failed requests never become policy.
         public void Record(FountainCommand command)
         {
             if (command.Operation == FountainOperation.Reset) { fountain = null; return; }
-            Setting next = command.Operation == FountainOperation.Set ? new Setting(true, command.Amount) :
-                fountain.GetValueOrDefault().Add(command.Operation == FountainOperation.Add ? command.Amount : -(decimal)command.Amount);
+            Setting next = NextFountainSetting(command);
             fountain = next.Empty ? (Setting?)null : next;
         }
 
@@ -116,14 +118,8 @@ namespace SephiriaOne
             error = "The joining player's Fountain baseline or session limit is unavailable.";
             if (fountain.HasValue)
             {
-                Setting setting = fountain.Value;
-                long baseline = (long)player.FountainPoints - player.FountainContribution;
-                if (!player.FountainLimit.HasValue || baseline < 0 || baseline > int.MaxValue ||
-                    setting.Value < -int.MaxValue || setting.Value > int.MaxValue) return false;
-                var command = new FountainCommand(setting.Absolute ? FountainOperation.Set :
-                    setting.Value < 0 ? FountainOperation.Subtract : FountainOperation.Add,
-                    (int)(setting.Absolute ? setting.Value : Math.Abs(setting.Value)));
-                if (!command.TryPlanTracked(new[] { (int)baseline }, new[] { 0 }, player.FountainLimit.Value,
+                if (!player.FountainLimit.HasValue || !TryPlanFountainSetting(fountain.Value,
+                    new[] { player.FountainPoints }, new[] { player.FountainContribution }, player.FountainLimit.Value,
                     player.OriginalLimit, player.AppliedLimit, out FountainPlan pending, out error)) return false;
                 fountainPlan = pending;
             }

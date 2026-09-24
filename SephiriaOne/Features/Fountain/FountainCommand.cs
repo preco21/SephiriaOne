@@ -7,7 +7,7 @@ using System.Globalization;
 namespace SephiriaOne
 {
     internal enum FountainParseResult { NotCommand, Help, Invalid, Valid }
-    internal enum FountainOperation { Set, Add, Subtract, Reset }
+    internal enum FountainOperation { Set, Add, Subtract, Reset, Multiply }
 
     internal sealed class FountainPlan
     {
@@ -27,11 +27,11 @@ namespace SephiriaOne
     internal readonly struct FountainCommand
     {
         public FountainOperation Operation { get; }
-        public int Amount { get; }
+        public decimal Amount { get; }
 
-        public const string Usage = "Host only, current and joining players: /fountain 100 (set), /fountain +10 (add), /fountain -5 (subtract). Also: /fountain set|add|sub N. /fountain reset restores points and clears the retained setting.";
+        public const string Usage = "Host only, current and joining players: /fountain 100 (set), +10, -5, x3, or set|add|sub N. xN targets each player's native Fountain points times N, replacing prior adjustments. " + RelativeMultiplier.Usage + " A delta after xN starts a new native offset. /fountain reset restores points and clears the retained setting.";
 
-        internal FountainCommand(FountainOperation operation, int amount)
+        internal FountainCommand(FountainOperation operation, decimal amount)
         {
             Operation = operation;
             Amount = amount;
@@ -89,6 +89,15 @@ namespace SephiriaOne
                 return FountainParseResult.Invalid;
             }
 
+            if (RelativeMultiplier.HasPrefix(amountText))
+            {
+                error = RelativeMultiplier.Usage;
+                if (operation != FountainOperation.Set || !RelativeMultiplier.TryParse(amountText, out decimal factor)) return FountainParseResult.Invalid;
+                command = new FountainCommand(FountainOperation.Multiply, factor);
+                error = "";
+                return FountainParseResult.Valid;
+            }
+
             if (!int.TryParse(amountText, NumberStyles.None, CultureInfo.InvariantCulture, out int amount))
             {
                 error = "Use a whole-number amount from 0 to 2147483647. " + Usage;
@@ -120,12 +129,19 @@ namespace SephiriaOne
             var points = new int[balances.Count];
             var offsets = new int[balances.Count];
             int nextLimit = currentLimit;
-            bool reset = Operation == FountainOperation.Reset;
+            bool reset = Operation == FountainOperation.Reset || (Operation == FountainOperation.Multiply && Amount == 1);
+            if (!reset && (Operation == FountainOperation.Multiply ? !RelativeMultiplier.IsValid(Amount) :
+                Amount < 0 || Amount > int.MaxValue || Amount != decimal.Truncate(Amount)))
+            { error = "Invalid Fountain amount or multiplier. Nobody was changed."; return false; }
             for (int i = 0; i < balances.Count; i++)
             {
-                long value = reset ? (long)balances[i] - contributions[i] :
+                decimal target = reset ? (long)balances[i] - contributions[i] :
                     Operation == FountainOperation.Set ? Amount :
-                    (long)balances[i] + (Operation == FountainOperation.Add ? (long)Amount : -(long)Amount);
+                    Operation == FountainOperation.Multiply ? ((decimal)balances[i] - contributions[i]) * Amount :
+                    balances[i] + (Operation == FountainOperation.Add ? Amount : -Amount);
+                if (target < 0 || target > int.MaxValue || target != decimal.Truncate(target))
+                { error = "Every player's Fountain result must be an exact whole number 0..2147483647. Nobody was changed."; return false; }
+                long value = (long)target;
                 long offset = reset ? 0 : (long)contributions[i] + value - balances[i];
                 if (value < 0 || value > int.MaxValue || offset < int.MinValue || offset > int.MaxValue)
                 {

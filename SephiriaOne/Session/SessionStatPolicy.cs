@@ -21,9 +21,10 @@ namespace SephiriaOne
         {
             if (command.Stat == null) throw new ArgumentException("A stat is required.", nameof(command));
             if (command.Operation == StatOperation.Set) return new Setting(true, command.Amount);
+            if (command.Operation == StatOperation.Multiply) return new Setting(false, command.Amount, true);
             stats.TryGetValue(command.Stat, out Setting current);
             // A relative command starts a new offset when leaving absolute mode.
-            decimal offset = current.Absolute ? 0 : current.Value;
+            decimal offset = current.Absolute || current.Multiplier ? 0 : current.Value;
             return new Setting(false, offset + (command.Operation == StatOperation.Add ? command.Amount : -command.Amount));
         }
 
@@ -62,9 +63,9 @@ namespace SephiriaOne
                 error = "";
                 return true;
             }
-            var command = new StatCommand(value.Stat, setting.Absolute ? StatOperation.Set :
+            var command = new StatCommand(value.Stat, setting.Multiplier ? StatOperation.Multiply : setting.Absolute ? StatOperation.Set :
                 setting.Value < 0 ? StatOperation.Subtract : StatOperation.Add,
-                setting.Absolute ? setting.Value : Math.Abs(setting.Value));
+                setting.Absolute || setting.Multiplier ? setting.Value : Math.Abs(setting.Value));
             var native = new StatSnapshot(value.Stat, (int)baseline, 0, value.Bonus, value.Amplifier);
             if (!StatPlanner.TryPlan(command, new[] { native }, out StatUpdate[] planned, out error)) return false;
             update = planned[0];

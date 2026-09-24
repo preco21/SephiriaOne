@@ -55,7 +55,7 @@ namespace SephiriaOne
         {
             update = default;
             error = "Stat or tracked adjustment would overflow. Nobody was changed.";
-            if (command.Operation == StatOperation.Reset)
+            if (command.Operation == StatOperation.Reset || (command.Operation == StatOperation.Multiply && command.Amount == 1))
             {
                 long restored = (long)value.Raw - value.Contribution;
                 if (!FitsInt(restored)) return false;
@@ -63,19 +63,32 @@ namespace SephiriaOne
                 return true;
             }
 
+            if (command.Operation == StatOperation.Multiply && !RelativeMultiplier.IsValid(command.Amount))
+            { error = RelativeMultiplier.Usage; return false; }
+
+            // Multiply is always native-relative, even when this planner is used
+            // directly rather than through the retained session policy.
+            int source = value.Raw;
+            if (command.Operation == StatOperation.Multiply)
+            {
+                long baseline = (long)value.Raw - value.Contribution;
+                if (!FitsInt(baseline)) return false;
+                source = (int)baseline;
+            }
             // Match UnitAvatar: int sum/product, then float division and truncation.
             long factor = 100L + value.Amplifier;
             error = "A stat multiplier is non-positive or its arithmetic would overflow. Nobody was changed.";
-            if (factor <= 0 || !FitsInt(factor) || !TryEffective(value.Raw, value.Bonus, factor, out int current)) return false;
+            if (factor <= 0 || !FitsInt(factor) || !TryEffective(source, value.Bonus, factor, out int current)) return false;
             StatDefinition stat = value.Stat;
             decimal display = command.Operation == StatOperation.Set ? command.Amount :
+                command.Operation == StatOperation.Multiply ? stat.Display(current) * command.Amount :
                 stat.Display(current) + (command.Operation == StatOperation.Add ? command.Amount : -command.Amount);
             error = $"Every player's resulting {stat.Name} must be {stat.Minimum}..{stat.Maximum} {stat.Unit}. Nobody was changed.";
             if (display < stat.Minimum || display > stat.Maximum) return false;
             decimal scaled = (display - stat.Offset) * stat.Scale;
             if (scaled != decimal.Truncate(scaled) || scaled < int.MinValue || scaled > int.MaxValue) return false;
             int target = (int)scaled;
-            int raw = value.Raw;
+            int raw = source;
             if (current != target)
             {
                 // Search all sums with representable base, sum, and native product.

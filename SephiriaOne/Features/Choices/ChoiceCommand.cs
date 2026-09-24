@@ -54,6 +54,11 @@ namespace SephiriaOne
 
             ChoiceOperation operation = ChoiceOperation.Set;
             string amountText = parts[parts.Length - 1];
+            if (RelativeMultiplier.HasPrefix(amountText))
+            {
+                error = "Choices count extra candidates, whose native baseline is normally zero. Baseline multipliers are not supported here; use set/add/sub amounts 0..20.";
+                return ChoiceParseResult.Invalid;
+            }
             if (parts.Length == 3 && amountText.Equals("reset", StringComparison.OrdinalIgnoreCase))
             {
                 command = new ChoiceCommand(target, ChoiceOperation.Reset, 0);

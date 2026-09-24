@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../SephiriaOne/Controls/RelativeMultiplier.cs" Link="Source/Controls/RelativeMultiplier.cs" />
     <Compile Include="../../SephiriaOne/UI/PanelDraft.cs" Link="Source/UI/PanelDraft.cs" />
     <Compile Include="../../SephiriaOne/UI/PanelControlLifetime.cs" Link="Source/UI/PanelControlLifetime.cs" />
     <Compile Include="../../SephiriaOne/Synchronization/Core/*.cs" Link="Source/Synchronization/Core/%(Filename)%(Extension)" />
@@ -17,6 +18,7 @@
     <Compile Include="../../SephiriaOne/Features/Stats/StatPlan.cs" Link="Source/Features/Stats/StatPlan.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionPolicy.cs" Link="Source/Session/SessionPolicy.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionStatPolicy.cs" Link="Source/Session/SessionStatPolicy.cs" />
+    <Compile Include="../../SephiriaOne/Session/SessionFountainPolicy.cs" Link="Source/Session/SessionFountainPolicy.cs" />
     <Compile Include="../../SephiriaOne/Session/Presets/SessionPreset.cs" Link="Source/Session/Presets/SessionPreset.cs" />
     <Compile Include="../../SephiriaOne/Session/Presets/PresetCommand.cs" Link="Source/Session/Presets/PresetCommand.cs" />
     <Compile Include="../../SephiriaOne/Session/Presets/PresetStore.cs" Link="Source/Session/Presets/PresetStore.cs" />

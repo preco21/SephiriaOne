@@ -6,7 +6,13 @@ feedback remain local. Guests receive gameplay changes through native sync.
 Since `0.13.0`, the [host settings panel](control-panel.md) provides the same
 save/forget/status operations through `/mod ui` or the pause-menu button.
 Its Presets tab separates active intent from the saved copy; saving excludes
-unapplied input. It introduces no new persistence format or automatic-save rule.
+unapplied input. It introduced no automatic-save rule.
+
+Since `0.14.0`, [native-baseline factors](multiplier-command.md) are saved as
+`multiplier N` rather than calculated totals. A preset containing a factor uses
+v2; v1 files remain supported and are still written when no factor is active.
+Older addon versions cannot load v2. Status exposes the retained factor even
+when native incompatibility temporarily suspends its application.
 
 Native in-game loadout presets are separate from this addon file. Applying one
 does not replace the retained addon policy; its equipment/passive effects update
@@ -64,7 +70,7 @@ markers. A set equal to a native value is still an active setting.
 For character stats, an add/subtract command after `set` switches to a new relative
 offset; subsequent deltas accumulate. Older presets retain their explicit stored
 mode and amount: `set 110` stays absolute, while `offset 10` is now maintained
-automatically. The preset format is unchanged. See the
+automatically. Those modes remain compatible with v1. See the
 [relative-stat audit](relative-stat-consistency.md).
 
 One explicit snapshot is sufficient; named presets and continuous autosave are

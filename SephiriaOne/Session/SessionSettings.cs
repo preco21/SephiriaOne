@@ -34,6 +34,9 @@ namespace SephiriaOne
             result.Register(new ReconciliationRule<HostPlayer>("session-inheritance", SyncDomain.Identity,
                 SyncDomain.Stats | SyncDomain.Choices | SyncDomain.Fountain, ReconcileMode.Once,
                 subject => subject.IsReady, subject => subject.Id, Inherit));
+            result.Register(new ReconciliationRule<HostPlayer>("fountain-multiplier", SyncDomain.Fountain,
+                SyncDomain.Fountain, ReconcileMode.OnChange, subject => subject.IsReady,
+                subject => (policy.HasFountainMultiplier, CaptureFountain(subject.Player)), MaintainFountainMultiplier));
             result.Register(new ReconciliationRule<HostPlayer>("fountain-capacity", SyncDomain.Fountain,
                 SyncDomain.Limits, ReconcileMode.OnChange, subject => subject.IsReady,
                 subject => CaptureFountain(subject.Player), subject =>
@@ -284,11 +287,15 @@ namespace SephiriaOne
                 if (!subject.IsReady) continue;
                 if (policy.HasFountainSetting) fountainPlayers.Add(subject.Player);
                 else fountainPlayers.Remove(subject.Player);
+                players.AcceptObservation(subject, "fountain-multiplier");
                 players.AcceptObservation(subject, "fountain-capacity");
             }
         }
         public static bool TryPlanStats(StatCommand command, IReadOnlyList<StatSnapshot> values,
             out StatUpdate[] updates, out string error) => policy.TryPlanStatCommand(command, values, out updates, out error);
+        public static bool TryPlanFountain(FountainCommand command, IReadOnlyList<int> balances, IReadOnlyList<int> contributions,
+            int limit, int? original, int? applied, out FountainPlan plan, out string error) =>
+            policy.TryPlanFountainCommand(command, balances, contributions, limit, original, applied, out plan, out error);
         public static void Remember(StatCommand command, IReadOnlyList<PlayerAvatar> participants)
         { policy.Record(command); foreach (PlayerAvatar player in participants) TrackRelativeStats(player, command.Stat); }
         public static void RememberChoice(string key, int contribution) => policy.RecordChoice(key, contribution);

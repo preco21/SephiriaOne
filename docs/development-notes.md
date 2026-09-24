@@ -9,10 +9,17 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.14.0` adds [native-baseline multipliers](multiplier-command.md) to
+stats and Fountain (`x3` or `set x3`). Each player's own native displayed value
+is multiplied; factors replace prior adjustments, follow native changes and
+survive explicit save/reload and joins. `x1` restores native, and a numeric delta
+after a factor starts a new native-relative offset. The panel's Set button shares
+the same syntax. Choices remain extra-count commands and reject multipliers.
+
 Investigated [five additional resource/capacity settings](resource-settings-investigation.md):
 initial dice, inventory slots, talent points, fruit-skewer points and initial
 leaves. All have native host-to-guest paths, but need phase-aware grant/load
-handling and safe reductions. This is research only; runtime remains `0.13.0`.
+handling and safe reductions. Those five controls remain research only.
 
 Version `0.13.0` adds a [host settings control panel](control-panel.md), opened
 from the pause menu or `/mod ui`. Stats, Fountain, choices, presets and status
@@ -61,13 +68,13 @@ normal upgrades when reset. This version was built and tested without deployment
 | --- | --- |
 | Project | Visual Studio solution and `netstandard2.1` class library exist. |
 | Compiler | .NET SDK `10.0.401` is installed and was used successfully. |
-| Release build | `dotnet build SephiriaOne.slnx --configuration Release --nologo -p:DeployMod=false` passed for `0.13.0` with 0 warnings/errors. See the [implementation record](control-panel-implementation.md). |
-| Debug build | `dotnet build SephiriaOne.slnx --configuration Debug --nologo -p:DeployMod=false` passed for `0.13.0` with 0 warnings/errors. |
+| Release build | `dotnet build SephiriaOne.slnx --configuration Release --nologo -p:DeployMod=false` passed for `0.14.0` with 0 warnings/errors. See [multiplier verification](multiplier-command.md#verification). |
+| Debug build | `dotnet build SephiriaOne.slnx --configuration Debug --nologo -p:DeployMod=false` passed for `0.14.0` with 0 warnings/errors. |
 | Automatic deployment | The build invokes `scripts/Deploy-Mod.ps1` after the MSBuild `Build` target. |
 | Visual Studio command | Added the `Deploy Mod` launch profile. Its command was verified with evaluated Release properties and matching deployed hashes; Debug path resolution was also checked. The IDE dropdown has not been tested interactively. |
 | Missing addon folder | Deployment created `AddOns\SephiriaOne` during verification. |
 | Existing addon folder | Running deployment again succeeded. |
-| Deployed content | `0.13.0` was not deployed. The user-installed files identify `0.11.0`. Output embeds Harmony and its license; no game DLLs are distributed. |
+| Deployed content | `0.14.0` was not deployed. The user-installed files identify `0.11.0`. Output embeds Harmony and its license; no game DLLs are distributed. |
 | In-game loading | The user confirmed `0.1.0` loaded. `Player.log` also contains `[SephiriaOne] Loaded v0.1.0`, the AddOnLoader success entry, and `[SephiriaOne] All databases ready`. |
 | Name gradient | Per-letter midpoint colors from `#408af1` to `#a8d7fa` are published through the native owned character-name command in multiplayer. Native peers control rendering and refresh; lobby platform names and solo labels get no addon styling. See [current compatibility](presentation-compatibility.md). |
 | Multiplayer verification | 21 portable synchronization, 11 bounded-retry and 30 gradient checks pass; installed native server setter, command transport, name getter and serialization paths pass inspection. A live second-client visual check is still pending. |
@@ -78,6 +85,7 @@ normal upgrades when reset. This version was built and tested without deployment
 | Reset commands | `/choices reset`, `/choices item reset` (also `weapon`/`miracle`), and `/fountain reset` remove tracked addon adjustments while preserving native bonuses. See [reset semantics and checks](command-reset.md). |
 | Character stats | `/stats luck +10`, `/stats luck -5`, `/stats luck set 100`, `/stats luck reset`, and `/stats reset` use native synchronized stats. `/stats list` shows supported names and display units. See [commands and findings](stat-command.md). |
 | Stat verification | 117 command checks and 219 relative consistency checks cover parsing, units, exact amplified targets, batch rejection, native baselines, resets, and agreement between manual, inherited, maintained, and saved settings. Live host/guest UI and gameplay checks remain pending. |
+| Multipliers | 85 new portable checks; 750 portable and 354 runtime fixture checks pass overall. Factors share policy/planning/presets and native synchronization; live guest rendering remains unverified. |
 | Joining players | Successful settings apply once after native avatar/inventory initialization, including reconnects with a new avatar. Host-only commands and native synchronization support unmodified guests. |
 | Automated verification | 665 portable checks and 316 runtime command/session checks pass (981 total). Covers existing gameplay/policy behavior plus shared controls, snapshots, drafts and exceptional UI cleanup. Nine native lifecycle paths, native UI stack/cancel, name transport, both candidate guards and embedded dependencies pass inspection. Fixtures do not establish live Unity/network behavior. |
 | Lifecycle audit | Native preset/costume/passive/hard-mode changes, buffs, floors, restart, joins, rejection, unload and persistence were traced. Fountain cap gaps fixed; native open-panel/cached-anvil limitations remain. See [findings and live checklist](sync-lifecycle-audit.md). |
@@ -221,6 +229,12 @@ Stages 1–14 occurred on 2026-09-23; candidate expansion continued on 2026-09-2
     documented local-profile/menu limits and the two-phase starting-leaf grant.
     Proposed shared resource definitions and initialization boundaries; no
     runtime code, addon build, game execution, save modification or deployment occurred.
+31. Added character-specific `xN` factors in `0.14.0` for stats and Fountain.
+    Shared parsing, retained multiplier mode, exact display arithmetic, v2
+    presets and Fountain maintenance preserve native baselines across changes,
+    joins and restarts. Reused the panel's Set action. Added identity/zero,
+    incompatible-target, fault-recovery and legacy negative-baseline regressions.
+    No new native hooks or deployment; see [verification](multiplier-command.md#verification).
 
 The repository already contained commits `c793844` (Git configuration files) and
 `736b305` (initial project files). The scaffold adjustments and deployment work
@@ -237,7 +251,7 @@ commits are recorded in Git history. The configured remote is
 | Build SDK | .NET `10.0.401` |
 | Mod target framework | `netstandard2.1` |
 | Mod assembly / namespace | `SephiriaOne` |
-| Mod version / author | `0.13.0` / `preco21` |
+| Mod version / author | `0.14.0` / `preco21` |
 | Game version reported by the confirmed load log | `1.0.33` |
 | Game directory | `C:\Program Files (x86)\Steam\steamapps\common\Sephiria` |
 | Game managed assemblies | `<GameDir>\Sephiria_Data\Managed` |
@@ -621,13 +635,13 @@ requirement for a native HorayMod addon.
 
 ## Next verification steps
 
-1. Manually install the `0.13.0` Release DLL and adjacent metadata when ready;
+1. Manually install the `0.14.0` Release DLL and adjacent metadata when ready;
    this task did not deploy them. Fully restart Sephiria and enter the town/lobby
    or a run; the title screen alone is insufficient for addon loading.
 2. Inspect `Player.log` for these expected entries:
 
    ```text
-   [SephiriaOne] Loaded v0.13.0
+   [SephiriaOne] Loaded v0.14.0
    [SephiriaOne] All databases ready
    [SephiriaOne] Chat commands bound: /fountain, /choices, /stats, /mod
    [SephiriaOne] Candidate commands ready: /choices (extra choices 0..20)
@@ -672,3 +686,6 @@ requirement for a native HorayMod addon.
 15. Follow the [host-panel checks](control-panel.md#live-verification-still-required)
     for both entry points, native focus/cancel, scrolling/scaling, parity with
     chat, stale drafts, session transitions, presets and unmodified guests.
+16. Follow the [multiplier checks](multiplier-command.md#verification) with
+    unequal character baselines, repeated factors, immediate run entry, native
+    loadout changes, restarts and saved factors.

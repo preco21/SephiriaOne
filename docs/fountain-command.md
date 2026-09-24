@@ -16,10 +16,15 @@ retained setting. See [session inheritance](session-inheritance.md).
 | `/fountain 100` or `/fountain set 100` | Set each player's points to 100. |
 | `/fountain +10` or `/fountain add 10` | Add 10 to each player's current points. |
 | `/fountain -5` or `/fountain sub 5` | Subtract 5 from each player's current points. |
+| `/fountain x3` or `/fountain set x3` | Maintain three times each player's own native capacity. Replaces the previous adjustment. |
+| `/fountain x1` | Restore native capacity and clear retained multiplier intent, like reset. |
 | `/fountain reset` | Remove this addon's point adjustments and restore the session limit it raised. |
 | `/fountain` | Show usage. |
 
-Names are case-insensitive. Amounts are whole numbers. Validate every resulting
+Names are case-insensitive. Ordinary amounts are whole numbers; `xN` factors
+allow two decimal places but require whole-number results. A delta after `xN`
+starts a new native-relative offset. See [multiplier semantics](multiplier-command.md).
+Validate every resulting
 balance in the range `0..2147483647` before changing any player. Underflow,
 overflow, invalid arguments, a non-host caller, or players still initializing
 must leave everyone unchanged. Ordinary chat remains ordinary chat; only the
@@ -70,8 +75,9 @@ local game log; guests should reopen their Fountain panel to see the new capacit
 ## Scope and lifecycle
 
 This changes runtime point capacity; it does not buy or rewrite passive upgrades,
-edit profile files, grant items directly, or keep enforcing a value every frame.
-Normal game stat changes can subsequently adjust the capacity. New players and
+edit profile files or grant items directly. Ordinary Set/Add/Subtract do not
+continuously enforce a target. Since `0.14.0`, multiplier mode recalculates when
+native capacity changes. New players and
 replacement avatars inherit the active session setting once. Existing avatars
 retain their point adjustment until reset or replaced. The raised session limit is
 reset by the game's normal dungeon initialization; since `0.9.1`, the addon

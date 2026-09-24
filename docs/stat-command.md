@@ -19,6 +19,13 @@ Examples: `/stats luck +10`, `/stats luck -5`, `/stats luck set 100`,
 supported names and units. Bare numbers mean set; `add`, `sub`, and `subtract`
 are also accepted. Explicit amounts are unsigned; shorthand `-N` means subtract.
 
+Since `0.14.0`, `/stats luck x3` targets each character's native displayed luck
+times 3, replacing previous addon intent. Repeating it does not stack. The host
+maintains the factor after native changes. `x1` restores native; `x0` retains
+zero where allowed. A delta after a factor starts a fresh native offset.
+`set x3` also works from the panel's Set button. See [multipliers](multiplier-command.md)
+for fractional factors, exact-result checks and saved presets.
+
 Values use the selected character-panel metric, including its normal offset.
 Critical chance and evasion rating support two decimal places; the others use
 whole numbers. Evasion rating is not the derived dodge percentage. Bounds below

@@ -31,6 +31,11 @@ service maintains relative displayed offsets after native stat changes.
 Use a decimal point for fractional units. Catalog limits and precision are shown
 beside the selected stat; the shared parser and service validate every action.
 
+Since `0.14.0`, enter `x3` and click **Set** on Stats or Fountain to maintain
+three times each character's native value. `x1` restores native. Fractional
+factors such as `x1.5` require exactly representable results; Add/Subtract after
+a factor starts a fresh native-relative offset. See [multipliers](multiplier-command.md).
+
 Choices retain their existing 0..20 addon contribution limit and native
 multiplier behavior. Already-generated offers keep the game's cache behavior.
 Reset removes tracked addon changes and preserves native bonuses. There is no
@@ -39,7 +44,8 @@ cross-family Apply All or Reset All operation.
 Save stores applied intent, excluding any text still in the amount field.
 Forget removes only the saved copy. Resets affect the current session; save again
 to replace a saved preset, or forget it to stop automatic loading in future hosted
-sessions. The file format and automatic-load rules are unchanged.
+sessions. Automatic-load rules are unchanged; presets containing multipliers
+use v2 while older setting types retain v1 compatibility.
 
 The name gradient remains automatic, fixed at `#408af1` to `#a8d7fa` and read-only.
 The panel does not add color settings or style platform lobby names. See the

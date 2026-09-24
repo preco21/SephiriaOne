@@ -13,7 +13,7 @@ Version `0.13.0` adds a [host settings panel](control-panel.md) on the same serv
 | --- | --- | --- |
 | `/stats`, `/choices`, `/fountain` | Ready-player collection, identity snapshots, preflight, journaled native writes, readback, fault containment, policy commit | Parsing and pure arithmetic |
 | Joining/replaced avatars and saved presets | Object-lifetime enrollment, once-only outcomes, all-family planning and write batch | Compose retained settings using existing planners |
-| Relative stats | Change-driven coordinator, exact observations, readiness, suspension/fault reporting | Maintain displayed native value plus cumulative offset |
+| Relative stats | Change-driven coordinator, exact observations, readiness, suspension/fault reporting | Maintain displayed native value plus cumulative offset, or native value times a retained factor |
 | Fountain capacity and carryover cap | Player observation, ordered dependency, session invalidation, verified cap-only writes | Preserve native baseline and independent cap ownership |
 | Native Fountain grant and new candidate generation | `SessionSettings.BeforeNativeRead` / `EnsureFresh` | Native consumer and existing generation guards |
 | Owned name publication | Shared coordinator and readiness; bounded native-command acknowledgment retry | Format name and use the owned native transport |
@@ -27,7 +27,14 @@ not replayed. Replacing an avatar with a reused network ID creates a new lifetim
 Commands retain their existing meaning: relative stats accumulate from each
 character's native baseline; an increment after an absolute set starts relative
 mode. Choices remain raw additive contributions affected by native multipliers.
-Absolute stats and Fountain points remain one-time changes for existing avatars.
+Absolute stats and ordinary Fountain Set/Add/Subtract remain one-time changes
+for existing avatars. Since `0.14.0`, [multiplier mode](multiplier-command.md)
+retains per-character factors for stats/Fountain. A shared parser validates `xN`;
+policy stores the factor, and planners remove owned contributions before using
+the native baseline. The `fountain-multiplier` rule runs after inheritance and
+before `fountain-capacity`, so carryover observes the recalculated allowance.
+Failed inheritance cannot partially enroll a Fountain multiplier. Presets write
+v2 only for multiplier mode and continue accepting v1 settings.
 Changing retained intent does not reapply unrelated settings.
 
 ## Adding a gameplay feature

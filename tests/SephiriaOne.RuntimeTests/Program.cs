@@ -415,7 +415,7 @@ UnityEngine.Debug.Warnings.Clear();
 SessionSettings.Synchronize();
 Check(Value(host) == 5 && Value(host, "SEPHIRIAONE_STAT_LUCK") == 0 && UnityEngine.Debug.Warnings.Count == 1,
     "Unrepresentable relative offset suspends only addon contribution and warns once");
-Check(Mod(PresetAction.Status, out var suspendedStatus) && suspendedStatus.Any(line => line.Contains("relative offset suspended")),
+Check(Mod(PresetAction.Status, out var suspendedStatus) && suspendedStatus.Any(line => line.Contains("relative setting suspended")),
     "Status distinguishes suspended offsets from currently applied values");
 Check(Mod(PresetAction.Save, out _) && File.ReadAllText(PresetPath()).Contains("stats luck offset 1"),
     "Saving a suspended offset retains desired command intent");
@@ -737,6 +737,7 @@ foreach (bool useCommand in new[] { false, true })
 }
 
 SettingsControlsTests.Run(Check, Start, Add);
+MultiplierRuntimeTests.Run(Check, Start, Add);
 
 if (Directory.Exists(testDataRoot)) Directory.Delete(testDataRoot, true);
 Console.WriteLine($"Passed {checks} runtime command/session integration checks using game API fixtures.");

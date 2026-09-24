@@ -19,7 +19,8 @@ namespace SephiriaOne
                 return false;
             }
 
-            if (!SessionSettings.PrepareCommand("fountain", command.Operation == FountainOperation.Reset, out HostCommandContext context, out message)) return false;
+            bool reset = command.Operation == FountainOperation.Reset || (command.Operation == FountainOperation.Multiply && command.Amount == 1);
+            if (!SessionSettings.PrepareCommand("fountain", reset, out HostCommandContext context, out message)) return false;
 
             DungeonManager dungeon = context.Dungeon;
             if (!dungeon || !dungeon.isServer || !dungeon.constValueDictionary.TryGetValue(LimitKey, out int limit))
@@ -43,7 +44,7 @@ namespace SephiriaOne
 
             int? originalLimit = dungeon.constValueDictionary.TryGetValue(OriginalLimitKey, out int original) ? original : (int?)null;
             int? appliedLimit = dungeon.constValueDictionary.TryGetValue(AppliedLimitKey, out int applied) ? applied : (int?)null;
-            if (!command.TryPlanTracked(balances, contributions, limit, originalLimit, appliedLimit, out FountainPlan plan, out message))
+            if (!SessionSettings.TryPlanFountain(command, balances, contributions, limit, originalLimit, appliedLimit, out FountainPlan plan, out message))
             {
                 return false;
             }
@@ -60,7 +61,7 @@ namespace SephiriaOne
             }
 
             string points = minimum == maximum ? minimum.ToString() : $"{minimum}..{maximum}";
-            string action = command.Operation == FountainOperation.Reset ? "Reset addon adjustments to" : "Updated";
+            string action = reset ? "Reset addon adjustments to" : "Updated";
             message = $"{action} Wishing Fountain points for {inventories.Count} player(s). Points now: {points}. Reopen the Fountain panel.";
             return true;
         }

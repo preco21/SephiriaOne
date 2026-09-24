@@ -19,6 +19,7 @@
     <Compile Include="../../SephiriaOne/Features/Stats/CharacterStats.cs" Link="Source/Features/Stats/CharacterStats.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionPolicy.cs" Link="Source/Session/SessionPolicy.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionStatPolicy.cs" Link="Source/Session/SessionStatPolicy.cs" />
+    <Compile Include="../../SephiriaOne/Session/SessionFountainPolicy.cs" Link="Source/Session/SessionFountainPolicy.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionSettings.cs" Link="Source/Session/SessionSettings.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionDiagnostics.cs" Link="Source/Session/SessionDiagnostics.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionRelativeStats.cs" Link="Source/Session/SessionRelativeStats.cs" />

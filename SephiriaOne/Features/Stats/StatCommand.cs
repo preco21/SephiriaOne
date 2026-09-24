@@ -6,7 +6,7 @@ using System.Globalization;
 namespace SephiriaOne
 {
     internal enum StatParseResult { NotCommand, Help, List, Invalid, Valid }
-    internal enum StatOperation { Set, Add, Subtract, Reset }
+    internal enum StatOperation { Set, Add, Subtract, Reset, Multiply }
 
     internal sealed class StatDefinition
     {
@@ -72,7 +72,7 @@ namespace SephiriaOne
         public StatDefinition? Stat { get; }
         public StatOperation Operation { get; }
         public decimal Amount { get; }
-        public const string Usage = "Host only, current and joining players: /stats luck 100, +10, -5, or set|add|sub N. Deltas accumulate from each player's native stats; a delta after set starts a new offset. Reset: /stats luck reset or /stats reset. Names/units: /stats list. Active values: /mod status. Save for next launch: /mod save.";
+        public const string Usage = "Host only, current and joining players: /stats luck 100, +10, -5, x3, or set|add|sub N. xN targets each player's native displayed stat times N; repeated xN replaces the factor. Deltas accumulate; a delta after Set or xN starts a new native offset. " + RelativeMultiplier.Usage + " Reset: /stats luck reset or /stats reset. Names/units: /stats list. Active values: /mod status. Save: /mod save.";
 
         internal StatCommand(StatDefinition? stat, StatOperation operation, decimal amount)
         {
@@ -128,6 +128,15 @@ namespace SephiriaOne
             {
                 operation = amountText[0] == '+' ? StatOperation.Add : StatOperation.Subtract;
                 amountText = amountText.Substring(1);
+            }
+
+            if (RelativeMultiplier.HasPrefix(amountText))
+            {
+                error = RelativeMultiplier.Usage;
+                if (operation != StatOperation.Set || !RelativeMultiplier.TryParse(amountText, out decimal factor)) return StatParseResult.Invalid;
+                command = new StatCommand(stat, StatOperation.Multiply, factor);
+                error = "";
+                return StatParseResult.Valid;
             }
 
             int decimalPoint = amountText.IndexOf('.');

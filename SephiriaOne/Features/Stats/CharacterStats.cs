@@ -15,7 +15,8 @@ namespace SephiriaOne
                 message = "Only the host can change everyone's character stats.";
                 return false;
             }
-            if (!SessionSettings.PrepareCommand("stats", command.Operation == StatOperation.Reset, out HostCommandContext context, out message, command.Stat == null)) return false;
+            bool reset = command.Operation == StatOperation.Reset || (command.Operation == StatOperation.Multiply && command.Amount == 1);
+            if (!SessionSettings.PrepareCommand("stats", reset, out HostCommandContext context, out message, command.Stat == null)) return false;
 
             List<PlayerAvatar> players = context.Players;
             var owners = new List<PlayerAvatar>();
@@ -45,7 +46,7 @@ namespace SephiriaOne
             if (!SessionSettings.Commit("stats", batch, () => SessionSettings.Remember(command, players), out message)) return false;
 
             string name = command.Stat == null ? "all supported stats" : command.Stat.Name;
-            if (command.Operation == StatOperation.Reset)
+            if (reset)
             {
                 message = $"Reset addon adjustments to {name} for {players.Count} player(s), preserving native stat changes.";
                 return true;

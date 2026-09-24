@@ -89,7 +89,7 @@ namespace SephiriaOne
                     stats.Add(stat.Name, value);
                     statDescriptions.Add(stat.Name + "=" + value.ToString("0.##", CultureInfo.InvariantCulture) +
                         (contribution == 0 ? "" : " (base adjustment " + Signed(contribution) + ")") +
-                        (sameSession && IsRelativeStatSuspended(player, stat) ? " (relative offset suspended)" : ""));
+                        (sameSession && IsRelativeStatSuspended(player, stat) ? " (relative setting suspended)" : ""));
                 }
                 lines.Add(label + string.Join(", ", statDescriptions) + ". Units: /stats list.");
                 var choices = new Dictionary<string, int>();
