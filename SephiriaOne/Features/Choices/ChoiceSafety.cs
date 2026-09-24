@@ -18,8 +18,10 @@ namespace SephiriaOne
             try
             {
                 instance.Patch(AccessTools.Method(typeof(Sephirite), nameof(Sephirite.GenerateItems)),
+                    prefix: new HarmonyMethod(typeof(ChoiceSafety), nameof(BeforeGeneration)),
                     transpiler: new HarmonyMethod(typeof(ChoiceSafety), nameof(ItemPatch)));
                 instance.Patch(AccessTools.Method(typeof(MiracleSelector2), "GenerateMiracles"),
+                    prefix: new HarmonyMethod(typeof(ChoiceSafety), nameof(BeforeGeneration)),
                     transpiler: new HarmonyMethod(typeof(ChoiceSafety), nameof(MiraclePatch)));
                 harmony = instance;
             }
@@ -35,6 +37,8 @@ namespace SephiriaOne
             harmony?.UnpatchAll(Owner);
             harmony = null;
         }
+
+        private static void BeforeGeneration() => SessionSettings.BeforeNativeRead("Candidate generation");
 
         private static IEnumerable<CodeInstruction> ItemPatch(IEnumerable<CodeInstruction> instructions, ILGenerator generator, MethodBase original)
             => ChoiceTranspilers.Items(instructions, generator, original, AccessTools.Method(typeof(ChoiceSafety), nameof(CanRollItem)));

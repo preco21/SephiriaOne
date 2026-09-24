@@ -19,9 +19,9 @@ namespace SephiriaOne
                 return false;
             }
 
-            if (!SessionSettings.Prepare(out message)) return false;
+            if (!SessionSettings.PrepareCommand("fountain", command.Operation == FountainOperation.Reset, out HostCommandContext context, out message)) return false;
 
-            DungeonManager dungeon = DungeonManager.Instance;
+            DungeonManager dungeon = context.Dungeon;
             if (!dungeon || !dungeon.isServer || !dungeon.constValueDictionary.TryGetValue(LimitKey, out int limit))
             {
                 message = "Fountain session data is not ready. Enter town or a run first.";
@@ -29,33 +29,16 @@ namespace SephiriaOne
             }
 
             var inventories = new List<GridInventory>();
-            var players = new List<PlayerAvatar>();
+            List<PlayerAvatar> players = context.Players;
             var balances = new List<int>();
             var contributions = new List<int>();
-            var seen = new HashSet<GridInventory>();
-            foreach (PlayerSpawner spawner in PlayerSpawner.MultiplayerList)
+            foreach (PlayerAvatar player in players)
             {
-                if (!spawner || !spawner.isServer || spawner.netId == 0)
-                {
-                    continue;
-                }
-
-                PlayerAvatar player = spawner.PlayerAvatar;
-                GridInventory inventory = player ? player.Inventory : null;
-                if (!SessionSettings.IsReady(spawner))
-                {
-                    message = "A player is still initializing. Wait a moment and retry; nobody was changed.";
-                    return false;
-                }
-
-                if (seen.Add(inventory))
-                {
-                    inventories.Add(inventory);
-                    players.Add(player);
-                    balances.Add(inventory.dimensionPocket);
-                    player.customStats.TryGetValue(ContributionKey, out int contribution);
-                    contributions.Add(contribution);
-                }
+                GridInventory inventory = player.Inventory;
+                inventories.Add(inventory);
+                balances.Add(inventory.dimensionPocket);
+                player.customStats.TryGetValue(ContributionKey, out int contribution);
+                contributions.Add(contribution);
             }
 
             int? originalLimit = dungeon.constValueDictionary.TryGetValue(OriginalLimitKey, out int original) ? original : (int?)null;
@@ -65,8 +48,9 @@ namespace SephiriaOne
                 return false;
             }
 
-            ApplyPlan(dungeon, players, plan);
-            SessionSettings.Remember(command);
+            StateWriteBatch batch = context.CreateBatch();
+            NativeStateWrites.Fountain(batch, dungeon, players, plan);
+            if (!SessionSettings.Commit("fountain", batch, () => SessionSettings.Remember(command), out message)) return false;
             int minimum = int.MaxValue;
             int maximum = 0;
             for (int i = 0; i < inventories.Count; i++)
@@ -81,71 +65,49 @@ namespace SephiriaOne
             return true;
         }
 
-        internal static void ApplyPlan(DungeonManager dungeon, IReadOnlyList<PlayerAvatar> players, FountainPlan plan)
-        {
-            // Manual commands and inherited settings use the same validated writes.
-            ApplyLimit(dungeon, plan);
-            for (int i = 0; i < players.Count; i++)
-            {
-                players[i].Inventory.NetworkdimensionPocket = plan.Points[i];
-                if (plan.Contributions[i] == 0) players[i].customStats.Remove(ContributionKey);
-                else players[i].customStats[ContributionKey] = plan.Contributions[i];
-            }
-        }
-
-        // Returns false only while native player/dungeon initialization is pending.
-        // Rebuild the cap reset markers without replaying any points command.
-        internal static bool RestoreCarryoverLimit(DungeonManager dungeon, ISet<uint> configuredPlayers)
+        // Derive only the carryover cap; never replay a points command.
+        internal static ReconcileResult RestoreCarryoverLimit(DungeonManager dungeon, ISet<PlayerAvatar> configuredPlayers)
         {
             if (!NetworkServer.active || !dungeon || !dungeon.isServer ||
-                !dungeon.constValueDictionary.TryGetValue(LimitKey, out int limit)) return false;
+                !dungeon.constValueDictionary.TryGetValue(LimitKey, out int limit))
+                return ReconcileResult.Waiting("Fountain session data is not ready.");
             var balances = new List<int>();
             var contributions = new List<int>();
+            var participants = new List<HostPlayer>();
+            var seen = new HashSet<PlayerAvatar>(ReferenceComparer<PlayerAvatar>.Instance);
             bool allReady = true;
             foreach (PlayerSpawner spawner in PlayerSpawner.MultiplayerList)
             {
                 if (!spawner || !spawner.isServer || spawner.netId == 0) continue;
-                if (!SessionSettings.IsReady(spawner)) { allReady = false; continue; }
+                if (!HostStateAdapter.IsReady(spawner)) { allReady = false; continue; }
                 PlayerAvatar player = spawner.PlayerAvatar;
+                if (!seen.Add(player)) continue;
                 player.customStats.TryGetValue(ContributionKey, out int contribution);
-                if (!configuredPlayers.Contains(player.netId) && contribution == 0) continue;
-                // Native status removal after a low absolute set may make a
-                // player's capacity negative. They need no allowance; do not let
-                // that block repairing everyone else's cap or rewrite their points.
+                if (!configuredPlayers.Contains(player) && contribution == 0) continue;
+                // A negative native capacity needs no allowance and must not block others.
                 balances.Add(System.Math.Max(0, player.Inventory.dimensionPocket));
                 contributions.Add(contribution);
+                participants.Add(new HostPlayer(spawner));
             }
-            if (balances.Count == 0) return allReady;
-            int? original = dungeon.constValueDictionary.TryGetValue(OriginalLimitKey, out int first) ? first : (int?)null;
-            int? applied = dungeon.constValueDictionary.TryGetValue(AppliedLimitKey, out int last) ? last : (int?)null;
-            if (!new FountainCommand(FountainOperation.Add, 0).TryPlanTracked(balances, contributions, limit,
-                original, applied, out FountainPlan plan, out string error))
+            if (balances.Count > 0)
             {
-                UnityEngine.Debug.LogWarning("[SephiriaOne] Could not reconcile Fountain carryover limit: " + error);
-                return true;
+                var context = new HostCommandContext(dungeon, participants);
+                int? original = dungeon.constValueDictionary.TryGetValue(OriginalLimitKey, out int first) ? first : (int?)null;
+                int? applied = dungeon.constValueDictionary.TryGetValue(AppliedLimitKey, out int last) ? last : (int?)null;
+                if (!new FountainCommand(FountainOperation.Add, 0).TryPlanTracked(balances, contributions, limit,
+                    original, applied, out FountainPlan plan, out string error))
+                    return ReconcileResult.Rejected(error);
+                StateWriteBatch batch = context.CreateBatch();
+                NativeStateWrites.Limit(batch, dungeon, plan);
+                if (!batch.TryCommit(out error))
+                {
+                    if (batch.MayHaveWritten) SessionSettings.RecordFault("fountain", batch, error);
+                    return batch.MayHaveWritten ? ReconcileResult.Faulted(error) : ReconcileResult.Waiting(error);
+                }
+                if (plan.Limit != limit)
+                    UnityEngine.Debug.Log($"[SephiriaOne] Reconciled Fountain carryover limit: {limit} -> {plan.Limit}.");
             }
-            if (plan.Limit != limit)
-                UnityEngine.Debug.Log($"[SephiriaOne] Reconciled Fountain carryover limit: {limit} -> {plan.Limit}.");
-            ApplyLimit(dungeon, plan);
-            return allReady;
-        }
-
-        private static void ApplyLimit(DungeonManager dungeon, FountainPlan plan)
-        {
-            if (dungeon.constValueDictionary[LimitKey] != plan.Limit)
-            {
-                dungeon.constValueDictionary[LimitKey] = plan.Limit;
-            }
-            if (plan.OriginalLimit.HasValue)
-            {
-                dungeon.constValueDictionary[OriginalLimitKey] = plan.OriginalLimit.Value;
-                dungeon.constValueDictionary[AppliedLimitKey] = plan.AppliedLimit.Value;
-            }
-            else
-            {
-                dungeon.constValueDictionary.Remove(OriginalLimitKey);
-                dungeon.constValueDictionary.Remove(AppliedLimitKey);
-            }
+            return allReady ? ReconcileResult.Applied() : ReconcileResult.Waiting("Fountain participants are still initializing.");
         }
     }
 }

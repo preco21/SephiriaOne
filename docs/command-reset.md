@@ -66,6 +66,10 @@ candidate changes. The same server synchronization reaches unmodified guests.
 
 ## Live checks
 
+In `0.12.0`, recovery from a partial native write requires a whole-family reset;
+healthy sessions retain normal selective resets. The journal refuses conflicting
+edits or replaced objects. See [recovery details](synchronization-guide.md#diagnostics-and-recovery).
+
 Record each player's unmodified Fountain points, issue set/add/sub commands, then
 reset and compare every player. Repeat with a native stat change between command
 and reset. Confirm the original carryover cap returns and other limit changes

@@ -16,7 +16,12 @@ internal static class GameChoiceCompatibilityTests
         var game = Assembly.LoadFrom(Path.Combine(managed, "Assembly-CSharp.dll"));
         var addon = Assembly.LoadFrom(Path.GetFullPath(addonPath));
         GameLifecycleCompatibilityTests.Run(game, addon);
+        GamePresentationCompatibilityTests.Run(game, addon);
         var guards = addon.GetType("SephiriaOne.ChoiceSafety", throwOnError: true)!;
+        var freshness = AccessTools.DeclaredMethod(guards, "BeforeGeneration");
+        if (freshness == null || !freshness.IsStatic || freshness.ReturnType != typeof(void) || freshness.GetParameters().Length != 0 ||
+            !PatchProcessor.GetOriginalInstructions(freshness).Any(i => i.operand is MethodInfo m && m.Name == "BeforeNativeRead"))
+            throw new Exception("Candidate generation no longer uses the shared freshness boundary.");
         foreach (var target in new[] { ("Sephirite", "GenerateItems", "CanRollItem"), ("MiracleSelector2", "GenerateMiracles", "LimitMiracles") })
         {
             var method = AccessTools.Method(game.GetType(target.Item1), target.Item2);

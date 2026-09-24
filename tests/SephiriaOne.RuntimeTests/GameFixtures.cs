@@ -50,12 +50,27 @@ public sealed class PlayerAvatar : UnityEngine.Object
     public string currentFloorGuid = "town";
     public GridInventory Inventory = new();
     public int maxPassivePoint = 5;
-    public readonly Dictionary<string, int> customStats = new();
+    public readonly FixtureStats customStats = new();
     public readonly Dictionary<string, int> calculatedBonusStats = new();
     public readonly Dictionary<string, int> customStatsAmp = new();
     public int GetCustomStatUnsafe(string key) =>
         (int)((float)((customStats.GetValueOrDefault(key) + calculatedBonusStats.GetValueOrDefault(key)) *
             (100 + customStatsAmp.GetValueOrDefault(key))) / 100f);
+}
+
+public sealed class FixtureStats : Dictionary<string, int>, IDictionary<string, int>
+{
+    public Action<string, int> BeforeWrite;
+    public Action<string> BeforeRemove;
+    public int Writes;
+    public new int this[string key]
+    {
+        get => base[key];
+        set { BeforeWrite?.Invoke(key, value); Writes++; base[key] = value; }
+    }
+    int IDictionary<string, int>.this[string key] { get => this[key]; set => this[key] = value; }
+    public new bool Remove(string key) { BeforeRemove?.Invoke(key); return base.Remove(key); }
+    bool IDictionary<string, int>.Remove(string key) => Remove(key);
 }
 
 public sealed class GridInventory : UnityEngine.Object
@@ -72,7 +87,7 @@ public sealed class DungeonManager : UnityEngine.Object
     public static DungeonManager Instance;
     public bool isServer = true;
     public uint netId = 100;
-    public readonly Dictionary<string, int> constValueDictionary = new() { ["DIMENSIONPOCKETLIMIT"] = 12 };
+    public readonly FixtureStats constValueDictionary = new() { ["DIMENSIONPOCKETLIMIT"] = 12 };
 }
 
 public sealed class GameLogWriter : UnityEngine.Object
@@ -91,4 +106,5 @@ namespace SephiriaOne
 {
     internal static class ChoiceFeature { public static bool Available = true; }
     internal static class SessionBoundaryFeature { public static bool Available = true; }
+    internal static class LocalPlayerNameColor { public static string Diagnostics => "fixture: rendering unverified"; }
 }

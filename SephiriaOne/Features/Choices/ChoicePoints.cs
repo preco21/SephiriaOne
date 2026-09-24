@@ -9,6 +9,8 @@ namespace SephiriaOne
     {
         private static readonly string[] Keys = ChoiceCommand.Keys;
         private const string MarkerPrefix = "SEPHIRIAONE_";
+        private static StateWriteBatch cleanup;
+        private static DungeonManager cleanupDungeon;
 
         private readonly struct Update
         {
@@ -34,20 +36,12 @@ namespace SephiriaOne
                 message = "Candidate commands are unavailable. Check Player.log for the compatibility error.";
                 return false;
             }
-            if (!SessionSettings.Prepare(out message)) return false;
+            if (!SessionSettings.PrepareCommand("choices", command.IsReset, out HostCommandContext context, out message, command.Target == ChoiceTarget.All)) return false;
 
-            var players = new HashSet<PlayerAvatar>();
+            List<PlayerAvatar> players = context.Players;
             var updates = new List<Update>();
-            foreach (PlayerSpawner spawner in PlayerSpawner.MultiplayerList)
+            foreach (PlayerAvatar player in players)
             {
-                if (!spawner || !spawner.isServer || spawner.netId == 0) continue;
-                PlayerAvatar player = spawner.PlayerAvatar;
-                if (!SessionSettings.IsReady(spawner))
-                {
-                    message = "A player is still initializing. Retry in a moment; nobody was changed.";
-                    return false;
-                }
-                if (!players.Add(player)) continue;
                 for (int i = 0; i < Keys.Length; i++)
                 {
                     if (((int)command.Target & (1 << i)) == 0) continue;
@@ -67,16 +61,17 @@ namespace SephiriaOne
                 return false;
             }
 
-            // Plan every category for every player before touching synchronized state.
+            StateWriteBatch batch = context.CreateBatch();
             foreach (Update update in updates)
             {
-                update.Player.customStats[update.Key] = update.Raw;
-                if (update.Applied == 0) update.Player.customStats.Remove(MarkerPrefix + update.Key);
-                else update.Player.customStats[MarkerPrefix + update.Key] = update.Applied;
+                NativeStateWrites.Stat(batch, update.Player, update.Key, MarkerPrefix + update.Key, update.Raw, update.Applied);
             }
-            var recorded = new HashSet<string>();
-            foreach (Update update in updates)
-                if (recorded.Add(update.Key)) SessionSettings.RememberChoice(update.Key, update.Applied);
+            if (!SessionSettings.Commit("choices", batch, () =>
+            {
+                var recorded = new HashSet<string>();
+                foreach (Update update in updates)
+                    if (recorded.Add(update.Key)) SessionSettings.RememberChoice(update.Key, update.Applied);
+            }, out message)) return false;
             string action = command.IsReset ? "Reset addon bonuses for" : "Updated";
             message = $"{action} {command.Target.ToString().ToLowerInvariant()} extra choices for {players.Count} player(s). Use new offers; existing offers stay cached. An already opened anvil can hide reroll after an increase.";
             return true;
@@ -85,10 +80,28 @@ namespace SephiriaOne
         public static void RemoveContributions()
         {
             if (!NetworkServer.active) return;
+            DungeonManager current = DungeonManager.Instance;
+            if (!ReferenceEquals(cleanupDungeon, current)) cleanup = null;
+            if (cleanup != null)
+            {
+                if (!SessionSettings.Recover(cleanup, out string recoveryError))
+                    throw new InvalidOperationException(recoveryError + " " + cleanup.Describe());
+                cleanup = null;
+            }
+            var participants = new List<PlayerAvatar>();
+            var dictionaries = new List<object>();
+            var batch = new StateWriteBatch(() =>
+            {
+                if (!NetworkServer.active || !ReferenceEquals(current, DungeonManager.Instance)) return false;
+                for (int i = 0; i < participants.Count; i++)
+                    if (!participants[i] || !participants[i].isServer || !ReferenceEquals(participants[i].customStats, dictionaries[i])) return false;
+                return true;
+            });
             foreach (PlayerSpawner spawner in PlayerSpawner.MultiplayerList)
             {
                 PlayerAvatar player = spawner ? spawner.PlayerAvatar : null;
-                if (!player || !player.isServer) continue;
+                if (!player || !player.isServer || participants.Contains(player)) continue;
+                participants.Add(player); dictionaries.Add(player.customStats);
                 foreach (string key in Keys)
                 {
                     if (!player.customStats.TryGetValue(MarkerPrefix + key, out int applied)) continue;
@@ -96,9 +109,18 @@ namespace SephiriaOne
                     long restored = (long)raw - applied;
                     if (restored < int.MinValue || restored > int.MaxValue)
                         throw new InvalidOperationException("Cannot restore candidate stat: " + key);
-                    player.customStats[key] = (int)restored;
-                    player.customStats.Remove(MarkerPrefix + key);
+                    NativeStateWrites.Stat(batch, player, key, MarkerPrefix + key, (int)restored, 0);
                 }
+            }
+            // Shutdown removes generation guards only after all cleanup readbacks succeed.
+            if (!SessionSettings.Commit("choices", batch, () => { }, out string error))
+            {
+                if (batch.MayHaveWritten)
+                {
+                    cleanup = batch; cleanupDungeon = current;
+                    SessionSettings.RecordFault("choices", batch, error, () => cleanup = null);
+                }
+                throw new InvalidOperationException(error + " " + batch.Describe());
             }
         }
     }

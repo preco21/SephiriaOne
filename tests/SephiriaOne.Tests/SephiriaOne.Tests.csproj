@@ -6,8 +6,12 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../SephiriaOne/Synchronization/Core/*.cs" Link="Source/Synchronization/Core/%(Filename)%(Extension)" />
+    <Compile Include="../../SephiriaOne/Synchronization/Presentation/PresentationRegistry.cs" Link="Source/Synchronization/Presentation/PresentationRegistry.cs" />
     <Compile Include="../../SephiriaOne/Features/Names/NetworkNameState.cs" Link="Source/Features/Names/NetworkNameState.cs" />
     <Compile Include="../../SephiriaOne/Features/Names/NameGradient.cs" Link="Source/Features/Names/NameGradient.cs" />
+    <Compile Include="../../SephiriaOne/Features/Names/NamePresentation.cs" Link="Source/Features/Names/NamePresentation.cs" />
+    <Compile Include="../../SephiriaOne/Features/Names/NameLabelPresenter.cs" Link="Source/Features/Names/NameLabelPresenter.cs" />
     <Compile Include="../../SephiriaOne/Features/Fountain/FountainCommand.cs" Link="Source/Features/Fountain/FountainCommand.cs" />
     <Compile Include="../../SephiriaOne/Features/Choices/ChoiceCommand.cs" Link="Source/Features/Choices/ChoiceCommand.cs" />
     <Compile Include="../../SephiriaOne/Features/Stats/StatCommand.cs" Link="Source/Features/Stats/StatCommand.cs" />

@@ -6,6 +6,8 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../SephiriaOne/Synchronization/Core/*.cs" Link="Source/Synchronization/Core/%(Filename)%(Extension)" />
+    <Compile Include="../../SephiriaOne/Synchronization/Game/*.cs" Link="Source/Synchronization/Game/%(Filename)%(Extension)" />
     <Compile Include="../../SephiriaOne/Features/Fountain/FountainCommand.cs" Link="Source/Features/Fountain/FountainCommand.cs" />
     <Compile Include="../../SephiriaOne/Features/Fountain/FountainPoints.cs" Link="Source/Features/Fountain/FountainPoints.cs" />
     <Compile Include="../../SephiriaOne/Features/Choices/ChoiceCommand.cs" Link="Source/Features/Choices/ChoiceCommand.cs" />
@@ -16,6 +18,7 @@
     <Compile Include="../../SephiriaOne/Session/SessionPolicy.cs" Link="Source/Session/SessionPolicy.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionStatPolicy.cs" Link="Source/Session/SessionStatPolicy.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionSettings.cs" Link="Source/Session/SessionSettings.cs" />
+    <Compile Include="../../SephiriaOne/Session/SessionDiagnostics.cs" Link="Source/Session/SessionDiagnostics.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionRelativeStats.cs" Link="Source/Session/SessionRelativeStats.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionFountainState.cs" Link="Source/Session/SessionFountainState.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionBoundaryHooks.cs" Link="Source/Session/SessionBoundaryHooks.cs" />

@@ -9,9 +9,12 @@ can change independently of that installed game version.
 
 ## Current status
 
-The [shared synchronization architecture proposal](synchronization-architecture.md)
-describes a coordinator for lifecycle observation, ordered reconciliation, and
-registered UI bindings. It is a design proposal; runtime behavior remains unchanged.
+Version `0.12.0` implements the [shared synchronization architecture](synchronization-architecture.md)
+across Fountain, stats, choices, owned name publication, and local UI bindings.
+Commands share readiness, snapshots, journaled writes, readback, and fault recovery.
+See the [extension guide](synchronization-guide.md) and
+[UI compatibility inventory](presentation-compatibility.md). `/mod status` now
+reports revisions, rule outcomes, critical boundaries, and partial-write journals.
 
 SephiriaOne is a C# addon using Sephiria's built-in HorayMod API. Version `0.11.1`
 repairs Fountain caps after native loadout changes and reconciles ready state
@@ -38,13 +41,13 @@ normal upgrades when reset. This version was built and tested without deployment
 | --- | --- |
 | Project | Visual Studio solution and `netstandard2.1` class library exist. |
 | Compiler | .NET SDK `10.0.401` is installed and was used successfully. |
-| Release build | `dotnet build SephiriaOne.slnx --configuration Release --nologo -p:DeployMod=false` passed for `0.11.1` with 0 warnings and 0 errors. |
-| Debug build | `dotnet build SephiriaOne.slnx --configuration Debug --nologo -p:DeployMod=false` passed for `0.11.1` with 0 warnings and 0 errors. |
+| Release build | `dotnet build SephiriaOne.slnx --configuration Release --nologo -p:DeployMod=false` passed for `0.12.0` with 0 warnings and 0 errors. |
+| Debug build | `dotnet build SephiriaOne.slnx --configuration Debug --nologo -p:DeployMod=false` passed for `0.12.0` with 0 warnings and 0 errors. |
 | Automatic deployment | The build invokes `scripts/Deploy-Mod.ps1` after the MSBuild `Build` target. |
 | Visual Studio command | Added the `Deploy Mod` launch profile. Its command was verified with evaluated Release properties and matching deployed hashes; Debug path resolution was also checked. The IDE dropdown has not been tested interactively. |
 | Missing addon folder | Deployment created `AddOns\SephiriaOne` during verification. |
 | Existing addon folder | Running deployment again succeeded. |
-| Deployed content | `0.11.1` was not deployed. The user-installed files identify `0.11.0`; their hashes remain unchanged from this audit's start. Release output is `0.11.1.0`, with Harmony and its license embedded; no game DLLs are distributed. |
+| Deployed content | `0.12.0` was not deployed. The user-installed files identify `0.11.0`; their hashes remain unchanged. Release output is `0.12.0.0`, with Harmony and its license embedded; no game DLLs are distributed. |
 | In-game loading | The user confirmed `0.1.0` loaded. `Player.log` also contains `[SephiriaOne] Loaded v0.1.0`, the AddOnLoader success entry, and `[SephiriaOne] All databases ready`. |
 | Name gradient | `0.8.0` replaces solid blue with per-letter midpoint colors from `#408af1` to `#a8d7fa` on the character/stats panel, existing overhead label, and synchronized multiplayer name. See [design and verification steps](name-gradient.md). |
 | Multiplayer verification | 21 portable synchronization and 37 gradient/label-restoration checks pass; the native command and serialized rich-text label settings were inspected. A live second-client visual check is still pending. |
@@ -56,9 +59,9 @@ normal upgrades when reset. This version was built and tested without deployment
 | Character stats | `/stats luck +10`, `/stats luck -5`, `/stats luck set 100`, `/stats luck reset`, and `/stats reset` use native synchronized stats. `/stats list` shows supported names and display units. See [commands and findings](stat-command.md). |
 | Stat verification | 117 command checks and 219 relative consistency checks cover parsing, units, exact amplified targets, batch rejection, native baselines, resets, and agreement between manual, inherited, maintained, and saved settings. Live host/guest UI and gameplay checks remain pending. |
 | Joining players | Successful settings apply once after native avatar/inventory initialization, including reconnects with a new avatar. Host-only commands and native synchronization support unmodified guests. |
-| Inheritance, restart, and preset verification | 43 policy checks, 47 preset/storage checks, and 173 command/session integration checks pass; 792 checks pass across both suites. Nine installed-game lifecycle paths, grant-hook signature/cap reads, candidate guards and embedded dependencies pass inspection. Fixtures do not establish live Unity/network behavior. |
+| Inheritance, restart, and preset verification | 673 portable checks and 221 runtime command/session checks pass (894 total). Includes 30 policy checks, 47 preset checks, coordinator/batch/presentation checks, reused avatar IDs, partial failures and recovery. Nine native lifecycle paths, seven presentation hook contracts, stat-only refresh IL, both candidate guards and embedded dependencies pass inspection. Fixtures do not establish live Unity/network behavior. |
 | Lifecycle audit | Native preset/costume/passive/hard-mode changes, buffs, floors, restart, joins, rejection, unload and persistence were traced. Fountain cap gaps fixed; native open-panel/cached-anvil limitations remain. See [findings and live checklist](sync-lifecycle-audit.md). |
-| Status and persistence | `/mod status` shows session intent and current player values. `/mod save` stores all three families as a preset; `/mod forget` removes only that saved copy. Automatic loading occurs once per new hosted session. |
+| Status and persistence | `/mod status` shows intent, current values, scope/rule revisions, waiting/rejected/suspended/faulted outcomes, journals and local UI coverage. `/mod save` stores all three families and rejects unresolved partial writes; `/mod forget` removes only that saved copy. Automatic loading occurs once per new hosted session. |
 
 ## History
 
@@ -155,6 +158,14 @@ Stages 1–14 occurred on 2026-09-23; candidate expansion continued on 2026-09-2
     linked-source paths and docs while preserving namespaces and every moved
     source file's contents. All 792 checks and both builds passed; version remains
     `0.11.1`, with no deployment. See [module structure](module-structure.md).
+25. Audited overlooked multiplayer name surfaces and designed shared reconciliation
+    before runtime changes. With approval, implemented `0.12.0`: common host
+    snapshots/write journals, object-lifetime enrollment, relative-stat/cap rules,
+    critical Fountain/candidate reads, owned-name retries and registered local UI.
+    Independent review found recovery/enrollment/cleanup and TMP restoration edge
+    cases; regressions and fixes now cover them. All 894 checks and both builds
+    passed; installed-game contracts passed inspection. No deployment or live
+    multiplayer/rendering test was performed.
 
 The repository already contained commits `c793844` (Git configuration files) and
 `736b305` (initial project files). The scaffold adjustments and deployment work
@@ -171,7 +182,7 @@ commits are recorded in Git history. The configured remote is
 | Build SDK | .NET `10.0.401` |
 | Mod target framework | `netstandard2.1` |
 | Mod assembly / namespace | `SephiriaOne` |
-| Mod version / author | `0.11.1` / `preco21` |
+| Mod version / author | `0.12.0` / `preco21` |
 | Game version reported by the confirmed load log | `1.0.33` |
 | Game directory | `C:\Program Files (x86)\Steam\steamapps\common\Sephiria` |
 | Game managed assemblies | `<GameDir>\Sephiria_Data\Managed` |
@@ -204,6 +215,10 @@ SephiriaOne/
       Stats/
     Infrastructure/
       HarmonyRuntime.cs
+    Synchronization/
+      Core/
+      Game/
+      Presentation/
     Session/
       SessionPolicy.cs
       SessionSettings.cs
@@ -239,8 +254,8 @@ SephiriaOne/
 
 Source and portable tests are grouped by feature. See
 [module structure](module-structure.md) for responsibilities and source-link
-conventions. This folder refactor preserves namespaces, runtime behavior, and
-version `0.11.1`.
+conventions. The `0.12.0` synchronization migration preserves namespaces and
+command semantics while sharing lifecycle and mutation infrastructure.
 
 - [Project configuration](../SephiriaOne/SephiriaOne.csproj) references the installed
   `Assembly-CSharp.dll`, `UnityEngine.CoreModule.dll`, `Mirror.dll`,
@@ -255,8 +270,9 @@ version `0.11.1`.
   controller object for name colors, chat commands, and session settings. Components
   are disabled on unload before the object is destroyed. Candidate contributions
   are removed before unpatching this addon's generation guards.
-- [Name color controller](../SephiriaOne/Features/Names/LocalPlayerNameColor.cs) colors only
-  `UI_StatsPanel.characterNameText` and the owned player's `WorldUserName` blue.
+- [Name color controller](../SephiriaOne/Features/Names/LocalPlayerNameColor.cs) uses
+  registered bindings for character/overhead/lobby/host/player-list labels and
+  safe own-stat-panel refresh; see the [coverage inventory](presentation-compatibility.md).
   It preserves alpha and restores original text color settings on disconnect,
   rebinding, or unload. It does not make hidden nameplates visible.
 - [Multiplayer name synchronization](../SephiriaOne/Features/Names/MultiplayerNameColor.cs)
@@ -550,15 +566,14 @@ requirement for a native HorayMod addon.
 
 ## Next verification steps
 
-1. Manually install the `0.11.1` Release DLL and adjacent metadata when ready;
+1. Manually install the `0.12.0` Release DLL and adjacent metadata when ready;
    this task did not deploy them. Fully restart Sephiria and enter the town/lobby
    or a run; the title screen alone is insufficient for addon loading.
 2. Inspect `Player.log` for these expected entries:
 
    ```text
-   [SephiriaOne] Loaded v0.11.1
+   [SephiriaOne] Loaded v0.12.0
    [SephiriaOne] All databases ready
-   [SephiriaOne] Local player name gradient applied (#408af1 -> #a8d7fa)
    [SephiriaOne] Chat commands bound: /fountain, /choices, /stats, /mod
    [SephiriaOne] Candidate commands ready: /choices (extra choices 0..20)
    ```
@@ -595,3 +610,7 @@ requirement for a native HorayMod addon.
 13. Follow the [full lifecycle checklist](sync-lifecycle-audit.md#verification-and-live-checklist),
     including native presets, costume changes, passive resets, hard-mode points,
     immediate run entry after a capacity change, and cached UI limitations.
+14. Inspect `/mod status` and follow the [presentation checks](presentation-compatibility.md#verification)
+    for lobby rows/host status, open panels, pooling, language changes, and peer
+    differences. Use the [shared synchronization guide](synchronization-guide.md)
+    for fault recovery and future features.

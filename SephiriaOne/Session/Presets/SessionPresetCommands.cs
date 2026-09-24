@@ -35,6 +35,8 @@ namespace SephiriaOne
             }
             if (action != PresetAction.Save) { messages = new[] { PresetCommand.Usage }; return false; }
             if (!Prepare(out string failure)) { messages = new[] { failure }; return false; }
+            if (failedBatch != null)
+            { messages = new[] { "Resolve the faulted " + failedFeature + " write before saving. Inspect /mod status." }; return false; }
             bool saved = store.TrySave(policy, out string saveError);
             messages = new[] { saved ? "Saved current session settings for future hosted sessions: " + store.FilePath : saveError };
             return saved;
@@ -47,6 +49,7 @@ namespace SephiriaOne
             bool sameSession = dungeon && ReferenceEquals(dungeon, DungeonManager.Instance);
             IReadOnlyList<string> active = sameSession ? policy.DescribeSettings() : new string[0];
             lines.Add("Active session settings: " + (active.Count == 0 ? "none." : string.Join("; ", active)));
+            DescribeSynchronization(lines, sameSession);
             if (!SessionBoundaryFeature.Available)
                 lines.Add("Fountain grant synchronization guard is unavailable; frame polling remains active. Check Player.log.");
             int ready = 0;

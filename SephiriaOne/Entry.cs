@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace SephiriaOne
 {
@@ -32,6 +32,8 @@ namespace SephiriaOne
 
         protected override void OnModUnloaded()
         {
+            // Keep controllers/guards available if verified cleanup needs recovery.
+            ChoiceFeature.Shutdown();
             HorayModAPI.OnAllDatabasesReady -= OnDatabasesReady;
             if (sessionSettings)
             {
@@ -44,7 +46,6 @@ namespace SephiriaOne
                 chatCommands = null;
             }
 
-            ChoiceFeature.Shutdown();
             SessionBoundaryFeature.Shutdown();
 
             if (nameColor)

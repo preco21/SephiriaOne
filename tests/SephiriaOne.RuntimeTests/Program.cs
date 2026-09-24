@@ -613,5 +613,128 @@ SessionSettings.Synchronize();
 Check(DungeonManager.Instance.constValueDictionary[FountainPoints.LimitKey] == 28,
     "Successful zero-contribution set remains eligible for later native capacity changes");
 
+host = Start();
+Check(Fountain("+10") && Stats("luck +10") && Choices("all 5"), "Configure all features before avatar replacement");
+PlayerSpawner.MultiplayerList.Remove(host);
+var reusedId = Add(1, luck: 20, points: 7, itemChoices: 2);
+SessionSettings.Synchronize();
+Check(Value(reusedId) == 30 && Points(reusedId) == 17 && Value(reusedId, "EXTRAITEMCHOICES") == 7,
+    "A replaced avatar reusing a network ID inherits each family once against its own baseline");
+SessionSettings.Synchronize();
+Check(Value(reusedId) == 30 && Points(reusedId) == 17, "Replacement does not duplicate inheritance on later frames");
+
+host = Start();
+Check(Stats("luck +10"), "Prepare relative state before reentrant command callback");
+bool nestedFlush = true;
+host.PlayerAvatar.customStats.BeforeWrite = (key, value) => { if (key == "LUCK") nestedFlush = SessionSettings.Synchronize(); };
+Check(Stats("luck +5") && !nestedFlush && Value(host) == 20, "Command mutation excludes recursive reconciliation");
+host.PlayerAvatar.customStats.BeforeWrite = null;
+SessionSettings.Synchronize();
+Check(Value(host) == 20 && Stats("luck reset") && Value(host) == 5, "Reentrant callback cannot corrupt native baseline");
+
+foreach (string family in new[] { "stats", "choices", "fountain" })
+{
+    host = Start();
+    string marker = family == "stats" ? "SEPHIRIAONE_STAT_LUCK" : family == "choices" ? "SEPHIRIAONE_EXTRAITEMCHOICES" : FountainPoints.ContributionKey;
+    host.PlayerAvatar.customStats.BeforeWrite = (key, value) => { if (key == marker) throw new InvalidOperationException("simulated marker failure"); };
+    bool succeeded = family == "stats" ? Stats("luck +10") : family == "choices" ? Choices("item 5") : Fountain("+10");
+    Check(!succeeded, family + " reports partial failure rather than throwing or recording success");
+    Check(!Stats("luck +1"), family + " fault prevents another command from consuming partial state");
+    host.PlayerAvatar.customStats.BeforeWrite = null;
+    if (family == "stats") Check(!Stats("defense reset"), "An unrelated stat reset cannot finalize uncommitted luck intent");
+    if (family == "choices") Check(!Choices("weapon reset"), "An unrelated category reset cannot finalize uncommitted item intent");
+    bool recovered = family == "stats" ? Stats("reset") : family == "choices" ? Choices("reset") : Fountain("reset");
+    Check(recovered && Value(host) == 5 && Points(host) == 4 && Value(host, "EXTRAITEMCHOICES") == 2,
+        family + " explicit reset finishes tracked partial values then restores original baseline");
+    var afterFault = Add(2, luck: 9, points: 7, itemChoices: 3);
+    SessionSettings.Synchronize();
+    Check(Value(afterFault) == 9 && Points(afterFault) == 7 && Value(afterFault, "EXTRAITEMCHOICES") == 3,
+        family + " failed intent is not inherited or persisted");
+}
+
+host = Start();
+guest = Add(2, luck: 7);
+Check(Stats("luck +10") && Fountain("20"), "Prepare enrollment across multiple players before maintenance fault");
+guest.PlayerAvatar.Inventory.dimensionPocket += 7;
+SessionSettings.Synchronize();
+host.PlayerAvatar.customStatsAmp["LUCK"] = 100;
+host.PlayerAvatar.customStats.BeforeWrite = (key, value) => { if (key == "SEPHIRIAONE_STAT_LUCK") throw new InvalidOperationException("maintenance marker failure"); };
+SessionSettings.Synchronize();
+host.PlayerAvatar.customStats.BeforeWrite = null;
+Check(Stats("reset") && Points(guest) == 27, "Interrupted reconciliation does not prune connected guests or replay one-time settings");
+
+host = Start();
+Check(Fountain("+10") && Stats("luck +10") && Choices("all 5"), "Prepare cross-family inheritance failure");
+guest = Add(2, luck: 9);
+guest.PlayerAvatar.customStats.BeforeWrite = (key, value) => { if (key == "SEPHIRIAONE_STAT_LUCK") throw new InvalidOperationException("inheritance marker failure"); };
+SessionSettings.Synchronize();
+guest.PlayerAvatar.customStats.BeforeWrite = null;
+Check(Choices("reset"), "Explicit reset recovers cross-family inheritance");
+guest.PlayerAvatar.customStatsAmp["LUCK"] = 100;
+SessionSettings.Synchronize();
+Check(guest.PlayerAvatar.GetCustomStatUnsafe("LUCK") == 28, "Recovered inheritance enrolls relative stats even when a different family is reset");
+
+host = Start();
+host.PlayerAvatar.customStats.BeforeWrite = (key, value) => { if (key == FountainPoints.ContributionKey) throw new InvalidOperationException("inventory swap failure"); };
+Check(!Fountain("+10"), "Prepare partial Fountain write before inventory replacement");
+GridInventory previousInventory = host.PlayerAvatar.Inventory;
+host.PlayerAvatar.Inventory = new GridInventory { netId = 1, dimensionPocket = 30 };
+host.PlayerAvatar.customStats.BeforeWrite = null;
+Check(!Fountain("reset") && Points(host) == 30 && previousInventory.dimensionPocket == 14,
+    "Recovery cannot write a replaced inventory or apply its marker to a different lifetime");
+
+host = Start();
+Check(Fountain("+100"), "Prepare cap-only reconciliation failure");
+host.PlayerAvatar.Inventory.dimensionPocket += 8;
+DungeonManager.Instance.constValueDictionary.BeforeWrite = (key, value) =>
+{ if (key == FountainPoints.AppliedLimitKey) throw new InvalidOperationException("cap marker failure"); };
+bool capReady = false;
+try { capReady = SessionSettings.EnsureFresh(); } catch { }
+Check(!capReady && !Stats("luck +10"), "Partial cap writes share fault containment across command families");
+Check(Mod(PresetAction.Status, out messages) && messages.Any(line => line.Contains("Write journal:")) &&
+    messages.Any(line => line.Contains("Faulted")), "Status exposes coordinator outcome and before/target/readback journal");
+Check(!Mod(PresetAction.Save, out _), "Partial writes cannot be saved as an apparently healthy preset");
+DungeonManager.Instance.constValueDictionary.BeforeWrite = null;
+Check(Fountain("reset") && Points(host) == 12 && DungeonManager.Instance.constValueDictionary[FountainPoints.LimitKey] == 12,
+    "Explicit Fountain reset safely recovers a partial cap-only write");
+Check(SessionSettings.EnsureFresh(), "Successful cap recovery clears the coordinator fault and permits a fresh boundary");
+
+host = Start();
+host.PlayerAvatar.customStats.BeforeWrite = (key, value) =>
+{ if (key == "LUCK") host.PlayerAvatar.customStatsAmp["LUCK"] = 100; };
+Check(!Stats("luck +10"), "Native multiplier mutation during a command fails post-write validation");
+host.PlayerAvatar.customStats.BeforeWrite = null;
+Check(!Choices("item 5"), "Unverified stat write blocks other families until explicit recovery");
+host.PlayerAvatar.customStatsAmp.Remove("LUCK");
+Check(Stats("reset") && Value(host) == 5, "Recovering validated inputs restores a partial stat command baseline");
+
+host = Start();
+Check(Stats("luck +10") && Choices("all 5"), "Prepare shared candidate generation boundary");
+guest = Add(2, luck: 9, itemChoices: 4);
+SessionSettings.BeforeNativeRead("Candidate generation");
+Check(Value(guest) == 19 && Value(guest, "EXTRAITEMCHOICES") == 9, "Candidate generation flushes newcomer inheritance before the frame tick");
+SessionSettings.BeforeNativeRead("Candidate generation");
+Check(Value(guest) == 19 && Value(guest, "EXTRAITEMCHOICES") == 9, "Repeated generation boundaries do not stack settings");
+ChoicePoints.RemoveContributions();
+Check(Value(guest, "EXTRAITEMCHOICES") == 4 && Value(host, "EXTRAITEMCHOICES") == 2,
+    "Verified candidate unload cleanup preserves each native baseline");
+ChoicePoints.RemoveContributions();
+Check(Value(guest, "EXTRAITEMCHOICES") == 4, "Candidate cleanup is idempotent");
+
+foreach (bool useCommand in new[] { false, true })
+{
+    host = Start();
+    Check(Choices("all 5"), "Prepare candidate cleanup fault");
+    host.PlayerAvatar.customStats.BeforeRemove = key => { if (key == "SEPHIRIAONE_EXTRAITEMCHOICES") throw new InvalidOperationException("cleanup marker failure"); };
+    bool failedCleanup = false;
+    try { ChoicePoints.RemoveContributions(); } catch (InvalidOperationException) { failedCleanup = true; }
+    Check(failedCleanup && !Stats("luck +10"), "Partial cleanup retains journal and blocks gameplay commands");
+    host.PlayerAvatar.customStats.BeforeRemove = null;
+    if (useCommand) Check(Choices("reset") && Choices("item 3"), "Reset recovers cleanup and permits fresh intent");
+    ChoicePoints.RemoveContributions();
+    Check(Value(host, "EXTRAITEMCHOICES") == 2 && Value(host, "SEPHIRIAONE_EXTRAITEMCHOICES") == 0,
+        "Cleanup retry/reset uses original journal and never subtracts the addon twice");
+}
+
 if (Directory.Exists(testDataRoot)) Directory.Delete(testDataRoot, true);
 Console.WriteLine($"Passed {checks} runtime command/session integration checks using game API fixtures.");

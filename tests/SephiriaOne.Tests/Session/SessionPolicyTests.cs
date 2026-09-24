@@ -134,22 +134,6 @@ internal static class SessionPolicyTests
         Check(policy.TryPlan(Snapshot(), out plan, out _) && Write(plan, "LUCK").Raw == 0,
             "Subtract after a zero set switches to the native baseline rather than making a negative absolute target");
 
-        var tracker = new SessionJoinTracker();
-        object firstSession = new();
-        object nextSession = new();
-        Check(!tracker.TryBegin(1, true), "No inheritance without an active session");
-        Check(tracker.SetSession(firstSession), "Starting server changes scope");
-        Check(!tracker.TryBegin(0, true), "Unspawned ID cannot inherit");
-        Check(!tracker.TryBegin(1, false), "Initializing avatar is not marked as processed");
-        Check(tracker.TryBegin(1, true), "Avatar inherits when ready");
-        Check(!tracker.TryBegin(1, true), "Repeated polling cannot double-apply");
-        Check(!tracker.SetSession(firstSession) && !tracker.TryBegin(1, true), "Floor changes in same dungeon do not repeat settings");
-        Check(tracker.TryBegin(2, true), "Another player receives the settings");
-        Check(tracker.TryBegin(3, true), "Reconnect with a new avatar receives settings once");
-        Check(!tracker.TryBegin(3, true), "A failed attempt is also not retried continuously");
-        Check(tracker.SetSession(null) && !tracker.TryBegin(4, true), "Stopped server disables inheritance");
-        Check(tracker.SetSession(nextSession) && tracker.TryBegin(1, true), "Fresh session can reuse a network ID");
-        Check(tracker.SetSession(firstSession) && tracker.TryBegin(1, true), "Dungeon replacement resets tracking even without a stopped frame");
         return checks;
     }
 }

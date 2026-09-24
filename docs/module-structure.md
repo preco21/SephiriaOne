@@ -1,8 +1,8 @@
 # Module structure
 
-Source files are grouped by feature and shared responsibility. This is a folder
-refactor: existing C# namespaces, type names, behavior, metadata, and addon version
-remain unchanged. The SDK project discovers source files recursively.
+Source files are grouped by feature and shared responsibility. The initial folder
+refactor preserved behavior; `0.12.0` adds reusable synchronization modules.
+The SDK project discovers source files recursively; namespaces remain stable.
 
 ```text
 SephiriaOne/
@@ -18,6 +18,10 @@ SephiriaOne/
   Infrastructure/
   Session/
     Presets/
+  Synchronization/
+    Core/
+    Game/
+    Presentation/
   Properties/
 ```
 
@@ -30,7 +34,10 @@ SephiriaOne/
 | `Features/Names/` | Gradient formatting, local labels, and synchronized name state. |
 | `Features/Stats/` | Character stat catalog, commands, exact arithmetic, and host batch updates. |
 | `Infrastructure/` | Shared embedded Harmony runtime loading. |
-| `Session/` | Cross-feature policy, readiness, inheritance, maintenance, and native grant boundary hooks. |
+| `Session/` | Policy, registered inheritance/maintenance rules, scope lifecycle, diagnostics, and critical native read boundaries. |
+| `Synchronization/Core/` | Unity-independent reconciliation, reference identity, outcome records, and journaled write batches. |
+| `Synchronization/Game/` | Shared host readiness, player/native snapshots, preflight/readback, and native write helpers. |
+| `Synchronization/Presentation/` | Registered active bindings and safe native stat-panel refresh. |
 | `Session/Presets/` | Saved policy codec/storage and status/save/forget commands. |
 | `Properties/` | Visual Studio launch configuration. |
 
@@ -54,7 +61,9 @@ Deployment paths are unchanged: the project, metadata, build output directory,
 launch profile and deployment script retain their previous locations. Build with
 `-p:DeployMod=false` when deployment is not intended.
 
-## Verification
+See the [extension guide](synchronization-guide.md) for adding rules and bindings.
+
+## Initial folder-refactor verification (0.11.1)
 
 The refactor moves 27 production source files and 11 portable test files without
 changing their contents. Verification compares moved files with their original

@@ -38,12 +38,7 @@ namespace SephiriaOne
         {
             // Native loadout edits and starting a run can arrive in the same
             // frame. Reconcile before the game clamps/grants the saved items.
-            // Synchronize guards server authority, controller state and readiness.
-            try { SessionSettings.Synchronize(); }
-            catch (Exception exception)
-            {
-                Debug.LogError("[SephiriaOne] Pre-grant synchronization failed; continuing native item grant: " + exception);
-            }
+            SessionSettings.BeforeNativeRead("Fountain grant");
         }
     }
 }

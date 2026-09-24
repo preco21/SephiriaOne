@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using TMPro;
 using UnityEngine;
 
@@ -5,117 +8,77 @@ namespace SephiriaOne
 {
     public sealed class LocalPlayerNameColor : MonoBehaviour
     {
-        private readonly GradientNameLabel characterName = new GradientNameLabel();
-        private readonly GradientNameLabel overheadName = new GradientNameLabel();
+        private readonly PresentationRegistry registry = new PresentationRegistry();
         private readonly MultiplayerNameColor multiplayerName = new MultiplayerNameColor();
-        private PlayerSpawner loggedPlayer;
+        private readonly HashSet<TMP_Text> overhead = new HashSet<TMP_Text>();
+        private bool installed;
+        public static string Diagnostics { get; private set; } = "presentation not initialized";
+
+        private void OnEnable()
+        {
+            try
+            {
+                HarmonyRuntime.EnsureLoaded();
+                InstallHooks();
+                installed = true;
+            }
+            catch (Exception exception)
+            {
+                Debug.LogWarning("[SephiriaOne] Presentation discovery degraded: " + exception.Message);
+            }
+        }
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private void InstallHooks() => NamePresentationHooks.Install(registry);
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private void RemoveHooks() => NamePresentationHooks.Uninstall();
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private string HookStatus() => NamePresentationHooks.Status;
 
         private void LateUpdate()
         {
             UIManager ui = UIManager.Instance;
             GameObject playerObject = ui ? ui.connectedPlayer : null;
             PlayerSpawner player = playerObject ? playerObject.GetComponent<PlayerSpawner>() : null;
+            if (player && player.isOwned) multiplayerName.Update(player);
+            else multiplayerName.Restore();
 
-            if (!player || !player.isOwned)
+            var current = new HashSet<TMP_Text>();
+            foreach (PlayerSpawner subject in PlayerSpawner.MultiplayerList)
             {
-                RestoreLabels();
-                return;
+                if (!subject || !subject.WorldUserName) continue;
+                TMP_Text label = subject.WorldUserName;
+                current.Add(label);
+                if (overhead.Add(label)) registry.Register(label, new NameLabelBinding(label,
+                    () => Character(subject ? subject.PlayerAvatar : null)));
             }
-
-            multiplayerName.Update(player);
-
-            UI_StatsPanel panel = ui.GetElement<UI_StatsPanel>();
-            characterName.Apply(panel ? panel.characterNameText : null);
-            overheadName.Apply(player.WorldUserName);
-
-            if (loggedPlayer != player && panel && panel.characterNameText)
+            // Solo avatar is not guaranteed to have entered MultiplayerList yet.
+            if (player && player.WorldUserName)
             {
-                loggedPlayer = player;
-                Debug.Log("[SephiriaOne] Local player name gradient applied (#408af1 -> #a8d7fa)");
+                var label = player.WorldUserName;
+                current.Add(label);
+                if (overhead.Add(label)) registry.Register(label, new NameLabelBinding(label,
+                    () => Character(player ? player.PlayerAvatar : null)));
             }
+            foreach (var label in new List<TMP_Text>(overhead))
+                if (!current.Contains(label)) { registry.Remove(label); overhead.Remove(label); }
+            registry.Tick();
+            Diagnostics = multiplayerName.Status + "; " + (installed ? HookStatus() : "native UI hooks unavailable");
         }
-
+        private static NameView Character(UnitAvatar avatar)
+        {
+            if (!avatar) return new NameView(null, false);
+            string name = avatar.Name;
+            bool own = avatar is PlayerAvatar player && player.isOwned;
+            return NamePresentation.Character(name, own);
+        }
         private void OnDisable()
         {
-            RestoreLabels();
-        }
-
-        private void RestoreLabels()
-        {
-            characterName.Restore();
-            overheadName.Restore();
+            if (installed) RemoveHooks();
+            installed = false;
+            registry.Clear();
+            overhead.Clear();
             multiplayerName.Restore();
-            loggedPlayer = null;
-        }
-
-        private sealed class GradientNameLabel
-        {
-            private readonly GradientNameText text = new GradientNameText();
-            private TMP_Text target;
-            private Color originalColor;
-            private bool originalRichText;
-            private bool originalOverrideColorTags;
-            private bool originalEnableVertexGradient;
-
-            public void Apply(TMP_Text label)
-            {
-                if (target != label)
-                {
-                    Restore();
-                    target = label;
-                    if (target)
-                    {
-                        originalColor = target.color;
-                        originalRichText = target.richText;
-                        originalOverrideColorTags = target.overrideColorTags;
-                        originalEnableVertexGradient = target.enableVertexGradient;
-                    }
-                }
-
-                if (!target)
-                {
-                    return;
-                }
-
-                // Let the same per-letter tags render locally and on peers.
-                // Keep game-controlled alpha, including fades during UI changes.
-                Color white = new Color(1f, 1f, 1f, target.color.a);
-                if (target.color != white)
-                {
-                    target.color = white;
-                }
-
-                if (!target.richText) target.richText = true;
-                if (target.overrideColorTags)
-                {
-                    target.overrideColorTags = false;
-                }
-
-                if (target.enableVertexGradient)
-                {
-                    target.enableVertexGradient = false;
-                }
-
-                string formatted = text.Apply(target.text ?? "");
-                if (target.text != formatted) target.text = formatted;
-            }
-
-            public void Restore()
-            {
-                if (target)
-                {
-                    target.color = new Color(originalColor.r, originalColor.g,
-                        originalColor.b, target.color.a);
-                    target.richText = originalRichText;
-                    target.overrideColorTags = originalOverrideColorTags;
-                    target.enableVertexGradient = originalEnableVertexGradient;
-                    string restored = text.Restore(target.text ?? "");
-                    if (target.text != restored) target.text = restored;
-                }
-                else text.Restore("");
-
-                target = null;
-            }
+            Diagnostics = "presentation disabled";
         }
     }
 }

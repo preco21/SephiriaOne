@@ -1,7 +1,9 @@
 # Shared synchronization architecture
 
-Status: proposed design, 2026-09-24. No runtime changes in this document's commit.
-Based on the current `0.11.1` implementation, the [lifecycle audit](sync-lifecycle-audit.md),
+Status: approved design implemented in `0.12.0`, 2026-09-24. See the
+[implementation and extension guide](synchronization-guide.md) and
+[presentation inventory](presentation-compatibility.md) for delivered coverage.
+Originally based on `0.11.1`, the [lifecycle audit](sync-lifecycle-audit.md),
 and inspection of installed Sephiria `1.0.33` name consumers and UI assets.
 
 ## Problem and recommended approach
@@ -32,8 +34,7 @@ Existing features should not need to learn about every new screen or event.
 ## Compatibility and behavior contract
 
 - Preserve host-only gameplay commands, native Mirror replication, and support
-  for unmodified guests. This is the proposed default pending the user's peer
-  compatibility preference; mandatory installation would be a separate decision.
+  for unmodified guests. Local UI adapters require local addon installation.
 - Name publication retains the owned client's existing authority-checked native
   command. Presentation updates run locally on clients with this addon.
 - Keep command syntax, stat units, reset behavior, midpoint gradient formatting,

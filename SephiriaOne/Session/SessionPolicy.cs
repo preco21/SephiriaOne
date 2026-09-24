@@ -157,21 +157,4 @@ namespace SephiriaOne
         }
     }
 
-    internal sealed class SessionJoinTracker
-    {
-        private object? session;
-        private readonly HashSet<uint> processed = new HashSet<uint>();
-
-        public bool SetSession(object? current)
-        {
-            if (ReferenceEquals(session, current)) return false;
-            session = current;
-            processed.Clear();
-            return true;
-        }
-
-        // Mark before attempting writes: exceptions/rejections must not spam or
-        // repeatedly apply a bonus. New avatar IDs still get their own attempt.
-        public bool TryBegin(uint avatarId, bool ready) => session != null && ready && avatarId != 0 && processed.Add(avatarId);
-    }
 }

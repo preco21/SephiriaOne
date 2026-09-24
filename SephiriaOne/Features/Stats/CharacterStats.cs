@@ -15,23 +15,13 @@ namespace SephiriaOne
                 message = "Only the host can change everyone's character stats.";
                 return false;
             }
-            if (!SessionSettings.Prepare(out message)) return false;
+            if (!SessionSettings.PrepareCommand("stats", command.Operation == StatOperation.Reset, out HostCommandContext context, out message, command.Stat == null)) return false;
 
-            var players = new List<PlayerAvatar>();
+            List<PlayerAvatar> players = context.Players;
             var owners = new List<PlayerAvatar>();
             var snapshots = new List<StatSnapshot>();
-            var seen = new HashSet<PlayerAvatar>();
-            foreach (PlayerSpawner spawner in PlayerSpawner.MultiplayerList)
+            foreach (PlayerAvatar player in players)
             {
-                if (!spawner || !spawner.isServer || spawner.netId == 0) continue;
-                PlayerAvatar player = spawner.PlayerAvatar;
-                if (!SessionSettings.IsReady(spawner))
-                {
-                    message = "A player is still initializing. Wait a moment and retry; nobody was changed.";
-                    return false;
-                }
-                if (!seen.Add(player)) continue;
-                players.Add(player);
                 foreach (StatDefinition stat in StatCatalog.All)
                 {
                     if (command.Stat != null && command.Stat != stat) continue;
@@ -45,17 +35,14 @@ namespace SephiriaOne
             }
 
             if (!SessionSettings.TryPlanStats(command, snapshots, out StatUpdate[] updates, out message)) return false;
-            // No writes until every selected stat on every player has been validated.
-            // Mirror's existing SyncDictionary carries both values and reset markers.
+            StateWriteBatch batch = context.CreateBatch();
             for (int i = 0; i < updates.Length; i++)
             {
                 StatDefinition stat = snapshots[i].Stat;
                 PlayerAvatar player = owners[i];
-                if (snapshots[i].Raw != updates[i].Raw) player.customStats[stat.Key] = updates[i].Raw;
-                if (updates[i].Contribution == 0) player.customStats.Remove(stat.Marker);
-                else player.customStats[stat.Marker] = updates[i].Contribution;
+                NativeStateWrites.Stat(batch, player, stat.Key, stat.Marker, updates[i].Raw, updates[i].Contribution);
             }
-            SessionSettings.Remember(command, players);
+            if (!SessionSettings.Commit("stats", batch, () => SessionSettings.Remember(command, players), out message)) return false;
 
             string name = command.Stat == null ? "all supported stats" : command.Stat.Name;
             if (command.Operation == StatOperation.Reset)

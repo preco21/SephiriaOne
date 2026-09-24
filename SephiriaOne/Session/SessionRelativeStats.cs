@@ -4,23 +4,24 @@ namespace SephiriaOne
 {
     internal static partial class SessionSettings
     {
-        private readonly struct RelativeObservation
+        private sealed class RelativeTarget
         {
-            public StatSnapshot Snapshot { get; }
-            public bool Suspended { get; }
-            public RelativeObservation(StatSnapshot snapshot, bool suspended)
-            {
-                Snapshot = snapshot;
-                Suspended = suspended;
-            }
-
-            public bool Matches(StatSnapshot other) => Snapshot.Raw == other.Raw &&
-                Snapshot.Contribution == other.Contribution && Snapshot.Bonus == other.Bonus &&
-                Snapshot.Amplifier == other.Amplifier;
+            public readonly PlayerAvatar Player;
+            public readonly StatDefinition Stat;
+            public RelativeTarget(PlayerAvatar player, StatDefinition stat) { Player = player; Stat = stat; }
         }
+        private static readonly Dictionary<PlayerAvatar, Dictionary<StatDefinition, RelativeTarget>> relativeStats =
+            new Dictionary<PlayerAvatar, Dictionary<StatDefinition, RelativeTarget>>(ReferenceComparer<PlayerAvatar>.Instance);
+        private static readonly ReconciliationCoordinator<RelativeTarget> relative = CreateRelativeCoordinator();
 
-        private static readonly Dictionary<uint, Dictionary<StatDefinition, RelativeObservation>> relativeStats =
-            new Dictionary<uint, Dictionary<StatDefinition, RelativeObservation>>();
+        private static ReconciliationCoordinator<RelativeTarget> CreateRelativeCoordinator()
+        {
+            var result = new ReconciliationCoordinator<RelativeTarget>();
+            result.Register(new ReconciliationRule<RelativeTarget>("relative-stat", SyncDomain.Stats, SyncDomain.None,
+                ReconcileMode.OnChange, target => subjects.TryGetValue(target.Player, out HostPlayer subject) && subject.IsReady,
+                target => CaptureStat(target.Player, target.Stat), ApplyRelative));
+            return result;
+        }
 
         private static StatSnapshot CaptureStat(PlayerAvatar player, StatDefinition stat)
         {
@@ -31,64 +32,70 @@ namespace SephiriaOne
             return new StatSnapshot(stat, raw, contribution, bonus, amplifier);
         }
 
-        // Enroll only successfully applied settings. A rejected inheritance stays
-        // rejected until an explicit command succeeds for that player and stat.
         private static void TrackRelativeStats(PlayerAvatar player, StatDefinition selected)
         {
-            if (!relativeStats.TryGetValue(player.netId, out var observations))
-            {
-                observations = new Dictionary<StatDefinition, RelativeObservation>();
-                relativeStats.Add(player.netId, observations);
-            }
+            if (!relativeStats.TryGetValue(player, out var targets))
+            { targets = new Dictionary<StatDefinition, RelativeTarget>(); relativeStats.Add(player, targets); }
             foreach (StatDefinition stat in StatCatalog.All)
             {
                 if (selected != null && selected != stat) continue;
-                if (policy.IsRelativeStat(stat)) observations[stat] = new RelativeObservation(CaptureStat(player, stat), false);
-                else observations.Remove(stat);
+                if (targets.TryGetValue(stat, out RelativeTarget previous)) relative.Forget(previous);
+                if (policy.IsRelativeStat(stat)) targets[stat] = new RelativeTarget(player, stat);
+                else targets.Remove(stat);
             }
-            if (observations.Count == 0) relativeStats.Remove(player.netId);
+            if (targets.Count == 0) relativeStats.Remove(player);
         }
 
-        private static void MaintainRelativeStats(PlayerAvatar player)
+        private static void ForgetRelativeStats(PlayerAvatar player)
         {
-            if (!relativeStats.TryGetValue(player.netId, out var observations)) return;
-            foreach (StatDefinition stat in StatCatalog.All)
-            {
-                if (!observations.TryGetValue(stat, out RelativeObservation previous)) continue;
-                StatSnapshot snapshot = CaptureStat(player, stat);
-                if (previous.Matches(snapshot)) continue;
-                bool success = policy.TryPlanRelativeStat(snapshot, out StatUpdate update, out string error);
-                string recovery = "";
-                if (!success)
-                {
-                    // Integer native stats cannot express every displayed offset.
-                    // Remove our raw contribution while awaiting changed inputs.
-                    if (StatPlanner.TryPlan(new StatCommand(stat, StatOperation.Reset, 0), new[] { snapshot },
-                        out StatUpdate[] reset, out _))
-                    {
-                        update = reset[0];
-                        recovery = "The addon contribution was removed.";
-                    }
-                    else
-                    {
-                        update = new StatUpdate(snapshot.Raw, snapshot.Contribution);
-                        recovery = "The native baseline could not be restored; current values were left unchanged.";
-                    }
-                }
-                if (snapshot.Raw != update.Raw) player.customStats[stat.Key] = update.Raw;
-                if (snapshot.Contribution != update.Contribution)
-                {
-                    if (update.Contribution == 0) player.customStats.Remove(stat.Marker);
-                    else player.customStats[stat.Marker] = update.Contribution;
-                }
-                observations[stat] = new RelativeObservation(CaptureStat(player, stat), !success);
-                if (!success && !previous.Suspended)
-                    Report($"Relative {stat.Name} offset suspended for player {player.netId}: {error.Replace(" Nobody was changed.", "")} {recovery} It will retry when native stat inputs change.", false);
-            }
+            if (!relativeStats.TryGetValue(player, out var targets)) return;
+            foreach (var target in targets.Values) relative.Forget(target);
+            relativeStats.Remove(player);
         }
 
-        private static bool IsRelativeStatSuspended(PlayerAvatar player, StatDefinition stat) =>
-            relativeStats.TryGetValue(player.netId, out var observations) &&
-            observations.TryGetValue(stat, out RelativeObservation observation) && observation.Suspended;
+        private static bool MaintainRelativeStats(PlayerAvatar player)
+        {
+            if (!relativeStats.TryGetValue(player, out var targets)) return true;
+            bool fresh = true;
+            foreach (var target in targets.Values)
+            { fresh &= relative.Reconcile(target); if (failedBatch != null) return false; }
+            return fresh;
+        }
+
+        private static ReconcileResult ApplyRelative(RelativeTarget target)
+        {
+            PlayerAvatar player = target.Player;
+            StatDefinition stat = target.Stat;
+            StatSnapshot snapshot = CaptureStat(player, stat);
+            bool success = policy.TryPlanRelativeStat(snapshot, out StatUpdate update, out string error);
+            string recovery = "";
+            if (!success)
+            {
+                if (StatPlanner.TryPlan(new StatCommand(stat, StatOperation.Reset, 0), new[] { snapshot },
+                    out StatUpdate[] reset, out _))
+                { update = reset[0]; recovery = "The addon contribution was removed."; }
+                else
+                { update = new StatUpdate(snapshot.Raw, snapshot.Contribution); recovery = "Native baseline could not be restored; current values were left unchanged."; }
+            }
+            var context = new HostCommandContext(dungeon, new[] { subjects[player] });
+            StateWriteBatch batch = context.CreateBatch();
+            NativeStateWrites.Stat(batch, player, stat.Key, stat.Marker, update.Raw, update.Contribution);
+            if (!batch.TryCommit(out string writeError))
+            {
+                if (batch.MayHaveWritten) RecordFault("stats", batch, writeError);
+                return ReconcileResult.Faulted(writeError);
+            }
+            if (success) return ReconcileResult.Applied();
+            if (!IsRelativeStatSuspended(player, stat))
+                Report($"Relative {stat.Name} offset suspended for player {player.netId}: {error.Replace(" Nobody was changed.", "")} {recovery} It will retry when native stat inputs change.", false);
+            return ReconcileResult.Suspended(error + " " + recovery);
+        }
+
+        private static bool IsRelativeStatSuspended(PlayerAvatar player, StatDefinition stat)
+        {
+            if (!relativeStats.TryGetValue(player, out var targets) || !targets.TryGetValue(stat, out var target)) return false;
+            foreach (var status in relative.Describe(target)) if (status.State == ReconcileState.Suspended) return true;
+            return false;
+        }
     }
 }

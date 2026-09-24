@@ -50,6 +50,11 @@ later equipment change.
 
 ## Readiness and synchronization findings
 
+Since `0.12.0`, the shared coordinator tracks avatar object lifetimes, so a reused
+network ID cannot skip inheritance. Command preparation, native writes, cap repair,
+relative maintenance, and critical Fountain/candidate reads use shared validation
+and outcomes. See the [implementation guide](synchronization-guide.md).
+
 The installed `PlayerSpawner` receives default profile data before synchronously
 initializing race, equipment, costume, inventory, and native stats. A nonzero
 network ID alone is too early. The session controller polls in `LateUpdate` and

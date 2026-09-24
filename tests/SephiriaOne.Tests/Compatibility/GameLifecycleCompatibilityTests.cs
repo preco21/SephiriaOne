@@ -30,6 +30,8 @@ internal static class GameLifecycleCompatibilityTests
         var prefix = AccessTools.DeclaredMethod(addon.GetType("SephiriaOne.SessionBoundaryHooks", true), "BeforeFountainGrant");
         if (grant == null || grant.ReturnType != typeof(void) || prefix == null || !prefix.IsStatic || prefix.GetParameters().Length != 0)
             throw new Exception("Fountain grant hook signature changed.");
+        if (!PatchProcessor.GetOriginalInstructions(prefix).Any(i => i.operand is MethodInfo m && m.Name == "BeforeNativeRead"))
+            throw new Exception("Fountain grant no longer uses the shared freshness boundary.");
         var instructions = PatchProcessor.GetOriginalInstructions(grant);
         if (!instructions.Any(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "KeywordDatabase" && m.Name == "GetConstValue") ||
             !instructions.Any(i => i.operand is FieldInfo f && f.DeclaringType?.Name == "GridInventory" && f.Name == "dimensionPocket"))
