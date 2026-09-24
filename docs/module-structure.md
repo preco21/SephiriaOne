@@ -4,6 +4,7 @@ Source files are grouped by feature and shared responsibility. The initial folde
 refactor preserved behavior; `0.12.0` added reusable synchronization modules.
 Version `0.12.2` removes the local-only presentation layer and keeps native
 multiplayer synchronization.
+Version `0.13.0` adds shared settings controls and an addon-owned host panel.
 The SDK project discovers source files recursively; namespaces remain stable.
 
 ```text
@@ -12,6 +13,7 @@ SephiriaOne/
   SephiriaOne.csproj
   metadata.json
   Chat/
+  Controls/
   Features/
     Choices/
     Fountain/
@@ -24,18 +26,21 @@ SephiriaOne/
     Core/
     Game/
   Properties/
+  UI/
 ```
 
 | Location | Responsibility |
 | --- | --- |
 | `Entry.cs` | Addon lifecycle and creation/shutdown of feature controllers. |
-| `Chat/` | Local chat interception and dispatch to feature commands. |
+| `Chat/` | Local chat interception and forwarding to the shared settings dispatcher. |
+| `Controls/` | Shared action dispatch/results and immutable settings/player snapshots used by chat and UI. |
+| `UI/` | Addon-owned host panel, pause-menu binding, native control-stack lifetime, widgets and session-bound drafts. |
 | `Features/Choices/` | Candidate command parsing/planning, host writes, and Harmony generation guards. |
 | `Features/Fountain/` | Fountain command parsing/planning, point writes, and carryover-cap operations. |
 | `Features/Names/` | Gradient formatting, native publication controller, and synchronized name state. |
 | `Features/Stats/` | Character stat catalog, commands, exact arithmetic, and host batch updates. |
 | `Infrastructure/` | Shared embedded Harmony runtime loading. |
-| `Session/` | Policy, registered inheritance/maintenance rules, scope lifecycle, diagnostics, and critical native read boundaries. |
+| `Session/` | Policy, registered inheritance/maintenance rules, scope lifecycle, diagnostics, read-only settings capture, and critical native read boundaries. |
 | `Synchronization/Core/` | Unity-independent reconciliation, reference identity, outcome records, and journaled write batches. |
 | `Synchronization/Game/` | Shared host readiness, player/native snapshots, preflight/readback, and native write helpers. |
 | `Session/Presets/` | Saved policy codec/storage and status/save/forget commands. |

@@ -1,10 +1,11 @@
-# Shared synchronization in 0.12.2
+# Shared synchronization
 
 Implemented 2026-09-24 against the locally inspected Sephiria 1.0.33 assemblies.
 The [architecture](synchronization-architecture.md) records the original design;
 this document describes the current extension points and operational limits.
 The `0.12.2` scope retains effects that reach unmodified guests through native
 multiplayer state and removes the former local-only presentation layer.
+Version `0.13.0` adds a [host settings panel](control-panel.md) on the same services.
 
 ## Shared paths
 
@@ -66,6 +67,22 @@ inputs. A partial native write is contained separately and is never replayed by
 ordinary frame polling.
 
 ## Native UI boundary
+
+Chat and the host panel both call `SettingsActions.Execute`, which uses the same
+parsers, validation and feature services. New command families should be exposed
+there instead of adding independent UI mutation paths. Button availability is
+advisory; execution services retain authority, readiness and batch checks.
+
+`SessionSettings.ReadSnapshot` captures copied immutable settings/player values
+and shared status formatting. Inspection never invokes preparation,
+reconciliation, enrollment or native writes. Only saved-file observations are
+cached, with explicit open/status/refresh and save/forget/lifecycle invalidation.
+Add observations to this model rather than parsing status text in a new view.
+
+Panel drafts carry session identity, epoch and run generation; render/refresh
+does not apply them. The addon-owned panel uses `UIBase` for native control-stack
+lifetime, not the removed foreign-label registry. Keep future panels on these
+shared action/read paths and explicitly manage their native UI lifetimes.
 
 The addon no longer patches local name/stat labels or refreshes their panels.
 Each peer renders native replicated values using the base game's settings and

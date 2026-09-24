@@ -6,6 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../SephiriaOne/UI/PanelDraft.cs" Link="Source/UI/PanelDraft.cs" />
+    <Compile Include="../../SephiriaOne/UI/PanelControlLifetime.cs" Link="Source/UI/PanelControlLifetime.cs" />
     <Compile Include="../../SephiriaOne/Synchronization/Core/*.cs" Link="Source/Synchronization/Core/%(Filename)%(Extension)" />
     <Compile Include="../../SephiriaOne/Features/Names/NetworkNameState.cs" Link="Source/Features/Names/NetworkNameState.cs" />
     <Compile Include="../../SephiriaOne/Features/Names/NameGradient.cs" Link="Source/Features/Names/NameGradient.cs" />

@@ -65,6 +65,7 @@ namespace SephiriaOne
         {
             Stop();
             store = new PresetStore(System.IO.Path.Combine(Application.persistentDataPath, "SephiriaOne", "session-preset.txt"));
+            InvalidateSavedPresetSnapshot();
             enabled = true;
             HorayModAPI.OnStartSessionServerside += OnStartSession;
         }
@@ -84,6 +85,7 @@ namespace SephiriaOne
             enabled = false;
             HorayModAPI.OnStartSessionServerside -= OnStartSession;
             ClearScope(); dungeon = null; store = null;
+            InvalidateSavedPresetSnapshot();
         }
 
         private static void OnStartSession(bool isSaved)

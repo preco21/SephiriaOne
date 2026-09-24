@@ -70,77 +70,22 @@ namespace SephiriaOne
 
         private void OnSubmitted(string submittedText)
         {
-            if (!chat || !input)
-            {
-                return;
-            }
+            if (!chat || !input) return;
+            string command = input.text;
+            if (!SettingsActions.IsCommand(command)) return;
 
-            FountainParseResult result = FountainCommand.Parse(input.text, out FountainCommand command, out string error);
-            ChoiceParseResult choices = ChoiceCommand.Parse(input.text, out ChoiceCommand choiceCommand, out string choiceError);
-            StatParseResult stats = StatCommand.Parse(input.text, out StatCommand statCommand, out string statError);
-            PresetAction preset = PresetCommand.Parse(input.text, out string presetError);
-            bool fountain = result != FountainParseResult.NotCommand;
-            bool choice = choices != ChoiceParseResult.NotCommand;
-            if (!fountain && !choice && stats == StatParseResult.NotCommand && preset == PresetAction.NotCommand)
-            {
-                return;
-            }
-
-            // The vanilla handler reads input.text after our listener returns.
-            // Clear before any work so even rejected commands stay local.
+            // Vanilla reads input.text after our listener returns. Consume first,
+            // before executing actions that may trigger a UI/session transition.
             input.text = "";
             chat.Close();
-            if (preset != PresetAction.NotCommand)
+            SettingsActionResult result = SettingsActions.Execute(command);
+            if (result.OpenPanel)
             {
-                if (preset == PresetAction.Help || preset == PresetAction.Invalid)
-                    Reply(presetError, preset == PresetAction.Help ? Color.cyan : Color.yellow);
-                else
-                {
-                    try
-                    {
-                        bool success = SessionSettings.TryExecutePreset(preset, out string[] messages);
-                        foreach (string message in messages) Reply(message, success ? Color.cyan : Color.yellow);
-                    }
-                    catch (Exception exception)
-                    {
-                        Debug.LogError($"[SephiriaOne] Preset command failed: {exception}");
-                        Reply("Preset command failed. Check Player.log for details.", Color.red);
-                    }
-                }
+                if (!SettingsPanelController.TryOpen(out string error)) Reply(error, Color.yellow);
                 return;
             }
-            if (stats == StatParseResult.List)
-            {
-                foreach (StatDefinition stat in StatCatalog.All)
-                    Reply($"{stat.Name}: {stat.Minimum}..{stat.Maximum} {stat.Unit}; " +
-                        (stat.Scale == 100 ? "up to 2 decimal places." : "whole numbers."), Color.cyan);
-                return;
-            }
-            if (result == FountainParseResult.Help || choices == ChoiceParseResult.Help || stats == StatParseResult.Help)
-            {
-                Reply(fountain ? FountainCommand.Usage : choice ? ChoiceCommand.Usage : StatCommand.Usage, Color.cyan);
-                return;
-            }
-
-            if (result == FountainParseResult.Invalid || choices == ChoiceParseResult.Invalid || stats == StatParseResult.Invalid)
-            {
-                Reply(fountain ? error : choice ? choiceError : statError, Color.yellow);
-                return;
-            }
-
-            try
-            {
-                string message;
-                bool success = fountain ? FountainPoints.TryExecute(command, out message) :
-                    choice ? ChoicePoints.TryExecute(choiceCommand, out message) :
-                    CharacterStats.TryExecute(statCommand, out message);
-                Reply(message, success ? Color.green : Color.yellow);
-            }
-            catch (Exception exception)
-            {
-                Debug.LogError($"[SephiriaOne] Chat command failed: {exception}");
-                Reply("Command failed. Check Player.log for details.", Color.red);
-            }
+            foreach (string message in result.Messages)
+                Reply(message, result.Success ? Color.green : Color.yellow);
         }
 
         private static void Reply(string message, Color color)

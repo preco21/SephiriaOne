@@ -16,9 +16,10 @@ namespace UnityEngine
     public static class Debug
     {
         public static readonly List<string> Warnings = new();
+        public static readonly List<string> Errors = new();
         public static void Log(object message) { }
         public static void LogWarning(object message) => Warnings.Add(message.ToString());
-        public static void LogError(object message) => throw new Exception(message.ToString());
+        public static void LogError(object message) => Errors.Add(message.ToString());
     }
 }
 
@@ -53,9 +54,13 @@ public sealed class PlayerAvatar : UnityEngine.Object
     public readonly FixtureStats customStats = new();
     public readonly Dictionary<string, int> calculatedBonusStats = new();
     public readonly Dictionary<string, int> customStatsAmp = new();
-    public int GetCustomStatUnsafe(string key) =>
-        (int)((float)((customStats.GetValueOrDefault(key) + calculatedBonusStats.GetValueOrDefault(key)) *
+    public Action<string> BeforeRead;
+    public int GetCustomStatUnsafe(string key)
+    {
+        BeforeRead?.Invoke(key);
+        return (int)((float)((customStats.GetValueOrDefault(key) + calculatedBonusStats.GetValueOrDefault(key)) *
             (100 + customStatsAmp.GetValueOrDefault(key))) / 100f);
+    }
 }
 
 public sealed class FixtureStats : Dictionary<string, int>, IDictionary<string, int>

@@ -1,0 +1,103 @@
+using System;
+using System.Collections.Generic;
+using Mirror;
+using UnityEngine;
+
+namespace SephiriaOne
+{
+    internal sealed class SettingsActionResult
+    {
+        public bool Recognized { get; }
+        public bool Success { get; }
+        public bool OpenPanel { get; }
+        public IReadOnlyList<string> Messages { get; }
+
+        public SettingsActionResult(bool recognized, bool success, bool openPanel, IEnumerable<string> messages)
+        {
+            Recognized = recognized; Success = success; OpenPanel = openPanel;
+            Messages = new List<string>(messages).AsReadOnly();
+        }
+    }
+
+    // Local chat and the host panel share parsers and authoritative services.
+    // An OpenPanel result is only a request; this layer never touches Unity UI.
+    internal static class SettingsActions
+    {
+        // Chat uses this before clearing/closing its native input. Recognition
+        // is deliberately independent of validation, services, and host state.
+        public static bool IsCommand(string text)
+        {
+            string[] parts = (text ?? "").Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 0) return false;
+            string prefix = parts[0];
+            return prefix.Equals("/fountain", StringComparison.OrdinalIgnoreCase) ||
+                prefix.Equals("/choices", StringComparison.OrdinalIgnoreCase) ||
+                prefix.Equals("/stats", StringComparison.OrdinalIgnoreCase) ||
+                prefix.Equals("/mod", StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static SettingsActionResult Execute(string command)
+        {
+            bool recognized = false;
+            bool isPreset = false;
+            try
+            {
+                string[] parts = (command ?? "").Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length == 2 && parts[0].Equals("/mod", StringComparison.OrdinalIgnoreCase) &&
+                    parts[1].Equals("ui", StringComparison.OrdinalIgnoreCase))
+                {
+                    bool host = NetworkServer.active;
+                    return new SettingsActionResult(true, host, host, host ? Array.Empty<string>() :
+                        new[] { "Only the host can open the session settings panel." });
+                }
+
+                FountainParseResult fountain = FountainCommand.Parse(command, out FountainCommand fountainCommand, out string fountainError);
+                ChoiceParseResult choice = ChoiceCommand.Parse(command, out ChoiceCommand choiceCommand, out string choiceError);
+                StatParseResult stat = StatCommand.Parse(command, out StatCommand statCommand, out string statError);
+                PresetAction preset = PresetCommand.Parse(command, out string presetError);
+                isPreset = preset != PresetAction.NotCommand;
+                recognized = isPreset || fountain != FountainParseResult.NotCommand ||
+                    choice != ChoiceParseResult.NotCommand || stat != StatParseResult.NotCommand;
+                if (!recognized) return new SettingsActionResult(false, false, false, Array.Empty<string>());
+
+                if (isPreset)
+                {
+                    if (preset == PresetAction.Help)
+                        return Reply(true, presetError + " /mod ui opens the host settings panel.");
+                    if (preset == PresetAction.Invalid) return Reply(false, presetError);
+                    bool success = SessionSettings.TryExecutePreset(preset, out string[] messages);
+                    return new SettingsActionResult(true, success, false, messages);
+                }
+                if (stat == StatParseResult.List)
+                {
+                    var lines = new List<string>();
+                    foreach (StatDefinition definition in StatCatalog.All)
+                        lines.Add($"{definition.Name}: {definition.Minimum}..{definition.Maximum} {definition.Unit}; " +
+                            (definition.Scale == 100 ? "up to 2 decimal places." : "whole numbers."));
+                    return new SettingsActionResult(true, true, false, lines);
+                }
+                if (fountain == FountainParseResult.Help || choice == ChoiceParseResult.Help || stat == StatParseResult.Help)
+                    return Reply(true, fountain == FountainParseResult.Help ? FountainCommand.Usage :
+                        choice == ChoiceParseResult.Help ? ChoiceCommand.Usage : StatCommand.Usage);
+                if (fountain == FountainParseResult.Invalid || choice == ChoiceParseResult.Invalid || stat == StatParseResult.Invalid)
+                    return Reply(false, fountain == FountainParseResult.Invalid ? fountainError :
+                        choice == ChoiceParseResult.Invalid ? choiceError : statError);
+
+                string message;
+                bool applied = fountain == FountainParseResult.Valid ? FountainPoints.TryExecute(fountainCommand, out message) :
+                    choice == ChoiceParseResult.Valid ? ChoicePoints.TryExecute(choiceCommand, out message) :
+                    CharacterStats.TryExecute(statCommand, out message);
+                return Reply(applied, message);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError($"[SephiriaOne] {(isPreset ? "Preset" : "Settings")} command failed: {exception}");
+                return new SettingsActionResult(recognized, false, false,
+                    new[] { (isPreset ? "Preset command" : "Command") + " failed. Check Player.log for details." });
+            }
+        }
+
+        private static SettingsActionResult Reply(bool success, string message) =>
+            new SettingsActionResult(true, success, false, new[] { message });
+    }
+}

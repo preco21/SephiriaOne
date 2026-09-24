@@ -6,6 +6,8 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../SephiriaOne/Controls/*.cs" Link="Source/Controls/%(Filename)%(Extension)" />
+    <Compile Include="../../SephiriaOne/Session/SessionSettingsSnapshot.cs" Link="Source/Session/SessionSettingsSnapshot.cs" />
     <Compile Include="../../SephiriaOne/Synchronization/Core/*.cs" Link="Source/Synchronization/Core/%(Filename)%(Extension)" />
     <Compile Include="../../SephiriaOne/Synchronization/Game/*.cs" Link="Source/Synchronization/Game/%(Filename)%(Extension)" />
     <Compile Include="../../SephiriaOne/Features/Fountain/FountainCommand.cs" Link="Source/Features/Fountain/FountainCommand.cs" />

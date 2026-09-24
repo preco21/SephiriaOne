@@ -9,10 +9,12 @@ can change independently of that installed game version.
 
 ## Current status
 
-Investigated a [host settings control panel](control-panel-investigation.md).
-Recommended a native uGUI/TMP panel over shared command services and a read-only
-settings snapshot. This is research only; no panel is implemented and runtime
-version remains `0.12.2`.
+Version `0.13.0` adds a [host settings control panel](control-panel.md), opened
+from the pause menu or `/mod ui`. Stats, Fountain, choices, presets and status
+share validated actions and read-only snapshots with chat. The panel uses native
+UI focus/cancel handling and clears stale session/run drafts. No hotkeys were
+added; the first version uses mouse controls and keyboard input. Live rendering
+and input verification remain pending. No deployment was performed.
 
 Version `0.12.2` narrows the addon to effects that can reach unmodified guests
 when the host installs it. Removed local name/UI adapters, platform-name styling,
@@ -54,13 +56,13 @@ normal upgrades when reset. This version was built and tested without deployment
 | --- | --- |
 | Project | Visual Studio solution and `netstandard2.1` class library exist. |
 | Compiler | .NET SDK `10.0.401` is installed and was used successfully. |
-| Release build | `dotnet build SephiriaOne.slnx --configuration Release --nologo -p:DeployMod=false` passed for `0.12.2` with 0 warnings and 0 errors. |
-| Debug build | `dotnet build SephiriaOne.slnx --configuration Debug --nologo -p:DeployMod=false` passed for `0.12.2` with 0 warnings and 0 errors. |
+| Release build | `dotnet build SephiriaOne.slnx --configuration Release --nologo -p:DeployMod=false` passed for `0.13.0` with 0 warnings/errors. See the [implementation record](control-panel-implementation.md). |
+| Debug build | `dotnet build SephiriaOne.slnx --configuration Debug --nologo -p:DeployMod=false` passed for `0.13.0` with 0 warnings/errors. |
 | Automatic deployment | The build invokes `scripts/Deploy-Mod.ps1` after the MSBuild `Build` target. |
 | Visual Studio command | Added the `Deploy Mod` launch profile. Its command was verified with evaluated Release properties and matching deployed hashes; Debug path resolution was also checked. The IDE dropdown has not been tested interactively. |
 | Missing addon folder | Deployment created `AddOns\SephiriaOne` during verification. |
 | Existing addon folder | Running deployment again succeeded. |
-| Deployed content | `0.12.2` was not deployed. The user-installed files identify `0.11.0`; their hashes remain unchanged. Release output is `0.12.2.0`, with Harmony and its license embedded; no game DLLs are distributed. |
+| Deployed content | `0.13.0` was not deployed. The user-installed files identify `0.11.0`. Output embeds Harmony and its license; no game DLLs are distributed. |
 | In-game loading | The user confirmed `0.1.0` loaded. `Player.log` also contains `[SephiriaOne] Loaded v0.1.0`, the AddOnLoader success entry, and `[SephiriaOne] All databases ready`. |
 | Name gradient | Per-letter midpoint colors from `#408af1` to `#a8d7fa` are published through the native owned character-name command in multiplayer. Native peers control rendering and refresh; lobby platform names and solo labels get no addon styling. See [current compatibility](presentation-compatibility.md). |
 | Multiplayer verification | 21 portable synchronization, 11 bounded-retry and 30 gradient checks pass; installed native server setter, command transport, name getter and serialization paths pass inspection. A live second-client visual check is still pending. |
@@ -72,9 +74,11 @@ normal upgrades when reset. This version was built and tested without deployment
 | Character stats | `/stats luck +10`, `/stats luck -5`, `/stats luck set 100`, `/stats luck reset`, and `/stats reset` use native synchronized stats. `/stats list` shows supported names and display units. See [commands and findings](stat-command.md). |
 | Stat verification | 117 command checks and 219 relative consistency checks cover parsing, units, exact amplified targets, batch rejection, native baselines, resets, and agreement between manual, inherited, maintained, and saved settings. Live host/guest UI and gameplay checks remain pending. |
 | Joining players | Successful settings apply once after native avatar/inventory initialization, including reconnects with a new avatar. Host-only commands and native synchronization support unmodified guests. |
-| Inheritance, restart, and preset verification | 639 portable checks and 221 runtime command/session checks pass (860 total). Includes 30 policy checks, 47 preset checks, coordinator/batch checks, reused avatar IDs, partial failures and recovery. Nine native lifecycle paths, native name transport, both candidate guards and embedded dependencies pass inspection. The removed checks tested removed local presentation code. Fixtures do not establish live Unity/network behavior. |
+| Automated verification | 665 portable checks and 316 runtime command/session checks pass (981 total). Covers existing gameplay/policy behavior plus shared controls, snapshots, drafts and exceptional UI cleanup. Nine native lifecycle paths, native UI stack/cancel, name transport, both candidate guards and embedded dependencies pass inspection. Fixtures do not establish live Unity/network behavior. |
 | Lifecycle audit | Native preset/costume/passive/hard-mode changes, buffs, floors, restart, joins, rejection, unload and persistence were traced. Fountain cap gaps fixed; native open-panel/cached-anvil limitations remain. See [findings and live checklist](sync-lifecycle-audit.md). |
 | Status and persistence | `/mod status` shows intent, current values, scope/rule revisions, waiting/rejected/suspended/faulted outcomes, journals and native name synchronization status. `/mod save` stores all three families and rejects unresolved partial writes; `/mod forget` removes only that saved copy. Automatic loading occurs once per new hosted session. |
+| Host settings panel | Pause-menu button or `/mod ui`; explicit actions, current player values, separate active/saved summaries and status. Shared command services preserve native effects for unmodified guests. No new hotkeys, gamepad navigation or live-rendering claim. |
+| Shared settings controls | Both chat and UI use `SettingsActions`; immutable snapshots never process pending joins or mutate gameplay. Cached saved-file reads have explicit refresh and save/forget/lifecycle invalidation. See [panel architecture and tests](control-panel-implementation.md). |
 
 ## History
 
@@ -198,6 +202,14 @@ Stages 1–14 occurred on 2026-09-23; candidate expansion continued on 2026-09-2
     services, missing typed read models and dynamic-panel lifecycle requirements.
     Recorded native integration evidence, UI options, semantic constraints and
     verification checkpoints. No runtime changes, build or deployment occurred.
+29. Implemented the recommended host panel in `0.13.0`, using fresh native
+    uGUI/TMP controls and a pause-menu button plus `/mod ui`. Extracted reusable
+    action dispatch and immutable read-only snapshots for chat and UI; added
+    separate active/saved summaries, cached preset inspection, fault-recovery
+    controls and stale-draft protection. Review led to membership-based cleanup
+    after native callback failures and a clear unavailable-choice message. See the
+    [implementation record](control-panel-implementation.md) for verification.
+    No deployment or live Unity/multiplayer test was performed.
 
 The repository already contained commits `c793844` (Git configuration files) and
 `736b305` (initial project files). The scaffold adjustments and deployment work
@@ -214,7 +226,7 @@ commits are recorded in Git history. The configured remote is
 | Build SDK | .NET `10.0.401` |
 | Mod target framework | `netstandard2.1` |
 | Mod assembly / namespace | `SephiriaOne` |
-| Mod version / author | `0.12.2` / `preco21` |
+| Mod version / author | `0.13.0` / `preco21` |
 | Game version reported by the confirmed load log | `1.0.33` |
 | Game directory | `C:\Program Files (x86)\Steam\steamapps\common\Sephiria` |
 | Game managed assemblies | `<GameDir>\Sephiria_Data\Managed` |
@@ -240,6 +252,7 @@ SephiriaOne/
     metadata.json
     Chat/
       ModChatCommands.cs
+    Controls/
     Features/
       Choices/
       Fountain/
@@ -261,6 +274,7 @@ SephiriaOne/
         SessionPresetCommands.cs
     Properties/
       launchSettings.json
+    UI/
     bin/Release/netstandard2.1/
   scripts/
     Deploy-Mod.ps1
@@ -596,13 +610,13 @@ requirement for a native HorayMod addon.
 
 ## Next verification steps
 
-1. Manually install the `0.12.2` Release DLL and adjacent metadata when ready;
+1. Manually install the `0.13.0` Release DLL and adjacent metadata when ready;
    this task did not deploy them. Fully restart Sephiria and enter the town/lobby
    or a run; the title screen alone is insufficient for addon loading.
 2. Inspect `Player.log` for these expected entries:
 
    ```text
-   [SephiriaOne] Loaded v0.12.2
+   [SephiriaOne] Loaded v0.13.0
    [SephiriaOne] All databases ready
    [SephiriaOne] Chat commands bound: /fountain, /choices, /stats, /mod
    [SephiriaOne] Candidate commands ready: /choices (extra choices 0..20)
@@ -644,3 +658,6 @@ requirement for a native HorayMod addon.
     Confirm lobby platform names keep their native appearance and character-name
     consumers use their native refresh timing. Use the [shared synchronization guide](synchronization-guide.md)
     for fault recovery and future features.
+15. Follow the [host-panel checks](control-panel.md#live-verification-still-required)
+    for both entry points, native focus/cancel, scrolling/scaling, parity with
+    chat, stale drafts, session transitions, presets and unmodified guests.

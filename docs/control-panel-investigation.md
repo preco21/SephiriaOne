@@ -1,8 +1,10 @@
 # Settings control-panel investigation
 
 Investigated 2026-09-24 against addon `0.12.2` and installed Sephiria `1.0.33`.
-This is a feasibility report and recommendation, not an implemented panel.
-No runtime source, preset format, game files or deployment changed.
+This is the original feasibility report. The recommended approach was subsequently
+implemented in `0.13.0`; see the [panel guide](control-panel.md) and
+[implementation record](control-panel-implementation.md). The findings below
+describe the investigation stage, which made no runtime changes or deployment.
 
 ## Recommendation
 

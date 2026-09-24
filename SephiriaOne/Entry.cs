@@ -7,6 +7,7 @@ namespace SephiriaOne
         private MultiplayerNameController nameColor;
         private ModChatCommands chatCommands;
         private SessionSettingsController sessionSettings;
+        private SettingsPanelController settingsPanel;
 
         protected override void OnModLoaded()
         {
@@ -18,6 +19,7 @@ namespace SephiriaOne
                 var controller = new GameObject("SephiriaOne.Controllers");
                 Object.DontDestroyOnLoad(controller);
                 sessionSettings = controller.AddComponent<SessionSettingsController>();
+                settingsPanel = controller.AddComponent<SettingsPanelController>();
                 nameColor = controller.AddComponent<MultiplayerNameController>();
                 chatCommands = controller.AddComponent<ModChatCommands>();
             }
@@ -34,6 +36,11 @@ namespace SephiriaOne
         {
             // Keep controllers/guards available if verified cleanup needs recovery.
             ChoiceFeature.Shutdown();
+            if (settingsPanel)
+            {
+                settingsPanel.enabled = false;
+                settingsPanel = null;
+            }
             HorayModAPI.OnAllDatabasesReady -= OnDatabasesReady;
             if (sessionSettings)
             {

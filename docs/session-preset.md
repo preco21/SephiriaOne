@@ -3,6 +3,11 @@
 Added in `0.10.0`. Only the host needs the addon; preset commands and their
 feedback remain local. Guests receive gameplay changes through native sync.
 
+Since `0.13.0`, the [host settings panel](control-panel.md) provides the same
+save/forget/status operations through `/mod ui` or the pause-menu button.
+Its Presets tab separates active intent from the saved copy; saving excludes
+unapplied input. It introduces no new persistence format or automatic-save rule.
+
 Native in-game loadout presets are separate from this addon file. Applying one
 does not replace the retained addon policy; its equipment/passive effects update
 native baselines. See the [lifecycle audit](sync-lifecycle-audit.md) for these
@@ -49,6 +54,7 @@ Add host-only local chat commands for all three gameplay families:
   Fountain, choice, and character-stat settings.
 - `/mod forget`: remove the saved preset without changing the current session.
 - `/mod` or `/mod help`: show usage.
+- `/mod ui`: open the host settings panel while in town or a run.
 
 Preserve command intent rather than capturing equipment: a retained set remains
 absolute, a net add/subtract remains relative to each player's native baseline,

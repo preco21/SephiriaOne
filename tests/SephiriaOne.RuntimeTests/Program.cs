@@ -736,5 +736,7 @@ foreach (bool useCommand in new[] { false, true })
         "Cleanup retry/reset uses original journal and never subtracts the addon twice");
 }
 
+SettingsControlsTests.Run(Check, Start, Add);
+
 if (Directory.Exists(testDataRoot)) Directory.Delete(testDataRoot, true);
 Console.WriteLine($"Passed {checks} runtime command/session integration checks using game API fixtures.");

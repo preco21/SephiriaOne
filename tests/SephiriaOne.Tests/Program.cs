@@ -39,6 +39,8 @@ Equal(null, state.Next("", "Bob", true), "Uninitialized network name waits for g
 Equal(null, state.Next("Bob", "", true), "Missing profile name does not rename the player");
 
 Console.WriteLine($"Passed {checks} multiplayer name synchronization checks.");
+Console.WriteLine($"Passed {PanelDraftTests.Run()} panel draft isolation checks.");
+Console.WriteLine($"Passed {PanelControlLifetimeTests.Run()} panel control lifetime checks.");
 Console.WriteLine($"Passed {ReconciliationTests.Run()} shared reconciliation checks.");
 Console.WriteLine($"Passed {StateWriteBatchTests.Run()} shared write-batch checks.");
 Console.WriteLine($"Passed {NetworkNameRetryTests.Run()} name retry checks.");
