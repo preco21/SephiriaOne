@@ -9,6 +9,11 @@ can change independently of that installed game version.
 
 ## Current status
 
+Investigated a [host settings control panel](control-panel-investigation.md).
+Recommended a native uGUI/TMP panel over shared command services and a read-only
+settings snapshot. This is research only; no panel is implemented and runtime
+version remains `0.12.2`.
+
 Version `0.12.2` narrows the addon to effects that can reach unmodified guests
 when the host installs it. Removed local name/UI adapters, platform-name styling,
 and automatic stat-panel refresh. Fountain, stats, choices, and the native
@@ -188,6 +193,11 @@ Stages 1–14 occurred on 2026-09-23; candidate expansion continued on 2026-09-2
     Added installed native name-transport checks; 860 retained checks and both
     builds pass. Independent code review found no actionable issues. No deployment
     or live multiplayer test was performed.
+28. Investigated a settings control panel against installed `UIBase`, `UIRoot`,
+    UI/input management and options/pause lifecycles. Identified reusable command
+    services, missing typed read models and dynamic-panel lifecycle requirements.
+    Recorded native integration evidence, UI options, semantic constraints and
+    verification checkpoints. No runtime changes, build or deployment occurred.
 
 The repository already contained commits `c793844` (Git configuration files) and
 `736b305` (initial project files). The scaffold adjustments and deployment work
