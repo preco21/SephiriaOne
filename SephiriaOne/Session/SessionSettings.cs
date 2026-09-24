@@ -246,7 +246,7 @@ namespace SephiriaOne
 
         private static ReconcileResult Inherit(HostPlayer subject)
         {
-            if (!policy.HasChanges) return ReconcileResult.Applied("No retained settings.");
+            if (!policy.HasChanges && !policy.Resources.HasIntent) return ReconcileResult.Applied("No retained settings.");
             PlayerAvatar player = subject.Player;
             SessionPlayerSnapshot snapshot = Capture(player);
             if (!policy.TryPlan(snapshot, out SessionPlan plan, out string error))
@@ -260,7 +260,9 @@ namespace SephiriaOne
             foreach (SessionStatWrite write in plan.Stats)
                 NativeStateWrites.Stat(batch, player, write.Key, write.Marker, write.Raw, write.Contribution);
             if (!ResourceRuntime.TryAppend(player, batch, out Action rememberResources, out error))
-                return ReconcileResult.Rejected(error);
+                return ResourceRuntime.HasRestored(player) ?
+                    ReconcileResult.Waiting(error + " Restored inventory/talent data retained; inheritance will retry when safe.") :
+                    ReconcileResult.Rejected(error);
             if (!batch.TryCommit(out error))
             {
                 if (batch.MayHaveWritten)

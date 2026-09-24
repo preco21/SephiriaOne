@@ -8,6 +8,8 @@
   <ItemGroup>
     <Compile Include="../../SephiriaOne/Features/Resources/Resource*.cs" Exclude="../../SephiriaOne/Features/Resources/ResourceFeature.cs" Link="Source/Features/Resources/%(Filename)%(Extension)" />
     <Compile Include="../../SephiriaOne/Features/Resources/Budgets/ResourceBudgets.cs" Link="Source/Features/Resources/Budgets/ResourceBudgets.cs" />
+    <Compile Include="../../SephiriaOne/Features/Resources/Budgets/TalentResourceCheckpoint.cs" Link="Source/Features/Resources/Budgets/TalentResourceCheckpoint.cs" />
+    <Compile Include="../../SephiriaOne/Features/Resources/Inventory/InventoryResourceHooks.cs" Link="Source/Features/Resources/Inventory/InventoryResourceHooks.cs" />
     <Compile Include="../../SephiriaOne/Features/Resources/Inventory/InventoryResources.cs" Link="Source/Features/Resources/Inventory/InventoryResources.cs" />
     <Compile Include="../../SephiriaOne/Controls/*.cs" Link="Source/Controls/%(Filename)%(Extension)" />
     <Compile Include="../../SephiriaOne/Session/SessionSettingsSnapshot.cs" Link="Source/Session/SessionSettingsSnapshot.cs" />

@@ -118,3 +118,24 @@ talents, and guest menus open while decreasing budgets. Check current balances
 against future starting previews, and verify new-game/fresh late-join allowances
 once each. Initial lobby generation may still precede the new avatar's dice
 allowance; already-created offers are not regenerated. No deployment was run.
+
+## Repeated re-entry follow-up (0.15.1)
+
+The [full-quit/reconnect review](session-reentry-review.md) reproduced and fixed
+stale inventory/talent checkpoint acknowledgment, missing offline reset intent,
+and saved native gains being reclassified as addon ownership. Other families
+already used fresh avatar lifetimes and were left unchanged. Unsafe decreases
+retain saved items/allocations and keep combined inheritance pending until safe.
+
+Verification on 2026-09-24: 938 portable checks, 489 runtime checks (including
+actual checkpoint/runtime composition), 57 starting-hook checks and 62 native
+budget/inventory hook checks passed: **1,546 total**. Debug and Release builds
+passed with zero warnings/errors and `DeployMod=false`. Installed-game IL
+compatibility checks passed, including existing name/panel/Fountain/choice paths,
+resource boundaries and the embedded runtime. Independent review found the
+native-gain ownership issue; its regression failed before the fix and passed
+afterward. Final rereview found no additional actionable defect.
+
+Live Unity/Mirror quit/reconnect remains a manual check. Native authentication can
+assign a new GUID to an overlapping town reconnect, and native town menu drafts
+are not all disconnect-persistent; see the review's limits. No deployment ran.

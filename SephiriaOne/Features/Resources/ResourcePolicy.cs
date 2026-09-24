@@ -28,8 +28,19 @@ namespace SephiriaOne
     internal sealed class ResourcePolicy
     {
         private readonly Dictionary<ResourceKind, ResourceSetting> settings = new Dictionary<ResourceKind, ResourceSetting>();
+        // Successful commands, including resets, have a distinct identity. A
+        // reconnect checkpoint proves what was applied, not what is desired now.
+        private readonly Dictionary<ResourceKind, string> intents = new Dictionary<ResourceKind, string>();
         public bool HasChanges => settings.Count != 0;
+        public bool HasIntent => intents.Count != 0;
         public bool TryGet(ResourceKind kind, out ResourceSetting setting) => settings.TryGetValue(kind, out setting);
+        public string Intent(ResourceKind kind) => intents.TryGetValue(kind, out string? stamp) ? stamp : "";
+        public bool TryGetIntent(ResourceKind kind, out ResourceSetting setting)
+        {
+            if (TryGet(kind, out setting)) return true;
+            setting = new ResourceSetting(ResourceMode.Offset, 0);
+            return intents.ContainsKey(kind);
+        }
         public ResourceSetting Next(ResourceCommand command)
         {
             if (command.IsReset) return new ResourceSetting(ResourceMode.Offset, 0);
@@ -41,12 +52,20 @@ namespace SephiriaOne
         }
         public void Record(ResourceCommand command)
         {
-            if (command.Definition == null) { if (command.IsReset) Clear(); else throw new ArgumentException("Resource required."); return; }
+            if (command.Definition == null)
+            {
+                if (!command.IsReset) throw new ArgumentException("Resource required.");
+                foreach (var definition in ResourceCatalog.All) Set(definition.Kind, new ResourceSetting(ResourceMode.Offset, 0));
+                return;
+            }
             Set(command.Definition.Kind, Next(command));
         }
         public void Set(ResourceKind kind, ResourceSetting setting)
-        { if (setting.Empty) settings.Remove(kind); else settings[kind] = setting; }
-        public void Clear() => settings.Clear();
+        {
+            if (setting.Empty) settings.Remove(kind); else settings[kind] = setting;
+            intents[kind] = Guid.NewGuid().ToString("N");
+        }
+        public void Clear() { settings.Clear(); intents.Clear(); }
         public IEnumerable<string> Describe()
         {
             foreach (var definition in ResourceCatalog.All)

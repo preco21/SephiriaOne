@@ -156,7 +156,8 @@ namespace SephiriaOne
         public static Action<PlayerAvatar, ResourceKind, int> Apply;
         public static int Calls;
         public static int Restored;
-        public static void AcceptRestored(PlayerAvatar player, ResourceKind kind) { Restored++; }
+        public static string CheckpointIntent(PlayerAvatar player, ResourceKind kind) => "";
+        public static void AcceptRestored(PlayerAvatar player, ResourceKind kind, string intent = "") { Restored++; }
         public static void ApplyEarly(PlayerAvatar player, ResourceKind kind, int requiredMinimum = 0) { Calls++; Apply?.Invoke(player, kind, requiredMinimum); }
         public static bool TryGetSetting(ResourceKind kind, out ResourceSetting setting) { setting = default; return Managed.Contains(kind); }
         public static void Report(string text) => Messages.Add(text);

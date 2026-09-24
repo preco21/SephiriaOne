@@ -128,4 +128,93 @@ Depart(reconnect);
 Check(reconnect.currentMoney == 5 && StartingResourceHooks.Available,
     "native save-version migration preserves frozen starting allocation and identity");
 
+// Repeated full guest exits replace the avatar and connection, while native GUID
+// resolution selects the same save slot. Keep the host session and hook cache
+// alive throughout; policy changes while absent must only affect future grants.
+Reset();
+SaveManager.CurrentRun.Data.Remove("SaveVersion");
+ResourceRuntime.Policy[ResourceKind.Leaves] = new(ResourceMode.Set, 500);
+ResourceRuntime.Policy[ResourceKind.Dice] = new(ResourceMode.Offset, 2);
+var host = NewPlayer();
+Seed(host, 200);
+Dice(host, 3);
+host.currentMoney = 70;
+host.rerollDice = 3;
+var guest = NewPlayer();
+guest.spawner.currentPlayerIdxForSave = 4;
+guest.spawner.playerGuid = "repeat-guest";
+guest.Bonus = 100;
+Seed(guest, 200);
+Dice(guest, 3);
+guest.currentMoney = 73;
+guest.rerollDice = 2;
+int[] expectedMoney = { 73, 0, 17 };
+int[] expectedDice = { 2, 0, 1 };
+for (int cycle = 0; cycle < 3; cycle++)
+{
+    var departedAvatar = guest;
+    Disconnect(departedAvatar);
+    PlayerSpawner.MultiplayerList.Remove(departedAvatar.spawner);
+    var observedStates = (System.Collections.IDictionary)typeof(StartingResourceHooks)
+        .GetField("states", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
+    Check(!observedStates.Contains(departedAvatar), $"reconnect cycle {cycle}: old avatar cache removed");
+    Check(SaveManager.CurrentRun.GetInt("Player4Money") == expectedMoney[cycle] &&
+        SaveManager.CurrentRun.GetInt("Player4RerollDice") == expectedDice[cycle],
+        $"reconnect cycle {cycle}: disconnect checkpoints current spent balances");
+
+    if (cycle == 0)
+    {
+        ResourceRuntime.Policy[ResourceKind.Leaves] = new(ResourceMode.Set, 900);
+        ResourceRuntime.Policy[ResourceKind.Dice] = new(ResourceMode.Set, 20);
+    }
+    else if (cycle == 1)
+    {
+        ResourceRuntime.Policy.Remove(ResourceKind.Leaves);
+        ResourceRuntime.Policy.Remove(ResourceKind.Dice);
+    }
+    else
+    {
+        ResourceRuntime.Policy[ResourceKind.Leaves] = new(ResourceMode.Offset, 100);
+        ResourceRuntime.Policy[ResourceKind.Dice] = new(ResourceMode.Multiplier, 3);
+    }
+
+    guest = NewPlayer();
+    guest.spawner.currentPlayerIdxForSave = 4;
+    guest.spawner.playerGuid = "repeat-guest";
+    guest.Bonus = 100;
+    string nativePrefix = SaveManager.CurrentRun.GetInt("SaveVersion") == 0 ? "Player" : "Player4";
+    Seed(guest, SaveManager.CurrentRun.GetInt(nativePrefix + "Money", 200));
+    Dice(guest, SaveManager.CurrentRun.GetInt(nativePrefix + "RerollDice", 3));
+    Check(!ReferenceEquals(guest, departedAvatar) && guest.currentMoney == expectedMoney[cycle] &&
+        guest.rerollDice == expectedDice[cycle],
+        $"reconnect cycle {cycle}: fresh avatar restores balances despite changed or reset future policy");
+    Check(guest.maxRerollDice == 5 && StartingResourceHooks.NativeDice(guest) == 3,
+        $"reconnect cycle {cycle}: original dice ownership restores exactly once");
+
+    Depart(guest);
+    int expectedAfterDeparture = expectedMoney[cycle] + (cycle == 0 ? 300 : 0);
+    Check(guest.currentMoney == expectedAfterDeparture,
+        $"reconnect cycle {cycle}: original frozen allowance departs once without refill");
+    Seed(guest, 200);
+    Dice(guest, 3);
+    Depart(guest);
+    Check(guest.currentMoney == expectedAfterDeparture && guest.rerollDice == expectedDice[cycle],
+        $"reconnect cycle {cycle}: duplicate grant boundaries do not refill restored balances");
+    Check(host.currentMoney == 70 && host.rerollDice == 3 && StartingResourceHooks.Available,
+        $"reconnect cycle {cycle}: host state stays independent and hooks remain available");
+
+    if (cycle == 0)
+    {
+        SaveManager.CurrentRun.SetInt("SaveVersion", 2);
+        DungeonManager.Instance.dungeonEnvironment["IsInDungeon"] = 1;
+        guest.currentMoney = 0;
+        guest.rerollDice = 0;
+    }
+    else if (cycle == 1)
+    {
+        guest.currentMoney = 17;
+        guest.rerollDice = 1;
+    }
+}
+
 Console.WriteLine($"Passed {checks} real starting-hook lifecycle fixture checks.");

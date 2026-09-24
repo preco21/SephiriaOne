@@ -12,14 +12,16 @@ namespace SephiriaOne
     {
         private readonly struct Applied
         {
-            public readonly ResourceSetting Setting;
+            public readonly string Intent;
             public readonly int Owned;
-            public Applied(ResourceSetting setting, int owned) { Setting = setting; Owned = owned; }
+            public Applied(string intent, int owned) { Intent = intent; Owned = owned; }
         }
         private static readonly Dictionary<PlayerAvatar, Dictionary<ResourceKind, Applied>> applied =
             new Dictionary<PlayerAvatar, Dictionary<ResourceKind, Applied>>(ReferenceComparer<PlayerAvatar>.Instance);
-        public static void Clear() => applied.Clear();
-        public static void Forget(PlayerAvatar player) => applied.Remove(player);
+        private static readonly Dictionary<PlayerAvatar, Dictionary<ResourceKind, Applied>> restored =
+            new Dictionary<PlayerAvatar, Dictionary<ResourceKind, Applied>>(ReferenceComparer<PlayerAvatar>.Instance);
+        public static void Clear() { applied.Clear(); restored.Clear(); }
+        public static void Forget(PlayerAvatar player) { applied.Remove(player); restored.Remove(player); }
         public static bool TryGetSetting(ResourceKind kind, out ResourceSetting setting)
         {
             setting = default;
@@ -27,20 +29,32 @@ namespace SephiriaOne
         }
         public static void Report(string message) => Debug.LogWarning("[SephiriaOne] " + message);
 
-        public static void AcceptRestored(PlayerAvatar player, ResourceKind kind)
+        public static void AcceptRestored(PlayerAvatar player, ResourceKind kind, string intent = "")
         {
-            if (TryGetSetting(kind, out ResourceSetting setting)) Accept(player, kind, setting);
+            if (!restored.TryGetValue(player, out var values)) restored[player] = values = new Dictionary<ResourceKind, Applied>();
+            player.customStats.TryGetValue(ResourceCatalog.Get(kind).Marker, out int owned);
+            values[kind] = new Applied(intent, owned);
+            if (applied.TryGetValue(player, out var previous)) previous.Remove(kind);
         }
-        private static void Accept(PlayerAvatar player, ResourceKind kind, ResourceSetting setting)
+        public static bool HasRestored(PlayerAvatar player) => restored.TryGetValue(player, out var values) && values.Count != 0;
+        public static string CheckpointIntent(PlayerAvatar player, ResourceKind kind)
+        {
+            player.customStats.TryGetValue(ResourceCatalog.Get(kind).Marker, out int owned);
+            if ((applied.TryGetValue(player, out var values) && values.TryGetValue(kind, out Applied previous)) ||
+                (restored.TryGetValue(player, out values) && values.TryGetValue(kind, out previous)))
+                return previous.Owned == owned ? previous.Intent : "";
+            return "";
+        }
+        private static void Accept(PlayerAvatar player, ResourceKind kind)
         {
             if (!applied.TryGetValue(player, out var values)) applied[player] = values = new Dictionary<ResourceKind, Applied>();
             player.customStats.TryGetValue(ResourceCatalog.Get(kind).Marker, out int owned);
-            values[kind] = new Applied(setting, owned);
+            values[kind] = new Applied(SessionSettings.ResourcePolicy.Intent(kind), owned);
+            if (restored.TryGetValue(player, out var pending)) pending.Remove(kind);
         }
-        private static bool KeepAbsolute(PlayerAvatar player, ResourceKind kind, ResourceSetting setting, int owned) =>
-            setting.Mode == ResourceMode.Set && applied.TryGetValue(player, out var values) &&
-            values.TryGetValue(kind, out Applied previous) && previous.Owned == owned &&
-            previous.Setting.Mode == setting.Mode && previous.Setting.Amount == setting.Amount;
+        private static bool KeepAbsolute(PlayerAvatar player, ResourceKind kind, ResourceSetting setting) =>
+            setting.Mode == ResourceMode.Set && SessionSettings.ResourcePolicy.Intent(kind) != "" &&
+            CheckpointIntent(player, kind) == SessionSettings.ResourcePolicy.Intent(kind);
 
         public static bool TryExecute(ResourceCommand command, out string message)
         {
@@ -69,8 +83,7 @@ namespace SephiriaOne
                     foreach (var definition in ResourceCatalog.All)
                     {
                         if (command.Definition != null && command.Definition != definition) continue;
-                        if (SessionSettings.ResourcePolicy.TryGet(definition.Kind, out ResourceSetting setting)) Accept(player, definition.Kind, setting);
-                        else if (applied.TryGetValue(player, out var values)) values.Remove(definition.Kind);
+                        Accept(player, definition.Kind);
                     }
             }, out message)) return false;
             message = command.Definition?.StartingOnly == true ?
@@ -82,21 +95,24 @@ namespace SephiriaOne
         // Append to the same journal as stats/choices/Fountain inheritance.
         public static bool TryAppend(PlayerAvatar player, StateWriteBatch batch, out Action remember, out string error, bool enrolledOnly = false)
         {
-            var accepted = new List<(ResourceKind Kind, ResourceSetting Setting)>();
-            remember = () => { foreach (var entry in accepted) Accept(player, entry.Kind, entry.Setting); };
+            var accepted = new List<ResourceKind>();
+            remember = () => { foreach (var kind in accepted) Accept(player, kind); };
             error = "";
             foreach (var definition in ResourceCatalog.All)
             {
-                if (definition.StartingOnly || !SessionSettings.ResourcePolicy.TryGet(definition.Kind, out ResourceSetting setting)) continue;
+                if (definition.StartingOnly || !SessionSettings.ResourcePolicy.TryGetIntent(definition.Kind, out ResourceSetting setting)) continue;
                 // A rejected or partially written inheritance cannot opt a player
                 // into maintenance. Explicit commands enroll only their own kind.
                 if (enrolledOnly && (!applied.TryGetValue(player, out var existing) || !existing.ContainsKey(definition.Kind))) continue;
-                if (!ResourceFeature.IsAvailable(definition.Kind)) { error = definition.Label + " guard unavailable."; return false; }
+                if (!setting.Empty && !ResourceFeature.IsAvailable(definition.Kind)) { error = definition.Label + " guard unavailable."; return false; }
                 ResourceSnapshot snapshot = ResourceNative.Capture(player, definition.Kind);
-                if (KeepAbsolute(player, definition.Kind, setting, snapshot.Owned)) continue;
+                // A reset is complete once ownership is absent. It must not
+                // impose addon validation on unrelated native selections.
+                if ((setting.Empty && snapshot.Owned == 0) || KeepAbsolute(player, definition.Kind, setting))
+                { accepted.Add(definition.Kind); continue; }
                 if (!ResourcePlanner.TryPlan(setting, snapshot, false, out ResourceUpdate update, out error)) return false;
                 ResourceNative.AddWrites(batch, player, update);
-                accepted.Add((definition.Kind, setting));
+                accepted.Add(definition.Kind);
             }
             return true;
         }
@@ -106,9 +122,9 @@ namespace SephiriaOne
             var key = new StringBuilder();
             foreach (var definition in ResourceCatalog.All)
             {
-                if (definition.StartingOnly || !SessionSettings.ResourcePolicy.TryGet(definition.Kind, out ResourceSetting setting)) continue;
+                if (definition.StartingOnly || !SessionSettings.ResourcePolicy.TryGetIntent(definition.Kind, out _)) continue;
                 var value = ResourceNative.Capture(player, definition.Kind);
-                key.Append(definition.Name).Append(setting.Describe()).Append(':').Append(ResourceFeature.IsAvailable(definition.Kind))
+                key.Append(definition.Name).Append(SessionSettings.ResourcePolicy.Intent(definition.Kind)).Append(':').Append(ResourceFeature.IsAvailable(definition.Kind))
                     .Append(':').Append(value.Raw).Append(':').Append(value.Owned).Append(':').Append(value.Bonus)
                     .Append(':').Append(value.Amplifier).Append(':').Append(value.DisplayOffset)
                     .Append(':').Append(value.MinimumSafe).Append(':').Append(value.Busy).Append(';');
@@ -134,11 +150,12 @@ namespace SephiriaOne
         // ordinary Synchronize here: doing so would enroll a partially loaded avatar.
         public static void ApplyEarly(PlayerAvatar player, ResourceKind kind, int requiredMinimum = 0)
         {
-            if (!TryGetSetting(kind, out ResourceSetting setting)) return;
+            if (!SessionSettings.EnsureResourceScope() || !SessionSettings.ResourcePolicy.TryGetIntent(kind, out ResourceSetting setting)) return;
+            if (setting.Empty && (!player.customStats.TryGetValue(ResourceCatalog.Get(kind).Marker, out int owned) || owned == 0)) return;
             if (!ResourceFeature.IsAvailable(kind) || !EarlyReady(player) || SessionSettings.ResourceWritesBlocked)
                 throw new InvalidOperationException("Resource state is not ready for the native " + kind + " consumer.");
             ResourceSnapshot snapshot = ResourceNative.Capture(player, kind);
-            if (KeepAbsolute(player, kind, setting, snapshot.Owned))
+            if (KeepAbsolute(player, kind, setting))
             {
                 if (!ResourcePlanner.TryValue(snapshot, false, out int current) || current < Math.Max(requiredMinimum, snapshot.MinimumSafe))
                     throw new InvalidOperationException("The retained " + kind + " budget cannot preserve incoming native selections.");
@@ -147,7 +164,16 @@ namespace SephiriaOne
             var constrained = new ResourceSnapshot(snapshot.Definition, snapshot.Raw, snapshot.Owned, snapshot.Bonus,
                 snapshot.Amplifier, snapshot.DisplayOffset, Math.Max(requiredMinimum, snapshot.MinimumSafe), snapshot.Busy);
             if (!ResourcePlanner.TryPlan(setting, constrained, false, out ResourceUpdate update, out string error))
+            {
+                // A returning player's checkpoint must first restore all selections.
+                // Defer only safe-decrease conflicts; invalid arithmetic still fails.
+                var unconstrained = new ResourceSnapshot(snapshot.Definition, snapshot.Raw, snapshot.Owned,
+                    snapshot.Bonus, snapshot.Amplifier, snapshot.DisplayOffset);
+                if (restored.TryGetValue(player, out var pending) && pending.ContainsKey(kind) &&
+                    ResourcePlanner.TryValue(snapshot, false, out int current) && current >= constrained.MinimumSafe &&
+                    ResourcePlanner.TryPlan(setting, unconstrained, false, out _, out _)) return;
                 throw new InvalidOperationException(error);
+            }
             DungeonManager scope = DungeonManager.Instance;
             PlayerSpawner spawner = player.spawner;
             var storage = player.localDataStorage;
@@ -172,7 +198,7 @@ namespace SephiriaOne
                 if (batch.MayHaveWritten) SessionSettings.RecordFault("resources", batch, error);
                 throw new InvalidOperationException(error);
             }
-            Accept(player, kind, setting);
+            Accept(player, kind);
         }
         private static bool EarlyReady(PlayerAvatar player) => NetworkServer.active && player && player.isServer && player.netId != 0 &&
             player.spawner && player.spawner.isServer && ReferenceEquals(player.spawner.PlayerAvatar, player) &&

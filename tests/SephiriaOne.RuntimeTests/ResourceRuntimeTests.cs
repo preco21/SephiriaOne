@@ -149,7 +149,7 @@ internal static class ResourceRuntimeTests
             late.PlayerAvatar.customStats.BeforeWrite = null; late.connectionToClient.isReady = true;
             if (replacement == "netId") late.PlayerAvatar.netId = 99;
             else if (replacement == "storage") late.PlayerAvatar.localDataStorage = late.LocalDataStorage = new PlayerLocalDataStorage();
-            else SaveManager.CurrentRun = new object();
+            else SaveManager.CurrentRun = new();
             check(!Command("reset") && Owned(late.PlayerAvatar, ResourceKind.Talents) == 0,
                 "Early recovery cannot replay into changed " + replacement);
         }

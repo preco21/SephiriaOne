@@ -51,13 +51,15 @@ namespace SephiriaOne
                 throw new InvalidOperationException("The addon talent checkpoint is incomplete or unsupported.");
             int saved = run.GetInt(key + "Total", -1);
             int savedOwned = run.GetInt(key + "Owned", 0);
-            if (saved < 0 || (long)saved - savedOwned < 0)
+            if (saved < 0 || (long)saved - savedOwned < 0 || (long)saved - savedOwned > int.MaxValue)
                 throw new InvalidOperationException("The saved talent budget or its native baseline is invalid.");
             ResourceSnapshot before = ResourceBudgets.Capture(player, ResourceKind.Talents);
             int native = checked(before.Raw - before.Owned);
             if (native < 0) throw new InvalidOperationException("The live talent ownership baseline is invalid.");
             int target = Math.Max(saved, checked(native + savedOwned));
-            int owned = checked(target - native);
+            // A saved native award remains native even if initialization has
+            // not replayed it. Reset/multipliers must retain that baseline.
+            int owned = savedOwned;
             string guid = spawner.playerGuid;
             int slot = spawner.currentPlayerIdxForSave;
             uint netId = player.netId;
@@ -71,7 +73,7 @@ namespace SephiriaOne
                 if (batch.MayHaveWritten) SessionSettings.RecordFault("resources", batch, error);
                 throw new InvalidOperationException(error);
             }
-            ResourceRuntime.AcceptRestored(player, ResourceKind.Talents);
+            ResourceRuntime.AcceptRestored(player, ResourceKind.Talents, run.GetString(key + "Intent", ""));
             Remember(player, stamp);
             return true;
         }
@@ -98,6 +100,7 @@ namespace SephiriaOne
                 throw new InvalidOperationException("The talent budget is below its allocated points; no replacement checkpoint was written.");
             run.SetInt(key + "Total", snapshot.Raw);
             run.SetInt(key + "Owned", snapshot.Owned);
+            run.SetString(key + "Intent", ResourceRuntime.CheckpointIntent(player, ResourceKind.Talents));
             run.SetInt(key + "Version", 1);
         }
 

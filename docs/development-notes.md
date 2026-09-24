@@ -9,6 +9,12 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.15.1` audits [repeated full-quit/reconnect](session-reentry-review.md).
+Inventory/talent checkpoints distinguish their applied command from current host
+intent, honor offline resets safely, and preserve saved native gains as part of
+the character baseline. Other sync paths already covered new avatar lifetimes
+and remain unchanged. Pending unsafe decreases are visible in status.
+
 Version `0.15.0` adds [five resource controls](resource-command.md), shared command,
 panel, preset and synchronization support, native grant/load guards, and saved-run
 capacity/budget checkpoints. `/one` replaces the generic `/mod` command namespace;

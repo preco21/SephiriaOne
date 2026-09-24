@@ -133,6 +133,13 @@ resource-only maintenance. Starting grants and pre-item/pre-talent restoration
 use separate native boundary adapters, since normal ready-player reconciliation
 is too late. See [implementation/review](resource-settings-implementation.md).
 
+Since 0.15.1, durable resource checkpoints carry the identity of their applied
+command. Restored proof is distinct from ready-player enrollment and current
+desired intent, including reset intent retained for absent players. Never mark
+an old checkpoint as current merely because it loaded successfully. Preserve its
+native baseline and saved addon contribution separately. See the
+[re-entry review and composed regression tests](session-reentry-review.md).
+
 Shared command journals now capture native run-save identity and run generation.
 Early resource journals also capture network IDs, spawner/storage/inventory and
 stat dictionary lifetimes. Destructive native writers revalidate occupancy and

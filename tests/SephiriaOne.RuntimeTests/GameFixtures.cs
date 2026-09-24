@@ -40,6 +40,17 @@ public sealed class PlayerSpawner : UnityEngine.Object
     public string playerGuid = "fixture-player";
     public int currentPlayerIdxForSave;
     public int LastFountainAllowance;
+    public int RestoredSlots;
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private bool Initialize(int weaponId, string costumeName, string skinID, int loadingScreen)
+    {
+        RestoredSlots = 0;
+        for (int i = 0; i < PlayerAvatar.Inventory.CurrentInventoryStorage; i++) RestoredSlots++;
+        return true;
+    }
+    public void RestoreInventory() => Initialize(0, "", "", 0);
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    public void SaveCurrentSessionData() { }
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
     public void AddDimensionPocketItemsOnServer(int[] items) => LastFountainAllowance =
         Math.Min(PlayerAvatar.Inventory.dimensionPocket, DungeonManager.Instance.constValueDictionary["DIMENSIONPOCKETLIMIT"]);
@@ -131,7 +142,16 @@ public static class KeywordDatabase
     public static int FruitDefault = 6;
     public static int GetConstValue(string key) => key == "fruitSkewerDefaultCount" ? FruitDefault : 0;
 }
-public static class SaveManager { public static object CurrentRun = new(); }
+public sealed class SaveData
+{
+    public readonly Dictionary<string, object> Values = new();
+    public bool ContainsKey(string key) => Values.ContainsKey(key);
+    public int GetInt(string key, int fallback) => Values.TryGetValue(key, out var value) ? (int)value : fallback;
+    public string GetString(string key, string fallback) => Values.TryGetValue(key, out var value) ? (string)value : fallback;
+    public void SetInt(string key, int value) => Values[key] = value;
+    public void SetString(string key, string value) => Values[key] = value;
+}
+public static class SaveManager { public static SaveData CurrentRun = new(); }
 
 public sealed class DungeonManager : UnityEngine.Object
 {

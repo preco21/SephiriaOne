@@ -25,6 +25,7 @@ PlayerSpawner Add(uint id, int luck = 5, int points = 4, int itemChoices = 0)
 PlayerSpawner Start()
 {
     SessionSettings.Stop();
+    SaveManager.CurrentRun = new();
     PlayerSpawner.MultiplayerList.Clear();
     UnityEngine.Debug.Warnings.Clear();
     DungeonManager.Instance = new DungeonManager();
@@ -743,6 +744,7 @@ foreach (bool useCommand in new[] { false, true })
 SettingsControlsTests.Run(Check, Start, Add);
 MultiplierRuntimeTests.Run(Check, Start, Add);
 ResourceRuntimeTests.Run(Check, Start, Add);
+ReentryRuntimeTests.Run(Check, Start, Add);
 Check(SettingsActions.IsCommand("/resources slots +6"), "Resource command family is recognized by shared controls");
 
 if (Directory.Exists(testDataRoot)) Directory.Delete(testDataRoot, true);

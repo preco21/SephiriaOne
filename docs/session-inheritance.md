@@ -1,5 +1,8 @@
 # Settings for players joining later
 
+For repeated full-quit/reconnect, offline policy edits/resets, and resource
+checkpoint handling, see the [0.15.1 re-entry review](session-reentry-review.md).
+
 ## Behavior
 
 Version 0.9.0 remembers successful host `/fountain`, `/choices`, and `/stats`

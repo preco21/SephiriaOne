@@ -1,5 +1,9 @@
 # Synchronization and lifecycle audit
 
+Follow-up: the [0.15.1 repeated re-entry review](session-reentry-review.md) covers
+full guest quit/reconnect cycles, offline host edits/resets, and resource
+checkpoint freshness and ownership. The record below describes the earlier audit.
+
 Audited on 2026-09-24 against installed Sephiria 1.0.33; fixes released as
 `0.11.1`. Covers stats, Fountain points/carryover, candidates, names, addon
 presets, and native loadouts. Game fingerprint: [development notes](development-notes.md).

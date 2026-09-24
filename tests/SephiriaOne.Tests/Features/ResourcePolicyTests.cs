@@ -19,6 +19,9 @@ internal static class ResourcePolicyTests
             Check(policy.TryGet(definition.Kind, out var setting) && setting.Mode == ResourceMode.Offset && setting.Amount == 8,
                 "Relative resource additions accumulate: " + definition.Name);
             policy.Record(Parse(definition.Name + " set 20"));
+            string firstIntent = policy.Intent(definition.Kind);
+            policy.Record(Parse(definition.Name + " set 20"));
+            Check(firstIntent != policy.Intent(definition.Kind), "Reissued absolute command has a new checkpoint identity");
             policy.Record(Parse(definition.Name + " +2"));
             Check(policy.TryGet(definition.Kind, out setting) && setting.Mode == ResourceMode.Offset && setting.Amount == 2,
                 "Add after Set starts native relative mode");
@@ -32,6 +35,11 @@ internal static class ResourcePolicyTests
             Check(policy.HasChanges, "Zero factor remains retained policy");
             policy.Record(Parse(definition.Name + " reset"));
             Check(!policy.HasChanges, "Resource reset clears policy");
+            Check(policy.TryGetIntent(definition.Kind, out setting) && setting.Empty && policy.HasIntent,
+                "Reset is retained for offline checkpoints within this host session");
+            policy.Clear();
+            Check(!policy.HasIntent && !policy.TryGetIntent(definition.Kind, out _) && policy.Intent(definition.Kind) == "",
+                "Scope clear forgets checkpoint intent and reset history");
         }
         foreach (string input in new[] { "unknown 1", "slots -1.5", "dice add x3", "fruit x-2", "leaves 1000000001", "talents set -2", "slots x1.001" })
             Check(ResourceCommand.Parse("/resources " + input, out _, out _) == ResourceParseResult.Invalid, "Reject bad resource syntax " + input);

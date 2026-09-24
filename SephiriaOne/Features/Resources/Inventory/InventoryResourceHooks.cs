@@ -174,12 +174,16 @@ namespace SephiriaOne
                     throw new InvalidOperationException("The addon inventory checkpoint is incomplete or unsupported.");
                 int saved = run.GetInt(key + "Total", -1);
                 int savedOwned = run.GetInt(key + "Owned", 0);
+                if ((long)saved - savedOwned < 0 || (long)saved - savedOwned > int.MaxValue)
+                    throw new InvalidOperationException("The saved inventory ownership baseline is invalid.");
                 InventoryResources.ValidateCapacity(context.Inventory, saved);
                 ResourceSnapshot before = InventoryResources.Capture(context.Player);
                 int native = checked(before.Raw - before.Owned);
                 if (native < 0) throw new InvalidOperationException("The inventory ownership baseline is invalid.");
                 int target = Math.Max(saved, checked(native + savedOwned));
-                int owned = checked(target - native);
+                // Saved level-up capacity may not be replayed by native load.
+                // Preserve its provenance; only the saved addon delta is owned.
+                int owned = savedOwned;
                 var batch = new StateWriteBatch(context.IsCurrent);
                 InventoryResources.AddWrites(batch, context.Player, new ResourceUpdate(before.Definition, target, owned, target));
                 if (!batch.TryCommit(out string error))
@@ -187,7 +191,7 @@ namespace SephiriaOne
                     if (batch.MayHaveWritten) SessionSettings.RecordFault("resources", batch, error);
                     throw new InvalidOperationException(error);
                 }
-                ResourceRuntime.AcceptRestored(context.Player, ResourceKind.Slots);
+                ResourceRuntime.AcceptRestored(context.Player, ResourceKind.Slots, run.GetString(key + "Intent", ""));
                 return;
             }
             if (ResourceRuntime.TryGetSetting(ResourceKind.Slots, out _)) RequireKey(context.Spawner);
@@ -217,6 +221,7 @@ namespace SephiriaOne
             if (run == null) throw new InvalidOperationException("The native run save is unavailable.");
             run.SetInt(key + "Total", snapshot.Raw);
             run.SetInt(key + "Owned", snapshot.Owned);
+            run.SetString(key + "Intent", ResourceRuntime.CheckpointIntent(spawner.PlayerAvatar, ResourceKind.Slots));
             run.SetInt(key + "Version", 1);
         }
 
