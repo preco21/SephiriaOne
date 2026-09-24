@@ -49,15 +49,6 @@ internal static class NameGradientTests
         Equal(escapedTags, NameGradient.Plain(escapedGradient), "Canonical removal skips literal no-parse colors");
         Equal(escapedGradient, NameGradient.Format(escapedGradient), "No-parse colors cannot trigger nested gradients");
 
-        var label = new GradientNameText();
-        Equal(two, label.Apply("AB"), "Local label formats native text");
-        Equal(two, label.Apply(two), "Local refresh does not nest tags");
-        Equal(one, label.Apply("A"), "Game name change is reformatted");
-        Equal("A", label.Restore(one), "Restore removes owned current formatting");
-        Equal(two, label.Apply(two), "Already synchronized gradient can bind locally");
-        Equal("AB", label.Restore(two), "Restore synchronized formatting to plain name");
-        label.Apply("AB");
-        Equal("Changed by game", label.Restore("Changed by game"), "Restore does not overwrite a newer native text");
         return checks;
     }
 }

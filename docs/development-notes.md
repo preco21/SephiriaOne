@@ -9,17 +9,19 @@ can change independently of that installed game version.
 
 ## Current status
 
-Version `0.12.1` continues the [name UI fix](name-ui-follow-up.md): local Steam
-ownership compares numeric IDs to avoid native boxed-equality behavior, remote
-Steam lobby/host labels follow received style by stable identity, and live party
-labels share observed refresh/restoration and native width updates. Platform
-nicknames and persistent names remain unchanged. No deployment was performed.
+Version `0.12.2` narrows the addon to effects that can reach unmodified guests
+when the host installs it. Removed local name/UI adapters, platform-name styling,
+and automatic stat-panel refresh. Fountain, stats, choices, and the native
+multiplayer character-name gradient remain. Lobby/status platform nicknames
+retain their native appearance; the addon no longer applies solo label styling.
+See the [host-only compatibility inventory](presentation-compatibility.md).
+No deployment was performed.
 
-Version `0.12.0` implements the [shared synchronization architecture](synchronization-architecture.md)
-across Fountain, stats, choices, owned name publication, and local UI bindings.
+The [shared synchronization architecture](synchronization-architecture.md)
+introduced in `0.12.0` remains across Fountain, stats, choices and owned name publication.
 Commands share readiness, snapshots, journaled writes, readback, and fault recovery.
 See the [extension guide](synchronization-guide.md) and
-[UI compatibility inventory](presentation-compatibility.md). `/mod status` now
+[compatibility inventory](presentation-compatibility.md). `/mod status` now
 reports revisions, rule outcomes, critical boundaries, and partial-write journals.
 
 SephiriaOne is a C# addon using Sephiria's built-in HorayMod API. Version `0.11.1`
@@ -47,16 +49,16 @@ normal upgrades when reset. This version was built and tested without deployment
 | --- | --- |
 | Project | Visual Studio solution and `netstandard2.1` class library exist. |
 | Compiler | .NET SDK `10.0.401` is installed and was used successfully. |
-| Release build | `dotnet build SephiriaOne.slnx --configuration Release --nologo -p:DeployMod=false` passed for `0.12.1` with 0 warnings and 0 errors. |
-| Debug build | `dotnet build SephiriaOne.slnx --configuration Debug --nologo -p:DeployMod=false` passed for `0.12.1` with 0 warnings and 0 errors. |
+| Release build | `dotnet build SephiriaOne.slnx --configuration Release --nologo -p:DeployMod=false` passed for `0.12.2` with 0 warnings and 0 errors. |
+| Debug build | `dotnet build SephiriaOne.slnx --configuration Debug --nologo -p:DeployMod=false` passed for `0.12.2` with 0 warnings and 0 errors. |
 | Automatic deployment | The build invokes `scripts/Deploy-Mod.ps1` after the MSBuild `Build` target. |
 | Visual Studio command | Added the `Deploy Mod` launch profile. Its command was verified with evaluated Release properties and matching deployed hashes; Debug path resolution was also checked. The IDE dropdown has not been tested interactively. |
 | Missing addon folder | Deployment created `AddOns\SephiriaOne` during verification. |
 | Existing addon folder | Running deployment again succeeded. |
-| Deployed content | `0.12.1` was not deployed. The user-installed files identify `0.11.0`; their hashes remain unchanged. Release output is `0.12.1.0`, with Harmony and its license embedded; no game DLLs are distributed. |
+| Deployed content | `0.12.2` was not deployed. The user-installed files identify `0.11.0`; their hashes remain unchanged. Release output is `0.12.2.0`, with Harmony and its license embedded; no game DLLs are distributed. |
 | In-game loading | The user confirmed `0.1.0` loaded. `Player.log` also contains `[SephiriaOne] Loaded v0.1.0`, the AddOnLoader success entry, and `[SephiriaOne] All databases ready`. |
-| Name gradient | `0.8.0` replaces solid blue with per-letter midpoint colors from `#408af1` to `#a8d7fa` on the character/stats panel, existing overhead label, and synchronized multiplayer name. See [design and verification steps](name-gradient.md). |
-| Multiplayer verification | 21 portable synchronization and 37 gradient/label-restoration checks pass; the native command and serialized rich-text label settings were inspected. A live second-client visual check is still pending. |
+| Name gradient | Per-letter midpoint colors from `#408af1` to `#a8d7fa` are published through the native owned character-name command in multiplayer. Native peers control rendering and refresh; lobby platform names and solo labels get no addon styling. See [current compatibility](presentation-compatibility.md). |
+| Multiplayer verification | 21 portable synchronization, 11 bounded-retry and 30 gradient checks pass; installed native server setter, command transport, name getter and serialization paths pass inspection. A live second-client visual check is still pending. |
 | Wishing Fountain commands | `/fountain 100`, `/fountain +10`, and `/fountain -5` update every current player's capacity through native server synchronization. The host installs the addon; guests can use the base game. See [commands, findings, and live checks](fountain-command.md). |
 | Fountain verification | 44 command checks and 20 reset checks pass, including whole-batch rejection and restoration of distinct player values. Live chat interception, guest UI, and item carryover remain unverified. |
 | Candidate commands | `/choices all 5`, `/choices item +2`, `/choices weapon -1`, and `/choices miracle 5` change this addon's extra-candidate contribution using synchronized native stats. See [design and commands](choice-command.md). |
@@ -65,9 +67,9 @@ normal upgrades when reset. This version was built and tested without deployment
 | Character stats | `/stats luck +10`, `/stats luck -5`, `/stats luck set 100`, `/stats luck reset`, and `/stats reset` use native synchronized stats. `/stats list` shows supported names and display units. See [commands and findings](stat-command.md). |
 | Stat verification | 117 command checks and 219 relative consistency checks cover parsing, units, exact amplified targets, batch rejection, native baselines, resets, and agreement between manual, inherited, maintained, and saved settings. Live host/guest UI and gameplay checks remain pending. |
 | Joining players | Successful settings apply once after native avatar/inventory initialization, including reconnects with a new avatar. Host-only commands and native synchronization support unmodified guests. |
-| Inheritance, restart, and preset verification | 698 portable checks and 221 runtime command/session checks pass (919 total). Includes 30 policy checks, 47 preset checks, coordinator/batch/presentation checks, reused avatar IDs, partial failures and recovery. Nine native lifecycle paths, nine presentation hook contracts, Steam ownership regression, party sizing, stat-only refresh IL, both candidate guards and embedded dependencies pass inspection. Fixtures do not establish live Unity/network behavior. |
+| Inheritance, restart, and preset verification | 639 portable checks and 221 runtime command/session checks pass (860 total). Includes 30 policy checks, 47 preset checks, coordinator/batch checks, reused avatar IDs, partial failures and recovery. Nine native lifecycle paths, native name transport, both candidate guards and embedded dependencies pass inspection. The removed checks tested removed local presentation code. Fixtures do not establish live Unity/network behavior. |
 | Lifecycle audit | Native preset/costume/passive/hard-mode changes, buffs, floors, restart, joins, rejection, unload and persistence were traced. Fountain cap gaps fixed; native open-panel/cached-anvil limitations remain. See [findings and live checklist](sync-lifecycle-audit.md). |
-| Status and persistence | `/mod status` shows intent, current values, scope/rule revisions, waiting/rejected/suspended/faulted outcomes, journals and local UI coverage. `/mod save` stores all three families and rejects unresolved partial writes; `/mod forget` removes only that saved copy. Automatic loading occurs once per new hosted session. |
+| Status and persistence | `/mod status` shows intent, current values, scope/rule revisions, waiting/rejected/suspended/faulted outcomes, journals and native name synchronization status. `/mod save` stores all three families and rejects unresolved partial writes; `/mod forget` removes only that saved copy. Automatic loading occurs once per new hosted session. |
 
 ## History
 
@@ -178,6 +180,14 @@ Stages 1–14 occurred on 2026-09-23; candidate expansion continued on 2026-09-2
     preservation. Regression checks cover identity isolation, native style
     changes, departure, rename, restoration and the actual ownership adapter.
     See [follow-up findings](name-ui-follow-up.md).
+27. Narrowed scope at the user's request in `0.12.2` to effects that reach
+    unmodified guests from a modded host. Removed the client-only presentation
+    registry, UI hooks/adapters, platform-name styling and stat-panel refresh.
+    Replaced the local name-color controller with a thin native name publisher;
+    retained all gameplay synchronization and supporting commands/presets.
+    Added installed native name-transport checks; 860 retained checks and both
+    builds pass. Independent code review found no actionable issues. No deployment
+    or live multiplayer test was performed.
 
 The repository already contained commits `c793844` (Git configuration files) and
 `736b305` (initial project files). The scaffold adjustments and deployment work
@@ -194,7 +204,7 @@ commits are recorded in Git history. The configured remote is
 | Build SDK | .NET `10.0.401` |
 | Mod target framework | `netstandard2.1` |
 | Mod assembly / namespace | `SephiriaOne` |
-| Mod version / author | `0.12.1` / `preco21` |
+| Mod version / author | `0.12.2` / `preco21` |
 | Game version reported by the confirmed load log | `1.0.33` |
 | Game directory | `C:\Program Files (x86)\Steam\steamapps\common\Sephiria` |
 | Game managed assemblies | `<GameDir>\Sephiria_Data\Managed` |
@@ -230,7 +240,6 @@ SephiriaOne/
     Synchronization/
       Core/
       Game/
-      Presentation/
     Session/
       SessionPolicy.cs
       SessionSettings.cs
@@ -282,13 +291,12 @@ command semantics while sharing lifecycle and mutation infrastructure.
   controller object for name colors, chat commands, and session settings. Components
   are disabled on unload before the object is destroyed. Candidate contributions
   are removed before unpatching this addon's generation guards.
-- [Name color controller](../SephiriaOne/Features/Names/LocalPlayerNameColor.cs) uses
-  registered bindings for character/overhead/lobby/host/player-list labels and
-  safe own-stat-panel refresh; see the [coverage inventory](presentation-compatibility.md).
-  It preserves alpha and restores original text color settings on disconnect,
-  rebinding, or unload. It does not make hidden nameplates visible.
+- [Name synchronization controller](../SephiriaOne/Features/Names/MultiplayerNameController.cs)
+  observes the owned player and drives native publication/restoration. It does not
+  patch name/stat labels or refresh their panels; see the
+  [compatibility inventory](presentation-compatibility.md).
 - [Multiplayer name synchronization](../SephiriaOne/Features/Names/MultiplayerNameColor.cs)
-  publishes blue name tags through `PlayerAvatar.SetPlayerName` for the owned
+  publishes per-letter gradient tags through `PlayerAvatar.SetPlayerName` for the owned
   player while multiplayer is active. The profile name is read-only; native host
   run snapshots can contain the formatted runtime name. See the feature notes
   for restoration behavior and [portable checks](../tests/SephiriaOne.Tests/Program.cs).
@@ -558,10 +566,10 @@ requirement for a native HorayMod addon.
   The current deployment script only handles the starter DLL and metadata.
 - Keep content IDs and saved-state keys stable across releases. Test an existing
   save when adding persistent content, and use a backed-up save for development.
-- Separate server-authoritative gameplay changes from local UI and visual effects.
-  Matching content definitions and network prefab identifiers may be needed on
-  every participant. The existing features use the game's own synchronized fields
-  and commands to support unmodified guests; live multiplayer verification is pending.
+- Keep features that affect unmodified guests with the addon installed on the
+  host. Verify native authority, serialization and peer consumers before adding
+  one; local rendering patches alone do not meet this scope. Supporting local
+  command/status/preset controls remain. Live multiplayer verification is pending.
 - Do not assume an added `[SyncVar]` attribute will work in an ordinary DLL build.
   Mirror synchronization requires the appropriate generated or explicit code.
   Mira's [Charm_Kill_Luck example](https://github.com/Mira090/MiraItemMod/blob/master/MiraItemMod/Items/Charm_Kill_Luck.cs)
@@ -578,19 +586,19 @@ requirement for a native HorayMod addon.
 
 ## Next verification steps
 
-1. Manually install the `0.12.1` Release DLL and adjacent metadata when ready;
+1. Manually install the `0.12.2` Release DLL and adjacent metadata when ready;
    this task did not deploy them. Fully restart Sephiria and enter the town/lobby
    or a run; the title screen alone is insufficient for addon loading.
 2. Inspect `Player.log` for these expected entries:
 
    ```text
-   [SephiriaOne] Loaded v0.12.1
+   [SephiriaOne] Loaded v0.12.2
    [SephiriaOne] All databases ready
    [SephiriaOne] Chat commands bound: /fountain, /choices, /stats, /mod
    [SephiriaOne] Candidate commands ready: /choices (extra choices 0..20)
    ```
 
-3. Follow the [name-gradient multiplayer checks](name-gradient.md#live-checks)
+3. Follow the [native-name multiplayer checks](presentation-compatibility.md#verification)
    and record the result. The confirmed `0.1.0` lifecycle does not establish that
    the new color renders correctly.
 4. Test panel reopening, scene/session transitions, and coexistence with RaidRaid.
@@ -622,7 +630,7 @@ requirement for a native HorayMod addon.
 13. Follow the [full lifecycle checklist](sync-lifecycle-audit.md#verification-and-live-checklist),
     including native presets, costume changes, passive resets, hard-mode points,
     immediate run entry after a capacity change, and cached UI limitations.
-14. Inspect `/mod status` and follow the [presentation checks](presentation-compatibility.md#verification)
-    for lobby rows/host status, open panels, pooling, language changes, and peer
-    differences. Use the [shared synchronization guide](synchronization-guide.md)
+14. Inspect `/mod status` and follow the [host-only compatibility checks](presentation-compatibility.md#verification).
+    Confirm lobby platform names keep their native appearance and character-name
+    consumers use their native refresh timing. Use the [shared synchronization guide](synchronization-guide.md)
     for fault recovery and future features.

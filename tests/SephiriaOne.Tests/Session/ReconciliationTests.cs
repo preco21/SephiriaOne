@@ -49,14 +49,14 @@ internal static class ReconciliationTests
 
         var order = new List<string>();
         var ordered = new ReconciliationCoordinator<Subject>();
-        ordered.Register(new ReconciliationRule<Subject>("view", SyncDomain.Limits, SyncDomain.Presentation,
-            ReconcileMode.OnChange, s => true, s => s.Output, s => { order.Add("view"); return ReconcileResult.Applied(); }));
+        ordered.Register(new ReconciliationRule<Subject>("consume", SyncDomain.Limits, SyncDomain.Choices,
+            ReconcileMode.OnChange, s => true, s => s.Output, s => { order.Add("consume"); return ReconcileResult.Applied(); }));
         ordered.Register(new ReconciliationRule<Subject>("derive", SyncDomain.Stats, SyncDomain.Limits,
             ReconcileMode.OnChange, s => true, s => s.Input, s => { order.Add("derive"); s.Output = s.Input; return ReconcileResult.Applied(); }));
         ordered.Reconcile(subject);
-        Check(string.Join(",", order) == "derive,view", "Dependencies order rules independently of registration");
+        Check(string.Join(",", order) == "derive,consume", "Dependencies order rules independently of registration");
         bool cycle = false;
-        try { ordered.Register(new ReconciliationRule<Subject>("cycle", SyncDomain.Presentation, SyncDomain.Stats,
+        try { ordered.Register(new ReconciliationRule<Subject>("cycle", SyncDomain.Choices, SyncDomain.Stats,
             ReconcileMode.OnChange, s => true, s => 0, s => ReconcileResult.Applied())); }
         catch (InvalidOperationException) { cycle = true; }
         Check(cycle, "Dependency cycles rejected at registration");

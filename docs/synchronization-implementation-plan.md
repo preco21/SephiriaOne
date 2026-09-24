@@ -1,5 +1,12 @@
 # Shared synchronization implementation plan
 
+Historical `0.12.0` implementation record. In `0.12.2`, the user narrowed scope
+to effects available to unmodified guests from a modded host. The local-only
+presentation portions below have been removed; native name publication and
+gameplay synchronization remain. See the current
+[extension guide](synchronization-guide.md) and
+[compatibility inventory](presentation-compatibility.md).
+
 **Goal:** Apply the approved reconciliation architecture to Fountain, stats,
 choices, name publication and safe local presentation without changing command
 semantics or requiring guest installation.

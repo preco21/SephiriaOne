@@ -106,5 +106,5 @@ namespace SephiriaOne
 {
     internal static class ChoiceFeature { public static bool Available = true; }
     internal static class SessionBoundaryFeature { public static bool Available = true; }
-    internal static class LocalPlayerNameColor { public static string Diagnostics => "fixture: rendering unverified"; }
+    internal static class MultiplayerNameController { public static string Diagnostics => "fixture: rendering unverified"; }
 }

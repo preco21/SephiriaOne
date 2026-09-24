@@ -26,7 +26,7 @@ namespace SephiriaOne
                 }
                 else if (failedReason != null) lines.Add(failedReason);
             }
-            lines.Add("Local presentation: " + LocalPlayerNameColor.Diagnostics + ".");
+            lines.Add("Native name synchronization: " + MultiplayerNameController.Diagnostics + ".");
             lines.Add("Native replication carries gameplay state; peer delivery/rendering is not acknowledged by this status.");
         }
 

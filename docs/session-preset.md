@@ -37,7 +37,8 @@ do not erase the saved preset.
 ## Design
 
 Since `0.12.0`, status also includes shared synchronization outcomes, revisions,
-critical-read and local UI coverage, and partial-write journals. Saving is blocked
+critical-read availability, native name synchronization status, and partial-write
+journals. Saving is blocked
 while native writes are faulted. See [diagnostics and recovery](synchronization-guide.md#diagnostics-and-recovery).
 
 Add host-only local chat commands for all three gameplay families:

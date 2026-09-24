@@ -1,7 +1,9 @@
 # Module structure
 
 Source files are grouped by feature and shared responsibility. The initial folder
-refactor preserved behavior; `0.12.0` adds reusable synchronization modules.
+refactor preserved behavior; `0.12.0` added reusable synchronization modules.
+Version `0.12.2` removes the local-only presentation layer and keeps native
+multiplayer synchronization.
 The SDK project discovers source files recursively; namespaces remain stable.
 
 ```text
@@ -21,7 +23,6 @@ SephiriaOne/
   Synchronization/
     Core/
     Game/
-    Presentation/
   Properties/
 ```
 
@@ -31,13 +32,12 @@ SephiriaOne/
 | `Chat/` | Local chat interception and dispatch to feature commands. |
 | `Features/Choices/` | Candidate command parsing/planning, host writes, and Harmony generation guards. |
 | `Features/Fountain/` | Fountain command parsing/planning, point writes, and carryover-cap operations. |
-| `Features/Names/` | Gradient formatting, local labels, and synchronized name state. |
+| `Features/Names/` | Gradient formatting, native publication controller, and synchronized name state. |
 | `Features/Stats/` | Character stat catalog, commands, exact arithmetic, and host batch updates. |
 | `Infrastructure/` | Shared embedded Harmony runtime loading. |
 | `Session/` | Policy, registered inheritance/maintenance rules, scope lifecycle, diagnostics, and critical native read boundaries. |
 | `Synchronization/Core/` | Unity-independent reconciliation, reference identity, outcome records, and journaled write batches. |
 | `Synchronization/Game/` | Shared host readiness, player/native snapshots, preflight/readback, and native write helpers. |
-| `Synchronization/Presentation/` | Registered active bindings and safe native stat-panel refresh. |
 | `Session/Presets/` | Saved policy codec/storage and status/save/forget commands. |
 | `Properties/` | Visual Studio launch configuration. |
 
@@ -45,9 +45,10 @@ Session partial classes stay together under `Session/`, including preset-related
 parts in its `Presets/` subfolder. Feature folders own their command syntax and
 calculations; session code coordinates their application across players/events.
 
-All production types retain the `SephiriaOne` namespace. In particular, the
-metadata entry type, reflection-based compatibility checks, Harmony ownership,
-embedded-resource names and partial-class identities remain stable. These folders
+All production types use the `SephiriaOne` namespace. The metadata entry type,
+gameplay Harmony ownership, embedded-resource names and partial-class identities
+remain stable. `MultiplayerNameController` replaces the former local color
+controller; there are no presentation Harmony patches. These folders
 do not create separate assemblies or introduce new dependency boundaries.
 
 The portable test project mirrors `Features/` and `Session/Presets/`; installed
@@ -61,7 +62,7 @@ Deployment paths are unchanged: the project, metadata, build output directory,
 launch profile and deployment script retain their previous locations. Build with
 `-p:DeployMod=false` when deployment is not intended.
 
-See the [extension guide](synchronization-guide.md) for adding rules and bindings.
+See the [extension guide](synchronization-guide.md) for adding native state rules.
 
 ## Initial folder-refactor verification (0.11.1)
 

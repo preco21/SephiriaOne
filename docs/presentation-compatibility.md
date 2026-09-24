@@ -1,74 +1,69 @@
-# Local presentation compatibility inventory
+# Host-only multiplayer compatibility
 
-Updated for addon 0.12.1 against inspected Sephiria 1.0.33 assemblies. This inventory describes
-local adapters and intentional limits, not a claim of live Unity or peer testing.
+As of `0.12.2`, the addon retains features whose effects can reach unmodified
+guests through Sephiria's native multiplayer state. The user explicitly removed
+the requirement for extra UI styling that only a modded viewing client could see.
+The local presentation registry, UI hooks, label adapters, platform-style mapping,
+and automatic stat-panel refresh from `0.12.0`/`0.12.1` have been removed.
 
-| Surface | Coverage | Binding and limits |
-| --- | --- | --- |
-| Owned native character name | Covered transport | Existing authority-checked `PlayerAvatar.SetPlayerName`; profile remains untouched. Owned readback is checked, with at most three requests two seconds apart for an unacknowledged target. Exhaustion is suspended and visible; a new target, acknowledgment followed by drift, or replacement avatar permits new work. No peer protocol or peer acknowledgment. |
-| Own character panel | Covered local | `UI_StatsPanel.OnOpened`, then active registered label observation reads the panel's actual avatar. Native rename and dictionary changes do not require reopening. |
-| Overhead names | Covered local | Bounded current `PlayerSpawner.MultiplayerList` plus owned avatar; destroyed/departed labels unbind. Local subject gets the gradient; remote subjects only render the gradient already present in their native character name. |
-| Steam lobby member rows | Covered local | `UI_MultiplayerUserIcon.UpdateState` discovers/rebinds. Local ownership compares nonzero Steam IDs with `UserData.Me`; a unique nonzero `UserData.SteamId` / `PlayerSpawner.steamID` match carries a remote avatar's received canonical gradient to that avatar's platform nickname. Never substitutes the character name or matches nicknames. |
-| EOS lobby member rows | Covered local | `UI_MultiplayerUserIcon_E.UpdateState`; nonempty member PUID equals lobby local PUID. Preserves EOS display name or native shortened-PUID fallback. |
-| Steam room-host HUD | Covered local | `UI_HUDMultiplayerRoomViewer.UpdateRoomName` and language rebuild discover binding. Resolve the current owner using the same Steam identity/style directory, including a styled remote host on a modded client. Color only the host-name segment, keeping room/chapter text and native cached fields unchanged. |
-| EOS host summary | Unsupported | No corresponding audited EOS host-summary renderer is registered. |
-| In-dungeon player list | Covered local | `UI_MultiplayerInDungeonUserIcon.SetUser`; observe the bound spawner's current avatar name, including remote renames. No inference from matching names. |
-| Other-character panel name | Covered local | `UI_OtherCharacterPanel.OnOpened`; observe actual `otherCharacter`, including remote name changes while open. Does not replay panel opening or rebuild inventory. |
-| Own stat panel | Covered local | Observe exact, sorted snapshots of raw, bonus and amplifier dictionaries together. Call only audited parameterless `UI_StatsPanel.Refresh()` after changed snapshots while open. No `OnOpened` replay; categories and stat labels refresh without recreating inventory/miracle controls. |
-| Other-character panel statistics | Unsupported | Name is refreshed; its inventory/stat lifetime is native. No broad panel refresh is invoked. |
-| Live party HP bars | Covered local | `UI_MultiplayerHPBar.SetSteamProfile` supplies the native nickname and registers the composite character/alias label. Received style and later renames/language changes refresh while active, with native width recalculation. `SetSpawner` removes the old binding before a reused bar can keep another alias. Already-open bars bind on their next native profile refresh (normally every eight seconds while the multiplayer HUD is updating). |
-| Loading placeholders | Native-only | Before an avatar supplies its native style, the placeholder remains the native platform nickname. No nickname matching, stale style caching, or blanket recoloring. |
-| Fountain budget/selection panel | Unsupported refresh | Open-panel budget/selection caches are not refreshed. Reopen through normal native interaction to observe changed capacity; no automatic closing/reopening, item granting or selection mutation. |
-| Candidate offers, rerolls, anvils | Unsupported existing caches | New native generation retains gameplay guards. Existing offers are not regenerated and selection/reroll state is not rewritten. Follow the native interaction lifecycle; reopening is not promised to regenerate an already cached offer. |
-| Chat, HUD notifications, chat bubbles | Intentionally excluded | Preserve native rich-text sanitization. Publishing a formatted name does not repair these renderers. |
-| Host signs, dialogue, journal, ending/credits | Unsupported cached substitutions | No broad story/dialogue replay or hostName replacement. |
-| Profile, rename input, cloud comparison, room-title input | Intentionally excluded | Native/plain persistent/input values remain unchanged. |
+## Retained behavior
 
-`PresentationRegistry` observes only registered active bindings each frame and uses
-the shared coordinator for post-write observations, readiness and fault outcomes.
-Native open/bind/update hooks discover views; one bootstrap scan of six known UI
-types covers loading the addon with a view already open. There is no per-frame
-scene scan. Hidden bindings wait; destroyed bindings are removed; pooled native
-bind methods replace bindings and restore prior owned TMP changes. TMP rich-text,
-override-color and vertex-gradient settings are saved/restored, alpha remains
-native-controlled, and newer native text is not overwritten during restoration.
-Missing hook signatures and binding faults appear in presentation diagnostics.
-Mixed host-summary labels keep their native base RGB and vertex gradient for
-untagged room/chapter text. Audited TMP `SaveGlyphVertexInfo` honors explicit name
-color tags when `overrideColorTags` is false. Remote native name markup is retained
-verbatim on unbind; taking ownership of TMP settings does not imply text ownership.
+| Feature | Effect with the addon on the host |
+| --- | --- |
+| Fountain points and carryover limit | Native synchronized capacity/limit changes for all eligible players, including newcomer inheritance and restart reconciliation. |
+| Character stats | Native synchronized stat changes, cumulative relative offsets, multiplier maintenance, resets and saved presets. |
+| Extra item, weapon and miracle choices | Native synchronized extra-choice stats used by subsequent native generation. Existing offers are not regenerated. |
+| Host's character-name gradient | Owned `PlayerAvatar.SetPlayerName` publishes the formatted runtime name to the native `playerNameSource` SyncVar. Guests do not need a custom addon protocol to receive it. |
+| Commands, status and preset controls | Local controls for those native effects; these are retained as supporting tools. `/mod status` does not acknowledge delivery or rendering on another client. |
 
-Unmodified peers can receive native published character names, but this addon
-cannot repair their cached labels, platform nicknames or sanitizing renderers.
-Remote appearance is unverified; there is no capability exchange.
+The shared reconciliation coordinator, host snapshots, journaled writes, readback,
+fault recovery and critical native read guards remain in use across gameplay
+features. Removing presentation does not replay or reset their retained intent.
 
-The style directory is rebuilt from current spawners before each presentation
-pass, so departures, replacements and native style removal cannot leave an old
-platform decoration behind. Duplicate/zero Steam IDs fail closed for remote style.
-The local-user fallback compares numeric IDs: native `UserData.Equals(object)`
-has different semantics from `Equals(UserData)` and cannot compare two boxed
-users. EOS retains local-only platform decoration because the inspected Steam
-build exposes no usable replicated remote-PUID mapping.
+## Name surfaces and native UI limits
+
+The gradient still samples each letter's midpoint between `#408af1` and `#a8d7fa`.
+The addon publishes only the owned character's name while another player is in
+the session. It requests the plain runtime name when alone again or on unload,
+provided ownership/network readiness still permit sending. The profile name is
+read-only; native run snapshots can contain the formatted runtime name.
+
+| Surface | Behavior in 0.12.2 |
+| --- | --- |
+| Native overhead, character-panel, player-list and party labels | Can consume the replicated character name, with each renderer's normal rich-text settings and native refresh timing. No addon label writes or cache refreshes. The alias portion of a party label remains native. |
+| Steam/EOS lobby member rows and lobby host/status summaries | Native platform nicknames remain unchanged. These sources do not become styled from host character-name publication. |
+| Solo local name labels | No local-only gradient override. Name publication is multiplayer-only. |
+| Chat, notifications and chat bubbles | Native sanitization remains; no host-side guarantee of colored names. |
+| Story/dialogue substitutions, loading placeholders and other cached labels | Native source/cache behavior; no presentation patches. |
+| Open stats and Fountain panels, existing offers | Native refresh and interaction lifecycle. No automatic panel refresh, reopening, item granting or offer regeneration. |
+| Profile, rename and other input fields | No direct addon changes. Native inputs that read the runtime name can still see its published markup. |
+
+A native replicated name is not a guarantee that every native UI renders its
+tags. In particular, the multiplayer lobby status window will retain its native
+platform-name appearance even when the host installs this addon.
+
+## Extension rule
+
+Before adding a feature, identify the native server/owned-client write path,
+serialization, and consumer on an unmodified peer. A host-local rendering patch
+alone does not satisfy this project's compatibility scope. Add rules to the
+[shared synchronization paths](synchronization-guide.md) when appropriate; do not
+reintroduce a guest addon requirement or a local-only UI feature to claim coverage.
 
 ## Verification
 
-Portable regression cases cover idle deduplication, changed input, hidden/reopen,
-rebind restoration, destruction, teardown, retry deadlines, bounded exhaustion,
-late acknowledgment, target supersession and replacement reset. Existing gradient
-cases cover Unicode/markup preservation and restoring only owned text.
-Portable label-adapter fixtures also exercise the actual rendering state writes:
-remote markup preservation, mixed-label RGB/vertex-gradient preservation, rich-text
-settings, own-label cleanup, native fade alpha, and newer native text/RGB edits.
+The `0.12.2` Debug and Release builds pass with zero warnings/errors. The portable
+suite passes 639 checks and the runtime command/session fixtures pass 221 checks
+(860 total). Removed checks belonged to the removed presentation implementations;
+gameplay regression coverage is retained.
 
-`GamePresentationCompatibilityTests` inspects nine installed native hook/field
-contracts, Steam identity/style access, native party-label sizing, and the stat-only refresh method's direct IL
-calls. It does not execute game methods and cannot prove future transitive refresh
-semantics. A compatibility failure requires a new native-code audit.
-It also invokes the addon's Steam ownership adapter with a fixture reproducing
-the native boxed equality trap, without calling Steam or Unity APIs.
+`GameNameCompatibilityTests` inspects native name publication/restoration,
+server setter, command transport, SyncVar serialization/deserialization and the
+native name getter against installed Sephiria `1.0.33`. The nine lifecycle paths,
+Fountain read boundary, candidate guards and embedded dependencies also pass.
+These checks do not execute Unity or establish visible delivery on a live guest.
 
-Still required in a running game: visible TMP alpha/fades/layout and restoration,
-pooled rows, language changes, host migration, EOS/Steam identity changes, delayed
-native name readback, panel dictionary delivery order, and host/modded-guest/
-unmodified-guest sessions across repeated runs. No live test or deployment was
-performed by this migration.
+Still pending: host with an unmodified guest across join/leave, repeated runs,
+name changes, native panel refreshes and reset/unload. Inspect the guest's native
+character-name consumers after their normal refresh interval; lobby platform
+names should remain native. Builds used `-p:DeployMod=false`; no deployment occurred.

@@ -157,26 +157,4 @@ namespace SephiriaOne
             return (start + step).ToString("X2", CultureInfo.InvariantCulture);
         }
     }
-
-    internal sealed class GradientNameText
-    {
-        private string? plain;
-        private string? applied;
-
-        public string Apply(string text)
-        {
-            if (text == applied) return text;
-            plain = NameGradient.Plain(text);
-            applied = NameGradient.Format(plain);
-            return applied;
-        }
-
-        public string Restore(string current)
-        {
-            string restored = current == applied ? plain! : current;
-            plain = null;
-            applied = null;
-            return restored;
-        }
-    }
 }

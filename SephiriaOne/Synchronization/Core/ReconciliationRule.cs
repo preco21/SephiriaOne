@@ -7,7 +7,7 @@ namespace SephiriaOne
     internal enum SyncDomain
     {
         None = 0, Identity = 1, Stats = 2, Fountain = 4, Choices = 8,
-        Limits = 16, Names = 32, Presentation = 64, All = 127
+        Limits = 16, Names = 32, All = 63
     }
 
     internal enum ReconcileMode { Once, OnChange }

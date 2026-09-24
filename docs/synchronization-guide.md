@@ -1,8 +1,10 @@
-# Shared synchronization in 0.12.0
+# Shared synchronization in 0.12.2
 
 Implemented 2026-09-24 against the locally inspected Sephiria 1.0.33 assemblies.
-The [architecture](synchronization-architecture.md) records the design rationale;
-this document describes the implemented extension points and operational limits.
+The [architecture](synchronization-architecture.md) records the original design;
+this document describes the current extension points and operational limits.
+The `0.12.2` scope retains effects that reach unmodified guests through native
+multiplayer state and removes the former local-only presentation layer.
 
 ## Shared paths
 
@@ -14,7 +16,6 @@ this document describes the implemented extension points and operational limits.
 | Fountain capacity and carryover cap | Player observation, ordered dependency, session invalidation, verified cap-only writes | Preserve native baseline and independent cap ownership |
 | Native Fountain grant and new candidate generation | `SessionSettings.BeforeNativeRead` / `EnsureFresh` | Native consumer and existing generation guards |
 | Owned name publication | Shared coordinator and readiness; bounded native-command acknowledgment retry | Format name and use the owned native transport |
-| Local name/stat UI | Registered presentation bindings, observed changes, pooling, hidden-view readiness, restoration | Native source identity and safe rendering adapter |
 
 Native equipment, costume, preset, passive-menu, buff, and spent hard-mode point
 changes are observed through their resulting raw/bonus/amplifier/capacity values.
@@ -30,7 +31,9 @@ Changing retained intent does not reapply unrelated settings.
 
 ## Adding a gameplay feature
 
-1. Keep parsing and arithmetic in `Features/<Feature>/`. Plan without writing game
+1. Verify that the native write/replication/consumer path affects unmodified guests
+   when the host installs the addon. Keep parsing and arithmetic in
+   `Features/<Feature>/`. Plan without writing game
    objects. Decide whether the operation is once-only, a maintained invariant, or
    a derived value; this decision prevents accidental replay of a delta.
 2. Use `SessionSettings.PrepareCommand` and `HostCommandContext.CreateBatch` for a
@@ -53,8 +56,8 @@ Changing retained intent does not reapply unrelated settings.
    Add lifecycle and fault regressions using the portable core and runtime fixture
    projects, plus installed-game signature checks for new native boundaries.
 
-The coordinator is independent of Unity. Existing tests register a synthetic
-derived-value and presentation rule without adding feature branches to its core.
+The coordinator is independent of Unity. Existing tests register synthetic
+dependent rules without adding feature branches to its core.
 `OnChange` rules capture their post-write observation, coalesce invalidations,
 and bound reentrant processing to four passes. Nested flushes report unavailable.
 `Once` rules do not silently retry a rejected enrollment after a native edit.
@@ -62,29 +65,21 @@ Waiting rules resume when ready; suspended change-driven rules resume on changed
 inputs. A partial native write is contained separately and is never replayed by
 ordinary frame polling.
 
-## Adding a presentation surface
+## Native UI boundary
 
-Implement `IPresentationBinding` and register it at a verified native creation,
-open, or rebind boundary. Supply liveness, activity, an immutable observation,
-safe refresh, and restoration. The registry observes only registered active
-views; destroyed views unbind and hidden views wait. Use stable player/platform
-identity, never a matching display name. Native ownership and local rendering
-readiness are separate from host inventory readiness.
-
-Refresh only the presentation data that was audited. Do not call a panel's
-`OnOpened` or an interaction method as a generic refresh: it may regenerate an
-offer, alter selections, or grant an item. `StatsPanelBinding` demonstrates a
-verified stat-only refresh. `NameLabelPresenter` demonstrates owned TMP state
-restoration through a portable adapter. New UI surfaces need one adapter, rather
-than edits to each gameplay feature. See the full
-[presentation compatibility inventory](presentation-compatibility.md).
+The addon no longer patches local name/stat labels or refreshes their panels.
+Each peer renders native replicated values using the base game's settings and
+refresh lifecycle. Lobby platform names have a separate source and remain native.
+Do not replay a panel's `OnOpened` or an interaction method to force refresh: it
+can regenerate an offer, alter selections or grant an item. See the
+[host-only compatibility inventory](presentation-compatibility.md).
 
 ## Diagnostics and recovery
 
 `/mod status` is read-only: it does not process pending joins or write game state.
 It shows session epoch, run generation, intent revision, rule outcomes and
 reasons, relative suspension, critical-hook availability, last boundary results,
-local presentation coverage, and any before/target/readback journal.
+native name synchronization status, and any before/target/readback journal.
 
 Preflight rejects stale plans before writes. Unity/Mirror writes are not an atomic
 transaction. If application throws or readback fails after a possible write,
@@ -111,17 +106,17 @@ Portable/runtime tests cover ordinary commands, distinct baselines, presets,
 restarts, delayed readiness, reused IDs, missed/duplicate/reentrant changes,
 native menu/buff edits, rejection/suspension, cap ownership, partial commands,
 maintenance and cleanup faults, stale object recovery, and same-frame native
-reads. Label tests exercise actual rendering-state writes and restoration.
+reads. Name tests cover gradient formatting, publication state and bounded retries.
 
 No custom peer protocol was added. Gameplay continues through native server
 SyncVar/SyncDictionary paths; name publication uses the native owned command.
 Local readback is not acknowledgment from another player's renderer. Unmodified
-guests cannot receive our local UI adapters. Cached Fountain selections and
-existing offers require normal native interaction; they are never regenerated
+guests use their native UI; no presentation adapters are installed. Cached
+Fountain selections and existing offers require normal native interaction; they are never regenerated
 by reconciliation. Unknown game changes still require an adapter/compatibility
 audit. Another addon changing raw values while retaining our markers can remain
 ambiguous; no framework can infer that missing intent reliably.
 
-Live host/modded-guest/unmodified-guest rendering and transport checks across
+Live host/unmodified-guest rendering and transport checks across
 repeated runs remain pending. This implementation was built with
 `-p:DeployMod=false`; no deployment script was run.

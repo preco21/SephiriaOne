@@ -1,5 +1,11 @@
 # Name UI follow-up
 
+Historical `0.12.1` investigation. **Superseded in `0.12.2`:** the user requested
+removal of features that require a modded viewing client. All local presentation
+adapters described here have been removed. Native character-name publication is
+retained; lobby platform names remain native. See the current
+[host-only compatibility inventory](presentation-compatibility.md).
+
 Scope: continue the approved name-color/UI work using the shared presentation
 registry, preserving the midpoint gradient `#408af1 -> #a8d7fa`.
 

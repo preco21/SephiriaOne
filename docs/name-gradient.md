@@ -1,5 +1,14 @@
 # Player name gradient
 
+Current behavior (`0.12.2`): retain this formatter and native multiplayer name
+publication, with no local label overrides or rendering-setting changes. The
+gradient can reach unmodified guests through native character-name replication;
+each native renderer controls its appearance and refresh timing. Solo labels and
+lobby platform nicknames receive no addon styling. See the current
+[compatibility inventory and live checklist](presentation-compatibility.md).
+The implementation plan and verification results below record the original
+`0.8.0` work; its local-only rendering portion has since been removed.
+
 ## Design and implementation plan
 
 Replace the solid blue name with a per-letter gradient from `#408af1` to

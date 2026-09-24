@@ -1,6 +1,11 @@
 # Shared synchronization architecture
 
-Status: approved design implemented in `0.12.0`, 2026-09-24. See the
+Historical design: approved and implemented in `0.12.0`, 2026-09-24.
+**Scope narrowed in `0.12.2`:** the user requested only features whose effects
+reach unmodified guests when installed on the host. The local presentation
+registry, UI hooks, label adapters and stat-panel refresh described below were
+removed. Native name publication and shared gameplay reconciliation remain.
+The remainder records the original design, not current UI coverage. See the
 [implementation and extension guide](synchronization-guide.md) and
 [presentation inventory](presentation-compatibility.md) for delivered coverage.
 Originally based on `0.11.1`, the [lifecycle audit](sync-lifecycle-audit.md),

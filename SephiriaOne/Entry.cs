@@ -4,7 +4,7 @@ namespace SephiriaOne
 {
     public sealed class Entry : HorayModBase
     {
-        private LocalPlayerNameColor nameColor;
+        private MultiplayerNameController nameColor;
         private ModChatCommands chatCommands;
         private SessionSettingsController sessionSettings;
 
@@ -18,7 +18,7 @@ namespace SephiriaOne
                 var controller = new GameObject("SephiriaOne.Controllers");
                 Object.DontDestroyOnLoad(controller);
                 sessionSettings = controller.AddComponent<SessionSettingsController>();
-                nameColor = controller.AddComponent<LocalPlayerNameColor>();
+                nameColor = controller.AddComponent<MultiplayerNameController>();
                 chatCommands = controller.AddComponent<ModChatCommands>();
             }
 
@@ -50,7 +50,7 @@ namespace SephiriaOne
 
             if (nameColor)
             {
-                // Restore labels immediately; Unity destroys the object later.
+                // Request native name restoration before Unity destroys the object.
                 nameColor.enabled = false;
                 Object.Destroy(nameColor.gameObject);
                 nameColor = null;

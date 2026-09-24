@@ -3,7 +3,10 @@
 This records the solid-blue implementation introduced in 0.2.0/0.3.0. Version
 0.8.0 replaces it with a [per-letter name gradient](name-gradient.md) from
 `#408af1` to `#a8d7fa`, retaining the ownership and native multiplayer transport
-described here. Use the gradient document for current behavior and live checks.
+described here. Version `0.12.2` removes all local-only rendering overrides while
+retaining native gradient publication. Use the
+[compatibility inventory](presentation-compatibility.md) for current behavior
+and live checks; the implementation details below are historical.
 
 ## Behavior in 0.3.0
 
@@ -66,7 +69,7 @@ formatting; it is not one of the requested nameplate targets.
 
 ## Implementation
 
-- `LocalPlayerNameColor.cs` retains the local text-color overrides. It preserves
+- The former `LocalPlayerNameColor.cs` retained local text-color overrides. It preserved
   transparency, rebinds existing labels, and restores original color settings.
 - `MultiplayerNameColor.cs` reads the plain profile name, checks ownership and
   network readiness, and calls the native name update. It uses the same
