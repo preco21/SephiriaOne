@@ -69,7 +69,9 @@ namespace SephiriaOne
         private readonly Dictionary<string, int> choices = new Dictionary<string, int>();
         private readonly Dictionary<StatDefinition, Setting> stats = new Dictionary<StatDefinition, Setting>();
         public ResourcePolicy Resources { get; } = new ResourcePolicy();
-        public bool HasChanges => fountain.HasValue || choices.Count != 0 || stats.Count != 0 || Resources.HasChanges;
+        public RabbitPotionSettings RabbitPotions { get; private set; }
+        public void Record(RabbitCommand command) => RabbitPotions = RabbitPotions.Apply(command);
+        public bool HasChanges => fountain.HasValue || choices.Count != 0 || stats.Count != 0 || Resources.HasChanges || RabbitPotions.HasChanges;
         public bool HasFountainSetting => fountain.HasValue;
         public bool HasFountainMultiplier => fountain.HasValue && fountain.Value.Multiplier;
 
@@ -110,6 +112,7 @@ namespace SephiriaOne
             choices.Clear();
             stats.Clear();
             Resources.Clear();
+            RabbitPotions = default;
         }
 
         public bool TryPlan(SessionPlayerSnapshot player, out SessionPlan plan, out string error)

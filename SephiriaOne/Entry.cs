@@ -15,6 +15,8 @@ namespace SephiriaOne
             ChoiceFeature.Initialize();
             SessionBoundaryFeature.Initialize();
             ResourceFeature.Initialize();
+            RabbitPotionFeature.Initialize();
+            RabbitDescriptionFeature.Initialize();
             DisconnectDiagnosticsFeature.Initialize();
             if (!nameColor)
             {
@@ -39,6 +41,8 @@ namespace SephiriaOne
             // Keep controllers/guards available if verified cleanup needs recovery.
             ChoiceFeature.Shutdown();
             ResourceFeature.Shutdown();
+            RabbitDescriptionFeature.Shutdown();
+            RabbitPotionFeature.Shutdown();
             DisconnectDiagnosticsFeature.Shutdown();
             if (settingsPanel)
             {

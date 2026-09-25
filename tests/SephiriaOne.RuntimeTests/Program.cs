@@ -748,6 +748,7 @@ foreach (bool useCommand in new[] { false, true })
 }
 
 SettingsControlsTests.Run(Check, Start, Add);
+RabbitRuntimeTests.Run(Start, Add, Check);
 PenaltyMultiplierRuntimeTests.Run(Check, Start, Add);
 MultiplierRuntimeTests.Run(Check, Start, Add);
 ResourceRuntimeTests.Run(Check, Start, Add);

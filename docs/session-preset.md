@@ -14,6 +14,11 @@ use v3 and retain Set/Offset/Multiplier intent. v1/v2 files remain supported.
 Run checkpoints preserving inventory/talent capacity and spent starting grants
 are separate from the explicit future-session preset.
 
+Version `0.16.0` stores enabled [rabbit potion options](rabbit-potions.md) in v4
+as `rabbit infinite 1` and `rabbit share 1`. Missing/off options remain native.
+v1-v3 are still readable; v4 supports all prior setting families. These flags are
+read at potion use, never translated into healing on preset load or player join.
+
 Since `0.14.0`, [native-baseline factors](multiplier-command.md) are saved as
 `multiplier N` rather than calculated totals. A preset containing a factor uses
 v2; v1 files remain supported and are still written when no factor is active.
@@ -48,7 +53,7 @@ an incompatible player when inherited in a future session.
 
 To change the saved copy, issue new commands and run `/one save` again. To stop
 future automatic loading, run `/one forget`. To also undo the current adjustments,
-use `/fountain reset`, `/choices reset`, `/stats reset`, and `/resources reset`. These resets alone
+use `/fountain reset`, `/choices reset`, `/stats reset`, `/resources reset`, and `/one rabbit reset`. These resets alone
 do not erase the saved preset.
 
 ## Design
@@ -63,7 +68,7 @@ Host-only local chat commands cover all gameplay families:
 - `/one status`: show retained session adjustments, current adjusted values for
   each ready player, and the saved preset for future hosted sessions.
 - `/one save`: explicitly replace one saved preset with the current retained
-  Fountain, choice, character-stat, and resource settings.
+  Fountain, choice, character-stat, resource, and rabbit potion settings.
 - `/one forget`: remove the saved preset without changing the current session.
 - `/one` or `/one help`: show usage.
 - `/one ui`: open the host settings panel while in town or a run.

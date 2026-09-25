@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 namespace SephiriaOne
 {
-    public sealed class SettingsPanel : UIBase
+    public sealed partial class SettingsPanel : UIBase
     {
         private readonly PanelDraft draft = new PanelDraft();
         private readonly List<Button> changeButtons = new List<Button>();
@@ -46,11 +46,11 @@ namespace SephiriaOne
             var close = widgets.Button(window, "X", 563, 10, 23, 23, Close);
             defaultSelectable = close.gameObject;
             availability = widgets.Text(window, "Availability", "", 16, 54, 568, 22, 10);
-            string[] pages = { "Stats", "Fountain", "Choices", "Resources", "Presets", "Status" };
+            string[] pages = { "Stats", "Fountain", "Choices", "Resources", "Presets", "Status", "Rabbit" };
             for (int i = 0; i < pages.Length; i++)
             {
                 int target = i;
-                widgets.Button(window, pages[i], 16 + 95 * i, 80, 89, 22, () => SelectPage(target));
+                widgets.Button(window, pages[i], 16 + 81 * i, 80, 77, 22, () => SelectPage(target));
             }
             feedback = widgets.Text(window, "Feedback", "Choose an action to apply. Native menus and offers refresh normally.", 16, 282, 568, 40, 10);
             SelectPage(0);
@@ -102,16 +102,18 @@ namespace SephiriaOne
                 float scale = Mathf.Min(1, Mathf.Min(rootRect.rect.width / 640f, rootRect.rect.height / 360f));
                 window.localScale = Vector3.one * Mathf.Max(0.1f, scale);
             }
-            bool choicesReady = page == 2 ? snapshot.ChoicesAvailable : page != 3 || ResourceFeature.IsAvailable(ResourceCatalog.All[resourceIndex].Kind);
+            bool choicesReady = page == 6 ? snapshot.RabbitPotionsAvailable : page == 2 ? snapshot.ChoicesAvailable : page != 3 || ResourceFeature.IsAvailable(ResourceCatalog.All[resourceIndex].Kind);
             availability.text = !snapshot.CanMutate ? snapshot.AvailabilityReason : !choicesReady ?
-                (page == 3 ? ResourceFeature.UnavailableReason(ResourceCatalog.All[resourceIndex].Kind) :
+                (page == 6 ? "Rabbit potion compatibility checks failed. Off/reset remain available; see Player.log." :
+                page == 3 ? ResourceFeature.UnavailableReason(ResourceCatalog.All[resourceIndex].Kind) :
                 "Extra-choice compatibility guard failed. Reset remains available; see Player.log.") :
                 snapshot.Players.Count + " ready player(s). Changes apply when you press an action button.";
             availability.color = snapshot.CanMutate && choicesReady ? PanelWidgets.Muted : (Color)new Color32(255, 200, 122, 255);
             foreach (var button in changeButtons) button.interactable = snapshot.CanMutate && choicesReady;
+            foreach (var button in rabbitOffButtons) button.interactable = snapshot.CanMutate;
             if (amount) amount.interactable = snapshot.CanMutate && choicesReady;
             // Full-family reset is intentionally available for the existing recovery path.
-            string family = page == 0 ? "stats" : page == 1 ? "fountain" : page == 3 ? "resources" : "choices";
+            string family = page == 0 ? "stats" : page == 1 ? "fountain" : page == 3 ? "resources" : page == 6 ? "rabbit" : "choices";
             bool recovery = snapshot.HostActive && snapshot.SessionIdentity != null &&
                 (snapshot.FaultedFeature == family || snapshot.FaultedFeature == "inheritance");
             if (resetAll) resetAll.interactable = snapshot.CanMutate || recovery;
@@ -119,6 +121,7 @@ namespace SephiriaOne
             if (save) save.interactable = snapshot.CanSave;
             if (forget) forget.interactable = snapshot.CanForget;
             if (page < 4) readout.SetText(PlayerValues(snapshot));
+            else if (page == 6) readout.SetText(RabbitValues(snapshot));
             else if (page == 4) readout.SetText(PresetValues(snapshot));
             else readout.SetText("Automatic name gradient: #408af1 -> #a8d7fa\n" +
                 "Host's native multiplayer character name; colors are fixed.\n\n" + string.Join("\n\n", snapshot.Lines));
@@ -127,10 +130,12 @@ namespace SephiriaOne
         private void SelectPage(int target)
         {
             page = target; draft.Clear(); changeButtons.Clear();
+            rabbitOffButtons.Clear();
             amount = null; resetOne = resetAll = save = forget = null;
             if (pageRoot) { pageRoot.gameObject.SetActive(false); Destroy(pageRoot.gameObject); }
             pageRoot = PanelWidgets.Rect(window, "Page", 0, 110, 600, 162);
             if (page < 4) BuildEditor();
+            else if (page == 6) BuildRabbitEditor();
             else
             {
                 if (page == 4)

@@ -35,6 +35,9 @@ namespace SephiriaOne
         public bool CanSave { get; }
         public bool CanForget { get; }
         public bool ChoicesAvailable { get; }
+        public RabbitPotionSettings RabbitPotions { get; }
+        public bool RabbitPotionsAvailable { get; }
+        public bool RabbitDescriptionAvailable { get; }
         public bool SavedValid { get; }
         public string AvailabilityReason { get; }
         public string FaultedFeature { get; }
@@ -48,11 +51,14 @@ namespace SephiriaOne
             bool hostActive, bool canMutate, bool canSave, bool canForget, bool choicesAvailable, bool savedValid,
             string availabilityReason, string faultedFeature, IEnumerable<string> lines,
             IEnumerable<PlayerSettingsSnapshot> players, IEnumerable<string> activeSettings,
-            IEnumerable<string> savedSettings, string savedSummary)
+            IEnumerable<string> savedSettings, string savedSummary, RabbitPotionSettings rabbitPotions = default,
+            bool rabbitPotionsAvailable = false, bool rabbitDescriptionAvailable = false)
         {
             SessionIdentity = sessionIdentity; Epoch = epoch; RunGeneration = runGeneration; Revision = revision;
             HostActive = hostActive; CanMutate = canMutate; CanSave = canSave; CanForget = canForget;
             ChoicesAvailable = choicesAvailable; SavedValid = savedValid;
+            RabbitPotions = rabbitPotions; RabbitPotionsAvailable = rabbitPotionsAvailable;
+            RabbitDescriptionAvailable = rabbitDescriptionAvailable;
             AvailabilityReason = availabilityReason; FaultedFeature = faultedFeature;
             ActiveSettings = new List<string>(activeSettings).AsReadOnly();
             SavedSettings = new List<string>(savedSettings).AsReadOnly();

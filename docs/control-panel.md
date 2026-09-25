@@ -20,6 +20,7 @@ effects use the same native synchronization as the existing commands.
 | Resources | Select dice, inventory slots, talents, fruit-skewer budget or leaves. Set/add/subtract, `xN`, and selected/all resets. Dice/leaves show current balance separately from the next fresh starting allowance. |
 | Presets | Save current applied settings, forget the saved copy, or refresh it from disk. Active intent and saved intent are shown separately. |
 | Status | Current intent, player values, revisions, synchronization outcomes, native name status and fault details. Scroll for the complete readout. |
+| Rabbit | Independent On/Off controls for Wing-Eared Rabbit infinite healing potions and nearby potion healing; reset both options. Shows active state and compatibility. |
 
 Actions only run when clicked. Typing, switching tabs and refreshing observations
 never send a settings command. Successful actions clear the amount field. Changing
@@ -46,7 +47,7 @@ Save stores applied intent, excluding any text still in the amount field.
 Forget removes only the saved copy. Resets affect the current session; save again
 to replace a saved preset, or forget it to stop automatic loading in future hosted
 sessions. Automatic-load rules are unchanged; presets containing multipliers
-use v2, resource presets use v3, and older setting types retain v1 compatibility.
+use v2, resource presets use v3, enabled rabbit options use v4, and older setting types retain v1 compatibility.
 See [resource semantics and safe reductions](resource-command.md). Since 0.15.0,
 `/one` replaces the old generic `/mod` token, which is no longer intercepted.
 

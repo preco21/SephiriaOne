@@ -52,6 +52,23 @@ namespace SephiriaOne
                         new[] { "Only the host can open the session settings panel." });
                 }
 
+                RabbitParseResult rabbit = RabbitCommand.Parse(command, out RabbitCommand rabbitCommand, out string rabbitError);
+                if (rabbit != RabbitParseResult.NotCommand)
+                {
+                    recognized = true;
+                    if (rabbit == RabbitParseResult.Help) return Reply(true, RabbitCommand.Usage);
+                    if (rabbit == RabbitParseResult.Invalid) return Reply(false, rabbitError);
+                    if (rabbit == RabbitParseResult.Status)
+                    {
+                        SettingsSnapshot snapshot = SessionSettings.ReadSnapshot();
+                        if (!snapshot.HostActive || snapshot.SessionIdentity == null) return Reply(false, snapshot.AvailabilityReason);
+                        return Reply(true, SessionSettings.DescribeRabbit(snapshot.RabbitPotions) +
+                            (snapshot.RabbitPotionsAvailable ? "" : " Potion hooks unavailable; native behavior continues. See Player.log."));
+                    }
+                    bool success = SessionSettings.TryExecuteRabbit(rabbitCommand, out string rabbitMessage);
+                    return Reply(success, rabbitMessage);
+                }
+
                 FountainParseResult fountain = FountainCommand.Parse(command, out FountainCommand fountainCommand, out string fountainError);
                 ChoiceParseResult choice = ChoiceCommand.Parse(command, out ChoiceCommand choiceCommand, out string choiceError);
                 StatParseResult stat = StatCommand.Parse(command, out StatCommand statCommand, out string statError);
@@ -72,7 +89,7 @@ namespace SephiriaOne
                 if (isPreset)
                 {
                     if (preset == PresetAction.Help)
-                        return Reply(true, presetError + " /one ui opens the host settings panel.");
+                        return Reply(true, presetError + " /one ui opens the host settings panel. /one rabbit help lists potion options.");
                     if (preset == PresetAction.Invalid) return Reply(false, presetError);
                     bool success = SessionSettings.TryExecutePreset(preset, out string[] messages);
                     return new SettingsActionResult(true, success, false, messages);

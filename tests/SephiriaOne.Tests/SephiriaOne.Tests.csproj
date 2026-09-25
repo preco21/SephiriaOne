@@ -6,6 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../SephiriaOne/Features/Rabbit/RabbitPotionSettings.cs" Link="Source/Features/Rabbit/RabbitPotionSettings.cs" />
+    <Compile Include="../../SephiriaOne/Features/Rabbit/RabbitCommand.cs" Link="Source/Features/Rabbit/RabbitCommand.cs" />
     <Compile Include="../../SephiriaOne/Features/Resources/Starting/*Plan.cs" Link="Source/Features/Resources/Starting/%(Filename)%(Extension)" />
     <Compile Include="../../SephiriaOne/Features/Resources/Resource*.cs" Link="Source/Features/Resources/%(Filename)%(Extension)" Exclude="../../SephiriaOne/Features/Resources/ResourceRuntime.cs;../../SephiriaOne/Features/Resources/ResourceNative.cs;../../SephiriaOne/Features/Resources/ResourceFeature.cs" />
     <Compile Include="../../SephiriaOne/Controls/RelativeMultiplier.cs" Link="Source/Controls/RelativeMultiplier.cs" />

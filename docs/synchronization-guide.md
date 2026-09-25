@@ -17,6 +17,8 @@ Version `0.13.0` adds a [host settings panel](control-panel.md) on the same serv
 | Fountain capacity and carryover cap | Player observation, ordered dependency, session invalidation, verified cap-only writes | Preserve native baseline and independent cap ownership |
 | Native Fountain grant and new candidate generation | `SessionSettings.BeforeNativeRead` / `EnsureFresh` | Native consumer and existing generation guards |
 | Owned name publication | Shared coordinator and readiness; bounded native-command acknowledgment retry | Format name and use the owned native transport |
+| Rabbit potion options | Policy, command authority/batch commit, presets and snapshots | Read current host intent on the native drink event; never replay healing during reconciliation |
+| Read-only settings views | `SessionSettings.SettingsChanged` after commit, preset load and scope clear; isolated callback failures | Refresh rendered text from current read-only policy without gameplay writes |
 
 Native equipment, costume, preset, passive-menu, buff, and spent hard-mode point
 changes are observed through their resulting raw/bonus/amplifier/capacity values.
@@ -73,6 +75,14 @@ Changing retained intent does not reapply unrelated settings.
 6. Extend policy serialization only if this feature needs explicit persistence.
    Add lifecycle and fault regressions using the portable core and runtime fixture
    projects, plus installed-game signature checks for new native boundaries.
+
+For event-driven options such as [Rabbit potions](rabbit-potions.md), keep the
+option in policy and validate live scope/participants at the native event.
+Do not register a recurring reconciliation action for a one-time effect such as
+healing. The current policy applies to reconnects without stale per-player flags.
+Read-only presentation subscribers can use `SettingsChanged`; exceptions are
+isolated and cannot turn a successful policy commit into a failed command.
+Subscribers must not perform gameplay writes or replay native menu-open handlers.
 
 The coordinator is independent of Unity. Existing tests register synthetic
 dependent rules without adding feature branches to its core.

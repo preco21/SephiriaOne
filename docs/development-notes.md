@@ -9,12 +9,21 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.16.0` adds independent [Wing-Eared Rabbit potion options](rabbit-potions.md):
+infinite healing-potion uses and nearby potion healing through native host events.
+Commands, the Rabbit panel, resets and v4 saved presets share the existing policy.
+Rejoining players read current intent on use; no healing is replayed by sync.
+The host's costume description shows enabled options through a shared read-only
+settings notification. Unmodified guests retain native description text.
+Both toggles default off. Automated verification is documented in the feature
+guide; live multiplayer/UI smoke testing remains pending. No deployment was run.
+
 Investigated a [host-only healing spell book and infinite potions](healing-item-investigation.md).
 A genuinely new legendary item requires matching guest definitions; host-only
 reuse of an existing HP potion appears feasible by suppressing consumption after
 its normal effect. Wing-Eared Rabbit natively shares buff spells, so nearby
-potion healing would be an explicit host-side extension. No gameplay change or
-deployment was made for this investigation.
+potion healing is an explicit host-side extension, now implemented above.
+The earlier investigation itself made no gameplay changes or deployment.
 
 Version `0.15.5` handles [penalty-costume stat multipliers and native fallback](penalty-stat-sync-review.md).
 An incompatible stat factor preserves that player's exact native raw value and

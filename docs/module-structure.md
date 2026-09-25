@@ -18,6 +18,8 @@ SephiriaOne/
     Choices/
     Fountain/
     Names/
+    Rabbit/
+    Resources/
     Stats/
   Infrastructure/
   Session/
@@ -38,9 +40,11 @@ SephiriaOne/
 | `Features/Choices/` | Candidate command parsing/planning, host writes, and Harmony generation guards. |
 | `Features/Fountain/` | Fountain command parsing/planning, point writes, and carryover-cap operations. |
 | `Features/Names/` | Gradient formatting, native publication controller, and synchronized name state. |
+| `Features/Rabbit/` | Potion option parsing/settings, native successful-drink hooks and host costume-description adapter. |
+| `Features/Resources/` | Starting grants, capacity/budget policy and native resource boundaries. |
 | `Features/Stats/` | Character stat catalog, commands, exact arithmetic, and host batch updates. |
 | `Infrastructure/` | Shared embedded Harmony runtime loading. |
-| `Session/` | Policy, registered inheritance/maintenance rules, scope lifecycle, diagnostics, read-only settings capture, and critical native read boundaries. |
+| `Session/` | Policy, registered inheritance/maintenance rules, scope lifecycle, diagnostics, read-only settings capture/change notifications, and critical native read boundaries. |
 | `Synchronization/Core/` | Unity-independent reconciliation, reference identity, outcome records, and journaled write batches. |
 | `Synchronization/Game/` | Shared host readiness, player/native snapshots, preflight/readback, and native write helpers. |
 | `Session/Presets/` | Saved policy codec/storage and status/save/forget commands. |
@@ -53,7 +57,8 @@ calculations; session code coordinates their application across players/events.
 All production types use the `SephiriaOne` namespace. The metadata entry type,
 gameplay Harmony ownership, embedded-resource names and partial-class identities
 remain stable. `MultiplayerNameController` replaces the former local color
-controller; there are no presentation Harmony patches. These folders
+controller. Version `0.16.0` adds a narrow host-local costume-description hook for
+the requested Rabbit options; it does not style guest UI. These folders
 do not create separate assemblies or introduce new dependency boundaries.
 
 The portable test project mirrors `Features/` and `Session/Presets/`; installed

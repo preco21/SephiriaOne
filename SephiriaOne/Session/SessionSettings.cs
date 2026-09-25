@@ -88,6 +88,7 @@ namespace SephiriaOne
             restoreFountainLimit = false; runGeneration = 0; intentRevision = 0;
             failedBatch = null; failedFeature = null; failedReason = null; recovered = null; criticalFresh = true;
             boundaries.Clear();
+            NotifySettingsChanged();
         }
 
         public static void Stop()
@@ -134,6 +135,7 @@ namespace SephiriaOne
             if (failedBatch != null || applyingCommand || synchronizing)
             { message = "Another state write is faulted or still processing. Inspect /one status before retrying."; return false; }
             applyingCommand = true;
+            bool committed = false;
             try
             {
                 if (!batch.TryCommit(out message))
@@ -142,9 +144,14 @@ namespace SephiriaOne
                     return false;
                 }
                 remember(); intentRevision++;
+                committed = true;
                 return true;
             }
-            finally { applyingCommand = false; }
+            finally
+            {
+                applyingCommand = false;
+                if (committed) NotifySettingsChanged();
+            }
         }
 
         internal static bool Recover(StateWriteBatch batch, out string message)

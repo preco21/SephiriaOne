@@ -6,6 +6,8 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../SephiriaOne/Features/Rabbit/RabbitPotionSettings.cs" Link="Source/Features/Rabbit/RabbitPotionSettings.cs" />
+    <Compile Include="../../SephiriaOne/Features/Rabbit/RabbitCommand.cs" Link="Source/Features/Rabbit/RabbitCommand.cs" />
     <Compile Include="../../SephiriaOne/Features/Names/MultiplayerNameColor.cs" Link="Source/Features/Names/MultiplayerNameColor.cs" />
     <Compile Include="../../SephiriaOne/Features/Names/NetworkNameState.cs" Link="Source/Features/Names/NetworkNameState.cs" />
     <Compile Include="../../SephiriaOne/Features/Names/NameGradient.cs" Link="Source/Features/Names/NameGradient.cs" />
@@ -29,6 +31,8 @@
     <Compile Include="../../SephiriaOne/Session/SessionStatPolicy.cs" Link="Source/Session/SessionStatPolicy.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionFountainPolicy.cs" Link="Source/Session/SessionFountainPolicy.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionSettings.cs" Link="Source/Session/SessionSettings.cs" />
+    <Compile Include="../../SephiriaOne/Session/SessionRabbit.cs" Link="Source/Session/SessionRabbit.cs" />
+    <Compile Include="../../SephiriaOne/Session/SessionSettingsNotifications.cs" Link="Source/Session/SessionSettingsNotifications.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionDiagnostics.cs" Link="Source/Session/SessionDiagnostics.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionRelativeStats.cs" Link="Source/Session/SessionRelativeStats.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionFountainState.cs" Link="Source/Session/SessionFountainState.cs" />
