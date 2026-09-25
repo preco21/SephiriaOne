@@ -9,6 +9,13 @@ can change independently of that installed game version.
 
 ## Current status
 
+Investigated a [host-only healing spell book and infinite potions](healing-item-investigation.md).
+A genuinely new legendary item requires matching guest definitions; host-only
+reuse of an existing HP potion appears feasible by suppressing consumption after
+its normal effect. Wing-Eared Rabbit natively shares buff spells, so nearby
+potion healing would be an explicit host-side extension. No gameplay change or
+deployment was made for this investigation.
+
 Version `0.15.5` handles [penalty-costume stat multipliers and native fallback](penalty-stat-sync-review.md).
 An incompatible stat factor preserves that player's exact native raw value and
 zero addon contribution while other players/settings still apply. The shared
