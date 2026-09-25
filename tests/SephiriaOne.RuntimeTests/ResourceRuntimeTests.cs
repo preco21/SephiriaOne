@@ -78,12 +78,19 @@ internal static class ResourceRuntimeTests
         host = start(); guest = add(2, 7, 2, 0);
         host.PlayerAvatar.currentMoney = 123; host.PlayerAvatar.rerollDice = 1;
         guest.PlayerAvatar.StartingLeaves = 200; guest.PlayerAvatar.maxRerollDice = 5;
+        check(!ResourceRuntime.TryGetIntent(ResourceKind.Leaves, out _), "No session intent permits an existing saved pending allowance");
         check(Command("leaves x3") && Command("dice +10"), "Future grant policies accepted");
+        check(ResourceRuntime.TryGetIntent(ResourceKind.Leaves, out var startingIntent) && startingIntent.Amount == 3 &&
+            startingIntent.Mode == ResourceMode.Multiplier, "Grant boundary can read the current leaves command intent");
         check(host.PlayerAvatar.currentMoney == 123 && host.PlayerAvatar.rerollDice == 1 && host.PlayerAvatar.maxRerollDice == 3,
             "Starting commands never refill live balances or change live dice maximum");
         var snapshot = SessionSettings.ReadSnapshot();
-        check(snapshot.Players[0].Resources["leaves"].Contains("next fresh start 300") && snapshot.Players[1].Resources["leaves"].Contains("next fresh start 600"),
+        check(snapshot.Players[0].Resources["leaves"].Contains("starting allowance 300") && snapshot.Players[1].Resources["leaves"].Contains("starting allowance 600"),
             "Read-only status shows separate character-specific next grants");
+        check(Command("leaves reset") && ResourceRuntime.TryGetIntent(ResourceKind.Leaves, out startingIntent) && startingIntent.Empty &&
+            !ResourceRuntime.TryGetSetting(ResourceKind.Leaves, out _) && host.PlayerAvatar.currentMoney == 123,
+            "Explicit leaves reset overrides a pending checkpoint without changing the wallet");
+        check(Command("leaves x3"), "Restore factor for saved-preset coverage");
         check(Command("dice reset") && host.PlayerAvatar.rerollDice == 1, "Future dice reset does not alter current spendable dice");
         check(SettingsActions.Execute("/one save").Success, "Resource intent explicitly saves");
         check(SessionSettings.ReadSnapshot(true).SavedSettings.Any(x => x == "resources leaves multiplier 3"), "Saved resource policy visible in shared snapshot");

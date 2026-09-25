@@ -119,8 +119,11 @@ namespace SephiriaOne
                             bool valid = !sameSession || !policy.Resources.TryGet(definition.Kind, out ResourceSetting setting) ||
                                 setting.TryTarget(native, definition.Minimum, definition.Maximum, out target, out _);
                             int balance = definition.Kind == ResourceKind.Dice ? player.rerollDice : player.currentMoney;
-                            description = "Current balance " + balance + "; next fresh start " + (valid ? target.ToString() : "invalid") +
-                                " (native " + native + "). Grants already begun stay unchanged.";
+                            bool leaves = definition.Kind == ResourceKind.Leaves;
+                            description = "Current balance " + balance + (leaves ? "; starting allowance " : "; next fresh start ") +
+                                (valid ? target.ToString() : "invalid") + " (native " + native + "). " +
+                                (leaves ? "Pending first departure uses the latest setting; already paid leaves cannot be reclaimed." :
+                                    "Grants already begun stay unchanged.");
                         }
                         else description = "Total " + total + " (native " + native + ", addon " + Signed(value.Owned) +
                             "); " + (definition.Kind == ResourceKind.Slots ? "minimum safe capacity " : "allocated/selected ") + value.MinimumSafe +

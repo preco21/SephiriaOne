@@ -258,7 +258,8 @@ namespace SephiriaOne
                 {
                     ResourceSetting setting = default;
                     bool active = Available && ResourceRuntime.TryGetSetting(ResourceKind.Leaves, out setting);
-                    // Definite assignment also keeps absent/reset intent frozen.
+                    // Capture the initial allocation. A later explicit host intent
+                    // can still change its uncommitted first-departure remainder.
                     if (!active) setting = default;
                     checkpoint = new MoneyCheckpoint { Active = active, Setting = setting, Seed = nativeAmount, Granted = nativeAmount };
                     if (nativeAmount < 0) throw new InvalidOperationException("Native initial leaves are negative.");
@@ -382,12 +383,20 @@ namespace SephiriaOne
                 state = State(player);
                 if (state.MoneyFailed) return 0;
                 state.Money = state.Money ?? ReadMoney(state);
-                // Installed during a run: preserve native behavior. New command
-                // intent must not be enrolled retroactively at this boundary.
+                // Without seed history, do not invent or replay an allocation.
                 if (state.Money == null) return nativeBonus;
                 if (state.Money.Departed) return 0;
                 if (state.PendingDeparture.HasValue) throw new InvalidOperationException("Reentrant starting-leaf departure grant.");
                 MoneyCheckpoint checkpoint = state.Money;
+                // Lobby initialization happens before the player can edit settings.
+                // Use current host intent (including reset) for the outstanding
+                // grant; never recalculate the already paid seed or live wallet.
+                // No session intent means a saved pending allocation remains valid.
+                if (Available && ResourceRuntime.TryGetIntent(ResourceKind.Leaves, out ResourceSetting setting))
+                {
+                    checkpoint.Active = !setting.Empty;
+                    checkpoint.Setting = setting;
+                }
                 if (!StartingResourcePlan.TryDeparture(checkpoint.Seed, checkpoint.Granted, Math.Max(0, nativeBonus),
                     Available && checkpoint.Active, checkpoint.Setting, MoneyMaximum,
                     out int grant, out bool fallback, out string error)) throw new InvalidOperationException(error);

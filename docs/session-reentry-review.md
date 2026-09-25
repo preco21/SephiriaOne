@@ -16,7 +16,7 @@ Decompiled game code and binaries remain outside the repository.
 | Stats, Fountain, choices | The current host policy is planned against the new avatar's native inputs. Native saves do not restore the addon raw dictionaries/ownership markers or Fountain contribution. Offline resets therefore do not resurrect old adjustments. |
 | Fruit budget | Current policy follows the new avatar's native default/raw/bonus/amplifier inputs and committed selection cost. No saved scalar checkpoint bypasses current policy. |
 | Names | Owned-avatar replacement resets name acknowledgment/retry state. The native handshake supplies the current profile name. Existing native replication and guest UI refresh timing still apply. |
-| Dice and leaves | The disconnect hook checkpoints current balances, including zero, and retires the old avatar's grant record. Reconnect restores these balances and the original grant metadata; changed future-grant policies cannot refill them. A pending first-departure allowance remains frozen and can complete only once. |
+| Dice and leaves | The disconnect hook checkpoints current balances, including zero, and retires the old avatar's grant record. Reconnect restores these balances and the original grant metadata; changed future-grant policies cannot refill them. As of 0.15.4, a still-pending first-departure leaf remainder uses current host intent, including reset, and completes only once. Completed grants and dice balances remain unchanged. |
 
 Native GUID-to-save-slot resolution precedes player initialization. Native server
 disconnect saving precedes destruction of the connection's avatar, and Mirror

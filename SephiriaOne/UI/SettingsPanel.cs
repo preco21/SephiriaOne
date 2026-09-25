@@ -171,7 +171,7 @@ namespace SephiriaOne
             }
             string help = page == 0 ? "Set accepts x3 = each native stat times 3; x1 restores native. Add/subtract start a new offset after Set or xN." :
                 page == 1 ? "Set accepts x3 = each native allowance times 3; x1 restores native. Add/subtract after xN start a new offset." :
-                page == 3 ? "Set accepts xN = native baseline times N. Dice/leaves: future starts only. Set budgets preserve later native gains; unsafe reductions are rejected." :
+                page == 3 ? "xN = native baseline times N. Dice: future starts. Leaves: change before first departure. Current balances stay unchanged; unsafe budget reductions are rejected." :
                 "Amounts are extra candidates, not totals. Existing offers stay cached; new offers use the updated stats.";
             widgets.Text(pageRoot, "Help", help, 16, 88, 273, 46, 9);
             if (page == 1)
@@ -208,7 +208,8 @@ namespace SephiriaOne
             {
                 var definition = ResourceCatalog.All[resourceIndex];
                 selection.text = definition.Label;
-                units.text = definition.Minimum + ".." + definition.Maximum + " whole numbers | " + (definition.StartingOnly ? "future starts" : "all players");
+                units.text = definition.Minimum + ".." + definition.Maximum + " whole numbers | " +
+                    (definition.Kind == ResourceKind.Leaves ? "pending starting grant" : definition.StartingOnly ? "future starts" : "all players");
             }
             else { selection.text = Choices[choiceIndex] == "all" ? "All choice categories" : Choices[choiceIndex] + " choices"; units.text = "Extra candidates: 0..20. Native multipliers still apply."; }
         }

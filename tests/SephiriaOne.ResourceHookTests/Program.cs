@@ -13,14 +13,101 @@ void Dice(PlayerAvatar p,int amount)=>Call("InitializeDice",p,amount);
 void Depart(PlayerAvatar p){int amount=(int)Call("PlanDepartureMoney",p,"STARTINGMONEY");if(amount>0)Call("ApplyDepartureMoney",p,amount);}
 void Disconnect(PlayerAvatar p)=>Call("BeforeDisconnect",new Mirror.NetworkConnectionToClient{identity=new Mirror.NetworkIdentity{Player=p}});
 bool UninstallFails(){try{StartingResourceHooks.Uninstall();return false;}catch(InvalidOperationException){return true;}}
-Reset();var p=NewPlayer();p.Bonus=100;ResourceRuntime.Policy[ResourceKind.Leaves]=new(ResourceMode.Set,500);Seed(p,200);Check(p.currentMoney==200,"seed does not advance addon");p.currentMoney-=50;p.currentMoney+=20;ResourceRuntime.Policy[ResourceKind.Leaves]=new(ResourceMode.Set,900);Depart(p);Check(p.currentMoney==470,"frozen target preserves earnings/spend");Depart(p);Check(p.currentMoney==470,"departure once");
+// Lobby initialization precedes a command typed immediately before departure.
+Reset();
+var latePlayer = NewPlayer();
+latePlayer.Bonus = 100;
+Seed(latePlayer, 200);
+latePlayer.currentMoney -= 50;
+latePlayer.currentMoney += 20;
+ResourceRuntime.Policy[ResourceKind.Leaves] = new(ResourceMode.Multiplier, 3);
+Check(latePlayer.currentMoney == 170, "lobby leaf setting does not immediately change the wallet");
+Depart(latePlayer);
+Check(latePlayer.currentMoney == 870, "multiplier selected after lobby initialization affects the imminent departure");
+Depart(latePlayer);
+Check(latePlayer.currentMoney == 870, "late multiplier does not grant twice");
+
+Reset();
+latePlayer = NewPlayer();
+Seed(latePlayer, 200);
+ResourceRuntime.Policy[ResourceKind.Leaves] = new(ResourceMode.Multiplier, 2);
+ResourceRuntime.Policy[ResourceKind.Leaves] = new(ResourceMode.Multiplier, 3);
+Depart(latePlayer);
+Check(latePlayer.currentMoney == 600, "latest factor replaces earlier factor even when native departure bonus is zero");
+ResourceRuntime.Policy[ResourceKind.Leaves] = new(ResourceMode.Set, 900);
+latePlayer.currentMoney = 0;
+Depart(latePlayer);
+Check(latePlayer.currentMoney == 0, "edits after departure do not refill a spent wallet");
+
+Reset();
+latePlayer = NewPlayer();
+ResourceRuntime.Policy[ResourceKind.Leaves] = new(ResourceMode.Set, 20);
+Seed(latePlayer, 200);
+latePlayer.currentMoney = 5;
+latePlayer.Bonus = 100;
+ResourceRuntime.Policy[ResourceKind.Leaves] = new(ResourceMode.Offset, 0); // Explicit reset intent.
+Reload(); // Use the persisted initial allocation, not an in-memory-only setting.
+Depart(latePlayer);
+Check(latePlayer.currentMoney == 285, "lobby reset releases withheld native seed without refunding spending");
+
+Reset();
+latePlayer = NewPlayer();
+ResourceRuntime.Policy[ResourceKind.Leaves] = new(ResourceMode.Set, 500);
+Seed(latePlayer, 200);
+latePlayer.Bonus = 100;
+ResourceRuntime.Policy.Clear(); // New host scope with no overriding command/preset.
+Reload();
+Depart(latePlayer);
+Check(latePlayer.currentMoney == 500, "saved pending allowance survives absent host intent");
+
+Reset();
+latePlayer = NewPlayer();
+Seed(latePlayer, 200);
+latePlayer.Bonus = 100;
+latePlayer.currentMoney = 170;
+ResourceRuntime.Policy[ResourceKind.Leaves] = new(ResourceMode.Multiplier, 0.5m);
+Depart(latePlayer);
+Check(latePlayer.currentMoney == 270 && ResourceRuntime.Warnings.Count == 1,
+    "late target below already paid seed falls back without confiscating money");
+
+Reset();
+latePlayer = NewPlayer();
+Seed(latePlayer, 200);
+ResourceRuntime.Policy[ResourceKind.Leaves] = new(ResourceMode.Offset, 50);
+int committedGrant = (int)Call("PlanDepartureMoney", latePlayer, "STARTINGMONEY");
+ResourceRuntime.Policy[ResourceKind.Leaves] = new(ResourceMode.Set, 900);
+Call("ApplyDepartureMoney", latePlayer, committedGrant);
+Depart(latePlayer);
+Check(latePlayer.currentMoney == 250, "intent cannot replace a grant between its plan and write or replay it afterward");
+
+Reset();
+var departingParty = new List<PlayerAvatar>();
+for (int index = 0; index < 5; index++)
+{
+    var member = NewPlayer();
+    member.spawner.currentPlayerIdxForSave = index;
+    member.spawner.playerGuid = "leaves-player-" + index;
+    member.Bonus = index * 10;
+    Seed(member, 50 + index * 20);
+    member.currentMoney -= index;
+    departingParty.Add(member);
+}
+ResourceRuntime.Policy[ResourceKind.Leaves] = new(ResourceMode.Multiplier, 3);
+for (int index = 0; index < departingParty.Count; index++)
+{
+    Depart(departingParty[index]);
+    Check(departingParty[index].currentMoney == (50 + index * 30) * 3 - index,
+        "late multiplayer multiplier uses each player's seed, bonus and spending");
+}
+
+Reset();var p=NewPlayer();p.Bonus=100;ResourceRuntime.Policy[ResourceKind.Leaves]=new(ResourceMode.Set,500);Seed(p,200);Check(p.currentMoney==200,"seed does not advance addon");p.currentMoney-=50;p.currentMoney+=20;ResourceRuntime.Policy[ResourceKind.Leaves]=new(ResourceMode.Set,900);Depart(p);Check(p.currentMoney==870,"latest target preserves earnings/spend");Depart(p);Check(p.currentMoney==870,"departure once");
 Reset();p=NewPlayer();p.Bonus=100;ResourceRuntime.Policy[ResourceKind.Leaves]=new(ResourceMode.Offset,-250);Seed(p,200);p.currentMoney+=30;Depart(p);Check(p.currentMoney==80,"negative allowance uses grants only");
 Reset();p=NewPlayer();ResourceRuntime.Policy[ResourceKind.Leaves]=new(ResourceMode.Multiplier,0.5m);Seed(p,101);p.currentMoney-=20;Depart(p);Check(p.currentMoney==81,"invalid exact result restores withheld native seed");Check(ResourceRuntime.Warnings.Count==1,"invalid future setting warning");
 Reset();p=NewPlayer();ResourceRuntime.Policy[ResourceKind.Dice]=new(ResourceMode.Offset,2);Dice(p,3);Check(p.rerollDice==5&&p.maxRerollDice==5,"initial dice grants once");p.rerollDice=0;Seed(p,200);p.currentMoney=0;Disconnect(p);var q=NewPlayer();Seed(q,SaveManager.CurrentRun.GetInt("Player0Money"));Dice(q,SaveManager.CurrentRun.GetInt("Player0RerollDice"));Check(q.currentMoney==0&&q.rerollDice==0,"saved zero restored");Check(q.maxRerollDice==5&&StartingResourceHooks.NativeDice(q)==3,"max contribution restored once");
 NewRun();p.currentMoney=0;Dice(p,p.maxRerollDice);Check(p.maxRerollDice==5&&p.rerollDice==5,"restart surviving avatar does not stack maximum");p.rerollDice=2;Dice(p,5);Check(p.rerollDice==2,"duplicate initializer no refill");Reload();Dice(p,5);Check(p.rerollDice==2&&p.maxRerollDice==5,"reload marker prevents refill and stacking");
 NewRun();ResourceRuntime.Policy.Clear();Dice(p,p.maxRerollDice);Check(p.rerollDice==3&&p.maxRerollDice==3,"reset affects next fresh grant only");
 Reset();p=NewPlayer();DungeonManager.Instance.dungeonEnvironment["IsInDungeon"]=1;ResourceRuntime.Policy[ResourceKind.Leaves]=new(ResourceMode.Set,500);Seed(p,200);Check(p.currentMoney==500,"new midrun player receives one total");Depart(p);Check(p.currentMoney==500,"midrun player no extra departure");
-Reset();p=NewPlayer();ResourceRuntime.Policy[ResourceKind.Leaves]=new(ResourceMode.Set,20);Seed(p,200);p.currentMoney=5;Disconnect(p);q=NewPlayer();Seed(q,SaveManager.CurrentRun.GetInt("Player0Money"));Check(q.currentMoney==5,"town reconnect preserves spending");q.Bonus=100;Depart(q);Check(q.currentMoney==5,"town reconnect preserves frozen allocation");
+Reset();p=NewPlayer();ResourceRuntime.Policy[ResourceKind.Leaves]=new(ResourceMode.Set,20);Seed(p,200);p.currentMoney=5;Disconnect(p);q=NewPlayer();Seed(q,SaveManager.CurrentRun.GetInt("Player0Money"));Check(q.currentMoney==5,"town reconnect preserves spending");q.Bonus=100;Depart(q);Check(q.currentMoney==5,"unchanged town allowance does not refill a restored balance");
 Reset();p=NewPlayer();ResourceRuntime.Policy[ResourceKind.Leaves]=new(ResourceMode.Set,20);Seed(p,200);p.currentMoney=5;ResourceRuntime.Policy[ResourceKind.Dice]=new(ResourceMode.Offset,2);Dice(p,3);p.rerollDice=1;StartingResourceHooks.Uninstall();Check(p.currentMoney==185,"unload restores only withheld native seed");Check(p.rerollDice==1&&p.maxRerollDice==3,"unload does not refill dice");
 Reset();p=NewPlayer();ResourceRuntime.Policy[ResourceKind.Leaves]=new(ResourceMode.Set,20);p.OnMoneyWrite=_=>throw new Exception("injected after write");Seed(p,200);Check(p.currentMoney==20&&!StartingResourceHooks.Available,"possible write fault contained");p.OnMoneyWrite=null;Seed(p,200);Check(p.currentMoney==20,"failed write is not replayed");
 // Unloading must checkpoint current balances, not the original grant amounts.
@@ -126,7 +213,7 @@ SaveManager.CurrentRun.SetInt("SaveVersion", 2);
 reconnect.Bonus = 100;
 Depart(reconnect);
 Check(reconnect.currentMoney == 5 && StartingResourceHooks.Available,
-    "native save-version migration preserves frozen starting allocation and identity");
+    "native save-version migration preserves the starting allocation and identity");
 
 // Repeated full guest exits replace the avatar and connection, while native GUID
 // resolution selects the same save slot. Keep the host session and hook cache
@@ -192,9 +279,9 @@ for (int cycle = 0; cycle < 3; cycle++)
         $"reconnect cycle {cycle}: original dice ownership restores exactly once");
 
     Depart(guest);
-    int expectedAfterDeparture = expectedMoney[cycle] + (cycle == 0 ? 300 : 0);
+    int expectedAfterDeparture = expectedMoney[cycle] + (cycle == 0 ? 700 : 0);
     Check(guest.currentMoney == expectedAfterDeparture,
-        $"reconnect cycle {cycle}: original frozen allowance departs once without refill");
+        $"reconnect cycle {cycle}: latest pending allowance departs once without refill");
     Seed(guest, 200);
     Dice(guest, 3);
     Depart(guest);

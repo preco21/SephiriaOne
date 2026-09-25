@@ -49,18 +49,28 @@ contribution retained, rather than discarding items or allocated points.
 ## Starting grants and saved runs
 
 Dice/leaf commands never refill or subtract from current spendable balances.
-Their policy is fixed when a fresh initialization grant begins. Changing it while
-already in the lobby affects the next fresh initialization, not that lobby's
-pending departure grant. Save the settings before exiting to retain them for
-future hosted sessions.
+Dice policy is fixed when a fresh initialization grant begins. Starting leaves
+can be changed in the lobby until the first departure: as of **0.15.4**, that
+pending grant reads the latest host setting, including reset. Save the settings
+before exiting to retain them for future hosted sessions.
 
 Leaves have a tree-shop seed followed by the native `STARTINGMONEY` departure
 grant. The addon grants at most the normal seed initially; any additional amount
 arrives at departure. This permits decreases without confiscating intervening
-earnings. If later native inputs make the requested total invalid, it restores
+earnings when configured before initialization. A late decrease cannot reclaim
+the seed already granted. If the new target is below that paid seed, or later
+native inputs make the requested total invalid, it restores
 the withheld native portion and uses the native allowance, with a warning.
 Spending and earnings between these two grants remain intact. Brand-new arrivals
 already inside a dungeon have only their native initialization seed as baseline.
+
+For example, native seed 200 plus departure bonus 100 has an allowance of 300.
+Setting `leaves x3` in the lobby makes the total allowance 900: departure adds
+700 after the 200 already granted. Spending 50 and earning 20 in town leaves
+870 after departure. Repeating the factor or moving to another floor does not
+grant that amount again. A reconnect before first departure restores its spent
+balance and uses the current host intent for the still-unpaid remainder. A saved
+pending allocation remains the fallback if a new host scope has no leaves intent.
 
 Saved zero dice/leaves means spent resources. Restoring a saved run or reconnecting
 restores the saved balance, without multiplying it or granting it again. Separate

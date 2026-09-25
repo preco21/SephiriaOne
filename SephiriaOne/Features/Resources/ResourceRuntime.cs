@@ -34,6 +34,11 @@ namespace SephiriaOne
             setting = default;
             return SessionSettings.EnsureResourceScope() && SessionSettings.ResourcePolicy.TryGet(kind, out setting);
         }
+        public static bool TryGetIntent(ResourceKind kind, out ResourceSetting setting)
+        {
+            setting = default;
+            return SessionSettings.EnsureResourceScope() && SessionSettings.ResourcePolicy.TryGetIntent(kind, out setting);
+        }
         public static void Report(string message) => Debug.LogWarning("[SephiriaOne] " + message);
 
         public static void ReportTalentRejection(uint playerId)
@@ -101,7 +106,9 @@ namespace SephiriaOne
                         Accept(player, definition.Kind);
                     }
             }, out message)) return false;
-            message = command.Definition?.StartingOnly == true ?
+            message = command.Definition?.Kind == ResourceKind.Leaves ?
+                "Updated starting leaves, including a pending first departure. Current balances stay unchanged; completed grants are not repeated." :
+                command.Definition?.StartingOnly == true ?
                 "Updated future fresh-run " + command.Definition.Label.ToLowerInvariant() + ". Current balances and grants already begun are unchanged." :
                 "Updated resource settings for " + context.Players.Count + " player(s). Occupied slots and native selections were preserved.";
             return true;

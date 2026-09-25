@@ -9,6 +9,11 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.15.4` fixes [starting leaves changed just before departure](leaves-departure-fix.md).
+The pending first-departure grant reads current host intent rather than the value
+captured when the lobby character initialized. Paid seed, spending, reconnect
+balances and completed grants remain intact. Command/panel hints describe the timing.
+
 Version `0.15.3` investigates [two multiplayer disconnects](disconnect-investigation.md).
 Their cause remains unconfirmed. A separate live talent-preset rejection no longer
 escapes into Mirror's disconnect handler; initial save-restoration guards remain.
