@@ -125,6 +125,12 @@ dotnet run --project tests/SephiriaOne.DisconnectTests -c Release -p:DeployMod=f
 
 ## Evidence needed if it recurs
 
+The 2026-09-26 recurrence was reviewed in
+[penalty costumes and synchronization](penalty-stat-sync-review.md). That review
+connects the stat fallback status to the Fountain freshness warning and fixes
+incompatible multiplier inheritance. It records new Steam send-buffer/timeout
+evidence, but does not establish the cause of the peer disconnects.
+
 Keep the host and affected guest `Player.log`/`Player-prev.log` before another
 launch replaces them. A guest-side Mirror exception/deserialization trace or a
 Unity crash log can distinguish invalid client state from Steam connection loss.

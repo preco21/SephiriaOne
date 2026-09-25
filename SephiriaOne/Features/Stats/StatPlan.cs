@@ -30,7 +30,10 @@ namespace SephiriaOne
     {
         public int Raw { get; }
         public int Contribution { get; }
-        public StatUpdate(int raw, int contribution) { Raw = raw; Contribution = contribution; }
+        public string NativeFallbackReason { get; }
+        public bool UsesNativeFallback => !string.IsNullOrEmpty(NativeFallbackReason);
+        public StatUpdate(int raw, int contribution, string nativeFallbackReason = "")
+        { Raw = raw; Contribution = contribution; NativeFallbackReason = nativeFallbackReason; }
     }
 
     internal static class StatPlanner

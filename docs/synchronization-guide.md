@@ -57,6 +57,12 @@ Changing retained intent does not reapply unrelated settings.
    `IEquatable<TSnapshot>` on custom value snapshots. Include every planner input;
    do not substitute a lossy hash or mutate a retained observation object.
    `TryGetResult` reads a single outcome without allocating a diagnostic list.
+   Since `0.15.5`, return `NativeFallback(reason)` only after a validated batch
+   has restored the feature's exact native state and removed its owned adjustment.
+   `ReconcileResult.IsFresh` accepts `Applied` and `NativeFallback`; waiting,
+   suspension without proven restoration, rejection and faults remain unready.
+   Fallback retains desired intent and its observations so a later native change
+   can resume it. Never use it to acknowledge an incomplete join or partial write.
 4. Scope subjects by object lifetime, and call `Forget` on departure and `Clear`
    at teardown. Keep one-time inheritance separate from continuing maintenance.
    `AcceptObservation` is only for separately validated command/recovery work,
@@ -110,7 +116,7 @@ can regenerate an offer, alter selections or grant an item. See the
 
 `/one status` is read-only: it does not process pending joins or write game state.
 It shows session epoch, run generation, intent revision, rule outcomes and
-reasons, relative suspension, critical-hook availability, last boundary results,
+reasons, verified native fallback or unresolved suspension, critical-hook availability, last boundary results,
 native name synchronization status, and any before/target/readback journal.
 
 Preflight rejects stale plans before writes. Unity/Mirror writes are not an atomic

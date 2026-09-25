@@ -123,8 +123,9 @@ internal static class ResourceRuntimeTests
         check(late.PlayerAvatar.maxPassivePoint == 14, "Ordinary inheritance after early application does not duplicate resource contribution");
 
         host = start();
-        check(SettingsActions.Execute("/stats luck x2").Success && Command("talents +5"), "Combined inheritance policy prepared");
-        late = add(2, 6000, 4, 0);
+        check(SettingsActions.Execute("/stats luck set 11").Success && Command("talents +5"), "Combined inheritance policy prepared");
+        late = add(2, 7, 4, 0);
+        late.PlayerAvatar.customStatsAmp["LUCK"] = 100;
         SessionSettings.Synchronize(); SessionSettings.Synchronize();
         check(late.PlayerAvatar.maxPassivePoint == 5 && Owned(late.PlayerAvatar, ResourceKind.Talents) == 0,
             "Rejected stat inheritance cannot partially enroll resource maintenance");

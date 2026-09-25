@@ -52,12 +52,17 @@ into the next baseline or stack on subsequent frames. Ready-player guards apply
 during native initialization. Server/dungeon changes and unload clear tracking.
 
 If an exact offset becomes impossible (e.g. +1 luck with a 2x multiplier), remove
-that stat's addon contribution and mark it suspended. Warn once per suspension,
+that stat's addon contribution. Since `0.15.5`, verified restoration is reported
+as `NativeFallback` and is fresh for native consumers. Warn once per fallback,
 retry when inputs change, and resume if compatible. If even baseline subtraction
 overflows, leave that value untouched and report it instead. Desired offsets
 remain in the policy and saved preset. Initially rejected full inheritance still
 applies nothing and is not retried silently; a successful explicit command is
 needed to enroll that stat for that avatar.
+Well-formed stat multipliers now have per-player native fallback during initial
+planning too, so an incompatible costume does not reject all-family inheritance.
+Add/Subtract and absolute Set commands retain their initial validation rules.
+See the [penalty-stat review](penalty-stat-sync-review.md).
 
 ## Synchronization and limits
 

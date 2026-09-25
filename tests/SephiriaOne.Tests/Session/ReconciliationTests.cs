@@ -127,6 +127,20 @@ internal static class ReconciliationTests
         legacy.Register(new ReconciliationRule<Subject>("legacy", SyncDomain.Stats, SyncDomain.None,
             ReconcileMode.OnChange, s => true, s => s.Input, s => ReconcileResult.Applied()));
         Check(legacy.Reconcile(subject) && legacy.Reconcile(subject), "Object observation constructor remains compatible");
+        foreach (var result in new[] { ReconcileResult.Applied(), ReconcileResult.NativeFallback("native restored"),
+            ReconcileResult.Waiting("native loading"), ReconcileResult.Suspended("cannot restore"),
+            ReconcileResult.Rejected("invalid inputs"), ReconcileResult.Faulted("partial write") })
+        {
+            var readiness = new ReconciliationCoordinator<Subject>();
+            int calls = 0;
+            readiness.Register(ReconciliationRule<Subject>.ObserveValue("readiness", SyncDomain.Stats, SyncDomain.None,
+                ReconcileMode.OnChange, s => s.Ready, s => s.Input, s => { calls++; return result; }));
+            bool expected = result.State == ReconcileState.Applied || result.State == ReconcileState.NativeFallback;
+            Check(readiness.Reconcile(subject) == expected && readiness.Reconcile(subject) == expected,
+                "Only verified application or native fallback is fresh: " + result.State);
+            Check(calls == (result.State == ReconcileState.WaitingForReadiness ? 2 : 1),
+                "Fallback and unresolved stable outcomes do not busy retry: " + result.State);
+        }
         return checks;
     }
 }

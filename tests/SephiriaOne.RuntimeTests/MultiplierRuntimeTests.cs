@@ -46,7 +46,7 @@ internal static class MultiplierRuntimeTests
             check(Points(arrival) == 33 + i * 3 && Limit() == Points(arrival) && Luck(arrival) == 27,
                 "Reused avatars retain multiplier after restart without replay or stale carryover");
         }
-        check(!Do("/stats luck x10000") && !Do("/fountain x10000.01") && !Do("/choices all x3"),
+        check(!Do("/stats luck x10001") && !Do("/fountain x10000.01") && !Do("/choices all x3"),
             "Invalid factors and unsupported family are rejected");
         SessionSettings.Synchronize();
         check(Luck(arrival) == 27 && Points(arrival) == 36, "Rejected commands leave prior factor and values intact");
@@ -66,8 +66,8 @@ internal static class MultiplierRuntimeTests
         int warnings = UnityEngine.Debug.Warnings.Count;
         SessionSettings.Synchronize();
         check(Points(host) == 5 && UnityEngine.Debug.Warnings.Count == warnings &&
-            SessionSettings.ReadSnapshot().Lines.Any(s => s.Contains("fountain-multiplier: Suspended")),
-            "Suspended Fountain factor is visible without retry or warning spam");
+            SessionSettings.ReadSnapshot().Lines.Any(s => s.Contains("fountain-multiplier: NativeFallback")) && SessionSettings.EnsureFresh(),
+            "Restored native Fountain capacity is fresh without retry or warning spam");
         host.PlayerAvatar.Inventory.dimensionPocket += 1;
         SessionSettings.Synchronize();
         check(Points(host) == 9, "Compatible native change automatically resumes Fountain multiplier");

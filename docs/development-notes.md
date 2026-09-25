@@ -1,6 +1,6 @@
 # SephiriaOne development notes
 
-Recorded: 2026-09-23; updated: 2026-09-25 (Asia/Seoul).
+Recorded: 2026-09-23; updated: 2026-09-26 (Asia/Seoul).
 
 This document records the project history, current implementation, and modding
 findings collected during the initial investigation. Installed-game observations
@@ -8,6 +8,15 @@ apply to the assembly fingerprint below. Reference repositories and documentatio
 can change independently of that installed game version.
 
 ## Current status
+
+Version `0.15.5` handles [penalty-costume stat multipliers and native fallback](penalty-stat-sync-review.md).
+An incompatible stat factor preserves that player's exact native raw value and
+zero addon contribution while other players/settings still apply. The shared
+coordinator recognizes verified native restoration as fresh; incomplete joins,
+rejected plans and partial writes remain unready. Today’s host log connects the
+old suspended stat status to the Fountain warning, but does not establish the
+disconnect cause. It also contains Steam send-buffer errors and one timeout.
+Deployment remains disabled.
 
 Version `0.15.4` fixes [starting leaves changed just before departure](leaves-departure-fix.md).
 The pending first-departure grant reads current host intent rather than the value

@@ -12,14 +12,18 @@ namespace SephiriaOne
     }
 
     internal enum ReconcileMode { Once, OnChange }
-    internal enum ReconcileState { WaitingForReadiness, Applied, Suspended, Rejected, Faulted }
+    internal enum ReconcileState { WaitingForReadiness, Applied, NativeFallback, Suspended, Rejected, Faulted }
 
     internal readonly struct ReconcileResult
     {
         public ReconcileState State { get; }
         public string Detail { get; }
+        // Only a verified application/restoration is safe for native consumers.
+        // Suspended, rejected, waiting, and partial/faulted writes remain unready.
+        public bool IsFresh => State == ReconcileState.Applied || State == ReconcileState.NativeFallback;
         private ReconcileResult(ReconcileState state, string detail) { State = state; Detail = detail; }
         public static ReconcileResult Applied(string detail = "") => new ReconcileResult(ReconcileState.Applied, detail);
+        public static ReconcileResult NativeFallback(string detail) => new ReconcileResult(ReconcileState.NativeFallback, detail);
         public static ReconcileResult Waiting(string detail) => new ReconcileResult(ReconcileState.WaitingForReadiness, detail);
         public static ReconcileResult Suspended(string detail) => new ReconcileResult(ReconcileState.Suspended, detail);
         public static ReconcileResult Rejected(string detail) => new ReconcileResult(ReconcileState.Rejected, detail);

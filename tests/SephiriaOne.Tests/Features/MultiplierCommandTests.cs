@@ -70,12 +70,13 @@ internal static class MultiplierCommandTests
             Check(policy.TryPlanStatCommand(Stats(name + " x" + factor), new[] { new StatSnapshot(stat, raw, 0, 0, 0) }, out changes, out _) &&
                 changes[0].Raw == expected, "Multiply displayed units and offsets: " + name);
         }
-        Check(!policy.TryPlanStatCommand(Stats("luck x1.5"), new[] { new StatSnapshot(luck, 3, 0, 0, 0) }, out changes, out _) && changes.Length == 0,
-            "Reject fractional integer result rather than round");
-        Check(!policy.TryPlanStatCommand(Stats("luck x2"), new[] { native[0], new StatSnapshot(luck, 6000, 0, 0, 0) }, out changes, out _) && changes.Length == 0,
-            "One out-of-bounds player rejects whole batch");
-        Check(!policy.TryPlanStatCommand(Stats("luck x1.5"), new[] { new StatSnapshot(luck, 1, 0, 0, 100) }, out changes, out _),
-            "Reject integer display target unreachable through native amplifier");
+        Check(policy.TryPlanStatCommand(Stats("luck x1.5"), new[] { new StatSnapshot(luck, 3, 0, 0, 0) }, out changes, out _) &&
+            changes[0].Raw == 3 && changes[0].UsesNativeFallback, "Fractional integer result preserves native rather than rounding");
+        Check(policy.TryPlanStatCommand(Stats("luck x2"), new[] { native[0], new StatSnapshot(luck, 6000, 0, 0, 0) }, out changes, out _) &&
+            changes[0].Raw == 20 && changes[1].Raw == 6000 && changes[1].UsesNativeFallback,
+            "One out-of-bounds player falls back without rejecting others");
+        Check(policy.TryPlanStatCommand(Stats("luck x1.5"), new[] { new StatSnapshot(luck, 1, 0, 0, 100) }, out changes, out _) &&
+            changes[0].Raw == 1 && changes[0].UsesNativeFallback, "Unreachable native amplifier target preserves native");
         command = Stats("luck x1");
         Check(policy.TryPlanStatCommand(command, new[] { new StatSnapshot(luck, 20010, 10, 0, -100) }, out changes, out _) &&
             changes[0].Raw == 20000 && changes[0].Contribution == 0, "Identity restores exact baseline outside bounds even with invalid native amplifier");

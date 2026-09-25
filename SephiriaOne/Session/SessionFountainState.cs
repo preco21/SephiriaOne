@@ -47,12 +47,9 @@ namespace SephiriaOne
                 return ReconcileResult.Faulted(writeError);
             }
             if (valid) return ReconcileResult.Applied();
-            bool alreadySuspended = false;
-            foreach (var state in players.Describe(subject))
-                if (state.Id == "fountain-multiplier" && state.State == ReconcileState.Suspended) alreadySuspended = true;
-            if (!alreadySuspended)
-                Report($"Fountain multiplier suspended for player {player.netId}: {error.Replace(" Nobody was changed.", "")} Native capacity restored. It will retry when native inputs change.", false);
-            return ReconcileResult.Suspended(error + " Native capacity restored.");
+            if (!players.TryGetResult(subject, "fountain-multiplier", out var previous) || previous.State != ReconcileState.NativeFallback)
+                Report($"Fountain multiplier uses native capacity for player {player.netId}: {error.Replace(" Nobody was changed.", "")} Native capacity restored. It will retry when native inputs change.", false);
+            return ReconcileResult.NativeFallback(error.Replace(" Nobody was changed.", "") + " Native capacity restored.");
         }
     }
 }

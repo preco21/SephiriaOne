@@ -64,6 +64,10 @@ namespace SephiriaOne
             string minimumText = minimum.ToString("0.##", CultureInfo.InvariantCulture);
             string values = minimum == maximum ? minimumText : minimumText + ".." + maximum.ToString("0.##", CultureInfo.InvariantCulture);
             message = $"Updated {name} for {players.Count} player(s). Value now: {values} {selected.Unit}.";
+            int fallbacks = 0;
+            foreach (StatUpdate update in updates) if (update.UsesNativeFallback) fallbacks++;
+            if (fallbacks != 0)
+                message += $" Native value preserved for {fallbacks} player(s) with incompatible multiplier targets; the factor remains active for compatible native input changes.";
             return true;
         }
     }

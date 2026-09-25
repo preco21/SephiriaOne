@@ -52,6 +52,8 @@ namespace SephiriaOne
         private static bool TryPlanStatSetting(Setting setting, StatSnapshot value, out StatUpdate update, out string error)
         {
             update = default;
+            error = RelativeMultiplier.Usage;
+            if (setting.Multiplier && !RelativeMultiplier.IsValid(setting.Value)) return false;
             error = "A player's native stat baseline would overflow. Nobody was changed.";
             long baseline = (long)value.Raw - value.Contribution;
             if (baseline < int.MinValue || baseline > int.MaxValue) return false;
@@ -67,7 +69,17 @@ namespace SephiriaOne
                 setting.Value < 0 ? StatOperation.Subtract : StatOperation.Add,
                 setting.Absolute || setting.Multiplier ? setting.Value : Math.Abs(setting.Value));
             var native = new StatSnapshot(value.Stat, (int)baseline, 0, value.Bonus, value.Amplifier);
-            if (!StatPlanner.TryPlan(command, new[] { native }, out StatUpdate[] planned, out error)) return false;
+            if (!StatPlanner.TryPlan(command, new[] { native }, out StatUpdate[] planned, out error))
+            {
+                if (!setting.Multiplier) return false;
+                // A valid factor can be incompatible with one character's native
+                // penalties, range, or rounding. Restore the exact raw baseline;
+                // never clamp it or reject the other participants/families. Keep
+                // the factor so observed native input changes can try it again.
+                update = new StatUpdate((int)baseline, 0, error.Replace(" Nobody was changed.", ""));
+                error = "";
+                return true;
+            }
             update = planned[0];
             return true;
         }

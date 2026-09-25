@@ -68,14 +68,13 @@ namespace SephiriaOne
             StatDefinition stat = target.Stat;
             StatSnapshot snapshot = CaptureStat(player, stat);
             bool success = policy.TryPlanRelativeStat(snapshot, out StatUpdate update, out string error);
-            string recovery = "";
             if (!success)
             {
                 if (StatPlanner.TryPlan(new StatCommand(stat, StatOperation.Reset, 0), new[] { snapshot },
                     out StatUpdate[] reset, out _))
-                { update = reset[0]; recovery = "The addon contribution was removed."; }
+                    update = new StatUpdate(reset[0].Raw, 0, error.Replace(" Nobody was changed.", ""));
                 else
-                { update = new StatUpdate(snapshot.Raw, snapshot.Contribution); recovery = "Native baseline could not be restored; current values were left unchanged."; }
+                    return ReconcileResult.Suspended(error + " Native baseline could not be restored; current values were left unchanged.");
             }
             var context = new HostCommandContext(dungeon, new[] { subjects[player] });
             StateWriteBatch batch = context.CreateBatch();
@@ -85,17 +84,16 @@ namespace SephiriaOne
                 if (batch.MayHaveWritten) RecordFault("stats", batch, writeError);
                 return ReconcileResult.Faulted(writeError);
             }
-            if (success) return ReconcileResult.Applied();
-            if (!IsRelativeStatSuspended(player, stat))
-                Report($"Relative {stat.Name} setting suspended for player {player.netId}: {error.Replace(" Nobody was changed.", "")} {recovery} It will retry when native stat inputs change.", false);
-            return ReconcileResult.Suspended(error + " " + recovery);
+            if (!update.UsesNativeFallback) return ReconcileResult.Applied();
+            if (!IsRelativeStatState(player, stat, ReconcileState.NativeFallback))
+                Report($"Relative {stat.Name} setting uses the native value for player {player.netId}: {update.NativeFallbackReason} Only the addon contribution was removed. It will retry when native stat inputs change.", false);
+            return ReconcileResult.NativeFallback(update.NativeFallbackReason + " Exact native value restored; addon contribution is zero.");
         }
 
-        private static bool IsRelativeStatSuspended(PlayerAvatar player, StatDefinition stat)
+        private static bool IsRelativeStatState(PlayerAvatar player, StatDefinition stat, ReconcileState state)
         {
             if (!relativeStats.TryGetValue(player, out var targets) || !targets.TryGetValue(stat, out var target)) return false;
-            foreach (var status in relative.Describe(target)) if (status.State == ReconcileState.Suspended) return true;
-            return false;
+            return relative.TryGetResult(target, "relative-stat", out var result) && result.State == state;
         }
     }
 }

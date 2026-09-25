@@ -125,7 +125,7 @@ namespace SephiriaOne
                     if (!pending)
                     {
                         foreach (var record in records.Values)
-                            if (record.Result.State != ReconcileState.Applied) return false;
+                            if (!record.Result.IsFresh) return false;
                         return true;
                     }
                 }

@@ -29,8 +29,10 @@ native sources increase it.
   In the host panel, enter `x3` and click **Set** on Stats or Fountain.
 - Factors accept a decimal point and at most two decimal places, from 0 to
   10000. Resulting values must also meet the feature's existing bounds.
-- Integer metrics require an exact integer result. Native luck 3 with `x1.5`
-  is rejected; luck 10 becomes 15. No rounding or clamping is introduced.
+- Integer metrics require an exact integer result. Since `0.15.5`, stat luck 3
+  with `x1.5` preserves native 3; luck 10 becomes 15. Invalid stat targets fall
+  back per player, with no rounding or clamping. Fountain command validation
+  continues to reject an incompatible party result.
 - `x1` restores the exact current native baseline and removes retained intent,
   like the selected stat's reset or Fountain reset. A fault involving the whole
   stats family still requires `/stats reset`, as with a selective stat reset.
@@ -50,18 +52,30 @@ are not implemented by this change.
 
 ## Synchronization, storage and reset
 
-Commands validate all ready players before writing. An incompatible result for
-one player rejects the entire command and leaves retained intent unchanged.
+Commands validate all ready players before writing. Since `0.15.5`, a well-formed
+stat multiplier with an incompatible target restores that character's exact
+native raw value, removes only its tracked contribution, and retains the factor.
+For example, native cooldown -50 with `x3` stays -50, not -150 or zero. The other
+players and command families still receive their settings, including on joins
+and preset loads. Negative internal values with valid displayed targets (such
+as attack speed) continue to use displayed units. Malformed factors, unrecoverable
+baseline subtraction, and other command families retain their rejection guards.
 The host maintains factors when native inputs change and flushes them through
 existing native-read boundaries. Fountain maintenance runs before carryover-cap
 reconciliation, covering immediate run entry and restarts on reused avatars.
 
 If a later native change makes a target out of range or unrepresentable, the
 addon removes its contribution when the baseline can be safely restored and
-marks the setting suspended. It retries when inputs change. `/one status` and
+reports `NativeFallback` only after verified native restoration. The shared
+coordinator treats this outcome as fresh, so a safe stat fallback does not trigger
+unrelated Fountain/candidate warnings. It retries when inputs change. `/one status` and
 the panel show retained factors, current values and synchronization outcomes.
 They do not apply settings while being read. Partial writes retain the existing
 journal and block further mutations until explicit family reset recovers them.
+This status also covers verified restoration of existing relative stat offsets
+and Fountain multiplier maintenance. A baseline that cannot be restored remains
+`Suspended` and unready. Preserving native values does not repair invalid inputs
+created by the game or another addon. See the [penalty review](penalty-stat-sync-review.md).
 
 `/one save` stores **factors**, not each player's calculated totals. Multiplier
 presets use `SephiriaOne preset v2` with `multiplier N` rows. Existing v1 presets
