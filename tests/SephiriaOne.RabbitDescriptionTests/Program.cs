@@ -19,7 +19,7 @@ Check(Show(rabbit, true, true, false) == native, "gameplay incompatibility hides
 
 string infiniteOnly = Show(rabbit, true, false);
 Check(infiniteOnly.StartsWith(native + "\n"), "native text remains first");
-Check(infiniteOnly.Contains("Healing potions are not consumed"), "infinite line appears");
+Check(infiniteOnly.Contains("HP potions are not consumed"), "infinite line appears");
 Check(!infiniteOnly.Contains("Nearby allies"), "share line is absent");
 
 string shareOnly = Show(rabbit, false, true);
@@ -28,6 +28,14 @@ Check(!shareOnly.Contains("not consumed"), "infinite line is absent");
 
 string both = Show(rabbit, true, true);
 Check(both.Contains("not consumed") && both.Contains("Nearby allies"), "both lines appear");
+string costOnly = RabbitDescriptionText.Decorate(native, rabbit, false, false, true, true, false);
+Check(costOnly.Contains("10 MP") && costOnly.Contains("HP potion") && !costOnly.Contains("Survival"), "MP cost appears only when enabled");
+string suppressOnly = RabbitDescriptionText.Decorate(native, rabbit, false, false, true, false, true);
+Check(suppressOnly.Contains("Survival") && suppressOnly.Contains("HP potion") && !suppressOnly.Contains("10 MP"), "Survival suppression appears only when enabled");
+Check(RabbitDescriptionText.Decorate(native, rabbit, false, false, false, true, true) == native,
+    "Compatibility loss hides balance claims");
+Check(RabbitDescriptionText.Decorate(native, "PinkRabbit", false, false, true, true, true) == native,
+    "Other costumes retain native text with balance flags");
 Check(RabbitDescriptionText.Decorate(native, rabbit, false, false, true) == native, "reset retains native text");
 Check(RabbitDescriptionText.Decorate(native, rabbit, true, true, false) == native, "compatibility loss retains native text");
 
@@ -43,6 +51,9 @@ Check(panel.tooltipEffectText.text.Contains("not consumed"), "policy event refre
 SessionSettings.Change(true, true);
 Check(panel.tooltipEffectText.text.Contains("Nearby allies"), "second option refreshes current tooltip");
 Check(panel.tooltipEffectText.text.Split("Nearby allies").Length == 2, "refresh does not duplicate line");
+SessionSettings.Change(false, false, true, true);
+Check(panel.tooltipEffectText.text.Contains("10 MP") && panel.tooltipEffectText.text.Contains("Survival"), "balance options refresh current tooltip");
+SessionSettings.Change(true, true);
 panel.Select(new CostumeEntity("PinkRabbit"));
 Check(panel.tooltipEffectText.text == native, "selection of another costume stays native");
 panel.Select(new CostumeEntity(rabbit));
@@ -62,12 +73,12 @@ SessionSettings.Change(true, true);
 RabbitDescriptionFeature.Shutdown();
 Check(!RabbitDescriptionFeature.Available && panel.tooltipEffectText.text == native, "unload removes rendered text and hook");
 
-const string nativeIdentical = native + "\n- <indent=10>Healing potions are not consumed after a successful drink (requires one potion).</indent>";
+const string nativeIdentical = native + "\n- <indent=10>HP potions are not consumed after a successful drink (requires one potion).</indent>";
 UI_CostumePanel.NativeDescription = nativeIdentical;
 RabbitDescriptionFeature.Initialize();
 panel.Select(new CostumeEntity(rabbit));
 SessionSettings.Change(true, false);
-Check(panel.tooltipEffectText.text == nativeIdentical + "\n- <indent=10>Healing potions are not consumed after a successful drink (requires one potion).</indent>",
+Check(panel.tooltipEffectText.text == nativeIdentical + "\n- <indent=10>HP potions are not consumed after a successful drink (requires one potion).</indent>",
     "option line is appended even when native text coincidentally ends with it");
 SessionSettings.Change(false, false);
 Check(panel.tooltipEffectText.text == nativeIdentical, "reset preserves identical native trailing line");

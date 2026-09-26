@@ -9,6 +9,15 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.17.0` extends [Rabbit potion options](rabbit-potions.md) with independent
+MP-cost and Survival rank-5 suppression toggles. Initial MP cost is 10 at the
+completed HP-potion attempt; insufficient MP rejects the drink, cancelled drinks
+cost nothing. Suppression targets the random-stat passive callback, preserving
+other potion events. All options stay scoped to HolyRabbit and stock HP-potion
+IDs 0/1/37. Commands, panel, description and v5 presets share current host intent.
+Old presets leave the new toggles off; unmodified guests retain native descriptions.
+Deployment remains disabled.
+
 Version `0.16.0` adds independent [Wing-Eared Rabbit potion options](rabbit-potions.md):
 infinite healing-potion uses and nearby potion healing through native host events.
 Commands, the Rabbit panel, resets and v4 saved presets share the existing policy.

@@ -3,7 +3,7 @@ using System;
 
 namespace SephiriaOne
 {
-    internal enum RabbitOption { Infinite, Share, Reset }
+    internal enum RabbitOption { Infinite, Share, ConsumeMp, SuppressSurvival, Reset }
     internal enum RabbitParseResult { NotCommand, Help, Status, Invalid, Valid }
 
     internal readonly struct RabbitCommand
@@ -11,7 +11,7 @@ namespace SephiriaOne
         public RabbitOption Option { get; }
         public bool Enabled { get; }
         public bool IsReset => Option == RabbitOption.Reset || !Enabled;
-        public const string Usage = "Host only: /one rabbit infinite on|off, /one rabbit share on|off, /one rabbit reset, /one rabbit status. Applies to Wing-Eared Rabbit healing potions. Save for future sessions: /one save.";
+        public const string Usage = "Host only: /one rabbit infinite on|off, /one rabbit share on|off, /one rabbit mp-cost on|off, /one rabbit suppress-survival on|off, /one rabbit reset, /one rabbit status. Applies to Wing-Eared Rabbit HP potions. Save for future sessions: /one save.";
 
         public RabbitCommand(RabbitOption option, bool enabled)
         { Option = option; Enabled = enabled; }
@@ -32,6 +32,8 @@ namespace SephiriaOne
             RabbitOption option;
             if (parts[2].Equals("infinite", StringComparison.OrdinalIgnoreCase)) option = RabbitOption.Infinite;
             else if (parts[2].Equals("share", StringComparison.OrdinalIgnoreCase)) option = RabbitOption.Share;
+            else if (parts[2].Equals("mp-cost", StringComparison.OrdinalIgnoreCase)) option = RabbitOption.ConsumeMp;
+            else if (parts[2].Equals("suppress-survival", StringComparison.OrdinalIgnoreCase)) option = RabbitOption.SuppressSurvival;
             else return RabbitParseResult.Invalid;
             bool enabled;
             if (parts[3].Equals("on", StringComparison.OrdinalIgnoreCase)) enabled = true;

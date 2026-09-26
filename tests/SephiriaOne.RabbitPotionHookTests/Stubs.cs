@@ -40,8 +40,18 @@ public class UnitAvatar : NetworkBehaviour
     public bool IsDead;
     public GridInventory Inventory = new();
     public int PotionBonus, DrinkEvents;
+    public int mp = 30, MpWrites, MpUseEvents;
+    public bool FailMpWrite, InfinityMp;
+    public int Networkmp { get => mp; set => GeneratedSyncVarSetter(value, ref mp, 32UL, null); }
+    private void GeneratedSyncVarSetter(int value, ref int field, ulong bit, Action callback)
+    {
+        if (FailMpWrite) throw new InvalidOperationException("MP write failed");
+        field = value; MpWrites++; callback?.Invoke();
+    }
+    public void UseMp(int value) { MpUseEvents++; if (!InfinityMp) Networkmp = mp - value; }
     public float Hp = 20f, MaxHp = 100f, HealingPenalty;
     public Action OnPotionEvent;
+    public event Action<PotionEffect> OnDrinkPotion;
     public Action OnHealed;
     public readonly List<float> Heals = new();
     public virtual int GetCustomStat(ECustomStat stat) => PotionBonus;
@@ -51,7 +61,7 @@ public class UnitAvatar : NetworkBehaviour
         if (!IsDead) Hp = Math.Min(MaxHp, Hp + MaxHp * strength * (1f - HealingPenalty) / 100f);
         OnHealed?.Invoke();
     }
-    public void ReceivePotionDrinkEvent(PotionEffect effect) { DrinkEvents++; OnPotionEvent?.Invoke(); }
+    public void ReceivePotionDrinkEvent(PotionEffect effect) { DrinkEvents++; OnPotionEvent?.Invoke(); OnDrinkPotion?.Invoke(effect); }
 }
 public class PlayerAvatar : UnitAvatar
 {
@@ -78,17 +88,26 @@ public class ItemController : NetworkBehaviour
     public int SelectedQuickSlotIdx;
     public readonly List<QuickSlot> quickSlotTable = new() { new QuickSlot { idx = 0 } };
     public event Action<WieldingPotion> OnDrinkPotionServerside;
+    public int CleanupCalls;
+    private void RpcWieldItem(int id) { CleanupCalls++; }
     public void RunDrink() => DrinkPotionAnimation();
     [MethodImpl(MethodImplOptions.NoInlining)] public void DrinkPotionAnimation()
     {
         var potion = currentWieldingItem as WieldingPotion;
-        if (potion == null || SelectedQuickSlotIdx < 0 || SelectedQuickSlotIdx >= quickSlotTable.Count) return;
+        if (potion == null || SelectedQuickSlotIdx < 0 || SelectedQuickSlotIdx >= quickSlotTable.Count) { RpcWieldItem(-1); return; }
         var pos = Avatar.Inventory.IdxToPos(quickSlotTable[SelectedQuickSlotIdx].idx);
         var item = Avatar.Inventory.FindItem(pos);
-        if (item == null || item.EntityID != potion.entityID) return;
-        potion.Drink(out var decreased, item.InstanceID);
-        OnDrinkPotionServerside?.Invoke(potion);
-        if (decreased) Avatar.Inventory.DecreaseItemQuantity(pos.x, pos.y, 1);
+        if (item != null && item.EntityID == potion.entityID)
+        {
+            try
+            {
+                potion.Drink(out var decreased, item.InstanceID);
+                OnDrinkPotionServerside?.Invoke(potion);
+                if (decreased) Avatar.Inventory.DecreaseItemQuantity(pos.x, pos.y, 1);
+            }
+            catch { }
+        }
+        RpcWieldItem(-1);
     }
 }
 public class WieldingItem : NetworkBehaviour { public ItemController NetworkController; public int entityID; }
@@ -120,11 +139,20 @@ public class PotionEffect_Regeneration : PotionEffect
         avatar.HealPercent(num + num * bonus);
     }
 }
+public class PassiveObject : NetworkBehaviour { public PlayerAvatar player; }
+public class PassiveObject_PotionAndRandomStat : PassiveObject
+{
+    public int StatGains;
+    public void Enable(PlayerAvatar avatar) { player = avatar; avatar.OnDrinkPotion += HandleDrinkPotion; }
+    public void Invoke(PotionEffect effect) => HandleDrinkPotion(effect);
+    [MethodImpl(MethodImplOptions.NoInlining)] private void HandleDrinkPotion(PotionEffect effect) { StatGains++; }
+}
 public static class SaveManager { public static object CurrentRun = new(); }
 public class DungeonManager { public static DungeonManager Instance = new(); }
 namespace SephiriaOne
 {
-    internal readonly record struct RabbitPotionSettings(bool Infinite, bool Share) { public bool HasChanges => Infinite || Share; }
+    internal readonly record struct RabbitPotionSettings(bool Infinite, bool Share, bool ConsumeMp = false, bool SuppressSurvival = false)
+    { public const int MpCostPerDrink = 10; public bool HasChanges => Infinite || Share || ConsumeMp || SuppressSurvival; }
     internal static class SessionSettings { public static RabbitPotionSettings RabbitPotionsForUse { get; set; } }
     internal static class HarmonyRuntime { public static void EnsureLoaded() { } }
     internal static class HostStateAdapter

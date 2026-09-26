@@ -12,6 +12,7 @@ namespace SephiriaOne
         private const string MultiplierPresetHeader = "SephiriaOne preset v2";
         private const string ResourcePresetHeader = "SephiriaOne preset v3";
         private const string RabbitPresetHeader = "SephiriaOne preset v4";
+        private const string RabbitBalancePresetHeader = "SephiriaOne preset v5";
         private static readonly string[] ChoiceNames = { "item", "weapon", "miracle" };
 
         public IReadOnlyList<string> DescribeSettings()
@@ -28,6 +29,8 @@ namespace SephiriaOne
             lines.AddRange(Resources.Describe());
             if (RabbitPotions.Infinite) lines.Add("rabbit infinite 1");
             if (RabbitPotions.Share) lines.Add("rabbit share 1");
+            if (RabbitPotions.ConsumeMp) lines.Add("rabbit mp-cost 1");
+            if (RabbitPotions.SuppressSurvival) lines.Add("rabbit suppress-survival 1");
             return lines;
         }
 
@@ -35,7 +38,8 @@ namespace SephiriaOne
         {
             bool multiplier = HasFountainMultiplier;
             foreach (Setting setting in stats.Values) multiplier |= setting.Multiplier;
-            return (RabbitPotions.HasChanges ? RabbitPresetHeader : Resources.HasChanges ? ResourcePresetHeader : multiplier ? MultiplierPresetHeader : PresetHeader) + "\n" +
+            return (RabbitPotions.ConsumeMp || RabbitPotions.SuppressSurvival ? RabbitBalancePresetHeader :
+                RabbitPotions.HasChanges ? RabbitPresetHeader : Resources.HasChanges ? ResourcePresetHeader : multiplier ? MultiplierPresetHeader : PresetHeader) + "\n" +
                 (HasChanges ? string.Join("\n", DescribeSettings()) + "\n" : "");
         }
 
@@ -45,8 +49,9 @@ namespace SephiriaOne
             error = "Invalid saved preset; no saved settings were applied.";
             if (text == null || text.Length > MaximumPresetLength) return false;
             string[] lines = text.Replace("\r\n", "\n").Split('\n');
-            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader)) return false;
-            bool allowRabbit = lines[0] == RabbitPresetHeader;
+            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader && lines[0] != RabbitBalancePresetHeader)) return false;
+            bool allowBalance = lines[0] == RabbitBalancePresetHeader;
+            bool allowRabbit = lines[0] == RabbitPresetHeader || allowBalance;
             bool allowResources = lines[0] == ResourcePresetHeader || allowRabbit;
             bool allowMultiplier = lines[0] != PresetHeader;
             var pending = new SessionPolicy();
@@ -64,6 +69,8 @@ namespace SephiriaOne
                     RabbitOption option;
                     if (parts[1] == "infinite") option = RabbitOption.Infinite;
                     else if (parts[1] == "share") option = RabbitOption.Share;
+                    else if (allowBalance && parts[1] == "mp-cost") option = RabbitOption.ConsumeMp;
+                    else if (allowBalance && parts[1] == "suppress-survival") option = RabbitOption.SuppressSurvival;
                     else return false;
                     pending.Record(new RabbitCommand(option, value == 1));
                     continue;

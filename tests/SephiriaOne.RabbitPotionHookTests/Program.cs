@@ -79,7 +79,7 @@ Check("failed effect and cancelled controller call do not consume or share", () 
     controller.SelectedQuickSlotIdx = -1; controller.RunDrink();
     Assert(item.Quantity == 3 && player.Heals.Count == 0, "Cancelled call ran");
     controller.SelectedQuickSlotIdx = 0; potion.effect = new ThrowingRegeneration();
-    try { controller.RunDrink(); throw new Exception("Expected effect error"); } catch (InvalidOperationException) { }
+    controller.RunDrink();
     Assert(item.Quantity == 3 && near.Heals.Count == 0, "Failed call forwarded healing");
 });
 Check("recipient filtering, error containment, and shutdown", () =>
@@ -171,6 +171,212 @@ Check("shared healing uses each recipient's native penalty and HP cap", () =>
         capped.Heals.SequenceEqual(new[] { 30f }) && capped.Hp == 100f,
         "Recipient native healing calculation bypassed");
 });
+Check("MP fee uses synchronized state once and keeps native potion callbacks", () =>
+{
+    var (player, controller, _, item) = Setup(); int events = 0;
+    controller.OnDrinkPotionServerside += _ => events++;
+    SessionSettings.RabbitPotionsForUse = new(false, false, true);
+    Install(); controller.RunDrink();
+    Assert(player.mp == 20 && player.MpWrites == 1 && player.MpUseEvents == 0 && player.Heals.Count == 1 &&
+        player.DrinkEvents == 1 && events == 1 && item.Quantity == 2 && controller.CleanupCalls == 1, "Fee or native completion incorrect");
+});
+Check("insufficient MP rejects full operation and preserves cleanup", () =>
+{
+    var (player, controller, _, item) = Setup(); player.mp = 9; int events = 0;
+    var passive = new PassiveObject_PotionAndRandomStat(); passive.Enable(player);
+    var near = new PlayerAvatar(); _ = new PlayerSpawner(near);
+    controller.OnDrinkPotionServerside += _ => events++;
+    SessionSettings.RabbitPotionsForUse = new(true, true, true, true);
+    Install(); controller.RunDrink();
+    Assert(player.mp == 9 && player.MpWrites == 0 && player.Heals.Count == 0 && player.DrinkEvents == 0 &&
+        passive.StatGains == 0 && near.Heals.Count == 0 && events == 0 && item.Quantity == 3 && controller.CleanupCalls == 1,
+        "Rejected drink leaked effects or skipped cleanup");
+});
+Check("Survival suppression is independent and preserves unrelated drink listeners", () =>
+{
+    var (player, controller, _, item) = Setup(); var passive = new PassiveObject_PotionAndRandomStat(); passive.Enable(player);
+    int other = 0; player.OnDrinkPotion += _ => other++;
+    SessionSettings.RabbitPotionsForUse = new(false, false, false, true);
+    Install(); controller.RunDrink();
+    Assert(passive.StatGains == 0 && other == 1 && player.DrinkEvents == 1 && player.mp == 30 &&
+        player.Heals.Count == 1 && item.Quantity == 2, "Survival suppression changed unrelated effects");
+});
+Check("nested direct call with the same potion does not inherit completion suppression", () =>
+{
+    var (player, controller, potion, item) = Setup();
+    var passive = new PassiveObject_PotionAndRandomStat(); passive.Enable(player);
+    player.OnPotionEvent = () => { player.OnPotionEvent = null; potion.Drink(out _, item.InstanceID); };
+    SessionSettings.RabbitPotionsForUse = new(false, false, false, true);
+    Install(); controller.RunDrink();
+    Assert(passive.StatGains == 1, "Nested direct call borrowed outer completion scope");
+});
+Check("server shutdown within event restores native Survival", () =>
+{
+    var (player, controller, _, _) = Setup();
+    var passive = new PassiveObject_PotionAndRandomStat(); passive.Enable(player);
+    player.OnPotionEvent = () => NetworkServer.active = false;
+    SessionSettings.RabbitPotionsForUse = new(false, false, false, true);
+    Install(); controller.RunDrink();
+    Assert(passive.StatGains == 1, "Stopped server retained suppression scope");
+});
+foreach (int flags in Enumerable.Range(0, 16))
+    Check("independent option combination " + flags, () =>
+    {
+        bool infinite = (flags & 1) != 0, share = (flags & 2) != 0, mp = (flags & 4) != 0, suppress = (flags & 8) != 0;
+        var (player, controller, _, item) = Setup(); var near = new PlayerAvatar(); _ = new PlayerSpawner(near);
+        var passive = new PassiveObject_PotionAndRandomStat(); passive.Enable(player);
+        SessionSettings.RabbitPotionsForUse = new(infinite, share, mp, suppress);
+        Install(); controller.RunDrink();
+        Assert(item.Quantity == (infinite ? 3 : 2) && near.Heals.Count == (share ? 1 : 0) &&
+            player.mp == (mp ? 20 : 30) && passive.StatGains == (suppress ? 0 : 1), "Option coupling");
+    });
+Check("fixed fee ignores MP immunity and exact funds reach zero", () =>
+{
+    var (player, controller, _, _) = Setup(); player.mp = 10; player.InfinityMp = true;
+    SessionSettings.RabbitPotionsForUse = new(false, false, true);
+    Install(); controller.RunDrink();
+    Assert(player.mp == 0 && player.Heals.Count == 1 && player.MpUseEvents == 0, "Fixed fee unexpectedly waived");
+});
+Check("cancelled animation costs nothing and cleanup remains", () =>
+{
+    var (player, controller, _, item) = Setup(); controller.SelectedQuickSlotIdx = -1;
+    SessionSettings.RabbitPotionsForUse = new(true, true, true, true);
+    Install(); controller.RunDrink();
+    Assert(player.mp == 30 && player.MpWrites == 0 && player.Heals.Count == 0 && item.Quantity == 3 &&
+        controller.CleanupCalls == 1, "Cancellation charged or skipped cleanup");
+});
+Check("failed synchronized fee write blocks healing and both events", () =>
+{
+    var (player, controller, _, item) = Setup(); player.FailMpWrite = true; int events = 0;
+    controller.OnDrinkPotionServerside += _ => events++;
+    SessionSettings.RabbitPotionsForUse = new(true, true, true, true);
+    Install(); controller.RunDrink();
+    Assert(player.mp == 30 && player.Heals.Count == 0 && player.DrinkEvents == 0 && events == 0 &&
+        item.Quantity == 3 && controller.CleanupCalls == 1, "Failed fee granted free potion");
+});
+Check("callback fault retains fee and unrelated MP changes without replay", () =>
+{
+    var (player, controller, potion, item) = Setup();
+    var passive = new PassiveObject_PotionAndRandomStat(); passive.Enable(player);
+    player.OnPotionEvent = () => { player.Networkmp += 3; throw new InvalidOperationException("native proc"); };
+    SessionSettings.RabbitPotionsForUse = new(true, true, true, true);
+    Install(); controller.RunDrink();
+    Assert(player.mp == 23 && player.Heals.Count == 0 && item.Quantity == 3 && controller.CleanupCalls == 1,
+        "Callback fault refunded, overwrote native MP or skipped cleanup");
+    player.OnPotionEvent = null;
+    passive.Invoke(potion.effect);
+    Assert(passive.StatGains == 1, "Fault leaked suppression scope");
+    SessionSettings.RabbitPotionsForUse = default;
+    controller.RunDrink();
+    Assert(player.mp == 23 && player.Heals.Count == 1 && item.Quantity == 2, "Fee replayed after reset");
+});
+Check("controller callback fault retains fee and cleanup without consuming item", () =>
+{
+    var (player, controller, _, item) = Setup();
+    controller.OnDrinkPotionServerside += _ => throw new InvalidOperationException("controller proc");
+    SessionSettings.RabbitPotionsForUse = new(false, false, true, true);
+    Install(); controller.RunDrink();
+    Assert(player.mp == 20 && player.Heals.Count == 1 && item.Quantity == 3 && controller.CleanupCalls == 1,
+        "Controller fault rolled back fee or failed cleanup");
+});
+Check("other costume mana status buff and derived regeneration remain native", () =>
+{
+    SessionSettings.RabbitPotionsForUse = new(true, true, true, true); Install();
+    foreach (int scenario in Enumerable.Range(0, 5))
+    {
+        var (player, controller, potion, item) = Setup(scenario == 1 ? 2 : 0);
+        var passive = new PassiveObject_PotionAndRandomStat(); passive.Enable(player);
+        if (scenario == 0) player.currentCostume = "PinkRabbit";
+        if (scenario == 1) potion.effect = new PotionEffect_Concentration();
+        if (scenario == 2) potion.effect = new PotionEffect_StatusInstance();
+        if (scenario == 3) potion.effect = new OtherEffect();
+        if (scenario == 4) potion.effect = new DerivedRegeneration();
+        controller.RunDrink();
+        Assert(player.mp == 30 && item.Quantity == 2 && passive.StatGains == 1, "Non-eligible native potion intercepted: " + scenario);
+    }
+});
+Check("other player and other effect Survival callbacks stay active inside eligible drink", () =>
+{
+    var (player, controller, potion, _) = Setup();
+    var own = new PassiveObject_PotionAndRandomStat(); own.Enable(player);
+    var other = new PassiveObject_PotionAndRandomStat(); other.Enable(new PlayerAvatar());
+    player.OnPotionEvent = () => { own.Invoke(new OtherEffect()); other.Invoke(potion.effect); };
+    SessionSettings.RabbitPotionsForUse = new(false, false, false, true);
+    Install(); controller.RunDrink();
+    Assert(own.StatGains == 1 && other.StatGains == 1, "Other player/effect callback suppressed");
+});
+Check("nested eligible controller charges independently and restores outer suppression", () =>
+{
+    var first = Setup(); var second = Setup();
+    var one = new PassiveObject_PotionAndRandomStat(); one.Enable(first.player);
+    var two = new PassiveObject_PotionAndRandomStat(); two.Enable(second.player);
+    first.player.OnPotionEvent = () => second.controller.RunDrink();
+    SessionSettings.RabbitPotionsForUse = new(false, false, true, true);
+    Install(); first.controller.RunDrink();
+    Assert(first.player.mp == 20 && second.player.mp == 20 && one.StatGains == 0 && two.StatGains == 0 &&
+        first.player.Heals.Count == 1 && second.player.Heals.Count == 1, "Nested completion scopes leaked");
+});
+Check("live guest ownership is required and inactive client stays native", () =>
+{
+    SessionSettings.RabbitPotionsForUse = new(true, true, true, true); Install();
+    var guest = Setup(); guest.controller.RunDrink();
+    Assert(guest.player.mp == 20 && guest.item.Quantity == 3, "Live guest not charged by host");
+    var stale = Setup(); NetworkServer.connections.Remove(PlayerSpawner.MultiplayerList.Count);
+    var passive = new PassiveObject_PotionAndRandomStat(); passive.Enable(stale.player);
+    stale.controller.RunDrink();
+    Assert(stale.player.mp == 30 && stale.item.Quantity == 2 && passive.StatGains == 1, "Disconnected source intercepted");
+    var client = Setup(); NetworkServer.active = false; client.controller.RunDrink();
+    Assert(client.player.mp == 30 && client.item.Quantity == 2, "Client applied host fee");
+});
+Check("mid-drink lifetime changes disable Survival without a deferred MP debit", () =>
+{
+    foreach (int change in Enumerable.Range(0, 6))
+    {
+        var (player, controller, _, _) = Setup();
+        var passive = new PassiveObject_PotionAndRandomStat(); passive.Enable(player);
+        SessionSettings.RabbitPotionsForUse = new(false, false, true, true);
+        player.OnPotionEvent = () =>
+        {
+            if (change == 0) player.currentCostume = "PinkRabbit";
+            if (change == 1) SaveManager.CurrentRun = new();
+            if (change == 2) DungeonManager.Instance = new();
+            if (change == 3) player.currentFloorGuid = "next";
+            if (change == 4) player.spawner.connectionToClient.isReady = false;
+            if (change == 5) SessionSettings.RabbitPotionsForUse = default;
+            player.Networkmp = 7;
+        };
+        Install(); controller.RunDrink();
+        Assert(player.mp == 7 && passive.StatGains == 1, "Stale lifetime retained suppression or deferred fee: " + change);
+    }
+});
+Check("unload removes fee and Survival patches", () =>
+{
+    var (player, controller, _, _) = Setup(); var passive = new PassiveObject_PotionAndRandomStat(); passive.Enable(player);
+    SessionSettings.RabbitPotionsForUse = new(false, false, true, true);
+    Install(); RabbitPotionFeature.Shutdown(); controller.RunDrink();
+    Assert(player.mp == 30 && passive.StatGains == 1, "Balance hook survived unload");
+});
+Check("replaced source connection and despawned potion cannot retain completion scope", () =>
+{
+    foreach (bool replaceConnection in new[] { false, true })
+    {
+        var (player, controller, potion, _) = Setup();
+        var passive = new PassiveObject_PotionAndRandomStat(); passive.Enable(player);
+        SessionSettings.RabbitPotionsForUse = new(false, false, true, true);
+        player.OnPotionEvent = () =>
+        {
+            if (!replaceConnection) potion.isServer = false;
+            else
+            {
+                var replacement = new NetworkConnectionToClient { identity = new NetworkIdentity { Owner = player.spawner } };
+                player.spawner.connectionToClient = replacement; controller.connectionToClient = replacement;
+                NetworkServer.connections[PlayerSpawner.MultiplayerList.Count] = replacement;
+            }
+        };
+        Install(); controller.RunDrink();
+        Assert(passive.StatGains == 1 && player.mp == 20, "Changed source retained scoped suppression");
+    }
+});
 Console.WriteLine($"{passed} passed, {failed} failed");
 Environment.ExitCode = failed == 0 ? 0 : 1;
 
@@ -179,4 +385,7 @@ class ThrowingRegeneration : PotionEffect_Regeneration
     public override void CreateEffect_OnDrink(UnitAvatar avatar) => throw new InvalidOperationException("effect failed");
 }
 class OtherEffect : PotionEffect { }
+class PotionEffect_Concentration : PotionEffect { }
+class PotionEffect_StatusInstance : PotionEffect { }
+class DerivedRegeneration : PotionEffect_Regeneration { }
 class ErrorAvatar : PlayerAvatar { public override void HealPercent(float strength) => throw new InvalidOperationException("recipient failed"); }

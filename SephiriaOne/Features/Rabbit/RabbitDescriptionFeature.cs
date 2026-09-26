@@ -98,7 +98,8 @@ namespace SephiriaOne
             if (panel.tooltipEffectText.text != renderedDescription) return;
             RabbitPotionSettings settings = SessionSettings.RabbitPotionsForDisplay;
             renderedDescription = RabbitDescriptionText.Decorate(nativeDescription,
-                costumeId, settings.Infinite, settings.Share, RabbitPotionFeature.Available);
+                costumeId, settings.Infinite, settings.Share, RabbitPotionFeature.Available,
+                settings.ConsumeMp, settings.SuppressSurvival);
             panel.tooltipEffectText.text = renderedDescription;
         }
 

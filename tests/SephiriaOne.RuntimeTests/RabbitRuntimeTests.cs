@@ -31,6 +31,11 @@ internal static class RabbitRuntimeTests
             check(Command("share on"), "Host enables sharing");
             var snapshot = SessionSettings.ReadSnapshot();
             check(snapshot.RabbitPotions.Infinite && snapshot.RabbitPotions.Share && snapshot.RabbitPotionsAvailable, "Panel snapshot exposes both flags");
+            check(Command("mp-cost on") && Command("suppress-survival on"), "Host enables both balance options");
+            snapshot = SessionSettings.ReadSnapshot();
+            check(snapshot.RabbitPotions.ConsumeMp && snapshot.RabbitPotions.SuppressSurvival &&
+                SessionSettings.RabbitPotionsForUse.ConsumeMp && SessionSettings.RabbitPotionsForUse.SuppressSurvival,
+                "Snapshot and live policy expose independent balance flags");
             var guest = add(2, 4, 2, 0);
             SessionSettings.Synchronize();
             PlayerSpawner.MultiplayerList.Remove(guest);
@@ -38,16 +43,22 @@ internal static class RabbitRuntimeTests
             var rejoined = add(2, 8, 3, 1);
             SessionSettings.Synchronize();
             check(SessionSettings.RabbitPotionsForUse.Infinite && SessionSettings.RabbitPotionsForUse.Share &&
+                SessionSettings.RabbitPotionsForUse.ConsumeMp && SessionSettings.RabbitPotionsForUse.SuppressSurvival &&
                 rejoined.PlayerAvatar.customStats.Count == 2, "Rejoining uses live policy without adding player markers or healing state");
             check(SettingsActions.Execute("/one save").Success, "Rabbit flags save with common preset action");
             check(Command("reset") && !SessionSettings.RabbitPotionsForUse.HasChanges, "Reset clears active toggles");
             DungeonManager.Instance = new DungeonManager();
             check(!SessionSettings.RabbitPotionsForDisplay.HasChanges, "Display never reuses old dungeon intent");
-            check(SessionSettings.RabbitPotionsForUse.Infinite && SessionSettings.RabbitPotionsForUse.Share, "First use in new session loads saved flags");
+            check(SessionSettings.RabbitPotionsForUse.Infinite && SessionSettings.RabbitPotionsForUse.Share &&
+                SessionSettings.RabbitPotionsForUse.ConsumeMp && SessionSettings.RabbitPotionsForUse.SuppressSurvival,
+                "First use in new session loads saved flags");
             RabbitPotionFeature.Available = false;
             check(!Command("infinite on") && Command("infinite off") && !SessionSettings.RabbitPotionsForUse.Infinite && SessionSettings.RabbitPotionsForUse.Share,
                 "Compatibility blocks enabling but not independent disabling");
             check(Command("reset") && !SessionSettings.RabbitPotionsForUse.HasChanges, "Reset stays available when hook unavailable");
+            check(!Command("mp-cost on") && !Command("suppress-survival on") &&
+                Command("mp-cost off") && Command("suppress-survival off"),
+                "Compatibility blocks balance enabling but keeps disabling available");
             RabbitPotionFeature.Available = true;
             check(Command("share on"), "Reenable after compatible hooks return");
             NetworkServer.active = false;

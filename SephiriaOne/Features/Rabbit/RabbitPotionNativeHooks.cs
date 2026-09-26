@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace SephiriaOne
 {
-    internal static class RabbitPotionNativeHooks
+    internal static partial class RabbitPotionNativeHooks
     {
         private const string Owner = "preco21.SephiriaOne.RabbitPotions";
         private const float ShareRadiusSquared = 100f;
@@ -24,6 +24,7 @@ namespace SephiriaOne
             public ItemController Controller;
             public PlayerAvatar Player;
             public PlayerSpawner Spawner;
+            public NetworkConnectionToClient Connection;
             public GridInventory Inventory;
             public NewItemOwnInstance Item;
             public int InstanceId;
@@ -34,6 +35,7 @@ namespace SephiriaOne
             public RabbitPotionSettings Settings;
             public float HealStrength;
             public int HealCalls;
+            public DrinkContext NativeDrink;
         }
 
         public static void Install()
@@ -52,15 +54,20 @@ namespace SephiriaOne
                     nameof(PotionEffect_Regeneration.CreateEffect_OnDrink), new[] { typeof(UnitAvatar) });
                 MethodInfo consumer = AccessTools.DeclaredMethod(typeof(ItemController),
                     nameof(ItemController.DrinkPotionAnimation), Type.EmptyTypes);
+                MethodInfo survival = AccessTools.DeclaredMethod(typeof(PassiveObject_PotionAndRandomStat),
+                    "HandleDrinkPotion", new[] { typeof(PotionEffect) });
                 if (drink == null || drink.ReturnType != typeof(void) || heal == null || heal.ReturnType != typeof(void) ||
                     consumer == null || consumer.ReturnType != typeof(void) ||
-                    !ValidateDrinkShape(drink) || !ValidateConsumerShape(consumer))
+                    survival == null || survival.ReturnType != typeof(void) ||
+                    !ValidateMpSetter() || !ValidateDrinkShape(drink) || !ValidateConsumerShape(consumer))
                 { Debug.LogWarning("[SephiriaOne] Rabbit potion Drink/consumer signature or IL changed; optional hooks are disabled."); return; }
                 var instance = new Harmony(Owner);
                 harmony = instance;
                 try
                 {
                     instance.Patch(heal, transpiler: new HarmonyMethod(typeof(RabbitPotionNativeHooks), nameof(CaptureHealCall)));
+                    instance.Patch(consumer, transpiler: new HarmonyMethod(typeof(RabbitPotionNativeHooks), nameof(GuardCompletedDrink)));
+                    instance.Patch(survival, prefix: new HarmonyMethod(typeof(RabbitPotionNativeHooks), nameof(AllowSurvival)));
                     instance.Patch(drink, prefix: new HarmonyMethod(typeof(RabbitPotionNativeHooks), nameof(BeginDrink)),
                         postfix: new HarmonyMethod(typeof(RabbitPotionNativeHooks), nameof(CompleteDrink)),
                         finalizer: new HarmonyMethod(typeof(RabbitPotionNativeHooks), nameof(EndDrink)));
@@ -83,6 +90,7 @@ namespace SephiriaOne
             try { harmony?.UnpatchAll(Owner); harmony = null; }
             catch (Exception error) { Debug.LogWarning("[SephiriaOne] Rabbit potion hook removal failed: " + error); }
             drinks?.Clear();
+            completions?.Clear();
         }
 
         private static bool ValidateDrinkShape(MethodInfo drink)
@@ -102,15 +110,23 @@ namespace SephiriaOne
 
         private static bool ValidateConsumerShape(MethodInfo consumer)
         {
-            var code = PatchProcessor.GetOriginalInstructions(consumer).ToList();
+            return ValidateConsumerCode(PatchProcessor.GetOriginalInstructions(consumer).ToList());
+        }
+
+        private static bool ValidateConsumerCode(List<CodeInstruction> code)
+        {
             var drinks = Enumerable.Range(0, code.Count).Where(i => code[i].operand is MethodInfo method &&
                 method.DeclaringType == typeof(WieldingPotion) && method.Name == nameof(WieldingPotion.Drink) &&
                 method.GetParameters().Length == 2).ToList();
             var decreases = Enumerable.Range(0, code.Count).Where(i => code[i].operand is MethodInfo method &&
                 method.DeclaringType == typeof(GridInventory) && method.Name == nameof(GridInventory.DecreaseItemQuantity)).ToList();
-            if (drinks.Count != 1 || decreases.Count != 1 || drinks[0] >= decreases[0]) return false;
+            var events = Enumerable.Range(0, code.Count).Where(i => code[i].operand is FieldInfo field &&
+                field.DeclaringType == typeof(ItemController) && field.Name == "OnDrinkPotionServerside").ToList();
+            if (drinks.Count != 1 || decreases.Count != 1 || events.Count != 1 ||
+                drinks[0] >= events[0] || events[0] >= decreases[0]) return false;
             return code.Skip(drinks[0] + 1).Take(decreases[0] - drinks[0] - 1).Any(i =>
-                i.opcode == OpCodes.Brfalse || i.opcode == OpCodes.Brfalse_S);
+                i.opcode == OpCodes.Brfalse || i.opcode == OpCodes.Brfalse_S) &&
+                ValidateRejectionCleanup(code, drinks[0], decreases[0]);
         }
 
         private static IEnumerable<CodeInstruction> CaptureHealCall(IEnumerable<CodeInstruction> instructions)
@@ -138,6 +154,9 @@ namespace SephiriaOne
         {
             __state = null;
             try { __state = CaptureContext(__instance, instanceID); } catch { }
+            DrinkContext completion = completions != null && completions.Count != 0 ? completions.Peek() : null;
+            if (completion != null && completion.NativeDrink == null && ReferenceEquals(completion.Potion, __instance))
+                completion.NativeDrink = __state;
             if (drinks == null) drinks = new Stack<DrinkContext>();
             drinks.Push(__state);
         }
@@ -161,7 +180,7 @@ namespace SephiriaOne
             if (item == null || item.Quantity <= 0 || item.InstanceID != instanceId ||
                 item.EntityID != potion.entityID) return null;
             return new DrinkContext { Potion = potion, Effect = potion.effect, Controller = controller,
-                Player = player, Spawner = spawner, Inventory = inventory, Item = item,
+                Player = player, Spawner = spawner, Connection = spawner.connectionToClient, Inventory = inventory, Item = item,
                 InstanceId = instanceId, Slot = slot, Run = SaveManager.CurrentRun,
                 Dungeon = DungeonManager.Instance, Floor = player.currentFloorGuid, Settings = settings };
         }
@@ -184,7 +203,9 @@ namespace SephiriaOne
 
         private static bool Current(DrinkContext context)
         {
-            if (context == null || !Available || !ReferenceEquals(SaveManager.CurrentRun, context.Run) ||
+            if (context == null || !Available || !NetworkServer.active || !ReferenceEquals(SaveManager.CurrentRun, context.Run) ||
+                !context.Potion || !context.Potion.isServer || context.Potion.netId == 0 ||
+                !ReferenceEquals(context.Spawner.connectionToClient, context.Connection) ||
                 !ReferenceEquals(DungeonManager.Instance, context.Dungeon) ||
                 context.Player.currentFloorGuid != context.Floor ||
                 !SourceReady(context.Potion, context.Controller, context.Player, context.Spawner) ||

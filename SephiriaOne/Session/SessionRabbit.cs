@@ -25,7 +25,9 @@ namespace SephiriaOne
         }
 
         internal static string DescribeRabbit(RabbitPotionSettings settings) =>
-            "Wing-Eared Rabbit: infinite healing potions " + (settings.Infinite ? "on" : "off") +
-            "; nearby potion healing " + (settings.Share ? "on" : "off") + ".";
+            "Wing-Eared Rabbit HP potions: infinite uses " + (settings.Infinite ? "on" : "off") +
+            "; nearby healing " + (settings.Share ? "on" : "off") +
+            "; " + RabbitPotionSettings.MpCostPerDrink + " MP per drink " + (settings.ConsumeMp ? "on" : "off") +
+            "; Survival random-stat suppression " + (settings.SuppressSurvival ? "on" : "off") + ".";
     }
 }

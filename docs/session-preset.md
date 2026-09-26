@@ -19,6 +19,11 @@ as `rabbit infinite 1` and `rabbit share 1`. Missing/off options remain native.
 v1-v3 are still readable; v4 supports all prior setting families. These flags are
 read at potion use, never translated into healing on preset load or player join.
 
+Version `0.17.0` adds v5 rows `rabbit mp-cost 1` and
+`rabbit suppress-survival 1`. The four options remain independent and reset
+together with `/one rabbit reset`. v1-v4 still load and leave new flags off;
+loading or rejoining never charges MP or triggers/suppresses a past potion event.
+
 Since `0.14.0`, [native-baseline factors](multiplier-command.md) are saved as
 `multiplier N` rather than calculated totals. A preset containing a factor uses
 v2; v1 files remain supported and are still written when no factor is active.
