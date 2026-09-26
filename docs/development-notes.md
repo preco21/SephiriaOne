@@ -9,6 +9,15 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.18.1` fixes [Rabbit potion death timing](rabbit-potions.md). Alive/wielded
+readiness was rechecked after native callbacks, so death could abandon infinite
+consumption and Survival suppression for an already-admitted drink. The exact
+completion now retains those protections across death/wield cleanup while keeping
+ownership, session and inventory identity checks. Late already-dead completions
+with active Rabbit options are rejected before any effects or MP debit. Dead
+sources do not share healing. Five reproductions were repaired; 115 Harmony
+scenarios and installed death/consumption contracts pass. No deployment was run.
+
 Recipient-Survival verification for `0.18.0`: shared Rabbit potion healing already
 uses `HealPercent` without the potion-drink event, so nearby recipients of any
 costume gain no Survival stats. Added regression cases for supported potions,

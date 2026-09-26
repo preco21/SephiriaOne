@@ -28,6 +28,7 @@ namespace SephiriaOne
             public GridInventory Inventory;
             public NewItemOwnInstance Item;
             public int InstanceId;
+            public int EntityId;
             public int Slot;
             public object Run;
             public DungeonManager Dungeon;
@@ -153,25 +154,31 @@ namespace SephiriaOne
         private static void BeginDrink(WieldingPotion __instance, int instanceID, out DrinkContext __state)
         {
             __state = null;
-            try { __state = CaptureContext(__instance, instanceID); } catch { }
             DrinkContext completion = completions != null && completions.Count != 0 ? completions.Peek() : null;
-            if (completion != null && completion.NativeDrink == null && ReferenceEquals(completion.Potion, __instance))
-                completion.NativeDrink = __state;
+            if (completion != null && completion.NativeDrink == null &&
+                ReferenceEquals(completion.Potion, __instance) && completion.InstanceId == instanceID)
+            {
+                // Admission occurred before native callbacks. Do not lose it to death/wield cleanup
+                // between the controller boundary and this exact first Drink invocation.
+                __state = completion;
+                completion.NativeDrink = completion;
+            }
+            else try { __state = CaptureContext(__instance, instanceID); } catch { }
             if (drinks == null) drinks = new Stack<DrinkContext>();
             drinks.Push(__state);
         }
 
-        private static DrinkContext CaptureContext(WieldingPotion potion, int instanceId)
+        private static DrinkContext CaptureContext(WieldingPotion potion, int instanceId, bool allowDead = false)
         {
             if (!Available || !NetworkServer.active || !potion || !potion.isServer || potion.netId == 0 ||
                 potion.effect == null || potion.effect.GetType() != typeof(PotionEffect_Regeneration) ||
                 !Allowed(potion.entityID)) return null;
             RabbitPotionSettings settings = SessionSettings.RabbitPotionsForUse;
-            if (!settings.HasChanges) return null;
+            if (!settings.Infinite && !settings.Share && !settings.ConsumeMp && !settings.SuppressSurvival) return null;
             ItemController controller = potion.NetworkController;
             PlayerAvatar player = controller?.Avatar as PlayerAvatar;
             PlayerSpawner spawner = player?.spawner;
-            if (!SourceReady(potion, controller, player, spawner)) return null;
+            if (!SourceReady(potion, controller, player, spawner, allowDead)) return null;
             GridInventory inventory = player.Inventory;
             int selected = controller.SelectedQuickSlotIdx;
             if (selected < 0 || selected >= controller.quickSlotTable.Count) return null;
@@ -181,15 +188,19 @@ namespace SephiriaOne
                 item.EntityID != potion.entityID) return null;
             return new DrinkContext { Potion = potion, Effect = potion.effect, Controller = controller,
                 Player = player, Spawner = spawner, Connection = spawner.connectionToClient, Inventory = inventory, Item = item,
-                InstanceId = instanceId, Slot = slot, Run = SaveManager.CurrentRun,
+                InstanceId = instanceId, EntityId = potion.entityID, Slot = slot, Run = SaveManager.CurrentRun,
                 Dungeon = DungeonManager.Instance, Floor = player.currentFloorGuid, Settings = settings };
         }
 
-        private static bool SourceReady(WieldingPotion potion, ItemController controller, PlayerAvatar player, PlayerSpawner spawner)
+        private static bool SourceReady(WieldingPotion potion, ItemController controller, PlayerAvatar player, PlayerSpawner spawner,
+            bool allowDead = false)
         {
+            bool deathCleanup = allowDead && player && player.IsDead;
             if (!controller || !controller.isServer || controller.netId == 0 ||
-                !ReferenceEquals(controller.Avatar, player) || !ReferenceEquals(controller.NetworkcurrentWieldingItem, potion) ||
-                !player || player.IsDead || player.currentCostume != "HolyRabbit" || !spawner ||
+                !ReferenceEquals(controller.Avatar, player) ||
+                (!ReferenceEquals(controller.NetworkcurrentWieldingItem, potion) &&
+                    !(deathCleanup && !controller.NetworkcurrentWieldingItem)) ||
+                !player || (player.IsDead && !allowDead) || player.currentCostume != "HolyRabbit" || !spawner ||
                 !ReferenceEquals(spawner.PlayerAvatar, player) || !HostStateAdapter.IsReady(spawner) ||
                 !PlayerSpawner.MultiplayerList.Contains(spawner)) return false;
             var connection = spawner.connectionToClient;
@@ -201,33 +212,37 @@ namespace SephiriaOne
             return false;
         }
 
-        private static bool Current(DrinkContext context)
+        private static bool Current(DrinkContext context, bool retainDeath = false)
         {
+            // Only an operation admitted by the controller can survive death's transient wield teardown.
+            // Ownership, session, costume and the original inventory item must still match.
+            bool deathCleanup = retainDeath && context != null && context.Player && context.Player.IsDead &&
+                IsNativeCompletion(context);
             if (context == null || !Available || !NetworkServer.active || !ReferenceEquals(SaveManager.CurrentRun, context.Run) ||
-                !context.Potion || !context.Potion.isServer || context.Potion.netId == 0 ||
+                (!deathCleanup && (!context.Potion || !context.Potion.isServer || context.Potion.netId == 0 ||
+                    !ReferenceEquals(context.Potion.effect, context.Effect) || context.Potion.itemInstanceID != context.InstanceId ||
+                    context.Potion.entityID != context.EntityId)) ||
                 !ReferenceEquals(context.Spawner.connectionToClient, context.Connection) ||
                 !ReferenceEquals(DungeonManager.Instance, context.Dungeon) ||
                 context.Player.currentFloorGuid != context.Floor ||
-                !SourceReady(context.Potion, context.Controller, context.Player, context.Spawner) ||
-                !ReferenceEquals(context.Potion.effect, context.Effect) ||
-                context.Potion.itemInstanceID != context.InstanceId ||
+                !SourceReady(context.Potion, context.Controller, context.Player, context.Spawner, deathCleanup) ||
                 context.Controller.SelectedQuickSlotIdx < 0 ||
                 context.Controller.SelectedQuickSlotIdx >= context.Controller.quickSlotTable.Count ||
                 context.Controller.quickSlotTable[context.Controller.SelectedQuickSlotIdx].idx != context.Slot ||
                 !ReferenceEquals(context.Player.Inventory, context.Inventory)) return false;
             NewItemOwnInstance item = context.Inventory.FindItem(context.Inventory.IdxToPos(context.Slot));
             return ReferenceEquals(item, context.Item) && item.Quantity > 0 &&
-                item.InstanceID == context.InstanceId && item.EntityID == context.Potion.entityID;
+                item.InstanceID == context.InstanceId && item.EntityID == context.EntityId;
         }
 
         private static void CompleteDrink(ref bool itemDecreased, DrinkContext __state)
         {
             try
             {
-                if (!Current(__state) || __state.HealCalls != 1) return;
+                if (!Current(__state, retainDeath: true) || __state.HealCalls != 1) return;
                 RabbitPotionSettings now = SessionSettings.RabbitPotionsForUse;
                 if (__state.Settings.Infinite && now.Infinite && itemDecreased) itemDecreased = false;
-                if (__state.Settings.Share && now.Share && IsFinitePositive(__state.HealStrength)) Share(__state);
+                if (__state.Settings.Share && now.Share && IsFinitePositive(__state.HealStrength) && Current(__state)) Share(__state);
             }
             catch { /* An optional callback must never cancel the native drink. */ }
         }

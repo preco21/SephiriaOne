@@ -56,6 +56,27 @@ internal static class GameRabbitCompatibilityTests
         if (mpCallback < 0 || mpWrite <= mpCallback)
             throw new Exception("Re-audit native UseMp callback ordering before changing fee semantics.");
 
+        var death = PatchProcessor.GetOriginalInstructions(Method("UnitAvatar", "Die", typeof(int), Type("DamageInstance"))).ToList();
+        int deadWrite = death.FindIndex(i => i.operand is MethodInfo m && m.Name == "set_NetworkIsDead");
+        int deathEvent = death.FindIndex(i => i.operand is FieldInfo f && f.Name == "OnDie");
+        if (deadWrite < 0 || deathEvent <= deadWrite)
+            throw new Exception("Native death must publish IsDead before notifying death observers.");
+        var forceDeath = Method("UnitAvatar", "ForceDie");
+        var cancel = Method("UnitAvatar", "CancelCurrentAction");
+        var hit = Method("UnitAvatar", "StartHitFeedback", typeof(int), typeof(float), typeof(float));
+        var cancelItem = Method("ItemController", "CancelAction");
+        var itemCleanup = PatchProcessor.GetOriginalInstructions(cancelItem).ToList();
+        var regeneration = PatchProcessor.GetOriginalInstructions(effect).ToList();
+        int drinkEvent = regeneration.FindIndex(i => i.operand is MethodInfo m && m.DeclaringType == Type("PotionEffect") && m.Name == "CreateEffect_OnDrink");
+        int regenerationHeal = regeneration.FindIndex(i => i.operand is MethodInfo m && m.Name == "HealPercent");
+        if (!Calls(forceDeath, cancel) || !Calls(hit, cancel) ||
+            !death.Any(i => Equals(i.operand, hit)) ||
+            !PatchProcessor.GetOriginalInstructions(cancel).Any(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "IAvatarStuckModule" && m.Name == "CancelAction") ||
+            !itemCleanup.Any(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "NetworkServer" && m.Name == "Destroy") ||
+            !itemCleanup.Any(i => i.operand is MethodInfo m && m.Name == "set_NetworkcurrentWieldingItem") ||
+            drinkEvent < 0 || regenerationHeal <= drinkEvent)
+            throw new Exception("Re-audit native death/wield cleanup and Survival-before-healing order.");
+
         var healPercent = Method("UnitAvatar", "HealPercent", typeof(float));
         var healBody = Method("UnitAvatar", "HealPercent", typeof(float), typeof(bool), typeof(bool));
         if (!Calls(healPercent, healBody) ||

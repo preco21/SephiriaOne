@@ -86,6 +86,22 @@ These are independent options: sharing alone still consumes the source potion;
 infinite alone affects only the drinker. Native Wing-Eared Rabbit buff-spell
 sharing remains unchanged.
 
+**Death timing (`0.18.1`):** Once an eligible drink reaches completion while its
+player is alive, death during that same operation does not cancel infinite-item
+protection or Survival suppression. Native death may destroy/unwield the potion
+before the managed drink returns; the addon retains the exact admitted operation
+without trying to resurrect the potion object or player. It still checks the same
+host connection, session, costume and original inventory item. A dead source does
+not start shared healing. A completed admission pays MP once, without refunds or
+replay after death.
+
+If the player is already dead when an eligible pending completion reaches the
+controller guard, the addon rejects it before MP charges, potion events, healing
+or item consumption. The game's normal animation cleanup still runs. This applies
+only to Rabbit HP potions with at least one Rabbit option enabled; all-off settings
+(including a remembered disabled fee), other costumes and non-HP potions remain
+native. No per-player death flag or delayed operation survives the call stack.
+
 ## Synchronization and compatibility
 
 The host observes the existing successful potion-use event. A scoped context
@@ -154,6 +170,18 @@ potion IDs, suppression on/off, independent potion use during/after shared heali
 and recipient callback failures. Installed IL confirms HP-only sharing does not
 raise drink events and Survival subscribes only to `OnDrinkPotion`. No runtime
 change or additional suppression hook was needed for recipients.
+
+The `0.18.1` death-transition repair initially reproduced five failing cases:
+death before Survival, death during healing, both with and without wield cleanup,
+and a late completion already dead. After repair, all **115** potion scenarios
+pass, including Unity-style destroyed-object truthiness, all 16 toggle combinations,
+11 concurrent lifetime/input changes, revived players and ordinary potion behavior.
+Installed IL verifies death/cancellation can destroy and clear the wielded item,
+and the potion event precedes regeneration healing. Debug/Release builds and the
+pure/installed-game suite pass with deployment disabled. Independent review found
+no critical or important issues. Session-scope inspection confirms death does not
+clear shared Rabbit intent. Live lethal-hit timing
+and unmodified-guest multiplayer verification remain pending.
 The `0.17.0` five-player synchronization fixture retained zero allocated bytes per tick
 with both inactive and active settings. This is not a live-game profiler result.
 
@@ -192,3 +220,8 @@ Manual smoke tests:
     description. Try zero, invalid input and insufficient MP. Turn charging off,
     save and restart: the chosen amount should remain, without enabling charging.
     Reenable it and test with a rejoining unmodified guest. Reset restores 10/off.
+11. With infinite and suppression enabled and Survival 5 allocated, finish an HP
+    potion immediately before a lethal hit. Verify the item remains and no random
+    stat is granted. Repeat when death precedes the pending completion: no MP,
+    healing, potion events or consumption should occur. Revive and drink again,
+    then repeat with an unmodified guest and with each option disabled separately.

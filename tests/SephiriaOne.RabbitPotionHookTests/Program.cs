@@ -462,6 +462,109 @@ Check("disabled saved custom amount leaves native MP and consumption unchanged",
     Install(); controller.RunDrink();
     Assert(player.mp == 30 && player.MpWrites == 0 && player.Heals.Count == 1 && item.Quantity == 2, "Disabled custom cost changed native drink");
 });
+foreach (int phase in new[] { 0, 1, 2 })
+    foreach (bool unwield in new[] { false, true })
+        Check($"death at potion phase {phase}, wield cleanup {unwield} retains admitted protections", () =>
+        {
+            var (player, controller, potion, item) = Setup();
+            var passive = new PassiveObject_PotionAndRandomStat(); passive.Enable(player);
+            var recipient = new PlayerAvatar(); _ = new PlayerSpawner(recipient);
+            void Die()
+            {
+                if (unwield) controller.CancelAction();
+                player.IsDead = true; player.Hp = 0;
+            }
+            if (phase == 0) player.OnPotionEvent = Die;
+            if (phase == 1) player.OnHealed = Die;
+            if (phase == 2) controller.OnDrinkPotionServerside += _ => Die();
+            SessionSettings.RabbitPotionsForUse = new(true, true, true, true);
+            Install(); controller.RunDrink();
+            Assert(passive.StatGains == 0, "Death bypassed Survival suppression");
+            Assert(item.Quantity == 3, "Death bypassed infinite potion consumption");
+            Assert(player.IsDead && player.Hp == 0 && player.mp == 20 && player.MpWrites == 1 && controller.CleanupCalls == 1,
+                "Death, charged MP or native completion cleanup was altered");
+            Assert(recipient.Heals.Count == (phase == 2 ? 1 : 0), "Dead source started shared healing");
+        });
+Check("late HP potion completion after death rejects all effects without cost or consumption", () =>
+{
+    var (player, controller, _, item) = Setup(); player.IsDead = true; player.Hp = 0;
+    var passive = new PassiveObject_PotionAndRandomStat(); passive.Enable(player);
+    int controllerEvents = 0; controller.OnDrinkPotionServerside += _ => controllerEvents++;
+    var recipient = new PlayerAvatar(); _ = new PlayerSpawner(recipient);
+    SessionSettings.RabbitPotionsForUse = new(true, true, true, true);
+    Install(); controller.RunDrink();
+    Assert(item.Quantity == 3 && passive.StatGains == 0 && player.DrinkEvents == 0 && controllerEvents == 0,
+        "Dead pending completion consumed a potion or triggered potion events");
+    Assert(player.mp == 30 && player.MpWrites == 0 && player.Hp == 0 && recipient.Heals.Count == 0 && controller.CleanupCalls == 1,
+        "Dead pending completion charged MP, healed or skipped cleanup");
+});
+foreach (int flags in Enumerable.Range(0, 16))
+    Check("death retains independent options " + flags, () =>
+    {
+        var (player, controller, _, item) = Setup();
+        var passive = new PassiveObject_PotionAndRandomStat(); passive.Enable(player);
+        var recipient = new PlayerAvatar(); _ = new PlayerSpawner(recipient);
+        player.OnPotionEvent = () => { player.IsDead = true; player.Hp = 0; };
+        bool infinite = (flags & 1) != 0, share = (flags & 2) != 0, mp = (flags & 4) != 0, suppress = (flags & 8) != 0;
+        SessionSettings.RabbitPotionsForUse = new(infinite, share, mp, suppress);
+        Install(); controller.RunDrink();
+        Assert(item.Quantity == (infinite ? 3 : 2) && passive.StatGains == (suppress ? 0 : 1) &&
+            player.mp == (mp ? 20 : 30) && recipient.Heals.Count == 0, "Death coupled independent settings");
+    });
+foreach (string change in new[] { "run", "dungeon", "floor", "costume", "connection", "inventory", "item", "entity", "slot", "reset", "server" })
+    Check("death exception still rejects changed " + change, () =>
+    {
+        var (player, controller, _, item) = Setup();
+        var passive = new PassiveObject_PotionAndRandomStat(); passive.Enable(player);
+        player.OnPotionEvent = () =>
+        {
+            player.IsDead = true; player.Hp = 0;
+            if (change == "run") SaveManager.CurrentRun = new();
+            if (change == "dungeon") DungeonManager.Instance = new();
+            if (change == "floor") player.currentFloorGuid = "next";
+            if (change == "costume") player.currentCostume = "PinkRabbit";
+            if (change == "connection") player.spawner.connectionToClient.isReady = false;
+            if (change == "inventory")
+            {
+                player.Inventory = new();
+                player.Inventory.items[new(0, 0)] = item;
+            }
+            if (change == "item") player.Inventory.items[new(0, 0)] = new NewItemOwnInstance { EntityID = 0, InstanceID = 53, Quantity = 3 };
+            if (change == "entity") item.EntityID = 2;
+            if (change == "slot") controller.SelectedQuickSlotIdx = -1;
+            if (change == "reset") SessionSettings.RabbitPotionsForUse = default;
+            if (change == "server") NetworkServer.active = false;
+        };
+        SessionSettings.RabbitPotionsForUse = new(true, true, true, true);
+        Install(); controller.RunDrink();
+        Assert(passive.StatGains == 1 && player.Inventory.items[new(0, 0)].Quantity == 2,
+            "Death bypassed real lifetime or inventory invalidation");
+    });
+Check("revival and later native drink do not inherit the completed death scope", () =>
+{
+    var (player, controller, _, item) = Setup();
+    var passive = new PassiveObject_PotionAndRandomStat(); passive.Enable(player);
+    player.OnPotionEvent = () => { player.IsDead = true; player.Hp = 0; };
+    SessionSettings.RabbitPotionsForUse = new(true, true, true, true);
+    Install(); controller.RunDrink();
+    Assert(passive.StatGains == 0 && item.Quantity == 3, "Dying drink lost protection");
+    player.OnPotionEvent = null; player.IsDead = false; player.Hp = 20; player.currentCostume = "PinkRabbit";
+    controller.RunDrink();
+    Assert(passive.StatGains == 1 && item.Quantity == 2 && player.mp == 20, "Completed death scope leaked into revived player");
+});
+foreach (string scenario in new[] { "all-off", "remembered-fee-only", "other-costume", "mana-potion" })
+    Check("dead late completion preserves native behavior for " + scenario, () =>
+    {
+        var (player, controller, potion, item) = Setup(); player.IsDead = true; player.Hp = 0;
+        var passive = new PassiveObject_PotionAndRandomStat(); passive.Enable(player);
+        SessionSettings.RabbitPotionsForUse = scenario == "all-off" ? default :
+            scenario == "remembered-fee-only" ? new(false, false, false, false, 25) : new(true, true, true, true);
+        if (scenario == "other-costume") player.currentCostume = "PinkRabbit";
+        if (scenario == "mana-potion") potion.effect = new PotionEffect_Concentration();
+        Install(); controller.RunDrink();
+        Assert(item.Quantity == 2 && passive.StatGains == 1 && player.mp == 30 && controller.CleanupCalls == 1,
+            "Death guard intercepted an unmodified native drink");
+    });
 Console.WriteLine($"{passed} passed, {failed} failed");
 Environment.ExitCode = failed == 0 ? 0 : 1;
 

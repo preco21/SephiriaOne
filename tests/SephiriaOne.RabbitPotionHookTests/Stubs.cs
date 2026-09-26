@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace UnityEngine
 {
-    public class Object { public static implicit operator bool(Object value) => value != null; }
+    public class Object { public bool Destroyed; public static implicit operator bool(Object value) => value != null && !value.Destroyed; }
     public readonly record struct Vector3(float x, float y, float z)
     {
         public static Vector3 operator -(Vector3 a, Vector3 b) => new(a.x - b.x, a.y - b.y, a.z - b.z);
@@ -90,6 +90,11 @@ public class ItemController : NetworkBehaviour
     public event Action<WieldingPotion> OnDrinkPotionServerside;
     public int CleanupCalls;
     private void RpcWieldItem(int id) { CleanupCalls++; }
+    public void CancelAction()
+    {
+        if (currentWieldingItem) { currentWieldingItem.Destroyed = true; currentWieldingItem.netId = 0; currentWieldingItem.isServer = false; }
+        NetworkcurrentWieldingItem = null;
+    }
     public void RunDrink() => DrinkPotionAnimation();
     [MethodImpl(MethodImplOptions.NoInlining)] public void DrinkPotionAnimation()
     {

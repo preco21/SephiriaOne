@@ -79,7 +79,10 @@ namespace SephiriaOne
         {
             // This call stays inside the validated native catch-all, before both controller event and decrement.
             // No state is reserved at animation start, so cancellation cannot charge or replay anything.
-            DrinkContext context = CaptureContext(potion, instanceId);
+            DrinkContext context = CaptureContext(potion, instanceId, allowDead: true);
+            // A pending animation may reach the native consumer after death. Reject before any
+            // event or MP charge rather than falling through to unprotected native consumption.
+            if (context != null && context.Player.IsDead) throw new RejectedDrink();
             if (context != null && context.Settings.ConsumeMp && context.Settings.MpCostPerDrink > 0)
             {
                 int cost = context.Settings.MpCostPerDrink;
@@ -100,10 +103,12 @@ namespace SephiriaOne
         private static bool AllowSurvival(PassiveObject_PotionAndRandomStat __instance, PotionEffect effect)
         {
             DrinkContext drink = drinks != null && drinks.Count != 0 ? drinks.Peek() : null;
-            DrinkContext completion = completions != null && completions.Count != 0 ? completions.Peek() : null;
-            return drink == null || completion == null || !ReferenceEquals(drink, completion.NativeDrink) ||
+            return !IsNativeCompletion(drink) ||
                 !ReferenceEquals(__instance.player, drink.Player) || !ReferenceEquals(effect, drink.Effect) ||
-                !drink.Settings.SuppressSurvival || !SessionSettings.RabbitPotionsForUse.SuppressSurvival || !Current(drink);
+                !drink.Settings.SuppressSurvival || !SessionSettings.RabbitPotionsForUse.SuppressSurvival || !Current(drink, retainDeath: true);
         }
+
+        private static bool IsNativeCompletion(DrinkContext drink) => drink != null &&
+            completions != null && completions.Count != 0 && ReferenceEquals(drink, completions.Peek()?.NativeDrink);
     }
 }
