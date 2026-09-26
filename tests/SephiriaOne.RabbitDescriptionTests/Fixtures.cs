@@ -27,23 +27,13 @@ namespace UnityEngine
 
 namespace SephiriaOne
 {
-    internal readonly struct RabbitPotionSettings
-    {
-        public const int MpCostPerDrink = 10;
-        public bool Infinite { get; }
-        public bool Share { get; }
-        public bool ConsumeMp { get; }
-        public bool SuppressSurvival { get; }
-        public RabbitPotionSettings(bool infinite, bool share, bool consumeMp = false, bool suppressSurvival = false)
-        { Infinite = infinite; Share = share; ConsumeMp = consumeMp; SuppressSurvival = suppressSurvival; }
-    }
     internal static class SessionSettings
     {
         internal static event Action SettingsChanged;
         internal static RabbitPotionSettings RabbitPotionsForDisplay { get; set; }
-        internal static void Change(bool infinite, bool share, bool consumeMp = false, bool suppressSurvival = false)
+        internal static void Change(bool infinite, bool share, bool consumeMp = false, bool suppressSurvival = false, int mpCost = 10)
         {
-            RabbitPotionsForDisplay = new RabbitPotionSettings(infinite, share, consumeMp, suppressSurvival);
+            RabbitPotionsForDisplay = new RabbitPotionSettings(infinite, share, consumeMp, suppressSurvival, mpCost);
             SettingsChanged?.Invoke();
         }
     }

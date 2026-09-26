@@ -1,20 +1,26 @@
 #nullable enable
 using System;
+using System.Globalization;
 
 namespace SephiriaOne
 {
-    internal enum RabbitOption { Infinite, Share, ConsumeMp, SuppressSurvival, Reset }
+    internal enum RabbitOption { Infinite, Share, ConsumeMp, SuppressSurvival, Reset, MpAmount }
     internal enum RabbitParseResult { NotCommand, Help, Status, Invalid, Valid }
 
     internal readonly struct RabbitCommand
     {
         public RabbitOption Option { get; }
         public bool Enabled { get; }
-        public bool IsReset => Option == RabbitOption.Reset || !Enabled;
-        public const string Usage = "Host only: /one rabbit infinite on|off, /one rabbit share on|off, /one rabbit mp-cost on|off, /one rabbit suppress-survival on|off, /one rabbit reset, /one rabbit status. Applies to Wing-Eared Rabbit HP potions. Save for future sessions: /one save.";
+        public int Amount { get; }
+        public bool IsReset => Option == RabbitOption.Reset || (Option != RabbitOption.MpAmount && !Enabled);
+        public const string Usage = "Host only: /one rabbit infinite on|off, /one rabbit share on|off, /one rabbit mp-cost on|off|<0..10000>, /one rabbit suppress-survival on|off, /one rabbit reset, /one rabbit status. A number sets the MP fee and enables it; on/off retain the amount. Applies to Wing-Eared Rabbit HP potions. Save for future sessions: /one save.";
 
-        public RabbitCommand(RabbitOption option, bool enabled)
-        { Option = option; Enabled = enabled; }
+        public RabbitCommand(RabbitOption option, bool enabled, int amount = RabbitPotionSettings.DefaultMpCostPerDrink)
+        { Option = option; Enabled = enabled; Amount = amount; }
+
+        internal static bool TryParseMpCost(string text, out int amount) =>
+            int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out amount) &&
+            amount >= 0 && amount <= RabbitPotionSettings.MaximumMpCostPerDrink;
 
         public static RabbitParseResult Parse(string? text, out RabbitCommand command, out string error)
         {
@@ -35,6 +41,11 @@ namespace SephiriaOne
             else if (parts[2].Equals("mp-cost", StringComparison.OrdinalIgnoreCase)) option = RabbitOption.ConsumeMp;
             else if (parts[2].Equals("suppress-survival", StringComparison.OrdinalIgnoreCase)) option = RabbitOption.SuppressSurvival;
             else return RabbitParseResult.Invalid;
+            if (option == RabbitOption.ConsumeMp && TryParseMpCost(parts[3], out int amount))
+            {
+                command = new RabbitCommand(RabbitOption.MpAmount, true, amount); error = "";
+                return RabbitParseResult.Valid;
+            }
             bool enabled;
             if (parts[3].Equals("on", StringComparison.OrdinalIgnoreCase)) enabled = true;
             else if (parts[3].Equals("off", StringComparison.OrdinalIgnoreCase)) enabled = false;

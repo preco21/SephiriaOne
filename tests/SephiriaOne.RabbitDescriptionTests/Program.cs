@@ -53,6 +53,12 @@ Check(panel.tooltipEffectText.text.Contains("Nearby allies"), "second option ref
 Check(panel.tooltipEffectText.text.Split("Nearby allies").Length == 2, "refresh does not duplicate line");
 SessionSettings.Change(false, false, true, true);
 Check(panel.tooltipEffectText.text.Contains("10 MP") && panel.tooltipEffectText.text.Contains("Survival"), "balance options refresh current tooltip");
+SessionSettings.Change(false, false, true, true, 25);
+Check(panel.tooltipEffectText.text.Contains("25 MP") && !panel.tooltipEffectText.text.Contains("10 MP"), "custom amount replaces old tooltip cost");
+SessionSettings.Change(false, false, true, true, 0);
+Check(panel.tooltipEffectText.text.Contains("0 MP") && panel.tooltipEffectText.text.Split("MP;").Length == 2, "zero amount refreshes without duplicate lines");
+SessionSettings.Change(false, false, false, true, 25);
+Check(!panel.tooltipEffectText.text.Contains(" MP;"), "disabled fee hides custom cost description");
 SessionSettings.Change(true, true);
 panel.Select(new CostumeEntity("PinkRabbit"));
 Check(panel.tooltipEffectText.text == native, "selection of another costume stays native");

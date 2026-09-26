@@ -20,7 +20,7 @@ effects use the same native synchronization as the existing commands.
 | Resources | Select dice, inventory slots, talents, fruit-skewer budget or leaves. Set/add/subtract, `xN`, and selected/all resets. Dice/leaves show current balance separately from the next fresh starting allowance. |
 | Presets | Save current applied settings, forget the saved copy, or refresh it from disk. Active intent and saved intent are shown separately. |
 | Status | Current intent, player values, revisions, synchronization outcomes, native name status and fault details. Scroll for the complete readout. |
-| Rabbit | Independent On/Off controls for Wing-Eared Rabbit infinite HP potions, nearby potion healing, 10 MP cost and Survival rank-5 suppression; reset all four options. Shows active state and compatibility. |
+| Rabbit | Independent On/Off controls for Wing-Eared Rabbit infinite HP potions, nearby potion healing, MP cost and Survival rank-5 suppression. Enter 0..10000 MP and press Set & on to choose a fee; Off remembers it. Reset restores 10 MP and disables all four options. Shows active state and compatibility. |
 
 Actions only run when clicked. Typing, switching tabs and refreshing observations
 never send a settings command. Successful actions clear the amount field. Changing
@@ -48,7 +48,8 @@ Forget removes only the saved copy. Resets affect the current session; save agai
 to replace a saved preset, or forget it to stop automatic loading in future hosted
 sessions. Automatic-load rules are unchanged; presets containing multipliers
 use v2, resource presets use v3, original rabbit options use v4, and rabbit MP-cost
-or Survival-suppression options use v5. Older setting types retain v1 compatibility.
+or Survival-suppression options use v5. Custom Rabbit MP amounts use v6, including
+amounts retained with charging off. Older setting types retain v1 compatibility.
 See [resource semantics and safe reductions](resource-command.md). Since 0.15.0,
 `/one` replaces the old generic `/mod` token, which is no longer intercepted.
 

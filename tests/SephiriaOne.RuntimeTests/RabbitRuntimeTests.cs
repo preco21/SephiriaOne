@@ -36,23 +36,38 @@ internal static class RabbitRuntimeTests
             check(snapshot.RabbitPotions.ConsumeMp && snapshot.RabbitPotions.SuppressSurvival &&
                 SessionSettings.RabbitPotionsForUse.ConsumeMp && SessionSettings.RabbitPotionsForUse.SuppressSurvival,
                 "Snapshot and live policy expose independent balance flags");
+            previous = notifications;
+            check(Command("mp-cost 25") && notifications > previous && SessionSettings.ReadSnapshot().RabbitPotions.MpCostPerDrink == 25 &&
+                SessionSettings.DescribeRabbit(SessionSettings.RabbitPotionsForUse).Contains("25 MP"), "Custom fee commits and refreshes status through shared dispatch");
+            revision = SessionSettings.ReadSnapshot().Revision;
+            previous = notifications;
+            check(!Command("mp-cost -1") && !Command("mp-cost 10001") &&
+                SessionSettings.ReadSnapshot().Revision == revision && notifications == previous && SessionSettings.RabbitPotionsForUse.MpCostPerDrink == 25,
+                "Invalid fee leaves policy and revision untouched");
+            check(Command("mp-cost off") && !SessionSettings.RabbitPotionsForUse.ConsumeMp &&
+                SessionSettings.RabbitPotionsForUse.MpCostPerDrink == 25 && Command("mp-cost on"), "Off/on preserves chosen fee");
             var guest = add(2, 4, 2, 0);
             SessionSettings.Synchronize();
             PlayerSpawner.MultiplayerList.Remove(guest);
             SessionSettings.Synchronize();
+            check(Command("mp-cost 35"), "Fee can change while guest is away");
             var rejoined = add(2, 8, 3, 1);
             SessionSettings.Synchronize();
             check(SessionSettings.RabbitPotionsForUse.Infinite && SessionSettings.RabbitPotionsForUse.Share &&
                 SessionSettings.RabbitPotionsForUse.ConsumeMp && SessionSettings.RabbitPotionsForUse.SuppressSurvival &&
-                rejoined.PlayerAvatar.customStats.Count == 2, "Rejoining uses live policy without adding player markers or healing state");
+                SessionSettings.RabbitPotionsForUse.MpCostPerDrink == 35 &&
+                rejoined.PlayerAvatar.customStats.Count == 2, "Rejoining uses current custom fee without adding player markers or healing state");
             check(SettingsActions.Execute("/one save").Success, "Rabbit flags save with common preset action");
-            check(Command("reset") && !SessionSettings.RabbitPotionsForUse.HasChanges, "Reset clears active toggles");
+            check(Command("reset") && !SessionSettings.RabbitPotionsForUse.HasChanges && SessionSettings.RabbitPotionsForUse.MpCostPerDrink == 10,
+                "Reset clears active toggles and custom fee");
             DungeonManager.Instance = new DungeonManager();
             check(!SessionSettings.RabbitPotionsForDisplay.HasChanges, "Display never reuses old dungeon intent");
             check(SessionSettings.RabbitPotionsForUse.Infinite && SessionSettings.RabbitPotionsForUse.Share &&
-                SessionSettings.RabbitPotionsForUse.ConsumeMp && SessionSettings.RabbitPotionsForUse.SuppressSurvival,
-                "First use in new session loads saved flags");
+                SessionSettings.RabbitPotionsForUse.ConsumeMp && SessionSettings.RabbitPotionsForUse.SuppressSurvival &&
+                SessionSettings.RabbitPotionsForUse.MpCostPerDrink == 35, "First use in new session loads saved flags and cost");
             RabbitPotionFeature.Available = false;
+            check(!Command("mp-cost 50") && !Command("mp-cost 0") && SessionSettings.RabbitPotionsForUse.MpCostPerDrink == 35,
+                "Compatibility blocks numeric changes, including zero");
             check(!Command("infinite on") && Command("infinite off") && !SessionSettings.RabbitPotionsForUse.Infinite && SessionSettings.RabbitPotionsForUse.Share,
                 "Compatibility blocks enabling but not independent disabling");
             check(Command("reset") && !SessionSettings.RabbitPotionsForUse.HasChanges, "Reset stays available when hook unavailable");
@@ -62,6 +77,7 @@ internal static class RabbitRuntimeTests
             RabbitPotionFeature.Available = true;
             check(Command("share on"), "Reenable after compatible hooks return");
             NetworkServer.active = false;
+            check(!Command("mp-cost 25"), "Guest cannot change numeric Rabbit fee");
             check(!Command("infinite on") && !Command("share off") && !SessionSettings.RabbitPotionsForDisplay.HasChanges && !SessionSettings.RabbitPotionsForUse.HasChanges,
                 "Guest cannot change or consume host-only policy");
             NetworkServer.active = true;

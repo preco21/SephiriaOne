@@ -13,6 +13,7 @@ namespace SephiriaOne
         private const string ResourcePresetHeader = "SephiriaOne preset v3";
         private const string RabbitPresetHeader = "SephiriaOne preset v4";
         private const string RabbitBalancePresetHeader = "SephiriaOne preset v5";
+        private const string RabbitCostPresetHeader = "SephiriaOne preset v6";
         private static readonly string[] ChoiceNames = { "item", "weapon", "miracle" };
 
         public IReadOnlyList<string> DescribeSettings()
@@ -31,6 +32,8 @@ namespace SephiriaOne
             if (RabbitPotions.Share) lines.Add("rabbit share 1");
             if (RabbitPotions.ConsumeMp) lines.Add("rabbit mp-cost 1");
             if (RabbitPotions.SuppressSurvival) lines.Add("rabbit suppress-survival 1");
+            if (RabbitPotions.MpCostPerDrink != RabbitPotionSettings.DefaultMpCostPerDrink)
+                lines.Add("rabbit mp-amount " + RabbitPotions.MpCostPerDrink.ToString(CultureInfo.InvariantCulture));
             return lines;
         }
 
@@ -38,7 +41,8 @@ namespace SephiriaOne
         {
             bool multiplier = HasFountainMultiplier;
             foreach (Setting setting in stats.Values) multiplier |= setting.Multiplier;
-            return (RabbitPotions.ConsumeMp || RabbitPotions.SuppressSurvival ? RabbitBalancePresetHeader :
+            return (RabbitPotions.MpCostPerDrink != RabbitPotionSettings.DefaultMpCostPerDrink ? RabbitCostPresetHeader :
+                RabbitPotions.ConsumeMp || RabbitPotions.SuppressSurvival ? RabbitBalancePresetHeader :
                 RabbitPotions.HasChanges ? RabbitPresetHeader : Resources.HasChanges ? ResourcePresetHeader : multiplier ? MultiplierPresetHeader : PresetHeader) + "\n" +
                 (HasChanges ? string.Join("\n", DescribeSettings()) + "\n" : "");
         }
@@ -49,8 +53,9 @@ namespace SephiriaOne
             error = "Invalid saved preset; no saved settings were applied.";
             if (text == null || text.Length > MaximumPresetLength) return false;
             string[] lines = text.Replace("\r\n", "\n").Split('\n');
-            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader && lines[0] != RabbitBalancePresetHeader)) return false;
-            bool allowBalance = lines[0] == RabbitBalancePresetHeader;
+            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader && lines[0] != RabbitBalancePresetHeader && lines[0] != RabbitCostPresetHeader)) return false;
+            bool allowCost = lines[0] == RabbitCostPresetHeader;
+            bool allowBalance = lines[0] == RabbitBalancePresetHeader || allowCost;
             bool allowRabbit = lines[0] == RabbitPresetHeader || allowBalance;
             bool allowResources = lines[0] == ResourcePresetHeader || allowRabbit;
             bool allowMultiplier = lines[0] != PresetHeader;
@@ -64,8 +69,15 @@ namespace SephiriaOne
                     CultureInfo.InvariantCulture, out decimal value) || value < -int.MaxValue || value > int.MaxValue) return false;
                 if (parts[0] == "rabbit")
                 {
-                    if (!allowRabbit || parts.Length != 3 || (parts[2] != "0" && parts[2] != "1") ||
-                        !seen.Add("rabbit " + parts[1])) return false;
+                    if (!allowRabbit || parts.Length != 3 || !seen.Add("rabbit " + parts[1])) return false;
+                    if (allowCost && parts[1] == "mp-amount")
+                    {
+                        if (!RabbitCommand.TryParseMpCost(parts[2], out int mpCost) ||
+                            parts[2] != mpCost.ToString(CultureInfo.InvariantCulture)) return false;
+                        pending.Record(new RabbitCommand(RabbitOption.MpAmount, pending.RabbitPotions.ConsumeMp, mpCost));
+                        continue;
+                    }
+                    if (parts[2] != "0" && parts[2] != "1") return false;
                     RabbitOption option;
                     if (parts[1] == "infinite") option = RabbitOption.Infinite;
                     else if (parts[1] == "share") option = RabbitOption.Share;

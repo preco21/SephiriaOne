@@ -6,16 +6,26 @@ namespace SephiriaOne
         public bool Share { get; }
         public bool ConsumeMp { get; }
         public bool SuppressSurvival { get; }
-        public const int MpCostPerDrink = 10;
-        public bool HasChanges => Infinite || Share || ConsumeMp || SuppressSurvival;
+        public const int DefaultMpCostPerDrink = 10;
+        public const int MaximumMpCostPerDrink = 10000;
+        // An all-zero struct still represents the native/default policy with a 10 MP fee.
+        private readonly int mpCostOffset;
+        public int MpCostPerDrink => DefaultMpCostPerDrink + mpCostOffset;
+        public bool HasChanges => Infinite || Share || ConsumeMp || SuppressSurvival || mpCostOffset != 0;
 
-        public RabbitPotionSettings(bool infinite, bool share, bool consumeMp = false, bool suppressSurvival = false)
-        { Infinite = infinite; Share = share; ConsumeMp = consumeMp; SuppressSurvival = suppressSurvival; }
+        public RabbitPotionSettings(bool infinite, bool share, bool consumeMp = false, bool suppressSurvival = false,
+            int mpCost = DefaultMpCostPerDrink)
+        {
+            if (mpCost < 0 || mpCost > MaximumMpCostPerDrink) throw new System.ArgumentOutOfRangeException(nameof(mpCost));
+            Infinite = infinite; Share = share; ConsumeMp = consumeMp; SuppressSurvival = suppressSurvival;
+            mpCostOffset = mpCost - DefaultMpCostPerDrink;
+        }
 
         public RabbitPotionSettings Apply(RabbitCommand command) => command.Option == RabbitOption.Reset ? default :
-            command.Option == RabbitOption.Infinite ? new RabbitPotionSettings(command.Enabled, Share, ConsumeMp, SuppressSurvival) :
-            command.Option == RabbitOption.Share ? new RabbitPotionSettings(Infinite, command.Enabled, ConsumeMp, SuppressSurvival) :
-            command.Option == RabbitOption.ConsumeMp ? new RabbitPotionSettings(Infinite, Share, command.Enabled, SuppressSurvival) :
-            new RabbitPotionSettings(Infinite, Share, ConsumeMp, command.Enabled);
+            command.Option == RabbitOption.Infinite ? new RabbitPotionSettings(command.Enabled, Share, ConsumeMp, SuppressSurvival, MpCostPerDrink) :
+            command.Option == RabbitOption.Share ? new RabbitPotionSettings(Infinite, command.Enabled, ConsumeMp, SuppressSurvival, MpCostPerDrink) :
+            command.Option == RabbitOption.ConsumeMp ? new RabbitPotionSettings(Infinite, Share, command.Enabled, SuppressSurvival, MpCostPerDrink) :
+            command.Option == RabbitOption.MpAmount ? new RabbitPotionSettings(Infinite, Share, command.Enabled, SuppressSurvival, command.Amount) :
+            new RabbitPotionSettings(Infinite, Share, ConsumeMp, command.Enabled, MpCostPerDrink);
     }
 }

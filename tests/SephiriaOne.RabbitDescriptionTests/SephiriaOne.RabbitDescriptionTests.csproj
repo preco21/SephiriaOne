@@ -6,6 +6,8 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../SephiriaOne/Features/Rabbit/RabbitPotionSettings.cs" Link="RabbitPotionSettings.cs" />
+    <Compile Include="../../SephiriaOne/Features/Rabbit/RabbitCommand.cs" Link="RabbitCommand.cs" />
     <Compile Include="../../SephiriaOne/Features/Rabbit/RabbitDescriptionText.cs" Link="RabbitDescriptionText.cs" />
     <Compile Include="../../SephiriaOne/Features/Rabbit/RabbitDescriptionFeature.cs" Link="RabbitDescriptionFeature.cs" />
     <Compile Include="../../SephiriaOne/Features/Rabbit/RabbitDescriptionHooks.cs" Link="RabbitDescriptionHooks.cs" />

@@ -1,6 +1,6 @@
 # Wing-Eared Rabbit potion options
 
-Added in `0.16.0`, extended in `0.17.0`. All four options are **off by default** and apply only while a
+Added in `0.16.0`, extended in `0.17.0` and `0.18.0`. All four options are **off by default** and apply only while a
 player wears Wing-Eared Rabbit (`HolyRabbit`). The host needs the addon; guests
 use the ordinary game's potion controls, inventory and HP synchronization.
 
@@ -8,6 +8,7 @@ use the ordinary game's potion controls, inventory and HP synchronization.
 /one rabbit infinite on
 /one rabbit share on
 /one rabbit mp-cost on
+/one rabbit mp-cost 25
 /one rabbit suppress-survival on
 /one rabbit status
 /one rabbit infinite off
@@ -16,12 +17,14 @@ use the ordinary game's potion controls, inventory and HP synchronization.
 /one save
 ```
 
-The **Rabbit** tab in `/one ui` exposes the same independent On/Off actions and
-reset. `/one save` stores all flags for future hosted sessions. Reset affects
+The **Rabbit** tab in `/one ui` exposes the same independent On/Off actions, an
+MP-cost input with **Set & on**, and reset. `/one save` stores all flags and the
+chosen fee for future hosted sessions. Reset affects
 the current session; save again or `/one forget` to change the saved copy.
-Presets with MP cost or Survival suppression use v5; original infinite/share-only
-presets still use v4. v1-v4 still load, with the new options off. Older addon
-versions cannot load v5. No hotkeys were added.
+Custom MP amounts use preset v6, including amounts retained while charging is off.
+Presets with the default fee and MP cost or Survival suppression use v5; original
+infinite/share-only presets still use v4. v1-v5 still load with a 10 MP fee; v1-v4
+leave the new toggles off. Older addon versions cannot load v6. No hotkeys were added.
 
 ## Behavior
 
@@ -42,8 +45,16 @@ need to be Wing-Eared Rabbit. Shared healing does not make recipients drink a
 potion, trigger their potion-use passives, consume their inventory, or relay
 healing again. It does not share regeneration, all healing sources or spell heals.
 
-**MP cost** charges an initial fixed fee of **10 MP** when an eligible HP-potion
-drink reaches completion. Insufficient MP rejects the entire drink: no healing,
+**MP cost** charges a configurable flat fee, initially **10 MP**, when an eligible
+HP-potion drink reaches completion. `/one rabbit mp-cost 25` sets the fee to 25 MP
+and enables charging. Use whole numbers **0..10000**; zero costs no MP and does
+not write to the MP balance. Negative values, fractions and `xN` are rejected.
+`mp-cost off` disables charging and remembers the amount; `mp-cost on` reuses it.
+`/one rabbit reset` restores 10 MP and switches all Rabbit options off.
+
+The amount current at drink completion applies, including edits made while the
+drinking animation runs. A change during the native potion callbacks only affects
+the next drink. Insufficient MP rejects the entire drink: no healing,
 sharing, potion events, random-stat gain or item consumption. Cancelled drinks
 cost nothing. The drinking animation may run before a completion-time rejection;
 native wield/animation cleanup still runs.
@@ -52,7 +63,8 @@ The fixed fee uses the game's synchronized MP value. It is separate from spell
 costs: spell discounts and `INFINITYMP` do not waive it, and the addon does not
 invoke native MP-spend passives. If a native potion callback fails after payment,
 the fee is retained; it is never retried or refunded over unrelated MP changes.
-The amount is centralized as `RabbitPotionSettings.MpCostPerDrink` for later tuning.
+The session's `RabbitPotionSettings.MpCostPerDrink` is shared by the native charge,
+status, panel, description and preset. No per-player fee cache is needed.
 
 **Suppress Survival bonus** skips only Survival's rank-5 random-stat-on-potion
 callback for the current eligible Rabbit HP-potion drink. It does not disable
@@ -115,18 +127,19 @@ signature/IL checks and builds target Sephiria 1.0.33; see the assembly fingerpr
 in [the investigation](healing-item-investigation.md). These do not replace live
 multiplayer or UI verification. Development builds are not automatically deployed.
 
-Verification on 2026-09-26: Debug and Release builds passed with zero warnings
-and errors using `-p:DeployMod=false`. All seven test runners passed in Release:
-1,066 pure checks, 676 session/runtime checks, 71 starting-resource checks,
-66 budget/inventory checks, 14 disconnect checks, 47 potion-hook scenarios and
-32 description checks. Potion scenarios include all 16 option combinations,
+Verification for `0.18.0` on 2026-09-26: Debug and Release builds passed with zero
+warnings and errors using `-p:DeployMod=false`. Four affected test runners passed
+in Release: 1,122 pure checks, 682 session/runtime checks, 61 potion-hook scenarios
+and 35 description checks. Potion scenarios include custom costs of 0, 1, 25 and
+10000, insufficient/exact/excess balances, mid-drink fee changes, all 16 option combinations,
 insufficient funds, cancellation, nested calls, unrelated passives, callback
 faults and lifetime changes. Installed-game IL contracts passed, including the
 native catch/cleanup path, synchronized MP setter, Survival callback, consumption
 decision, single regeneration-heal call, HP replication and costume-tooltip
 signatures. Modified consumer IL without the required catch, event or cleanup
-is rejected. Independent review found no actionable correctness issues.
-The five-player synchronization fixture retained zero allocated bytes per tick
+is rejected. Independent review found no actionable issues. Live Unity/Mirror
+and rendered panel verification remain pending.
+The `0.17.0` five-player synchronization fixture retained zero allocated bytes per tick
 with both inactive and active settings. This is not a live-game profiler result.
 
 Manual smoke tests:
@@ -156,3 +169,8 @@ Manual smoke tests:
 9. Enable every Rabbit option and drink mana/status potions. Verify ordinary
    consumption, no extra MP fee and unchanged Survival behavior. Change costume,
    leave/rejoin, return to lobby and restart to check current-intent scoping.
+10. Set 25 using the Rabbit panel, then change to 7 in chat during a drink animation.
+    Confirm completion charges 7. Compare current status and the host's costume
+    description. Try zero, invalid input and insufficient MP. Turn charging off,
+    save and restart: the chosen amount should remain, without enabling charging.
+    Reenable it and test with a rejoining unmodified guest. Reset restores 10/off.

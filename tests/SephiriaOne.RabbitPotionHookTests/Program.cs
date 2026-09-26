@@ -377,6 +377,39 @@ Check("replaced source connection and despawned potion cannot retain completion 
         Assert(passive.StatGains == 1 && player.mp == 20, "Changed source retained scoped suppression");
     }
 });
+foreach (int cost in new[] { 0, 1, 25, 10000 })
+    foreach (int balance in new[] { cost - 1, cost, cost + 7 })
+        Check($"custom fee {cost} with balance {balance} preserves full drink boundary", () =>
+        {
+            var (player, controller, _, item) = Setup(); player.mp = balance;
+            var passive = new PassiveObject_PotionAndRandomStat(); passive.Enable(player);
+            var near = new PlayerAvatar(); _ = new PlayerSpawner(near);
+            SessionSettings.RabbitPotionsForUse = new(true, true, true, true, cost);
+            Install(); controller.RunDrink();
+            bool allowed = cost == 0 || balance >= cost;
+            Assert(player.mp == (allowed ? balance - cost : balance) && player.MpWrites == (allowed && cost > 0 ? 1 : 0), "Configured debit incorrect");
+            Assert(player.Heals.Count == (allowed ? 1 : 0) && near.Heals.Count == (allowed ? 1 : 0) &&
+                player.DrinkEvents == (allowed ? 1 : 0) && passive.StatGains == 0 && item.Quantity == 3 && controller.CleanupCalls == 1,
+                "Configured fee changed drink events, sharing, consumption, Survival or cleanup");
+        });
+Check("fee changes before completion use current amount and callbacks do not reprice drink", () =>
+{
+    var (player, controller, _, _) = Setup();
+    SessionSettings.RabbitPotionsForUse = new(true, false, true, false, 25); Install();
+    SessionSettings.RabbitPotionsForUse = new(true, false, true, false, 7);
+    player.OnPotionEvent = () => SessionSettings.RabbitPotionsForUse = new(true, false, true, false, 50);
+    controller.RunDrink();
+    Assert(player.mp == 23 && player.MpWrites == 1 && player.Heals.Count == 1, "Completion did not capture current fee exactly once");
+    controller.RunDrink();
+    Assert(player.mp == 23 && player.Heals.Count == 1, "Next drink used stale affordable fee");
+});
+Check("disabled saved custom amount leaves native MP and consumption unchanged", () =>
+{
+    var (player, controller, _, item) = Setup();
+    SessionSettings.RabbitPotionsForUse = new(false, false, false, false, 10000);
+    Install(); controller.RunDrink();
+    Assert(player.mp == 30 && player.MpWrites == 0 && player.Heals.Count == 1 && item.Quantity == 2, "Disabled custom cost changed native drink");
+});
 Console.WriteLine($"{passed} passed, {failed} failed");
 Environment.ExitCode = failed == 0 ? 0 : 1;
 

@@ -24,6 +24,14 @@ Version `0.17.0` adds v5 rows `rabbit mp-cost 1` and
 together with `/one rabbit reset`. v1-v4 still load and leave new flags off;
 loading or rejoining never charges MP or triggers/suppresses a past potion event.
 
+Version `0.18.0` adds v6 for custom Rabbit MP fees: `rabbit mp-amount 25` stores
+the integer amount independently of `rabbit mp-cost 0|1`, which retains its boolean
+meaning. Both row orders work. Disabled custom fees are preserved. Missing amount
+rows and v1-v5 files use 10 MP. Amounts must be canonical integers 0..10000; invalid
+or duplicate rows reject the entire file. Only a nondefault fee requires v6.
+Older addon versions cannot load v6. `/one rabbit reset` restores 10 MP and all
+Rabbit toggles off; save again to persist that reset.
+
 Since `0.14.0`, [native-baseline factors](multiplier-command.md) are saved as
 `multiplier N` rather than calculated totals. A preset containing a factor uses
 v2; v1 files remain supported and are still written when no factor is active.

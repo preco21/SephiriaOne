@@ -151,8 +151,6 @@ public static class SaveManager { public static object CurrentRun = new(); }
 public class DungeonManager { public static DungeonManager Instance = new(); }
 namespace SephiriaOne
 {
-    internal readonly record struct RabbitPotionSettings(bool Infinite, bool Share, bool ConsumeMp = false, bool SuppressSurvival = false)
-    { public const int MpCostPerDrink = 10; public bool HasChanges => Infinite || Share || ConsumeMp || SuppressSurvival; }
     internal static class SessionSettings { public static RabbitPotionSettings RabbitPotionsForUse { get; set; } }
     internal static class HarmonyRuntime { public static void EnsureLoaded() { } }
     internal static class HostStateAdapter

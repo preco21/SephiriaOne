@@ -80,15 +80,16 @@ namespace SephiriaOne
             // This call stays inside the validated native catch-all, before both controller event and decrement.
             // No state is reserved at animation start, so cancellation cannot charge or replay anything.
             DrinkContext context = CaptureContext(potion, instanceId);
-            if (context != null && context.Settings.ConsumeMp)
+            if (context != null && context.Settings.ConsumeMp && context.Settings.MpCostPerDrink > 0)
             {
+                int cost = context.Settings.MpCostPerDrink;
                 int balance = context.Player.mp;
-                if (balance < RabbitPotionSettings.MpCostPerDrink) throw new RejectedDrink();
+                if (balance < cost) throw new RejectedDrink();
                 // Fixed fee, including INFINITYMP. UseMp fires arbitrary procs before its subtraction; this
                 // SyncVar write deliberately avoids those procs and does not reset native MP regeneration.
                 // Never refund after callbacks: doing so could overwrite unrelated native MP changes.
-                context.Player.Networkmp = balance - RabbitPotionSettings.MpCostPerDrink;
-                if (context.Player.mp != balance - RabbitPotionSettings.MpCostPerDrink) throw new RejectedDrink();
+                context.Player.Networkmp = balance - cost;
+                if (context.Player.mp != balance - cost) throw new RejectedDrink();
             }
             if (completions == null) completions = new Stack<DrinkContext>();
             completions.Push(context);

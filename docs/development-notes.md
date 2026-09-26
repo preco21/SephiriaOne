@@ -9,6 +9,14 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.18.0` makes the Rabbit HP-potion MP fee configurable in game through
+`/one rabbit mp-cost 25` and the Rabbit panel's amount field. Numeric values
+0..10000 set and enable the fee; on/off retain it, and reset restores 10/off.
+Custom fees persist independently of the toggle in v6 presets. Status and the
+host's costume description show the current amount. Each completed drink reads
+current host intent; zero does no MP write. Existing HP-only, Rabbit-only and
+unmodified-guest behavior remains. See [verification and manual checks](rabbit-potions.md).
+
 Version `0.17.0` extends [Rabbit potion options](rabbit-potions.md) with independent
 MP-cost and Survival rank-5 suppression toggles. Initial MP cost is 10 at the
 completed HP-potion attempt; insufficient MP rejects the drink, cancelled drinks

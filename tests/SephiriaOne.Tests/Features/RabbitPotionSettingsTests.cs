@@ -14,7 +14,9 @@ internal static class RabbitPotionSettingsTests
         }
         var policy = new SessionPolicy();
         Check(!policy.HasChanges && !policy.RabbitPotions.HasChanges, "Defaults are native");
-        Check(RabbitPotionSettings.MpCostPerDrink == 10, "MP cost is ten");
+        Check(RabbitCommand.Parse("/one rabbit mp-cost 25", out _, out _) == RabbitParseResult.Valid,
+            "Host can set a numeric MP fee in game");
+        Check(policy.RabbitPotions.MpCostPerDrink == 10, "Default struct MP cost is ten");
         policy.Record(Parse("/one rabbit mp-cost on"));
         Check(policy.RabbitPotions.ConsumeMp && !policy.RabbitPotions.Infinite && !policy.RabbitPotions.Share && !policy.RabbitPotions.SuppressSurvival,
             "MP cost is independent");
@@ -63,6 +65,51 @@ internal static class RabbitPotionSettingsTests
         Check(SessionPolicy.TryReadPreset("SephiriaOne preset v5\nresources leaves multiplier 2\nrabbit share 1\nrabbit mp-cost 1\n", out loaded, out _) &&
             loaded.RabbitPotions.Share && loaded.RabbitPotions.ConsumeMp && loaded.Resources.HasChanges,
             "v5 accepts previous families and new flags");
+        policy.Clear();
+        policy.Record(Parse("/one rabbit mp-cost 25"));
+        Check(policy.RabbitPotions.ConsumeMp && policy.RabbitPotions.MpCostPerDrink == 25 &&
+            !policy.RabbitPotions.Infinite && !policy.RabbitPotions.SuppressSurvival, "Amount enables only MP charging");
+        Check(policy.ToPresetText() == "SephiriaOne preset v6\nrabbit mp-cost 1\nrabbit mp-amount 25\n", "Custom cost uses v6");
+        policy.Record(Parse("/one rabbit mp-cost off"));
+        Check(!policy.RabbitPotions.ConsumeMp && policy.HasChanges && policy.RabbitPotions.MpCostPerDrink == 25,
+            "Off retains custom amount and save eligibility");
+        Check(SessionPolicy.TryReadPreset(policy.ToPresetText(), out loaded, out _) && !loaded.RabbitPotions.ConsumeMp &&
+            loaded.RabbitPotions.MpCostPerDrink == 25, "Disabled custom cost round trips");
+        policy.Record(Parse("/one rabbit mp-cost on"));
+        policy.Record(Parse("/one rabbit share on"));
+        policy.Record(Parse("/one rabbit suppress-survival on"));
+        Check(policy.RabbitPotions.ConsumeMp && policy.RabbitPotions.MpCostPerDrink == 25, "Toggle changes preserve custom cost");
+        foreach (int amount in new[] { 0, 1, 10000 })
+        {
+            var command = Parse("/one rabbit mp-cost " + amount);
+            Check(!command.IsReset, "Numeric cost is a mutation even for zero");
+            policy.Record(command);
+            Check(policy.RabbitPotions.ConsumeMp && policy.RabbitPotions.MpCostPerDrink == amount, "Exact integer cost " + amount);
+            Check(SessionPolicy.TryReadPreset(policy.ToPresetText(), out loaded, out _) && loaded.RabbitPotions.MpCostPerDrink == amount,
+                "Cost boundary round trips " + amount);
+        }
+        foreach (string amount in new[] { "-1", "10001", "2147483648", "1.5", "1e2", "x2", "+5", "NaN", "1,000" })
+            Check(RabbitCommand.Parse("/one rabbit mp-cost " + amount, out _, out _) == RabbitParseResult.Invalid, "Reject invalid fee " + amount);
+        foreach (int version in new[] { 1, 2, 3, 4, 5 })
+        {
+            Check(SessionPolicy.TryReadPreset("SephiriaOne preset v" + version + "\n", out loaded, out _) &&
+                loaded.RabbitPotions.MpCostPerDrink == 10, "Old presets default to ten");
+            Check(!SessionPolicy.TryReadPreset("SephiriaOne preset v" + version + "\nrabbit mp-amount 25\n", out loaded, out _) &&
+                !loaded.HasChanges, "Old versions reject amount row");
+        }
+        foreach (string toggle in new[] { "0", "1" })
+            foreach (bool amountFirst in new[] { false, true })
+            {
+                string amountRow = "rabbit mp-amount 25\n", toggleRow = "rabbit mp-cost " + toggle + "\n";
+                Check(SessionPolicy.TryReadPreset("SephiriaOne preset v6\n" + (amountFirst ? amountRow + toggleRow : toggleRow + amountRow), out loaded, out _) &&
+                    loaded.RabbitPotions.MpCostPerDrink == 25 && loaded.RabbitPotions.ConsumeMp == (toggle == "1"), "Preset row order preserves fee and toggle");
+            }
+        foreach (string row in new[] { "rabbit mp-amount -1", "rabbit mp-amount 10001", "rabbit mp-amount 01", "rabbit mp-amount 1.0",
+            "rabbit mp-amount +1", "rabbit mp-amount 25\nrabbit mp-amount 20", "rabbit mp-cost 25", "rabbit mp-amount 25 extra" })
+            Check(!SessionPolicy.TryReadPreset("SephiriaOne preset v6\nrabbit share 1\n" + row, out loaded, out _) && !loaded.HasChanges,
+                "Reject bad cost preset atomically " + row);
+        policy.Record(Parse("/one rabbit reset"));
+        Check(!policy.HasChanges && policy.RabbitPotions.MpCostPerDrink == 10, "Reset clears custom fee to ten");
         return checks;
     }
 }
