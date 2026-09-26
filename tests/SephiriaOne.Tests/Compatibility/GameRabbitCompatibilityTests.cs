@@ -61,6 +61,18 @@ internal static class GameRabbitCompatibilityTests
         if (!Calls(healPercent, healBody) ||
             !PatchProcessor.GetOriginalInstructions(healBody).Any(i => i.operand is MethodInfo m && m.Name == "set_Networkhp"))
             throw new Exception("Shared percentage healing must retain native HP replication.");
+        var share = AccessTools.DeclaredMethod(hooks, "Share")!;
+        if (!Calls(share, healPercent)) throw new Exception("Rabbit sharing must retain the HP-only recipient path.");
+        foreach (var hpOnly in new[] { share, healPercent, healBody, AccessTools.PropertySetter(Type("UnitAvatar"), "Networkhp")! })
+            if (PatchProcessor.GetOriginalInstructions(hpOnly).Any(i =>
+                i.operand is MethodInfo m && (m.Name.Contains("PotionDrinkEvent") || m.Name == "CreateEffect_OnDrink" ||
+                    m.Name == "HandleDrinkPotion" || m.Name == "AddOrphanedStatusInstance") ||
+                i.operand is FieldInfo f && (f.Name == "OnDrinkPotion" || f.Name == "OnDrinkPotionServerside")))
+                throw new Exception("Shared HP healing unexpectedly invokes potion/talent events: " + hpOnly.Name);
+        var passiveEvents = PatchProcessor.GetOriginalInstructions(enable).Where(i =>
+            i.operand is MethodInfo m && m.Name.StartsWith("add_", StringComparison.Ordinal)).ToList();
+        if (passiveEvents.Count != 1 || ((MethodInfo)passiveEvents[0].operand).Name != "add_OnDrinkPotion")
+            throw new Exception("Survival must subscribe only to the drink event, never shared HP changes.");
         var onDrink = Method("PotionEffect", "CreateEffect_OnDrink", Type("UnitAvatar"));
         if (!PatchProcessor.GetOriginalInstructions(onDrink).Any(i => i.operand is MethodInfo m && m.Name == "ReceivePotionDrinkEvent"))
             throw new Exception("Native successful potion-use event changed.");
@@ -79,7 +91,7 @@ internal static class GameRabbitCompatibilityTests
                 if (!Calls(AccessTools.DeclaredMethod(addon.GetType("SephiriaOne.Entry"), pair.Item1), AccessTools.DeclaredMethod(feature, pair.Item2)))
                     throw new Exception("Missing rabbit lifecycle: " + name + "." + pair.Item2);
         }
-        Console.WriteLine("Verified installed rabbit potion catch/cleanup guard, synchronized MP fee, targeted Survival callback, healing replication, costume tooltip and addon lifecycle contracts (not live multiplayer/UI).");
+        Console.WriteLine("Verified installed rabbit potion catch/cleanup guard, synchronized MP fee, targeted Survival callback, HP-only sharing without recipient potion events, healing replication, costume tooltip and addon lifecycle contracts (not live multiplayer/UI).");
     }
 
     private static bool Calls(MethodInfo caller, MethodInfo target) =>

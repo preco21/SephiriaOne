@@ -73,6 +73,15 @@ earned, or suppress other potion-use passives. Normal Survival behavior remains
 for other costumes and non-HP potions. This option also works when infinite uses
 and/or sharing are off.
 
+With suppression on, neither the Rabbit drinker nor nearby healing recipients
+gain Survival stats from that shared potion. Recipients of any costume are already
+protected by the HP-only sharing path: `HealPercent` changes HP without emitting
+`OnDrinkPotion`, the event Survival subscribes to. Receiving shared healing never
+grants a Survival bonus, even when suppression is off. The toggle controls the
+drinker only because only that player actually drinks. A recipient's separate
+native potion use still follows its own costume/potion rules; no nearby player's
+talent is globally disabled or temporarily removed.
+
 These are independent options: sharing alone still consumes the source potion;
 infinite alone affects only the drinker. Native Wing-Eared Rabbit buff-spell
 sharing remains unchanged.
@@ -129,7 +138,7 @@ multiplayer or UI verification. Development builds are not automatically deploye
 
 Verification for `0.18.0` on 2026-09-26: Debug and Release builds passed with zero
 warnings and errors using `-p:DeployMod=false`. Four affected test runners passed
-in Release: 1,122 pure checks, 682 session/runtime checks, 61 potion-hook scenarios
+in Release: 1,122 pure checks, 682 session/runtime checks, 76 potion-hook scenarios
 and 35 description checks. Potion scenarios include custom costs of 0, 1, 25 and
 10000, insufficient/exact/excess balances, mid-drink fee changes, all 16 option combinations,
 insufficient funds, cancellation, nested calls, unrelated passives, callback
@@ -139,6 +148,12 @@ decision, single regeneration-heal call, HP replication and costume-tooltip
 signatures. Modified consumer IL without the required catch, event or cleanup
 is rejected. Independent review found no actionable issues. Live Unity/Mirror
 and rendered panel verification remain pending.
+The recipient-Survival follow-up reran all 76 potion scenarios and the pure/installed
+contracts. Added coverage checks both recipient costumes, all three supported HP
+potion IDs, suppression on/off, independent potion use during/after shared healing,
+and recipient callback failures. Installed IL confirms HP-only sharing does not
+raise drink events and Survival subscribes only to `OnDrinkPotion`. No runtime
+change or additional suppression hook was needed for recipients.
 The `0.17.0` five-player synchronization fixture retained zero allocated bytes per tick
 with both inactive and active settings. This is not a live-game profiler result.
 
@@ -165,7 +180,10 @@ Manual smoke tests:
 8. Give Rabbit and non-Rabbit players Survival 5. With suppression on, Rabbit HP
    potions must not grant random stats, while non-Rabbit drinks, Rabbit non-HP
    potions and unrelated potion passives behave normally. Turn suppression off
-   and verify Survival works again. Already-earned stats must remain intact.
+   and verify Survival works again for the drinker. Nearby recipients should gain
+   HP without random stats with either toggle setting. Confirm recipients' own
+   non-Rabbit HP or any non-HP potion still triggers their normal Survival bonus.
+   Already-earned stats must remain intact.
 9. Enable every Rabbit option and drink mana/status potions. Verify ordinary
    consumption, no extra MP fee and unchanged Survival behavior. Change costume,
    leave/rejoin, return to lobby and restart to check current-intent scoping.

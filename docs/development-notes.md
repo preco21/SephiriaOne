@@ -9,6 +9,13 @@ can change independently of that installed game version.
 
 ## Current status
 
+Recipient-Survival verification for `0.18.0`: shared Rabbit potion healing already
+uses `HealPercent` without the potion-drink event, so nearby recipients of any
+costume gain no Survival stats. Added regression cases for supported potions,
+both costumes, toggle states, separate native drinks and failed recipient callbacks;
+76 Harmony scenarios and installed-game contracts pass. No runtime hook change
+was required, and no global talent suppression was added. See [Rabbit behavior](rabbit-potions.md).
+
 Version `0.18.0` makes the Rabbit HP-potion MP fee configurable in game through
 `/one rabbit mp-cost 25` and the Rabbit panel's amount field. Numeric values
 0..10000 set and enable the fee; on/off retain it, and reset restores 10/off.

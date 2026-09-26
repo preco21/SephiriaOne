@@ -225,11 +225,63 @@ foreach (int flags in Enumerable.Range(0, 16))
         bool infinite = (flags & 1) != 0, share = (flags & 2) != 0, mp = (flags & 4) != 0, suppress = (flags & 8) != 0;
         var (player, controller, _, item) = Setup(); var near = new PlayerAvatar(); _ = new PlayerSpawner(near);
         var passive = new PassiveObject_PotionAndRandomStat(); passive.Enable(player);
+        var recipientPassive = new PassiveObject_PotionAndRandomStat(); recipientPassive.Enable(near);
         SessionSettings.RabbitPotionsForUse = new(infinite, share, mp, suppress);
         Install(); controller.RunDrink();
         Assert(item.Quantity == (infinite ? 3 : 2) && near.Heals.Count == (share ? 1 : 0) &&
-            player.mp == (mp ? 20 : 30) && passive.StatGains == (suppress ? 0 : 1), "Option coupling");
+            player.mp == (mp ? 20 : 30) && passive.StatGains == (suppress ? 0 : 1) &&
+            recipientPassive.StatGains == 0 && near.DrinkEvents == 0, "Option coupling or recipient gained potion stats");
     });
+foreach (int id in new[] { 0, 1, 37 })
+    foreach (string costume in new[] { "HolyRabbit", "PinkRabbit" })
+        foreach (bool suppress in new[] { false, true })
+            Check($"shared HP potion {id}, recipient {costume}, suppression {suppress} grants no recipient Survival stats", () =>
+            {
+                var source = Setup(id); var recipient = Setup(); recipient.player.currentCostume = costume;
+                recipient.player.transform.position = new(9, 0, 0);
+                var sourcePassive = new PassiveObject_PotionAndRandomStat(); sourcePassive.Enable(source.player);
+                var recipientPassive = new PassiveObject_PotionAndRandomStat(); recipientPassive.Enable(recipient.player);
+                int recipientEvents = 0; recipient.controller.OnDrinkPotionServerside += _ => recipientEvents++;
+                SessionSettings.RabbitPotionsForUse = new(true, true, true, suppress);
+                Install(); source.controller.RunDrink();
+                Assert(sourcePassive.StatGains == (suppress ? 0 : 1) && recipientPassive.StatGains == 0,
+                    "Shared potion granted recipient Survival or changed source suppression");
+                Assert(recipient.player.Hp == 40 && recipient.player.Heals.Count == 1 && recipient.player.DrinkEvents == 0 &&
+                    recipientEvents == 0 && recipient.item.Quantity == 3 && recipient.player.mp == 30,
+                    "Recipient must gain only healing, without potion events, inventory loss or MP cost");
+            });
+foreach (bool manaPotion in new[] { false, true })
+    Check($"recipient's own {(manaPotion ? "mana" : "non-Rabbit HP")} potion retains Survival during and after shared healing", () =>
+    {
+        var source = Setup(); var recipient = Setup();
+        if (manaPotion) recipient.potion.effect = new PotionEffect_Concentration();
+        else recipient.player.currentCostume = "PinkRabbit";
+        var sourcePassive = new PassiveObject_PotionAndRandomStat(); sourcePassive.Enable(source.player);
+        var recipientPassive = new PassiveObject_PotionAndRandomStat(); recipientPassive.Enable(recipient.player);
+        recipient.player.OnHealed = () => { recipient.player.OnHealed = null; recipient.controller.RunDrink(); };
+        SessionSettings.RabbitPotionsForUse = new(true, true, true, true);
+        Install(); source.controller.RunDrink();
+        Assert(sourcePassive.StatGains == 0 && recipientPassive.StatGains == 1 && recipient.player.DrinkEvents == 1 &&
+            recipient.item.Quantity == 2 && recipient.player.mp == 30, "Shared healing suppressed a separate native potion use");
+        recipient.controller.RunDrink();
+        Assert(recipientPassive.StatGains == 2 && recipient.player.DrinkEvents == 2 && recipient.item.Quantity == 1,
+            "Suppression leaked beyond shared healing");
+    });
+Check("failed recipient healing leaves other recipients and later native Survival intact", () =>
+{
+    var source = Setup(); var failedRecipient = Setup(); var laterRecipient = Setup();
+    failedRecipient.player.currentCostume = laterRecipient.player.currentCostume = "PinkRabbit";
+    var failedPassive = new PassiveObject_PotionAndRandomStat(); failedPassive.Enable(failedRecipient.player);
+    var laterPassive = new PassiveObject_PotionAndRandomStat(); laterPassive.Enable(laterRecipient.player);
+    failedRecipient.player.OnHealed = () => throw new InvalidOperationException("recipient HP callback failed");
+    SessionSettings.RabbitPotionsForUse = new(true, true, false, true);
+    Install(); source.controller.RunDrink();
+    Assert(failedPassive.StatGains == 0 && laterPassive.StatGains == 0 && laterRecipient.player.Hp == 40,
+        "Recipient failure granted potion stats or stopped subsequent sharing");
+    failedRecipient.player.OnHealed = null;
+    failedRecipient.controller.RunDrink(); laterRecipient.controller.RunDrink();
+    Assert(failedPassive.StatGains == 1 && laterPassive.StatGains == 1, "Failure leaked suppression into subsequent native drinks");
+});
 Check("fixed fee ignores MP immunity and exact funds reach zero", () =>
 {
     var (player, controller, _, _) = Setup(); player.mp = 10; player.InfinityMp = true;
