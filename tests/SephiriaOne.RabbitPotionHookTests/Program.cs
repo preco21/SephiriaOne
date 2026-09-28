@@ -659,6 +659,7 @@ foreach (string mutation in new[] { "hash", "name", "write", "read", "order" })
         }
         Assert(!NativePlayerAlert.ValidateCode(send, receive), "Unsafe RPC contract accepted");
     });
+SharedHealVisualTests.Run(Check, Assert, () => Setup(), Install);
 L.Initialize(Path.Combine(Path.GetTempPath(), "SephiriaOne-Potion-Language-" + Guid.NewGuid().ToString("N")), _ => { });
 Console.WriteLine($"Rabbit localized alert checks passed: {LocalizationAlertTests.Run(language =>
 {

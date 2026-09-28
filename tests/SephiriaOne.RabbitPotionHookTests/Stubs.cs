@@ -5,6 +5,7 @@ using UnityEngine;
 namespace UnityEngine
 {
     public class Object { public bool Destroyed; public static implicit operator bool(Object value) => value != null && !value.Destroyed; }
+    public class GameObject : Object { }
     public readonly record struct Vector3(float x, float y, float z)
     {
         public static Vector3 operator -(Vector3 a, Vector3 b) => new(a.x - b.x, a.y - b.y, a.z - b.z);
@@ -32,8 +33,13 @@ namespace Mirror
             if (target.FailNotice) throw new InvalidOperationException("notice unavailable");
             target.Notices.Add((this, name, hash, writer.Values.ToArray(), channel));
         }
-        protected void SendRPCInternal(string name, int hash, NetworkWriter writer, int channel, bool includeOwner) =>
-            throw new Exception("Feedback must never broadcast");
+        protected void SendRPCInternal(string name, int hash, NetworkWriter writer, int channel, bool includeOwner)
+        {
+            if (name != "System.Void UnitAvatar::RpcBloodFestivalHealFx()" || hash != 184881409 ||
+                writer.Values.Count != 0 || channel != 0 || !includeOwner)
+                throw new Exception("Only the native empty heal FX may broadcast; feedback stays private");
+            ((UnitAvatar)this).HealVisuals++;
+        }
     }
     public class NetworkIdentity
     {
@@ -66,6 +72,7 @@ namespace Mirror
         public static void WriteNetworkBehaviour(this NetworkWriter w, NetworkBehaviour v) => w.Values.Add(v);
     }
     public class NetworkReader { }
+    public static class NetworkClient { public static bool active = true; }
     public static class NetworkReaderExtensions
     {
         public static Vector2 ReadVector2(this NetworkReader r) => default;
@@ -90,6 +97,23 @@ public class GridInventory : NetworkBehaviour
 public enum ECustomStat { HpPotionBonus }
 public class UnitAvatar : NetworkBehaviour
 {
+    public int HealVisuals;
+    public void RpcBloodFestivalHealFx()
+    {
+        var writer = NetworkWriterPool.Get();
+        SendRPCInternal("System.Void UnitAvatar::RpcBloodFestivalHealFx()", 184881409, writer, 0, true);
+        NetworkWriterPool.Return(writer);
+    }
+    protected void UserCode_RpcBloodFestivalHealFx()
+    {
+        if (CombatManager.Instance == null) return;
+        var prefab = CombatManager.Instance.bloodFestivalHealFxPrefab;
+        if (prefab != null && SpriteFx.Pool != null) SpriteFx.Pool.Spawn(prefab, transform.position);
+    }
+    protected static void InvokeUserCode_RpcBloodFestivalHealFx(NetworkBehaviour obj, NetworkReader reader, NetworkConnectionToClient connection)
+    {
+        if (NetworkClient.active) ((UnitAvatar)obj).UserCode_RpcBloodFestivalHealFx();
+    }
     public readonly List<(string Message, float Duration, bool Timer)> SystemMessages = new();
     public bool FailSystemMessage;
     public void WriteSystemMessage(string message, float time, bool showTimer)
@@ -122,7 +146,8 @@ public class UnitAvatar : NetworkBehaviour
         field = value; MpWrites++; callback?.Invoke();
     }
     public void UseMp(int value) { MpUseEvents++; if (!InfinityMp) Networkmp = mp - value; }
-    public float Hp = 20f, MaxHp = 100f, HealingPenalty;
+    public float hp = 20f, MaxHp = 100f, HealingPenalty;
+    public float Hp { get => hp; set => hp = value; }
     public Action OnPotionEvent;
     public event Action<PotionEffect> OnDrinkPotion;
     public Action OnHealed;
@@ -229,6 +254,16 @@ public class PassiveObject_PotionAndRandomStat : PassiveObject
 }
 public static class SaveManager { public static object CurrentRun = new(); }
 public class DungeonManager { public static DungeonManager Instance = new(); }
+public class CombatManager
+{
+    public static CombatManager Instance { get; } = new();
+    public GameObject bloodFestivalHealFxPrefab = new();
+}
+public class SpriteFx
+{
+    public static SpriteFxPool Pool { get; } = new();
+}
+public class SpriteFxPool { public SpriteFx Spawn(GameObject prefab, Vector3 position, GameObject owner = null) => new(); }
 namespace SephiriaOne
 {
     internal static class SessionSettings { public static RabbitPotionSettings RabbitPotionsForUse { get; set; } }

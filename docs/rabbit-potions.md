@@ -45,9 +45,12 @@ need to be Wing-Eared Rabbit. Shared healing does not make recipients drink a
 potion, trigger their potion-use passives, consume their inventory, or relay
 healing again. It does not share regeneration, all healing sources or spell heals.
 
-A [shared-healing particle investigation](rabbit-shared-healing-visuals.md) confirms
-a native host-triggered route for green effects on recipients, including
-unmodified guests. That visual integration is not implemented yet.
+Since `0.22.0`, each recipient whose HP actually increases also gets the game's
+[green HP-potion particles](rabbit-shared-healing-visuals.md), visible to unmodified
+guests observing that avatar. This follows the existing sharing toggle; no extra
+setting is needed. Full-health/zero-healing recipients get no effect. Connection,
+avatar, run and floor are rechecked after healing callbacks. Visual failures never
+retry healing or interrupt MP, infinite-potion or Survival protections.
 
 **MP cost** charges a configurable flat fee, initially **10 MP**, when an eligible
 HP-potion drink reaches completion. `/one rabbit mp-cost 25` sets the fee to 25 MP

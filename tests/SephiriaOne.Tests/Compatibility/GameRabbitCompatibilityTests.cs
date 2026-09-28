@@ -13,6 +13,7 @@ internal static class GameRabbitCompatibilityTests
         var consume = Method("ItemController", "DrinkPotionAnimation");
         var hooks = addon.GetType("SephiriaOne.RabbitPotionNativeHooks", true)!;
         VerifyAlerts(game, addon);
+        VerifySharedHealVisuals(game, addon);
         if (!(bool)AccessTools.DeclaredMethod(hooks, "ValidateMpSetter")!.Invoke(null, null)!)
             throw new Exception("MP fee requires the native callback-free synchronized setter.");
         foreach (var boundary in new[] { ("ValidateDrinkShape", drink), ("ValidateConsumerShape", consume) })
@@ -148,5 +149,45 @@ internal static class GameRabbitCompatibilityTests
         if (!PatchProcessor.GetOriginalInstructions(connect).Any(i => i.operand is MethodInfo m && m.Name == "add_OnWriteSystemMessage"))
             throw new Exception("Host system-message UI subscription changed.");
         Console.WriteLine("Verified local system-message UI and private guest floating-text payload, receiver and Mirror dispatch contracts (not live UI).");
+    }
+
+    private static void VerifySharedHealVisuals(Assembly game, Assembly addon)
+    {
+        var unit = game.GetType("UnitAvatar", true)!;
+        var hooks = addon.GetType("SephiriaOne.RabbitPotionNativeHooks", true)!;
+        var validate = AccessTools.DeclaredMethod(hooks, "ValidateHealVisual")!;
+        if (validate == null || !(bool)validate.Invoke(null, null)!)
+            throw new Exception("Installed green healing particle RPC contract is unavailable.\n" +
+                string.Join("\n", new[] { "RpcBloodFestivalHealFx", "InvokeUserCode_RpcBloodFestivalHealFx", "UserCode_RpcBloodFestivalHealFx" }
+                    .Select(name => name + ":\n" + string.Join("\n", PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(unit, name))))));
+        var send = AccessTools.DeclaredMethod(unit, "RpcBloodFestivalHealFx")!;
+        var receive = AccessTools.DeclaredMethod(unit, "InvokeUserCode_RpcBloodFestivalHealFx")!;
+        var body = AccessTools.DeclaredMethod(unit, "UserCode_RpcBloodFestivalHealFx")!;
+        var registration = PatchProcessor.GetOriginalInstructions(unit.TypeInitializer!).ToList();
+        int native = registration.FindIndex(i => Equals(i.operand, "System.Void UnitAvatar::RpcBloodFestivalHealFx()"));
+        if (native < 0 || !registration.Skip(native + 1).Take(5).Any(i => Equals(i.operand, receive)) ||
+            !registration.Skip(native + 1).Take(6).Any(i => i.operand is MethodInfo m && m.Name == "RegisterRpc"))
+            throw new Exception("Unmodified guests must have the native green FX receiver registered.");
+        foreach (string change in new[] { "hash", "name", "channel", "owner", "payload", "reader", "gameplay", "prefab" })
+        {
+            var senderCode = PatchProcessor.GetOriginalInstructions(send).ToList();
+            var receiveCode = PatchProcessor.GetOriginalInstructions(receive).ToList();
+            var bodyCode = PatchProcessor.GetOriginalInstructions(body).ToList();
+            int dispatch = senderCode.FindIndex(i => i.operand is MethodInfo m && m.Name == "SendRPCInternal");
+            switch (change)
+            {
+                case "hash": senderCode.Single(i => Equals(i.operand, 184881409)).operand = 123; break;
+                case "name": senderCode.Single(i => i.opcode == System.Reflection.Emit.OpCodes.Ldstr).operand = "different"; break;
+                case "channel": senderCode[dispatch - 2].opcode = System.Reflection.Emit.OpCodes.Ldc_I4_1; break;
+                case "owner": senderCode[dispatch - 1].opcode = System.Reflection.Emit.OpCodes.Ldc_I4_0; break;
+                case "payload": senderCode.Insert(0, new(System.Reflection.Emit.OpCodes.Call, AccessTools.DeclaredMethod(unit, "HealPercent", new[] { typeof(float) }))); break;
+                case "reader": receiveCode.Insert(0, new(System.Reflection.Emit.OpCodes.Call, typeof(string).GetMethod("IsNullOrEmpty")!)); break;
+                case "gameplay": bodyCode.Insert(0, new(System.Reflection.Emit.OpCodes.Call, AccessTools.DeclaredMethod(unit, "HealPercent", new[] { typeof(float) }))); break;
+                case "prefab": bodyCode.RemoveAll(i => i.operand is FieldInfo f && f.Name == "bloodFestivalHealFxPrefab"); break;
+            }
+            if ((bool)AccessTools.DeclaredMethod(hooks, "ValidateHealVisualCode")!.Invoke(null, new object[] { senderCode, receiveCode, bodyCode })!)
+                throw new Exception("Unsafe shared-heal visual contract accepted: " + change);
+        }
+        Console.WriteLine("Verified native shared-heal green FX broadcast, zero payload, guest registration and visual-only receiver; changed contracts rejected (not live rendering).");
     }
 }

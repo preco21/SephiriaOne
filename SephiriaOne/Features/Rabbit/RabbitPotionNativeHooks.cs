@@ -92,6 +92,7 @@ namespace SephiriaOne
             catch (Exception error) { Debug.LogWarning("[SephiriaOne] Rabbit potion hook removal failed: " + error); }
             drinks?.Clear();
             completions?.Clear();
+            ResetHealVisuals();
         }
 
         private static bool ValidateDrinkShape(MethodInfo drink)
@@ -273,7 +274,25 @@ namespace SephiriaOne
                     Vector3 delta = recipient.transform.position - context.Player.transform.position;
                     if (!(delta.sqrMagnitude < ShareRadiusSquared) || !Current(context) ||
                         !SessionSettings.RabbitPotionsForUse.Share) continue;
+                    float before = recipient.hp;
+                    uint recipientId = recipient.netId;
+                    var identity = connection.identity;
+                    string floor = recipient.currentFloorGuid;
                     recipient.HealPercent(context.HealStrength);
+                    // Native HP callbacks may end the run, move a player, replace
+                    // their avatar/connection or disable sharing. FX is transient;
+                    // never send it against a replaced lifetime or replay the heal.
+                    if (!float.IsNaN(before) && !float.IsInfinity(before) &&
+                        !float.IsNaN(recipient.hp) && !float.IsInfinity(recipient.hp) && recipient.hp > before &&
+                        Current(context) && SessionSettings.RabbitPotionsForUse.Share &&
+                        NetworkServer.connections.TryGetValue(entry.Key, out live) && ReferenceEquals(live, connection) &&
+                        connection.isReady && ReferenceEquals(connection.identity, identity) &&
+                        connection.identity.TryGetComponent<PlayerSpawner>(out var owner) && ReferenceEquals(owner, spawner) &&
+                        ReferenceEquals(spawner.connectionToClient, connection) && PlayerSpawner.MultiplayerList.Contains(spawner) &&
+                        HostStateAdapter.IsReady(spawner) && ReferenceEquals(spawner.PlayerAvatar, recipient) &&
+                        ReferenceEquals(recipient.spawner, spawner) && recipient.netId == recipientId &&
+                        !recipient.IsDead && recipient.currentFloorGuid == floor && floor == context.Floor)
+                        ShowSharedHealVisual(recipient);
                 }
                 catch { /* A stale recipient or failed heal cannot cancel the native drink. */ }
             }

@@ -2,7 +2,8 @@
 
 Investigated 2026-09-28 against the installed Sephiria 1.0.33 assembly, SHA-256
 `C57A0DAEAB8E8D0AF7066A344133EEC4C57D8F303FD9E25DA9410FBFC4CF1510`.
-This records feasibility and a recommended integration; runtime behavior is unchanged.
+Implemented in `0.22.0` using the existing shared-healing toggle. The investigation
+below records the native contract and asset evidence used by that implementation.
 
 ## Finding
 
@@ -38,14 +39,14 @@ cleanup when its animation ends. No replacement assets need to be distributed.
 - The packet contains no new entity IDs, addon messages, replicated fields, or
   manually serialized custom payload. Guests execute their existing receiver and
   use their installed prefab.
-- The addon currently calls only `recipient.HealPercent(...)` for shared healing.
+- Before `0.22.0`, the addon called only `recipient.HealPercent(...)` for shared healing.
   That method changes HP and emits the native HP-change event; it does not request
   the potion's particle effect. This explains the missing explicit shared effect.
 - Keep the existing HP-only healing call. Never call `CreateEffect_OnDrink` on a
   recipient to obtain visuals: that would raise potion events and could grant
   Survival's random-stat bonus. The recommended RPC is presentation only.
 
-## Recommended integration
+## Implemented integration
 
 At the existing successful shared-heal boundary in
 `SephiriaOne/Features/Rabbit/RabbitPotionNativeHooks.cs`:
@@ -62,8 +63,8 @@ At the existing successful shared-heal boundary in
    contract independently so a future visual incompatibility leaves HP sharing
    and potion protections intact.
 
-This would show effects only for actual HP gains. Full-health players, healing
-reduced to zero, dead/out-of-range players, failed or MP-rejected drinks would not
+This shows effects only for actual finite HP gains. Full-health players, healing
+reduced to zero, dead/out-of-range players, failed or MP-rejected drinks do not
 show a misleading heal. It needs no additional toggle, preset fields, polling,
 per-player cache, or rejoin replay: the visual is a transient event for each heal.
 
@@ -73,15 +74,34 @@ sounds and depends on the short-lived potion's network identity. The public
 avatar RPC is the better fit. Calling `CreateDrinkVisual` or spawning `SpriteFx`
 locally alone would not deliver the visual to unmodified guests.
 
-## Verification still needed for implementation
+The adapter lives in `RabbitPotionNativeVisuals.cs`. It validates the native RPC
+name/hash, empty payload, reliable channel, owner inclusion, zero-argument reader
+and visual-only receiver calls before caching an open delegate to the game's
+public wrapper. There is no new/custom serializer. A failed check or send logs
+once and disables particles until addon reload; healing and potion protections
+continue. Unload clears the delegate/compatibility flags. No player is retained.
 
-The native sender, receiver, asset identity, green sprite frames, and pooled
-cleanup were inspected. No gameplay feature was changed, deployed, or live-tested.
+## Verification
 
-Implementation tests should cover exactly one FX per healed recipient, actual HP
-gain versus zero gain, no extra healing or Survival events, stale connections and
-death/floor/session changes during HP callbacks, failed FX without healing retry,
-and unchanged behavior when sharing is off. Live checks should include an
+The native sender, receiver, asset identity, green sprite frames and pooled sprite
+cleanup were inspected. Installed-game tests verify the registered native guest
+receiver and reject changed RPC hash/name, channel, owner inclusion, payload,
+reader, gameplay calls or prefab reference. The installed IL uses `ldc.i4 0` for
+the reliable channel and `Spawn(prefab, position, owner: null)` for the effect;
+these were checked against the actual assembly, not inferred from source syntax.
+
+Linked-source tests cover exactly one FX per healed recipient, actual HP gain
+versus zero/non-finite gain, no extra healing or Survival events, stale connections,
+death/floor/session/identity changes during HP callbacks, failed FX without healing
+retry, continued healing of later recipients, duplicate connection entries, no
+rejoin/new-run replay, and unchanged behavior when sharing is off. Live checks should include an
 unmodified guest as drinker/recipient/observer, multiple nearby recipients, and
 repeated heals across reconnect and new runs. Exact placement and animation
 appearance in a running game remain unverified.
+No deployment was run.
+
+Verification for `0.22.0`: 167 potion lifecycle checks and 12 localized alert
+checks pass, along with 757 session/runtime checks, 35 tooltip checks plus 6
+language-refresh checks, pure policy/catalog tests and installed-game contracts.
+Independent review repeated the potion and installed-game suites with no
+actionable findings. Debug and Release builds use deployment disabled.

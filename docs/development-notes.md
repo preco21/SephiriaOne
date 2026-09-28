@@ -9,6 +9,13 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.22.0` implements [Rabbit shared-healing particles](rabbit-shared-healing-visuals.md).
+An actual recipient HP gain invokes the game's zero-argument green-heal RPC once,
+using native guest assets and replication. Post-heal lifetime checks prevent stale
+effects after death, disconnect, avatar replacement or floor/run changes. An
+independent optional compatibility guard disables only particles on failure.
+Existing sharing controls and gameplay settings are unchanged; no deployment.
+
 Version `0.21.0` adds [English/Korean JSON localization](localization.md) for the
 panel, help, command feedback, status and addon Rabbit text/notifications. Local
 `/one language en|ko|reload|status` commands select and reload editable catalogs
@@ -25,13 +32,10 @@ actor crime exemptions. Stable per-floor run markers prevent duplicate spawns or
 rerolls across reconnects, revisits and setting changes. Natural merchants keep
 their normal penalties. Live gameplay confirmation remains pending; no deployment.
 
-The [shared-healing visual investigation](rabbit-shared-healing-visuals.md) found
-that `UnitAvatar.RpcBloodFestivalHealFx()` uses the exact green `HealFx` prefab used
-by HP potions. It is an existing visual-only broadcast supported by unmodified
-guests, without potion/talent callbacks or drinking sounds. Native code, asset
-links, green sprite frames and pooled cleanup were checked. Recommended integration
-is once per actual recipient HP gain with lifetime revalidation; implementation
-and live appearance checks remain pending. That investigation changed no runtime code.
+The earlier [shared-healing visual investigation](rabbit-shared-healing-visuals.md)
+verified that `UnitAvatar.RpcBloodFestivalHealFx()` uses the exact green `HealFx`
+prefab used by HP potions, without potion/talent callbacks or drinking sounds.
+Version `0.22.0` integrates that native path; live appearance checks remain pending.
 
 Version `0.19.0` adds [low-MP feedback for Rabbit healing](rabbit-potions.md).
 Insufficient-MP rejection displays current/required MP to the affected drinker:
