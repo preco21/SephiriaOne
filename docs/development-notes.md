@@ -9,6 +9,14 @@ can change independently of that installed game version.
 
 ## Current status
 
+The [shared-healing visual investigation](rabbit-shared-healing-visuals.md) found
+that `UnitAvatar.RpcBloodFestivalHealFx()` uses the exact green `HealFx` prefab used
+by HP potions. It is an existing visual-only broadcast supported by unmodified
+guests, without potion/talent callbacks or drinking sounds. Native code, asset
+links, green sprite frames and pooled cleanup were checked. Recommended integration
+is once per actual recipient HP gain with lifetime revalidation; implementation
+and live appearance checks remain pending. Runtime remains `0.19.0`.
+
 Version `0.19.0` adds [low-MP feedback for Rabbit healing](rabbit-potions.md).
 Insufficient-MP rejection displays current/required MP to the affected drinker:
 a native timed system message locally, native floating text for unmodified guests.

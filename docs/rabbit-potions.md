@@ -45,6 +45,10 @@ need to be Wing-Eared Rabbit. Shared healing does not make recipients drink a
 potion, trigger their potion-use passives, consume their inventory, or relay
 healing again. It does not share regeneration, all healing sources or spell heals.
 
+A [shared-healing particle investigation](rabbit-shared-healing-visuals.md) confirms
+a native host-triggered route for green effects on recipients, including
+unmodified guests. That visual integration is not implemented yet.
+
 **MP cost** charges a configurable flat fee, initially **10 MP**, when an eligible
 HP-potion drink reaches completion. `/one rabbit mp-cost 25` sets the fee to 25 MP
 and enables charging. Use whole numbers **0..10000**; zero costs no MP and does
