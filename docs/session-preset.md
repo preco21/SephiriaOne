@@ -14,6 +14,13 @@ use v3 and retain Set/Offset/Multiplier intent. v1/v2 files remain supported.
 Run checkpoints preserving inventory/talent capacity and spent starting grants
 are separate from the explicit future-session preset.
 
+Version `0.20.0` adds v7 for the [extra hostile merchant](wandering-merchant.md):
+`merchant spawns 1` enables it and `merchant chance 25` stores a custom whole-number
+chance from 0 to 100. Missing rows mean off/25%. A custom chance persists even with
+the toggle off. Earlier presets remain supported. Per-floor rolls and the first
+encounter guarantee live in the native run save, not the future-session preset;
+loading a preset or rejoining cannot reroll a consumed floor.
+
 Version `0.16.0` stores enabled [rabbit potion options](rabbit-potions.md) in v4
 as `rabbit infinite 1` and `rabbit share 1`. Missing/off options remain native.
 v1-v3 are still readable; v4 supports all prior setting families. These flags are

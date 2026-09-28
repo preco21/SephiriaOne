@@ -38,6 +38,9 @@ namespace SephiriaOne
         public RabbitPotionSettings RabbitPotions { get; }
         public bool RabbitPotionsAvailable { get; }
         public bool RabbitDescriptionAvailable { get; }
+        public bool MerchantSpawns { get; }
+        public int MerchantSpawnChance { get; }
+        public bool MerchantsAvailable { get; }
         public bool SavedValid { get; }
         public string AvailabilityReason { get; }
         public string FaultedFeature { get; }
@@ -52,13 +55,16 @@ namespace SephiriaOne
             string availabilityReason, string faultedFeature, IEnumerable<string> lines,
             IEnumerable<PlayerSettingsSnapshot> players, IEnumerable<string> activeSettings,
             IEnumerable<string> savedSettings, string savedSummary, RabbitPotionSettings rabbitPotions = default,
-            bool rabbitPotionsAvailable = false, bool rabbitDescriptionAvailable = false)
+            bool rabbitPotionsAvailable = false, bool rabbitDescriptionAvailable = false,
+            bool merchantSpawns = false, bool merchantsAvailable = false, int merchantSpawnChance = MerchantCommand.DefaultChance)
         {
             SessionIdentity = sessionIdentity; Epoch = epoch; RunGeneration = runGeneration; Revision = revision;
             HostActive = hostActive; CanMutate = canMutate; CanSave = canSave; CanForget = canForget;
             ChoicesAvailable = choicesAvailable; SavedValid = savedValid;
             RabbitPotions = rabbitPotions; RabbitPotionsAvailable = rabbitPotionsAvailable;
             RabbitDescriptionAvailable = rabbitDescriptionAvailable;
+            MerchantSpawns = merchantSpawns; MerchantsAvailable = merchantsAvailable;
+            MerchantSpawnChance = merchantSpawnChance;
             AvailabilityReason = availabilityReason; FaultedFeature = faultedFeature;
             ActiveSettings = new List<string>(activeSettings).AsReadOnly();
             SavedSettings = new List<string>(savedSettings).AsReadOnly();

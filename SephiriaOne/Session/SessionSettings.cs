@@ -81,6 +81,7 @@ namespace SephiriaOne
 
         private static void ClearScope()
         {
+            MerchantFeature.Clear();
             policy.Clear();
             relativeStats.Clear(); relative.Clear();
             ResourceRuntime.Clear();

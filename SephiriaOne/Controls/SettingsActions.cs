@@ -52,6 +52,23 @@ namespace SephiriaOne
                         new[] { "Only the host can open the session settings panel." });
                 }
 
+                MerchantParseResult merchant = MerchantCommand.Parse(command, out MerchantCommand merchantCommand, out string merchantError);
+                if (merchant != MerchantParseResult.NotCommand)
+                {
+                    recognized = true;
+                    if (merchant == MerchantParseResult.Help) return Reply(true, MerchantCommand.Usage);
+                    if (merchant == MerchantParseResult.Invalid) return Reply(false, merchantError);
+                    if (merchant == MerchantParseResult.Status)
+                    {
+                        SettingsSnapshot snapshot = SessionSettings.ReadSnapshot();
+                        if (!snapshot.HostActive || snapshot.SessionIdentity == null) return Reply(false, snapshot.AvailabilityReason);
+                        return Reply(true, SessionSettings.DescribeMerchant(snapshot.MerchantSpawns, snapshot.MerchantSpawnChance) +
+                            (snapshot.MerchantsAvailable ? "" : " Merchant hooks unavailable; native behavior continues. See Player.log."));
+                    }
+                    bool success = SessionSettings.TryExecuteMerchant(merchantCommand, out string merchantMessage);
+                    return Reply(success, merchantMessage);
+                }
+
                 RabbitParseResult rabbit = RabbitCommand.Parse(command, out RabbitCommand rabbitCommand, out string rabbitError);
                 if (rabbit != RabbitParseResult.NotCommand)
                 {
@@ -89,7 +106,7 @@ namespace SephiriaOne
                 if (isPreset)
                 {
                     if (preset == PresetAction.Help)
-                        return Reply(true, presetError + " /one ui opens the host settings panel. /one rabbit help lists potion options.");
+                        return Reply(true, presetError + " /one ui opens the host settings panel. /one rabbit help lists potion options. /one merchant help lists extra merchant options.");
                     if (preset == PresetAction.Invalid) return Reply(false, presetError);
                     bool success = SessionSettings.TryExecutePreset(preset, out string[] messages);
                     return new SettingsActionResult(true, success, false, messages);

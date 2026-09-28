@@ -63,6 +63,8 @@ namespace SephiriaOne
             lines.Add("Active session settings: " + (active.Count == 0 ? "none." : string.Join("; ", active)));
             lines.Add(DescribeRabbit(sameSession ? policy.RabbitPotions : default) +
                 (RabbitPotionFeature.Available ? "" : " Potion hooks unavailable; native behavior continues. See Player.log."));
+            lines.Add(DescribeMerchant(sameSession && policy.MerchantSpawns, sameSession ? policy.MerchantSpawnChance : MerchantCommand.DefaultChance) +
+                (MerchantFeature.Available ? "" : " Merchant hooks unavailable; native behavior continues. See Player.log."));
             DescribeSynchronization(lines, sameSession);
             if (!SessionBoundaryFeature.Available)
                 lines.Add("Fountain grant synchronization guard is unavailable; frame polling remains active. Check Player.log.");
@@ -158,7 +160,9 @@ namespace SephiriaOne
             return new SettingsSnapshot(sameSession ? dungeon : null, epoch, runGeneration, intentRevision, host,
                 unavailable.Length == 0, canSave, canForget, ChoiceFeature.Available, saved.Valid, unavailable, fault,
                 lines, currentPlayers, active, savedSettings, savedSummary, sameSession ? policy.RabbitPotions : default,
-                RabbitPotionFeature.Available, RabbitDescriptionFeature.Available);
+                RabbitPotionFeature.Available, RabbitDescriptionFeature.Available,
+                sameSession && policy.MerchantSpawns, MerchantFeature.Available,
+                sameSession ? policy.MerchantSpawnChance : MerchantCommand.DefaultChance);
         }
 
         private static string Signed(int value) => value.ToString("+0;-0;0", CultureInfo.InvariantCulture);

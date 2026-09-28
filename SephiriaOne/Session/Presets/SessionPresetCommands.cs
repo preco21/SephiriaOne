@@ -16,6 +16,7 @@ namespace SephiriaOne
             }
             if (!exists) return;
             policy = saved;
+            MerchantFeature.Refresh();
             NotifySettingsChanged();
             Report("Loaded saved preset for this hosted session. Use /one status to inspect it.", true);
         }

@@ -54,6 +54,7 @@ Console.WriteLine($"Passed {PenaltyMultiplierTests.Run()} native penalty multipl
 Console.WriteLine($"Passed {MultiplierCommandTests.Run()} native-baseline multiplier checks.");
 Console.WriteLine($"Passed {ResourcePolicyTests.Run()} resource policy checks.");
 Console.WriteLine($"Passed {RabbitPotionSettingsTests.Run()} rabbit potion settings checks.");
+Console.WriteLine($"Passed {MerchantSettingsTests.Run()} merchant settings checks.");
 Console.WriteLine($"Passed {StartingResourceTests.Run()} starting resource checks.");
 Console.WriteLine($"Passed {PresetTests.Run()} preset parser/storage checks.");
 Console.WriteLine($"Passed {ChoiceCommandTests.Run()} candidate command checks.");

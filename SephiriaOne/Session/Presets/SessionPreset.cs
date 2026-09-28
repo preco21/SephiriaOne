@@ -14,6 +14,7 @@ namespace SephiriaOne
         private const string RabbitPresetHeader = "SephiriaOne preset v4";
         private const string RabbitBalancePresetHeader = "SephiriaOne preset v5";
         private const string RabbitCostPresetHeader = "SephiriaOne preset v6";
+        private const string MerchantPresetHeader = "SephiriaOne preset v7";
         private static readonly string[] ChoiceNames = { "item", "weapon", "miracle" };
 
         public IReadOnlyList<string> DescribeSettings()
@@ -34,6 +35,9 @@ namespace SephiriaOne
             if (RabbitPotions.SuppressSurvival) lines.Add("rabbit suppress-survival 1");
             if (RabbitPotions.MpCostPerDrink != RabbitPotionSettings.DefaultMpCostPerDrink)
                 lines.Add("rabbit mp-amount " + RabbitPotions.MpCostPerDrink.ToString(CultureInfo.InvariantCulture));
+            if (MerchantSpawns) lines.Add("merchant spawns 1");
+            if (MerchantSpawnChance != MerchantCommand.DefaultChance)
+                lines.Add("merchant chance " + MerchantSpawnChance.ToString(CultureInfo.InvariantCulture));
             return lines;
         }
 
@@ -41,7 +45,7 @@ namespace SephiriaOne
         {
             bool multiplier = HasFountainMultiplier;
             foreach (Setting setting in stats.Values) multiplier |= setting.Multiplier;
-            return (RabbitPotions.MpCostPerDrink != RabbitPotionSettings.DefaultMpCostPerDrink ? RabbitCostPresetHeader :
+            return (MerchantSpawns || MerchantSpawnChance != MerchantCommand.DefaultChance ? MerchantPresetHeader : RabbitPotions.MpCostPerDrink != RabbitPotionSettings.DefaultMpCostPerDrink ? RabbitCostPresetHeader :
                 RabbitPotions.ConsumeMp || RabbitPotions.SuppressSurvival ? RabbitBalancePresetHeader :
                 RabbitPotions.HasChanges ? RabbitPresetHeader : Resources.HasChanges ? ResourcePresetHeader : multiplier ? MultiplierPresetHeader : PresetHeader) + "\n" +
                 (HasChanges ? string.Join("\n", DescribeSettings()) + "\n" : "");
@@ -53,8 +57,9 @@ namespace SephiriaOne
             error = "Invalid saved preset; no saved settings were applied.";
             if (text == null || text.Length > MaximumPresetLength) return false;
             string[] lines = text.Replace("\r\n", "\n").Split('\n');
-            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader && lines[0] != RabbitBalancePresetHeader && lines[0] != RabbitCostPresetHeader)) return false;
-            bool allowCost = lines[0] == RabbitCostPresetHeader;
+            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader && lines[0] != RabbitBalancePresetHeader && lines[0] != RabbitCostPresetHeader && lines[0] != MerchantPresetHeader)) return false;
+            bool allowMerchant = lines[0] == MerchantPresetHeader;
+            bool allowCost = lines[0] == RabbitCostPresetHeader || allowMerchant;
             bool allowBalance = lines[0] == RabbitBalancePresetHeader || allowCost;
             bool allowRabbit = lines[0] == RabbitPresetHeader || allowBalance;
             bool allowResources = lines[0] == ResourcePresetHeader || allowRabbit;
@@ -67,6 +72,22 @@ namespace SephiriaOne
                 if (parts.Length == 0) continue;
                 if (!decimal.TryParse(parts[parts.Length - 1], NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint,
                     CultureInfo.InvariantCulture, out decimal value) || value < -int.MaxValue || value > int.MaxValue) return false;
+                if (parts[0] == "merchant")
+                {
+                    if (!allowMerchant || parts.Length != 3 || !seen.Add("merchant " + parts[1])) return false;
+                    if (parts[1] == "chance")
+                    {
+                        if (!MerchantCommand.TryParseChance(parts[2], out int chance) ||
+                            parts[2] != chance.ToString(CultureInfo.InvariantCulture)) return false;
+                        pending.Record(new MerchantCommand(chance));
+                    }
+                    else
+                    {
+                        if (parts[1] != "spawns" || (parts[2] != "0" && parts[2] != "1")) return false;
+                        pending.Record(new MerchantCommand(value == 1));
+                    }
+                    continue;
+                }
                 if (parts[0] == "rabbit")
                 {
                     if (!allowRabbit || parts.Length != 3 || !seen.Add("rabbit " + parts[1])) return false;

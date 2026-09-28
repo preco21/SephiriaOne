@@ -17,6 +17,7 @@ SephiriaOne/
   Features/
     Choices/
     Fountain/
+    Merchants/
     Names/
     Rabbit/
     Resources/
@@ -39,6 +40,7 @@ SephiriaOne/
 | `UI/` | Addon-owned host panel, pause-menu binding, native control-stack lifetime, widgets and session-bound drafts. |
 | `Features/Choices/` | Candidate command parsing/planning, host writes, and Harmony generation guards. |
 | `Features/Fountain/` | Fountain command parsing/planning, point writes, and carryover-cap operations. |
+| `Features/Merchants/` | Host encounter toggle/chance parsing, native room placement, run-scoped spawn bookkeeping and actor-specific crime/retaliation guards. |
 | `Features/Names/` | Gradient formatting, native publication controller, and synchronized name state. |
 | `Features/Rabbit/` | Potion option parsing/settings, native successful-drink hooks and host costume-description adapter. |
 | `Features/Resources/` | Starting grants, capacity/budget policy and native resource boundaries. |

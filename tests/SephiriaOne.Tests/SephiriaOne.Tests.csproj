@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../SephiriaOne/Features/Merchants/MerchantCommand.cs" Link="Source/Features/Merchants/MerchantCommand.cs" />
     <Compile Include="../../SephiriaOne/Features/Rabbit/RabbitPotionSettings.cs" Link="Source/Features/Rabbit/RabbitPotionSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Rabbit/RabbitCommand.cs" Link="Source/Features/Rabbit/RabbitCommand.cs" />
     <Compile Include="../../SephiriaOne/Features/Resources/Starting/*Plan.cs" Link="Source/Features/Resources/Starting/%(Filename)%(Extension)" />

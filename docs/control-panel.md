@@ -21,6 +21,7 @@ effects use the same native synchronization as the existing commands.
 | Presets | Save current applied settings, forget the saved copy, or refresh it from disk. Active intent and saved intent are shown separately. |
 | Status | Current intent, player values, revisions, synchronization outcomes, native name status and fault details. Scroll for the complete readout. |
 | Rabbit | Independent On/Off controls for Wing-Eared Rabbit infinite HP potions, nearby potion healing, MP cost and Survival rank-5 suppression. Enter 0..10000 MP and press Set & on to choose a fee; Off remembers it. Reset restores 10 MP and disables all four options. Shows active state and compatibility. |
+| Merchant | On/Off, whole-number spawn chance 0..100% (default 25%), and Reset to off/25%. First eligible encounter is guaranteed each new run; later floors roll once. Added hostile merchants have 3× native scaled HP and no crime penalty. |
 
 Actions only run when clicked. Typing, switching tabs and refreshing observations
 never send a settings command. Successful actions clear the amount field. Changing
@@ -49,7 +50,8 @@ to replace a saved preset, or forget it to stop automatic loading in future host
 sessions. Automatic-load rules are unchanged; presets containing multipliers
 use v2, resource presets use v3, original rabbit options use v4, and rabbit MP-cost
 or Survival-suppression options use v5. Custom Rabbit MP amounts use v6, including
-amounts retained with charging off. Older setting types retain v1 compatibility.
+amounts retained with charging off. Merchant settings use v7, including a custom
+chance retained while off. Older setting types retain v1 compatibility.
 See [resource semantics and safe reductions](resource-command.md). Since 0.15.0,
 `/one` replaces the old generic `/mod` token, which is no longer intercepted.
 

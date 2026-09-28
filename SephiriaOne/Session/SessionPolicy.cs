@@ -71,7 +71,18 @@ namespace SephiriaOne
         public ResourcePolicy Resources { get; } = new ResourcePolicy();
         public RabbitPotionSettings RabbitPotions { get; private set; }
         public void Record(RabbitCommand command) => RabbitPotions = RabbitPotions.Apply(command);
-        public bool HasChanges => fountain.HasValue || choices.Count != 0 || stats.Count != 0 || Resources.HasChanges || RabbitPotions.HasChanges;
+        public bool MerchantSpawns { get; private set; }
+        public int MerchantSpawnChance { get; private set; } = MerchantCommand.DefaultChance;
+        public void Record(MerchantCommand command)
+        {
+            if (command.Option == MerchantOption.Chance) MerchantSpawnChance = command.Chance;
+            else
+            {
+                MerchantSpawns = command.Enabled;
+                if (command.Option == MerchantOption.Reset) MerchantSpawnChance = MerchantCommand.DefaultChance;
+            }
+        }
+        public bool HasChanges => fountain.HasValue || choices.Count != 0 || stats.Count != 0 || Resources.HasChanges || RabbitPotions.HasChanges || MerchantSpawns || MerchantSpawnChance != MerchantCommand.DefaultChance;
         public bool HasFountainSetting => fountain.HasValue;
         public bool HasFountainMultiplier => fountain.HasValue && fountain.Value.Multiplier;
 
@@ -113,6 +124,8 @@ namespace SephiriaOne
             stats.Clear();
             Resources.Clear();
             RabbitPotions = default;
+            MerchantSpawns = false;
+            MerchantSpawnChance = MerchantCommand.DefaultChance;
         }
 
         public bool TryPlan(SessionPlayerSnapshot player, out SessionPlan plan, out string error)
