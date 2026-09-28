@@ -5,7 +5,12 @@ using SephiriaOne;
 internal static class SettingsControlsTests
 {
     private static SettingsActionResult Execute(string command) => SettingsActions.Execute(command);
-    private static SettingsSnapshot Snapshot(bool refresh = false) => SessionSettings.ReadSnapshot(refresh);
+    private static SettingsSnapshot Snapshot(bool refresh = false)
+    {
+        var full = SessionSettings.ReadSnapshot(refresh);
+        SnapshotDetailTests.AssertSameValues(full, SessionSettings.ReadSnapshot(includeDiagnostics: false));
+        return full;
+    }
     private static bool IsCommand(string command) => SettingsActions.IsCommand(command);
     private static IReadOnlyList<string> Active(SettingsSnapshot snapshot) => snapshot.ActiveSettings;
     private static IReadOnlyList<string> Saved(SettingsSnapshot snapshot) => snapshot.SavedSettings;
@@ -172,6 +177,10 @@ internal static class SettingsControlsTests
         Directory.CreateDirectory(Path.GetDirectoryName(SavedPath()));
         File.WriteAllText(SavedPath(), "corrupt external preset");
         check(Snapshot().SavedValid, "Polling snapshots reuse the saved file cache");
+        var refreshedCompact = SessionSettings.ReadSnapshot(refreshSaved: true, includeDiagnostics: false);
+        check(!refreshedCompact.SavedValid && refreshedCompact.SavedSettings.Count == 0 && refreshedCompact.Lines.Count == 0,
+            "Compact explicit refresh reads external preset edits without building a status report");
+        SnapshotDetailTests.AssertSameValues(SessionSettings.ReadSnapshot(), refreshedCompact);
         check(!Snapshot(true).SavedValid && !Execute("/one status").Success,
             "Explicit refresh and status expose malformed saved data");
         check(Execute("/stats luck +3").Success && Execute("/one save").Success && Snapshot().SavedValid &&

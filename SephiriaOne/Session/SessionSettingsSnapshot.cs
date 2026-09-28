@@ -33,7 +33,10 @@ namespace SephiriaOne
 
         // No Prepare/Synchronize call is allowed here: inspecting a pending join
         // must never enroll it or apply retained settings. Only file reads cache.
-        public static SettingsSnapshot ReadSnapshot(bool refreshSaved = false)
+        // Ordinary panel pages need live values and permissions, but only Status
+        // and chat consume the formatted diagnostic report. Do not cache values:
+        // native edits and language changes can occur without an intent revision.
+        public static SettingsSnapshot ReadSnapshot(bool refreshSaved = false, bool includeDiagnostics = true)
         {
             bool host = NetworkServer.active;
             bool loaded = enabled && store != null;
@@ -54,21 +57,24 @@ namespace SephiriaOne
             var currentPlayers = new List<PlayerSettingsSnapshot>();
             if (!host || !loaded)
             {
-                lines.Add(unavailable);
+                if (includeDiagnostics) lines.Add(unavailable);
                 return new SettingsSnapshot(null, epoch, runGeneration, intentRevision, host, false, false, false,
                     ChoiceFeature.Available, false, unavailable, "", lines, currentPlayers,
                     Array.Empty<string>(), Array.Empty<string>(), unavailable);
             }
 
             IReadOnlyList<string> active = sameSession ? policy.DescribeSettings() : Array.Empty<string>();
-            lines.Add(L.T("Active session settings: ") + (active.Count == 0 ? L.T("none.") : string.Join("; ", active)));
-            lines.Add(DescribeRabbit(sameSession ? policy.RabbitPotions : default) +
-                (RabbitPotionFeature.Available ? "" : L.T(" Potion hooks unavailable; native behavior continues. See Player.log.")));
-            lines.Add(DescribeMerchant(sameSession && policy.MerchantSpawns, sameSession ? policy.MerchantSpawnChance : MerchantCommand.DefaultChance) +
-                (MerchantFeature.Available ? "" : L.T(" Merchant hooks unavailable; native behavior continues. See Player.log.")));
-            DescribeSynchronization(lines, sameSession);
-            if (!SessionBoundaryFeature.Available)
-                lines.Add(L.T("Fountain grant synchronization guard is unavailable; frame polling remains active. Check Player.log."));
+            if (includeDiagnostics)
+            {
+                lines.Add(L.T("Active session settings: ") + (active.Count == 0 ? L.T("none.") : string.Join("; ", active)));
+                lines.Add(DescribeRabbit(sameSession ? policy.RabbitPotions : default) +
+                    (RabbitPotionFeature.Available ? "" : L.T(" Potion hooks unavailable; native behavior continues. See Player.log.")));
+                lines.Add(DescribeMerchant(sameSession && policy.MerchantSpawns, sameSession ? policy.MerchantSpawnChance : MerchantCommand.DefaultChance) +
+                    (MerchantFeature.Available ? "" : L.T(" Merchant hooks unavailable; native behavior continues. See Player.log.")));
+                DescribeSynchronization(lines, sameSession);
+                if (!SessionBoundaryFeature.Available)
+                    lines.Add(L.T("Fountain grant synchronization guard is unavailable; frame polling remains active. Check Player.log."));
+            }
 
             bool allReady = true;
             var seen = new HashSet<PlayerAvatar>(ReferenceComparer<PlayerAvatar>.Instance);
@@ -82,34 +88,40 @@ namespace SephiriaOne
                 }
                 PlayerAvatar player = spawner.PlayerAvatar;
                 if (!seen.Add(player)) continue;
-                string label = L.T("Player #") + player.netId + ": ";
+                string label = includeDiagnostics ? L.T("Player #") + player.netId + ": " : "";
                 player.customStats.TryGetValue(FountainPoints.ContributionKey, out int fountainOffset);
-                lines.Add(label + L.F("Fountain={0} (addon {1}).", player.Inventory.dimensionPocket, Signed(fountainOffset)));
+                if (includeDiagnostics) lines.Add(label + L.F("Fountain={0} (addon {1}).", player.Inventory.dimensionPocket, Signed(fountainOffset)));
                 var stats = new Dictionary<string, decimal>();
-                var statDescriptions = new List<string>();
+                var statDescriptions = includeDiagnostics ? new List<string>() : null;
                 foreach (StatDefinition stat in StatCatalog.All)
                 {
-                    player.customStats.TryGetValue(stat.Marker, out int contribution);
                     decimal value = stat.Display(player.GetCustomStatUnsafe(stat.Key));
                     stats.Add(stat.Name, value);
-                    statDescriptions.Add(stat.Name + "=" + value.ToString("0.##", CultureInfo.InvariantCulture) +
-                        (contribution == 0 ? "" : L.T(" (base adjustment ") + Signed(contribution) + ")") +
-                        (sameSession && IsRelativeStatState(player, stat, ReconcileState.NativeFallback) ? L.T(" (native fallback)") :
-                            sameSession && IsRelativeStatState(player, stat, ReconcileState.Suspended) ? L.T(" (relative setting suspended)") : ""));
+                    if (includeDiagnostics)
+                    {
+                        player.customStats.TryGetValue(stat.Marker, out int contribution);
+                        statDescriptions.Add(stat.Name + "=" + value.ToString("0.##", CultureInfo.InvariantCulture) +
+                            (contribution == 0 ? "" : L.T(" (base adjustment ") + Signed(contribution) + ")") +
+                            (sameSession && IsRelativeStatState(player, stat, ReconcileState.NativeFallback) ? L.T(" (native fallback)") :
+                                sameSession && IsRelativeStatState(player, stat, ReconcileState.Suspended) ? L.T(" (relative setting suspended)") : ""));
+                    }
                 }
-                lines.Add(label + string.Join(", ", statDescriptions) + L.T(". Units: /stats list."));
+                if (includeDiagnostics) lines.Add(label + string.Join(", ", statDescriptions) + L.T(". Units: /stats list."));
                 var choices = new Dictionary<string, int>();
-                var choiceDescriptions = new List<string>();
+                var choiceDescriptions = includeDiagnostics ? new List<string>() : null;
                 string[] names = { "item", "weapon", "miracle" };
                 for (int i = 0; i < ChoiceCommand.Keys.Length; i++)
                 {
                     string key = ChoiceCommand.Keys[i];
-                    player.customStats.TryGetValue("SEPHIRIAONE_" + key, out int contribution);
                     int value = player.GetCustomStatUnsafe(key);
                     choices.Add(names[i], value);
-                    choiceDescriptions.Add(L.F("{0}={1} (addon {2})", names[i], value, Signed(contribution)));
+                    if (includeDiagnostics)
+                    {
+                        player.customStats.TryGetValue("SEPHIRIAONE_" + key, out int contribution);
+                        choiceDescriptions.Add(L.F("{0}={1} (addon {2})", names[i], value, Signed(contribution)));
+                    }
                 }
-                lines.Add(label + L.T("extra choices: ") + string.Join(", ", choiceDescriptions));
+                if (includeDiagnostics) lines.Add(label + L.T("extra choices: ") + string.Join(", ", choiceDescriptions));
                 var resources = new Dictionary<string, string>();
                 foreach (var definition in ResourceCatalog.All)
                 {
@@ -138,12 +150,12 @@ namespace SephiriaOne
                     catch (System.Exception error) { description = L.T("Unavailable: ") + error.Message; }
                     if (!ResourceFeature.IsAvailable(definition.Kind)) description += " " + ResourceFeature.UnavailableReason(definition.Kind);
                     resources.Add(definition.Name, description);
-                    lines.Add(label + L.T(definition.Label) + ": " + description);
+                    if (includeDiagnostics) lines.Add(label + L.T(definition.Label) + ": " + description);
                 }
                 currentPlayers.Add(new PlayerSettingsSnapshot(player.netId, player.playerNameSource,
                     player.Inventory.dimensionPocket, fountainOffset, stats, choices, resources));
             }
-            if (currentPlayers.Count == 0) lines.Add(L.T("No ready players; current values are unavailable."));
+            if (includeDiagnostics && currentPlayers.Count == 0) lines.Add(L.T("No ready players; current values are unavailable."));
             if (canMutate)
             {
                 if (!allReady) unavailable = L.T("A player is still initializing. Retry in a moment; no command writes were made.");
@@ -156,8 +168,11 @@ namespace SephiriaOne
                 L.T("Saved preset: none. Use /one save to store active settings.") :
                 L.T("Saved for future hosted sessions: ") + (saved.Policy.HasChanges ?
                     string.Join("; ", savedSettings) : L.T("empty (no adjustments)."));
-            lines.Add(savedSummary);
-            lines.Add(L.T("Current values include native bonuses; base adjustments are tracked raw stat units. Commands and resets change the active session; /one save updates the saved copy."));
+            if (includeDiagnostics)
+            {
+                lines.Add(savedSummary);
+                lines.Add(L.T("Current values include native bonuses; base adjustments are tracked raw stat units. Commands and resets change the active session; /one save updates the saved copy."));
+            }
 
             return new SettingsSnapshot(sameSession ? dungeon : null, epoch, runGeneration, intentRevision, host,
                 canMutate, canSave, canForget, ChoiceFeature.Available, saved.Valid, unavailable, fault,

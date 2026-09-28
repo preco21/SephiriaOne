@@ -62,7 +62,7 @@ namespace SephiriaOne
             { DisposePanel(); return; }
             if (Time.unscaledTime < nextRefresh) return;
             nextRefresh = Time.unscaledTime + 0.25f;
-            try { panel.Refresh(SessionSettings.ReadSnapshot()); }
+            try { panel.Refresh(panel.ReadCurrentSnapshot()); }
             catch (Exception exception) { ReportFailure(exception); DisposePanel(); }
         }
 

@@ -9,6 +9,14 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.22.2` completes a [performance follow-up](performance-review.md).
+Non-Status panel pages skip unused diagnostic formatting while retaining live
+values, permissions, saved settings and language updates. Five-player fixture
+allocation falls from 103,958 to 27,880 bytes per refresh (about 73%). Choices
+cleanup now releases its recovery journal and dungeon reference after recovery
+or scope teardown; weak-reference tests cover both paths. Synchronization cadence,
+write validation and network behavior are unchanged. No deployment was run.
+
 Version `0.22.1` reduces extra Wandering Merchant health from 3× to 1× normal HP.
 New spawns retain native floor/multiplayer scaling and start at full health;
 existing actors, spawn settings and crime exemptions are unchanged. English and

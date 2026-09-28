@@ -59,6 +59,18 @@ internal static class GamePanelCompatibilityTests
         var refreshCalls = PatchProcessor.GetOriginalInstructions(Required(panel, "Refresh"));
         if (refreshCalls.Any(i => Equals(i.operand, execute)))
             throw new Exception("Refreshing the panel must not dispatch settings changes.");
+        var snapshot = Required(panel, "ReadCurrentSnapshot");
+        var snapshotInstructions = PatchProcessor.GetOriginalInstructions(snapshot);
+        if (!Calls(snapshot, Required(addon.GetType("SephiriaOne.SessionSettings", true)!, "ReadSnapshot")) ||
+            !snapshotInstructions.Any(i => i.operand is FieldInfo f && f.DeclaringType == panel && f.Name == "page") ||
+            !snapshotInstructions.Any(i => i.LoadsConstant(5)) ||
+            !snapshotInstructions.Any(i => i.opcode == System.Reflection.Emit.OpCodes.Ceq))
+            throw new Exception("Only the Status page should request full formatted diagnostics.");
+        foreach (string method in new[] { "Show", "SelectPage", "MoveSelection", "Execute", "RefreshSaved" })
+            if (!Calls(Required(panel, method), snapshot))
+                throw new Exception("Panel snapshot detail selection is bypassed by " + method);
+        if (!Calls(Required(addon.GetType("SephiriaOne.SettingsPanelController", true)!, "Update"), snapshot))
+            throw new Exception("Polling must use the panel's current snapshot detail selection.");
         var entryUnload = PatchProcessor.GetOriginalInstructions(Required(addon.GetType("SephiriaOne.Entry", true)!, "OnModUnloaded"));
         int cleanup = entryUnload.FindIndex(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "ChoiceFeature" && m.Name == "Shutdown");
         int disable = entryUnload.FindIndex(i => i.operand is MethodInfo m && m.Name == "set_enabled");

@@ -18,6 +18,7 @@ internal static class LanguageRuntimeTests
             check(SettingsActions.Execute("/one language status").Success, "Local language status works without host authority");
             NetworkServer.active = true;
             var after = SessionSettings.ReadSnapshot();
+            SnapshotDetailTests.AssertSameValues(after, SessionSettings.ReadSnapshot(includeDiagnostics: false));
             check(after.Revision == before.Revision && canonical == string.Join("\n", after.ActiveSettings), "Language change preserves gameplay revision and canonical preset rows");
             check(SettingsActions.Execute("/one merchant status").Messages.Any(text => text.Contains("방랑 상인")), "Existing merchant status is Korean without replaying gameplay");
             check(!SettingsActions.Execute("/stats luck invalid").Success &&

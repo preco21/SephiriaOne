@@ -1,5 +1,72 @@
 # Synchronization performance review
 
+## Follow-up: 0.22.2 (2026-09-29)
+
+Reviewed session reconciliation and resources, name/chat controllers, UI and
+localization, Rabbit/Merchant/Choices hooks, diagnostics and object cleanup.
+The [implementation plan](plans/2026-09-29-performance-review.md) records scope.
+
+Two concrete issues were fixed:
+
+- Every open settings tab requested the full diagnostic report four times per
+  second, although only Status displays it. Non-Status pages now omit report
+  construction. They still read current player values and readiness/permissions,
+  respect fault recovery, and refresh presets/language. Chat and Status keep the
+  full report. No native values are cached across frames or intent revisions.
+- Partially failed Choices unload cleanup retained a static journal and dungeon
+  reference. Successful recovery cleared only the journal, and session teardown
+  did not clear either feature reference. Both now clear after recovery or scope
+  teardown, preserving recovery while that host scope remains active. Weak-reference
+  tests reproduced both leaks and verify release after retry/reset, stop and scope
+  replacement, including recovery without a later teardown to mask retention.
+
+Release .NET 10 fixture measurements with five players and active settings:
+
+| Snapshot construction | Bytes/refresh | Sample time/refresh |
+| --- | ---: | ---: |
+| Full status report (previously every tab) | 103,958 | 91.79 us |
+| Non-Status panel pages | 27,880 | 25.77 us |
+
+This removes about **73%** of snapshot allocations, roughly 304 KB/second at the
+existing four refreshes per second while a non-Status panel is open. It does not
+affect closed-panel gameplay. These figures measure snapshot construction, not
+Unity/TMP rendering, actual GC pauses or FPS. Timings vary with JIT/runtime state.
+
+The unchanged five-player synchronization probe remains at **0 measured bytes/tick**
+with settings inactive or active. A third scenario now includes 90 occupied slots,
+40 talent entries and 30 mystic positions per player; it also stays at 0 measured
+bytes/tick. The first two historical workload definitions remain available for
+comparison. Allocation checks enforce the existing 1 KiB/tick ceiling and at least
+a 25% snapshot reduction; wall-clock timings are informational only.
+
+Paths retained after review:
+
+- Native Mirror collection IL and compiled addon call sites use concrete struct
+  enumerators for inventory, talents and mystic positions. `Dictionary.Values`
+  caches its first wrapper; it does not allocate one on every tick. These scans
+  retain their immediate occupancy and budget safety checks.
+- Names cache normalization/status until their inputs change. Localization and
+  preset disk I/O occur at initialization or explicit refresh/save boundaries.
+  Native UI lookup is a hash lookup, and chat reflection occurs only on rebinding.
+- Rabbit sharing allocations happen per qualifying drink, not per frame. Rechecks
+  around native callbacks protect death/disconnect/replacement handling and remain.
+  Green effects are sent only after actual healing. Low-MP alert reflection is
+  event-only; no speculative delegate/pooling rewrite was warranted here.
+- Merchant placement is bounded, runs at floor/settings events, and can be the
+  largest burst in that feature. Tile/collision searches were not changed without
+  live evidence of a stall; placement and chance-roll ordering remain intact.
+  The universal damage hook performs an allocation-free ownership lookup.
+- Disconnect diagnostics are event-driven. Shared reconciliation retains typed
+  observations, immediate boundary flushes and write readback/recovery guards.
+
+Validation includes 782 runtime checks, full/compact snapshot equivalence
+through pending joins, faults, native edits, preset refresh, authority/scope changes
+and Korean language selection, allocation budgets, portable tests and installed-game
+compatibility checks. Debug/Release builds use `-p:DeployMod=false`. Live Unity/Mono
+profiling and multiplayer rendering were not performed; no deployment was run.
+
+## Original review: 0.15.2
+
 2026-09-25. Goal: reduce repeated CPU work and allocations while preserving
 per-frame synchronization, native-read guards, host authority and command semantics.
 

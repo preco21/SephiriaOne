@@ -62,12 +62,15 @@ namespace SephiriaOne
         {
             if (IsOpened) return;
             draft.Clear(); ClearInput();
-            Refresh(SessionSettings.ReadSnapshot(true));
+            Refresh(ReadCurrentSnapshot(true));
             transform.SetAsLastSibling();
             lifetime.Open(Open);
         }
 
         internal bool HasControlRegistration => lifetime != null && lifetime.IsRegistered;
+
+        internal SettingsSnapshot ReadCurrentSnapshot(bool refreshSaved = false) =>
+            SessionSettings.ReadSnapshot(refreshSaved, includeDiagnostics: page == 5);
 
         public override void Close()
         {
@@ -146,7 +149,7 @@ namespace SephiriaOne
         private void SelectPage(int target)
         {
             BuildPage(target);
-            Refresh(SessionSettings.ReadSnapshot());
+            Refresh(ReadCurrentSnapshot());
         }
 
         private void BuildPage(int target)
@@ -219,7 +222,7 @@ namespace SephiriaOne
             if (page == 0) statIndex = (statIndex + delta + StatCatalog.All.Count) % StatCatalog.All.Count;
             else if (page == 3) resourceIndex = (resourceIndex + delta + ResourceCatalog.All.Count) % ResourceCatalog.All.Count;
             else choiceIndex = (choiceIndex + delta + Choices.Length) % Choices.Length;
-            draft.Clear(); ClearInput(); UpdateSelection(); Refresh(SessionSettings.ReadSnapshot());
+            draft.Clear(); ClearInput(); UpdateSelection(); Refresh(ReadCurrentSnapshot());
         }
 
         private void UpdateSelection()
@@ -251,7 +254,7 @@ namespace SephiriaOne
 
         private void Execute(string command, bool requiresScope)
         {
-            var current = SessionSettings.ReadSnapshot();
+            var current = ReadCurrentSnapshot();
             if (requiresScope && !draft.IsCurrent(current.SessionIdentity, current.Epoch, current.RunGeneration))
             {
                 Refresh(current); feedback.text = L.T("Session changed. Review the values and enter the action again."); return;
@@ -259,12 +262,12 @@ namespace SephiriaOne
             // Button state is advisory; the shared services revalidate authority and inputs.
             SettingsActionResult result = SettingsActions.Execute(command);
             if (result.Success) { draft.Clear(); ClearInput(); }
-            Refresh(SessionSettings.ReadSnapshot());
+            Refresh(ReadCurrentSnapshot());
             feedback.text = string.Join("\n", result.Messages);
             feedback.color = result.Success ? new Color32(153, 226, 183, 255) : new Color32(255, 200, 122, 255);
         }
 
-        private void RefreshSaved() { Refresh(SessionSettings.ReadSnapshot(true)); feedback.text = L.T("Refreshed current values and the saved copy."); }
+        private void RefreshSaved() { Refresh(ReadCurrentSnapshot(true)); feedback.text = L.T("Refreshed current values and the saved copy."); }
         private void ClearInput() { if (amount) amount.SetTextWithoutNotify(""); }
 
         private static string PresetValues(SettingsSnapshot snapshot)

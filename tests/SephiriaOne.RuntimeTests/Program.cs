@@ -747,6 +747,7 @@ foreach (bool useCommand in new[] { false, true })
         "Cleanup retry/reset uses original journal and never subtracts the addon twice");
 }
 
+ChoiceCleanupLifetimeTests.Run(Check, Start);
 SettingsControlsTests.Run(Check, Start, Add);
 RabbitRuntimeTests.Run(Start, Add, Check);
 MerchantRuntimeTests.Run(Start, Check);

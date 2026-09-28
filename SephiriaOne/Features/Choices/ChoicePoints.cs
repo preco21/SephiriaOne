@@ -79,16 +79,22 @@ namespace SephiriaOne
             return true;
         }
 
+        internal static void ClearCleanup()
+        {
+            cleanup = null;
+            cleanupDungeon = null;
+        }
+
         public static void RemoveContributions()
         {
             if (!NetworkServer.active) return;
             DungeonManager current = DungeonManager.Instance;
-            if (!ReferenceEquals(cleanupDungeon, current)) cleanup = null;
+            if (!ReferenceEquals(cleanupDungeon, current)) ClearCleanup();
             if (cleanup != null)
             {
                 if (!SessionSettings.Recover(cleanup, out string recoveryError))
                     throw new InvalidOperationException(recoveryError + " " + cleanup.Describe());
-                cleanup = null;
+                ClearCleanup();
             }
             var participants = new List<PlayerAvatar>();
             var dictionaries = new List<object>();
@@ -120,7 +126,7 @@ namespace SephiriaOne
                 if (batch.MayHaveWritten)
                 {
                     cleanup = batch; cleanupDungeon = current;
-                    SessionSettings.RecordFault("choices", batch, error, () => cleanup = null);
+                    SessionSettings.RecordFault("choices", batch, error, ClearCleanup);
                 }
                 throw new InvalidOperationException(error + " " + batch.Describe());
             }
