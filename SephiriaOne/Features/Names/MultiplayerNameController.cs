@@ -6,7 +6,24 @@ namespace SephiriaOne
     public sealed class MultiplayerNameController : MonoBehaviour
     {
         private readonly MultiplayerNameColor multiplayerName = new MultiplayerNameColor();
-        public static string Diagnostics { get; private set; } = "name synchronization not initialized";
+        private static MultiplayerNameColor diagnosticSource;
+        private static string diagnostics = "name synchronization not initialized";
+        private static string translatedSource, translatedDiagnostics;
+        private static int translatedRevision = -1;
+        public static string Diagnostics
+        {
+            get
+            {
+                // Reading after a language change never advances the name scheduler.
+                if (diagnosticSource != null) return diagnosticSource.Status;
+                if (translatedSource == diagnostics && translatedRevision == L.Revision) return translatedDiagnostics;
+                translatedSource = diagnostics;
+                translatedRevision = L.Revision;
+                translatedDiagnostics = diagnostics == "name synchronization disabled"
+                    ? L.T("name synchronization disabled") : L.T("name synchronization not initialized");
+                return translatedDiagnostics;
+            }
+        }
 
         private void LateUpdate()
         {
@@ -15,13 +32,14 @@ namespace SephiriaOne
             PlayerSpawner player = playerObject ? playerObject.GetComponent<PlayerSpawner>() : null;
             if (player && player.isOwned) multiplayerName.Update(player);
             else multiplayerName.Restore();
-            Diagnostics = multiplayerName.Status;
+            diagnosticSource = multiplayerName;
         }
 
         private void OnDisable()
         {
             multiplayerName.Restore();
-            Diagnostics = "name synchronization disabled";
+            diagnosticSource = null;
+            diagnostics = "name synchronization disabled";
         }
     }
 }

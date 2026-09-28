@@ -23,9 +23,9 @@ namespace SephiriaOne
             PlayerAvatar player = subject.Player;
             // A rejected inheritance must not partially apply this family.
             if (!policy.HasFountainMultiplier || !fountainPlayers.Contains(player)) return ReconcileResult.Applied();
-            if (failedBatch != null) return ReconcileResult.Waiting("Another state write is faulted.");
+            if (failedBatch != null) return ReconcileResult.Waiting(L.T("Another state write is faulted."));
             SessionPlayerSnapshot snapshot = Capture(player);
-            if (!snapshot.FountainLimit.HasValue) return ReconcileResult.Waiting("Fountain limit is not ready.");
+            if (!snapshot.FountainLimit.HasValue) return ReconcileResult.Waiting(L.T("Fountain limit is not ready."));
             bool valid = policy.TryPlanFountainMultiplier(snapshot, out FountainPlan plan, out string error);
             if (!valid)
             {
@@ -34,7 +34,7 @@ namespace SephiriaOne
                 var reset = new FountainCommand(FountainOperation.Reset, 0);
                 if (!reset.TryPlanTracked(new[] { snapshot.FountainPoints }, new[] { snapshot.FountainContribution },
                     snapshot.FountainLimit.Value, null, null, out FountainPlan native, out _))
-                    return ReconcileResult.Suspended(error + " Native capacity could not be restored; values were left unchanged.");
+                    return ReconcileResult.Suspended(error + L.T(" Native capacity could not be restored; values were left unchanged."));
                 plan = new FountainPlan(native.Points, native.Contributions, snapshot.FountainLimit.Value,
                     snapshot.OriginalLimit, snapshot.AppliedLimit);
             }
@@ -48,8 +48,8 @@ namespace SephiriaOne
             }
             if (valid) return ReconcileResult.Applied();
             if (!players.TryGetResult(subject, "fountain-multiplier", out var previous) || previous.State != ReconcileState.NativeFallback)
-                Report($"Fountain multiplier uses native capacity for player {player.netId}: {error.Replace(" Nobody was changed.", "")} Native capacity restored. It will retry when native inputs change.", false);
-            return ReconcileResult.NativeFallback(error.Replace(" Nobody was changed.", "") + " Native capacity restored.");
+                Report(L.F("Fountain multiplier uses native capacity for player {0}: {1} Native capacity restored. It will retry when native inputs change.", player.netId, L.TrimSuffix(error, " Nobody was changed.")), false);
+            return ReconcileResult.NativeFallback(L.TrimSuffix(error, " Nobody was changed.") + L.T(" Native capacity restored."));
         }
     }
 }

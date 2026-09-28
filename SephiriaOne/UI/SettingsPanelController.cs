@@ -15,6 +15,8 @@ namespace SephiriaOne
         private SettingsPanel panel;
         private Button entryButton;
         private TMP_FontAsset font;
+        private PanelWidgets entryWidgets;
+        private int languageRevision;
         private float nextRefresh, nextBind, nextCleanup, nextLookup;
         private bool loggedFailure, cleanupPending;
 
@@ -50,6 +52,11 @@ namespace SephiriaOne
                 catch (Exception exception) { ReportFailure(exception); }
             }
             if (entryButton) entryButton.gameObject.SetActive(NetworkServer.active);
+            if (entryWidgets != null && languageRevision != L.Revision)
+            {
+                entryWidgets.RefreshLocalization();
+                languageRevision = L.Revision;
+            }
             if (!panel || !panel.IsOpened) return;
             if (!NetworkServer.active || !manager || !manager.connectedPlayer || !pause || !pause.ParentRoot)
             { DisposePanel(); return; }
@@ -73,8 +80,9 @@ namespace SephiriaOne
             var nativeLabel = pause.GetComponentInChildren<TMP_Text>(true);
             font = nativeLabel && nativeLabel.font ? nativeLabel.font : TMP_Settings.defaultFontAsset;
             if (!font) return;
-            var widgets = new PanelWidgets(font);
-            entryButton = widgets.Button(pause.transform, "SephiriaOne", 0, 0, 106, 23, OpenFromButton);
+            entryWidgets = new PanelWidgets(font);
+            languageRevision = L.Revision;
+            entryButton = entryWidgets.Button(pause.transform, "SephiriaOne", 0, 0, 106, 23, OpenFromButton);
             var rect = (RectTransform)entryButton.transform;
             rect.anchorMin = rect.anchorMax = rect.pivot = Vector2.one;
             rect.anchoredPosition = new Vector2(-12, -12);
@@ -92,14 +100,14 @@ namespace SephiriaOne
 
         public static bool TryOpen(out string error)
         {
-            error = "Only the host can open session settings.";
+            error = L.T("Only the host can open session settings.");
             if (!NetworkServer.active) return false;
-            error = "Settings UI is not ready. Enter town or a run, then try /one ui again.";
+            error = L.T("Settings UI is not ready. Enter town or a run, then try /one ui again.");
             if (!current || !current.enabled || !current.manager || !current.manager.connectedPlayer ||
                 !current.pause || !current.pause.ParentRoot || !current.font) return false;
             if (current.cleanupPending)
             {
-                error = "Settings UI cleanup is pending. It will retry automatically; see Player.log.";
+                error = L.T("Settings UI cleanup is pending. It will retry automatically; see Player.log.");
                 return false;
             }
             try
@@ -113,8 +121,8 @@ namespace SephiriaOne
             {
                 current.ReportFailure(exception);
                 bool released = current.DisposePanel();
-                error = released ? "Settings UI could not open. Chat commands remain available; see Player.log." :
-                    "Settings UI cleanup is pending. It will retry automatically; see Player.log.";
+                error = L.T(released ? "Settings UI could not open. Chat commands remain available; see Player.log." :
+                    "Settings UI cleanup is pending. It will retry automatically; see Player.log.");
                 return false;
             }
         }
@@ -157,7 +165,7 @@ namespace SephiriaOne
                 entryButton.gameObject.SetActive(false);
                 Destroy(entryButton.gameObject);
             }
-            entryButton = null; font = null;
+            entryButton = null; font = null; entryWidgets = null;
             return released;
         }
 

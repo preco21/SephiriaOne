@@ -14,12 +14,12 @@ namespace SephiriaOne
         public ResourceSetting(ResourceMode mode, decimal amount) { Mode = mode; Amount = amount; }
         public bool TryTarget(int baseline, int minimum, int maximum, out int target, out string error)
         {
-            target = baseline; error = "Resource baseline or setting is invalid.";
+            target = baseline; error = L.T("Resource baseline or setting is invalid.");
             if (baseline < 0 || (Mode == ResourceMode.Multiplier && !RelativeMultiplier.IsValid(Amount))) return false;
             decimal value;
             try { value = Mode == ResourceMode.Set ? Amount : Mode == ResourceMode.Offset ? baseline + Amount : baseline * Amount; }
             catch (OverflowException) { return false; }
-            error = $"Every resulting resource value must be an exact whole number {minimum}..{maximum}. Nobody was changed.";
+            error = L.F("Every resulting resource value must be an exact whole number {0}..{1}. Nobody was changed.", minimum, maximum);
             if (value < minimum || value > maximum || value != decimal.Truncate(value)) return false;
             target = (int)value; error = ""; return true;
         }

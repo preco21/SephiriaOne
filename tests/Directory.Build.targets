@@ -1,0 +1,15 @@
+<Project>
+  <PropertyGroup>
+    <GameDir Condition="'$(GameDir)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Sephiria</GameDir>
+  </PropertyGroup>
+  <!-- All linked-source fixtures use the real presentation service and catalogs.
+       The dedicated loader suite embeds deliberately controlled test catalogs. -->
+  <ItemGroup Condition="'$(MSBuildProjectName)' != 'SephiriaOne.LocalizationTests'">
+    <Compile Include="$(MSBuildThisFileDirectory)../SephiriaOne/Localization/*.cs" Link="Source/Localization/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)../SephiriaOne/Localization/Catalogs/en.json" LogicalName="SephiriaOne.Localization.en.json" />
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)../SephiriaOne/Localization/Catalogs/ko.json" LogicalName="SephiriaOne.Localization.ko.json" />
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>$(GameDir)\Sephiria_Data\Managed\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>

@@ -22,6 +22,7 @@ namespace SephiriaOne
                 HarmonyRuntime.EnsureLoaded();
                 InstallHooks();
                 SessionSettings.SettingsChanged += Refresh;
+                L.Changed += Refresh;
                 installed = true;
             }
             catch (Exception error)
@@ -40,6 +41,7 @@ namespace SephiriaOne
         public static void Shutdown()
         {
             SessionSettings.SettingsChanged -= Refresh;
+            L.Changed -= Refresh;
             try { RefreshNative(); }
             catch (Exception error) { Debug.LogError("[SephiriaOne] Rabbit description cleanup failed: " + error); }
             if (installed)

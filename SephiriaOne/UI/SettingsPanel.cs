@@ -19,6 +19,7 @@ namespace SephiriaOne
         private PanelTextScroll readout;
         private Button resetOne, resetAll, save, forget;
         private int page, statIndex, choiceIndex, resourceIndex;
+        private int languageRevision;
         private PanelControlLifetime<UIBase> lifetime;
         private static readonly string[] Choices = { "all", "item", "weapon", "miracle" };
         private static readonly IReadOnlyDictionary<string, string> StatNames = new Dictionary<string, string>
@@ -37,6 +38,7 @@ namespace SephiriaOne
             lifetime = new PanelControlLifetime<UIBase>(this, () => owner ?
                 (IEnumerable<IEnumerable<UIBase>>)owner.AllControlStack : Array.Empty<IEnumerable<UIBase>>());
             widgets = new PanelWidgets(font);
+            languageRevision = L.Revision;
             gameObject.AddComponent<Image>().color = new Color(0.01f, 0.025f, 0.05f, 0.9f);
             window = PanelWidgets.Rect(transform, "Settings", 0, 0, 600, 332);
             window.anchorMin = window.anchorMax = window.pivot = new Vector2(0.5f, 0.5f);
@@ -91,10 +93,11 @@ namespace SephiriaOne
 
         internal void Refresh(SettingsSnapshot snapshot)
         {
+            RefreshLanguage();
             if (draft.Observe(snapshot.SessionIdentity, snapshot.Epoch, snapshot.RunGeneration))
             {
                 ClearInput();
-                feedback.text = "Session or run changed. Review the current values before applying.";
+                feedback.text = L.T("Session or run changed. Review the current values before applying.");
             }
             var rootRect = ParentRoot ? ParentRoot.transform as RectTransform : null;
             if (rootRect)
@@ -104,11 +107,11 @@ namespace SephiriaOne
             }
             bool choicesReady = page == 7 ? snapshot.MerchantsAvailable : page == 6 ? snapshot.RabbitPotionsAvailable : page == 2 ? snapshot.ChoicesAvailable : page != 3 || ResourceFeature.IsAvailable(ResourceCatalog.All[resourceIndex].Kind);
             availability.text = !snapshot.CanMutate ? snapshot.AvailabilityReason : !choicesReady ?
-                (page == 7 ? "Merchant compatibility checks failed. Off/reset remain available; see Player.log." :
-                page == 6 ? "Rabbit potion compatibility checks failed. Off/reset remain available; see Player.log." :
+                (page == 7 ? L.T("Merchant compatibility checks failed. Off/reset remain available; see Player.log.") :
+                page == 6 ? L.T("Rabbit potion compatibility checks failed. Off/reset remain available; see Player.log.") :
                 page == 3 ? ResourceFeature.UnavailableReason(ResourceCatalog.All[resourceIndex].Kind) :
-                "Extra-choice compatibility guard failed. Reset remains available; see Player.log.") :
-                snapshot.Players.Count + " ready player(s). Changes apply when you press an action button.";
+                L.T("Extra-choice compatibility guard failed. Reset remains available; see Player.log.")) :
+                L.F("{0} ready player(s). Changes apply when you press an action button.", snapshot.Players.Count);
             availability.color = snapshot.CanMutate && choicesReady ? PanelWidgets.Muted : (Color)new Color32(255, 200, 122, 255);
             foreach (var button in changeButtons) button.interactable = snapshot.CanMutate && choicesReady;
             foreach (var button in rabbitOffButtons) button.interactable = snapshot.CanMutate;
@@ -126,16 +129,32 @@ namespace SephiriaOne
             else if (page == 6) readout.SetText(RabbitValues(snapshot));
             else if (page == 7) readout.SetText(MerchantValues(snapshot));
             else if (page == 4) readout.SetText(PresetValues(snapshot));
-            else readout.SetText("Automatic name gradient: #408af1 -> #a8d7fa\n" +
-                "Host's native multiplayer character name; colors are fixed.\n\n" + string.Join("\n\n", snapshot.Lines));
+            else readout.SetText(L.T("Automatic name gradient: #408af1 -> #a8d7fa\nHost's native multiplayer character name; colors are fixed.") +
+                "\n\n" + string.Join("\n\n", snapshot.Lines));
+        }
+
+        private void RefreshLanguage()
+        {
+            if (languageRevision == L.Revision) return;
+            widgets.RefreshLocalization();
+            BuildPage(page);
+            feedback.text = L.T("Language updated. Review the current values before applying.");
+            feedback.color = PanelWidgets.Muted;
+            languageRevision = L.Revision;
         }
 
         private void SelectPage(int target)
         {
+            BuildPage(target);
+            Refresh(SessionSettings.ReadSnapshot());
+        }
+
+        private void BuildPage(int target)
+        {
             page = target; draft.Clear(); changeButtons.Clear();
             rabbitOffButtons.Clear();
             amount = null; resetOne = resetAll = save = forget = merchantOff = null;
-            if (pageRoot) { pageRoot.gameObject.SetActive(false); Destroy(pageRoot.gameObject); }
+            if (pageRoot) { widgets.Forget(pageRoot); pageRoot.gameObject.SetActive(false); Destroy(pageRoot.gameObject); }
             pageRoot = PanelWidgets.Rect(window, "Page", 0, 110, 600, 162);
             if (page < 4) BuildEditor();
             else if (page == 6) BuildRabbitEditor();
@@ -157,7 +176,6 @@ namespace SephiriaOne
                     readout = widgets.Scroll(pageRoot, 16, 26, 568, 136);
                 }
             }
-            Refresh(SessionSettings.ReadSnapshot());
         }
 
         private void BuildEditor()
@@ -209,18 +227,23 @@ namespace SephiriaOne
             if (page == 0)
             {
                 var stat = StatCatalog.All[statIndex];
-                selection.text = StatNames.TryGetValue(stat.Name, out string label) ? label : stat.Name;
-                units.text = stat.Unit + "  |  " + stat.Minimum + ".." + stat.Maximum + (stat.Scale == 100 ? "  |  2 decimal places" : "  |  whole numbers");
+                selection.text = StatNames.TryGetValue(stat.Name, out string label) ? L.T(label) : stat.Name;
+                units.text = L.F("{0}  |  {1}..{2}  |  {3}", L.T(stat.Unit), stat.Minimum, stat.Maximum,
+                    L.T(stat.Scale == 100 ? "2 decimal places" : "whole numbers"));
             }
-            else if (page == 1) { selection.text = "Wishing Fountain"; units.text = "Whole-number points. Each resulting balance must be valid."; }
+            else if (page == 1) { selection.text = L.T("Wishing Fountain"); units.text = L.T("Whole-number points. Each resulting balance must be valid."); }
             else if (page == 3)
             {
                 var definition = ResourceCatalog.All[resourceIndex];
-                selection.text = definition.Label;
-                units.text = definition.Minimum + ".." + definition.Maximum + " whole numbers | " +
-                    (definition.Kind == ResourceKind.Leaves ? "pending starting grant" : definition.StartingOnly ? "future starts" : "all players");
+                selection.text = L.T(definition.Label);
+                units.text = L.F("{0}..{1} whole numbers | {2}", definition.Minimum, definition.Maximum,
+                    L.T(definition.Kind == ResourceKind.Leaves ? "pending starting grant" : definition.StartingOnly ? "future starts" : "all players"));
             }
-            else { selection.text = Choices[choiceIndex] == "all" ? "All choice categories" : Choices[choiceIndex] + " choices"; units.text = "Extra candidates: 0..20. Native multipliers still apply."; }
+            else
+            {
+                selection.text = L.T(choiceIndex == 0 ? "All choice categories" : choiceIndex == 1 ? "item choices" : choiceIndex == 2 ? "weapon choices" : "miracle choices");
+                units.text = L.T("Extra candidates: 0..20. Native multipliers still apply.");
+            }
         }
 
         private string Prefix() => page == 0 ? "/stats " + StatCatalog.All[statIndex].Name : page == 1 ? "/fountain" :
@@ -231,7 +254,7 @@ namespace SephiriaOne
             var current = SessionSettings.ReadSnapshot();
             if (requiresScope && !draft.IsCurrent(current.SessionIdentity, current.Epoch, current.RunGeneration))
             {
-                Refresh(current); feedback.text = "Session changed. Review the values and enter the action again."; return;
+                Refresh(current); feedback.text = L.T("Session changed. Review the values and enter the action again."); return;
             }
             // Button state is advisory; the shared services revalidate authority and inputs.
             SettingsActionResult result = SettingsActions.Execute(command);
@@ -241,15 +264,16 @@ namespace SephiriaOne
             feedback.color = result.Success ? new Color32(153, 226, 183, 255) : new Color32(255, 200, 122, 255);
         }
 
-        private void RefreshSaved() { Refresh(SessionSettings.ReadSnapshot(true)); feedback.text = "Refreshed current values and the saved copy."; }
+        private void RefreshSaved() { Refresh(SessionSettings.ReadSnapshot(true)); feedback.text = L.T("Refreshed current values and the saved copy."); }
         private void ClearInput() { if (amount) amount.SetTextWithoutNotify(""); }
 
         private static string PresetValues(SettingsSnapshot snapshot)
         {
-            string active = snapshot.ActiveSettings.Count == 0 ? "None." : string.Join("\n", snapshot.ActiveSettings);
+            string active = snapshot.ActiveSettings.Count == 0 ? L.T("None.") : string.Join("\n", snapshot.ActiveSettings);
             string saved = snapshot.SavedSettings.Count == 0 ? snapshot.SavedSummary : string.Join("\n", snapshot.SavedSettings);
-            return "ACTIVE SETTINGS\n" + active + "\n\nSAVED FOR FUTURE HOSTED SESSIONS\n" + saved +
-                "\n\nForget leaves the active settings unchanged. Resetting does not erase the saved copy.";
+            return L.T("ACTIVE SETTINGS") + "\n" + active + "\n\n" + L.T("SAVED FOR FUTURE HOSTED SESSIONS") + "\n" + saved +
+                "\n\n" + L.T("Forget leaves the active settings unchanged. Resetting does not erase the saved copy.") +
+                "\n" + L.T("Setting rows retain command/preset syntax in every language.");
         }
 
         private string PlayerValues(SettingsSnapshot snapshot)
@@ -261,16 +285,16 @@ namespace SephiriaOne
                 if (page == 0)
                 {
                     var stat = StatCatalog.All[statIndex];
-                    if (player.Stats.TryGetValue(stat.Name, out decimal value)) text.Append(value.ToString("0.##", CultureInfo.InvariantCulture)).Append(' ').Append(stat.Unit);
+                    if (player.Stats.TryGetValue(stat.Name, out decimal value)) text.Append(value.ToString("0.##", CultureInfo.InvariantCulture)).Append(' ').Append(L.T(stat.Unit));
                 }
-                else if (page == 1) text.Append(player.FountainPoints).Append(" points (addon ").Append(player.FountainContribution.ToString("+0;-0;0", CultureInfo.InvariantCulture)).Append(')');
+                else if (page == 1) text.Append(L.F("{0} points (addon {1})", player.FountainPoints, player.FountainContribution.ToString("+0;-0;0", CultureInfo.InvariantCulture)));
                 else if (page == 3)
                 { if (player.Resources.TryGetValue(ResourceCatalog.All[resourceIndex].Name, out string value)) text.Append(value); }
                 else foreach (var choice in player.ExtraChoices)
-                    if (choiceIndex == 0 || choice.Key == Choices[choiceIndex]) text.Append(choice.Key).Append(": ").Append(choice.Value).Append(" extra  ");
+                    if (choiceIndex == 0 || choice.Key == Choices[choiceIndex]) text.Append(L.F("{0}: {1} extra  ", L.T(choice.Key), choice.Value));
                 text.AppendLine().AppendLine();
             }
-            return text.Length == 0 ? "Waiting for ready player values." : text.ToString();
+            return text.Length == 0 ? L.T("Waiting for ready player values.") : text.ToString();
         }
     }
 }

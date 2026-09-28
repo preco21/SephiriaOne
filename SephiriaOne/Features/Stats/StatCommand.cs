@@ -73,7 +73,7 @@ namespace SephiriaOne
         public StatDefinition? Stat { get; }
         public StatOperation Operation { get; }
         public decimal Amount { get; }
-        public const string Usage = "Host only, current and joining players: /stats luck 100, +10, -5, x3, or set|add|sub N. xN targets each player's native displayed stat times N; repeated xN replaces the factor. Deltas accumulate; a delta after Set or xN starts a new native offset. " + RelativeMultiplier.Usage + " Reset: /stats luck reset or /stats reset. Names/units: /stats list. Active values: /one status. Save: /one save.";
+        public static string Usage => L.F("Host only, current and joining players: /stats luck 100, +10, -5, x3, or set|add|sub N. xN targets each player's native displayed stat times N; repeated xN replaces the factor. Deltas accumulate; a delta after Set or xN starts a new native offset. {0} Reset: /stats luck reset or /stats reset. Names/units: /stats list. Active values: /one status. Save: /one save.", RelativeMultiplier.Usage);
 
         internal StatCommand(StatDefinition? stat, StatOperation operation, decimal amount)
         {
@@ -104,7 +104,7 @@ namespace SephiriaOne
             StatDefinition? stat = StatCatalog.Find(parts[1]);
             if (stat == null)
             {
-                error = "Unknown stat. Use /stats list for supported names and units.";
+                error = L.T("Unknown stat. Use /stats list for supported names and units.");
                 return StatParseResult.Invalid;
             }
             string amountText = parts[parts.Length - 1];
@@ -146,7 +146,7 @@ namespace SephiriaOne
                 !decimal.TryParse(amountText, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out decimal amount) ||
                 amount < 0 || amount > 10000)
             {
-                error = $"Use an unsigned amount 0..10000 with at most {allowedDecimals} decimal places. Use +N or -N to add/subtract. /stats list shows resulting limits.";
+                error = L.F("Use an unsigned amount 0..10000 with at most {0} decimal places. Use +N or -N to add/subtract. /stats list shows resulting limits.", allowedDecimals);
                 return StatParseResult.Invalid;
             }
             command = new StatCommand(stat, operation, amount);

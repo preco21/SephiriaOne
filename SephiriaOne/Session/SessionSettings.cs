@@ -111,7 +111,7 @@ namespace SephiriaOne
         public static bool Prepare(out string message)
         {
             if (!Synchronize())
-            { message = "Host synchronization is not ready or is already processing. Retry after entering town or a run."; return false; }
+            { message = L.T("Host synchronization is not ready or is already processing. Retry after entering town or a run."); return false; }
             message = ""; return true;
         }
 
@@ -122,11 +122,11 @@ namespace SephiriaOne
             if (failedBatch != null)
             {
                 if (!reset || (feature != failedFeature && failedFeature != "inheritance"))
-                { message = $"A {failedFeature} write is faulted. Use /{(failedFeature == "inheritance" ? "stats" : failedFeature)} reset to recover, or end this session. {failedReason}"; return false; }
+                { message = L.F("A {0} write is faulted. Use /{1} reset to recover, or end this session. {2}", failedFeature, failedFeature == "inheritance" ? "stats" : failedFeature, failedReason); return false; }
                 if (!fullReset && failedFeature != "inheritance")
-                { message = $"Partial {failedFeature} writes require /{failedFeature} reset across the whole command family; a selective reset cannot recover uncommitted settings."; return false; }
+                { message = L.F("Partial {0} writes require /{0} reset across the whole command family; a selective reset cannot recover uncommitted settings.", failedFeature); return false; }
                 if (!Recover(failedBatch, out message)) return false;
-                if (!Synchronize()) { message = "Synchronization is not ready after recovery."; return false; }
+                if (!Synchronize()) { message = L.T("Synchronization is not ready after recovery."); return false; }
             }
             return HostStateAdapter.TryCollect(out context, out message);
         }
@@ -134,7 +134,7 @@ namespace SephiriaOne
         public static bool Commit(string feature, StateWriteBatch batch, Action remember, out string message)
         {
             if (failedBatch != null || applyingCommand || synchronizing)
-            { message = "Another state write is faulted or still processing. Inspect /one status before retrying."; return false; }
+            { message = L.T("Another state write is faulted or still processing. Inspect /one status before retrying."); return false; }
             applyingCommand = true;
             bool committed = false;
             try
@@ -176,7 +176,7 @@ namespace SephiriaOne
         {
             failedFeature = feature; failedBatch = batch; failedReason = message;
             recovered = onRecovered;
-            Report(message + " Maintenance is paused; use reset for explicit recovery.", false);
+            Report(message + L.T(" Maintenance is paused; use reset for explicit recovery."), false);
         }
 
         internal static ResourcePolicy ResourcePolicy => policy.Resources;
@@ -240,10 +240,10 @@ namespace SephiriaOne
             catch (Exception error)
             {
                 fresh = false;
-                failedReason = "Critical synchronization exception: " + error.Message;
+                failedReason = L.T("Critical synchronization exception: ") + error.Message;
             }
             if (!fresh && (!boundaries.TryGetValue(consumer, out bool previous) || previous))
-                Report(consumer + " could not establish fresh addon state; native behavior continues. Inspect /one status.", false);
+                Report(L.F("{0} could not establish fresh addon state; native behavior continues. Inspect /one status.", L.T(consumer)), false);
             boundaries[consumer] = fresh;
         }
 
@@ -257,12 +257,12 @@ namespace SephiriaOne
 
         private static ReconcileResult Inherit(HostPlayer subject)
         {
-            if (!policy.HasChanges && !policy.Resources.HasIntent) return ReconcileResult.Applied("No retained settings.");
+            if (!policy.HasChanges && !policy.Resources.HasIntent) return ReconcileResult.Applied(L.T("No retained settings."));
             PlayerAvatar player = subject.Player;
             SessionPlayerSnapshot snapshot = Capture(player);
             if (!policy.TryPlan(snapshot, out SessionPlan plan, out string error))
             {
-                Report($"Could not inherit session settings for player {player.netId}: {error}", false);
+                Report(L.F("Could not inherit session settings for player {0}: {1}", player.netId, error), false);
                 return ReconcileResult.Rejected(error);
             }
             var context = new HostCommandContext(dungeon, new[] { subject });
@@ -272,7 +272,7 @@ namespace SephiriaOne
                 NativeStateWrites.Stat(batch, player, write.Key, write.Marker, write.Raw, write.Contribution);
             if (!ResourceRuntime.TryAppend(player, batch, out Action rememberResources, out error))
                 return ResourceRuntime.HasRestored(player) ?
-                    ReconcileResult.Waiting(error + " Restored inventory/talent data retained; inheritance will retry when safe.") :
+                    ReconcileResult.Waiting(error + L.T(" Restored inventory/talent data retained; inheritance will retry when safe.")) :
                     ReconcileResult.Rejected(error);
             if (!batch.TryCommit(out error))
             {
@@ -293,7 +293,7 @@ namespace SephiriaOne
             if (plan.Fountain != null) fountainPlayers.Add(player);
             TrackRelativeStats(player, null);
             rememberResources();
-            Report($"Applied active session settings to joining player {player.netId}.", true);
+            Report(L.F("Applied active session settings to joining player {0}.", player.netId), true);
             return ReconcileResult.Applied();
         }
 

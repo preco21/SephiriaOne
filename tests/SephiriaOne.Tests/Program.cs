@@ -59,5 +59,14 @@ Console.WriteLine($"Passed {StartingResourceTests.Run()} starting resource check
 Console.WriteLine($"Passed {PresetTests.Run()} preset parser/storage checks.");
 Console.WriteLine($"Passed {ChoiceCommandTests.Run()} candidate command checks.");
 Console.WriteLine($"Passed {ChoiceTranspilerTests.Run()} candidate generation guard checks.");
+Console.WriteLine($"Passed {LocalizationCatalogTests.Run()} bundled catalog checks.");
+string localizationFolder = Path.Combine(Path.GetTempPath(), "SephiriaOne-Features-Language-" + Guid.NewGuid().ToString("N"));
+L.Initialize(localizationFolder, warning => throw new Exception(warning));
+void SelectLanguage(string language)
+{
+    if (!L.TrySetLanguage(language, out string error)) throw new Exception(error);
+}
+Console.WriteLine($"Passed {LocalizationFeatureTests.Run(SelectLanguage)} localized feature checks.");
+L.Shutdown();
 if (args.Length == 2) GameChoiceCompatibilityTests.Run(args[0], args[1]);
 else if (args.Length != 0) throw new ArgumentException("Optional arguments: <game Managed directory> <built addon DLL>");

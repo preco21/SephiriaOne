@@ -53,20 +53,20 @@ namespace SephiriaOne
             error = "";
             try
             {
-                if (!identityGuard()) { error = "Session, player identity or authority changed. No further writes were made."; return false; }
+                if (!identityGuard()) { error = L.T("Session, player identity or authority changed. No further writes were made."); return false; }
                 if (complete)
                 {
                     foreach (var write in writes)
-                        if (!write.AtTarget) { error = "A completed batch changed externally; it cannot be replayed."; return false; }
+                        if (!write.AtTarget) { error = L.T("A completed batch changed externally; it cannot be replayed."); return false; }
                     return true;
                 }
-                if (MayHaveWritten && !recovery) { error = "A partial write requires explicit recovery/reset."; return false; }
+                if (MayHaveWritten && !recovery) { error = L.T("A partial write requires explicit recovery/reset."); return false; }
                 if (!recovery)
                     foreach (var precondition in preconditions)
-                        if (!precondition()) { error = "Native inputs changed after planning. Retry; no command writes were made."; return false; }
+                        if (!precondition()) { error = L.T("Native inputs changed after planning. Retry; no command writes were made."); return false; }
                 foreach (var write in writes)
                     if (!write.Unchanged && !(recovery && write.AtTarget))
-                    { error = "Native value changed: " + write.Description + ". No further writes were made."; return false; }
+                    { error = L.T("Native value changed: ") + write.Description + L.T(". No further writes were made."); return false; }
                 foreach (var write in writes)
                 {
                     if (!identityGuard()) throw new InvalidOperationException("Authority or identity changed during application.");
@@ -83,7 +83,7 @@ namespace SephiriaOne
             }
             catch (Exception exception)
             {
-                error = (MayHaveWritten ? "Partial or unverified state write: " : "State write preparation failed: ") + exception.Message;
+                error = (MayHaveWritten ? L.T("Partial or unverified state write: ") : L.T("State write preparation failed: ")) + exception.Message;
                 return false;
             }
         }
@@ -94,7 +94,7 @@ namespace SephiriaOne
             foreach (var write in writes)
             {
                 try { descriptions.Add(write.Description); }
-                catch (Exception error) { descriptions.Add("Readback unavailable: " + error.Message); }
+                catch (Exception error) { descriptions.Add(L.T("Readback unavailable: ") + error.Message); }
             }
             return string.Join("; ", descriptions);
         }

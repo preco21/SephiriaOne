@@ -94,3 +94,9 @@ Check(panel.tooltipEffectText.text == nativeIdentical, "unload preserves identic
 Check(Array.TrueForAll(typeof(RabbitDescriptionFeature).GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic),
     field => field.FieldType.Namespace != "HarmonyLib"), "facade has no Harmony-typed fields before runtime bootstrap");
 Console.WriteLine($"Rabbit description checks passed: {checks}");
+L.Initialize(Path.Combine(Path.GetTempPath(), "SephiriaOne-Description-Language-" + Guid.NewGuid().ToString("N")), _ => { });
+Console.WriteLine($"Rabbit localized description checks passed: {LocalizationDescriptionTests.Run(language =>
+{
+    if (!L.TrySetLanguage(language, out string error)) throw new Exception(error);
+})}");
+L.Shutdown();

@@ -29,7 +29,7 @@ namespace SephiriaOne
         public FountainOperation Operation { get; }
         public decimal Amount { get; }
 
-        public const string Usage = "Host only, current and joining players: /fountain 100 (set), +10, -5, x3, or set|add|sub N. xN targets each player's native Fountain points times N, replacing prior adjustments. " + RelativeMultiplier.Usage + " A delta after xN starts a new native offset. /fountain reset restores points and clears the retained setting.";
+        public static string Usage => L.F("Host only, current and joining players: /fountain 100 (set), +10, -5, x3, or set|add|sub N. xN targets each player's native Fountain points times N, replacing prior adjustments. {0} A delta after xN starts a new native offset. /fountain reset restores points and clears the retained setting.", RelativeMultiplier.Usage);
 
         internal FountainCommand(FountainOperation operation, decimal amount)
         {
@@ -77,7 +77,7 @@ namespace SephiriaOne
                     case "sub":
                     case "subtract": operation = FountainOperation.Subtract; break;
                     default:
-                        error = "Unknown Fountain operation. " + Usage;
+                        error = L.T("Unknown Fountain operation. ") + Usage;
                         return FountainParseResult.Invalid;
                 }
 
@@ -85,7 +85,7 @@ namespace SephiriaOne
             }
             else
             {
-                error = "Too many arguments. " + Usage;
+                error = L.T("Too many arguments. ") + Usage;
                 return FountainParseResult.Invalid;
             }
 
@@ -100,7 +100,7 @@ namespace SephiriaOne
 
             if (!int.TryParse(amountText, NumberStyles.None, CultureInfo.InvariantCulture, out int amount))
             {
-                error = "Use a whole-number amount from 0 to 2147483647. " + Usage;
+                error = L.T("Use a whole-number amount from 0 to 2147483647. ") + Usage;
                 return FountainParseResult.Invalid;
             }
 
@@ -120,9 +120,9 @@ namespace SephiriaOne
             int currentLimit, int? originalLimit, int? appliedLimit, out FountainPlan plan, out string error)
         {
             plan = new FountainPlan(Array.Empty<int>(), Array.Empty<int>(), currentLimit, originalLimit, appliedLimit);
-            error = "No active players are ready. Enter town or a run first.";
+            error = L.T("No active players are ready. Enter town or a run first.");
             if (balances.Count == 0) return false;
-            error = "Fountain reset tracking is inconsistent. Nobody was changed.";
+            error = L.T("Fountain reset tracking is inconsistent. Nobody was changed.");
             if (balances.Count != contributions.Count || currentLimit < 0 || originalLimit.HasValue != appliedLimit.HasValue ||
                 (originalLimit.HasValue && (originalLimit.Value < 0 || appliedLimit.GetValueOrDefault() < originalLimit.Value))) return false;
 
@@ -132,7 +132,7 @@ namespace SephiriaOne
             bool reset = Operation == FountainOperation.Reset || (Operation == FountainOperation.Multiply && Amount == 1);
             if (!reset && (Operation == FountainOperation.Multiply ? !RelativeMultiplier.IsValid(Amount) :
                 Amount < 0 || Amount > int.MaxValue || Amount != decimal.Truncate(Amount)))
-            { error = "Invalid Fountain amount or multiplier. Nobody was changed."; return false; }
+            { error = L.T("Invalid Fountain amount or multiplier. Nobody was changed."); return false; }
             for (int i = 0; i < balances.Count; i++)
             {
                 decimal target = reset ? (long)balances[i] - contributions[i] :
@@ -140,12 +140,12 @@ namespace SephiriaOne
                     Operation == FountainOperation.Multiply ? ((decimal)balances[i] - contributions[i]) * Amount :
                     balances[i] + (Operation == FountainOperation.Add ? Amount : -Amount);
                 if (target < 0 || target > int.MaxValue || target != decimal.Truncate(target))
-                { error = "Every player's Fountain result must be an exact whole number 0..2147483647. Nobody was changed."; return false; }
+                { error = L.T("Every player's Fountain result must be an exact whole number 0..2147483647. Nobody was changed."); return false; }
                 long value = (long)target;
                 long offset = reset ? 0 : (long)contributions[i] + value - balances[i];
                 if (value < 0 || value > int.MaxValue || offset < int.MinValue || offset > int.MaxValue)
                 {
-                    error = "A player's Fountain points or reset adjustment would exceed its supported range. Nobody was changed.";
+                    error = L.T("A player's Fountain points or reset adjustment would exceed its supported range. Nobody was changed.");
                     return false;
                 }
                 points[i] = (int)value;

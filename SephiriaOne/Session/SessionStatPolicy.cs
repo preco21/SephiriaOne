@@ -12,7 +12,7 @@ namespace SephiriaOne
         public bool TryPlanRelativeStat(StatSnapshot value, out StatUpdate update, out string error)
         {
             update = default;
-            error = "No relative setting is active for this stat.";
+            error = L.T("No relative setting is active for this stat.");
             return stats.TryGetValue(value.Stat, out Setting setting) && !setting.Absolute &&
                 TryPlanStatSetting(setting, value, out update, out error);
         }
@@ -33,15 +33,15 @@ namespace SephiriaOne
         {
             if (command.Operation == StatOperation.Reset) return StatPlanner.TryPlan(command, values, out updates, out error);
             updates = Array.Empty<StatUpdate>();
-            error = "No ready players found. Enter town or a run first.";
+            error = L.T("No ready players found. Enter town or a run first.");
             if (values.Count == 0) return false;
-            error = "A supported stat is required. Nobody was changed.";
+            error = L.T("A supported stat is required. Nobody was changed.");
             if (command.Stat == null) return false;
             Setting setting = NextStatSetting(command);
             var pending = new StatUpdate[values.Count];
             for (int i = 0; i < values.Count; i++)
             {
-                error = "Stat selection mismatch. Nobody was changed.";
+                error = L.T("Stat selection mismatch. Nobody was changed.");
                 if (values[i].Stat != command.Stat || !TryPlanStatSetting(setting, values[i], out pending[i], out error)) return false;
             }
             updates = pending;
@@ -54,7 +54,7 @@ namespace SephiriaOne
             update = default;
             error = RelativeMultiplier.Usage;
             if (setting.Multiplier && !RelativeMultiplier.IsValid(setting.Value)) return false;
-            error = "A player's native stat baseline would overflow. Nobody was changed.";
+            error = L.T("A player's native stat baseline would overflow. Nobody was changed.");
             long baseline = (long)value.Raw - value.Contribution;
             if (baseline < int.MinValue || baseline > int.MaxValue) return false;
             if (setting.Empty)
@@ -76,7 +76,7 @@ namespace SephiriaOne
                 // penalties, range, or rounding. Restore the exact raw baseline;
                 // never clamp it or reject the other participants/families. Keep
                 // the factor so observed native input changes can try it again.
-                update = new StatUpdate((int)baseline, 0, error.Replace(" Nobody was changed.", ""));
+                update = new StatUpdate((int)baseline, 0, L.TrimSuffix(error, " Nobody was changed."));
                 error = "";
                 return true;
             }

@@ -14,7 +14,22 @@ namespace SephiriaOne
         private bool restoreRequired;
         private bool multiplayer;
         private bool profileAvailable;
-        public string Status { get; private set; } = "waiting for owned avatar";
+        private string status = "waiting for owned avatar";
+        private string translatedSource, translatedStatus;
+        private int translatedRevision = -1;
+        public string Status
+        {
+            get
+            {
+                if (translatedSource == status && translatedRevision == L.Revision) return translatedStatus;
+                translatedSource = status;
+                translatedRevision = L.Revision;
+                translatedStatus = ReferenceEquals(status, diagnosticText)
+                    ? L.F("native name {0}: {1}", L.T(diagnosticState.ToString()), TranslateDetail(diagnosticDetail))
+                    : TranslateDetail(status);
+                return translatedStatus;
+            }
+        }
 
         public MultiplayerNameColor()
         {
@@ -41,7 +56,7 @@ namespace SephiriaOne
                     diagnosticState = result.State; diagnosticDetail = result.Detail;
                     diagnosticText = "native name " + result.State + ": " + result.Detail;
                 }
-                Status = diagnosticText;
+                status = diagnosticText;
             }
         }
 
@@ -54,11 +69,11 @@ namespace SephiriaOne
             if (player.playerNameSource == desired && request == null)
             {
                 if (!multiplayer) restoreRequired = false;
-                Status = "native local readback matches; peer rendering unverified";
-                return ReconcileResult.Applied(Status);
+                status = "native local readback matches; peer rendering unverified";
+                return ReconcileResult.Applied(status);
             }
-            Status = state.Exhausted ? "native name acknowledgment timed out after 3 attempts; peer rendering unverified" : "awaiting native name readback";
-            return state.Exhausted ? ReconcileResult.Suspended(Status) : ReconcileResult.Waiting(Status);
+            status = state.Exhausted ? "native name acknowledgment timed out after 3 attempts; peer rendering unverified" : "awaiting native name readback";
+            return state.Exhausted ? ReconcileResult.Suspended(status) : ReconcileResult.Waiting(status);
         }
 
         public void Restore()
@@ -69,9 +84,27 @@ namespace SephiriaOne
             profileSource = diagnosticDetail = diagnosticText = null;
             restoreRequired = false;
             profileAvailable = false;
-            Status = "waiting for owned avatar";
+            status = "waiting for owned avatar";
             state.Reset();
             coordinator.Clear();
+        }
+
+        // Reconciliation retains raw details. Translate only owned messages at the
+        // presentation boundary, leaving arbitrary native exception text intact.
+        private static string TranslateDetail(string detail)
+        {
+            switch (detail)
+            {
+                case "waiting for owned avatar": return L.T("waiting for owned avatar");
+                case "native local readback matches; peer rendering unverified":
+                    return L.T("native local readback matches; peer rendering unverified");
+                case "native name acknowledgment timed out after 3 attempts; peer rendering unverified":
+                    return L.T("native name acknowledgment timed out after 3 attempts; peer rendering unverified");
+                case "awaiting native name readback": return L.T("awaiting native name readback");
+                case "Not observed yet.": return L.T("Not observed yet.");
+                case "Required state or authority is not ready.": return L.T("Required state or authority is not ready.");
+                default: return detail;
+            }
         }
 
         private bool CanSend() => player && player.isOwned && player.isClient && player.netId != 0 && NetworkClient.active && NetworkClient.ready;

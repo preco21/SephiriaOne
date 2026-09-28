@@ -21,7 +21,7 @@ namespace SephiriaOne
                 exists = true;
                 if (stream.Length > SessionPolicy.MaximumPresetLength)
                 {
-                    error = "Saved preset is too large; no saved settings were applied.";
+                    error = L.T("Saved preset is too large; no saved settings were applied.");
                     return false;
                 }
                 using var reader = new StreamReader(stream, new UTF8Encoding(false, true));
@@ -31,7 +31,7 @@ namespace SephiriaOne
             catch (DirectoryNotFoundException) { return true; }
             catch (Exception exception) when (exception is IOException || exception is UnauthorizedAccessException || exception is DecoderFallbackException)
             {
-                error = "Could not read saved preset: " + exception.Message;
+                error = L.T("Could not read saved preset: ") + exception.Message;
                 return false;
             }
         }
@@ -57,7 +57,7 @@ namespace SephiriaOne
             }
             catch (Exception exception) when (exception is IOException || exception is UnauthorizedAccessException)
             {
-                error = "Could not save preset; previous saved settings were kept: " + exception.Message;
+                error = L.T("Could not save preset; previous saved settings were kept: ") + exception.Message;
                 return false;
             }
             finally
@@ -79,7 +79,7 @@ namespace SephiriaOne
             catch (DirectoryNotFoundException) { error = ""; return true; }
             catch (Exception exception) when (exception is IOException || exception is UnauthorizedAccessException)
             {
-                error = "Could not remove saved preset: " + exception.Message;
+                error = L.T("Could not remove saved preset: ") + exception.Message;
                 return false;
             }
         }

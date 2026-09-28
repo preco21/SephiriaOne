@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -9,10 +10,27 @@ namespace SephiriaOne
     internal sealed class PanelWidgets
     {
         private readonly TMP_FontAsset font;
+        private TMP_FontAsset displayFont;
+        private readonly List<(TMP_Text Text, string Key)> labels = new List<(TMP_Text, string)>();
         internal static readonly Color Ink = new Color32(226, 235, 246, 255);
         internal static readonly Color Muted = new Color32(168, 188, 208, 255);
         internal static readonly Color Accent = new Color32(64, 138, 241, 255);
-        public PanelWidgets(TMP_FontAsset font) { this.font = font; }
+        public PanelWidgets(TMP_FontAsset font) { this.font = font; displayFont = PanelFontResolver.Resolve(font); }
+
+        public void RefreshLocalization()
+        {
+            displayFont = PanelFontResolver.Resolve(font);
+            for (int i = labels.Count - 1; i >= 0; i--)
+            {
+                var binding = labels[i];
+                if (!binding.Text) { labels.RemoveAt(i); continue; }
+                binding.Text.font = displayFont;
+                if (binding.Key.Length > 0) binding.Text.text = L.T(binding.Key);
+            }
+        }
+
+        public void Forget(Transform root) => labels.RemoveAll(binding =>
+            !binding.Text || binding.Text.transform.IsChildOf(root));
 
         public static RectTransform Rect(Transform parent, string name, float x, float y, float width, float height)
         {
@@ -34,10 +52,14 @@ namespace SephiriaOne
         public TMP_Text Text(Transform parent, string name, string value, float x, float y, float width, float height, float size = 11)
         {
             var text = Rect(parent, name, x, y, width, height).gameObject.AddComponent<TextMeshProUGUI>();
-            text.font = font; text.fontSize = size; text.color = Ink; text.richText = false;
+            text.font = displayFont; text.fontSize = size; text.color = Ink; text.richText = false;
+            text.enableAutoSizing = value.Length > 0; text.fontSizeMax = size; text.fontSizeMin = size * 0.8f;
             text.raycastTarget = false; text.textWrappingMode = TextWrappingModes.Normal;
             text.overflowMode = TextOverflowModes.Truncate;
-            text.text = value;
+            // Values supplied here are addon-owned static labels. Dynamic/player text
+            // is assigned by the caller and is never used as a catalog lookup key.
+            text.text = L.T(value);
+            labels.Add((text, value));
             return text;
         }
 

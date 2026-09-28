@@ -10,6 +10,11 @@ The host uses this panel to change settings for **all current and joining
 players**. Guests can use the unmodified game. The panel itself is host-local;
 effects use the same native synchronization as the existing commands.
 
+Since `0.21.0`, `/one language en` or `/one language ko` selects the panel and
+message language. Editable JSON catalogs and config are described in
+[localization](localization.md). Language changes refresh open views and clear
+unapplied drafts without sending any gameplay command.
+
 ## Controls
 
 | Tab | Actions and observations |

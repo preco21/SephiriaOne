@@ -72,9 +72,9 @@ namespace SephiriaOne
             {
                 if (StatPlanner.TryPlan(new StatCommand(stat, StatOperation.Reset, 0), new[] { snapshot },
                     out StatUpdate[] reset, out _))
-                    update = new StatUpdate(reset[0].Raw, 0, error.Replace(" Nobody was changed.", ""));
+                    update = new StatUpdate(reset[0].Raw, 0, L.TrimSuffix(error, " Nobody was changed."));
                 else
-                    return ReconcileResult.Suspended(error + " Native baseline could not be restored; current values were left unchanged.");
+                    return ReconcileResult.Suspended(error + L.T(" Native baseline could not be restored; current values were left unchanged."));
             }
             var context = new HostCommandContext(dungeon, new[] { subjects[player] });
             StateWriteBatch batch = context.CreateBatch();
@@ -86,8 +86,8 @@ namespace SephiriaOne
             }
             if (!update.UsesNativeFallback) return ReconcileResult.Applied();
             if (!IsRelativeStatState(player, stat, ReconcileState.NativeFallback))
-                Report($"Relative {stat.Name} setting uses the native value for player {player.netId}: {update.NativeFallbackReason} Only the addon contribution was removed. It will retry when native stat inputs change.", false);
-            return ReconcileResult.NativeFallback(update.NativeFallbackReason + " Exact native value restored; addon contribution is zero.");
+                Report(L.F("Relative {0} setting uses the native value for player {1}: {2} Only the addon contribution was removed. It will retry when native stat inputs change.", stat.Name, player.netId, update.NativeFallbackReason), false);
+            return ReconcileResult.NativeFallback(update.NativeFallbackReason + L.T(" Exact native value restored; addon contribution is zero."));
         }
 
         private static bool IsRelativeStatState(PlayerAvatar player, StatDefinition stat, ReconcileState state)

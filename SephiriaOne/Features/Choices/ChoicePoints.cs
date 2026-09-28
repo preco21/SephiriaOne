@@ -28,12 +28,12 @@ namespace SephiriaOne
         {
             if (!NetworkServer.active)
             {
-                message = "Only the host can change everyone's candidate choices.";
+                message = L.T("Only the host can change everyone's candidate choices.");
                 return false;
             }
             if (!ChoiceFeature.Available && !command.IsReset)
             {
-                message = "Candidate commands are unavailable. Check Player.log for the compatibility error.";
+                message = L.T("Candidate commands are unavailable. Check Player.log for the compatibility error.");
                 return false;
             }
             if (!SessionSettings.PrepareCommand("choices", command.IsReset, out HostCommandContext context, out message, command.Target == ChoiceTarget.All)) return false;
@@ -57,7 +57,7 @@ namespace SephiriaOne
             }
             if (players.Count == 0)
             {
-                message = "No active players are ready. Enter town or a run first.";
+                message = L.T("No active players are ready. Enter town or a run first.");
                 return false;
             }
 
@@ -72,8 +72,10 @@ namespace SephiriaOne
                 foreach (Update update in updates)
                     if (recorded.Add(update.Key)) SessionSettings.RememberChoice(update.Key, update.Applied);
             }, out message)) return false;
-            string action = command.IsReset ? "Reset addon bonuses for" : "Updated";
-            message = $"{action} {command.Target.ToString().ToLowerInvariant()} extra choices for {players.Count} player(s). Use new offers; existing offers stay cached. An already opened anvil can hide reroll after an increase.";
+            string target = command.Target.ToString().ToLowerInvariant();
+            message = command.IsReset
+                ? L.F("Reset addon bonuses for {0} extra choices for {1} player(s). Use new offers; existing offers stay cached. An already opened anvil can hide reroll after an increase.", target, players.Count)
+                : L.F("Updated {0} extra choices for {1} player(s). Use new offers; existing offers stay cached. An already opened anvil can hide reroll after an increase.", target, players.Count);
             return true;
         }
 

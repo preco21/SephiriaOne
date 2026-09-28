@@ -11,6 +11,8 @@ namespace SephiriaOne
 
         protected override void OnModLoaded()
         {
+            L.Initialize(System.IO.Path.Combine(Application.persistentDataPath, "SephiriaOne", "localization"),
+                warning => Debug.LogWarning("[SephiriaOne] " + warning));
             HorayModAPI.OnAllDatabasesReady += OnDatabasesReady;
             ChoiceFeature.Initialize();
             SessionBoundaryFeature.Initialize();
@@ -74,6 +76,7 @@ namespace SephiriaOne
             }
 
             Debug.Log("[SephiriaOne] Unloaded");
+            L.Shutdown();
         }
     }
 }

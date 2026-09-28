@@ -33,16 +33,16 @@ namespace SephiriaOne
         }
 
         private static string RabbitValues(SettingsSnapshot snapshot) =>
-            "Infinite HP potions: " + (snapshot.RabbitPotions.Infinite ? "ON" : "OFF") +
-            "\nNearby HP potion healing: " + (snapshot.RabbitPotions.Share ? "ON" : "OFF") +
-            "\n" + snapshot.RabbitPotions.MpCostPerDrink + " MP per HP potion: " + (snapshot.RabbitPotions.ConsumeMp ? "ON" : "OFF") +
-            "\nSuppress Survival rank 5 random stats: " + (snapshot.RabbitPotions.SuppressSurvival ? "ON" : "OFF") +
-            "\n\nOnly Wing-Eared Rabbit HP potions are affected. Insufficient MP blocks the drink; keep one potion to use." +
-            "\n\nMP cost: whole numbers 0..10000. Set & on applies the amount and enables charging. Off retains it; Reset restores 10 and all options off." +
-            "\n\nSharing uses potion strength within 5 tiles on the same floor. Recipients retain their own healing penalties." +
-            "\n\nHost settings also apply to unmodified guests wearing Wing-Eared Rabbit." +
-            (snapshot.RabbitPotionsAvailable ? "" : "\nPotion hooks unavailable; native behavior continues.") +
-            (snapshot.RabbitDescriptionAvailable ? "\nDescription additions appear on this host only." : "\nDescription adapter unavailable; see Player.log.") +
-            "\nSave these options from Presets for future sessions.";
+            L.F("Infinite HP potions: {0}", L.T(snapshot.RabbitPotions.Infinite ? "ON" : "OFF")) +
+            "\n" + L.F("Nearby HP potion healing: {0}", L.T(snapshot.RabbitPotions.Share ? "ON" : "OFF")) +
+            "\n" + L.F("{0} MP per HP potion: {1}", snapshot.RabbitPotions.MpCostPerDrink, L.T(snapshot.RabbitPotions.ConsumeMp ? "ON" : "OFF")) +
+            "\n" + L.F("Suppress Survival rank 5 random stats: {0}", L.T(snapshot.RabbitPotions.SuppressSurvival ? "ON" : "OFF")) +
+            "\n\n" + L.T("Only Wing-Eared Rabbit HP potions are affected. Insufficient MP blocks the drink; keep one potion to use.") +
+            "\n\n" + L.T("MP cost: whole numbers 0..10000. Set & on applies the amount and enables charging. Off retains it; Reset restores 10 and all options off.") +
+            "\n\n" + L.T("Sharing uses potion strength within 5 tiles on the same floor. Recipients retain their own healing penalties.") +
+            "\n\n" + L.T("Host settings also apply to unmodified guests wearing Wing-Eared Rabbit.") +
+            (snapshot.RabbitPotionsAvailable ? "" : "\n" + L.T("Potion hooks unavailable; native behavior continues.")) +
+            "\n" + L.T(snapshot.RabbitDescriptionAvailable ? "Description additions appear on this host only." : "Description adapter unavailable; see Player.log.") +
+            "\n" + L.T("Save these options from Presets for future sessions.");
     }
 }

@@ -9,7 +9,7 @@ namespace SephiriaOne
         private static bool loaded;
         private static string startingError = "Not initialized.", inventoryError = "Not initialized.", budgetError = "Not initialized.";
         public static bool IsAvailable(ResourceKind kind) => loaded && Probe(kind);
-        public static string UnavailableReason(ResourceKind kind) => !loaded ? "Resource patch runtime is unavailable." : Reason(kind);
+        public static string UnavailableReason(ResourceKind kind) => !loaded ? L.T("Resource patch runtime is unavailable.") : Reason(kind);
         public static void Initialize()
         {
             try { HarmonyRuntime.EnsureLoaded(); loaded = true; Install(); }
@@ -37,7 +37,7 @@ namespace SephiriaOne
         {
             string reason = kind == ResourceKind.Dice || kind == ResourceKind.Leaves ? StartingResourceHooks.Error ?? startingError :
                 kind == ResourceKind.Slots ? inventoryError : budgetError;
-            return string.IsNullOrEmpty(reason) ? "Native resource guard is unavailable. Check Player.log." : reason;
+            return string.IsNullOrEmpty(reason) ? L.T("Native resource guard is unavailable. Check Player.log.") : reason == "Not initialized." ? L.T("Not initialized.") : reason;
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void Shutdown()

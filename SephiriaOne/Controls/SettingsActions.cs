@@ -44,12 +44,34 @@ namespace SephiriaOne
             try
             {
                 string[] parts = (command ?? "").Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+                // Language is a local presentation preference, including on guests
+                // and outside a hosted session. Never enter gameplay reconciliation.
+                if (parts.Length >= 2 && parts[0].Equals("/one", StringComparison.OrdinalIgnoreCase) &&
+                    parts[1].Equals("language", StringComparison.OrdinalIgnoreCase))
+                {
+                    recognized = true;
+                    if (parts.Length == 2 || (parts.Length == 3 && parts[2].Equals("status", StringComparison.OrdinalIgnoreCase)))
+                        return Reply(true, L.F("Language: {0}. Config: {1}", L.Language, L.ConfigPath));
+                    if (parts.Length != 3) return Reply(false, L.T("Local language: /one language en|ko|reload|status."));
+                    string selection = parts[2].ToLowerInvariant();
+                    if (selection == "reload")
+                    {
+                        bool reloaded = L.Reload(out string reloadError);
+                        return Reply(reloaded, reloaded ? L.F("Translation files reloaded ({0}).", L.Language) :
+                            L.F("Could not reload translations: {0}", reloadError));
+                    }
+                    if (selection != "en" && selection != "ko")
+                        return Reply(false, L.T("Local language: /one language en|ko|reload|status."));
+                    bool selected = L.TrySetLanguage(selection, out string languageError);
+                    return Reply(selected, selected ? L.F("Language changed to {0}.", L.Language) :
+                        L.F("Could not change language: {0}", languageError));
+                }
                 if (parts.Length == 2 && parts[0].Equals("/one", StringComparison.OrdinalIgnoreCase) &&
                     parts[1].Equals("ui", StringComparison.OrdinalIgnoreCase))
                 {
                     bool host = NetworkServer.active;
                     return new SettingsActionResult(true, host, host, host ? Array.Empty<string>() :
-                        new[] { "Only the host can open the session settings panel." });
+                        new[] { L.T("Only the host can open the session settings panel.") });
                 }
 
                 MerchantParseResult merchant = MerchantCommand.Parse(command, out MerchantCommand merchantCommand, out string merchantError);
@@ -63,7 +85,7 @@ namespace SephiriaOne
                         SettingsSnapshot snapshot = SessionSettings.ReadSnapshot();
                         if (!snapshot.HostActive || snapshot.SessionIdentity == null) return Reply(false, snapshot.AvailabilityReason);
                         return Reply(true, SessionSettings.DescribeMerchant(snapshot.MerchantSpawns, snapshot.MerchantSpawnChance) +
-                            (snapshot.MerchantsAvailable ? "" : " Merchant hooks unavailable; native behavior continues. See Player.log."));
+                            (snapshot.MerchantsAvailable ? "" : L.T(" Merchant hooks unavailable; native behavior continues. See Player.log.")));
                     }
                     bool success = SessionSettings.TryExecuteMerchant(merchantCommand, out string merchantMessage);
                     return Reply(success, merchantMessage);
@@ -80,7 +102,7 @@ namespace SephiriaOne
                         SettingsSnapshot snapshot = SessionSettings.ReadSnapshot();
                         if (!snapshot.HostActive || snapshot.SessionIdentity == null) return Reply(false, snapshot.AvailabilityReason);
                         return Reply(true, SessionSettings.DescribeRabbit(snapshot.RabbitPotions) +
-                            (snapshot.RabbitPotionsAvailable ? "" : " Potion hooks unavailable; native behavior continues. See Player.log."));
+                            (snapshot.RabbitPotionsAvailable ? "" : L.T(" Potion hooks unavailable; native behavior continues. See Player.log.")));
                     }
                     bool success = SessionSettings.TryExecuteRabbit(rabbitCommand, out string rabbitMessage);
                     return Reply(success, rabbitMessage);
@@ -106,7 +128,8 @@ namespace SephiriaOne
                 if (isPreset)
                 {
                     if (preset == PresetAction.Help)
-                        return Reply(true, presetError + " /one ui opens the host settings panel. /one rabbit help lists potion options. /one merchant help lists extra merchant options.");
+                        return Reply(true, presetError + L.T(" /one ui opens the host settings panel. /one rabbit help lists potion options. /one merchant help lists extra merchant options.") +
+                            L.T(" Language: /one language en|ko|reload|status."));
                     if (preset == PresetAction.Invalid) return Reply(false, presetError);
                     bool success = SessionSettings.TryExecutePreset(preset, out string[] messages);
                     return new SettingsActionResult(true, success, false, messages);
@@ -115,8 +138,8 @@ namespace SephiriaOne
                 {
                     var lines = new List<string>();
                     foreach (StatDefinition definition in StatCatalog.All)
-                        lines.Add($"{definition.Name}: {definition.Minimum}..{definition.Maximum} {definition.Unit}; " +
-                            (definition.Scale == 100 ? "up to 2 decimal places." : "whole numbers."));
+                        lines.Add(L.F("{0}: {1}..{2} {3}; ", definition.Name, definition.Minimum, definition.Maximum, L.T(definition.Unit)) +
+                            (definition.Scale == 100 ? L.T("up to 2 decimal places.") : L.T("whole numbers.")));
                     return new SettingsActionResult(true, true, false, lines);
                 }
                 if (fountain == FountainParseResult.Help || choice == ChoiceParseResult.Help || stat == StatParseResult.Help)
@@ -136,7 +159,7 @@ namespace SephiriaOne
             {
                 Debug.LogError($"[SephiriaOne] {(isPreset ? "Preset" : "Settings")} command failed: {exception}");
                 return new SettingsActionResult(recognized, false, false,
-                    new[] { (isPreset ? "Preset command" : "Command") + " failed. Check Player.log for details." });
+                    new[] { (isPreset ? L.T("Preset command") : L.T("Command")) + L.T(" failed. Check Player.log for details.") });
             }
         }
 

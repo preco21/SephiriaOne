@@ -9,6 +9,14 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.21.0` adds [English/Korean JSON localization](localization.md) for the
+panel, help, command feedback, status and addon Rabbit text/notifications. Local
+`/one language en|ko|reload|status` commands select and reload editable catalogs
+under the game's user-data directory. Validated, cached lookups and atomic reload
+preserve the last good state on errors. Presentation refresh leaves gameplay
+intent, native language, command syntax and saved presets unchanged. Unmodified
+guests receive host-localized native alerts. No deployment was run.
+
 Version `0.20.0` adds the [extra hostile Wandering Merchant](wandering-merchant.md).
 The off-by-default host toggle, 0–100% chance (default 25%), first-encounter guarantee
 per new run, status, panel and saved presets share the existing settings service.

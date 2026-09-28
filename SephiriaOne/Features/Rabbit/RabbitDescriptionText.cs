@@ -11,11 +11,10 @@ namespace SephiriaOne
         {
             string native = original ?? "";
             if (native.Length == 0 || costumeId != "HolyRabbit" || !compatible) return native;
-            if (infinite) native = Append(native, Infinite);
-            if (share) native = Append(native, Share);
-            if (consumeMp) native = Append(native, "- <indent=10>Each Wing-Eared Rabbit HP potion drink costs " +
-                mpCost + " MP; insufficient MP blocks the drink.</indent>");
-            if (suppressSurvival) native = Append(native, Survival);
+            if (infinite) native = Append(native, L.T(Infinite));
+            if (share) native = Append(native, L.T(Share));
+            if (consumeMp) native = Append(native, L.F("- <indent=10>Each Wing-Eared Rabbit HP potion drink costs {0} MP; insufficient MP blocks the drink.</indent>", mpCost));
+            if (suppressSurvival) native = Append(native, L.T(Survival));
             return native;
         }
 

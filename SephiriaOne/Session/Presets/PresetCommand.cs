@@ -7,7 +7,7 @@ namespace SephiriaOne
 
     internal static class PresetCommand
     {
-        public const string Usage = "Host only: /one status shows active settings and player values; /one save saves them for future hosted sessions; /one forget removes the saved preset without changing this session.";
+        public static string Usage => L.T("Host only: /one status shows active settings and player values; /one save saves them for future hosted sessions; /one forget removes the saved preset without changing this session.");
 
         public static PresetAction Parse(string? text, out string error)
         {

@@ -17,7 +17,7 @@ namespace SephiriaOne
         public bool IsReset => Operation == ChoiceOperation.Reset || (Operation == ChoiceOperation.Set && Amount == 0);
         public const int MaximumExtra = 20;
         internal static readonly string[] Keys = { "EXTRAITEMCHOICES", "EXTRAWEAPONCHOICES", "EXTRAMIRACLECHOICES" };
-        public const string Usage = "Host only, current and joining players: /choices all|item|weapon|miracle 5, +2, -1, or set|add|sub N. Extra choices: 0..20. Reset: /choices reset or /choices item|weapon|miracle reset.";
+        public static string Usage => L.T("Host only, current and joining players: /choices all|item|weapon|miracle 5, +2, -1, or set|add|sub N. Extra choices: 0..20. Reset: /choices reset or /choices item|weapon|miracle reset.");
 
         internal ChoiceCommand(ChoiceTarget target, ChoiceOperation operation, int amount)
         {
@@ -56,7 +56,7 @@ namespace SephiriaOne
             string amountText = parts[parts.Length - 1];
             if (RelativeMultiplier.HasPrefix(amountText))
             {
-                error = "Choices count extra candidates, whose native baseline is normally zero. Baseline multipliers are not supported here; use set/add/sub amounts 0..20.";
+                error = L.T("Choices count extra candidates, whose native baseline is normally zero. Baseline multipliers are not supported here; use set/add/sub amounts 0..20.");
                 return ChoiceParseResult.Invalid;
             }
             if (parts.Length == 3 && amountText.Equals("reset", StringComparison.OrdinalIgnoreCase))
@@ -94,7 +94,7 @@ namespace SephiriaOne
         {
             updatedRaw = raw;
             updatedApplied = applied;
-            error = "The addon's bonus and each resulting extra-choice stat must stay within 0..20. Nobody was changed.";
+            error = L.T("The addon's bonus and each resulting extra-choice stat must stay within 0..20. Nobody was changed.");
             if (applied < 0 || applied > MaximumExtra) return false;
             long nextApplied = IsReset ? 0 : Operation == ChoiceOperation.Set ? Amount :
                 (long)applied + (Operation == ChoiceOperation.Add ? Amount : -Amount);

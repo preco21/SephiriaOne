@@ -53,13 +53,13 @@ namespace SephiriaOne
         }
         public static bool TryPlan(ResourceSetting setting, ResourceSnapshot value, bool reset, out ResourceUpdate update, out string error)
         {
-            update = default; error = "Resource arithmetic or native baseline is invalid. Nobody was changed.";
+            update = default; error = L.T("Resource arithmetic or native baseline is invalid. Nobody was changed.");
             if (!TryValue(value, true, out int native) || !TryValue(value, false, out int current)) return false;
             var definition = value.Definition;
             int target = native;
             reset |= setting.Empty;
             if (!reset && !setting.TryTarget(native, definition.Minimum, definition.Maximum, out target, out error)) return false;
-            error = "A resource decrease conflicts with occupied slots, allocated points, or a pending native menu. Nobody was changed.";
+            error = L.T("A resource decrease conflicts with occupied slots, allocated points, or a pending native menu. Nobody was changed.");
             if (target < value.MinimumSafe || (value.Busy && target < current)) return false;
             if (definition.Kind == ResourceKind.Fruit)
             {

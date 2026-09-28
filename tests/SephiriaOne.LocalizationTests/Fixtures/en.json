@@ -1,0 +1,7 @@
+{
+  "Hello": "Hello",
+  "Only English": "English fallback",
+  "Player {0}: {1:0.0}": "Player {0}: {1:0.0}",
+  "Count {0}": "Count {0}",
+  "Literal {{value}} {0}": "Literal {{value}} {0}"
+}

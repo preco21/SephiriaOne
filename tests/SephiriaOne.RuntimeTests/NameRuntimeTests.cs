@@ -49,5 +49,6 @@ internal static class NameRuntimeTests
         name.Update(host);
         check(host.PlayerAvatar.NameRequests.Last() == NameGradient.Format("Carol"), "Profile returning after absence refreshes plain name");
         name.Restore();
+        NameLocalizationRuntimeTests.Run(check, start, add);
     }
 }

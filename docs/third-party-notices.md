@@ -33,3 +33,6 @@ SOFTWARE.
 Game assemblies are compile-time references from the user's installation and
 are not included in the addon. No code or assets from SephiriaChoiceExpander
 are included.
+
+Since `0.21.0`, JSON localization uses the game's installed `Newtonsoft.Json.dll`.
+The addon does not redistribute that assembly or any native font assets.

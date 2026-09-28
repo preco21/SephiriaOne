@@ -20,7 +20,7 @@ namespace SephiriaOne
         public static bool TryCollect(out HostCommandContext context, out string error)
         {
             context = null;
-            error = "Host session data is not ready. Enter town or a run first.";
+            error = L.T("Host session data is not ready. Enter town or a run first.");
             DungeonManager dungeon = NetworkServer.active ? DungeonManager.Instance : null;
             if (!dungeon || !dungeon.isServer || dungeon.netId == 0) return false;
             var subjects = new List<HostPlayer>();
@@ -29,10 +29,10 @@ namespace SephiriaOne
             {
                 if (!spawner || !spawner.isServer || spawner.netId == 0) continue;
                 if (!IsReady(spawner))
-                { error = "A player is still initializing. Retry in a moment; no command writes were made."; return false; }
+                { error = L.T("A player is still initializing. Retry in a moment; no command writes were made."); return false; }
                 if (seen.Add(spawner.PlayerAvatar)) subjects.Add(new HostPlayer(spawner));
             }
-            if (subjects.Count == 0) { error = "No ready players found. Enter town or a run first."; return false; }
+            if (subjects.Count == 0) { error = L.T("No ready players found. Enter town or a run first."); return false; }
             context = new HostCommandContext(dungeon, subjects);
             error = "";
             return true;

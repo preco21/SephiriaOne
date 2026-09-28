@@ -54,7 +54,7 @@ namespace SephiriaOne
         public static bool TryReadPreset(string text, out SessionPolicy policy, out string error)
         {
             policy = new SessionPolicy();
-            error = "Invalid saved preset; no saved settings were applied.";
+            error = L.T("Invalid saved preset; no saved settings were applied.");
             if (text == null || text.Length > MaximumPresetLength) return false;
             string[] lines = text.Replace("\r\n", "\n").Split('\n');
             if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader && lines[0] != RabbitBalancePresetHeader && lines[0] != RabbitCostPresetHeader && lines[0] != MerchantPresetHeader)) return false;

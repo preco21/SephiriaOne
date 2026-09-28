@@ -133,7 +133,7 @@ namespace SephiriaOne
             plan = new SessionPlan(null, Array.Empty<SessionStatWrite>());
             var writes = new List<SessionStatWrite>();
             FountainPlan? fountainPlan = null;
-            error = "The joining player's Fountain baseline or session limit is unavailable.";
+            error = L.T("The joining player's Fountain baseline or session limit is unavailable.");
             if (fountain.HasValue)
             {
                 if (!player.FountainLimit.HasValue || !TryPlanFountainSetting(fountain.Value,
@@ -142,7 +142,7 @@ namespace SephiriaOne
                 fountainPlan = pending;
             }
 
-            error = "Candidate guards are unavailable; inherited settings were not applied.";
+            error = L.T("Candidate guards are unavailable; inherited settings were not applied.");
             if (choices.Count != 0 && !player.ChoicesAvailable) return false;
             foreach (var choice in choices)
             {

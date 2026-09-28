@@ -27,14 +27,14 @@ namespace SephiriaOne
         }
 
         private static string MerchantValues(SettingsSnapshot snapshot) =>
-            "Extra Wandering Merchant: " + (snapshot.MerchantSpawns ? "ON" : "OFF") +
-            "\nLater-floor spawn chance: " + snapshot.MerchantSpawnChance + "%" +
-            "\nOne encounter is guaranteed each new run while enabled, even at 0%." +
-            "\n\nAt most one extra merchant per eligible normal dungeon floor. Boss-only floors, lobby, towns, and training are excluded." +
-            "\n\nAdded merchants are hostile combat encounters with 3x normal HP and cannot talk. Only these actors have no negotiation/crime penalty; natural merchants keep their usual behavior." +
-            "\n\nOff/reset stop future spawns; existing added merchants keep their penalty exemption until floor teardown." +
-            "\n\nThe host spawns merchants for all players, including unmodified guests." +
-            (snapshot.MerchantsAvailable ? "" : "\n\nMerchant hooks unavailable; native behavior continues. See Player.log.") +
-            "\n\nSave this option from Presets for future sessions.";
+            L.F("Extra Wandering Merchant: {0}", L.T(snapshot.MerchantSpawns ? "ON" : "OFF")) +
+            "\n" + L.F("Later-floor spawn chance: {0}%", snapshot.MerchantSpawnChance) +
+            "\n" + L.T("One encounter is guaranteed each new run while enabled, even at 0%.") +
+            "\n\n" + L.T("At most one extra merchant per eligible normal dungeon floor. Boss-only floors, lobby, towns, and training are excluded.") +
+            "\n\n" + L.T("Added merchants are hostile combat encounters with 3x normal HP and cannot talk. Only these actors have no negotiation/crime penalty; natural merchants keep their usual behavior.") +
+            "\n\n" + L.T("Off/reset stop future spawns; existing added merchants keep their penalty exemption until floor teardown.") +
+            "\n\n" + L.T("The host spawns merchants for all players, including unmodified guests.") +
+            (snapshot.MerchantsAvailable ? "" : "\n\n" + L.T("Merchant hooks unavailable; native behavior continues. See Player.log.")) +
+            "\n\n" + L.T("Save this option from Presets for future sessions.");
     }
 }

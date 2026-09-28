@@ -90,7 +90,7 @@ namespace SephiriaOne
                 if (balance < cost)
                 {
                     NativePlayerAlert.Show(context.Player, context.Connection,
-                        $"Not enough MP to heal ({balance}/{cost} MP).");
+                        L.F("Not enough MP to heal ({0}/{1} MP).", balance, cost));
                     throw new RejectedDrink();
                 }
                 // Fixed fee, including INFINITYMP. UseMp fires arbitrary procs before its subtraction; this

@@ -13,7 +13,7 @@ namespace SephiriaOne
         {
             grant = nativeSeed;
             error = null;
-            if (nativeSeed < 0) { error = "Native starting leaves are negative."; return false; }
+            if (nativeSeed < 0) { error = L.T("Native starting leaves are negative."); return false; }
             try
             {
                 decimal provisional;
@@ -25,17 +25,17 @@ namespace SephiriaOne
                         break;
                     case ResourceMode.Offset:
                         if (setting.Amount != decimal.Truncate(setting.Amount))
-                        { error = "Starting-leaf offsets must be whole numbers."; return false; }
+                        { error = L.T("Starting-leaf offsets must be whole numbers."); return false; }
                         provisional = nativeSeed + setting.Amount;
                         break;
                     case ResourceMode.Multiplier:
-                        if (setting.Amount < 0) { error = "Starting-leaf multipliers cannot be negative."; return false; }
+                        if (setting.Amount < 0) { error = L.T("Starting-leaf multipliers cannot be negative."); return false; }
                         // This is an allocation, not rounding the requested final
                         // result. TryTarget checks the complete total exactly later.
                         provisional = decimal.Floor(nativeSeed * setting.Amount);
                         break;
                     default:
-                        error = "Unknown starting-leaf mode.";
+                        error = L.T("Unknown starting-leaf mode.");
                         return false;
                 }
                 grant = (int)Math.Min(nativeSeed, Math.Max(0m, provisional));
@@ -43,7 +43,7 @@ namespace SephiriaOne
             }
             catch (OverflowException)
             {
-                error = "Starting-leaf arithmetic overflowed.";
+                error = L.T("Starting-leaf arithmetic overflowed.");
                 return false;
             }
         }
@@ -56,10 +56,10 @@ namespace SephiriaOne
             fallback = false;
             error = null;
             if (nativeSeed < 0 || grantedSeed < 0 || grantedSeed > nativeSeed || nativeBonus < 0)
-            { error = "Invalid starting-leaf checkpoint."; return false; }
+            { error = L.T("Invalid starting-leaf checkpoint."); return false; }
             long nativeTotal = (long)nativeSeed + nativeBonus;
             if (nativeTotal > int.MaxValue)
-            { error = "Native starting-leaf total exceeds the native integer range."; return false; }
+            { error = L.T("Native starting-leaf total exceeds the native integer range."); return false; }
             int target = (int)nativeTotal;
             if (hasSetting)
             {
@@ -68,7 +68,7 @@ namespace SephiriaOne
                     // Restore withheld native seed plus the native departure bonus.
                     // No withdrawal, balance reset, or replay of previous grants.
                     fallback = true;
-                    if (string.IsNullOrEmpty(error)) error = "Configured total is smaller than the committed starting allocation.";
+                    if (string.IsNullOrEmpty(error)) error = L.T("Configured total is smaller than the committed starting allocation.");
                 }
                 else target = configured;
             }

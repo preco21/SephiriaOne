@@ -23,6 +23,8 @@ SephiriaOne/
     Resources/
     Stats/
   Infrastructure/
+  Localization/
+    Catalogs/
   Session/
     Presets/
   Synchronization/
@@ -37,6 +39,7 @@ SephiriaOne/
 | `Entry.cs` | Addon lifecycle and creation/shutdown of feature controllers. |
 | `Chat/` | Local chat interception and forwarding to the shared settings dispatcher. |
 | `Controls/` | Shared action dispatch/results and immutable settings/player snapshots used by chat and UI. |
+| `Localization/` | Cached English/Korean JSON catalogs, validated formatting, local config, atomic reload and presentation revision notifications. |
 | `UI/` | Addon-owned host panel, pause-menu binding, native control-stack lifetime, widgets and session-bound drafts. |
 | `Features/Choices/` | Candidate command parsing/planning, host writes, and Harmony generation guards. |
 | `Features/Fountain/` | Fountain command parsing/planning, point writes, and carryover-cap operations. |

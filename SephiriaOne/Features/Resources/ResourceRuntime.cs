@@ -46,7 +46,8 @@ namespace SephiriaOne
             string text = "[SephiriaOne] Player #" + playerId + " talent preset was not applied. Any preceding native menu reset remains in effect. " +
                 "Choose a loadout within the budget or raise it before retrying; the addon did not disconnect the player.";
             Debug.LogWarning(text);
-            if (GameLogWriter.Instance) GameLogWriter.Instance.WriteLog(text, Color.yellow);
+            if (GameLogWriter.Instance) GameLogWriter.Instance.WriteLog(L.F(
+                "[SephiriaOne] Player #{0} talent preset was not applied. Any preceding native menu reset remains in effect. Choose a loadout within the budget or raise it before retrying; the addon did not disconnect the player.", playerId), Color.yellow);
         }
 
         public static void AcceptRestored(PlayerAvatar player, ResourceKind kind, string intent = "")
@@ -78,7 +79,7 @@ namespace SephiriaOne
 
         public static bool TryExecute(ResourceCommand command, out string message)
         {
-            message = "Only the host can change everyone's resources.";
+            message = L.T("Only the host can change everyone's resources.");
             if (!NetworkServer.active) return false;
             if (!SessionSettings.PrepareCommand("resources", command.IsReset, out HostCommandContext context,
                 out message, command.Definition == null)) return false;
@@ -88,7 +89,7 @@ namespace SephiriaOne
             {
                 if (command.Definition != null && command.Definition != definition) continue;
                 if (!command.IsReset && !ResourceFeature.IsAvailable(definition.Kind))
-                { message = definition.Label + " compatibility guards are unavailable. Check Player.log."; return false; }
+                { message = L.F("{0} compatibility guards are unavailable. Check Player.log.", L.T(definition.Label)); return false; }
                 foreach (PlayerAvatar player in context.Players)
                 {
                     ResourceSnapshot snapshot = ResourceNative.Capture(player, definition.Kind);
@@ -107,10 +108,10 @@ namespace SephiriaOne
                     }
             }, out message)) return false;
             message = command.Definition?.Kind == ResourceKind.Leaves ?
-                "Updated starting leaves, including a pending first departure. Current balances stay unchanged; completed grants are not repeated." :
+                L.T("Updated starting leaves, including a pending first departure. Current balances stay unchanged; completed grants are not repeated.") :
                 command.Definition?.StartingOnly == true ?
-                "Updated future fresh-run " + command.Definition.Label.ToLowerInvariant() + ". Current balances and grants already begun are unchanged." :
-                "Updated resource settings for " + context.Players.Count + " player(s). Occupied slots and native selections were preserved.";
+                L.F("Updated future fresh-run {0}. Current balances and grants already begun are unchanged.", L.T(command.Definition.Label.ToLowerInvariant())) :
+                L.F("Updated resource settings for {0} player(s). Occupied slots and native selections were preserved.", context.Players.Count);
             return true;
         }
 
@@ -126,7 +127,7 @@ namespace SephiriaOne
                 // A rejected or partially written inheritance cannot opt a player
                 // into maintenance. Explicit commands enroll only their own kind.
                 if (enrolledOnly && (!applied.TryGetValue(player, out var existing) || !existing.ContainsKey(definition.Kind))) continue;
-                if (!setting.Empty && !ResourceFeature.IsAvailable(definition.Kind)) { error = definition.Label + " guard unavailable."; return false; }
+                if (!setting.Empty && !ResourceFeature.IsAvailable(definition.Kind)) { error = L.F("{0} guard unavailable.", L.T(definition.Label)); return false; }
                 ResourceSnapshot snapshot = ResourceNative.Capture(player, definition.Kind);
                 // A reset is complete once ownership is absent. It must not
                 // impose addon validation on unrelated native selections.
@@ -151,10 +152,10 @@ namespace SephiriaOne
 
         public static ReconcileResult Maintain(HostPlayer subject)
         {
-            if (SessionSettings.ResourceWritesBlocked) return ReconcileResult.Waiting("Another native write is unresolved.");
+            if (SessionSettings.ResourceWritesBlocked) return ReconcileResult.Waiting(L.T("Another native write is unresolved."));
             var batch = new HostCommandContext(DungeonManager.Instance, new[] { subject }).CreateBatch();
             if (!TryAppend(subject.Player, batch, out Action remember, out string error, enrolledOnly: true))
-                return ReconcileResult.Suspended(error + " Existing contribution retained to preserve native state.");
+                return ReconcileResult.Suspended(error + L.T(" Existing contribution retained to preserve native state."));
             if (!batch.TryCommit(out error))
             {
                 if (batch.MayHaveWritten) { SessionSettings.RecordFault("resources", batch, error); return ReconcileResult.Faulted(error); }

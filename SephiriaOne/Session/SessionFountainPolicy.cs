@@ -33,7 +33,7 @@ namespace SephiriaOne
         public bool TryPlanFountainMultiplier(SessionPlayerSnapshot player, out FountainPlan plan, out string error)
         {
             plan = new FountainPlan(Array.Empty<int>(), Array.Empty<int>(), 0, null, null);
-            error = "Fountain multiplier or session limit is unavailable.";
+            error = L.T("Fountain multiplier or session limit is unavailable.");
             return HasFountainMultiplier && player.FountainLimit.HasValue &&
                 TryPlanFountainSetting(fountain!.Value, new[] { player.FountainPoints }, new[] { player.FountainContribution },
                     player.FountainLimit.Value, player.OriginalLimit, player.AppliedLimit, out plan, out error);
@@ -44,7 +44,7 @@ namespace SephiriaOne
             out FountainPlan plan, out string error)
         {
             plan = new FountainPlan(Array.Empty<int>(), Array.Empty<int>(), limit, original, applied);
-            error = "A player's native Fountain baseline is invalid. Nobody was changed.";
+            error = L.T("A player's native Fountain baseline is invalid. Nobody was changed.");
             if (balances.Count != contributions.Count) return false;
             var native = new int[balances.Count];
             for (int i = 0; i < balances.Count; i++)

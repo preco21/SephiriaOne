@@ -15,7 +15,7 @@ namespace SephiriaOne
             // Commands come only from this machine's input box, never received chat.
             if (!NetworkServer.active)
             {
-                message = "Only the host can change everyone's Wishing Fountain points.";
+                message = L.T("Only the host can change everyone's Wishing Fountain points.");
                 return false;
             }
 
@@ -25,7 +25,7 @@ namespace SephiriaOne
             DungeonManager dungeon = context.Dungeon;
             if (!dungeon || !dungeon.isServer || !dungeon.constValueDictionary.TryGetValue(LimitKey, out int limit))
             {
-                message = "Fountain session data is not ready. Enter town or a run first.";
+                message = L.T("Fountain session data is not ready. Enter town or a run first.");
                 return false;
             }
 
@@ -61,8 +61,9 @@ namespace SephiriaOne
             }
 
             string points = minimum == maximum ? minimum.ToString() : $"{minimum}..{maximum}";
-            string action = reset ? "Reset addon adjustments to" : "Updated";
-            message = $"{action} Wishing Fountain points for {inventories.Count} player(s). Points now: {points}. Reopen the Fountain panel.";
+            message = reset
+                ? L.F("Reset addon adjustments to Wishing Fountain points for {0} player(s). Points now: {1}. Reopen the Fountain panel.", inventories.Count, points)
+                : L.F("Updated Wishing Fountain points for {0} player(s). Points now: {1}. Reopen the Fountain panel.", inventories.Count, points);
             return true;
         }
 
@@ -71,7 +72,7 @@ namespace SephiriaOne
         {
             if (!NetworkServer.active || !dungeon || !dungeon.isServer ||
                 !dungeon.constValueDictionary.TryGetValue(LimitKey, out int limit))
-                return ReconcileResult.Waiting("Fountain session data is not ready.");
+                return ReconcileResult.Waiting(L.T("Fountain session data is not ready."));
             var balances = new List<int>();
             var contributions = new List<int>();
             var participants = new List<HostPlayer>();
@@ -108,7 +109,7 @@ namespace SephiriaOne
                 if (plan.Limit != limit)
                     UnityEngine.Debug.Log($"[SephiriaOne] Reconciled Fountain carryover limit: {limit} -> {plan.Limit}.");
             }
-            return allReady ? ReconcileResult.Applied() : ReconcileResult.Waiting("Fountain participants are still initializing.");
+            return allReady ? ReconcileResult.Applied() : ReconcileResult.Waiting(L.T("Fountain participants are still initializing."));
         }
     }
 }

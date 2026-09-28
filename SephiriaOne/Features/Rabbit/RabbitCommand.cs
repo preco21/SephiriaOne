@@ -13,7 +13,7 @@ namespace SephiriaOne
         public bool Enabled { get; }
         public int Amount { get; }
         public bool IsReset => Option == RabbitOption.Reset || (Option != RabbitOption.MpAmount && !Enabled);
-        public const string Usage = "Host only: /one rabbit infinite on|off, /one rabbit share on|off, /one rabbit mp-cost on|off|<0..10000>, /one rabbit suppress-survival on|off, /one rabbit reset, /one rabbit status. A number sets the MP fee and enables it; on/off retain the amount. Applies to Wing-Eared Rabbit HP potions. Save for future sessions: /one save.";
+        public static string Usage => L.T("Host only: /one rabbit infinite on|off, /one rabbit share on|off, /one rabbit mp-cost on|off|<0..10000>, /one rabbit suppress-survival on|off, /one rabbit reset, /one rabbit status. A number sets the MP fee and enables it; on/off retain the amount. Applies to Wing-Eared Rabbit HP potions. Save for future sessions: /one save.");
 
         public RabbitCommand(RabbitOption option, bool enabled, int amount = RabbitPotionSettings.DefaultMpCostPerDrink)
         { Option = option; Enabled = enabled; Amount = amount; }

@@ -12,7 +12,7 @@ namespace SephiriaOne
             // Only local input dispatches here; received chat is never a command.
             if (!NetworkServer.active)
             {
-                message = "Only the host can change everyone's character stats.";
+                message = L.T("Only the host can change everyone's character stats.");
                 return false;
             }
             bool reset = command.Operation == StatOperation.Reset || (command.Operation == StatOperation.Multiply && command.Amount == 1);
@@ -45,10 +45,10 @@ namespace SephiriaOne
             }
             if (!SessionSettings.Commit("stats", batch, () => SessionSettings.Remember(command, players), out message)) return false;
 
-            string name = command.Stat == null ? "all supported stats" : command.Stat.Name;
+            string name = command.Stat == null ? L.T("all supported stats") : command.Stat.Name;
             if (reset)
             {
-                message = $"Reset addon adjustments to {name} for {players.Count} player(s), preserving native stat changes.";
+                message = L.F("Reset addon adjustments to {0} for {1} player(s), preserving native stat changes.", name, players.Count);
                 return true;
             }
 
@@ -63,11 +63,11 @@ namespace SephiriaOne
             }
             string minimumText = minimum.ToString("0.##", CultureInfo.InvariantCulture);
             string values = minimum == maximum ? minimumText : minimumText + ".." + maximum.ToString("0.##", CultureInfo.InvariantCulture);
-            message = $"Updated {name} for {players.Count} player(s). Value now: {values} {selected.Unit}.";
+            message = L.F("Updated {0} for {1} player(s). Value now: {2} {3}.", name, players.Count, values, L.T(selected.Unit));
             int fallbacks = 0;
             foreach (StatUpdate update in updates) if (update.UsesNativeFallback) fallbacks++;
             if (fallbacks != 0)
-                message += $" Native value preserved for {fallbacks} player(s) with incompatible multiplier targets; the factor remains active for compatible native input changes.";
+                message += L.F(" Native value preserved for {0} player(s) with incompatible multiplier targets; the factor remains active for compatible native input changes.", fallbacks);
             return true;
         }
     }
