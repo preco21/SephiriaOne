@@ -87,7 +87,12 @@ namespace SephiriaOne
             {
                 int cost = context.Settings.MpCostPerDrink;
                 int balance = context.Player.mp;
-                if (balance < cost) throw new RejectedDrink();
+                if (balance < cost)
+                {
+                    NativePlayerAlert.Show(context.Player, context.Connection,
+                        $"Not enough MP to heal ({balance}/{cost} MP).");
+                    throw new RejectedDrink();
+                }
                 // Fixed fee, including INFINITYMP. UseMp fires arbitrary procs before its subtraction; this
                 // SyncVar write deliberately avoids those procs and does not reset native MP regeneration.
                 // Never refund after callbacks: doing so could overwrite unrelated native MP changes.

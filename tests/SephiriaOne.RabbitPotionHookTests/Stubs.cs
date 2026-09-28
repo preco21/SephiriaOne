@@ -11,17 +11,70 @@ namespace UnityEngine
         public float sqrMagnitude => x * x + y * y + z * z;
     }
     public class Transform : Object { public Vector3 position; }
+    public readonly record struct Vector2(float x, float y)
+    {
+        public static implicit operator Vector2(Vector3 value) => new(value.x, value.y);
+    }
+    public readonly record struct Color(float r, float g, float b, float a = 1f);
     public static class Debug { public static void LogWarning(object message) { } }
 }
 namespace Mirror
 {
-    public class NetworkBehaviour : UnityEngine.Object { public bool isServer = true; public uint netId = 1; public NetworkConnectionToClient connectionToClient; public Transform transform = new(); }
+    public class NetworkBehaviour : UnityEngine.Object
+    {
+        public bool isServer = true, isLocalPlayer;
+        public uint netId = 1;
+        public NetworkConnectionToClient connectionToClient;
+        public Transform transform = new();
+        protected void SendTargetRPCInternal(NetworkConnection connection, string name, int hash, NetworkWriter writer, int channel)
+        {
+            var target = (NetworkConnectionToClient)connection;
+            if (target.FailNotice) throw new InvalidOperationException("notice unavailable");
+            target.Notices.Add((this, name, hash, writer.Values.ToArray(), channel));
+        }
+        protected void SendRPCInternal(string name, int hash, NetworkWriter writer, int channel, bool includeOwner) =>
+            throw new Exception("Feedback must never broadcast");
+    }
     public class NetworkIdentity
     {
         public PlayerSpawner Owner;
         public bool TryGetComponent<T>(out T component) where T : class { component = Owner as T; return component != null; }
     }
-    public class NetworkConnectionToClient { public bool isReady = true; public NetworkIdentity identity; }
+    public class NetworkConnection { }
+    public class NetworkConnectionToClient : NetworkConnection
+    {
+        public bool isReady = true, FailNotice;
+        public NetworkIdentity identity;
+        public readonly List<(NetworkBehaviour Owner, string Name, int Hash, object[] Payload, int Channel)> Notices = new();
+    }
+    public class LocalConnectionToClient : NetworkConnectionToClient { }
+    public class NetworkWriter { public readonly List<object> Values = new(); }
+    public class NetworkWriterPooled : NetworkWriter { }
+    public static class NetworkWriterPool
+    {
+        public static int Outstanding;
+        public static NetworkWriterPooled Get() { Outstanding++; return new(); }
+        public static void Return(NetworkWriterPooled writer) { Outstanding--; }
+    }
+    public static class NetworkWriterExtensions
+    {
+        public static void WriteVector2(this NetworkWriter w, Vector2 v) => w.Values.Add(v);
+        public static void WriteString(this NetworkWriter w, string v) => w.Values.Add(v);
+        public static void WriteColor(this NetworkWriter w, Color v) => w.Values.Add(v);
+        public static void WriteVarInt(this NetworkWriter w, int v) => w.Values.Add(v);
+        public static void WriteBool(this NetworkWriter w, bool v) => w.Values.Add(v);
+        public static void WriteNetworkBehaviour(this NetworkWriter w, NetworkBehaviour v) => w.Values.Add(v);
+    }
+    public class NetworkReader { }
+    public static class NetworkReaderExtensions
+    {
+        public static Vector2 ReadVector2(this NetworkReader r) => default;
+        public static string ReadString(this NetworkReader r) => null;
+        public static Color ReadColor(this NetworkReader r) => default;
+        public static int ReadVarInt(this NetworkReader r) => 0;
+        public static bool ReadBool(this NetworkReader r) => false;
+        public static T ReadNetworkBehaviour<T>(this NetworkReader r) where T : NetworkBehaviour => null;
+    }
     public static class NetworkServer { public static bool active = true; public static readonly Dictionary<int, NetworkConnectionToClient> connections = new(); }
 }
 public sealed class NewItemOwnInstance { public int EntityID, InstanceID; public sbyte Quantity = 1; }
@@ -37,6 +90,26 @@ public class GridInventory : NetworkBehaviour
 public enum ECustomStat { HpPotionBonus }
 public class UnitAvatar : NetworkBehaviour
 {
+    public readonly List<(string Message, float Duration, bool Timer)> SystemMessages = new();
+    public bool FailSystemMessage;
+    public void WriteSystemMessage(string message, float time, bool showTimer)
+    {
+        if (FailSystemMessage) throw new InvalidOperationException("UI unavailable");
+        SystemMessages.Add((message, time, showTimer));
+    }
+    protected virtual void RpcShowDamageParticle(Vector2 position, string msg, Color color, int fontSize, bool isPrivate, UnitAvatar self, UnitAvatar attacker)
+    {
+        var writer = NetworkWriterPool.Get();
+        writer.WriteVector2(position); writer.WriteString(msg); writer.WriteColor(color); writer.WriteVarInt(fontSize);
+        writer.WriteBool(isPrivate); writer.WriteNetworkBehaviour(self); writer.WriteNetworkBehaviour(attacker);
+        SendRPCInternal("System.Void UnitAvatar::RpcShowDamageParticle(UnityEngine.Vector2,System.String,UnityEngine.Color,System.Int32,System.Boolean,UnitAvatar,UnitAvatar)", -1687250273, writer, 1, true);
+        NetworkWriterPool.Return(writer);
+    }
+    protected virtual void UserCode_RpcShowDamageParticle__Vector2__String__Color__Int32__Boolean__UnitAvatar__UnitAvatar(Vector2 position, string msg, Color color, int fontSize, bool isPrivate, UnitAvatar self, UnitAvatar attacker) { }
+    protected static void InvokeUserCode_RpcShowDamageParticle__Vector2__String__Color__Int32__Boolean__UnitAvatar__UnitAvatar(NetworkBehaviour obj, NetworkReader reader, NetworkConnectionToClient senderConnection)
+    {
+        ((UnitAvatar)obj).UserCode_RpcShowDamageParticle__Vector2__String__Color__Int32__Boolean__UnitAvatar__UnitAvatar(reader.ReadVector2(), reader.ReadString(), reader.ReadColor(), reader.ReadVarInt(), reader.ReadBool(), reader.ReadNetworkBehaviour<UnitAvatar>(), reader.ReadNetworkBehaviour<UnitAvatar>());
+    }
     public bool IsDead;
     public GridInventory Inventory = new();
     public int PotionBonus, DrinkEvents;
@@ -73,9 +146,11 @@ public class PlayerSpawner : NetworkBehaviour
 {
     public static readonly List<PlayerSpawner> MultiplayerList = new();
     public PlayerAvatar PlayerAvatar;
-    public PlayerSpawner(PlayerAvatar player)
+    public PlayerSpawner(PlayerAvatar player, bool local = false)
     {
-        PlayerAvatar = player; player.spawner = this; connectionToClient = new NetworkConnectionToClient { identity = new NetworkIdentity { Owner = this } };
+        PlayerAvatar = player; player.spawner = this;
+        connectionToClient = local ? new LocalConnectionToClient() : new NetworkConnectionToClient();
+        connectionToClient.identity = new NetworkIdentity { Owner = this };
         MultiplayerList.Add(this); NetworkServer.connections[MultiplayerList.Count] = connectionToClient;
     }
 }

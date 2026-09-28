@@ -12,6 +12,7 @@ internal static class GameRabbitCompatibilityTests
         var effect = Method("PotionEffect_Regeneration", "CreateEffect_OnDrink", Type("UnitAvatar"));
         var consume = Method("ItemController", "DrinkPotionAnimation");
         var hooks = addon.GetType("SephiriaOne.RabbitPotionNativeHooks", true)!;
+        VerifyAlerts(game, addon);
         if (!(bool)AccessTools.DeclaredMethod(hooks, "ValidateMpSetter")!.Invoke(null, null)!)
             throw new Exception("MP fee requires the native callback-free synchronized setter.");
         foreach (var boundary in new[] { ("ValidateDrinkShape", drink), ("ValidateConsumerShape", consume) })
@@ -117,4 +118,35 @@ internal static class GameRabbitCompatibilityTests
 
     private static bool Calls(MethodInfo caller, MethodInfo target) =>
         PatchProcessor.GetOriginalInstructions(caller).Any(i => Equals(i.operand, target));
+
+    private static void VerifyAlerts(Assembly game, Assembly addon)
+    {
+        var alert = addon.GetType("SephiriaOne.NativePlayerAlert", true)!;
+        if (!(bool)AccessTools.DeclaredMethod(alert, "ValidateTransport")!.Invoke(null, null)!)
+            throw new Exception("Guest alert RPC does not match installed serialization.");
+        var unit = game.GetType("UnitAvatar", true)!;
+        var nativeSend = AccessTools.DeclaredMethod(unit, "RpcShowDamageParticle")!;
+        var send = AccessTools.DeclaredMethod(alert, "Show")!;
+        MethodInfo[] Writes(MethodInfo method) => PatchProcessor.GetOriginalInstructions(method)
+            .Where(i => i.operand is MethodInfo m && m.Name.StartsWith("Write", StringComparison.Ordinal) && m.Name != "WriteSystemMessage")
+            .Select(i => (MethodInfo)i.operand).ToArray();
+        if (!Writes(send).SequenceEqual(Writes(nativeSend)))
+            throw new Exception("Addon alert must use exactly the native payload serializers in order.");
+        var target = AccessTools.Method(unit, "SendTargetRPCInternal")!;
+        var targetCode = PatchProcessor.GetOriginalInstructions(target).ToList();
+        if (!targetCode.Any(i => i.operand is FieldInfo f && f.DeclaringType?.FullName == "Mirror.RpcMessage" && f.Name == "functionHash") ||
+            !targetCode.Any(i => i.operand is MethodInfo m && m.Name == "Send" && m.IsGenericMethod &&
+                m.GetGenericArguments().Single().FullName == "Mirror.RpcMessage") ||
+            targetCode.Any(i => i.operand is MethodInfo m && m.Name.Contains("SendTo")))
+            throw new Exception("Targeted feedback must use native RPC dispatch to one connection.");
+        var receive = AccessTools.DeclaredMethod(unit, "UserCode_RpcShowDamageParticle__Vector2__String__Color__Int32__Boolean__UnitAvatar__UnitAvatar")!;
+        var receiveCode = PatchProcessor.GetOriginalInstructions(receive).ToList();
+        if (!receiveCode.Any(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "UI_DamageParticle" && m.Name == "SetDamage") ||
+            receiveCode.Any(i => i.operand is MethodInfo m && (m.Name.StartsWith("set_Network", StringComparison.Ordinal) || m.Name.Contains("Heal") || m.Name.Contains("PotionDrinkEvent"))))
+            throw new Exception("Guest floating feedback must remain presentation only.");
+        var connect = AccessTools.DeclaredMethod(game.GetType("UI_SystemMessage", true), "Connect")!;
+        if (!PatchProcessor.GetOriginalInstructions(connect).Any(i => i.operand is MethodInfo m && m.Name == "add_OnWriteSystemMessage"))
+            throw new Exception("Host system-message UI subscription changed.");
+        Console.WriteLine("Verified local system-message UI and private guest floating-text payload, receiver and Mirror dispatch contracts (not live UI).");
+    }
 }

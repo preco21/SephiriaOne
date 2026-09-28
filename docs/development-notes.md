@@ -1,6 +1,6 @@
 # SephiriaOne development notes
 
-Recorded: 2026-09-23; updated: 2026-09-26 (Asia/Seoul).
+Recorded: 2026-09-23; updated: 2026-09-28 (Asia/Seoul).
 
 This document records the project history, current implementation, and modding
 findings collected during the initial investigation. Installed-game observations
@@ -8,6 +8,16 @@ apply to the assembly fingerprint below. Reference repositories and documentatio
 can change independently of that installed game version.
 
 ## Current status
+
+Version `0.19.0` adds [low-MP feedback for Rabbit healing](rabbit-potions.md).
+Insufficient-MP rejection displays current/required MP to the affected drinker:
+a native timed system message locally, native floating text for unmodified guests.
+Guest delivery uses a validated native RPC payload targeted to the current owner;
+there is no arbitrary center-message RPC for unmodified guests. Optional feedback
+failure cannot bypass rejection or alter the existing infinite-potion/death/Survival
+protections. No polling, new settings, client assets or persistent connection state
+were added. 134 potion scenarios and installed alert contracts pass. Live UI and
+guest confirmation remain pending; no deployment was run.
 
 Version `0.18.1` fixes [Rabbit potion death timing](rabbit-potions.md). Alive/wielded
 readiness was rechecked after native callbacks, so death could abandon infinite

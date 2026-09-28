@@ -59,6 +59,23 @@ sharing, potion events, random-stat gain or item consumption. Cancelled drinks
 cost nothing. The drinking animation may run before a completion-time rejection;
 native wield/animation cleanup still runs.
 
+**Low-MP feedback (`0.19.0`):** A rejected attempt displays, for example,
+`Not enough MP to heal (6/25 MP).` The numbers are the current balance and fee at
+completion. The host/single-player drinker sees the native 2.5-second system
+message; an unmodified guest sees native amber floating text at their character.
+Only that drinker receives the alert. Successful, cancelled and already-dead
+attempts do not show it, nor do other costumes/potion types or disabled/zero fees.
+Each rejected attempt can notify again; there is no background low-MP polling.
+
+The system-message event is local-only. The game's custom-message RPC feeds shop
+events, so it cannot provide a generic center message to an unmodified guest.
+Guest feedback uses the existing `UnitAvatar.RpcShowDamageParticle` receiver,
+its exact native payload and Mirror's targeted sender on the reliable channel.
+Its serializer/reader contract is checked before sending. A game update that
+breaks the contract disables guest feedback with a bounded log warning; a UI or
+send failure still rejects the potion. No player/connection is cached, no old
+alerts are replayed on reconnect, and every pooled writer is returned on failure.
+
 The fixed fee uses the game's synchronized MP value. It is separate from spell
 costs: spell discounts and `INFINITYMP` do not waive it, and the addon does not
 invoke native MP-spend passives. If a native potion callback fails after payment,
@@ -182,6 +199,18 @@ pure/installed-game suite pass with deployment disabled. Independent review foun
 no critical or important issues. Session-scope inspection confirms death does not
 clear shared Rabbit intent. Live lethal-hit timing
 and unmodified-guest multiplayer verification remain pending.
+Verification for `0.19.0` on 2026-09-28: the missing local/guest/reconnect feedback
+first produced three failing fixtures. After implementation, all **134** potion
+scenarios pass. Coverage includes owner-only delivery, live amounts, repeated
+attempts, stale owners, reconnect, failed UI/transport, writer cleanup, silent
+non-rejections and changed RPC contracts. Installed-code checks compare the
+addon's serializer calls with the game's exact serializers and inspect native
+receiver/targeted transport/UI subscription. Debug/Release builds passed with zero
+warnings; 1,122 pure checks, 682 runtime checks and 35 description checks passed.
+Independent review found no actionable issues. Deployment stayed disabled.
+Live appearance and unmodified-guest
+delivery still need the manual check below.
+
 The `0.17.0` five-player synchronization fixture retained zero allocated bytes per tick
 with both inactive and active settings. This is not a live-game profiler result.
 
@@ -225,3 +254,9 @@ Manual smoke tests:
     stat is granted. Repeat when death precedes the pending completion: no MP,
     healing, potion events or consumption should occur. Revive and drink again,
     then repeat with an unmodified guest and with each option disabled separately.
+12. Set MP cost to 25 and attempt healing with less MP as host/single player and
+    as an unmodified guest. Verify the balance/cost text, local timed message and
+    guest floating text; other players must see neither alert. Repeat with a new
+    fee, after reconnect and with enough MP. Rejected attempts must preserve the
+    potion and grant neither healing nor Survival stats. No low-MP notice should
+    appear after cancellation, death, turning the fee off, or setting it to zero.

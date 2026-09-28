@@ -15,9 +15,9 @@ void Check(string name, Action action)
     finally { RabbitPotionFeature.Shutdown(); }
 }
 void Assert(bool ok, string reason) { if (!ok) throw new Exception(reason); }
-(PlayerAvatar player, ItemController controller, WieldingPotion potion, NewItemOwnInstance item) Setup(int id = 0)
+(PlayerAvatar player, ItemController controller, WieldingPotion potion, NewItemOwnInstance item) Setup(int id = 0, bool local = false)
 {
-    var player = new PlayerAvatar(); _ = new PlayerSpawner(player);
+    var player = new PlayerAvatar(); _ = new PlayerSpawner(player, local);
     var controller = new ItemController { Avatar = player, connectionToClient = player.spawner.connectionToClient };
     var potion = new WieldingPotion { entityID = id, effect = new PotionEffect_Regeneration(), NetworkController = controller };
     controller.currentWieldingItem = potion;
@@ -564,6 +564,100 @@ foreach (string scenario in new[] { "all-off", "remembered-fee-only", "other-cos
         Install(); controller.RunDrink();
         Assert(item.Quantity == 2 && passive.StatGains == 1 && player.mp == 30 && controller.CleanupCalls == 1,
             "Death guard intercepted an unmodified native drink");
+    });
+foreach (bool local in new[] { true, false })
+    Check($"insufficient MP displays one private {(local ? "system" : "floating")} alert with live amounts", () =>
+    {
+        var (player, controller, _, item) = Setup(local: local); player.mp = 6;
+        var other = Setup(local: !local);
+        var passive = new PassiveObject_PotionAndRandomStat(); passive.Enable(player);
+        SessionSettings.RabbitPotionsForUse = new(true, true, true, true, 25);
+        Install(); controller.RunDrink();
+        string expected = "Not enough MP to heal (6/25 MP).";
+        if (local)
+            Assert(player.SystemMessages.Count == 1 && player.SystemMessages[0] == (expected, 2.5f, false) &&
+                player.spawner.connectionToClient.Notices.Count == 0, "Local alert missing or duplicated over network");
+        else
+        {
+            var notices = player.spawner.connectionToClient.Notices;
+            Assert(notices.Count == 1 && player.SystemMessages.Count == 0, "Guest alert missing or displayed on host");
+            var notice = notices[0];
+            Assert(ReferenceEquals(notice.Owner, player) && notice.Hash == -1687250273 && notice.Channel == 0 &&
+                notice.Payload.Length == 7 && (string)notice.Payload[1] == expected &&
+                (int)notice.Payload[3] == 0 && !(bool)notice.Payload[4] &&
+                ReferenceEquals(notice.Payload[5], player) && ReferenceEquals(notice.Payload[6], player),
+                "Native payload or targeted reliable delivery incorrect");
+        }
+        Assert(other.player.SystemMessages.Count == 0 && other.player.spawner.connectionToClient.Notices.Count == 0 &&
+            player.mp == 6 && player.MpWrites == 0 && player.Heals.Count == 0 && player.DrinkEvents == 0 &&
+            passive.StatGains == 0 && item.Quantity == 3 && controller.CleanupCalls == 1 && NetworkWriterPool.Outstanding == 0,
+            "Notice leaked to another player, changed rejected drink behavior, or leaked writer");
+    });
+foreach (bool local in new[] { true, false })
+    Check($"{(local ? "local UI" : "guest transport")} failure cannot bypass rejection", () =>
+    {
+        var (player, controller, _, item) = Setup(local: local); player.mp = 0;
+        player.FailSystemMessage = true; player.spawner.connectionToClient.FailNotice = true;
+        var passive = new PassiveObject_PotionAndRandomStat(); passive.Enable(player);
+        SessionSettings.RabbitPotionsForUse = new(true, true, true, true);
+        Install(); controller.RunDrink();
+        Assert(item.Quantity == 3 && player.mp == 0 && player.MpWrites == 0 && player.Heals.Count == 0 &&
+            player.DrinkEvents == 0 && passive.StatGains == 0 && controller.CleanupCalls == 1 && NetworkWriterPool.Outstanding == 0,
+            "Feedback failure consumed, healed, raised Survival or leaked writer");
+    });
+foreach (string scenario in new[] { "enough", "zero-cost", "disabled", "other-costume", "mana", "dead", "cancelled", "disconnected", "stale-owner" })
+    Check("no low-MP alert for " + scenario, () =>
+    {
+        var (player, controller, potion, _) = Setup(); player.mp = scenario == "enough" ? 10 : 0;
+        SessionSettings.RabbitPotionsForUse = new(true, true, scenario != "disabled", true, scenario == "zero-cost" ? 0 : 10);
+        switch (scenario)
+        {
+            case "other-costume": player.currentCostume = "PinkRabbit"; break;
+            case "mana": potion.effect = new PotionEffect_Concentration(); break;
+            case "dead": player.IsDead = true; break;
+            case "cancelled": controller.SelectedQuickSlotIdx = -1; break;
+            case "disconnected": NetworkServer.connections.Clear(); break;
+            case "stale-owner": player.spawner.connectionToClient.identity.Owner = Setup().player.spawner; break;
+        }
+        Install(); controller.RunDrink();
+        Assert(player.SystemMessages.Count == 0 && player.spawner.connectionToClient.Notices.Count == 0,
+            "Misleading low-MP alert outside an eligible insufficient-MP rejection");
+    });
+Check("repeated low-MP attempts use current fee and reconnection without stale notices", () =>
+{
+    var (player, controller, _, _) = Setup(); player.mp = 1;
+    SessionSettings.RabbitPotionsForUse = new(true, true, true, true);
+    Install(); controller.RunDrink();
+    var old = player.spawner.connectionToClient;
+    NetworkServer.connections.Clear(); controller.RunDrink();
+    var replacement = new NetworkConnectionToClient { identity = new NetworkIdentity { Owner = player.spawner } };
+    player.spawner.connectionToClient = controller.connectionToClient = replacement;
+    NetworkServer.connections[1] = replacement;
+    player.mp = 4; SessionSettings.RabbitPotionsForUse = new(true, true, true, true, 30);
+    controller.RunDrink(); controller.RunDrink();
+    Assert(old.Notices.Count == 1 && (string)old.Notices[0].Payload[1] == "Not enough MP to heal (1/10 MP)." &&
+        replacement.Notices.Count == 2 && replacement.Notices.All(n => (string)n.Payload[1] == "Not enough MP to heal (4/30 MP)."),
+        "Repeated attempt used stale amount/connection or reconnect replayed an old alert");
+});
+foreach (string mutation in new[] { "hash", "name", "write", "read", "order" })
+    Check("guest alert refuses changed native contract: " + mutation, () =>
+    {
+        var send = HarmonyLib.PatchProcessor.GetOriginalInstructions(HarmonyLib.AccessTools.DeclaredMethod(typeof(UnitAvatar), "RpcShowDamageParticle")).ToList();
+        var receive = HarmonyLib.PatchProcessor.GetOriginalInstructions(HarmonyLib.AccessTools.DeclaredMethod(typeof(UnitAvatar),
+            "InvokeUserCode_RpcShowDamageParticle__Vector2__String__Color__Int32__Boolean__UnitAvatar__UnitAvatar")).ToList();
+        Assert(NativePlayerAlert.ValidateCode(send, receive), "Baseline RPC fixture invalid");
+        switch (mutation)
+        {
+            case "hash": send.Single(i => Equals(i.operand, -1687250273)).operand = 123; break;
+            case "name": send.Single(i => i.opcode == System.Reflection.Emit.OpCodes.Ldstr).operand = "other RPC"; break;
+            case "write": send.RemoveAll(i => i.operand is System.Reflection.MethodInfo m && m.Name == "WriteBool"); break;
+            case "read": receive.RemoveAll(i => i.operand is System.Reflection.MethodInfo m && m.Name == "ReadColor"); break;
+            case "order":
+                var color = send.Single(i => i.operand is System.Reflection.MethodInfo m && m.Name == "WriteColor");
+                var text = send.Single(i => i.operand is System.Reflection.MethodInfo m && m.Name == "WriteString");
+                (color.operand, text.operand) = (text.operand, color.operand); break;
+        }
+        Assert(!NativePlayerAlert.ValidateCode(send, receive), "Unsafe RPC contract accepted");
     });
 Console.WriteLine($"{passed} passed, {failed} failed");
 Environment.ExitCode = failed == 0 ? 0 : 1;
