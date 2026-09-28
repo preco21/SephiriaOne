@@ -146,12 +146,9 @@ namespace SephiriaOne
                 avatar.AddCustomStat(ECustomStat.AllDamageBonus,
                     extraPlayers * KeywordDatabase.GetConstValue(kind + "BonusDamageByPlayerNumber"));
             }
-            float targetHp = avatar.MaxHp * 3f;
-            if (avatar.isHPCursed > 0 || targetHp <= 0 || float.IsNaN(targetHp) || float.IsInfinity(targetHp))
-                throw new InvalidOperationException("Native merchant HP is not safe to multiply.");
-            // MaxHp = base HP * (1 + native percent / 100). Tripling the base keeps
-            // floor/player scaling intact; adding 200 percentage points would not.
-            avatar.AddMaxHp(avatar.maxHp * 2f);
+            float nativeHp = avatar.MaxHp;
+            if (avatar.isHPCursed > 0 || nativeHp <= 0 || float.IsNaN(nativeHp) || float.IsInfinity(nativeHp))
+                throw new InvalidOperationException("Native merchant HP is invalid.");
             avatar.HealPercent(100f);
         }
 

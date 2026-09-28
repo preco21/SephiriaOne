@@ -1,6 +1,6 @@
 # SephiriaOne development notes
 
-Recorded: 2026-09-23; updated: 2026-09-28 (Asia/Seoul).
+Recorded: 2026-09-23; updated: 2026-09-29 (Asia/Seoul).
 
 This document records the project history, current implementation, and modding
 findings collected during the initial investigation. Installed-game observations
@@ -8,6 +8,11 @@ apply to the assembly fingerprint below. Reference repositories and documentatio
 can change independently of that installed game version.
 
 ## Current status
+
+Version `0.22.1` reduces extra Wandering Merchant health from 3× to 1× normal HP.
+New spawns retain native floor/multiplayer scaling and start at full health;
+existing actors, spawn settings and crime exemptions are unchanged. English and
+Korean help/status/panel text now reflect normal health. No deployment was run.
 
 Version `0.22.0` implements [Rabbit shared-healing particles](rabbit-shared-healing-visuals.md).
 An actual recipient HP gain invokes the game's zero-argument green-heal RPC once,

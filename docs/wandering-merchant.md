@@ -26,7 +26,7 @@ v1–v6 presets still load and default this feature to off/25%.
 - **0%** means only the guaranteed encounter; **100%** means every eligible floor.
   Chance changes apply to floors that have not yet rolled. Turning the option on
   during a run also processes already generated eligible floors.
-- The added merchant starts hostile and has **3× normal maximum HP**, including
+- The added merchant starts hostile and has **1× normal maximum HP**, including
   the native floor and multiplayer scaling. Attack damage follows native scaling.
   Its original combat AI, attacks and native stock/loot container are reused.
 - Boss floors, single-room/special generators, towns, lobby, training and hidden
@@ -38,6 +38,10 @@ v1–v6 presets still load and default this feature to off/25%.
   debuffs are never removed or changed.
 - Off/reset stop future spawning. Already spawned extras stay alive and retain
   their exemption. Their native loot becomes accessible after death.
+
+Version `0.22.1` removes the previous 3× addon HP boost for newly spawned merchants.
+Native floor and multiplayer scaling still apply, and merchants start at full HP.
+Existing actors are not rescaled; saved toggle/chance settings are unchanged.
 
 The guarantee requires an eligible room and valid native game state. If native
 initialization fails, the partial spawn is cleaned up and that floor is not retried;

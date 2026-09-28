@@ -21,7 +21,7 @@ internal static class GameMerchantCompatibilityTests
         VerifyPrefix(hooks, "AllowCrime", new[] { game.GetType("UnitAI_NewBasic", true)! }, new[] { "npc" });
         VerifyPrefix(hooks, "HandleDamage", new[] { game.GetType("UnitAI_NewBasic", true)!, game.GetType("DamageInstance", true)! },
             new[] { "__instance", "damage" });
-        Console.WriteLine("Verified installed merchant crime boundary, damage-before-death order, native safe stock and guest replication, threefold scaled HP and floor-ready event after native travelers (not live gameplay).");
+        Console.WriteLine("Verified installed merchant crime boundary, damage-before-death order, native safe stock and guest replication, normal native-scaled HP and floor-ready event after native travelers (not live gameplay).");
     }
 
     private static void VerifyHealthScaling(Assembly game, Assembly addon)
@@ -39,32 +39,20 @@ internal static class GameMerchantCompatibilityTests
             Equals(formula[2].operand, baseHp) && formula[3].opcode == OpCodes.Mul && formula[4].LoadsConstant(100f) &&
             formula[5].opcode == OpCodes.Div && formula[6].opcode == OpCodes.Add && formula[7].opcode == OpCodes.Ret &&
             maximum.Take(formulaStart).Any(i => i.operand is FieldInfo f && f.Name == "isHPCursed"),
-            "Normal MaxHp must remain base HP * (1 + native percentage bonuses / 100); re-audit the threefold multiplier.");
+            "Normal MaxHp must remain base HP * (1 + native percentage bonuses / 100); re-audit native merchant scaling.");
 
         var addMax = RequiredMethod(unit, "AddMaxHp", typeof(float), typeof(bool));
         var addPercent = RequiredMethod(unit, "AddMaxHpPercent", typeof(float), typeof(bool));
-        var increase = Code(addMax);
-        int baseWrite = increase.FindIndex(i => i.operand is MethodInfo m && m.Name == "set_NetworkmaxHp");
-        int hpWrite = increase.FindIndex(i => i.operand is MethodInfo m && m.Name == "set_Networkhp");
-        Require(addMax.GetParameters()[1].DefaultValue is true && baseWrite >= 3 &&
-            Equals(increase[baseWrite - 3].operand, baseHp) && increase[baseWrite - 2].opcode == OpCodes.Ldarg_1 &&
-            increase[baseWrite - 1].opcode == OpCodes.Add && hpWrite > baseWrite &&
-            increase.Skip(baseWrite + 1).Take(hpWrite - baseWrite - 1).Any(i => i.operand is FieldInfo f && f.Name == "isHPCursed") &&
-            !increase.Any(i => Equals(i.operand, bonusHp) || i.operand is MethodInfo m && m.Name == "set_NetworkfinalMaxHp"),
-            "AddMaxHp must update synchronized base/current HP in the normal branch without replacing native percentage scaling.");
         Require(Code(addPercent).Any(i => i.operand is MethodInfo m && m.Name == "set_NetworkfinalMaxHp"),
             "Native stage and multiplayer HP bonuses must remain percentage contributions.");
 
         var scaling = Code(RequiredMethod(addon.GetType("SephiriaOne.MerchantRuntime", true)!, "ApplyNativeScaling",
             unit, Assembly.Load("UnityEngine.CoreModule").GetType("UnityEngine.Vector2", true)!));
-        int multiply = scaling.FindIndex(i => Equals(i.operand, addMax));
         int lastPercent = scaling.FindLastIndex(i => Equals(i.operand, addPercent));
         int heal = scaling.FindIndex(i => i.operand is MethodInfo m && m.DeclaringType == unit && m.Name == "HealPercent");
-        Require(scaling.Count(i => Equals(i.operand, addMax)) == 1 && lastPercent >= 0 && multiply > lastPercent &&
-            multiply >= 4 && Equals(scaling[multiply - 4].operand, baseHp) && scaling[multiply - 3].LoadsConstant(2f) &&
-            scaling[multiply - 2].opcode == OpCodes.Mul && scaling[multiply - 1].LoadsConstant(1) &&
-            heal > multiply && scaling[heal - 1].LoadsConstant(100f),
-            "Extra merchant HP must triple the fully scaled native maximum using AddMaxHp(maxHp * 2), then heal to full; adding 200 percentage points is not equivalent.");
+        Require(!scaling.Any(i => Equals(i.operand, addMax)) && lastPercent >= 0 &&
+            heal > lastPercent && scaling[heal - 1].LoadsConstant(100f),
+            "Extra merchant HP must retain the native base and percentage scaling, then heal to full without an addon health boost.");
     }
 
     private static void VerifyFloorCompletion(Assembly game, Assembly addon)

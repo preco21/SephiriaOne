@@ -49,11 +49,12 @@ UnitAI_NewBasic Natural(float x = 500)
 }
 UnitAvatar Player() { var actor = new GameObject("Player").AddComponent<UnitAvatar>(); actor.faction = "Player"; return actor; }
 
-Scenario("HP is three times the complete native scaling result", () =>
+Scenario("HP stays at the complete native scaling result", () =>
 {
     NetworkServer.connections[2] = new(); NetworkServer.connections[3] = new();
     var added = Spawn(Floor());
-    Check(added.Avatar.MaxHp == 24750, "Expected 24750 final HP, got " + added.Avatar.MaxHp);
+    Check(added.Avatar.MaxHp == 8250 && added.Avatar.maxHp == 2500,
+        "Expected native 8250 final HP and unchanged 2500 base HP, got " + added.Avatar.MaxHp);
     Check(added.Avatar.Healed == 100 && added.Avatar.Stats[ECustomStat.AllDamageBonus] == 35 &&
         added.Avatar.Stats[ECustomStat.DamageReduction] == 6, "Native healing, attack, and defense scaling are retained");
     Check(SocialIDDatabase.Template.avatarPrefab.GetComponent<UnitAvatar>().MaxHp == 2500, "Prefab HP stays unchanged");
