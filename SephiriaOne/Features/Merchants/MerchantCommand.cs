@@ -5,7 +5,7 @@ using System.Globalization;
 namespace SephiriaOne
 {
     internal enum MerchantParseResult { NotCommand, Help, Status, Invalid, Valid }
-    internal enum MerchantOption { Toggle, Chance, FirstFloor, MaxPerRun, Reset }
+    internal enum MerchantOption { Toggle, Chance, FirstFloor, MaxPerRun, Reset, Guarantee }
 
     internal readonly struct MerchantCommand
     {
@@ -17,15 +17,15 @@ namespace SephiriaOne
         public bool Enabled { get; }
         public int Value { get; }
         public int Chance => Option == MerchantOption.Chance ? Value : DefaultChance;
-        public bool IsReset => Option == MerchantOption.Reset || (Option == MerchantOption.Toggle && !Enabled);
-        public static string Usage => L.T("Host only: /one merchant <id> on|off|status|reset, /one merchant <id> chance <0..100>, /one merchant <id> from <1..1000>, /one merchant <id> limit <0..1000> (0 = unlimited). Legacy aliases: /one merchant on|off|reset, /one merchant chance <0..100>. Omit <id> for Wandering Merchant; /one merchant status lists all types. Each enabled type has its own guaranteed encounter on a randomly selected eligible floor, including the first. Chance applies to other floors before and after it. Conditions apply per type; different types can share a floor. Off keeps conditions; reset restores off, 25%, first floor 1, unlimited. Save: /one save.") + " " + L.T("Merchant types: ") + TypeIds();
+        public bool IsReset => Option == MerchantOption.Reset || ((Option == MerchantOption.Toggle || Option == MerchantOption.Guarantee) && !Enabled);
+        public static string Usage => L.T("Host only: /one merchant <id> on|off|status|reset, /one merchant <id> guarantee on|off, /one merchant <id> chance <0..100>, /one merchant <id> from <1..1000>, /one merchant <id> limit <0..1000> (0 = unlimited). Omit <id> for Wandering Merchant; /one merchant status lists all types. Guarantee defaults on: one encounter per enabled type on a random eligible floor. Guarantee off leaves chance rolls active with no reserved run-limit slot. Conditions apply per type; different types can share a floor. Off keeps settings; reset restores spawns off, guarantee on, 25%, first floor 1, unlimited. Save: /one save.") + " " + L.T("Merchant types: ") + TypeIds();
 
         public MerchantCommand(bool enabled) : this(MerchantCatalog.DefaultId, MerchantOption.Toggle, enabled ? 1 : 0) { }
         public MerchantCommand(int chance) : this(MerchantCatalog.DefaultId, MerchantOption.Chance, chance) { }
         public MerchantCommand(string id, MerchantOption option, int value = 0, bool allTypes = false)
         {
             typeId = (MerchantCatalog.Find(id) ?? throw new ArgumentException("Unknown merchant type.", nameof(id))).Id;
-            Option = option; Enabled = option == MerchantOption.Toggle && value != 0;
+            Option = option; Enabled = (option == MerchantOption.Toggle || option == MerchantOption.Guarantee) && value != 0;
             Value = value; AllTypes = allTypes;
         }
 
@@ -71,6 +71,14 @@ namespace SephiriaOne
             if (count == 2)
             {
                 string option = parts[operation].ToLowerInvariant();
+                if (option == "guarantee" &&
+                    (parts[operation + 1].Equals("on", StringComparison.OrdinalIgnoreCase) ||
+                     parts[operation + 1].Equals("off", StringComparison.OrdinalIgnoreCase)))
+                {
+                    command = new MerchantCommand(id, MerchantOption.Guarantee,
+                        parts[operation + 1].Equals("on", StringComparison.OrdinalIgnoreCase) ? 1 : 0);
+                    return MerchantParseResult.Valid;
+                }
                 int maximum = option == "chance" ? 100 : 1000;
                 int minimum = option == "from" ? 1 : 0;
                 if ((option == "chance" || option == "from" || option == "limit") &&

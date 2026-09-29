@@ -36,8 +36,12 @@ internal static class LocalizationFeatureTests
                 rabbit.Amount == 25 && RabbitCommand.Usage.Contains("/one rabbit mp-cost on|off|<0..10000>") &&
                 RabbitCommand.Usage.Contains("호스트"), "Rabbit help translates without altering syntax");
             Check(MerchantCommand.Parse("/one merchant chance 100", out var merchant, out _) == MerchantParseResult.Valid &&
-                merchant.Chance == 100 && MerchantCommand.Usage.Contains("/one merchant chance <0..100>") &&
+                merchant.Chance == 100 && MerchantCommand.Usage.Contains("/one merchant <id> chance <0..100>") &&
                 MerchantCommand.Usage.Contains("호스트"), "Merchant help translates without altering bounds");
+            Check(MerchantCommand.Parse("/one merchant papyrus guarantee off", out merchant, out _) == MerchantParseResult.Valid &&
+                merchant.Option == MerchantOption.Guarantee && !merchant.Enabled && MerchantCommand.Usage.Contains("/one merchant <id> guarantee on|off") &&
+                L.T("Guarantee") == "확정 출현" && L.F("Guarantee: {0}", L.T("OFF")).Contains("확정 출현"),
+                "Guarantee commands and panel controls translate without changing command syntax");
             const string native = "Native costume text <color=red>untouched</color>";
             string description = RabbitDescriptionText.Decorate(native, "HolyRabbit", true, true, true, true, true, 25);
             Check(description.StartsWith(native + "\n") && description.Contains("25 MP") && description.Contains("생존") &&

@@ -8,23 +8,24 @@ namespace SephiriaOne
     internal readonly struct MerchantSettings : IEquatable<MerchantSettings>
     {
         public bool Enabled { get; }
+        public bool Guarantee { get; }
         public int Chance { get; }
         public int FirstFloor { get; }
         public int MaxPerRun { get; }
 
-        public MerchantSettings(bool enabled, int chance, int firstFloor = 1, int maxPerRun = 0)
+        public MerchantSettings(bool enabled, int chance, int firstFloor = 1, int maxPerRun = 0, bool guarantee = true)
         {
             if (chance < 0 || chance > 100) throw new ArgumentOutOfRangeException(nameof(chance));
             if (firstFloor < 1 || firstFloor > 1000) throw new ArgumentOutOfRangeException(nameof(firstFloor));
             if (maxPerRun < 0 || maxPerRun > 1000) throw new ArgumentOutOfRangeException(nameof(maxPerRun));
-            Enabled = enabled; Chance = chance; FirstFloor = firstFloor; MaxPerRun = maxPerRun;
+            Enabled = enabled; Chance = chance; FirstFloor = firstFloor; MaxPerRun = maxPerRun; Guarantee = guarantee;
         }
 
-        public static MerchantSettings Defaults(MerchantDefinition definition) => new MerchantSettings(false, definition.DefaultChance);
+        public static MerchantSettings Defaults(MerchantDefinition definition) => new MerchantSettings(false, definition.DefaultChance, guarantee: definition.HasGuarantee);
         public bool Equals(MerchantSettings other) => Enabled == other.Enabled && Chance == other.Chance &&
-            FirstFloor == other.FirstFloor && MaxPerRun == other.MaxPerRun;
+            FirstFloor == other.FirstFloor && MaxPerRun == other.MaxPerRun && Guarantee == other.Guarantee;
         public override bool Equals(object? other) => other is MerchantSettings value && Equals(value);
-        public override int GetHashCode() => (Enabled ? 1 : 0) ^ (Chance << 1) ^ (FirstFloor << 8) ^ (MaxPerRun << 18);
+        public override int GetHashCode() => (Enabled ? 1 : 0) ^ (Chance << 1) ^ (FirstFloor << 8) ^ (MaxPerRun << 18) ^ (Guarantee ? 1 << 28 : 0);
     }
 
     internal sealed class MerchantPolicy
@@ -61,10 +62,11 @@ namespace SephiriaOne
             MerchantSettings next;
             switch (command.Option)
             {
-                case MerchantOption.Toggle: next = new MerchantSettings(command.Enabled, current.Chance, current.FirstFloor, current.MaxPerRun); break;
-                case MerchantOption.Chance: next = new MerchantSettings(current.Enabled, command.Chance, current.FirstFloor, current.MaxPerRun); break;
-                case MerchantOption.FirstFloor: next = new MerchantSettings(current.Enabled, current.Chance, command.Value, current.MaxPerRun); break;
-                case MerchantOption.MaxPerRun: next = new MerchantSettings(current.Enabled, current.Chance, current.FirstFloor, command.Value); break;
+                case MerchantOption.Toggle: next = new MerchantSettings(command.Enabled, current.Chance, current.FirstFloor, current.MaxPerRun, current.Guarantee); break;
+                case MerchantOption.Guarantee: next = new MerchantSettings(current.Enabled, current.Chance, current.FirstFloor, current.MaxPerRun, command.Enabled); break;
+                case MerchantOption.Chance: next = new MerchantSettings(current.Enabled, command.Chance, current.FirstFloor, current.MaxPerRun, current.Guarantee); break;
+                case MerchantOption.FirstFloor: next = new MerchantSettings(current.Enabled, current.Chance, command.Value, current.MaxPerRun, current.Guarantee); break;
+                case MerchantOption.MaxPerRun: next = new MerchantSettings(current.Enabled, current.Chance, current.FirstFloor, command.Value, current.Guarantee); break;
                 case MerchantOption.Reset: next = MerchantSettings.Defaults(definition); break;
                 default: throw new ArgumentOutOfRangeException(nameof(command));
             }

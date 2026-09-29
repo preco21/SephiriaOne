@@ -119,6 +119,7 @@ namespace SephiriaOne
             foreach (var button in changeButtons) button.interactable = snapshot.CanMutate && choicesReady;
             foreach (var button in rabbitOffButtons) button.interactable = snapshot.CanMutate;
             if (merchantOff) merchantOff.interactable = snapshot.CanMutate;
+            if (merchantGuaranteeOff) merchantGuaranteeOff.interactable = snapshot.CanMutate;
             if (amount) amount.interactable = snapshot.CanMutate && choicesReady;
             // Full-family reset is intentionally available for the existing recovery path.
             string family = page == 0 ? "stats" : page == 1 ? "fountain" : page == 3 ? "resources" : page == 6 ? "rabbit" : page == 7 ? "merchant" : "choices";
@@ -156,7 +157,7 @@ namespace SephiriaOne
         {
             page = target; draft.Clear(); changeButtons.Clear();
             rabbitOffButtons.Clear();
-            amount = null; resetOne = resetAll = save = forget = merchantOff = null;
+            amount = null; resetOne = resetAll = save = forget = merchantOff = merchantGuaranteeOff = null;
             if (pageRoot) { widgets.Forget(pageRoot); pageRoot.gameObject.SetActive(false); Destroy(pageRoot.gameObject); }
             pageRoot = PanelWidgets.Rect(window, "Page", 0, 110, 600, 162);
             if (page < 4) BuildEditor();

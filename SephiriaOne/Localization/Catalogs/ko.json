@@ -1,4 +1,11 @@
 {
+  "Guarantee": "확정 출현",
+  "Guarantee: {0}": "확정 출현: {0}",
+  "{0}: {1}; chance {2}%; first eligible floor {3}; per-run limit {4} (0 = unlimited); guarantee {5}.": "{0}: {1}; 확률 {2}%; 시작 층 {3}; 탐험당 최대 {4}회 (0 = 무제한); 확정 출현 {5}.",
+  "The run limit counts all spawns of this type. With guarantee on, one slot is reserved while its encounter remains reachable. Guarantee off releases that slot for chance rolls.": "탐험당 제한은 이 유형의 모든 출현을 셉니다. 확정 출현을 켜면 아직 가능한 확정 출현을 위해 1회를 남겨 둡니다. 끄면 그 자리도 확률 출현에 사용할 수 있습니다.",
+  "Changing guarantee, chance or conditions keeps this type's spawn toggle. Reset selected restores spawns off, guarantee on, {0}%, first floor 1, and no run limit.": "확정 출현, 확률 또는 조건을 바꿔도 이 유형의 출현 켜기/끄기는 유지됩니다. 선택 초기화는 출현 끄기, 확정 출현 켜기, {0}%, 시작 층 1, 탐험당 무제한으로 복원합니다.",
+  "Guarantee changes preserve saved targets, completed encounters, spawn counts and consumed floor rolls. Turning it back on cannot reroll floors or bypass the run limit.": "확정 출현 설정을 바꿔도 저장된 목표 층, 완료 여부, 출현 횟수와 이미 처리한 층은 유지됩니다. 다시 켜도 처리된 층을 재추첨하거나 탐험당 제한을 넘을 수 없습니다.",
+  "Host only: /one merchant <id> on|off|status|reset, /one merchant <id> guarantee on|off, /one merchant <id> chance <0..100>, /one merchant <id> from <1..1000>, /one merchant <id> limit <0..1000> (0 = unlimited). Omit <id> for Wandering Merchant; /one merchant status lists all types. Guarantee defaults on: one encounter per enabled type on a random eligible floor. Guarantee off leaves chance rolls active with no reserved run-limit slot. Conditions apply per type; different types can share a floor. Off keeps settings; reset restores spawns off, guarantee on, 25%, first floor 1, unlimited. Save: /one save.": "호스트 전용: /one merchant <id> on|off|status|reset, /one merchant <id> guarantee on|off, /one merchant <id> chance <0..100>, /one merchant <id> from <1..1000>, /one merchant <id> limit <0..1000> (0 = 무제한). <id>를 생략하면 떠돌이 상인에 적용하며, /one merchant status는 모든 유형을 표시합니다. 확정 출현은 기본 켜짐이며, 활성화된 유형마다 조건에 맞는 무작위 층에서 탐험당 1회 출현합니다. 확정 출현을 꺼도 확률 출현은 유지되며 탐험당 제한에서 확정 출현 몫을 남겨 두지 않습니다. 조건은 유형별로 적용되며 여러 유형이 같은 층에 나올 수 있습니다. off는 설정을 유지하고, reset은 출현 끄기, 확정 출현 켜기, 25%, 시작 층 1, 무제한으로 복원합니다. 저장: /one save.",
   " (base adjustment ": " (기본 보정 ",
   " (native ": " (원래 값 ",
   " (native fallback)": " (원래 값 사용)",

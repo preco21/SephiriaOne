@@ -16,7 +16,18 @@ namespace SephiriaOne
         private const string RabbitCostPresetHeader = "SephiriaOne preset v6";
         private const string MerchantPresetHeader = "SephiriaOne preset v7";
         private const string MerchantTypesPresetHeader = "SephiriaOne preset v8";
+        private const string MerchantGuaranteePresetHeader = "SephiriaOne preset v9";
         private static readonly string[] ChoiceNames = { "item", "weapon", "miracle" };
+
+        private bool UsesMerchantGuaranteePreset
+        {
+            get
+            {
+                foreach (var definition in MerchantCatalog.All)
+                    if (Merchants.Get(definition.Id).Guarantee != definition.HasGuarantee) return true;
+                return false;
+            }
+        }
 
         private bool UsesMerchantTypesPreset
         {
@@ -25,7 +36,7 @@ namespace SephiriaOne
                 foreach (var definition in MerchantCatalog.All)
                 {
                     var settings = Merchants.Get(definition.Id);
-                    if (settings.FirstFloor != 1 || settings.MaxPerRun != 0 ||
+                    if (settings.FirstFloor != 1 || settings.MaxPerRun != 0 || settings.Guarantee != definition.HasGuarantee ||
                         (definition.Id != MerchantCatalog.DefaultId && !settings.Equals(MerchantSettings.Defaults(definition)))) return true;
                 }
                 return false;
@@ -59,6 +70,7 @@ namespace SephiriaOne
                 if (settings.Chance != definition.DefaultChance) lines.Add(prefix + "chance " + settings.Chance.ToString(CultureInfo.InvariantCulture));
                 if (settings.FirstFloor != 1) lines.Add(prefix + "from " + settings.FirstFloor.ToString(CultureInfo.InvariantCulture));
                 if (settings.MaxPerRun != 0) lines.Add(prefix + "limit " + settings.MaxPerRun.ToString(CultureInfo.InvariantCulture));
+                if (settings.Guarantee != definition.HasGuarantee) lines.Add(prefix + "guarantee " + (settings.Guarantee ? "1" : "0"));
             }
             return lines;
         }
@@ -67,7 +79,7 @@ namespace SephiriaOne
         {
             bool multiplier = HasFountainMultiplier;
             foreach (Setting setting in stats.Values) multiplier |= setting.Multiplier;
-            return (UsesMerchantTypesPreset ? MerchantTypesPresetHeader : Merchants.HasChanges ? MerchantPresetHeader : RabbitPotions.MpCostPerDrink != RabbitPotionSettings.DefaultMpCostPerDrink ? RabbitCostPresetHeader :
+            return (UsesMerchantGuaranteePreset ? MerchantGuaranteePresetHeader : UsesMerchantTypesPreset ? MerchantTypesPresetHeader : Merchants.HasChanges ? MerchantPresetHeader : RabbitPotions.MpCostPerDrink != RabbitPotionSettings.DefaultMpCostPerDrink ? RabbitCostPresetHeader :
                 RabbitPotions.ConsumeMp || RabbitPotions.SuppressSurvival ? RabbitBalancePresetHeader :
                 RabbitPotions.HasChanges ? RabbitPresetHeader : Resources.HasChanges ? ResourcePresetHeader : multiplier ? MultiplierPresetHeader : PresetHeader) + "\n" +
                 (HasChanges ? string.Join("\n", DescribeSettings()) + "\n" : "");
@@ -79,8 +91,9 @@ namespace SephiriaOne
             error = L.T("Invalid saved preset; no saved settings were applied.");
             if (text == null || text.Length > MaximumPresetLength) return false;
             string[] lines = text.Replace("\r\n", "\n").Split('\n');
-            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader && lines[0] != RabbitBalancePresetHeader && lines[0] != RabbitCostPresetHeader && lines[0] != MerchantPresetHeader && lines[0] != MerchantTypesPresetHeader)) return false;
-            bool allowMerchantTypes = lines[0] == MerchantTypesPresetHeader;
+            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader && lines[0] != RabbitBalancePresetHeader && lines[0] != RabbitCostPresetHeader && lines[0] != MerchantPresetHeader && lines[0] != MerchantTypesPresetHeader && lines[0] != MerchantGuaranteePresetHeader)) return false;
+            bool allowMerchantGuarantee = lines[0] == MerchantGuaranteePresetHeader;
+            bool allowMerchantTypes = lines[0] == MerchantTypesPresetHeader || allowMerchantGuarantee;
             bool allowMerchant = lines[0] == MerchantPresetHeader || allowMerchantTypes;
             bool allowCost = lines[0] == RabbitCostPresetHeader || allowMerchant;
             bool allowBalance = lines[0] == RabbitBalancePresetHeader || allowCost;
@@ -110,6 +123,7 @@ namespace SephiriaOne
                     else if (field == "chance") { option = MerchantOption.Chance; maximum = 100; }
                     else if (typed && field == "from") { option = MerchantOption.FirstFloor; minimum = 1; maximum = 1000; }
                     else if (typed && field == "limit") { option = MerchantOption.MaxPerRun; maximum = 1000; }
+                    else if (typed && allowMerchantGuarantee && field == "guarantee") { option = MerchantOption.Guarantee; maximum = 1; }
                     else return false;
                     if (!MerchantCommand.TryParseNumber(number, minimum, maximum, out int merchantValue) ||
                         number != merchantValue.ToString(CultureInfo.InvariantCulture)) return false;

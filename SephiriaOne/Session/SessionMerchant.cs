@@ -25,9 +25,10 @@ namespace SephiriaOne
         }
 
         internal static string DescribeMerchant(MerchantDefinition definition, MerchantSettings settings) =>
-            L.F("{0}: {1}; other-floor chance {2}%; first eligible floor {3}; per-run limit {4} (0 = unlimited).", L.T(definition.Name),
-                L.T(settings.Enabled ? "on" : "off"), settings.Chance, settings.FirstFloor, settings.MaxPerRun) + " " +
-            (definition.HasGuarantee ? L.T("Each enabled type has its own guaranteed encounter on a randomly selected eligible floor, including the first when allowed by its conditions. Other eligible floors roll before and after the guarantee.") :
+            L.F("{0}: {1}; chance {2}%; first eligible floor {3}; per-run limit {4} (0 = unlimited); guarantee {5}.", L.T(definition.Name),
+                L.T(settings.Enabled ? "on" : "off"), settings.Chance, settings.FirstFloor, settings.MaxPerRun,
+                L.T(settings.Guarantee && definition.HasGuarantee ? "on" : "off")) + " " +
+            (settings.Guarantee && definition.HasGuarantee ? L.T("Each enabled type has its own guaranteed encounter on a randomly selected eligible floor, including the first when allowed by its conditions. Other eligible floors roll before and after the guarantee.") :
                 L.T("Eligible floors use this type's configured chance.")) + " " +
             L.T("At most one of each type per floor; different types can coexist. Added merchants are hostile with 1x normal HP, cannot talk, and have no negotiation/crime penalty. Off/reset stop future spawns; existing added merchants stay exempt until floor teardown.");
 

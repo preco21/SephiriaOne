@@ -9,6 +9,15 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.25.0` adds a per-type guaranteed-encounter toggle to the shared merchant
+commands, panel, snapshots, status and EN/KO messages.
+`/one merchant <id> guarantee on|off` preserves all other fields. Off leaves chance rolls active and releases a
+reserved cap slot; re-enabling preserves targets, completion, counts and consumed
+rolls. Existing presets default to guarantee on; nondefault intent uses v9.
+The event-driven runtime and native guest networking are unchanged. See
+[merchant behavior](merchant-variants.md) and the
+[implementation plan](plans/2026-09-29-merchant-guarantee-toggle.md). No deployment.
+
 Version `0.24.0` adds [independent hostile merchant variants](merchant-variants.md):
 Wandering Merchant, Papyrus and Taz. Each has its own toggle, chance, earliest
 eligible floor, per-run cap and random guarantee; different types can coexist on

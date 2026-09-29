@@ -4,11 +4,15 @@ Added in `0.20.0`, disabled by default. Only the host needs SephiriaOne.
 Since `0.24.0`, this is the `wandering` type in the
 [independent merchant catalog](merchant-variants.md), alongside Papyrus and Taz.
 Commands below remain aliases for Wandering only; its Off/Reset do not change
-other types. Each enabled type has its own conditions and guarantee.
+other types. Each enabled type has its own conditions and guarantee. Since
+`0.25.0`, `/one merchant guarantee on|off` controls the original type's guarantee
+separately; default on. Off leaves chance rolls active and releases its reserved
+cap slot. The Merchant panel exposes the same option for every type.
 Open `/one ui` → **Merchant**, or use chat:
 
 ```text
 /one merchant chance 25
+/one merchant guarantee on
 /one merchant on
 /one merchant status
 /one merchant off
@@ -18,19 +22,21 @@ Open `/one ui` → **Merchant**, or use chat:
 
 `chance` accepts a whole-number percentage from 0 to 100; default **25%**.
 Changing the chance preserves the on/off setting. Reset disables the feature and
-restores 25%. Save retains the toggle and chance for future hosted sessions; a
-custom chance is remembered even while off. Presets with merchant settings use v7;
-v1–v6 presets still load and default this feature to off/25%.
+restores guarantee on and 25%. Save retains the toggles and chance for future hosted
+sessions; custom settings are remembered even while off. Simple merchant settings
+use v7, typed conditions use v8, and guarantee off uses v9. All earlier presets
+remain supported and keep guarantees on. Run history is never reset by these options.
 
 ## Encounters and balance
 
-- Since `0.23.0`, **each new run** gets one guaranteed encounter scheduled across
+- With guarantee on, **each new run** gets one guaranteed encounter scheduled across
   its potential eligible normal floor positions. The first floor remains eligible,
   but is no longer forced. Other floors roll the configured chance before or after
   that position; an early chance encounter does not consume the scheduled guarantee.
   At most one addon Wandering Merchant spawns on each floor. Other types can share
   that floor when their own rules and safe placement allow it.
-- **0%** means only the guaranteed encounter; **100%** means every eligible floor.
+- **0%** means only the guaranteed encounter when enabled, or none with guarantee
+  off; **100%** means every eligible floor subject to the configured cap.
   Chance changes apply to floors that have not yet rolled. Turning the option on
   during a run selects from current/future progression. It does not populate passed
   main-route floors just because their generators remain loaded. Optional stages

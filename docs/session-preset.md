@@ -30,6 +30,17 @@ still export as v7 when possible. Duplicate alias/typed fields and unknown type 
 are rejected atomically. Run counters, reservations and guarantees remain separate
 from presets, so reloading settings never replenishes them.
 
+Version `0.25.0` adds v9 for per-type guarantee toggles. For example,
+`merchant papyrus guarantee 0` disables only Papyrus's guaranteed encounter while
+leaving its spawn toggle, chance and conditions intact. Missing guarantee rows
+default to on for all current types, including v1-v8 presets. Explicit `1`
+normalizes away; exports retain the oldest applicable schema when possible.
+Guarantee rows require v9, a canonical type ID and a canonical `0` or `1`;
+duplicates or invalid values reject the entire preset. The setting persists even
+while that type's spawns are off. Run targets, completed guarantees, consumed
+floor rolls and counts survive option changes; turning a guarantee back on never
+resets them or bypasses the current cap.
+
 Version `0.16.0` stores enabled [rabbit potion options](rabbit-potions.md) in v4
 as `rabbit infinite 1` and `rabbit share 1`. Missing/off options remain native.
 v1-v3 are still readable; v4 supports all prior setting families. These flags are

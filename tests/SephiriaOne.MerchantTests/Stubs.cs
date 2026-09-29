@@ -280,12 +280,13 @@ namespace SephiriaOne
     internal static class SessionSettings
     {
         public static bool MerchantSpawnsForUse;
+        public static bool Guarantee = true;
         public static int MerchantSpawnChanceForUse = 100;
         public static int FirstFloor = 1, MaxPerRun;
         public static readonly Dictionary<string, MerchantSettings> Variants = new();
         public static bool AnyMerchantSpawnsForUse => MerchantSpawnsForUse || Variants.Values.Any(value => value.Enabled);
         public static MerchantSettings GetMerchantSettingsForUse(string id) => id == MerchantCatalog.DefaultId ?
-            new MerchantSettings(MerchantSpawnsForUse, MerchantSpawnChanceForUse, FirstFloor, MaxPerRun) :
+            new MerchantSettings(MerchantSpawnsForUse, MerchantSpawnChanceForUse, FirstFloor, MaxPerRun, Guarantee) :
             Variants.TryGetValue(id, out var settings) ? settings : MerchantSettings.Defaults(MerchantCatalog.Find(id));
     }
     internal static class MerchantFeature { public static bool Available = true; }

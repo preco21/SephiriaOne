@@ -23,14 +23,14 @@ namespace SephiriaOne
 
         internal int Progress => run.GetInt(Prefix + "Progress", -1);
 
-        internal void Advance(int position, int firstFloor = 1)
+        internal void Advance(int position, int firstFloor = 1, bool guarantee = true)
         {
             if (position < 0) return;
             int progress = Math.Max(Progress, position);
             if (progress != Progress) run.SetInt(Prefix + "Progress", progress);
             // Old saves with an encounter retain their fulfilled guarantee. A pending
             // schedule stays fixed across option changes, reloads and guest re-entry.
-            if (!hasGuarantee || State.Completed || run.GetInt(Prefix + "Target", -1) >= 0) return;
+            if (!guarantee || !hasGuarantee || State.Completed || run.GetInt(Prefix + "Target", -1) >= 0) return;
             int remaining = 0;
             for (int i = firstFloor - 1; i < opportunities.Count; i++) if (opportunities[i] >= progress) remaining++;
             if (remaining == 0) return;
@@ -44,15 +44,15 @@ namespace SephiriaOne
             }
         }
 
-        internal bool IsDue(int position)
+        internal bool IsDue(int position, bool guarantee = true)
         {
             int target = run.GetInt(Prefix + "Target", -1);
-            return hasGuarantee && target >= 0 && position >= target && position >= Progress && !State.Completed;
+            return guarantee && hasGuarantee && target >= 0 && position >= target && position >= Progress && !State.Completed;
         }
 
-        internal bool HasPendingOpportunity(int firstFloor)
+        internal bool HasPendingOpportunity(int firstFloor, bool guarantee = true)
         {
-            if (!hasGuarantee || State.Completed) return false;
+            if (!guarantee || !hasGuarantee || State.Completed) return false;
             int earliest = Math.Max(Progress, run.GetInt(Prefix + "Target", -1));
             for (int i = firstFloor - 1; i < opportunities.Count; i++)
                 if (opportunities[i] >= earliest) return true;

@@ -69,7 +69,7 @@ namespace SephiriaOne
                         schedules.Add(definition.Id, schedule);
                     }
                     schedule.State.InitializeCount(dungeon.generatedFloors.Keys);
-                    schedule.Advance(route.LatestPosition, settings.FirstFloor);
+                    schedule.Advance(route.LatestPosition, settings.FirstFloor, settings.Guarantee);
                     foreach (FloorGenerator floor in floors)
                     {
                         // A broken template or condition must not suppress another type.
@@ -101,10 +101,10 @@ namespace SephiriaOne
             var context = new MerchantSpawnContext(route.FloorNumber(route.LatestPosition), schedule.State.Count,
                 floor.DataOnServer.difficulty, floor.DataOnServer.stageName);
             if (!MerchantSpawnRules.Allows(definition, settings, context)) return;
-            bool guaranteed = schedule.IsDue(positionInRun);
+            bool guaranteed = schedule.IsDue(positionInRun, settings.Guarantee);
             // Keep one slot available for the scheduled encounter. A 100% chance and
             // cap of one therefore produces only the guarantee, at its chosen floor.
-            if (!guaranteed && settings.MaxPerRun > 0 && schedule.HasPendingOpportunity(settings.FirstFloor) &&
+            if (!guaranteed && settings.MaxPerRun > 0 && schedule.HasPendingOpportunity(settings.FirstFloor, settings.Guarantee) &&
                 schedule.State.Count >= settings.MaxPerRun - 1) return;
             if (!MerchantRooms.TryChoose(floor, definition.SeedSalt, out Vector2 position)) return;
             SocialIDEntity template = SocialIDDatabase.FindByName(definition.SocialId);

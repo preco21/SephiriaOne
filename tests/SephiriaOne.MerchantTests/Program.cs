@@ -20,7 +20,7 @@ void Reset()
     FixtureWorld.FailSocialAfterStock = false; FixtureWorld.BeforeInstantiate = null; Debug.Warnings.Clear();
     SaveManager.CurrentRun = new(); DungeonManager.Instance = new(); RuntimeFactionManager.Instance = new();
     SessionSettings.MerchantSpawnsForUse = true; SessionSettings.MerchantSpawnChanceForUse = 100; MerchantFeature.Available = true;
-    SessionSettings.Variants.Clear(); SessionSettings.FirstFloor = 1; SessionSettings.MaxPerRun = 0;
+    SessionSettings.Variants.Clear(); SessionSettings.FirstFloor = 1; SessionSettings.MaxPerRun = 0; SessionSettings.Guarantee = true;
     var actorPrefab = new GameObject("Papa");
     actorPrefab.AddComponent<Unit_BabaMerchantHard>(); actorPrefab.AddComponent<UnitAI_NewBasic>();
     var safePrefab = new GameObject("Stock"); safePrefab.AddComponent<Safe>();
@@ -554,6 +554,86 @@ Scenario("merchant definitions compose eligibility without core-specific branche
     Check(!MerchantSpawnRules.Allows(variant, settings, new(2, 0, 3, "Desert")), "Independent region rule is composable");
     Check(MerchantSpawnRules.Allows(variant, settings, new(2, 1, 3, "Library")), "All conditions admit the variant");
     Check(!MerchantSpawnRules.Allows(variant, new(false, 25), new(2, 0, 3, "Library")), "Disabled variants never spawn");
+});
+
+Scenario("disabled guarantees do not force zero-chance encounters or select targets", () =>
+{
+    DungeonManager.Instance.Opportunities = new[] { 0, 1, 2 };
+    EnableVariants(); SessionSettings.Guarantee = false;
+    SessionSettings.Variants["papyrus"] = new(true, 0, guarantee: false);
+    SessionSettings.Variants["taz"] = new(true, 0, guarantee: false);
+    Visit(At(0)); Visit(At(1)); Visit(At(2));
+    Check(Actors().Length == 0, "Zero chance with guarantee off spawns no merchants of any type");
+    Check(SaveManager.CurrentRun.GetInt(TargetKey, -1) == -1 &&
+        SaveManager.CurrentRun.GetInt(VariantKey("papyrus", "Schedule.Target"), -1) == -1 &&
+        SaveManager.CurrentRun.GetInt(VariantKey("taz", "Schedule.Target"), -1) == -1, "No disabled guarantee creates a target");
+    Check(SaveManager.CurrentRun.GetInt(VariantKey("papyrus", "Schedule.Progress"), -1) == 2,
+        "Route progress still advances with guarantee off");
+});
+Scenario("guarantee off releases reserved cap slots while other types remain guaranteed", () =>
+{
+    DungeonManager.Instance.Opportunities = new[] { 0, 1, 2 };
+    EnableVariants(100, 1, 1);
+    SaveManager.CurrentRun.SetInt(TargetKey, 2);
+    SaveManager.CurrentRun.SetInt(VariantKey("papyrus", "Schedule.Target"), 2);
+    SaveManager.CurrentRun.SetInt(VariantKey("taz", "Schedule.Target"), 2);
+    SessionSettings.Guarantee = false;
+    SessionSettings.Variants["papyrus"] = new(true, 100, 1, 1, false);
+    Visit(At(0));
+    Check(Actors().Length == 2 && Actors().All(actor => actor.Avatar is not Unit_TurtlePotion),
+        "Chance rolls may use the full cap for guarantee-off types, while Taz keeps its reserved slot");
+    Check(!SaveManager.CurrentRun.GetBool(EncounterKey) && !SaveManager.CurrentRun.GetBool(VariantKey("papyrus", "Encounter")),
+        "Chance-only spawns do not fulfill paused guarantees");
+    SessionSettings.Guarantee = true; SessionSettings.Variants["papyrus"] = new(true, 100, 1, 1);
+    Visit(At(1)); Visit(At(2));
+    Check(Actors().Length == 3 && SaveManager.CurrentRun.GetBool(VariantKey("taz", "Encounter")) && !SaveManager.CurrentRun.GetBool(EncounterKey),
+        "Re-enabling guarantees cannot exceed caps consumed by chance spawns");
+});
+Scenario("pausing a saved target preserves rolls and carries the pending guarantee forward", () =>
+{
+    DungeonManager.Instance.Opportunities = new[] { 0, 1, 2, 3 };
+    SessionSettings.MerchantSpawnsForUse = false;
+    SessionSettings.Variants["papyrus"] = new(true, 0);
+    string target = VariantKey("papyrus", "Schedule.Target"); SaveManager.CurrentRun.SetInt(target, 1);
+    Visit(At(0)); SessionSettings.Variants["papyrus"] = new(true, 0, guarantee: false); Visit(At(1));
+    Check(Actors().Length == 0 && SaveManager.CurrentRun.GetInt(target, -1) == 1, "Turning off pauses the saved target without erasing it");
+    SaveManager.CurrentRun = CopyRun(); MerchantRuntime.Refresh();
+    SessionSettings.Variants["papyrus"] = new(true, 0); MerchantRuntime.Refresh();
+    Check(Actors().Length == 0, "Re-enabling cannot reopen the target floor's already-consumed chance roll");
+    Visit(At(2));
+    Check(Actors().Length == 1 && Actors()[0].Avatar is Unit_Soldier && SaveManager.CurrentRun.GetInt(target, -1) == 1,
+        "Pending target survives reload and fulfills on the next unused eligible floor");
+    SessionSettings.Variants["papyrus"] = new(true, 0, guarantee: false); MerchantRuntime.Refresh();
+    SessionSettings.Variants["papyrus"] = new(true, 0); Visit(At(3));
+    NetworkServer.connections[2] = new(); NetworkServer.connections.Remove(2); NetworkServer.connections[2] = new(); MerchantRuntime.Refresh();
+    Check(Actors().Length == 1, "Completed guarantees are never replenished by toggles or guest re-entry");
+});
+Scenario("first enabling a guarantee selects only remaining positions", () =>
+{
+    DungeonManager.Instance.Opportunities = new[] { 0, 1, 2, 3 };
+    SessionSettings.Guarantee = false; SessionSettings.MerchantSpawnChanceForUse = 0;
+    Visit(At(0)); Visit(At(1));
+    Check(SaveManager.CurrentRun.GetInt(TargetKey, -1) == -1, "An initially disabled guarantee is not preselected");
+    SessionSettings.Guarantee = true; Visit(At(2)); Visit(At(3));
+    Check(SaveManager.CurrentRun.GetInt(TargetKey, -1) >= 2 && Actors().Length == 1,
+        "First enabling the guarantee cannot select a passed floor");
+});
+Scenario("chance-only state survives reload and owned actors retain their crime exemption", () =>
+{
+    DungeonManager.Instance.Opportunities = new[] { 0, 1, 2, 3 };
+    SessionSettings.MaxPerRun = 1; SaveManager.CurrentRun.SetInt(TargetKey, 2);
+    SessionSettings.Guarantee = false; Visit(At(0)); MerchantNativeHooks.Install();
+    var actor = Actors().Single(); var attacker = Player(); var damage = new DamageInstance { origin = attacker };
+    actor.RunDamage(damage); actor.RunDeath(damage);
+    Check(attacker.Buffs == 0 && DungeonManager.Instance.CrimeCalls == 0,
+        "Chance-only added actors receive the same isolated crime exemption");
+    SaveManager.CurrentRun = CopyRun(); MerchantRuntime.Refresh(); Visit(At(1));
+    Check(Actors().Length == 0 && SaveManager.CurrentRun.GetInt(VariantKey("wandering", "Count"), 0) == 1,
+        "Reload never replenishes a chance-only cap");
+    SessionSettings.Guarantee = true; Visit(At(2)); Check(Actors().Length == 0, "A resumed guarantee respects a saved exhausted cap");
+    SessionSettings.MaxPerRun = 2; SessionSettings.MerchantSpawnChanceForUse = 0; Visit(At(3));
+    Check(Actors().Length == 1 && SaveManager.CurrentRun.GetBool(EncounterKey),
+        "Raising the cap allows the still-pending target without rerolling it");
 });
 
 Reset();

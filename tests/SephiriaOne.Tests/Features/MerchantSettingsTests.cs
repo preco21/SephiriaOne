@@ -7,6 +7,8 @@ internal static class MerchantSettingsTests
         int checks = 0;
         void Check(bool value, string scenario)
         { if (!value) throw new Exception(scenario); checks++; }
+        Check(MerchantCommand.Parse("/one merchant papyrus guarantee off", out _, out _) == MerchantParseResult.Valid,
+            "A selected merchant guarantee can be disabled without disabling chance spawns");
         Check(MerchantCommand.Parse("/one merchant papyrus on", out _, out _) == MerchantParseResult.Valid,
             "A selected merchant type can be enabled independently");
         const string variants = "SephiriaOne preset v8\nmerchant wandering spawns 1\nmerchant papyrus chance 80\nmerchant papyrus from 3\nmerchant papyrus limit 2\n";
@@ -113,6 +115,69 @@ internal static class MerchantSettingsTests
         Check(SessionPolicy.TryReadPreset(combined, out policy, out _) && policy.ToPresetText() == combined &&
             policy.RabbitPotions.Share && policy.RabbitPotions.ConsumeMp && policy.RabbitPotions.MpCostPerDrink == 25,
             "v7 preserves all existing families including Rabbit custom fee");
+        independent.Clear();
+        Apply("papyrus guarantee off");
+        Check(!independent.Merchants.Get("papyrus").Guarantee && !independent.Merchants.AnyEnabled && independent.HasChanges &&
+            independent.Merchants.Get("wandering").Guarantee && independent.Merchants.Get("taz").Guarantee,
+            "Guarantee intent persists independently while spawning is off");
+        retained = independent.Merchants.Snapshot;
+        foreach (string text in new[] { "papyrus on", "papyrus chance 70", "papyrus from 2", "papyrus limit 4", "papyrus off", "papyrus on" }) Apply(text);
+        Check(independent.Merchants.Get("papyrus").Equals(new MerchantSettings(true, 70, 2, 4, false)) &&
+            !retained["papyrus"].Enabled && !retained["papyrus"].Guarantee,
+            "Every other field edit retains guarantee off and snapshots stay detached");
+        Check(SessionPolicy.TryReadPreset(independent.ToPresetText(), out copied, out _) &&
+            copied.Merchants.Get("papyrus").Equals(independent.Merchants.Get("papyrus")) &&
+            independent.ToPresetText().StartsWith("SephiriaOne preset v9\n"), "Guarantee off round trips with all other fields in v9");
+        Apply("papyrus guarantee on");
+        Check(independent.Merchants.Get("papyrus").Equals(new MerchantSettings(true, 70, 2, 4)) &&
+            !copied.Merchants.Get("papyrus").Guarantee && independent.ToPresetText().StartsWith("SephiriaOne preset v8\n"),
+            "Enabling guarantee preserves other fields and returns to the earlier schema when possible");
+        Apply("guarantee off");
+        Check(!independent.Merchants.Get("wandering").Guarantee && independent.Merchants.Get("papyrus").Guarantee,
+            "Untyped guarantee alias applies only to Wandering");
+        Apply("papyrus guarantee off"); Apply("papyrus reset");
+        Check(independent.Merchants.Get("papyrus").Equals(MerchantSettings.Defaults(MerchantCatalog.Find("papyrus")!)) &&
+            !independent.Merchants.Get("wandering").Guarantee, "Reset restores selected guarantee on without altering other types");
+        independent.Clear(); Apply("guarantee off");
+        const string guaranteeOnly = "SephiriaOne preset v9\nmerchant wandering guarantee 0\n";
+        Check(independent.ToPresetText() == guaranteeOnly && SessionPolicy.TryReadPreset(guaranteeOnly, out copied, out _) &&
+            copied.ToPresetText() == guaranteeOnly, "An otherwise-default disabled type persists guarantee off");
+        independent.Clear();
+        Check(!independent.HasChanges && independent.Merchants.Get("wandering").Guarantee &&
+            !copied.Merchants.Get("wandering").Guarantee, "Clear restores default guarantees without mutating a copied preset");
+        Check(!new MerchantSettings(true, 25).Equals(new MerchantSettings(true, 25, guarantee: false)),
+            "Changing only guarantee produces a different setting");
+        foreach (var definition in MerchantCatalog.All)
+        {
+            foreach (bool enabledGuarantee in new[] { false, true })
+                Check(MerchantCommand.Parse("/ONE MERCHANT " + definition.Id.ToUpperInvariant() + " GuArAnTeE " + (enabledGuarantee ? "ON" : "OFF"),
+                    out var command, out _) == MerchantParseResult.Valid && command.Option == MerchantOption.Guarantee &&
+                    command.Enabled == enabledGuarantee && command.IsReset == !enabledGuarantee && command.TypeId == definition.Id,
+                    "Typed guarantees parse case-insensitively; only off is a recovery action");
+        }
+        foreach (string text in new[] { "guarantee", "guarantee 0", "guarantee 1", "guarantee yes", "guarantee x2", "guarantee on extra", "papyrus guarantee reset" })
+            Check(MerchantCommand.Parse("/one merchant " + text, out _, out _) == MerchantParseResult.Invalid,
+                "Malformed guarantee command is rejected: " + text);
+        for (int version = 1; version <= 9; version++)
+        {
+            Check(SessionPolicy.TryReadPreset("SephiriaOne preset v" + version + "\n", out policy, out _) &&
+                MerchantCatalog.All.All(definition => policy.Merchants.Get(definition.Id).Guarantee), "Missing guarantee fields default on: " + version);
+            if (version < 9)
+                Check(!SessionPolicy.TryReadPreset("SephiriaOne preset v" + version + "\nmerchant wandering guarantee 0\n", out policy, out _) && !policy.HasChanges,
+                    "Earlier schemas reject guarantee rows atomically: " + version);
+        }
+        Check(SessionPolicy.TryReadPreset("SephiriaOne preset v9\nmerchant taz guarantee 1\n", out policy, out _) &&
+            !policy.HasChanges && policy.ToPresetText() == "SephiriaOne preset v1\n", "Explicit default guarantee normalizes away");
+        foreach (string row in new[] { "merchant taz guarantee 2", "merchant taz guarantee -1", "merchant taz guarantee 00", "merchant taz guarantee 0.0",
+            "merchant taz guarantee +0", "merchant taz guarantee off", "merchant guarantee 0", "merchant taz guarantee 0\nmerchant taz guarantee 1" })
+            Check(!SessionPolicy.TryReadPreset("SephiriaOne preset v9\nrabbit share 1\n" + row + "\n", out policy, out _) && !policy.HasChanges,
+                "Invalid v9 guarantee rows reject all pending settings: " + row);
+        foreach (bool guaranteeFirst in new[] { false, true })
+        {
+            string rows = guaranteeFirst ? "merchant taz guarantee 0\nmerchant taz spawns 1\n" : "merchant taz spawns 1\nmerchant taz guarantee 0\n";
+            Check(SessionPolicy.TryReadPreset("SephiriaOne preset v9\n" + rows, out policy, out _) &&
+                policy.Merchants.Get("taz").Enabled && !policy.Merchants.Get("taz").Guarantee, "Guarantee and spawn rows are order independent");
+        }
         return checks;
     }
 }

@@ -148,5 +148,41 @@ internal static class MerchantRuntimeTests
         pendingHost = start(); pendingHost.connectionToClient.isReady = false; calls = MerchantFeature.RefreshCalls;
         check(!Command("papyrus on") && !Command("taz from 3") && !SessionSettings.ReadSnapshot().Merchants["papyrus"].Enabled &&
             MerchantFeature.RefreshCalls == calls, "Pending host initialization rejects all typed settings before policy mutation");
+
+        start(); MerchantFeature.Available = true;
+        presetPath = Path.Combine(UnityEngine.Application.persistentDataPath, "SephiriaOne", "session-preset.txt");
+        check(Command("papyrus on") && Command("papyrus chance 60") && Command("papyrus from 2") && Command("papyrus limit 3"),
+            "Guarantee test starts with independent enabled settings");
+        detached = SessionSettings.ReadSnapshot(); calls = MerchantFeature.RefreshCalls;
+        bool sawGuaranteeOff = false;
+        MerchantFeature.OnRefresh = () => sawGuaranteeOff = !SessionSettings.GetMerchantSettingsForUse("papyrus").Guarantee;
+        check(Command("papyrus guarantee off") && sawGuaranteeOff && MerchantFeature.RefreshCalls == calls + 1 &&
+            SessionSettings.GetMerchantSettingsForUse("papyrus").Equals(new MerchantSettings(true, 60, 2, 3, false)) &&
+            detached.Merchants["papyrus"].Guarantee && SessionSettings.GetMerchantSettingsForUse("taz").Guarantee,
+            "Guarantee mutation commits before refresh, preserves other fields and leaves older snapshots detached");
+        MerchantFeature.OnRefresh = null;
+        SnapshotDetailTests.AssertSameValues(SessionSettings.ReadSnapshot(), SessionSettings.ReadSnapshot(includeDiagnostics: false));
+        check(SettingsActions.Execute("/one merchant papyrus status").Messages.Any(text => text.Contains("guarantee off")),
+            "Selected status reports guarantee off");
+        check(SettingsActions.Execute("/one save").Success && File.ReadAllText(presetPath).StartsWith("SephiriaOne preset v9\n") &&
+            Command("papyrus reset") && SessionSettings.GetMerchantSettingsForUse("papyrus").Guarantee,
+            "The new option saves as v9 while reset restores the default without changing the saved copy");
+        DungeonManager.Instance = new DungeonManager(); calls = MerchantFeature.RefreshCalls;
+        check(SessionSettings.ReadSnapshot().Merchants["papyrus"].Guarantee && MerchantFeature.RefreshCalls == calls,
+            "Replacement scope snapshots remain read-only defaults before native use");
+        check(SessionSettings.GetMerchantSettingsForUse("papyrus").Equals(new MerchantSettings(true, 60, 2, 3, false)) &&
+            MerchantFeature.RefreshCalls == calls + 1, "Fresh native scope loads the complete v9 merchant policy exactly once");
+        SessionSettings.Synchronize();
+        check(Command("papyrus guarantee on"), "Host can re-enable a compatible guarantee");
+        MerchantFeature.Available = false;
+        check(!Command("papyrus guarantee on") && Command("papyrus guarantee off") &&
+            !SessionSettings.GetMerchantSettingsForUse("papyrus").Guarantee && SessionSettings.GetMerchantSettingsForUse("papyrus").Enabled,
+            "Guarantee off remains a recovery action with failed hooks and does not disable chance-spawn intent");
+        MerchantFeature.Available = true;
+        NetworkServer.active = false; calls = MerchantFeature.RefreshCalls;
+        check(!Command("papyrus guarantee on") && !Command("papyrus guarantee off") && MerchantFeature.RefreshCalls == calls,
+            "Guests cannot change either direction of the host's guarantee toggle");
+        NetworkServer.active = true;
+        SessionSettings.Stop();
     }
 }
