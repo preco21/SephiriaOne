@@ -8,11 +8,12 @@ namespace SephiriaOne
     internal static class MerchantRuntime
     {
         private const string FloorKey = "SephiriaOne.MerchantFloor.";
-        private const string EncounterKey = "SephiriaOne.MerchantEncounter";
         private static readonly Dictionary<UnitAI_NewBasic, SpawnedMerchant> owned =
             new Dictionary<UnitAI_NewBasic, SpawnedMerchant>(ReferenceComparer<UnitAI_NewBasic>.Instance);
         private static DungeonManager dungeon;
         private static SaveData run;
+        private static MerchantRoute route;
+        private static MerchantSchedule schedule;
         private static bool refreshing;
 
         private sealed class SpawnedMerchant
@@ -46,21 +47,43 @@ namespace SephiriaOne
                 { Clear(); dungeon = current; run = currentRun; }
                 Prune();
                 if (!enabled) return;
-                if (only) TrySpawn(only);
-                else foreach (FloorGenerator floor in FloorGenerator.FloorGenerators.ToArray()) TrySpawn(floor);
+                if (route == null)
+                {
+                    // Commands can refresh before native LoadDungeon has assigned the
+                    // scenario. Do not cache an empty plan for the rest of that run.
+                    if (!dungeon.Race) return;
+                    route = new MerchantRoute(dungeon, run);
+                    schedule = new MerchantSchedule(run, route.Opportunities, dungeon.DestinySeed);
+                }
+                route.ObserveHistory();
+                FloorGenerator[] floors = only ? new[] { only } : FloorGenerator.FloorGenerators.ToArray();
+                // Establish current progress before processing anything. Reversed list
+                // order and settings changes must not spawn on historical loaded floors.
+                foreach (FloorGenerator floor in floors)
+                    if (Ready(floor)) route.Position(floor.DataOnServer);
+                schedule.Advance(route.LatestPosition);
+                foreach (FloorGenerator floor in floors) TrySpawn(floor);
             }
             catch (Exception error)
             { Debug.LogWarning("[SephiriaOne] Merchant refresh failed; native floors continue: " + error); }
             finally { refreshing = false; }
         }
 
+        private static bool Ready(FloorGenerator floor) =>
+            floor && floor.isServer && floor.GenerateSuccess && !string.IsNullOrEmpty(floor.guid) &&
+            floor.DataOnServer != null && dungeon.generatedFloors.TryGetValue(floor.guid, out FloorData data) &&
+            ReferenceEquals(data, floor.DataOnServer);
+
         private static void TrySpawn(FloorGenerator floor)
         {
-            if (!floor || !floor.isServer || !floor.GenerateSuccess || floor.isSafeFloor || floor.isTrainingFloor ||
-                string.IsNullOrEmpty(floor.guid) || floor.DataOnServer == null || floor.DataOnServer.isHidden ||
+            if (!Ready(floor) || floor.isSafeFloor || floor.isTrainingFloor || floor.DataOnServer.isHidden ||
                 floor.DataOnServer.pocketDimension ||
-                !dungeon.generatedFloors.TryGetValue(floor.guid, out FloorData data) ||
-                !ReferenceEquals(data, floor.DataOnServer) || run.GetBool(FloorKey + floor.guid, false)) return;
+                run.GetBool(FloorKey + floor.guid, false)) return;
+            int positionInRun = route.Position(floor.DataOnServer);
+            // Optional/unknown stages cannot host the scheduled guarantee, but keep
+            // their existing chance-only behavior under the normal room safety gates.
+            if (positionInRun >= 0 && positionInRun < schedule.Progress) return;
+            bool guaranteed = schedule.IsDue(positionInRun);
             if (!MerchantRooms.TryChoose(floor, out Vector2 position)) return;
             SocialIDEntity template = SocialIDDatabase.FindByName("Merchant_Papa");
             GameObject stockPrefab = PropDatabase.FindPropById("Mat_TravelerMerchant")?.propPrefab;
@@ -77,7 +100,7 @@ namespace SephiriaOne
             if (Safe.Find(position)) return;
             run.SetBool(FloorKey + floor.guid, true);
             // The roll is consumed even on a miss. Setting changes and revisits cannot farm it.
-            if (run.GetBool(EncounterKey, false) &&
+            if (!guaranteed &&
                 new System.Random(floor.seed ^ 0x43484E43).Next(100) >= SessionSettings.MerchantSpawnChanceForUse) return;
             var record = new SpawnedMerchant { Floor = floor };
             UnitAI_NewBasic ai = null;
@@ -109,7 +132,7 @@ namespace SephiriaOne
                     throw new InvalidOperationException("Native merchant stock did not bind to its new owner.");
                 ai.CanTalk = false;
                 avatar.ChangeAttackableTargetSelector(EPersonality.Aggressive);
-                run.SetBool(EncounterKey, true);
+                if (guaranteed) schedule.Complete();
                 Debug.Log("[SephiriaOne] Spawned hostile Wandering Merchant on floor " + floor.guid + ".");
             }
             catch (Exception error)
@@ -163,7 +186,7 @@ namespace SephiriaOne
         internal static void Clear()
         {
             foreach (var pair in owned) Destroy(pair.Value);
-            owned.Clear(); dungeon = null; run = null;
+            owned.Clear(); dungeon = null; run = null; route = null; schedule = null;
         }
 
         private static void Destroy(SpawnedMerchant record)

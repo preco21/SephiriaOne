@@ -21,6 +21,6 @@ namespace SephiriaOne
         }
 
         internal static string DescribeMerchant(bool enabled, int chance = MerchantCommand.DefaultChance) =>
-            L.F("Extra Wandering Merchant: {0}; one guaranteed each new run while enabled, then {1}% chance per eligible normal dungeon floor (at most one per floor). Excludes boss-only floors, lobby, towns, and training. Added merchants are hostile with 1x normal HP, cannot talk, and have no negotiation/crime penalty; natural merchants are unchanged. Off stops future spawns; reset also restores 25%. Existing added merchants stay exempt until floor teardown.", L.T(enabled ? "on" : "off"), chance);
+            L.F("Extra Wandering Merchant: {0}; while enabled, one guaranteed per run on a randomly selected eligible floor, including the first. Other eligible floors have a {1}% chance before or after the guaranteed encounter (at most one per floor). Excludes boss-only floors, lobby, towns, and training. Added merchants are hostile with 1x normal HP, cannot talk, and have no negotiation/crime penalty; natural merchants are unchanged. Off stops future spawns; reset also restores 25%. Existing added merchants stay exempt until floor teardown.", L.T(enabled ? "on" : "off"), chance);
     }
 }

@@ -20,12 +20,16 @@ v1–v6 presets still load and default this feature to off/25%.
 
 ## Encounters and balance
 
-- The first eligible normal dungeon floor **of each new run** gets a guaranteed
-  encounter while enabled. After that, each eligible floor rolls the configured
-  chance, with at most one added merchant on that floor.
+- Since `0.23.0`, **each new run** gets one guaranteed encounter scheduled across
+  its potential eligible normal floor positions. The first floor remains eligible,
+  but is no longer forced. Other floors roll the configured chance before or after
+  that position; an early chance encounter does not consume the scheduled guarantee.
+  At most one addon merchant spawns on each floor.
 - **0%** means only the guaranteed encounter; **100%** means every eligible floor.
   Chance changes apply to floors that have not yet rolled. Turning the option on
-  during a run also processes already generated eligible floors.
+  during a run selects from current/future progression. It does not populate passed
+  main-route floors just because their generators remain loaded. Optional stages
+  outside that finite schedule retain their existing chance-only behavior.
 - The added merchant starts hostile and has **1× normal maximum HP**, including
   the native floor and multiplayer scaling. Attack damage follows native scaling.
   Its original combat AI, attacks and native stock/loot container are reused.
@@ -48,17 +52,39 @@ initialization fails, the partial spawn is cleaned up and that floor is not retr
 the guarantee remains pending for another eligible floor. If every remaining floor
 is excluded or unsafe, the mod cannot create an eligible encounter.
 
+Scheduling uses the active scenario's native stage assets. Choice-stage branches
+share a progression depth, so the selection follows the branch players actually
+take. Grassland's mission board uses the order of distinct requested/visited
+missions, including unsupported missions in the progress count, rather than a
+random mission ID that players might never choose. Safe entrances, boss-only steps
+and unsupported prefab pools are not candidates. Unknown route structures do not
+fall back to a forced first-floor encounter.
+
+Future branches and special-event replacements can change actual eligibility.
+Selection is random over potential progression positions, not exactly uniform over
+all rooms ultimately visited. If the selected floor is unsafe, unsupported or
+passed while disabled, the guarantee carries forward to the next eligible floor.
+Stopping a run early can therefore mean never reaching the scheduled encounter.
+
 ## Synchronization and lifetime
 
 The SDK's completed floor-generation notification runs on the host after geometry,
 normal spawners and travelers have been generated. Explicit command/preset changes
-also check loaded floors. There is no per-frame room scan and no join-driven spawn.
+also check current loaded progression. There is no per-frame room scan and no
+join-driven spawn. Native floor allocation is requested travel; generation completes
+before the player's actual arrival. Native travel histories seed progress when
+enabling the option midway or continuing a save.
 
 The host stores `SephiriaOne.MerchantFloor.<guid>` and
 `SephiriaOne.MerchantEncounter` in the native current-run save. These record consumed
-floor rolls and the first successful spawn. Duplicate notifications, toggle cycles,
+floor rolls and fulfillment of the guarantee. Versioned
+`SephiriaOne.MerchantSchedule.v1.*` keys retain the selected progression position
+and furthest observed progress; mission ordinals are also stored in the run.
+Chance-based extras do not mark the guarantee fulfilled. Old saves with the
+encounter marker already set keep it fulfilled after upgrading; existing consumed
+floor markers are never reopened. Duplicate notifications, toggle cycles,
 guest re-entry, regenerated/revisited floors and saved-run continuation cannot reroll
-or duplicate the encounter. A fresh native run save resets both. The addon does not
+or duplicate the encounter. A fresh native run save resets this state. The addon does not
 force a save; these keys follow the game's normal save cadence.
 
 Both the actor and its dedicated new stock container use existing network prefabs
@@ -90,20 +116,26 @@ ownership fixtures, and installed IL contracts for crime, damage/death ordering,
 stock initialization, HP scaling, completed generation and guest replication.
 Both production build configurations use `DeployMod=false`.
 
-Verification results: Debug and Release builds have zero warnings/errors; 43
-merchant settings checks, 729 shared runtime checks, 63 merchant runtime checks
-across 31 scenarios, and 34 tests of the actual room-placement code pass. Existing
-starting-resource (71), resource-budget (66), Rabbit potion (134), Rabbit description
-(35), disconnect (14), portable-policy and installed-game compatibility suites pass.
-Independent review found no remaining blocking implementation defects. A destruction
-failure regression verifies that native floor-cleanup references and exact-actor
-penalty protection remain available until cleanup succeeds.
+Scheduling regressions cover first/middle/last selection across run seeds, chance
+extras on both sides, 100% chance at the selected floor, copied-save continuation,
+legacy save markers, late enablement, reordered loaded floors, off/on and guest
+re-entry, unsafe rooms and partial network-spawn failures. Existing merchant actor,
+room placement, settings, shared synchronization and native compatibility checks
+remain in place. A destruction-failure regression verifies that native floor-cleanup
+references and exact-actor penalty protection remain available until cleanup succeeds.
+
+Version `0.23.0` verification: 362 merchant runtime checks across 44 scenarios,
+29 route adapter checks, 34 room-placement checks and 782 shared runtime checks
+pass. Portable policy/localization and installed-game compatibility checks pass.
+Debug and Release builds have zero warnings/errors. Independent review found no
+remaining blocking defects after the early-initialization recovery fix.
 
 Live Unity gameplay and multiplayer rendering are not exercised by these tests.
 Before relying on it in a long run, verify:
 
-1. Enable with 0%: one encounter on the first eligible floor, none on later floors;
-   repeat with 100% and confirm at most one per floor. Restart a run for a fresh guarantee.
+1. Enable with 0% across several fresh runs: one encounter on a varying floor when
+   the full eligible route is reached, with the first floor still possible. Repeat
+   with 100% and confirm at most one per floor. Test a Grassland mission-board run.
 2. Kill an extra with an unmodified guest: negotiation/crime remain unchanged,
    native stock is lootable, and natural merchant hostility remains unchanged.
 3. Kill a natural merchant separately and confirm the game's normal penalty still applies.

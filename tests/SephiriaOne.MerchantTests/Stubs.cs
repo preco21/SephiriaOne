@@ -134,11 +134,14 @@ public static class PropDatabase
 public class SaveData
 {
     public readonly Dictionary<string, bool> Flags = new();
+    public readonly Dictionary<string, int> Ints = new();
+    public int GetInt(string key, int fallback = 0) => Ints.TryGetValue(key, out int value) ? value : fallback;
+    public void SetInt(string key, int value) => Ints[key] = value;
     public bool GetBool(string key, bool fallback = false) => Flags.TryGetValue(key, out bool value) ? value : fallback;
     public void SetBool(string key, bool value) => Flags[key] = value;
 }
 public static class SaveManager { public static SaveData CurrentRun = new(); }
-public class FloorData { public string guid, name = "Dungeon"; public bool isHidden, pocketDimension; }
+public class FloorData { public string guid, name = "Dungeon"; public bool isHidden, pocketDimension; public int Progress; }
 public class FloorGenerator : NetworkBehaviour
 {
     public static readonly List<FloorGenerator> FloorGenerators = new();
@@ -152,6 +155,9 @@ public class FloorGenerator : NetworkBehaviour
 public class DungeonManager : NetworkBehaviour
 {
     public static DungeonManager Instance;
+    public UnityEngine.Object Race = new();
+    public int DestinySeed;
+    public int[] Opportunities = new[] { 0 };
     public readonly Dictionary<string, FloorData> generatedFloors = new();
     public CharacterBuff crimeDebuff = new();
     public int CrimeCalls;
@@ -249,6 +255,20 @@ public static class KeywordDatabase { public static int GetConstValue(string nam
 
 namespace SephiriaOne
 {
+    internal sealed class MerchantRoute
+    {
+        private readonly DungeonManager dungeon;
+        private readonly bool initialized;
+        public MerchantRoute(DungeonManager dungeon, SaveData run) { this.dungeon = dungeon; initialized = dungeon.Race; }
+        public IReadOnlyList<int> Opportunities => initialized ? dungeon.Opportunities : Array.Empty<int>();
+        public int LatestPosition { get; private set; } = -1;
+        public int Position(FloorData data)
+        {
+            if (!initialized || data.isHidden || data.pocketDimension) return -1;
+            LatestPosition = Math.Max(LatestPosition, data.Progress); return data.Progress;
+        }
+        public void ObserveHistory() { }
+    }
     internal static class SessionSettings
     {
         public static bool MerchantSpawnsForUse;

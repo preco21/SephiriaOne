@@ -91,7 +91,17 @@ Scenario("hostile encounter uses only instance settings", () =>
     Check(RuntimeFactionManager.Instance.GlobalWrites == 0 && RuntimeFactionManager.Instance.tempDynamicEnemies.Count == 0 &&
         RuntimeFactionManager.Instance.relationValues["Merchant_Player"] == 0, "Spawn never writes global faction relations");
 });
-Scenario("first encounter is guaranteed at zero percent and misses never reroll", () =>
+Scenario("a saved future guarantee does not force the first floor", () =>
+{
+    DungeonManager.Instance.Opportunities = new[] { 0, 1, 2 };
+    SaveManager.CurrentRun.SetInt("SephiriaOne.MerchantSchedule.v1.Target", 2);
+    SessionSettings.MerchantSpawnChanceForUse = 0;
+    var first = Floor(); MerchantRuntime.OnFloorReady(first.guid, "Dungeon", first);
+    Check(Actors().Length == 0, "Zero chance must leave the first floor empty when the guarantee is scheduled later");
+    var last = Floor("last", 100); last.DataOnServer.Progress = 2;
+    Spawn(last); Check(Actors().Length == 1, "Selected later floor must receive the guarantee");
+});
+Scenario("a one-floor route guarantees once and misses never reroll", () =>
 {
     SessionSettings.MerchantSpawnChanceForUse = 0;
     Spawn(Floor()); var second = Floor("floor-b", 50); MerchantRuntime.Refresh();
@@ -215,6 +225,166 @@ Scenario("failed network destruction preserves ownership and native cleanup refe
     NetworkServer.FailDestroy = null; MerchantRuntime.Clear();
     Check(!added && Actors().Length == 0 && floor.floorRelatedNetworkObjects.Count == 0,
         "A later clear retries retained objects and removes references only after successful destruction");
+});
+
+const string TargetKey = "SephiriaOne.MerchantSchedule.v1.Target";
+const string EncounterKey = "SephiriaOne.MerchantEncounter";
+FloorGenerator At(int progress)
+{
+    var floor = Floor("progress-" + progress, progress * 50);
+    floor.DataOnServer.Progress = progress;
+    return floor;
+}
+void Visit(FloorGenerator floor) => MerchantRuntime.OnFloorReady(floor.guid, "Dungeon", floor);
+SaveData CopyRun()
+{
+    var copy = new SaveData();
+    foreach (var pair in SaveManager.CurrentRun.Flags) copy.SetBool(pair.Key, pair.Value);
+    foreach (var pair in SaveManager.CurrentRun.Ints) copy.SetInt(pair.Key, pair.Value);
+    return copy;
+}
+
+Scenario("fresh run selection covers first, middle and last floors", () =>
+{
+    var selected = new HashSet<int>();
+    for (int seed = 0; seed < 90; seed++)
+    {
+        Reset(); DungeonManager.Instance.DestinySeed = seed;
+        DungeonManager.Instance.Opportunities = new[] { 0, 1, 2 };
+        SessionSettings.MerchantSpawnChanceForUse = 0;
+        Visit(At(0));
+        int target = SaveManager.CurrentRun.GetInt(TargetKey, -1);
+        selected.Add(target);
+        Check(target >= 0 && target <= 2, "Every fresh run selects a valid position");
+        Check(Actors().Length == (target == 0 ? 1 : 0), "Only the selected floor is forced");
+        Visit(At(1)); Visit(At(2));
+        Check(Actors().Length == 1 && Actors()[0].SocialName.EndsWith("progress-" + target),
+            "Zero chance produces exactly one merchant on the selected floor");
+    }
+    Check(selected.SetEquals(new[] { 0, 1, 2 }), "First, middle and final floors must all be selectable across runs");
+});
+Scenario("chance extras before and after the guarantee are independent", () =>
+{
+    DungeonManager.Instance.Opportunities = new[] { 0, 1, 2, 3 };
+    SaveManager.CurrentRun.SetInt(TargetKey, 2);
+    Visit(At(0));
+    Check(Actors().Length == 1 && !SaveManager.CurrentRun.GetBool(EncounterKey),
+        "An early 100-percent chance encounter must not fulfill the guarantee");
+    SessionSettings.MerchantSpawnChanceForUse = 0; Visit(At(1));
+    Check(Actors().Length == 1, "A chance miss before the guarantee remains a miss");
+    Visit(At(2));
+    Check(Actors().Length == 2 && SaveManager.CurrentRun.GetBool(EncounterKey), "Scheduled floor is still guaranteed");
+    SessionSettings.MerchantSpawnChanceForUse = 100; Visit(At(3)); MerchantRuntime.Refresh();
+    Check(Actors().Length == 3, "Chance extras work after the guarantee without duplicate refresh spawns");
+});
+Scenario("100-percent chance never doubles a guaranteed floor", () =>
+{
+    DungeonManager.Instance.Opportunities = new[] { 0, 1, 2 };
+    SaveManager.CurrentRun.SetInt(TargetKey, 1);
+    Visit(At(0)); Visit(At(1)); Visit(At(2));
+    Check(Actors().Length == 3, "Guaranteed and chance paths share the one-merchant-per-floor reservation");
+});
+Scenario("saved pending selection survives a chance spawn and reload", () =>
+{
+    DungeonManager.Instance.Opportunities = new[] { 0, 1, 2 };
+    SaveManager.CurrentRun.SetInt(TargetKey, 2); Visit(At(0));
+    SaveManager.CurrentRun = CopyRun(); MerchantRuntime.Refresh();
+    Check(SaveManager.CurrentRun.GetInt(TargetKey, -1) == 2 && !SaveManager.CurrentRun.GetBool(EncounterKey),
+        "Reload preserves selection and distinguishes a chance extra from the guarantee");
+    SessionSettings.MerchantSpawnChanceForUse = 0; Visit(At(1)); Visit(At(2));
+    Check(Actors().Length == 1 && Actors()[0].SocialName.EndsWith("progress-2"), "Saved later guarantee still spawns");
+    SaveManager.CurrentRun = CopyRun(); MerchantRuntime.Refresh();
+    Check(Actors().Length == 0 && SaveManager.CurrentRun.GetBool(EncounterKey), "Completed saved guarantee never replenishes");
+});
+Scenario("late enable schedules current and future floors only regardless of list order", () =>
+{
+    DungeonManager.Instance.Opportunities = new[] { 0, 1, 2, 3 };
+    SessionSettings.MerchantSpawnsForUse = false; SessionSettings.MerchantSpawnChanceForUse = 0;
+    Visit(At(0)); Visit(At(1)); Visit(At(2));
+    FloorGenerator.FloorGenerators.Reverse();
+    SessionSettings.MerchantSpawnsForUse = true; MerchantRuntime.Refresh();
+    int selected = SaveManager.CurrentRun.GetInt(TargetKey, -1);
+    Check(selected >= 2 && selected <= 3, "Late enable excludes passed floors even when loaded list order is reversed");
+    Visit(At(3));
+    Check(Actors().Length == 1 && Actors()[0].SocialName.EndsWith("progress-" + selected), "Late selection is reachable");
+});
+Scenario("toggle reset and rejoin never reroll a pending target", () =>
+{
+    DungeonManager.Instance.Opportunities = new[] { 0, 1, 2 };
+    SaveManager.CurrentRun.SetInt(TargetKey, 1); SessionSettings.MerchantSpawnChanceForUse = 0;
+    Visit(At(0)); SessionSettings.MerchantSpawnsForUse = false; Visit(At(1));
+    NetworkServer.connections[2] = new(); NetworkServer.connections.Remove(2);
+    NetworkServer.connections[2] = new(); SessionSettings.MerchantSpawnsForUse = true;
+    Visit(At(2)); MerchantRuntime.Refresh();
+    Check(SaveManager.CurrentRun.GetInt(TargetKey, -1) == 1 && Actors().Length == 1 &&
+        Actors()[0].SocialName.EndsWith("progress-2"), "A target passed while off carries forward without rerolling");
+});
+Scenario("unsafe selected floor and failed fallback retain the guarantee", () =>
+{
+    DungeonManager.Instance.Opportunities = new[] { 0, 1, 2, 3 };
+    SaveManager.CurrentRun.SetInt(TargetKey, 1); SessionSettings.MerchantSpawnChanceForUse = 0;
+    Visit(At(0)); var selected = At(1); selected.EligibleRoom = false; Visit(selected);
+    Check(!SaveManager.CurrentRun.GetBool(EncounterKey) && Actors().Length == 0, "Unsafe selected room keeps guarantee pending");
+    NetworkServer.FailSpawnAt = 2; Visit(At(2));
+    Check(!SaveManager.CurrentRun.GetBool(EncounterKey) && Actors().Length == 0 && FixtureWorld.Created.All(value => !value),
+        "Failed fallback cleans partial state without fulfilling the guarantee");
+    NetworkServer.FailSpawnAt = 0; MerchantRuntime.Refresh();
+    Check(Actors().Length == 0, "Failed reserved floor never retries");
+    Visit(At(3)); Check(Actors().Length == 1, "Next safe floor fulfills the pending guarantee");
+});
+Scenario("older loaded floors cannot fulfill a missed selected floor", () =>
+{
+    DungeonManager.Instance.Opportunities = new[] { 0, 1, 2 };
+    SaveManager.CurrentRun.SetInt(TargetKey, 1); SessionSettings.MerchantSpawnChanceForUse = 0;
+    var first = At(0); var middle = At(1); middle.EligibleRoom = false; Visit(middle);
+    var last = At(2); last.EligibleRoom = false; Visit(last);
+    middle.EligibleRoom = true; MerchantRuntime.Refresh(); Visit(first); Visit(middle);
+    Check(Actors().Length == 0 && !SaveManager.CurrentRun.GetBool(EncounterKey),
+        "Going backward or reordering callbacks never forces an encounter into a passed floor");
+    last.EligibleRoom = true; Visit(last); Check(Actors().Length == 1, "Current floor may recover before consuming its reservation");
+});
+Scenario("legacy fulfilled marker stays fulfilled and legacy misses stay consumed", () =>
+{
+    DungeonManager.Instance.Opportunities = new[] { 0, 1, 2 };
+    SessionSettings.MerchantSpawnChanceForUse = 0; SaveManager.CurrentRun.SetBool(EncounterKey, true);
+    Visit(At(0)); Visit(At(1)); Visit(At(2));
+    Check(Actors().Length == 0, "An old successful encounter does not gain a second guarantee after upgrade");
+    Reset(); DungeonManager.Instance.Opportunities = new[] { 0, 1, 2 };
+    SaveManager.CurrentRun.SetBool("SephiriaOne.MerchantFloor.progress-0", true);
+    SaveManager.CurrentRun.SetInt(TargetKey, 0); SessionSettings.MerchantSpawnChanceForUse = 0;
+    Visit(At(0)); Check(Actors().Length == 0, "An old consumed floor is never reopened");
+    Visit(At(1)); Check(Actors().Length == 1, "Unfulfilled old run continues on its next safe floor");
+});
+Scenario("unknown route has no forced first-floor fallback", () =>
+{
+    DungeonManager.Instance.Opportunities = Array.Empty<int>(); SessionSettings.MerchantSpawnChanceForUse = 0;
+    Visit(At(0));
+    Check(Actors().Length == 0 && SaveManager.CurrentRun.GetInt(TargetKey, -1) == -1,
+        "Missing route opportunities must not silently restore a first-floor guarantee");
+});
+Scenario("optional normal floors retain chance extras without consuming the main-route guarantee", () =>
+{
+    DungeonManager.Instance.Opportunities = new[] { 0, 1, 2 };
+    SaveManager.CurrentRun.SetInt(TargetKey, 2);
+    var optional = Floor("optional-side", 500); optional.DataOnServer.Progress = -1;
+    Visit(optional);
+    Check(Actors().Length == 1 && !SaveManager.CurrentRun.GetBool(EncounterKey),
+        "An eligible optional floor outside the finite schedule must retain its independent chance roll");
+    SessionSettings.MerchantSpawnChanceForUse = 0; Visit(At(0));
+    var another = Floor("other-optional", 600); another.DataOnServer.Progress = -1; Visit(another);
+    Check(Actors().Length == 1 && !SaveManager.CurrentRun.GetBool(EncounterKey),
+        "Zero chance cannot turn an optional floor into the scheduled guarantee");
+    Visit(At(2));
+    Check(Actors().Length == 2 && SaveManager.CurrentRun.GetBool(EncounterKey), "Main-route guarantee remains available afterward");
+});
+Scenario("early settings refresh waits for native race initialization", () =>
+{
+    DungeonManager.Instance.Race = null;
+    MerchantRuntime.Refresh();
+    Check(SaveManager.CurrentRun.Ints.Count == 0, "An incomplete native run must not establish an empty schedule");
+    DungeonManager.Instance.Race = new UnityEngine.Object(); SessionSettings.MerchantSpawnChanceForUse = 0;
+    Visit(At(0));
+    Check(Actors().Length == 1, "A later ready route must recover automatically after an early settings refresh");
 });
 
 Reset();

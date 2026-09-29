@@ -9,6 +9,16 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.23.0` randomizes the [guaranteed hostile merchant](wandering-merchant.md)
+across the run's potential eligible floor positions, including the first floor.
+Native stage assets supply future progression without generating floors early;
+branching depths and Grassland's chosen mission order have separate handling.
+The saved selection survives reloads, setting changes and re-entry. Chance extras
+before and after it do not fulfill the guarantee. Late enablement uses current or
+future progress; unsafe/failed selected floors carry the guarantee forward.
+Native HP, ownership exemptions and host-only replication remain unchanged.
+No deployment was run.
+
 Version `0.22.2` completes a [performance follow-up](performance-review.md).
 Non-Status panel pages skip unused diagnostic formatting while retaining live
 values, permissions, saved settings and language updates. Five-player fixture
