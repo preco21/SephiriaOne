@@ -20,10 +20,16 @@ void Reset()
     FixtureWorld.FailSocialAfterStock = false; FixtureWorld.BeforeInstantiate = null; Debug.Warnings.Clear();
     SaveManager.CurrentRun = new(); DungeonManager.Instance = new(); RuntimeFactionManager.Instance = new();
     SessionSettings.MerchantSpawnsForUse = true; SessionSettings.MerchantSpawnChanceForUse = 100; MerchantFeature.Available = true;
+    SessionSettings.Variants.Clear(); SessionSettings.FirstFloor = 1; SessionSettings.MaxPerRun = 0;
     var actorPrefab = new GameObject("Papa");
     actorPrefab.AddComponent<Unit_BabaMerchantHard>(); actorPrefab.AddComponent<UnitAI_NewBasic>();
     var safePrefab = new GameObject("Stock"); safePrefab.AddComponent<Safe>();
     SocialIDDatabase.Template = new SocialIDEntity { avatarPrefab = actorPrefab };
+    SocialIDDatabase.Variants.Clear();
+    var papyrus = new GameObject("Papyrus"); papyrus.AddComponent<Unit_Soldier>(); papyrus.AddComponent<UnitAI_NewBasic>();
+    var taz = new GameObject("Taz"); taz.AddComponent<Unit_TurtlePotion>(); taz.AddComponent<UnitAI_NewBasic>();
+    SocialIDDatabase.Variants["Traveler_Merchant_Papyrus"] = new SocialIDEntity { avatarPrefab = papyrus };
+    SocialIDDatabase.Variants["Traveler_Merchant_Taz"] = new SocialIDEntity { avatarPrefab = taz };
     PropDatabase.Stock = new PropEntity { propPrefab = safePrefab };
 }
 void Scenario(string name, Action test)
@@ -385,6 +391,169 @@ Scenario("early settings refresh waits for native race initialization", () =>
     DungeonManager.Instance.Race = new UnityEngine.Object(); SessionSettings.MerchantSpawnChanceForUse = 0;
     Visit(At(0));
     Check(Actors().Length == 1, "A later ready route must recover automatically after an early settings refresh");
+});
+
+Scenario("different merchant types coexist with isolated stock on one floor", () =>
+{
+    SessionSettings.Variants["papyrus"] = new(true, 100); SessionSettings.Variants["taz"] = new(true, 100);
+    Visit(At(0)); MerchantRuntime.Refresh();
+    Check(Actors().Length == 3, "Each eligible enabled type must independently spawn on the same floor");
+    Check(Actors().Select(actor => actor.NetworkMySafe).Distinct().Count() == 3 &&
+        Actors().All(actor => actor.NetworkMySafe.NetworkconnectedMerchant == actor), "Each type owns a different native stock container");
+    Check(Actors().Select(actor => actor.SocialName).Distinct().Count() == 3 &&
+        Actors().Select(actor => actor.Avatar.RandomID).Distinct().Count() == 3, "Same-floor types have distinct social and loot RNG identities");
+});
+string VariantKey(string id, string key) => "SephiriaOne.MerchantVariant.v1." + id + "." + key;
+void EnableVariants(int chance = 0, int first = 1, int limit = 0)
+{
+    SessionSettings.MerchantSpawnChanceForUse = chance; SessionSettings.FirstFloor = first; SessionSettings.MaxPerRun = limit;
+    SessionSettings.Variants["papyrus"] = new(true, chance, first, limit);
+    SessionSettings.Variants["taz"] = new(true, chance, first, limit);
+}
+Scenario("each type has its own zero-chance guarantee and persistent target", () =>
+{
+    DungeonManager.Instance.Opportunities = new[] { 0, 1, 2, 3 }; EnableVariants();
+    SaveManager.CurrentRun.SetInt(TargetKey, 2);
+    SaveManager.CurrentRun.SetInt(VariantKey("papyrus", "Schedule.Target"), 1);
+    SaveManager.CurrentRun.SetInt(VariantKey("taz", "Schedule.Target"), 3);
+    Visit(At(0)); Check(Actors().Length == 0, "First floor is not forced for any later scheduled type");
+    Visit(At(1)); Check(Actors().Length == 1 && Actors()[0].Avatar is Unit_Soldier, "Papyrus receives its own first target");
+    SaveManager.CurrentRun = CopyRun(); MerchantRuntime.Refresh();
+    Visit(At(2)); Visit(At(3));
+    Check(Actors().Length == 2 && Actors().Any(a => a.Avatar is Unit_TurtlePotion) && Actors().Any(a => a.Avatar is Unit_BabaMerchantHard),
+        "Reload retains distinct pending targets and never restores Papyrus's consumed guarantee");
+    foreach (string id in new[] { "papyrus", "taz" })
+        Check(SaveManager.CurrentRun.GetBool(VariantKey(id, "Encounter")), "Each type completes only its own guarantee: " + id);
+});
+Scenario("all variants draw stable independently salted guaranteed positions", () =>
+{
+    int different = 0;
+    for (int seed = 0; seed < 30; seed++)
+    {
+        Reset(); DungeonManager.Instance.DestinySeed = seed; DungeonManager.Instance.Opportunities = new[] { 0, 1, 2, 3 };
+        EnableVariants(); Visit(At(0));
+        var targets = new[] { SaveManager.CurrentRun.GetInt(TargetKey, -1),
+            SaveManager.CurrentRun.GetInt(VariantKey("papyrus", "Schedule.Target"), -1),
+            SaveManager.CurrentRun.GetInt(VariantKey("taz", "Schedule.Target"), -1) };
+        if (targets.Distinct().Count() > 1) different++;
+        Check(targets.All(value => value >= 0 && value < 4), "Each type selects a valid target");
+        Visit(At(1)); Visit(At(2)); Visit(At(3));
+        Check(Actors().Length == 3 && Actors().Select(actor => actor.Avatar.GetType()).Distinct().Count() == 3,
+            "Each enabled type produces exactly one zero-chance guarantee over the full route");
+    }
+    Check(different > 0, "Type seeds must not correlate every guarantee to the same floor");
+});
+Scenario("earliest floor settings independently filter guaranteed positions", () =>
+{
+    DungeonManager.Instance.Opportunities = new[] { 0, 1, 2, 3 }; EnableVariants(0);
+    SessionSettings.Variants["papyrus"] = new(true, 100, 3, 1);
+    SessionSettings.Variants["taz"] = new(true, 100, 4, 1);
+    Visit(At(0)); Visit(At(1));
+    Check(Actors().All(actor => actor.Avatar is Unit_BabaMerchantHard), "New types cannot spawn before their own minimums");
+    Check(SaveManager.CurrentRun.GetInt(VariantKey("papyrus", "Schedule.Target"), -1) >= 2 &&
+        SaveManager.CurrentRun.GetInt(VariantKey("taz", "Schedule.Target"), -1) == 3, "Guarantee selection respects each type's minimum");
+    Visit(At(2)); Visit(At(3)); Check(Actors().Length == 3, "Both late types retain their own guarantees");
+});
+Scenario("per-run caps reserve the scheduled guarantee without suppressing other types", () =>
+{
+    DungeonManager.Instance.Opportunities = new[] { 0, 1, 2, 3 };
+    EnableVariants(100); SessionSettings.MaxPerRun = 1;
+    SessionSettings.Variants["papyrus"] = new(true, 100, 1, 2);
+    SaveManager.CurrentRun.SetInt(TargetKey, 2);
+    SaveManager.CurrentRun.SetInt(VariantKey("papyrus", "Schedule.Target"), 2);
+    SaveManager.CurrentRun.SetInt(VariantKey("taz", "Schedule.Target"), 2);
+    Visit(At(0)); Visit(At(1));
+    Check(!Actors().Any(actor => actor.Avatar is Unit_BabaMerchantHard) && Actors().Count(actor => actor.Avatar is Unit_Soldier) == 1,
+        "Chance rolls leave one cap slot for each pending guarantee");
+    Visit(At(2)); Visit(At(3));
+    Check(Actors().Count(actor => actor.Avatar is Unit_BabaMerchantHard) == 1 &&
+        Actors().Count(actor => actor.Avatar is Unit_Soldier) == 2 && Actors().Count(actor => actor.Avatar is Unit_TurtlePotion) == 4,
+        "Independent caps count both chance and guarantee; unlimited type continues each floor");
+    SaveManager.CurrentRun = CopyRun(); MerchantRuntime.Refresh();
+    Visit(At(4));
+    Check(Actors().Length == 1 && Actors()[0].Avatar is Unit_TurtlePotion, "Saved caps survive runtime replacement");
+});
+Scenario("minimum changes retain a saved target while carrying it forward", () =>
+{
+    DungeonManager.Instance.Opportunities = new[] { 0, 1, 2, 3 };
+    SessionSettings.MerchantSpawnsForUse = false; SessionSettings.Variants["papyrus"] = new(true, 0);
+    string key = VariantKey("papyrus", "Schedule.Target"); SaveManager.CurrentRun.SetInt(key, 1);
+    Visit(At(0)); SessionSettings.Variants["papyrus"] = new(true, 0, 4);
+    Visit(At(1)); Visit(At(2)); Check(Actors().Length == 0, "Increased earliest floor applies to a pending guarantee");
+    Visit(At(3)); Check(Actors().Length == 1 && SaveManager.CurrentRun.GetInt(key, -1) == 1,
+        "Target is not rerolled and fulfills at the next floor allowed by current settings");
+});
+Scenario("a newly enabled type ignores another type's consumed legacy floor", () =>
+{
+    Visit(At(0)); SessionSettings.Variants["papyrus"] = new(true, 0);
+    MerchantRuntime.Refresh(); Check(Actors().Length == 2, "Legacy Wandering reservation cannot block a new type on the same floor");
+    SessionSettings.Variants["papyrus"] = new(false, 0); MerchantRuntime.Refresh();
+    NetworkServer.connections[2] = new(); NetworkServer.connections.Remove(2); NetworkServer.connections[2] = new();
+    SessionSettings.Variants["papyrus"] = new(true, 100); MerchantRuntime.Refresh();
+    Check(Actors().Length == 2, "Re-entry, reset/toggle and chance changes do not reroll per-type reservations");
+});
+Scenario("invalid native template and partial initialization fail independently", () =>
+{
+    EnableVariants(100);
+    SocialIDDatabase.Variants["Traveler_Merchant_Papyrus"].avatarPrefab = SocialIDDatabase.Template.avatarPrefab;
+    Visit(At(0));
+    Check(Actors().Length == 2 && Actors().All(actor => actor.Avatar is not Unit_Soldier),
+        "Mismatched Papyrus controller fails closed without blocking other types");
+    Reset(); EnableVariants(100);
+    NetworkServer.OnSpawn = obj => { if (obj.GetComponent<UnitAvatar>() is UnitAvatar avatar) FixtureWorld.FailSocialAfterStock = avatar is Unit_Soldier; };
+    var floor = At(0); Visit(floor);
+    Check(Actors().Length == 2 && floor.floorRelatedNetworkObjects.Count == 4 && Safe.All.Count(safe => safe) == 2,
+        "A failed Papyrus social initialization rolls back only its actor and stock");
+    Check(!SaveManager.CurrentRun.GetBool(VariantKey("papyrus", "Encounter")) &&
+        SaveManager.CurrentRun.GetBool(VariantKey("taz", "Encounter")), "Failure never consumes another type's guarantee");
+    NetworkServer.OnSpawn = null; FixtureWorld.FailSocialAfterStock = false; EnableVariants(0);
+    Visit(At(1)); Check(Actors().Count(actor => actor.Avatar is Unit_Soldier) == 1, "Failed type carries its guarantee to the next safe floor");
+});
+Scenario("each variant's crime exemption and teardown stay instance scoped", () =>
+{
+    EnableVariants(100); Visit(At(0)); MerchantNativeHooks.Install();
+    var attacker = Player(); var damage = new DamageInstance { origin = attacker };
+    foreach (var actor in Actors()) { actor.RunDamage(damage); actor.RunDeath(damage); }
+    Check(attacker.Buffs == 0 && DungeonManager.Instance.CrimeCalls == 0 && RuntimeFactionManager.Instance.GlobalWrites == 0,
+        "All addon types use exact-instance crime and faction isolation");
+    var natural = Natural(); natural.RunDeath(damage);
+    Check(attacker.Buffs == 1, "A natural merchant still invokes native crime");
+    MerchantRuntime.Clear(); Check(Actors().Length == 1 && Actors()[0] == natural && Safe.All.All(safe => !safe),
+        "Cleanup removes every addon type's stock and actor, never the natural merchant");
+});
+Scenario("each new run resets all independent guarantees and caps", () =>
+{
+    EnableVariants(0, 1, 1); Visit(At(0)); var previous = Actors();
+    SaveManager.CurrentRun = new(); MerchantRuntime.Refresh();
+    Check(Actors().Length == 3 && previous.All(actor => !actor), "Fresh run recreates all three guarantees despite previous caps");
+});
+Scenario("unsupported routes retain capped chance-only encounters", () =>
+{
+    DungeonManager.Instance.Opportunities = Array.Empty<int>(); EnableVariants(100, 1, 1);
+    var first = At(0); first.DataOnServer.Progress = -1; Visit(first);
+    Check(Actors().Length == 3, "A cap of one must not reserve an impossible guarantee and disable chance-only types");
+    var second = At(1); second.DataOnServer.Progress = -1; Visit(second);
+    Check(Actors().Length == 3, "Chance-only encounters still obey their successful-spawn caps");
+});
+Scenario("optional floor before main progression reserves still-reachable guarantees", () =>
+{
+    DungeonManager.Instance.Opportunities = new[] { 0, 1, 2 }; EnableVariants(100, 1, 1);
+    var optional = Floor("pre-route", 500); optional.DataOnServer.Progress = -1; Visit(optional);
+    Check(Actors().Length == 0, "A reachable guarantee keeps a cap slot even before the main route establishes a saved target");
+    Visit(At(0)); Visit(At(1)); Visit(At(2));
+    Check(Actors().Length == 3, "Each capped type later receives its guarantee on the main route");
+});
+Scenario("merchant definitions compose eligibility without core-specific branches", () =>
+{
+    var variant = new MerchantDefinition("test", "Test", "native", "Unit", 17, true, 25,
+        condition: context => context.StageName == "Library" && context.Difficulty >= 3);
+    var settings = new MerchantSettings(true, 25, 2, 2);
+    Check(!MerchantSpawnRules.Allows(variant, settings, new(1, 0, 3, "Library")), "Earliest floor is enforced");
+    Check(!MerchantSpawnRules.Allows(variant, settings, new(2, 2, 3, "Library")), "Per-run cap is enforced");
+    Check(!MerchantSpawnRules.Allows(variant, settings, new(2, 0, 2, "Library")), "Variant-specific condition is enforced");
+    Check(!MerchantSpawnRules.Allows(variant, settings, new(2, 0, 3, "Desert")), "Independent region rule is composable");
+    Check(MerchantSpawnRules.Allows(variant, settings, new(2, 1, 3, "Library")), "All conditions admit the variant");
+    Check(!MerchantSpawnRules.Allows(variant, new(false, 25), new(2, 0, 3, "Library")), "Disabled variants never spawn");
 });
 
 Reset();

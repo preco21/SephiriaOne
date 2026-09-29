@@ -7,6 +7,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../../SephiriaOne/Features/Merchants/MerchantCommand.cs" Link="Source/Features/Merchants/MerchantCommand.cs" />
+    <Compile Include="../../SephiriaOne/Features/Merchants/MerchantCatalog.cs" Link="Source/Features/Merchants/MerchantCatalog.cs" />
+    <Compile Include="../../SephiriaOne/Features/Merchants/MerchantSettings.cs" Link="Source/Features/Merchants/MerchantSettings.cs" />
+    <Compile Include="../../SephiriaOne/Features/Merchants/MerchantSpawnRules.cs" Link="Source/Features/Merchants/MerchantSpawnRules.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionMerchant.cs" Link="Source/Session/SessionMerchant.cs" />
     <Compile Include="../../SephiriaOne/Features/Rabbit/RabbitPotionSettings.cs" Link="Source/Features/Rabbit/RabbitPotionSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Rabbit/RabbitCommand.cs" Link="Source/Features/Rabbit/RabbitCommand.cs" />

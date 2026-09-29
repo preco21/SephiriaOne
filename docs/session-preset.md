@@ -21,6 +21,15 @@ the toggle off. Earlier presets remain supported. Per-floor rolls and the random
 scheduled encounter guarantee live in the native run save, not the future-session preset;
 loading a preset or rejoining cannot reroll a consumed floor.
 
+Version `0.24.0` adds v8 for [independent merchant variants](merchant-variants.md).
+Rows such as `merchant papyrus spawns 1`, `merchant papyrus chance 10`,
+`merchant papyrus from 3`, and `merchant papyrus limit 2` address one type.
+Default values are omitted; custom conditions persist while disabled. Old v1-v7
+presets still load and leave the new types off. Wandering-only toggle/chance presets
+still export as v7 when possible. Duplicate alias/typed fields and unknown type IDs
+are rejected atomically. Run counters, reservations and guarantees remain separate
+from presets, so reloading settings never replenishes them.
+
 Version `0.16.0` stores enabled [rabbit potion options](rabbit-potions.md) in v4
 as `rabbit infinite 1` and `rabbit share 1`. Missing/off options remain native.
 v1-v3 are still readable; v4 supports all prior setting families. These flags are

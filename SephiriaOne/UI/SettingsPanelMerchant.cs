@@ -1,3 +1,4 @@
+using System.Globalization;
 using UnityEngine.UI;
 
 namespace SephiriaOne
@@ -8,33 +9,60 @@ namespace SephiriaOne
 
         private void BuildMerchantEditor()
         {
-            widgets.Text(pageRoot, "MerchantTitle", "Extra Wandering Merchant", 16, 0, 273, 24, 14);
-            widgets.Text(pageRoot, "MerchantScope", "Hostile encounter · normal dungeon rooms", 16, 29, 273, 23, 10);
-            changeButtons.Add(widgets.Button(pageRoot, "On", 16, 55, 83, 25,
-                () => Execute("/one merchant on", true)));
-            merchantOff = widgets.Button(pageRoot, "Off", 111, 55, 83, 25,
-                () => Execute("/one merchant off", true));
-            resetAll = widgets.Button(pageRoot, "Reset", 206, 55, 83, 25,
-                () => Execute("/one merchant reset", true));
-            widgets.Text(pageRoot, "MerchantChance", "Chance %", 16, 91, 77, 23, 10);
-            amount = widgets.Input(pageRoot, 99, 88, 78, draft.Edit);
-            changeButtons.Add(widgets.Button(pageRoot, "Set chance", 187, 88, 102, 25,
-                () => Execute("/one merchant chance " + draft.Text, true)));
-            widgets.Text(pageRoot, "MerchantHelp", "One random floor per run guaranteed. Other floors: 0..100% (default 25%). Set chance keeps toggle; Reset: off/25%. No floor rerolls.",
-                16, 121, 273, 41, 10);
+            widgets.Button(pageRoot, "<", 16, 0, 24, 23, () => MoveMerchantSelection(-1));
+            widgets.Button(pageRoot, ">", 265, 0, 24, 23, () => MoveMerchantSelection(1));
+            selection = widgets.Text(pageRoot, "MerchantSelection", "", 47, 1, 212, 24, 12);
+            selection.text = L.T(MerchantCatalog.All[merchantIndex].Name);
+            changeButtons.Add(widgets.Button(pageRoot, "On", 16, 29, 83, 25,
+                () => Execute(MerchantPrefix() + " on", true)));
+            merchantOff = widgets.Button(pageRoot, "Off", 111, 29, 83, 25,
+                () => Execute(MerchantPrefix() + " off", true));
+            resetAll = widgets.Button(pageRoot, "Reset selected", 206, 29, 83, 25,
+                () => Execute(MerchantPrefix() + " reset", true));
+            amount = widgets.Input(pageRoot, 16, 63, 78, draft.Edit);
+            changeButtons.Add(widgets.Button(pageRoot, "Set chance", 103, 63, 186, 25,
+                () => Execute(MerchantPrefix() + " chance " + draft.Text, true)));
+            changeButtons.Add(widgets.Button(pageRoot, "Set first floor", 16, 96, 132, 25,
+                () => Execute(MerchantPrefix() + " from " + draft.Text, true)));
+            changeButtons.Add(widgets.Button(pageRoot, "Set run limit", 157, 96, 132, 25,
+                () => Execute(MerchantPrefix() + " limit " + draft.Text, true)));
+            widgets.Text(pageRoot, "MerchantHelp", "Chance: 0..100%. First eligible floor: 1..1000. Run limit: 0..1000 (0 = unlimited).",
+                16, 127, 273, 35, 9);
             widgets.Text(pageRoot, "MerchantStatus", "Current setting and behavior", 312, 0, 272, 22, 10).color = PanelWidgets.Muted;
             readout = widgets.Scroll(pageRoot, 312, 26, 272, 136);
         }
 
-        private static string MerchantValues(SettingsSnapshot snapshot) =>
-            L.F("Extra Wandering Merchant: {0}", L.T(snapshot.MerchantSpawns ? "ON" : "OFF")) +
-            "\n" + L.F("Chance on other floors: {0}%", snapshot.MerchantSpawnChance) +
-            "\n" + L.T("While enabled, one encounter per run is guaranteed on a randomly selected eligible floor, including the first, even at 0%. Other eligible floors roll before and after the guaranteed encounter.") +
-            "\n\n" + L.T("At most one extra merchant per eligible normal dungeon floor. Boss-only floors, lobby, towns, and training are excluded.") +
-            "\n\n" + L.T("Added merchants are hostile combat encounters with 1x normal HP and cannot talk. Only these actors have no negotiation/crime penalty; natural merchants keep their usual behavior.") +
-            "\n\n" + L.T("Off/reset stop future spawns; existing added merchants keep their penalty exemption until floor teardown.") +
-            "\n\n" + L.T("The host spawns merchants for all players, including unmodified guests.") +
-            (snapshot.MerchantsAvailable ? "" : "\n\n" + L.T("Merchant hooks unavailable; native behavior continues. See Player.log.")) +
-            "\n\n" + L.T("Save this option from Presets for future sessions.");
+        private string MerchantPrefix() => "/one merchant " + MerchantCatalog.All[merchantIndex].Id;
+
+        private void MoveMerchantSelection(int delta)
+        {
+            merchantIndex = (merchantIndex + delta + MerchantCatalog.All.Count) % MerchantCatalog.All.Count;
+            draft.Clear(); ClearInput();
+            selection.text = L.T(MerchantCatalog.All[merchantIndex].Name);
+            readout.SetText("", resetScroll: true);
+            Refresh(ReadCurrentSnapshot());
+        }
+
+        private string MerchantValues(SettingsSnapshot snapshot)
+        {
+            MerchantDefinition definition = MerchantCatalog.All[merchantIndex];
+            MerchantSettings settings = snapshot.Merchants[definition.Id];
+            return L.F("{0}: {1}", L.T(definition.Name), L.T(settings.Enabled ? "ON" : "OFF")) +
+                "\n" + L.F("Chance: {0}%", settings.Chance) +
+                "\n" + L.F("First eligible floor: {0}", settings.FirstFloor) +
+                "\n" + L.F("Per-run limit: {0}", settings.MaxPerRun == 0 ? L.T("Unlimited") : settings.MaxPerRun.ToString(CultureInfo.InvariantCulture)) +
+                "\n\n" + (definition.HasGuarantee ?
+                    L.T("Each enabled type guarantees one encounter per run on a random floor that meets its conditions. At 0%, only that encounter remains. Other eligible floors use this type's chance.") :
+                    L.T("This type uses its own chance on each eligible floor; no encounter is guaranteed.")) +
+                "\n\n" + L.T("Types roll independently and can share a floor. At most one extra merchant of each type per eligible floor.") +
+                "\n\n" + L.T("The run limit counts all spawns of this type. While a guaranteed encounter remains reachable, one slot is reserved for it; a limit of 1 then allows only that encounter.") +
+                "\n\n" + L.T("First eligible floor follows normal-route progress from 1. Optional floors use current route progress. Boss-only floors, lobby, towns, and training are excluded.") +
+                "\n\n" + L.T("Added merchants are hostile combat encounters with 1x normal HP and cannot talk. Only these actors have no negotiation/crime penalty; natural merchants keep their usual behavior.") +
+                "\n\n" + L.F("Changing chance or conditions keeps this type's toggle. Reset selected restores off, {0}%, first floor 1, and no run limit. Existing floor rolls stay consumed.", definition.DefaultChance) +
+                "\n\n" + L.T("Off/reset stop future spawns; existing added merchants keep their penalty exemption until floor teardown.") +
+                "\n\n" + L.T("The host spawns merchants for all players, including unmodified guests.") +
+                (snapshot.MerchantsAvailable ? "" : "\n\n" + L.T("Merchant hooks unavailable; native behavior continues. See Player.log.")) +
+                "\n\n" + L.T("Save these options from Presets for future sessions.");
+        }
     }
 }

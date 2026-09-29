@@ -11,6 +11,7 @@ internal static class GameMerchantCompatibilityTests
         VerifyDeathBoundary(game);
         VerifyShopIsolation(game);
         VerifyReplication(game);
+        VerifyVariantCombat(game);
         VerifyHealthScaling(game, addon);
         VerifyFloorCompletion(game, addon);
 
@@ -21,7 +22,65 @@ internal static class GameMerchantCompatibilityTests
         VerifyPrefix(hooks, "AllowCrime", new[] { game.GetType("UnitAI_NewBasic", true)! }, new[] { "npc" });
         VerifyPrefix(hooks, "HandleDamage", new[] { game.GetType("UnitAI_NewBasic", true)!, game.GetType("DamageInstance", true)! },
             new[] { "__instance", "damage" });
-        Console.WriteLine("Verified installed merchant crime boundary, damage-before-death order, native safe stock and guest replication, normal native-scaled HP and floor-ready event after native travelers (not live gameplay).");
+        Console.WriteLine("Verified installed merchant crime boundary, Papa/Papyrus/Taz native combat, native safe stock and guest replication, normal native-scaled HP and floor-ready event after native travelers (not live gameplay).");
+    }
+
+    private static void VerifyVariantCombat(Assembly game)
+    {
+        Type Type(string name) => game.GetType(name, true)!;
+        var npc = Type("UnitAI_NewBasic");
+        var unit = Type("UnitAvatar");
+        foreach (var pair in new[] { ("Unit_BabaMerchantHard", "UnitAI_BabaMerchantHard"),
+            ("Unit_Soldier", "UnitAI_Soldier"), ("Unit_TurtlePotion", "UnitAI_TurtlePotion") })
+        {
+            Require(Type(pair.Item1).BaseType == unit && Type(pair.Item2).BaseType == npc,
+                "Merchant variants must retain the shared native avatar and NPC hook boundaries: " + pair.Item1);
+            foreach (var name in new[] { pair.Item1, pair.Item2 })
+            {
+                var methods = Type(name).GetMethods(BindingFlags.Instance | BindingFlags.Static |
+                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+                Require(!methods.Any(m => m.Name is "OnDie" or "OnDamaged" or "OnSetSocialID"),
+                    "Variant-specific social/death callbacks require a separate safety audit: " + name);
+                var methodsAndIterators = methods.Concat(methods.Select(m =>
+                    m.GetCustomAttribute<IteratorStateMachineAttribute>()?.StateMachineType)
+                    .Where(t => t != null).Select(t => RequiredMethod(t!, "MoveNext")));
+                Require(!methodsAndIterators.SelectMany(Code).Any(i => i.operand is MethodInfo called &&
+                    (called.DeclaringType?.Name == "SaveManager" ||
+                     called.Name is "NPCDeadCheckServerside" or "SetTempEnemyRelation" or
+                         "NotifyWanderersHostile" or "add_OnDie" or "add_OnDamagedServerside")),
+                    "Variant controller added a global crime/save/death path outside the shared hooks: " + name);
+            }
+        }
+
+        var soldier = Type("Unit_Soldier");
+        Require(Code(RequiredMethod(Type("UnitAI_Soldier"), "OnAIUpdate_FoundEnemy"))
+                .Any(i => Equals(i.operand, RequiredMethod(soldier, "StartAttack"))),
+            "Papyrus must retain its native soldier attack initiation.");
+        var melee = Code(RequiredMethod(soldier, "BeginFireAnimation"));
+        Require(melee.Any(i => i.operand is MethodInfo m && m.Name == "get_isServer") &&
+            melee.Any(i => i.operand is MethodInfo m && m.Name == "RequestStandardDamage") &&
+            melee.Any(i => i.operand is MethodInfo m && m.Name == "CreateAttack"),
+            "Papyrus melee damage must remain a native server attack driven by its animation event.");
+
+        var turtle = Type("Unit_TurtlePotion");
+        var throwPotion = RequiredMethod(turtle, "ThrowPotionServer");
+        var turtleAI = Code(RequiredMethod(Type("UnitAI_TurtlePotion"), "OnAIUpdate_FoundEnemy"));
+        Require(turtleAI.Any(i => Equals(i.operand, throwPotion)) && turtleAI.Any(i =>
+                i.operand is MethodInfo m && m.DeclaringType == turtle && m.Name == "set_NetworkisInShell"),
+            "Taz must enter its native synchronized shell state before throwing potions.");
+        Require(Code(throwPotion).Any(i => i.operand is MethodInfo m && m.Name == "get_isServer"),
+            "Taz potion spawning must remain server-authoritative.");
+        var potions = IteratorCode(RequiredMethod(turtle, "ThrowPotionCoroutine"));
+        Require(potions.Any(i => i.operand is MethodInfo m && m.Name == "RequestStandardDamage") &&
+            potions.Any(i => i.operand is MethodInfo m && m.Name == "CreateAttack") &&
+            !potions.Any(i => i.operand is MethodInfo m && m.DeclaringType == Type("GridInventory")),
+            "Taz must use native damaging projectile attacks independently of merchant stock.");
+
+        var loot = Code(RequiredMethod(Type("DropItemOnDie"), "DropItems", Type("DamageInstance")));
+        Require(loot.Any(i => i.operand is MethodInfo m && m.Name == "get_isServer") &&
+            loot.Any(i => i.operand is MethodInfo m && m.Name == "DropEXP") &&
+            loot.Any(i => i.operand is MethodInfo m && m.Name == "DropRemoteInventory"),
+            "Papyrus/Taz native death loot must retain its server-side EXP and separate avatar inventory path.");
     }
 
     private static void VerifyHealthScaling(Assembly game, Assembly addon)
@@ -234,6 +293,7 @@ internal static class GameMerchantCompatibilityTests
         foreach (var pair in new[] { ("UnitAI_NewBasic", "socialID"), ("UnitAI_NewBasic", "roleName"),
             ("UnitAI_NewBasic", "MySafe"), ("UnitAI_NewBasic", "canTalkCount"), ("Safe", "connectedMerchant"), ("UnitAvatar", "faction"),
             ("UnitAvatar", "defaultNameKey"), ("UnitAvatar", "randomID"), ("UnitAvatar", "isInBattle"),
+            ("Unit_TurtlePotion", "isInShell"),
             ("UnitAvatar", "maxHp"), ("UnitAvatar", "finalMaxHp"), ("UnitAvatar", "hp") })
         {
             var type = game.GetType(pair.Item1, true)!;

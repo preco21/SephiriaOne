@@ -28,6 +28,11 @@ var hidden = Data("Moleland", 1); hidden.isHidden = true;
 var pocket = Data("Moleland", 1); pocket.pocketDimension = true;
 Check(route.Position(hidden) == -1 && route.Position(pocket) == -1, "Hidden and pocket floors are excluded");
 Check(route.LatestPosition == route.Position(Data("Library", 0)), "Older callbacks and excluded floors cannot lower the observed progress watermark");
+Check(route.FloorNumber(route.Position(Data("Moleland", 0))) == 1 &&
+    route.FloorNumber(route.Position(Data("Moleland", 2))) == 2 &&
+    route.FloorNumber(route.Position(Data("Library", 0))) == 2 &&
+    route.FloorNumber(route.Position(Data("Library", 1))) == 3 && route.FloorNumber(-1) == 0,
+    "Earliest-floor ordinals count eligible positions once and exclude boss/safe entrance depths");
 
 dungeon.Race.stages = [first, first, later]; dungeon.Race.lobbyStage = first;
 route = new Route(dungeon, save);
@@ -74,6 +79,8 @@ var missionB = Data("Grassland", 1, "mission-b", "Defense");
 var missionC = Data("Grassland", 4, "mission-c", "Miniboss");
 int a = route.Position(missionA), b = route.Position(missionB), c = route.Position(missionC);
 Check(a < b && b < c, "Board missions follow arrival order instead of their randomly assigned nodeProgress");
+Check(route.FloorNumber(a) == 1 && route.FloorNumber(b) == 2 && route.FloorNumber(c) == 3,
+    "Board earliest-floor conditions use actual mission order rather than arbitrary native mission IDs");
 Check(route.Position(missionA) == a && new Route(dungeon, save).Position(missionB) == b, "Revisits and run reloads preserve saved board ordinals");
 Check(route.Position(Data("Grassland", 1, "board-boss")) > c, "Board boss position follows all required mission visits");
 Check(!route.Opportunities.Contains(route.Position(Data("Grassland", 2, "extra", "Extra"))), "Unexpected extra board missions cannot introduce new scheduled opportunities");
@@ -110,5 +117,6 @@ sealed class Route
     internal IReadOnlyList<int> Opportunities => (IReadOnlyList<int>)type.GetProperty("Opportunities", Flags).GetValue(value);
     internal int LatestPosition => (int)type.GetProperty("LatestPosition", Flags).GetValue(value);
     internal int Position(FloorData data) => (int)type.GetMethod("Position", Flags).Invoke(value, [data]);
+    internal int FloorNumber(int position) => (int)type.GetMethod("FloorNumber", Flags).Invoke(value, [position]);
     internal void ObserveHistory() => type.GetMethod("ObserveHistory", Flags).Invoke(value, null);
 }

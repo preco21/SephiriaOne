@@ -23,6 +23,15 @@ namespace SephiriaOne
         internal IReadOnlyList<int> Opportunities => opportunities;
         internal int LatestPosition { get; private set; } = -1;
 
+        internal int FloorNumber(int position)
+        {
+            if (position < 0) return 0;
+            int count = 0;
+            foreach (int opportunity in opportunities)
+            { if (opportunity > position) break; count++; }
+            return count;
+        }
+
         internal MerchantRoute(DungeonManager dungeon, SaveData run)
         {
             this.dungeon = dungeon;

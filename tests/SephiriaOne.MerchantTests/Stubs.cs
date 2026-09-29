@@ -47,6 +47,10 @@ namespace UnityEngine
                     var copied = clone.AddComponent<Unit_BabaMerchantHard>(); copied.monsterType = avatar.monsterType;
                     copied.maxHp = avatar.maxHp; copied.isHPCursed = avatar.isHPCursed;
                 }
+                else if (component is Unit_Soldier soldier)
+                { var copied = clone.AddComponent<Unit_Soldier>(); copied.maxHp = soldier.maxHp; copied.monsterType = soldier.monsterType; }
+                else if (component is Unit_TurtlePotion turtle)
+                { var copied = clone.AddComponent<Unit_TurtlePotion>(); copied.maxHp = turtle.maxHp; copied.monsterType = turtle.monsterType; }
                 else if (component is UnitAvatar unit) clone.AddComponent<UnitAvatar>().monsterType = unit.monsterType;
                 else if (component is UnitAI_NewBasic) clone.AddComponent<UnitAI_NewBasic>();
                 else if (component is Safe) clone.AddComponent<Safe>();
@@ -123,7 +127,8 @@ public class SocialIDEntity : UnityEngine.Object
 public static class SocialIDDatabase
 {
     public static SocialIDEntity Template;
-    public static SocialIDEntity FindByName(string name) => name == "Merchant_Papa" ? Template : null;
+    public static readonly Dictionary<string, SocialIDEntity> Variants = new();
+    public static SocialIDEntity FindByName(string name) => name == "Merchant_Papa" ? Template : Variants.GetValueOrDefault(name);
 }
 public sealed class PropEntity { public GameObject propPrefab; }
 public static class PropDatabase
@@ -141,7 +146,7 @@ public class SaveData
     public void SetBool(string key, bool value) => Flags[key] = value;
 }
 public static class SaveManager { public static SaveData CurrentRun = new(); }
-public class FloorData { public string guid, name = "Dungeon"; public bool isHidden, pocketDimension; public int Progress; }
+public class FloorData { public string guid, name = "Dungeon", stageName = "Dungeon"; public bool isHidden, pocketDimension; public int Progress, difficulty; }
 public class FloorGenerator : NetworkBehaviour
 {
     public static readonly List<FloorGenerator> FloorGenerators = new();
@@ -208,6 +213,8 @@ public class UnitAvatar : NetworkBehaviour
     public void ForceDie() { DeathCalls++; IsDead = true; }
 }
 public class Unit_BabaMerchantHard : UnitAvatar { }
+public class Unit_Soldier : UnitAvatar { }
+public class Unit_TurtlePotion : UnitAvatar { }
 public class DamageInstance { public UnityEngine.Object origin; }
 public class Safe : NetworkBehaviour
 {
@@ -262,6 +269,7 @@ namespace SephiriaOne
         public MerchantRoute(DungeonManager dungeon, SaveData run) { this.dungeon = dungeon; initialized = dungeon.Race; }
         public IReadOnlyList<int> Opportunities => initialized ? dungeon.Opportunities : Array.Empty<int>();
         public int LatestPosition { get; private set; } = -1;
+        public int FloorNumber(int position) => position < 0 ? 0 : dungeon.Opportunities.Count(value => value <= position);
         public int Position(FloorData data)
         {
             if (!initialized || data.isHidden || data.pocketDimension) return -1;
@@ -273,6 +281,12 @@ namespace SephiriaOne
     {
         public static bool MerchantSpawnsForUse;
         public static int MerchantSpawnChanceForUse = 100;
+        public static int FirstFloor = 1, MaxPerRun;
+        public static readonly Dictionary<string, MerchantSettings> Variants = new();
+        public static bool AnyMerchantSpawnsForUse => MerchantSpawnsForUse || Variants.Values.Any(value => value.Enabled);
+        public static MerchantSettings GetMerchantSettingsForUse(string id) => id == MerchantCatalog.DefaultId ?
+            new MerchantSettings(MerchantSpawnsForUse, MerchantSpawnChanceForUse, FirstFloor, MaxPerRun) :
+            Variants.TryGetValue(id, out var settings) ? settings : MerchantSettings.Defaults(MerchantCatalog.Find(id));
     }
     internal static class MerchantFeature { public static bool Available = true; }
     internal static class MerchantRooms
@@ -280,6 +294,8 @@ namespace SephiriaOne
         public static bool ValidateContracts() => true;
         public static bool TryChoose(FloorGenerator floor, out Vector2 position)
         { position = floor.SpawnPosition; return floor.EligibleRoom; }
+        public static bool TryChoose(FloorGenerator floor, int salt, out Vector2 position)
+        { position = new Vector2(floor.SpawnPosition.x + (salt == 0 ? 0 : salt == 0x50415059 ? 16 : 32), floor.SpawnPosition.y); return floor.EligibleRoom; }
     }
 }
 internal static class FixtureWorld

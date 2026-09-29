@@ -9,12 +9,14 @@ internal static class SnapshotDetailTests
         if (compact.Lines.Count != 0) throw new Exception("Non-Status panel snapshots must not build diagnostic lines.");
         foreach (var property in typeof(SettingsSnapshot).GetProperties())
         {
-            if (property.Name is "Lines" or "Players" or "ActiveSettings" or "SavedSettings") continue;
+            if (property.Name is "Lines" or "Players" or "ActiveSettings" or "SavedSettings" or "Merchants") continue;
             if (!Equals(property.GetValue(full), property.GetValue(compact)))
                 throw new Exception("Compact snapshot changed " + property.Name);
         }
         if (!full.ActiveSettings.SequenceEqual(compact.ActiveSettings) ||
-            !full.SavedSettings.SequenceEqual(compact.SavedSettings) || full.Players.Count != compact.Players.Count)
+            !full.SavedSettings.SequenceEqual(compact.SavedSettings) || full.Players.Count != compact.Players.Count ||
+            full.Merchants.Count != compact.Merchants.Count || full.Merchants.Any(pair =>
+                !compact.Merchants.TryGetValue(pair.Key, out var value) || !pair.Value.Equals(value)))
             throw new Exception("Compact snapshot lost settings or ready players.");
         for (int i = 0; i < full.Players.Count; i++)
         {

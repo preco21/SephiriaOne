@@ -8,6 +8,9 @@ internal static class MerchantRuntimeTests
         start(); MerchantFeature.Available = true; MerchantFeature.RefreshCalls = 0;
         bool Command(string text) => SettingsActions.Execute("/one merchant " + text).Success;
         bool Enabled() => SessionSettings.ReadSnapshot().ActiveSettings.Contains("merchant spawns 1");
+        check(Command("papyrus on") && !SessionSettings.ReadSnapshot().MerchantSpawns,
+            "Enabling another merchant type preserves the legacy Wandering toggle");
+        check(Command("papyrus reset"), "Selected merchant reset restores only that type");
         check(Command("chance 75") && !Enabled() && SessionSettings.ReadSnapshot().ActiveSettings.Contains("merchant chance 75"),
             "Host can set spawn chance independently while merchants remain off");
         check(Command("reset") && !SessionSettings.ReadSnapshot().ActiveSettings.Any(line => line.StartsWith("merchant ")),
@@ -85,5 +88,65 @@ internal static class MerchantRuntimeTests
         calls = MerchantFeature.RefreshCalls;
         check(!SessionSettings.MerchantSpawnsForUse && MerchantFeature.RefreshCalls == calls,
             "An invalid saved merchant preset applies no intent and does not refresh gameplay");
+
+        start(); MerchantFeature.Available = true;
+        presetPath = Path.Combine(UnityEngine.Application.persistentDataPath, "SephiriaOne", "session-preset.txt");
+        check(Command("papyrus chance 65") && Command("papyrus from 3") && Command("papyrus limit 2") &&
+            Command("papyrus on") && Command("taz on") && Command("on"), "Independent merchant types accept all configured conditions");
+        var detached = SessionSettings.ReadSnapshot();
+        check(detached.Merchants.Count == MerchantCatalog.All.Count && detached.Merchants["papyrus"].Equals(new MerchantSettings(true, 65, 3, 2)) &&
+            SessionSettings.AnyMerchantSpawnsForUse && SessionSettings.GetMerchantSettingsForUse("papyrus").Equals(detached.Merchants["papyrus"]),
+            "Panel snapshots and native-use reads expose each independent merchant setting");
+        SnapshotDetailTests.AssertSameValues(detached, SessionSettings.ReadSnapshot(includeDiagnostics: false));
+        bool readOnly = false;
+        try { ((IDictionary<string, MerchantSettings>)detached.Merchants)["papyrus"] = new MerchantSettings(false, 25); }
+        catch (NotSupportedException) { readOnly = true; }
+        check(readOnly, "Snapshot merchant collection cannot mutate session policy");
+        revision = detached.Revision; calls = MerchantFeature.RefreshCalls;
+        var allStatus = SettingsActions.Execute("/one merchant status");
+        var typedStatus = SettingsActions.Execute("/one merchant papyrus status");
+        check(allStatus.Success && MerchantCatalog.All.All(definition => allStatus.Messages.Any(text => text.Contains(definition.Name))) &&
+            typedStatus.Success && typedStatus.Messages.Any(text => text.Contains("Papyrus") && text.Contains("65%")) &&
+            typedStatus.Messages.All(text => !text.Contains("Wandering Merchant") && !text.Contains("Taz")) &&
+            SessionSettings.ReadSnapshot().Revision == revision && MerchantFeature.RefreshCalls == calls,
+            "Bare status covers all types, selected status only its type, and neither replays gameplay");
+        foreach (string text in new[] { "unknown on", "papyrus from 0", "papyrus from 1001", "papyrus limit -1", "papyrus limit 1001", "taz chance 101" })
+            check(!Command(text) && SessionSettings.ReadSnapshot().Revision == revision && MerchantFeature.RefreshCalls == calls,
+                "Invalid typed command leaves every setting and refresh count unchanged: " + text);
+        check(Command("papyrus off") && SessionSettings.GetMerchantSettingsForUse("papyrus").Equals(new MerchantSettings(false, 65, 3, 2)) &&
+            detached.Merchants["papyrus"].Enabled && Command("reset") && SessionSettings.GetMerchantSettingsForUse("taz").Enabled &&
+            !SessionSettings.MerchantSpawnsForUse, "Off retains selected conditions, legacy reset only changes Wandering, and older snapshots stay detached");
+        check(Command("papyrus on") && SettingsActions.Execute("/one save").Success &&
+            File.ReadAllText(presetPath).StartsWith("SephiriaOne preset v8\n"), "All type settings save atomically as v8");
+        check(Command("papyrus reset") && !SessionSettings.GetMerchantSettingsForUse("papyrus").Enabled &&
+            SessionSettings.GetMerchantSettingsForUse("taz").Enabled, "Selected reset keeps other enabled types and the saved copy");
+        calls = MerchantFeature.RefreshCalls;
+        DungeonManager.Instance = new DungeonManager();
+        check(SessionSettings.ReadSnapshot().Merchants.Values.All(value => !value.Enabled) && MerchantFeature.RefreshCalls == calls,
+            "A snapshot for a replacement session does not load or apply saved merchant types");
+        check(SessionSettings.AnyMerchantSpawnsForUse && SessionSettings.GetMerchantSettingsForUse("papyrus").Equals(new MerchantSettings(true, 65, 3, 2)) &&
+            SessionSettings.GetMerchantSettingsForUse("taz").Enabled && !SessionSettings.MerchantSpawnsForUse && MerchantFeature.RefreshCalls == calls + 1,
+            "First native use restores the complete v8 preset exactly once after the session changes");
+        SessionSettings.Synchronize();
+        MerchantFeature.Available = false;
+        revision = SessionSettings.ReadSnapshot().Revision; calls = MerchantFeature.RefreshCalls;
+        check(!Command("papyrus from 5") && !Command("taz limit 3") && !Command("papyrus on") &&
+            SessionSettings.ReadSnapshot().Revision == revision && MerchantFeature.RefreshCalls == calls &&
+            Command("papyrus off") && Command("papyrus reset") && SessionSettings.GetMerchantSettingsForUse("taz").Enabled,
+            "Unavailable hooks reject typed condition changes while selected off/reset preserve independent types");
+        MerchantFeature.Available = true;
+        NetworkServer.active = false; calls = MerchantFeature.RefreshCalls;
+        foreach (string text in new[] { "papyrus on", "papyrus off", "papyrus reset", "papyrus chance 30", "papyrus from 4", "papyrus limit 2", "papyrus status", "status" })
+            check(!Command(text), "Guests cannot inspect or mutate typed host settings: " + text);
+        check(MerchantFeature.RefreshCalls == calls && !SessionSettings.AnyMerchantSpawnsForUse &&
+            SessionSettings.GetMerchantSettingsForUse("papyrus").Equals(MerchantSettings.Defaults(MerchantCatalog.Find("papyrus"))) &&
+            SessionSettings.ReadSnapshot().Merchants.Values.All(value => !value.Enabled), "Guest reads expose defaults and do not refresh merchant gameplay");
+        NetworkServer.active = true;
+        SessionSettings.Stop();
+        check(SessionSettings.ReadSnapshot().Merchants.Values.All(value => !value.Enabled) && detached.Merchants["papyrus"].Enabled,
+            "Stopping clears every active type without changing earlier snapshots");
+        pendingHost = start(); pendingHost.connectionToClient.isReady = false; calls = MerchantFeature.RefreshCalls;
+        check(!Command("papyrus on") && !Command("taz from 3") && !SessionSettings.ReadSnapshot().Merchants["papyrus"].Enabled &&
+            MerchantFeature.RefreshCalls == calls, "Pending host initialization rejects all typed settings before policy mutation");
     }
 }

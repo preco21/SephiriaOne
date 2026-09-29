@@ -38,8 +38,9 @@ namespace SephiriaOne
         public RabbitPotionSettings RabbitPotions { get; }
         public bool RabbitPotionsAvailable { get; }
         public bool RabbitDescriptionAvailable { get; }
-        public bool MerchantSpawns { get; }
-        public int MerchantSpawnChance { get; }
+        public IReadOnlyDictionary<string, MerchantSettings> Merchants { get; }
+        public bool MerchantSpawns => Merchants[MerchantCatalog.DefaultId].Enabled;
+        public int MerchantSpawnChance => Merchants[MerchantCatalog.DefaultId].Chance;
         public bool MerchantsAvailable { get; }
         public bool SavedValid { get; }
         public string AvailabilityReason { get; }
@@ -56,15 +57,20 @@ namespace SephiriaOne
             IEnumerable<PlayerSettingsSnapshot> players, IEnumerable<string> activeSettings,
             IEnumerable<string> savedSettings, string savedSummary, RabbitPotionSettings rabbitPotions = default,
             bool rabbitPotionsAvailable = false, bool rabbitDescriptionAvailable = false,
-            bool merchantSpawns = false, bool merchantsAvailable = false, int merchantSpawnChance = MerchantCommand.DefaultChance)
+            bool merchantSpawns = false, bool merchantsAvailable = false, int merchantSpawnChance = MerchantCommand.DefaultChance,
+            IReadOnlyDictionary<string, MerchantSettings> merchants = null)
         {
             SessionIdentity = sessionIdentity; Epoch = epoch; RunGeneration = runGeneration; Revision = revision;
             HostActive = hostActive; CanMutate = canMutate; CanSave = canSave; CanForget = canForget;
             ChoicesAvailable = choicesAvailable; SavedValid = savedValid;
             RabbitPotions = rabbitPotions; RabbitPotionsAvailable = rabbitPotionsAvailable;
             RabbitDescriptionAvailable = rabbitDescriptionAvailable;
-            MerchantSpawns = merchantSpawns; MerchantsAvailable = merchantsAvailable;
-            MerchantSpawnChance = merchantSpawnChance;
+            var merchantCopy = new Dictionary<string, MerchantSettings>();
+            foreach (var definition in MerchantCatalog.All)
+                merchantCopy.Add(definition.Id, merchants != null && merchants.TryGetValue(definition.Id, out var value) ? value :
+                    definition.Id == MerchantCatalog.DefaultId ? new MerchantSettings(merchantSpawns, merchantSpawnChance) : MerchantSettings.Defaults(definition));
+            Merchants = new ReadOnlyDictionary<string, MerchantSettings>(merchantCopy);
+            MerchantsAvailable = merchantsAvailable;
             AvailabilityReason = availabilityReason; FaultedFeature = faultedFeature;
             ActiveSettings = new List<string>(activeSettings).AsReadOnly();
             SavedSettings = new List<string>(savedSettings).AsReadOnly();

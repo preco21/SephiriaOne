@@ -18,7 +18,7 @@ namespace SephiriaOne
         private TMP_InputField amount;
         private PanelTextScroll readout;
         private Button resetOne, resetAll, save, forget;
-        private int page, statIndex, choiceIndex, resourceIndex;
+        private int page, statIndex, choiceIndex, resourceIndex, merchantIndex;
         private int languageRevision;
         private PanelControlLifetime<UIBase> lifetime;
         private static readonly string[] Choices = { "all", "item", "weapon", "miracle" };

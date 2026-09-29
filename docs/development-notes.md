@@ -9,6 +9,16 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.24.0` adds [independent hostile merchant variants](merchant-variants.md):
+Wandering Merchant, Papyrus and Taz. Each has its own toggle, chance, earliest
+eligible floor, per-run cap and random guarantee; different types can coexist on
+one floor with separate stock. A catalog, composable conditions, shared runtime
+and per-type run state replace the single-type flow. Host-only native networking,
+1x HP scaling and exact-actor crime exemptions remain. Old commands/saves are
+preserved; typed settings use v8 presets. EN/KO panel controls are updated. Native
+inspection excluded mage/villager templates without working combat components.
+No deployment was run.
+
 Version `0.23.0` randomizes the [guaranteed hostile merchant](wandering-merchant.md)
 across the run's potential eligible floor positions, including the first floor.
 Native stage assets supply future progression without generating floors early;

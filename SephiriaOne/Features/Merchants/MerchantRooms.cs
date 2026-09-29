@@ -25,6 +25,9 @@ namespace SephiriaOne
         }
 
         internal static bool TryChoose(FloorGenerator floor, out Vector2 position)
+            => TryChoose(floor, 0, out position);
+
+        internal static bool TryChoose(FloorGenerator floor, int variantSalt, out Vector2 position)
         {
             position = default;
             if (!(floor is TileFloorGenerator tiles) || !tiles.ground ||
@@ -48,7 +51,7 @@ namespace SephiriaOne
                 foreach (var room in ((Dictionary<Vector2Int, TileBasedRoomInstance>)fixedRooms.GetValue(floor)).Values) Add(rooms, room);
             else return false; // SingleRoom and unknown generators include boss/special maps.
 
-            var random = new System.Random(floor.seed ^ 0x4D524F4F);
+            var random = new System.Random(floor.seed ^ 0x4D524F4F ^ variantSalt);
             // Shuffle rooms, then select the first with a safe point: room area cannot bias
             // the selection. Both loops are bounded, run only at generation/settings events.
             for (int i = rooms.Count - 1; i > 0; i--)

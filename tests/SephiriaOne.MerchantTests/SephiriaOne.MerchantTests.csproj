@@ -1,6 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>disable</Nullable></PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../SephiriaOne/Features/Merchants/MerchantRunState.cs" Link="Production/MerchantRunState.cs" />
+    <Compile Include="../../SephiriaOne/Features/Merchants/MerchantCatalog.cs" Link="Production/MerchantCatalog.cs" />
+    <Compile Include="../../SephiriaOne/Features/Merchants/MerchantCommand.cs" Link="Production/MerchantCommand.cs" />
+    <Compile Include="../../SephiriaOne/Features/Merchants/MerchantSettings.cs" Link="Production/MerchantSettings.cs" />
+    <Compile Include="../../SephiriaOne/Features/Merchants/MerchantSpawnRules.cs" Link="Production/MerchantSpawnRules.cs" />
     <Compile Include="../../SephiriaOne/Features/Merchants/MerchantSchedule.cs" Link="Production/MerchantSchedule.cs" />
     <Compile Include="../../SephiriaOne/Features/Merchants/MerchantRuntime.cs" Condition="Exists('../../SephiriaOne/Features/Merchants/MerchantRuntime.cs')" Link="Production/MerchantRuntime.cs" />
     <Compile Include="../../SephiriaOne/Features/Merchants/MerchantNativeHooks.cs" Condition="Exists('../../SephiriaOne/Features/Merchants/MerchantNativeHooks.cs')" Link="Production/MerchantNativeHooks.cs" />

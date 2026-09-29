@@ -97,4 +97,23 @@ var blocked = Floor(Room(), Room(50, 50)); blocked.ground = Tiles(pit);
 Check(!MerchantRooms.TryChoose(blocked, out _) && blocked.ground.Queries <= 256,
     "Exhaustion across multiple rooms remains bounded");
 
+floor = Floor(Room(0, 0, 80, 80));
+var stockPoints = new List<Vector2>();
+float DistanceSquared(Vector2 a, Vector2 b) => (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y);
+Safe.Nearby = location => stockPoints.Any(existing => DistanceSquared(location, existing) <= 100);
+foreach (int salt in new[] { 0, 0x50415059, 0x54415A31 })
+{
+    Check(MerchantRooms.TryChoose(floor, salt, out point), "The same normal room can safely host independently salted types");
+    Check(MerchantRooms.TryChoose(floor, salt, out repeated) && repeated == point,
+        "A type's placement is deterministic while occupancy is unchanged");
+    Check(stockPoints.All(existing => DistanceSquared(point, existing) > 100),
+        "Each additional type stays outside every existing stock container's native adoption radius");
+    stockPoints.Add(point);
+}
+floor = Floor(Room(0, 0, 5, 5));
+Check(MerchantRooms.TryChoose(floor, 0, out point), "A small room can host its first merchant");
+Vector2 occupied = point; Safe.Nearby = location => DistanceSquared(location, occupied) <= 100;
+Check(!MerchantRooms.TryChoose(floor, 0x50415059, out _) && Physics2D.Queries <= 129,
+    "No safe second location skips that type with bounded work instead of sharing the first stock container");
+
 Console.WriteLine($"Passed {checks} merchant room placement checks.");

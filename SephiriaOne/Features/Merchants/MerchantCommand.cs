@@ -5,23 +5,42 @@ using System.Globalization;
 namespace SephiriaOne
 {
     internal enum MerchantParseResult { NotCommand, Help, Status, Invalid, Valid }
-    internal enum MerchantOption { Toggle, Chance, Reset }
+    internal enum MerchantOption { Toggle, Chance, FirstFloor, MaxPerRun, Reset }
 
     internal readonly struct MerchantCommand
     {
         public const int DefaultChance = 25;
+        private readonly string? typeId;
+        public string TypeId => typeId ?? MerchantCatalog.DefaultId;
+        public bool AllTypes { get; }
         public MerchantOption Option { get; }
         public bool Enabled { get; }
-        public int Chance { get; }
+        public int Value { get; }
+        public int Chance => Option == MerchantOption.Chance ? Value : DefaultChance;
         public bool IsReset => Option == MerchantOption.Reset || (Option == MerchantOption.Toggle && !Enabled);
-        public static string Usage => L.T("Host only: /one merchant on|off|status|reset, /one merchant chance <0..100>. While enabled, each run guarantees one extra hostile Wandering Merchant on a randomly selected eligible floor, including the first. Other eligible floors use the chosen whole-number percent (default 25), before or after the guaranteed encounter. At most one per normal dungeon floor; excludes boss-only floors, lobby, towns, and training. Added merchants have 1x normal HP, cannot talk, and have no negotiation/crime penalty. Chance changes keep the toggle unchanged. Off stops future spawns; reset also restores 25%. Existing added merchants stay exempt until floor teardown. Save: /one save.");
+        public static string Usage => L.T("Host only: /one merchant <id> on|off|status|reset, /one merchant <id> chance <0..100>, /one merchant <id> from <1..1000>, /one merchant <id> limit <0..1000> (0 = unlimited). Legacy aliases: /one merchant on|off|reset, /one merchant chance <0..100>. Omit <id> for Wandering Merchant; /one merchant status lists all types. Each enabled type has its own guaranteed encounter on a randomly selected eligible floor, including the first. Chance applies to other floors before and after it. Conditions apply per type; different types can share a floor. Off keeps conditions; reset restores off, 25%, first floor 1, unlimited. Save: /one save.") + " " + L.T("Merchant types: ") + TypeIds();
 
-        public MerchantCommand(bool enabled) { Option = MerchantOption.Toggle; Enabled = enabled; Chance = DefaultChance; }
-        public MerchantCommand(int chance) { Option = MerchantOption.Chance; Enabled = false; Chance = chance; }
-        private MerchantCommand(MerchantOption option) { Option = option; Enabled = false; Chance = DefaultChance; }
+        public MerchantCommand(bool enabled) : this(MerchantCatalog.DefaultId, MerchantOption.Toggle, enabled ? 1 : 0) { }
+        public MerchantCommand(int chance) : this(MerchantCatalog.DefaultId, MerchantOption.Chance, chance) { }
+        public MerchantCommand(string id, MerchantOption option, int value = 0, bool allTypes = false)
+        {
+            typeId = (MerchantCatalog.Find(id) ?? throw new ArgumentException("Unknown merchant type.", nameof(id))).Id;
+            Option = option; Enabled = option == MerchantOption.Toggle && value != 0;
+            Value = value; AllTypes = allTypes;
+        }
+
+        private static string TypeIds()
+        {
+            var ids = new string[MerchantCatalog.All.Count];
+            for (int i = 0; i < ids.Length; i++) ids[i] = MerchantCatalog.All[i].Id;
+            return string.Join(", ", ids);
+        }
 
         internal static bool TryParseChance(string text, out int chance) =>
-            int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out chance) && chance >= 0 && chance <= 100;
+            TryParseNumber(text, 0, 100, out chance);
+
+        internal static bool TryParseNumber(string text, int minimum, int maximum, out int value) =>
+            int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out value) && value >= minimum && value <= maximum;
 
         public static MerchantParseResult Parse(string? text, out MerchantCommand command, out string error)
         {
@@ -31,17 +50,37 @@ namespace SephiriaOne
                 !parts[1].Equals("merchant", StringComparison.OrdinalIgnoreCase)) return MerchantParseResult.NotCommand;
             if (parts.Length == 2 || (parts.Length == 3 && parts[2].Equals("help", StringComparison.OrdinalIgnoreCase)))
                 return MerchantParseResult.Help;
-            if (parts.Length == 3)
+            string id = MerchantCatalog.DefaultId;
+            int operation = 2;
+            var definition = MerchantCatalog.Find(parts[2]);
+            if (definition != null) { id = definition.Id; operation++; }
+            int count = parts.Length - operation;
+            if (count == 0 || (count == 1 && parts[operation].Equals("help", StringComparison.OrdinalIgnoreCase)))
+                return MerchantParseResult.Help;
+            if (count == 1)
             {
-                if (parts[2].Equals("status", StringComparison.OrdinalIgnoreCase)) return MerchantParseResult.Status;
-                if (parts[2].Equals("on", StringComparison.OrdinalIgnoreCase))
-                { command = new MerchantCommand(true); return MerchantParseResult.Valid; }
-                if (parts[2].Equals("off", StringComparison.OrdinalIgnoreCase)) return MerchantParseResult.Valid;
-                if (parts[2].Equals("reset", StringComparison.OrdinalIgnoreCase))
-                { command = new MerchantCommand(MerchantOption.Reset); return MerchantParseResult.Valid; }
+                if (parts[operation].Equals("status", StringComparison.OrdinalIgnoreCase))
+                { command = new MerchantCommand(id, MerchantOption.Toggle, allTypes: definition == null); return MerchantParseResult.Status; }
+                if (parts[operation].Equals("on", StringComparison.OrdinalIgnoreCase))
+                { command = new MerchantCommand(id, MerchantOption.Toggle, 1); return MerchantParseResult.Valid; }
+                if (parts[operation].Equals("off", StringComparison.OrdinalIgnoreCase))
+                { command = new MerchantCommand(id, MerchantOption.Toggle); return MerchantParseResult.Valid; }
+                if (parts[operation].Equals("reset", StringComparison.OrdinalIgnoreCase))
+                { command = new MerchantCommand(id, MerchantOption.Reset); return MerchantParseResult.Valid; }
             }
-            if (parts.Length == 4 && parts[2].Equals("chance", StringComparison.OrdinalIgnoreCase) && TryParseChance(parts[3], out int chance))
-            { command = new MerchantCommand(chance); return MerchantParseResult.Valid; }
+            if (count == 2)
+            {
+                string option = parts[operation].ToLowerInvariant();
+                int maximum = option == "chance" ? 100 : 1000;
+                int minimum = option == "from" ? 1 : 0;
+                if ((option == "chance" || option == "from" || option == "limit") &&
+                    TryParseNumber(parts[operation + 1], minimum, maximum, out int value))
+                {
+                    command = new MerchantCommand(id, option == "chance" ? MerchantOption.Chance :
+                        option == "from" ? MerchantOption.FirstFloor : MerchantOption.MaxPerRun, value);
+                    return MerchantParseResult.Valid;
+                }
+            }
             error = Usage;
             return MerchantParseResult.Invalid;
         }

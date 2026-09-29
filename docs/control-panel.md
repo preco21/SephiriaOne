@@ -26,7 +26,7 @@ unapplied drafts without sending any gameplay command.
 | Presets | Save current applied settings, forget the saved copy, or refresh it from disk. Active intent and saved intent are shown separately. |
 | Status | Current intent, player values, revisions, synchronization outcomes, native name status and fault details. Scroll for the complete readout. |
 | Rabbit | Independent On/Off controls for Wing-Eared Rabbit infinite HP potions, nearby potion healing, MP cost and Survival rank-5 suppression. Enter 0..10000 MP and press Set & on to choose a fee; Off remembers it. Reset restores 10 MP and disables all four options. Shows active state and compatibility. |
-| Merchant | On/Off, whole-number spawn chance 0..100% (default 25%), and Reset to off/25%. One guarantee is scheduled on a random eligible floor each run, including the first; other floors roll once before or after it. Added hostile merchants have 1× native scaled HP and no crime penalty. |
+| Merchant | Select Wandering Merchant, Papyrus or Taz. Each has On/Off, chance 0..100%, first eligible floor 1..1000, run limit 0..1000 (0 = unlimited), and Reset selected. Enter a number, then choose its action. Each enabled type gets an independent random guarantee; multiple types can share a floor. Added merchants have 1× native scaled HP and no crime penalty. |
 
 Actions only run when clicked. Typing, switching tabs and refreshing observations
 never send a settings command. Successful actions clear the amount field. Changing

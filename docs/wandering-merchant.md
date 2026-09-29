@@ -1,6 +1,10 @@
 # Extra hostile Wandering Merchant
 
 Added in `0.20.0`, disabled by default. Only the host needs SephiriaOne.
+Since `0.24.0`, this is the `wandering` type in the
+[independent merchant catalog](merchant-variants.md), alongside Papyrus and Taz.
+Commands below remain aliases for Wandering only; its Off/Reset do not change
+other types. Each enabled type has its own conditions and guarantee.
 Open `/one ui` → **Merchant**, or use chat:
 
 ```text
@@ -24,7 +28,8 @@ v1–v6 presets still load and default this feature to off/25%.
   its potential eligible normal floor positions. The first floor remains eligible,
   but is no longer forced. Other floors roll the configured chance before or after
   that position; an early chance encounter does not consume the scheduled guarantee.
-  At most one addon merchant spawns on each floor.
+  At most one addon Wandering Merchant spawns on each floor. Other types can share
+  that floor when their own rules and safe placement allow it.
 - **0%** means only the guaranteed encounter; **100%** means every eligible floor.
   Chance changes apply to floors that have not yet rolled. Turning the option on
   during a run selects from current/future progression. It does not populate passed

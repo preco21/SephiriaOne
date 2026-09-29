@@ -8,6 +8,9 @@
   <ItemGroup>
     <Compile Include="../../SephiriaOne/Features/Rabbit/RabbitDescriptionText.cs" Link="Source/Features/Rabbit/RabbitDescriptionText.cs" />
     <Compile Include="../../SephiriaOne/Features/Merchants/MerchantCommand.cs" Link="Source/Features/Merchants/MerchantCommand.cs" />
+    <Compile Include="../../SephiriaOne/Features/Merchants/MerchantCatalog.cs" Link="Source/Features/Merchants/MerchantCatalog.cs" />
+    <Compile Include="../../SephiriaOne/Features/Merchants/MerchantSettings.cs" Link="Source/Features/Merchants/MerchantSettings.cs" />
+    <Compile Include="../../SephiriaOne/Features/Merchants/MerchantSpawnRules.cs" Link="Source/Features/Merchants/MerchantSpawnRules.cs" />
     <Compile Include="../../SephiriaOne/Features/Rabbit/RabbitPotionSettings.cs" Link="Source/Features/Rabbit/RabbitPotionSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Rabbit/RabbitCommand.cs" Link="Source/Features/Rabbit/RabbitCommand.cs" />
     <Compile Include="../../SephiriaOne/Features/Resources/Starting/*Plan.cs" Link="Source/Features/Resources/Starting/%(Filename)%(Extension)" />

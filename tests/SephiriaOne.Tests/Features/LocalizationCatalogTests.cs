@@ -33,6 +33,8 @@ internal static class LocalizationCatalogTests
                 Check(korean.ContainsKey(stat.Unit), "Missing stat unit translation: " + stat.Unit);
             foreach (var resource in ResourceCatalog.All)
                 Check(korean.ContainsKey(resource.Label), "Missing resource label translation: " + resource.Label);
+            foreach (var merchant in MerchantCatalog.All)
+                Check(korean.ContainsKey(merchant.Name), "Missing merchant label translation: " + merchant.Name);
 
             // Catch new explicit literal lookup sites that omitted their catalog entry.
             // Dynamic widget label arrays have separate installed-UI and feature checks.

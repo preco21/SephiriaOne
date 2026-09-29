@@ -84,7 +84,7 @@ namespace SephiriaOne
                     {
                         SettingsSnapshot snapshot = SessionSettings.ReadSnapshot();
                         if (!snapshot.HostActive || snapshot.SessionIdentity == null) return Reply(false, snapshot.AvailabilityReason);
-                        return Reply(true, SessionSettings.DescribeMerchant(snapshot.MerchantSpawns, snapshot.MerchantSpawnChance) +
+                        return Reply(true, SessionSettings.DescribeMerchants(snapshot.Merchants, merchantCommand.AllTypes ? null : merchantCommand.TypeId) +
                             (snapshot.MerchantsAvailable ? "" : L.T(" Merchant hooks unavailable; native behavior continues. See Player.log.")));
                     }
                     bool success = SessionSettings.TryExecuteMerchant(merchantCommand, out string merchantMessage);
