@@ -137,7 +137,7 @@ namespace SephiriaOne
                 NetworkServer.Spawn(record.Actor);
                 avatar.SetRandomID(floor.seed ^ 0x534F4D ^ definition.SeedSalt);
                 avatar.ChangeFaction(faction);
-                ApplyNativeScaling(avatar, position);
+                ApplyScaling(avatar, position, context.FloorNumber);
                 if (Safe.Find(position)) throw new InvalidOperationException("Another safe appeared before merchant setup.");
                 // Own the container before native initialization can throw. SetSocialID
                 // reuses this known new safe, so rollback never claims a preexisting one.
@@ -178,7 +178,7 @@ namespace SephiriaOne
             return null;
         }
 
-        private static void ApplyNativeScaling(UnitAvatar avatar, Vector2 position)
+        private static void ApplyScaling(UnitAvatar avatar, Vector2 position, int floorNumber)
         {
             dungeon.GetStageStatBonusAtPosition(position, out int hp, out int attack, out int defense);
             avatar.AddMaxHpPercent(hp * 1.5f);
@@ -192,11 +192,27 @@ namespace SephiriaOne
                 avatar.AddCustomStat(ECustomStat.AllDamageBonus,
                     extraPlayers * KeywordDatabase.GetConstValue(kind + "BonusDamageByPlayerNumber"));
             }
-            float nativeHp = avatar.MaxHp;
-            if (avatar.isHPCursed > 0 || nativeHp <= 0 || float.IsNaN(nativeHp) || float.IsInfinity(nativeHp))
+            if (avatar.isHPCursed > 0 || !ValidHealth(avatar.maxHp) || !ValidHealth(avatar.MaxHp))
                 throw new InvalidOperationException("Native merchant HP is invalid.");
+            // Scale only this new actor's base HP, preserving the native percentage
+            // bonuses. Settings refreshes never revisit already-consumed floor rolls.
+            int factor = Math.Max(1, floorNumber);
+            if (factor > 1)
+            {
+                float extraBase = (float)((double)avatar.maxHp * (factor - 1));
+                float scaledBase = avatar.maxHp + extraBase;
+                // Match MaxHp's float evaluation order: even the percentage product
+                // must stay finite before any increased HP is sent to native clients.
+                float scaledMax = scaledBase + avatar.finalMaxHp * scaledBase / 100f;
+                if (!ValidHealth(extraBase) || !ValidHealth(scaledBase) || !ValidHealth(scaledMax))
+                    throw new InvalidOperationException("Floor-scaled merchant HP is invalid.");
+                avatar.AddMaxHp(extraBase, keepHpRatio: false);
+                if (!ValidHealth(avatar.MaxHp)) throw new InvalidOperationException("Merchant HP changed during scaling.");
+            }
             avatar.HealPercent(100f);
         }
+
+        private static bool ValidHealth(float value) => value > 0 && !float.IsNaN(value) && !float.IsInfinity(value);
 
         private static void Prune()
         {

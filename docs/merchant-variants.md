@@ -11,8 +11,9 @@ existing assets, combat controllers, inventory networking and RPCs.
 
 Each type defaults to **spawns off, guarantee on, 25% chance, first eligible floor
 1, unlimited per run**. Version **0.25.0** adds the independent guarantee toggle.
-Existing Wandering settings are retained. All three types retain native floor and
-multiplayer HP/attack scaling, with no additional HP multiplier. Added actors are
+Existing Wandering settings are retained. Since **0.26.0**, all three types multiply
+base HP by the current eligible floor number while retaining native stage and
+multiplayer HP/attack bonuses. Added actors are
 hostile, cannot talk and receive the same exact-instance crime exemption. Natural
 merchants remain unchanged.
 
@@ -107,6 +108,31 @@ configured cap. This can include old misses/failed attempts; starting a fresh ru
 gives an exact success count. New-version counts include successful spawns only.
 The game saves these values on its normal cadence; the addon does not force saves.
 
+## Floor-based health
+
+At spawn, each added merchant uses `base HP × max(1, floor number)`, then retains
+the normal native stage and multiplayer percentage bonuses. Floor 1 is ×1,
+floor 2 is ×2, floor 3 is ×3, and so on. This applies to guaranteed and chance-based
+encounters of every type without a separate setting or preset migration.
+
+The floor number is the same one-based eligible normal-route ordinal used by
+`from`: it continues across stages, shares branch depths, and follows Grassland
+mission visit order. Boss-only/safe entrances do not count. Optional rooms inherit
+current route progress; unsupported or unknown progress falls back to ×1. A
+delayed guarantee uses the floor where it actually spawns, not its original target.
+
+For example, 2,500 base HP on eligible floor 3 becomes 7,500 before native
+percentage bonuses. With a total native +230% bonus it becomes 24,750 final HP.
+Attack and defense keep their existing scaling. The native synchronized base-HP
+setter and full heal propagate to unmodified guests without new network fields.
+
+This is a one-time spawn calculation: settings changes, player re-entry and later
+floor transitions do not rescale or heal existing actors. Prefabs and natural
+merchants are unchanged. Invalid or overflowing scaled HP aborts that individual
+spawn before the increased HP is written; partial actors are cleaned up and an
+unfulfilled guarantee can continue on a later eligible floor. No per-frame work
+or new session state is added.
+
 ## Native investigation
 
 Sephiria 1.0.33 provides all three exact avatar prefabs in both native network
@@ -169,5 +195,14 @@ pending/completed targets, copied run saves, re-entry, delayed first enablement,
 host authority, detached snapshots, v1-v8 compatibility and v9 persistence.
 Live checks: open the Merchant page in both languages, change each guarantee,
 save and restart, then exercise off/on during a run with an unmodified guest.
+
+Version 0.26.0 verifies 551 merchant checks across 75 scenarios, 31 route checks,
+1061 bundled catalog checks, the portable suite and installed-game HP/replication
+contracts. Debug and Release builds pass with zero warnings/errors. Health cases
+cover each type on floors 1/2/3/7 with one and five players, native bonuses, reused
+prefabs, optional/unknown routes, delayed guarantees, repeated refresh/re-entry,
+copied run state and overflow cleanup. Live Unity gameplay still needs testing:
+compare the same type across floors, inspect host/guest health bars, and reconnect
+without changing an existing merchant's HP.
 
 No deployment script was run.

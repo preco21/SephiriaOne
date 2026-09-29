@@ -64,7 +64,8 @@ namespace SephiriaOne
                 "\n\n" + L.T("Types roll independently and can share a floor. At most one extra merchant of each type per eligible floor.") +
                 "\n\n" + L.T("The run limit counts all spawns of this type. With guarantee on, one slot is reserved while its encounter remains reachable. Guarantee off releases that slot for chance rolls.") +
                 "\n\n" + L.T("First eligible floor follows normal-route progress from 1. Optional floors use current route progress. Boss-only floors, lobby, towns, and training are excluded.") +
-                "\n\n" + L.T("Added merchants are hostile combat encounters with 1x normal HP and cannot talk. Only these actors have no negotiation/crime penalty; natural merchants keep their usual behavior.") +
+                "\n\n" + L.T("Added merchants multiply base HP by the current eligible floor number: floor 1 = x1, floor 3 = x3. Native stage and multiplayer bonuses still apply. Optional rooms use current route progress; unknown progress uses x1. Health is set once at spawn.") +
+                "\n\n" + L.T("Added merchants are hostile, cannot talk, and have no negotiation/crime penalty. Natural merchants keep their usual behavior.") +
                 "\n\n" + L.F("Changing guarantee, chance or conditions keeps this type's spawn toggle. Reset selected restores spawns off, guarantee on, {0}%, first floor 1, and no run limit.", definition.DefaultChance) +
                 "\n\n" + L.T("Guarantee changes preserve saved targets, completed encounters, spawn counts and consumed floor rolls. Turning it back on cannot reroll floors or bypass the run limit.") +
                 "\n\n" + L.T("Off/reset stop future spawns; existing added merchants keep their penalty exemption until floor teardown.") +

@@ -200,13 +200,16 @@ public class UnitAvatar : NetworkBehaviour
     public int RandomID, Buffs, DeathCalls, isHPCursed;
     public float maxHp = 2500, HpBonus, Healed;
     public float finalMaxHp => HpBonus;
-    public float MaxHp => maxHp * (1 + finalMaxHp / 100f);
+    public float MaxHp => maxHp + finalMaxHp * maxHp / 100f;
+    public int BaseHpWrites;
+    public bool KeptHpRatio;
     public readonly Dictionary<ECustomStat, int> Stats = new();
     public void SetRandomID(int id) => RandomID = id;
     public void ChangeFaction(string value) => faction = value;
     public void ChangeAttackableTargetSelector(EPersonality value) => attackableTargetSelector = value;
     public void AddMaxHpPercent(float value) => HpBonus += value;
-    public void AddMaxHp(float value, bool keepHpRatio = true) => maxHp += value;
+    public void AddMaxHp(float value, bool keepHpRatio = true)
+    { maxHp += value; BaseHpWrites++; KeptHpRatio = keepHpRatio; }
     public void AddCustomStat(ECustomStat stat, int value) => Stats[stat] = Stats.GetValueOrDefault(stat) + value;
     public void HealPercent(float value) => Healed += value;
     public void ApplyBuff(CharacterBuff buff) => Buffs++;

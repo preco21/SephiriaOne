@@ -41,8 +41,11 @@ remain supported and keep guarantees on. Run history is never reset by these opt
   during a run selects from current/future progression. It does not populate passed
   main-route floors just because their generators remain loaded. Optional stages
   outside that finite schedule retain their existing chance-only behavior.
-- The added merchant starts hostile and has **1× normal maximum HP**, including
-  the native floor and multiplayer scaling. Attack damage follows native scaling.
+- Since `0.26.0`, added merchant **base HP is multiplied by the current eligible
+  floor number**: floor 1 = ×1, floor 3 = ×3. Native stage and multiplayer HP
+  bonuses still apply. Optional rooms use current route progress; unknown progress
+  uses ×1. This is computed only at spawn and also applies to Papyrus and Taz.
+  The added merchant starts hostile. Attack damage follows native scaling.
   Its original combat AI, attacks and native stock/loot container are reused.
 - Boss floors, single-room/special generators, towns, lobby, training and hidden
   or pocket floors are excluded. Rooms must allow normal monsters and have a clear,
@@ -57,6 +60,7 @@ remain supported and keep guarantees on. Run history is never reset by these opt
 Version `0.22.1` removes the previous 3× addon HP boost for newly spawned merchants.
 Native floor and multiplayer scaling still apply, and merchants start at full HP.
 Existing actors are not rescaled; saved toggle/chance settings are unchanged.
+Version `0.26.0` replaces the flat ×1 addon factor with the floor-based rule above.
 
 The guarantee requires an eligible room and valid native game state. If native
 initialization fails, the partial spawn is cleaned up and that floor is not retried;

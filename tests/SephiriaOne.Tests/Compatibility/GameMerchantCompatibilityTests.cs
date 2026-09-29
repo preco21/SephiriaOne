@@ -22,7 +22,7 @@ internal static class GameMerchantCompatibilityTests
         VerifyPrefix(hooks, "AllowCrime", new[] { game.GetType("UnitAI_NewBasic", true)! }, new[] { "npc" });
         VerifyPrefix(hooks, "HandleDamage", new[] { game.GetType("UnitAI_NewBasic", true)!, game.GetType("DamageInstance", true)! },
             new[] { "__instance", "damage" });
-        Console.WriteLine("Verified installed merchant crime boundary, Papa/Papyrus/Taz native combat, native safe stock and guest replication, normal native-scaled HP and floor-ready event after native travelers (not live gameplay).");
+        Console.WriteLine("Verified installed merchant crime boundary, Papa/Papyrus/Taz native combat, native safe stock and guest replication, floor-scaled base HP with native bonuses and floor-ready event after native travelers (not live gameplay).");
     }
 
     private static void VerifyVariantCombat(Assembly game)
@@ -104,14 +104,19 @@ internal static class GameMerchantCompatibilityTests
         var addPercent = RequiredMethod(unit, "AddMaxHpPercent", typeof(float), typeof(bool));
         Require(Code(addPercent).Any(i => i.operand is MethodInfo m && m.Name == "set_NetworkfinalMaxHp"),
             "Native stage and multiplayer HP bonuses must remain percentage contributions.");
+        Require(Code(addMax).Any(i => i.operand is MethodInfo m && m.Name == "set_NetworkmaxHp") &&
+            !Code(addMax).Any(i => i.opcode == OpCodes.Stfld && Equals(i.operand, baseHp)),
+            "Base HP scaling must use the game's synchronized setter so unmodified guests receive it.");
 
-        var scaling = Code(RequiredMethod(addon.GetType("SephiriaOne.MerchantRuntime", true)!, "ApplyNativeScaling",
-            unit, Assembly.Load("UnityEngine.CoreModule").GetType("UnityEngine.Vector2", true)!));
+        var scaling = Code(RequiredMethod(addon.GetType("SephiriaOne.MerchantRuntime", true)!, "ApplyScaling",
+            unit, Assembly.Load("UnityEngine.CoreModule").GetType("UnityEngine.Vector2", true)!, typeof(int)));
         int lastPercent = scaling.FindLastIndex(i => Equals(i.operand, addPercent));
+        int baseScale = scaling.FindIndex(i => Equals(i.operand, addMax));
         int heal = scaling.FindIndex(i => i.operand is MethodInfo m && m.DeclaringType == unit && m.Name == "HealPercent");
-        Require(!scaling.Any(i => Equals(i.operand, addMax)) && lastPercent >= 0 &&
-            heal > lastPercent && scaling[heal - 1].LoadsConstant(100f),
-            "Extra merchant HP must retain the native base and percentage scaling, then heal to full without an addon health boost.");
+        Require(lastPercent >= 0 && baseScale > lastPercent && scaling[baseScale - 1].LoadsConstant(0) &&
+            heal > baseScale && scaling[heal - 1].LoadsConstant(100f) &&
+            !scaling.Any(i => i.opcode == OpCodes.Stfld && (Equals(i.operand, baseHp) || Equals(i.operand, bonusHp))),
+            "Merchant floor scaling must use synchronized base HP after native bonuses, then fill health without direct field writes.");
     }
 
     private static void VerifyFloorCompletion(Assembly game, Assembly addon)

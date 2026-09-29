@@ -1,6 +1,6 @@
 # SephiriaOne development notes
 
-Recorded: 2026-09-23; updated: 2026-09-29 (Asia/Seoul).
+Recorded: 2026-09-23; updated: 2026-09-30 (Asia/Seoul).
 
 This document records the project history, current implementation, and modding
 findings collected during the initial investigation. Installed-game observations
@@ -8,6 +8,17 @@ apply to the assembly fingerprint below. Reference repositories and documentatio
 can change independently of that installed game version.
 
 ## Current status
+
+Version `0.26.0` adds floor-based HP to all addon hostile merchant types: base HP
+times the current eligible route floor number, minimum ×1, while retaining native
+stage and multiplayer percentage bonuses. Scaling uses the shared route ordinal
+and native synchronized base-HP setter once at spawn; optional rooms inherit
+current progress and unknown routes use ×1. Natural merchants, prefabs, existing
+actors, attack/defense and spawn settings are preserved. Preflight validation
+rejects overflow before increased HP is written. EN/KO panel/status text and
+[merchant documentation](merchant-variants.md#floor-based-health) describe the
+formula. Tests cover floor progression, all variants, one/five players, no stacking,
+delayed guarantees and invalid health. No deployment or live Unity test was run.
 
 Version `0.25.0` adds a per-type guaranteed-encounter toggle to the shared merchant
 commands, panel, snapshots, status and EN/KO messages.
