@@ -9,7 +9,7 @@ internal static class GameMerchantCompatibilityTests
     internal static void Run(Assembly game, Assembly addon)
     {
         VerifyDeathBoundary(game);
-        VerifyShopIsolation(game);
+        VerifyShopIsolation(game, addon);
         VerifyReplication(game);
         VerifyVariantCombat(game);
         VerifyHealthScaling(game, addon);
@@ -224,7 +224,7 @@ internal static class GameMerchantCompatibilityTests
             awake.Any(i => i.operand is MethodInfo m && m.Name == "add_OnDie"), "Native NPC callback subscriptions changed.");
     }
 
-    private static void VerifyShopIsolation(Assembly game)
+    private static void VerifyShopIsolation(Assembly game, Assembly addon)
     {
         Type Type(string name) => game.GetType(name, true)!;
         var npc = Type("UnitAI_NewBasic");
@@ -246,6 +246,23 @@ internal static class GameMerchantCompatibilityTests
                 i.operand is FieldInfo f && f.Name == "connectedMerchant" ||
                 i.operand is MethodInfo m && m.Name == "get_NetworkconnectedMerchant"),
             "Safe.Find ownership/radius changed; re-audit the no-nearby-safe spawn precondition.");
+        var safeList = AccessTools.DeclaredField(safe, "safeList");
+        var vector3 = unity.GetType("UnityEngine.Vector3", true)!;
+        var distance = RequiredMethod(vector3, "Distance", vector3, vector3);
+        Require(safeList != null && safeList.IsStatic && safeList.FieldType == typeof(List<>).MakeGenericType(safe) &&
+            find.Any(i => Equals(i.operand, safeList)) && find.Any(i => Equals(i.operand, distance)),
+            "Silent placement queries require the native live safe list and 3D distance contract.");
+        foreach (var lifecycle in new[] { ("OnStartServer", "Add"), ("OnStopServer", "Remove") })
+        {
+            var code = Code(RequiredMethod(safe, lifecycle.Item1));
+            Require(code.Any(i => Equals(i.operand, safeList)) && code.Any(i => i.operand is MethodInfo m && m.Name == lifecycle.Item2),
+                "Native safe registration no longer maintains the live presence-query list: " + lifecycle.Item1);
+        }
+        var rooms = addon.GetType("SephiriaOne.MerchantRooms", true)!;
+        var presence = Code(RequiredMethod(rooms, "HasNearbySafe", safeList!.FieldType, vector3));
+        Require(presence.Any(i => Equals(i.operand, distance)) && presence.Any(i => i.LoadsConstant(10f)) &&
+            !presence.Any(i => i.operand is MethodInfo m && (m.DeclaringType == safe || m.DeclaringType?.FullName == "UnityEngine.Debug")),
+            "Placement presence must keep native distance without invoking the logging Safe.Find path.");
         Require(Code(RequiredMethod(safe, "GenerateItemInInventory", Type("ItemMetadata").MakeArrayType()))
                 .Any(i => i.operand is MethodInfo m && m.Name == "AddItems"), "Native safe stock generation changed.");
         var selling = Code(AccessTools.PropertyGetter(npc, "CurrentSelling")!);

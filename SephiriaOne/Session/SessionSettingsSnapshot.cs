@@ -152,7 +152,7 @@ namespace SephiriaOne
                     resources.Add(definition.Name, description);
                     if (includeDiagnostics) lines.Add(label + L.T(definition.Label) + ": " + description);
                 }
-                currentPlayers.Add(new PlayerSettingsSnapshot(player.netId, player.playerNameSource,
+                currentPlayers.Add(PlayerSettingsSnapshot.FromOwnedCapture(player.netId, player.playerNameSource,
                     player.Inventory.dimensionPocket, fountainOffset, stats, choices, resources));
             }
             if (includeDiagnostics && currentPlayers.Count == 0) lines.Add(L.T("No ready players; current values are unavailable."));

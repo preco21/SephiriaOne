@@ -50,6 +50,10 @@ internal static class PerformanceProbe
                 double full = MeasureSnapshot(true), compact = MeasureSnapshot(false);
                 if (checkBudget && compact >= full * 0.75)
                     throw new Exception("Non-Status snapshots must avoid at least 25% of full diagnostic allocations.");
+                // Fixed five-player fixture: retain headroom without allowing the
+                // capture path to allocate a second copy of each player dictionary.
+                if (checkBudget && compact > 25 * 1024)
+                    throw new Exception("Five-player non-Status snapshots exceed the 25 KiB allocation budget.");
             }
         }
         SessionSettings.Stop();

@@ -100,6 +100,12 @@ other types continue. If its guarantee is still pending it can carry forward to 
 later eligible floor. Runs ended early or without a remaining safe opportunity
 cannot be forced to contain the encounter.
 
+Since 0.26.1, candidate placement checks read the live native safe registry without
+calling the native nearest-safe lookup, which emits debug logs for each nearby
+safe. Distance, candidate order and live occupancy rules are unchanged. Final
+stock ownership validation still uses the native lookup. Missing registry data
+skips placement until native initialization is ready.
+
 The original type keeps its pre-0.24 run keys. New types use
 `SephiriaOne.MerchantVariant.v1.<id>.*` for consumed floors, count, completion and
 schedule. Old saves had no success counter, only consumed rolls: on first use,

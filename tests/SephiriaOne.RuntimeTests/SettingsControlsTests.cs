@@ -23,6 +23,17 @@ internal static class SettingsControlsTests
         string[] Lines(SettingsSnapshot snapshot) => snapshot.Lines.ToArray();
         int Value(PlayerSpawner player, string key = "LUCK") => player.PlayerAvatar.customStats.GetValueOrDefault(key);
 
+        var callerStats = new Dictionary<string, decimal> { ["luck"] = 17 };
+        var callerChoices = new Dictionary<string, int> { ["item"] = 4 };
+        var callerResources = new Dictionary<string, string> { ["leaves"] = "caller value" };
+        var callerSnapshot = new PlayerSettingsSnapshot(1, "Caller", 3, 2, callerStats, callerChoices, callerResources);
+        callerStats["luck"] = 99; callerChoices.Clear(); callerResources["leaves"] = "changed";
+        check(callerSnapshot.Stats["luck"] == 17 && callerSnapshot.ExtraChoices["item"] == 4 &&
+            callerSnapshot.Resources["leaves"] == "caller value",
+            "The ordinary snapshot constructor keeps defensive copies of caller-owned dictionaries");
+        check(new PlayerSettingsSnapshot(1, "Caller", 3, 2, callerStats, callerChoices).Resources.Count == 0,
+            "The ordinary snapshot constructor still accepts omitted resources");
+
         var host = start();
         var action = Execute("/fountain +10");
         check(action != null && action.Recognized && action.Success && !action.OpenPanel &&
@@ -116,22 +127,29 @@ internal static class SettingsControlsTests
         var player = snapshot.Players[0];
         var stats = (IReadOnlyDictionary<string, decimal>)player.Stats;
         var choices = (IReadOnlyDictionary<string, int>)player.ExtraChoices;
+        string originalLeaves = player.Resources["leaves"];
         check(player.Id == 1 && player.Name == "<color=#ff0000>Host</color>" && stats["critical"] == 12.34m &&
             stats["attackspeed"] == 100 && choices["item"] == 4,
             "Typed player values use display units and retain the untrusted raw name");
         host.PlayerAvatar.customStats["LUCK"] += 2;
+        host.PlayerAvatar.customStats["EXTRAITEMCHOICES"] += 1;
         host.PlayerAvatar.Inventory.dimensionPocket += 3;
+        host.PlayerAvatar.currentMoney += 10;
         var changed = Snapshot();
         check(stats["luck"] == 15 && player.FountainPoints == 4 && changed.Players[0].Stats["luck"] == 17 &&
             changed.Players[0].FountainPoints == 7 && changed.Revision == snapshot.Revision,
             "Native changes refresh values without modifying old snapshots or the intent revision");
-        bool deniedStats = false, deniedChoices = false, deniedPlayers = false, deniedLines = false, deniedMessages = false;
+        check(choices["item"] == 4 && changed.Players[0].ExtraChoices["item"] == 6 &&
+            player.Resources["leaves"] == originalLeaves && changed.Players[0].Resources["leaves"] != originalLeaves,
+            "Captured choices and resource descriptions remain detached across fresh native reads");
+        bool deniedStats = false, deniedChoices = false, deniedResources = false, deniedPlayers = false, deniedLines = false, deniedMessages = false;
         try { ((IDictionary<string, decimal>)stats)["luck"] = 99; } catch (NotSupportedException) { deniedStats = true; }
         try { ((IDictionary<string, int>)choices)["item"] = 99; } catch (NotSupportedException) { deniedChoices = true; }
+        try { ((IDictionary<string, string>)player.Resources)["leaves"] = "changed"; } catch (NotSupportedException) { deniedResources = true; }
         try { ((IList)snapshot.Players).Clear(); } catch (NotSupportedException) { deniedPlayers = true; }
         try { ((IList<string>)snapshot.Lines).Clear(); } catch (NotSupportedException) { deniedLines = true; }
         try { ((IList<string>)Execute("/stats").Messages).Clear(); } catch (NotSupportedException) { deniedMessages = true; }
-        check(deniedStats && deniedChoices && deniedPlayers && deniedLines && deniedMessages,
+        check(deniedStats && deniedChoices && deniedResources && deniedPlayers && deniedLines && deniedMessages,
             "Snapshot collections and dispatcher messages cannot be mutated through collection casts");
 
         guest.connectionToClient.isReady = false;

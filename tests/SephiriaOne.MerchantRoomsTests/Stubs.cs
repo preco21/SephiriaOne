@@ -6,7 +6,10 @@ namespace UnityEngine
     public class Object { public bool Destroyed; public static implicit operator bool(Object value) => value != null && !value.Destroyed; }
     public sealed class Transform { public Vector3 position; }
     public readonly record struct Vector3(float x, float y, float z = 0)
-    { public static implicit operator Vector2(Vector3 value) => new(value.x, value.y); }
+    {
+        public static implicit operator Vector2(Vector3 value) => new(value.x, value.y);
+        public static float Distance(Vector3 a, Vector3 b) => MathF.Sqrt((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y)+(a.z-b.z)*(a.z-b.z));
+    }
     public readonly record struct Vector2(float x, float y)
     {
         public static Vector2 zero => default;
@@ -94,7 +97,24 @@ public static class TileDatabase
 public static class CombatManager { public const int BlockCharacterLayerMask = 17; }
 public class Safe : UnityEngine.Object
 {
-    public static Func<Vector3, bool> Nearby = _ => false;
-    public static int Queries;
-    public static Safe Find(Vector3 position) { Queries++; return Nearby(position) ? new Safe() : null; }
+    private static List<Safe> safeList = new();
+    public readonly Transform transform = new();
+    public static int Queries, Logs;
+    public static List<Safe> All => safeList;
+    public static void Initialize() { safeList = new(); Queries = Logs = 0; }
+    public static void Destroy() => safeList = null;
+    public static Safe Add(Vector3 position, bool destroyed = false)
+    { var safe = new Safe { Destroyed = destroyed }; safe.transform.position = position; safeList.Add(safe); return safe; }
+    public static Safe Find(Vector3 position)
+    {
+        Queries++;
+        Safe found = null;
+        foreach (var safe in safeList)
+        {
+            if (!safe || Vector3.Distance(safe.transform.position, position) > 10f) continue;
+            Logs++;
+            if (!found || Vector3.Distance(safe.transform.position, position) < Vector3.Distance(found.transform.position, position)) found = safe;
+        }
+        return found;
+    }
 }

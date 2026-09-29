@@ -12,11 +12,13 @@ namespace SephiriaOne
         private static readonly FieldInfo proceduralRooms = typeof(EnhancedProceduralFloorGenerator).GetField("roomList", Fields);
         private static readonly FieldInfo libraryRooms = typeof(LibraryFloorGenerator).GetField("roomList", Fields);
         private static readonly FieldInfo fixedRooms = typeof(FixedFloorGenerator).GetField("roomInstances", Fields);
+        private static readonly FieldInfo safeList = typeof(Safe).GetField("safeList", BindingFlags.Static | BindingFlags.NonPublic);
 
         internal static bool ValidateContracts() =>
             proceduralRooms?.FieldType == typeof(List<TileBasedRoomInstance>) &&
             libraryRooms?.FieldType == typeof(List<LibraryFloorRoomInstance>) &&
-            fixedRooms?.FieldType == typeof(Dictionary<Vector2Int, TileBasedRoomInstance>);
+            fixedRooms?.FieldType == typeof(Dictionary<Vector2Int, TileBasedRoomInstance>) &&
+            safeList?.FieldType == typeof(List<Safe>);
 
         private struct Room
         {
@@ -33,6 +35,11 @@ namespace SephiriaOne
             if (!(floor is TileFloorGenerator tiles) || !tiles.ground ||
                 floor.floorThreatType == EFloorThreatType.Boss || floor.DataOnServer.threatType == EFloorThreatType.Boss)
                 return false;
+            // Native Safe.Find logs every nearby safe and searches for the nearest.
+            // Placement only needs presence. Read the current list once per search;
+            // never retain it across native Initialize/Destroy or cache occupancy.
+            var safes = safeList?.GetValue(null) as List<Safe>;
+            if (safes == null) return false;
             var rooms = new List<Room>();
             if (floor is EnhancedProceduralFloorGenerator)
                 foreach (var room in (List<TileBasedRoomInstance>)proceduralRooms.GetValue(floor)) Add(rooms, room);
@@ -65,11 +72,20 @@ namespace SephiriaOne
                         room.Min.x + 1 + (float)random.NextDouble() * (room.Max.x - room.Min.x - 2),
                         room.Min.y + 1 + (float)random.NextDouble() * (room.Max.y - room.Min.y - 2));
                     if (!Walkable(tiles, point) || Physics2D.OverlapCircle(point, 0.75f, CombatManager.BlockCharacterLayerMask) ||
-                        Safe.Find(point)) continue;
+                        HasNearbySafe(safes, point)) continue;
                     position = point;
                     return true;
                 }
             }
+            return false;
+        }
+
+        internal static bool HasNearbySafe(List<Safe> safes, Vector3 position)
+        {
+            foreach (Safe safe in safes)
+                // Match Find's rejection test, including its inclusive radius and
+                // non-finite distance behavior. Keep full 3D distance semantics.
+                if (safe && !(Vector3.Distance(safe.transform.position, position) > 10f)) return true;
             return false;
         }
 

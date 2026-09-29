@@ -5,6 +5,7 @@ namespace SephiriaOne
     internal sealed class NetworkNameState
     {
         private string? pendingName;
+        private string? normalizationSource, normalizedName;
         private string? gradientSource;
         private int attempts;
         private double retryAt;
@@ -22,7 +23,12 @@ namespace SephiriaOne
                 return null;
             }
 
-            plainName = Plain(plainName);
+            if (normalizationSource != plainName)
+            {
+                normalizedName = Plain(plainName);
+                normalizationSource = plainName;
+            }
+            plainName = normalizedName!;
             if (gradientSource != plainName)
             {
                 gradientSource = plainName;
@@ -60,6 +66,7 @@ namespace SephiriaOne
         public void Reset()
         {
             pendingName = null;
+            normalizationSource = normalizedName = null;
             gradientSource = null;
             GradientName = null;
             attempts = 0;

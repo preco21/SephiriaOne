@@ -13,7 +13,7 @@ TileBasedRoomInstance Room(float x = 0, float y = 0, float width = 10, float hei
     new() { bottomLeft = new Vector2(x, y), topRight = new Vector2(x + width, y + height) };
 EnhancedProceduralFloorGenerator Floor(params TileBasedRoomInstance[] rooms)
 {
-    Physics2D.Queries = Safe.Queries = 0; Physics2D.Blocked = _ => false; Safe.Nearby = _ => false;
+    Physics2D.Queries = 0; Physics2D.Blocked = _ => false; Safe.Initialize();
     var floor = new EnhancedProceduralFloorGenerator { ground = Tiles(normal) };
     foreach (var room in rooms) floor.Add(room);
     return floor;
@@ -81,7 +81,7 @@ foreach (string obstacle in new[] { "missing-ground", "pit", "water-ground", "up
         case "water": floor.water = Tiles(normal); break;
         case "cliff": floor.cliffCollider = Tiles(normal); break;
         case "collider": Physics2D.Blocked = _ => true; break;
-        case "safe": Safe.Nearby = _ => true; break;
+        case "safe": Safe.Add(new Vector3(5, 5)); break;
     }
     Check(!MerchantRooms.TryChoose(floor, out _), "Unsafe placement is rejected: " + obstacle);
     Check(floor.ground.Queries <= 128 * 9 && Physics2D.Queries <= 128 && Safe.Queries <= 128,
@@ -100,7 +100,6 @@ Check(!MerchantRooms.TryChoose(blocked, out _) && blocked.ground.Queries <= 256,
 floor = Floor(Room(0, 0, 80, 80));
 var stockPoints = new List<Vector2>();
 float DistanceSquared(Vector2 a, Vector2 b) => (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y);
-Safe.Nearby = location => stockPoints.Any(existing => DistanceSquared(location, existing) <= 100);
 foreach (int salt in new[] { 0, 0x50415059, 0x54415A31 })
 {
     Check(MerchantRooms.TryChoose(floor, salt, out point), "The same normal room can safely host independently salted types");
@@ -109,11 +108,47 @@ foreach (int salt in new[] { 0, 0x50415059, 0x54415A31 })
     Check(stockPoints.All(existing => DistanceSquared(point, existing) > 100),
         "Each additional type stays outside every existing stock container's native adoption radius");
     stockPoints.Add(point);
+    Safe.Add(point);
 }
 floor = Floor(Room(0, 0, 5, 5));
 Check(MerchantRooms.TryChoose(floor, 0, out point), "A small room can host its first merchant");
-Vector2 occupied = point; Safe.Nearby = location => DistanceSquared(location, occupied) <= 100;
+Safe.Add(point);
 Check(!MerchantRooms.TryChoose(floor, 0x50415059, out _) && Physics2D.Queries <= 129,
     "No safe second location skips that type with bounded work instead of sharing the first stock container");
+Check(Safe.Queries == 0 && Safe.Logs == 0,
+    "Crowded placement must avoid native Safe.Find, which logs each nearby safe on every rejected point; calls=" + Safe.Queries);
+
+foreach (var offset in new[] { new Vector3(0, 0), new Vector3(10, 0), new Vector3(10.001f, 0),
+    new Vector3(6, 8), new Vector3(0, 0, 10), new Vector3(0, 0, 10.001f),
+    new Vector3(float.NaN, 0), new Vector3(float.PositiveInfinity, 0) })
+{
+    Safe.Initialize(); Safe.Add(offset);
+    bool expected = Safe.Find(default);
+    Safe.Queries = Safe.Logs = 0;
+    Check(MerchantRooms.HasNearbySafe(Safe.All, default) == expected && Safe.Queries == 0 && Safe.Logs == 0,
+        "Silent presence matches the native 3D radius and non-finite comparison: " + offset);
+}
+Safe.Initialize(); Safe.Add(default, destroyed: true); Safe.All.Add(null); Safe.Add(new Vector3(200, 0));
+Check(!MerchantRooms.HasNearbySafe(Safe.All, default), "Destroyed, null and distant safes do not block placement");
+Safe.Add(default);
+Check(MerchantRooms.HasNearbySafe(Safe.All, default), "Presence finds a live match beyond stale list entries");
+for (int i = 0; i < 2000; i++) MerchantRooms.HasNearbySafe(Safe.All, default);
+long allocated = GC.GetAllocatedBytesForCurrentThread();
+for (int i = 0; i < 10000; i++) MerchantRooms.HasNearbySafe(Safe.All, default);
+Check(GC.GetAllocatedBytesForCurrentThread() - allocated < 1024, "Steady safe presence checks avoid per-candidate allocations");
+
+floor = Floor(Room(0, 0, 5, 5)); Safe.Add(new Vector3(2, 2));
+Check(!MerchantRooms.TryChoose(floor, out _), "A live safe blocks a fully covered room");
+Safe.Initialize();
+Check(MerchantRooms.TryChoose(floor, out _), "Native list replacement is observed on the next placement search");
+var newSafe = Safe.Add(new Vector3(2, 2));
+Check(!MerchantRooms.TryChoose(floor, out _), "New native stock is visible without a cached occupancy result");
+newSafe.Destroyed = true;
+Check(MerchantRooms.TryChoose(floor, out _), "Destroyed stock immediately releases placement space");
+Safe.Destroy(); int priorQueries = Physics2D.Queries;
+Check(!MerchantRooms.TryChoose(floor, out _) && Physics2D.Queries == priorQueries,
+    "Missing native safe registry fails closed before searching tiles or physics");
+Safe.Initialize();
+Check(MerchantRooms.TryChoose(floor, out _), "Placement recovers after native safe initialization");
 
 Console.WriteLine($"Passed {checks} merchant room placement checks.");

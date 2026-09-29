@@ -1,5 +1,73 @@
 # Synchronization performance review
 
+## Follow-up: 0.26.1 (2026-09-30)
+
+Reviewed the current session/stat/resource reconciliation, names, panel/chat and
+localization, Rabbit/Choices/Merchant hooks, disconnect diagnostics and cleanup.
+The [plan](plans/2026-09-30-performance-review.md) records this pass. Baseline was
+`994635d` (0.26.0); no deployment or live Unity profiling was performed.
+
+Three concrete sources of avoidable work were fixed:
+
+- **Merchant placement logging:** installed `Safe.Find` logs every nearby safe
+  while finding the nearest. A crowded room can invoke it 128 times per type per
+  search. Placement now reads the current native safe registry once and performs
+  a silent presence check with early exit. It retains Unity alive checks, the
+  exact inclusive 3D distance test, candidate order and occupancy checks. It does
+  not cache safes across searches or sessions. A missing registry fails closed;
+  initialization/list replacement recovers on the next search. Final nearest-safe
+  ownership checks and native `SetSocialID` remain unchanged. The room regression
+  first failed with 129 native lookups (one accepted point, 128 rejected points);
+  the new path makes zero such calls or logs. This avoids the candidate-loop log
+  burst; it does not suppress the game's normal per-merchant initialization log.
+- **Panel snapshot copies:** each capture built three fresh dictionaries per
+  player, then copied them again. An explicit ownership-transfer factory wraps
+  those private capture dictionaries directly. The ordinary constructor still
+  makes defensive copies. Every refresh reads fresh native state; previous
+  snapshots and their read-only collections remain detached and immutable.
+- **Pending rich-text names:** preserved foreign hex colors and `noparse` markup
+  were parsed again on every waiting publication tick. A bounded per-instance
+  input/result cache now avoids that repeated normalization and clears on Reset.
+  Profile edits, retry timing/exhaustion, acknowledgments and solo restoration
+  retain their original behavior.
+
+Release .NET 10 fixture measurements:
+
+| Path | Before allocation | After allocation |
+| --- | ---: | ---: |
+| Five-player full snapshot | 113,038 B/refresh | 107,678 B/refresh |
+| Five-player non-Status snapshot | 28,521 B/refresh | 23,160 B/refresh |
+| Pending name: foreign single-character hex color | 664 B/tick | 0 B/tick |
+| Pending name: foreign hex wrapper | 224 B/tick | 0 B/tick |
+| Pending name: `noparse` with hex markup | 272 B/tick | 0 B/tick |
+
+Compact snapshot allocations drop **18.8%**, saving approximately 21.4 KB/second
+at four refreshes per second while the panel is open. Full snapshots save 5,360
+bytes per refresh. All three five-player unchanged synchronization scenarios
+(inactive, active, active with populated collections) still measure **0 B/tick**.
+Final sample timings were 5.57/18.31/6.24 microseconds per synchronization tick and
+74.54/23.07 microseconds for full/compact snapshots. These are fixture timings,
+not Unity frame-rate claims; JIT, native engine work and GC pauses are not modeled.
+
+Kept unchanged after review: per-frame readiness/native-input observations,
+precommit/readback/recovery validation, inventory/talent occupancy scans, re-entry
+and death guards, Rabbit healing/FX/MP notifications, Choices cleanup, merchant
+chance/reservation ordering and once-at-spawn floor HP. Native collection scans
+use concrete struct enumerators. Additional merchant key/array allocations and
+complete route-history scans occur only at floor/settings events; they were left
+intact rather than adding caches that need new lifecycle invalidation. Panel
+text formatting is still bounded to open-panel refreshes; localization/preset I/O
+and chat reflection retain their existing event-only boundaries.
+
+Verification passes: 823 shared runtime checks, 551 merchant checks in 75
+scenarios, 63 placement checks, the full portable suite including 48 name retry
+checks, allocation budgets and installed-game compatibility. The placement tests
+cover radius boundaries, vertical distance, destroyed/null safes, native registry
+replacement and loss, new stock, deterministic variants and crowded rooms.
+Both production build configurations pass with zero warnings/errors and
+`-p:DeployMod=false`. Test realistic multiplayer sessions with the Unity profiler
+before attributing any live FPS or disconnect improvement to these changes.
+
 ## Follow-up: 0.22.2 (2026-09-29)
 
 Reviewed session reconciliation and resources, name/chat controllers, UI and

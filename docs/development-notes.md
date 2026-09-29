@@ -9,6 +9,15 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.26.1` completes a [performance review](performance-review.md). Merchant
+placement avoids a native lookup's repeated debug logs while retaining its live
+safe-distance rules and final stock ownership checks. Panel captures stop copying
+their fresh per-player dictionaries a second time, reducing compact snapshot
+allocations by 18.8%. Pending rich-text names cache normalization instead of
+allocating each retry tick. Shared synchronization remains at zero measured
+steady allocations in the five-player fixtures. Gameplay, synchronization cadence,
+native reads and network writes are preserved. No deployment or live profiling.
+
 Version `0.26.0` adds floor-based HP to all addon hostile merchant types: base HP
 times the current eligible route floor number, minimum ×1, while retaining native
 stage and multiplayer percentage bonuses. Scaling uses the shared route ordinal

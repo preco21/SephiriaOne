@@ -15,11 +15,26 @@ namespace SephiriaOne
 
         public PlayerSettingsSnapshot(uint id, string name, int fountainPoints, int fountainContribution,
             IDictionary<string, decimal> stats, IDictionary<string, int> extraChoices, IDictionary<string, string> resources = null)
+            : this(id, name, fountainPoints, fountainContribution,
+                new ReadOnlyDictionary<string, decimal>(new Dictionary<string, decimal>(stats)),
+                new ReadOnlyDictionary<string, int>(new Dictionary<string, int>(extraChoices)),
+                new ReadOnlyDictionary<string, string>(resources == null ? new Dictionary<string, string>() : new Dictionary<string, string>(resources)))
+        { }
+
+        // Only the capture path may transfer its newly created dictionaries here.
+        // It must not retain or mutate them afterward; other callers use the
+        // defensive constructor above. No native dictionaries are transferred.
+        internal static PlayerSettingsSnapshot FromOwnedCapture(uint id, string name, int fountainPoints, int fountainContribution,
+            Dictionary<string, decimal> stats, Dictionary<string, int> extraChoices, Dictionary<string, string> resources) =>
+            new PlayerSettingsSnapshot(id, name, fountainPoints, fountainContribution,
+                new ReadOnlyDictionary<string, decimal>(stats), new ReadOnlyDictionary<string, int>(extraChoices),
+                new ReadOnlyDictionary<string, string>(resources));
+
+        private PlayerSettingsSnapshot(uint id, string name, int fountainPoints, int fountainContribution,
+            ReadOnlyDictionary<string, decimal> stats, ReadOnlyDictionary<string, int> extraChoices, ReadOnlyDictionary<string, string> resources)
         {
             Id = id; Name = name; FountainPoints = fountainPoints; FountainContribution = fountainContribution;
-            Stats = new ReadOnlyDictionary<string, decimal>(new Dictionary<string, decimal>(stats));
-            ExtraChoices = new ReadOnlyDictionary<string, int>(new Dictionary<string, int>(extraChoices));
-            Resources = new ReadOnlyDictionary<string, string>(resources == null ? new Dictionary<string, string>() : new Dictionary<string, string>(resources));
+            Stats = stats; ExtraChoices = extraChoices; Resources = resources;
         }
     }
 
