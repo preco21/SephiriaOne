@@ -20,6 +20,7 @@ internal static class NameLocalizationRuntimeTests
         try
         {
             L.Initialize(folder, _ => { });
+            check(L.TrySetLanguage("en", out _), "Name diagnostic transition starts in English");
             File.WriteAllText(Path.Combine(folder, "ko.json"), System.Text.Json.JsonSerializer.Serialize(translations));
             check(L.Reload(out _), "Name diagnostic test catalog loads");
             var host = start();

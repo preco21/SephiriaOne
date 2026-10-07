@@ -24,9 +24,10 @@ internal static class LocalizationCatalogTests
         {
             L.Initialize(folder, warnings.Add);
             Check(warnings.Count == 0, "Bundled catalog initialization has no rejected JSON or format entries: " + string.Join("; ", warnings));
+            Check(L.TrySetLanguage("en", out string error), error);
             foreach (var entry in english)
                 Check(entry.Key == entry.Value && L.T(entry.Key) == entry.Key, "Default English wording changed: " + entry.Key);
-            Check(L.TrySetLanguage("ko", out string error), error);
+            Check(L.TrySetLanguage("ko", out error), error);
             foreach (var entry in korean)
                 Check(!string.IsNullOrWhiteSpace(entry.Value) && L.T(entry.Key) == entry.Value, "Korean entry was rejected or missing: " + entry.Key);
             foreach (var stat in StatCatalog.All)

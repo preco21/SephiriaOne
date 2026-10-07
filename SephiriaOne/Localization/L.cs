@@ -73,7 +73,7 @@ namespace SephiriaOne
                 Directory.CreateDirectory(directory);
                 Seed("en.json", englishDefault);
                 Seed("ko.json", koreanDefault);
-                Seed("config.json", "{\"language\":\"en\"}\n");
+                Seed("config.json", "{\"language\":\"ko\"}\n");
                 Snapshot loaded = Load(out ignored);
                 Publish(loaded);
                 WarnIgnored(ignored);

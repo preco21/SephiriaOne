@@ -31,13 +31,26 @@ void Korean(string folder, List<string> warnings)
     Equal("ko", L.Language);
 }
 
-Run("initialization seeds embedded defaults and English selection", (folder, warnings) =>
+Run("initialization seeds embedded defaults and Korean selection", (folder, warnings) =>
 {
     L.Initialize(folder, warnings.Add);
-    Equal("en", L.Language);
+    Equal("ko", L.Language);
+    Equal("안녕하세요", L.T("Hello"));
+    Equal("ko", JsonConvert.DeserializeObject<Dictionary<string, string>>(
+        File.ReadAllText(Path.Combine(folder, "config.json")))["language"]);
     foreach (string file in new[] { "config.json", "en.json", "ko.json" })
         Check(File.Exists(Path.Combine(folder, file)), "Missing seeded file " + file);
     Equal("English fallback", L.T("Only English"));
+    Equal(0, warnings.Count);
+});
+Run("existing English selection overrides the Korean default", (folder, warnings) =>
+{
+    const string config = "{\"language\":\"en\"}";
+    Write(folder, "config.json", config);
+    L.Initialize(folder, warnings.Add);
+    Equal("en", L.Language);
+    Equal("Hello", L.T("Hello"));
+    Equal(config, File.ReadAllText(Path.Combine(folder, "config.json")));
     Equal(0, warnings.Count);
 });
 Run("Korean lookup and English fallback", (folder, warnings) =>
@@ -79,16 +92,16 @@ Run("language selection persists and notifies once", (folder, warnings) =>
     L.Initialize(folder, warnings.Add);
     int revision = L.Revision, changed = 0;
     L.Changed += () => changed++;
-    Check(L.TrySetLanguage("ko", out var error), error);
-    Equal("ko", L.Language);
-    Equal("안녕하세요", L.T("Hello"));
+    Check(L.TrySetLanguage("en", out var error), error);
+    Equal("en", L.Language);
+    Equal("Hello", L.T("Hello"));
     Check(L.Revision > revision, "Language change must increase revision");
     Equal(1, changed);
-    Check(L.TrySetLanguage("ko", out error), error);
+    Check(L.TrySetLanguage("en", out error), error);
     Equal(1, changed);
     L.Shutdown();
     L.Initialize(folder, warnings.Add);
-    Equal("ko", L.Language);
+    Equal("en", L.Language);
 });
 Run("language codes are a fixed allowlist", (folder, warnings) =>
 {
@@ -98,7 +111,7 @@ Run("language codes are a fixed allowlist", (folder, warnings) =>
         Check(!L.TrySetLanguage(language, out var error), "Invalid language accepted");
         Check(!string.IsNullOrEmpty(error), "Failure should explain the error");
     }
-    Equal("en", L.Language);
+    Equal("ko", L.Language);
 });
 Run("lookup is cached until explicit reload", (folder, warnings) =>
 {
@@ -163,6 +176,7 @@ Run("translations may reorder and repeat existing arguments", (folder, warnings)
 });
 Run("invalid English format entry falls back to source", (folder, warnings) =>
 {
+    Write(folder, "config.json", "{\"language\":\"en\"}");
     Catalog(folder, "en", ("Count {0}", "Count {2}"));
     L.Initialize(folder, warnings.Add);
     Equal("Count 3", L.F("Count {0}", 3));
@@ -224,8 +238,8 @@ Run("failed atomic selection write leaves language unchanged", (folder, warnings
     int revision = L.Revision;
     File.Delete(Path.Combine(folder, "config.json"));
     Directory.CreateDirectory(Path.Combine(folder, "config.json"));
-    Check(!L.TrySetLanguage("ko", out _), "Blocked config path accepted");
-    Equal("en", L.Language);
+    Check(!L.TrySetLanguage("en", out _), "Blocked config path accepted");
+    Equal("ko", L.Language);
     Equal(revision, L.Revision);
     Check(!Directory.EnumerateFiles(folder, "*.tmp").Any(), "Temporary write file leaked");
 });
@@ -247,8 +261,8 @@ Run("throwing change subscribers cannot break a successful language update", (fo
     int changed = 0;
     L.Changed += () => throw new InvalidOperationException("broken view");
     L.Changed += () => changed++;
-    Check(L.TrySetLanguage("ko", out var error), error);
-    Equal("ko", L.Language);
+    Check(L.TrySetLanguage("en", out var error), error);
+    Equal("en", L.Language);
     Equal(1, changed);
     Equal(1, warnings.Count);
 });

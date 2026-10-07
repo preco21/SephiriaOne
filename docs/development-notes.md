@@ -9,6 +9,10 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.27.1` defaults newly created localization configs to Korean (`ko`).
+Existing saved language choices are preserved, and invalid-file startup fallback
+remains English. No gameplay or deployment changes.
+
 Version `0.27.0` adds [Crest of the Iron Wall as Wing-Eared Rabbit's starting
 artifact](rabbit-starting-artifact.md), retaining its native Blessing item. The
 official database-ready event adds the existing artifact to `HolyRabbit` only;

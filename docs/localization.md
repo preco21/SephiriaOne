@@ -2,8 +2,8 @@
 
 Added in `0.21.0`. SephiriaOne translates its settings panel, command help and
 feedback, current status labels, addon costume-description lines and low-MP
-notifications. Choose English (`en`, the default) or Korean (`ko`). The game's
-own language setting is independent.
+notifications. Choose Korean (`ko`, the default since `0.27.1`) or English (`en`).
+Existing saved selections are preserved. The game's own language setting is independent.
 
 ## Select a language
 
