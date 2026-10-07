@@ -30,7 +30,7 @@ namespace SephiriaOne
                 L.T(settings.Guarantee && definition.HasGuarantee ? "on" : "off")) + " " +
             (settings.Guarantee && definition.HasGuarantee ? L.T("Each enabled type has its own guaranteed encounter on a randomly selected eligible floor, including the first when allowed by its conditions. Other eligible floors roll before and after the guarantee.") :
                 L.T("Eligible floors use this type's configured chance.")) + " " +
-            L.T("At most one of each type per floor; different types can coexist. Added merchant base HP is multiplied by the current eligible floor number (minimum x1), retaining native stage and multiplayer bonuses. They are hostile, cannot talk, and have no negotiation/crime penalty. Off/reset stop future spawns; existing added merchants stay exempt until floor teardown.");
+            L.T("At most one of each type per map; different types can coexist. First eligible floor and base HP scaling use the main dungeon stage number, not the number of maps visited. HP retains native stage and multiplayer bonuses. They are hostile, cannot talk, and have no negotiation/crime penalty. Off/reset stop future spawns; existing added merchants stay exempt until floor teardown.");
 
         internal static string DescribeMerchants(IReadOnlyDictionary<string, MerchantSettings> settings, string selectedId = null)
         {

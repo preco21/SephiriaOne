@@ -42,6 +42,11 @@ namespace SephiriaOne
                 DungeonManager current = DungeonManager.Instance;
                 SaveData currentRun = SaveManager.CurrentRun;
                 if (!current || !current.isServer || current.netId == 0 || currentRun == null) return;
+                // Restart creates a fresh save before clearing/loading the reused
+                // dungeon. Never copy the old maps' progress into that new save.
+                if (!currentRun.ContainsKey("Seed") || !currentRun.ContainsKey("CurrentGame") ||
+                    currentRun.GetInt("Seed", -1) != current.DestinySeed ||
+                    currentRun.GetInt("CurrentGame", -1) != current.raceId) return;
                 if (!ReferenceEquals(dungeon, current) || !ReferenceEquals(run, currentRun))
                 { Clear(); dungeon = current; run = currentRun; }
                 Prune();
@@ -65,7 +70,7 @@ namespace SephiriaOne
                     if (!settings.Enabled) continue;
                     if (!schedules.TryGetValue(definition.Id, out MerchantSchedule schedule))
                     {
-                        schedule = new MerchantSchedule(run, route.Opportunities, dungeon.DestinySeed, definition);
+                        schedule = new MerchantSchedule(run, route, dungeon.DestinySeed, definition);
                         schedules.Add(definition.Id, schedule);
                     }
                     schedule.State.InitializeCount(dungeon.generatedFloors.Keys);
@@ -98,7 +103,7 @@ namespace SephiriaOne
             // Optional/unknown stages cannot host the scheduled guarantee, but keep
             // their existing chance-only behavior under the normal room safety gates.
             if (positionInRun >= 0 && positionInRun < schedule.Progress) return;
-            var context = new MerchantSpawnContext(route.FloorNumber(route.LatestPosition), schedule.State.Count,
+            var context = new MerchantSpawnContext(route.FloorNumber(positionInRun >= 0 ? positionInRun : route.LatestPosition), schedule.State.Count,
                 floor.DataOnServer.difficulty, floor.DataOnServer.stageName);
             if (!MerchantSpawnRules.Allows(definition, settings, context)) return;
             bool guaranteed = schedule.IsDue(positionInRun, settings.Guarantee);
@@ -156,7 +161,10 @@ namespace SephiriaOne
                 ai.CanTalk = false;
                 avatar.ChangeAttackableTargetSelector(EPersonality.Aggressive);
                 schedule.State.RecordSpawn(guaranteed);
-                Debug.Log("[SephiriaOne] Spawned hostile " + definition.Id + " merchant on floor " + floor.guid + ".");
+                Debug.Log("[SephiriaOne] Spawned hostile " + definition.Id + " merchant on floor " + floor.guid +
+                    "; stage=" + context.StageName + "; mainFloor=" + context.FloorNumber +
+                    "; route=" + positionInRun + "; target=" + schedule.Target + "; guaranteed=" + guaranteed +
+                    "; hpFactor=" + Math.Max(1, context.FloorNumber) + "; baseHp=" + avatar.maxHp + "; maxHp=" + avatar.MaxHp + ".");
             }
             catch (Exception error)
             {

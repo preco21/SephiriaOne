@@ -12,7 +12,7 @@ existing assets, combat controllers, inventory networking and RPCs.
 Each type defaults to **spawns off, guarantee on, 25% chance, first eligible floor
 1, unlimited per run**. Version **0.25.0** adds the independent guarantee toggle.
 Existing Wandering settings are retained. Since **0.26.0**, all three types multiply
-base HP by the current eligible floor number while retaining native stage and
+base HP by the current floor number while retaining native stage and
 multiplayer HP/attack bonuses. Added actors are
 hostile, cannot talk and receive the same exact-instance crime exemption. Natural
 merchants remain unchanged.
@@ -42,9 +42,11 @@ The **Guarantee** row has its own On/Off controls; current state appears on the 
 - `guarantee on|off`: default on. Off disables forced encounters, leaving ordinary
   chance rolls active. This does not enable or disable the type's spawn toggle.
 - `chance`: whole-number 0..100 percent on eligible floors without a forced encounter.
-- `from`: 1..1000, counting potential eligible normal route positions from one.
-  Branch alternatives share a position; Grassland follows mission visit order.
-  Boss/safe entrances do not count. Optional floors use current main-route progress.
+- `from`: 1..1000, the main dungeon stage number. Since **0.28.2**, every map
+  within stage 1 is below `from 2`; map visits no longer advance this number.
+  Grassland missions share their stage number. Safe/boss rooms remain excluded
+  from spawning, while their main stage still occupies its normal stage number.
+  Optional maps inherit the current main-route stage.
   A minimum of one also allows otherwise eligible unknown-route floors.
 - `limit`: 0..1000 successful spawns of this type per run; zero means unlimited.
   Guaranteed and chance encounters both count. While an enabled guarantee remains
@@ -121,13 +123,14 @@ the normal native stage and multiplayer percentage bonuses. Floor 1 is ×1,
 floor 2 is ×2, floor 3 is ×3, and so on. This applies to guaranteed and chance-based
 encounters of every type without a separate setting or preset migration.
 
-The floor number is the same one-based eligible normal-route ordinal used by
-`from`: it continues across stages, shares branch depths, and follows Grassland
-mission visit order. Boss-only/safe entrances do not count. Optional rooms inherit
-current route progress; unsupported or unknown progress falls back to ×1. A
+The floor number is the same main dungeon stage number used by `from`. Maps and
+Grassland missions within one stage all use the same factor. Main-stage ordinals
+come from the race's ordered main stages, so loading an optional side stage does
+not shift them. A playable lobby uses ×1. Optional rooms inherit the current
+main-route stage; unsupported or unknown progress falls back to ×1. A
 delayed guarantee uses the floor where it actually spawns, not its original target.
 
-For example, 2,500 base HP on eligible floor 3 becomes 7,500 before native
+For example, 2,500 base HP in main stage 3 becomes 7,500 before native
 percentage bonuses. With a total native +230% bonus it becomes 24,750 final HP.
 Attack and defense keep their existing scaling. The native synchronized base-HP
 setter and full heal propagate to unmodified guests without new network fields.
@@ -138,6 +141,36 @@ merchants are unchanged. Invalid or overflowing scaled HP aborts that individual
 spawn before the increased HP is written; partial actors are cleaned up and an
 unfulfilled guarantee can continue on a later eligible floor. No per-frame work
 or new session state is added.
+
+## Restart and numbering correction (0.28.2)
+
+Earlier versions counted each eligible map as another floor. The host log showed
+merchants during native stage 1 after additional map visits, explaining why
+`from 2` could permit them and why the HP factor could already reach ×3.
+Stage numbering now controls both conditions and HP, including guarantee candidate
+selection and reserved cap slots. Per-map chance rolls, chronological map positions
+and saved guarantee targets retain their existing identities. An old pending target
+below the new minimum waits for the next eligible unused map; it is not rerolled.
+Completed guarantees, counts and consumed rolls are not reset by settings changes.
+
+Native restart briefly exposes a fresh `CurrentRun` before reloading the reused
+dungeon. The addon now requires the save's Seed/CurrentGame to match the loaded
+dungeon before it observes maps or writes merchant state. This prevents a settings
+refresh in that window from importing the previous run's progress. New runs rebuild
+their route and per-type schedules; ordinary reloads retain their saved state.
+
+Native HP initialization was audited: it does not add the stage/co-op bonuses a
+second time. Those bonuses remain, so final HP can exceed the floor factor alone.
+Each successful added spawn now logs its main stage, map position, saved target,
+guaranteed/chance result, HP factor and base/final HP for subsequent diagnosis.
+
+The installed asset audit covered all 26 `RaceEntity` records (25 in
+`resources.assets` and one in a shared asset file). Normal
+race arrays follow their main-stage progression; alternate races may start at
+Grassland or contain only a quest stage. The playable Mole scenario has no main
+stage array and retains factor 1. None of those arrays has null, duplicate or
+repeated-lobby entries; the adapter also handles those defensively, matching native
+name-based load deduplication. Side stages do not advance the main-stage factor.
 
 ## Native investigation
 
@@ -166,7 +199,7 @@ No components or network scripts are injected to work around these limitations.
 3. Add matching EN/KO label entries. Parser, panel selection, snapshots, presets,
    save-key scoping and the runtime loop discover the catalog entry automatically.
 4. For additional native eligibility rules, supply a pure `Condition` predicate
-   over `MerchantSpawnContext` (route ordinal, successful count, native difficulty,
+   over `MerchantSpawnContext` (main-stage number, successful count, native difficulty,
    stage name). Built-in earliest-floor/cap checks are always composed with it.
    Conditions must not mutate game state. They also apply to guaranteed encounters;
    a target with an unmet rule remains pending for another eligible floor.
@@ -212,3 +245,12 @@ compare the same type across floors, inspect host/guest health bars, and reconne
 without changing an existing merchant's HP.
 
 No deployment script was run.
+
+Version 0.28.2 passes 562 runtime checks across 78 scenarios, 1,115 real-route and
+scheduler checks, 63 placement checks, 834 shared session checks, 48 localization
+tests, 1,103 catalog checks and the portable/installed-game compatibility suite.
+The new regressions first failed for map-based numbering and the fresh-save/old-map
+restart overlap. They now cover consecutive runs on one dungeon manager, stage-1
+multi-map HP/minimums, stage-2 guarantees, mid-run edits, retained targets and
+duplicate/null stage entries. Native IL checks pin the save replacement and
+restart/load identity boundary. Live gameplay and deployment were not performed.

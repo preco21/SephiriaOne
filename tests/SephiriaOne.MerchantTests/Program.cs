@@ -10,6 +10,10 @@ if (hooks == null) throw new Exception("MerchantNativeHooks is missing; actor-sp
 
 int checks = 0, scenarios = 0;
 void Check(bool value, string message) { if (!value) throw new Exception(message); checks++; }
+SaveData ReadyRun(int seed = 0, int race = 0)
+{
+    var save = new SaveData(); save.SetInt("Seed", seed); save.SetInt("CurrentGame", race); return save;
+}
 void Reset()
 {
     NetworkServer.FailDestroy = null;
@@ -18,7 +22,7 @@ void Reset()
     NetworkServer.Spawned.Clear(); NetworkServer.Destroyed.Clear(); NetworkServer.connections.Clear(); NetworkServer.connections[1] = new();
     FloorGenerator.FloorGenerators.Clear(); Safe.All.Clear(); FixtureWorld.Created.Clear();
     FixtureWorld.FailSocialAfterStock = false; FixtureWorld.BeforeInstantiate = null; Debug.Warnings.Clear();
-    SaveManager.CurrentRun = new(); DungeonManager.Instance = new(); RuntimeFactionManager.Instance = new();
+    SaveManager.CurrentRun = ReadyRun(); DungeonManager.Instance = new(); RuntimeFactionManager.Instance = new();
     SessionSettings.MerchantSpawnsForUse = true; SessionSettings.MerchantSpawnChanceForUse = 100; MerchantFeature.Available = true;
     SessionSettings.Variants.Clear(); SessionSettings.FirstFloor = 1; SessionSettings.MaxPerRun = 0; SessionSettings.Guarantee = true;
     var actorPrefab = new GameObject("Papa");
@@ -128,8 +132,31 @@ Scenario("each fresh run gets a new guaranteed encounter", () =>
 {
     SessionSettings.MerchantSpawnChanceForUse = 0;
     var old = Spawn(Floor());
-    SaveManager.CurrentRun = new(); MerchantRuntime.Refresh();
+    SaveManager.CurrentRun = ReadyRun(); MerchantRuntime.Refresh();
     Check(!old && Actors().Length == 1 && !ReferenceEquals(old, Actors()[0]), "New run identity retires old actors and guarantees a new one");
+});
+Scenario("restart does not initialize the new save from the previous dungeon", () =>
+{
+    DungeonManager.Instance.Opportunities = new[] { 0, 1, 2, 3 };
+    var late = Floor("old-late"); late.DataOnServer.Progress = 3; var old = Spawn(late);
+    // Native RestartGameCoroutine replaces CurrentRun before it clears the old
+    // network objects and calls NewGame/LoadDungeon on this same manager.
+    SaveManager.CurrentRun = new(); SessionSettings.FirstFloor = 2;
+    MerchantRuntime.Refresh(); MerchantRuntime.OnFloorReady(late.guid, "Dungeon", late);
+    Check(SaveManager.CurrentRun.Ints.Count == 0 && SaveManager.CurrentRun.Flags.Count == 0 && old,
+        "A settings refresh in the restart window must not save old progress or spawn into the new run");
+    SaveManager.CurrentRun.SetInt("Seed", 11); SaveManager.CurrentRun.SetInt("CurrentGame", 2);
+    MerchantRuntime.Refresh();
+    Check(SaveManager.CurrentRun.Ints.Count == 2 && SaveManager.CurrentRun.Flags.Count == 0,
+        "A save not yet loaded into the dungeon must not establish merchant state");
+    DungeonManager.Instance.DestinySeed = 11; DungeonManager.Instance.raceId = 2;
+    DungeonManager.Instance.generatedFloors.Clear(); FloorGenerator.FloorGenerators.Clear();
+    var first = Floor("new-first"); MerchantRuntime.OnFloorReady(first.guid, "Dungeon", first);
+    Check(!old && Actors().Length == 0 && SaveManager.CurrentRun.GetInt("SephiriaOne.MerchantSchedule.v1.Progress", -1) == 0,
+        "The loaded second run starts from its own progress and respects the earliest-floor condition");
+    var second = Floor("new-second", 50); second.DataOnServer.Progress = 1; Spawn(second);
+    Check(Actors().Length == 1 && Actors()[0].Avatar.maxHp == 5000,
+        "A later eligible floor uses the new run's health factor, never the previous run's progress");
 });
 foreach (string excluded in new[] { "not-server", "not-ready", "safe", "training", "hidden", "pocket", "no-room", "no-data", "stale-data", "unknown-guid" })
 Scenario("excluded floor: " + excluded, () =>
@@ -255,7 +282,7 @@ Scenario("fresh run selection covers first, middle and last floors", () =>
     var selected = new HashSet<int>();
     for (int seed = 0; seed < 90; seed++)
     {
-        Reset(); DungeonManager.Instance.DestinySeed = seed;
+        Reset(); DungeonManager.Instance.DestinySeed = seed; SaveManager.CurrentRun.SetInt("Seed", seed);
         DungeonManager.Instance.Opportunities = new[] { 0, 1, 2 };
         SessionSettings.MerchantSpawnChanceForUse = 0;
         Visit(At(0));
@@ -387,7 +414,7 @@ Scenario("early settings refresh waits for native race initialization", () =>
 {
     DungeonManager.Instance.Race = null;
     MerchantRuntime.Refresh();
-    Check(SaveManager.CurrentRun.Ints.Count == 0, "An incomplete native run must not establish an empty schedule");
+    Check(SaveManager.CurrentRun.Ints.Count == 2, "An incomplete native run must not establish an empty schedule");
     DungeonManager.Instance.Race = new UnityEngine.Object(); SessionSettings.MerchantSpawnChanceForUse = 0;
     Visit(At(0));
     Check(Actors().Length == 1, "A later ready route must recover automatically after an early settings refresh");
@@ -430,7 +457,7 @@ Scenario("all variants draw stable independently salted guaranteed positions", (
     int different = 0;
     for (int seed = 0; seed < 30; seed++)
     {
-        Reset(); DungeonManager.Instance.DestinySeed = seed; DungeonManager.Instance.Opportunities = new[] { 0, 1, 2, 3 };
+        Reset(); DungeonManager.Instance.DestinySeed = seed; SaveManager.CurrentRun.SetInt("Seed", seed); DungeonManager.Instance.Opportunities = new[] { 0, 1, 2, 3 };
         EnableVariants(); Visit(At(0));
         var targets = new[] { SaveManager.CurrentRun.GetInt(TargetKey, -1),
             SaveManager.CurrentRun.GetInt(VariantKey("papyrus", "Schedule.Target"), -1),
@@ -524,7 +551,7 @@ Scenario("each variant's crime exemption and teardown stay instance scoped", () 
 Scenario("each new run resets all independent guarantees and caps", () =>
 {
     EnableVariants(0, 1, 1); Visit(At(0)); var previous = Actors();
-    SaveManager.CurrentRun = new(); MerchantRuntime.Refresh();
+    SaveManager.CurrentRun = ReadyRun(); MerchantRuntime.Refresh();
     Check(Actors().Length == 3 && previous.All(actor => !actor), "Fresh run recreates all three guarantees despite previous caps");
 });
 Scenario("unsupported routes retain capped chance-only encounters", () =>
@@ -724,6 +751,44 @@ Scenario("scaled HP overflow aborts before a synchronized base-HP write", () =>
     prefab.maxHp = 2500; SessionSettings.MerchantSpawnChanceForUse = 0; Visit(At(3));
     Check(Actors().Single().Avatar.maxHp == 10000 && SaveManager.CurrentRun.GetBool(EncounterKey),
         "After a safe native template is restored, the pending guarantee scales on its next eligible floor");
+});
+
+Scenario("multiple maps per stage obey stage minimums and health on consecutive runs", () =>
+{
+    DungeonManager.Instance.Opportunities = new[] { 0, 1, 2, 3, 4 };
+    for (int position = 0; position < 5; position++) DungeonManager.Instance.MainStageNumbers[position] = position < 3 ? 1 : 2;
+    for (int runIndex = 0; runIndex < 2; runIndex++)
+    {
+        if (runIndex > 0)
+        {
+            SaveManager.CurrentRun = new(); MerchantRuntime.Refresh(); // Native restart overlap.
+            DungeonManager.Instance.generatedFloors.Clear(); FloorGenerator.FloorGenerators.Clear();
+            SaveManager.CurrentRun = ReadyRun(); // NewGame finished loading, same seed also works.
+        }
+        EnableVariants(100, 2, 1);
+        for (int position = 0; position < 3; position++) Visit(At(position));
+        Check(Actors().Length == 0, "From 2 excludes every stage-1 map on both runs, including guaranteed encounters");
+        Visit(At(3)); Visit(At(4));
+        Check(Actors().Length == 3 && Actors().All(actor => actor.Avatar.maxHp == 5000 && actor.Avatar.MaxHp == 12500),
+            "Each guarantee in stage 2 uses x2 base HP and applies the native bonus once");
+        var actors = Actors(); var before = new Dictionary<string, int>(SaveManager.CurrentRun.Ints);
+        EnableVariants(0, 1, 4); MerchantRuntime.Refresh();
+        EnableVariants(0, 2, 1); MerchantRuntime.Refresh();
+        Check(actors.All(actor => actor && actor.Avatar.maxHp == 5000) && Actors().Length == 3 &&
+            before.All(pair => SaveManager.CurrentRun.Ints.TryGetValue(pair.Key, out int value) && value == pair.Value),
+            "Mid-run condition changes preserve targets, caps, completion and existing actors' HP");
+    }
+});
+Scenario("stage-one maps keep x1 health even after repeated settings refresh", () =>
+{
+    DungeonManager.Instance.Opportunities = new[] { 0, 1, 2 };
+    for (int position = 0; position < 3; position++) DungeonManager.Instance.MainStageNumbers[position] = 1;
+    for (int position = 0; position < 3; position++)
+    {
+        Visit(At(position)); MerchantRuntime.Refresh();
+    }
+    Check(Actors().Length == 3 && Actors().All(actor => actor.Avatar.maxHp == 2500 && actor.Avatar.BaseHpWrites == 0),
+        "Three maps in stage 1 do not silently produce x2/x3 base health");
 });
 
 Reset();

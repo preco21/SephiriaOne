@@ -13,6 +13,7 @@ namespace SephiriaOne
         private readonly SaveData run;
         private readonly Dictionary<string, Stage> stages = new Dictionary<string, Stage>(StringComparer.Ordinal);
         private readonly List<int> opportunities = new List<int>();
+        private readonly List<int> floorNumbers = new List<int>();
         private int next;
 
         private sealed class Stage
@@ -23,23 +24,27 @@ namespace SephiriaOne
         internal IReadOnlyList<int> Opportunities => opportunities;
         internal int LatestPosition { get; private set; } = -1;
 
-        internal int FloorNumber(int position)
-        {
-            if (position < 0) return 0;
-            int count = 0;
-            foreach (int opportunity in opportunities)
-            { if (opportunity > position) break; count++; }
-            return count;
-        }
+        // Map positions order rolls/guarantees; the main stage number controls
+        // eligibility and health. Several maps in one stage must not multiply HP.
+        internal int FloorNumber(int position) =>
+            position >= 0 && position < floorNumbers.Count ? floorNumbers[position] : 0;
 
         internal MerchantRoute(DungeonManager dungeon, SaveData run)
         {
             this.dungeon = dungeon;
             this.run = run;
             if (!dungeon || !dungeon.Race || run == null) return;
-            Add(dungeon.Race.lobbyStage, onlyPlayable: true);
+            Add(dungeon.Race.lobbyStage, onlyPlayable: true, floorNumber: 1);
+            int floorNumber = 0;
+            // Native LocalLoadStage ignores names that are already loaded. The
+            // lobby is loaded first, even when it has no eligible spawn maps.
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            if (dungeon.Race.lobbyStage && !string.IsNullOrEmpty(dungeon.Race.lobbyStage.name))
+                seen.Add(dungeon.Race.lobbyStage.name);
             if (dungeon.Race.stages != null)
-                foreach (StageEntity stage in dungeon.Race.stages) Add(stage, onlyPlayable: false);
+                foreach (StageEntity stage in dungeon.Race.stages)
+                    if (stage && !string.IsNullOrEmpty(stage.name) && seen.Add(stage.name))
+                        Add(stage, onlyPlayable: false, floorNumber: ++floorNumber);
         }
 
         internal int Position(FloorData data)
@@ -87,7 +92,7 @@ namespace SephiriaOne
                 }
         }
 
-        private void Add(StageEntity asset, bool onlyPlayable)
+        private void Add(StageEntity asset, bool onlyPlayable, int floorNumber)
         {
             if (!asset || string.IsNullOrEmpty(asset.name) || stages.ContainsKey(asset.name)) return;
             Type type = asset.GetType();
@@ -120,7 +125,11 @@ namespace SephiriaOne
             }
             if (onlyPlayable && !eligible.Contains(true)) return;
             stages.Add(asset.name, new Stage { Start = next, Length = eligible.Count, BoardVisits = boardVisits });
-            for (int i = 0; i < eligible.Count; i++) if (eligible[i]) opportunities.Add(next + i);
+            for (int i = 0; i < eligible.Count; i++)
+            {
+                floorNumbers.Add(floorNumber);
+                if (eligible[i]) opportunities.Add(next + i);
+            }
             next = checked(next + eligible.Count);
         }
 

@@ -90,4 +90,6 @@ public class SaveData
     private readonly Dictionary<string, int> values = new();
     public int GetInt(string key, int fallback = 0) => values.TryGetValue(key, out int value) ? value : fallback;
     public void SetInt(string key, int value) => values[key] = value;
+    public bool GetBool(string key, bool fallback = false) => GetInt(key, fallback ? 1 : 0) != 0;
+    public void SetBool(string key, bool value) => values[key] = value ? 1 : 0;
 }

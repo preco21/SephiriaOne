@@ -9,6 +9,15 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.28.2` corrects [merchant floor numbering and restart handling](merchant-variants.md#restart-and-numbering-correction-0282).
+Minimum-floor conditions, guarantee eligibility/cap reservations and HP factors
+now use main dungeon stages rather than counting maps within a stage. Existing
+targets, consumed rolls and completed guarantees survive mid-run setting changes.
+A fresh save cannot initialize merchant state against the previous run's dungeon
+during restart. Per-spawn diagnostics distinguish guaranteed/chance encounters and
+record the stage, route position, target and HP calculation. Native HP initialization
+does not duplicate bonuses; native stage/co-op scaling remains. No deployment.
+
 Version `0.28.1` also excludes Potion of Regeneration (Sample), item `37`, from
 Rabbit infinite-potion retention. A completed Sample drink consumes one unit
 normally and retains its Survival bonus, including death during completion.

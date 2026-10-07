@@ -41,9 +41,10 @@ remain supported and keep guarantees on. Run history is never reset by these opt
   during a run selects from current/future progression. It does not populate passed
   main-route floors just because their generators remain loaded. Optional stages
   outside that finite schedule retain their existing chance-only behavior.
-- Since `0.26.0`, added merchant **base HP is multiplied by the current eligible
-  floor number**: floor 1 = ×1, floor 3 = ×3. Native stage and multiplayer HP
-  bonuses still apply. Optional rooms use current route progress; unknown progress
+- Since `0.28.2`, added merchant **base HP uses the main dungeon stage number**:
+  stage 1 = ×1, stage 3 = ×3. Maps within a stage share that factor and the same
+  `from` threshold; earlier versions incorrectly counted individual maps. Native
+  stage and multiplayer HP bonuses still apply. Optional rooms use the current main stage; unknown progress
   uses ×1. This is computed only at spawn and also applies to Papyrus and Taz.
   The added merchant starts hostile. Attack damage follows native scaling.
   Its original combat AI, attacks and native stock/loot container are reused.

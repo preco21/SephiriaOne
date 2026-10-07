@@ -14,6 +14,7 @@ internal static class GameMerchantCompatibilityTests
         VerifyVariantCombat(game);
         VerifyHealthScaling(game, addon);
         VerifyFloorCompletion(game, addon);
+        VerifyRestartBoundary(game);
 
         var hooks = addon.GetType("SephiriaOne.MerchantNativeHooks", true)!;
         var validate = RequiredMethod(hooks, "ValidateContracts");
@@ -23,6 +24,32 @@ internal static class GameMerchantCompatibilityTests
         VerifyPrefix(hooks, "HandleDamage", new[] { game.GetType("UnitAI_NewBasic", true)!, game.GetType("DamageInstance", true)! },
             new[] { "__instance", "damage" });
         Console.WriteLine("Verified installed merchant crime boundary, Papa/Papyrus/Taz native combat, native safe stock and guest replication, floor-scaled base HP with native bonuses and floor-ready event after native travelers (not live gameplay).");
+    }
+
+    private static void VerifyRestartBoundary(Assembly game)
+    {
+        var saves = game.GetType("SaveManager", true)!;
+        var network = game.GetType("HorayNetworkManager", true)!;
+        var dungeon = game.GetType("DungeonManager", true)!;
+        var create = Code(RequiredMethod(saves, "CreateNewTMP", typeof(string)));
+        int allocation = create.FindIndex(i => i.opcode == OpCodes.Newobj && i.operand is ConstructorInfo c && c.DeclaringType?.Name == "SaveData");
+        int replace = create.FindIndex(i => i.opcode == OpCodes.Stsfld && i.operand is FieldInfo f && f.Name == "currentRun");
+        Require(allocation >= 0 && replace > allocation, "Fresh native runs must replace SaveData identity; re-audit merchant run caching.");
+        var restart = IteratorCode(RequiredMethod(network, "RestartGameCoroutine", typeof(bool)));
+        int fresh = restart.FindIndex(i => i.operand is MethodInfo m && m.Name == "CreateNewTMP");
+        int clear = restart.FindIndex(i => i.operand is MethodInfo m && m.Name == "ClearNetworkObjects");
+        int load = restart.FindIndex(i => i.operand is MethodInfo m && m.Name == "NewGame");
+        Require(fresh >= 0 && clear > fresh && load > clear,
+            "Native restart boundary changed: merchant refresh must reject a fresh save paired with old maps.");
+        var loadDungeon = Code(RequiredMethod(dungeon, "LoadDungeon"));
+        foreach (var pair in new[] { ("Seed", "set_NetworkDestinySeed"), ("CurrentGame", "set_NetworkraceId") })
+        {
+            int key = loadDungeon.FindIndex(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, pair.Item1));
+            int publish = loadDungeon.FindIndex(i => i.operand is MethodInfo m && m.Name == pair.Item2);
+            Require(key >= 0 && publish > key && loadDungeon.Skip(key).Take(publish - key).Any(i =>
+                    i.operand is MethodInfo m && m.DeclaringType?.Name == "SaveData" && m.Name == "GetInt"),
+                "Loaded dungeon identity must come from native saved " + pair.Item1 + ".");
+        }
     }
 
     private static void VerifyVariantCombat(Assembly game)

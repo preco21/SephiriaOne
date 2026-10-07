@@ -29,19 +29,26 @@ var pocket = Data("Moleland", 1); pocket.pocketDimension = true;
 Check(route.Position(hidden) == -1 && route.Position(pocket) == -1, "Hidden and pocket floors are excluded");
 Check(route.LatestPosition == route.Position(Data("Library", 0)), "Older callbacks and excluded floors cannot lower the observed progress watermark");
 Check(route.FloorNumber(route.Position(Data("Moleland", 0))) == 1 &&
-    route.FloorNumber(route.Position(Data("Moleland", 2))) == 2 &&
+    route.FloorNumber(route.Position(Data("Moleland", 2))) == 1 &&
     route.FloorNumber(route.Position(Data("Library", 0))) == 2 &&
-    route.FloorNumber(route.Position(Data("Library", 1))) == 3 && route.FloorNumber(-1) == 0,
-    "Earliest-floor ordinals count eligible positions once and exclude boss/safe entrance depths");
+    route.FloorNumber(route.Position(Data("Library", 1))) == 2 && route.FloorNumber(-1) == 0,
+    "Several maps in stage 1 must not advance the minimum-floor or HP multiplier to stage 2 or 3");
 
 dungeon.Race.stages = [first, first, later]; dungeon.Race.lobbyStage = first;
 route = new Route(dungeon, save);
 Check(route.Opportunities.Count == 3, "Playable lobby and repeated main-stage references are counted once");
+Check(route.FloorNumber(route.Position(Data("Library", 1))) == 1,
+    "A lobby repeated in the main-stage lookup array cannot shift the first newly loaded main stage");
 dungeon.Race.lobbyStage = new StageEntity_Lobby { name = "Town", firstFloor = new FixedFloorGenerator { isSafeFloor = true } };
 dungeon.Race.sideStages = [Choice("Side")];
 route = new Route(dungeon, save);
 Check(route.Opportunities.Count == 3 && route.Position(Data("Side", 0)) == -1 && route.Position(Data("Town", 0)) == -1,
     "Safe lobby and optional side stages do not enter the finite plan");
+Check(route.FloorNumber(route.Position(Data("Library", 1))) == 2,
+    "Repeated main-stage references must not advance native stage numbering twice");
+dungeon.Race.stages = [first, null, later];
+route = new Route(dungeon, save);
+Check(route.FloorNumber(route.Position(Data("Library", 1))) == 2, "Missing stage entries do not add phantom stage numbers");
 route = new Route(Dungeon(new UnknownStage { name = "Custom", firstFloor = Normal() }), new());
 Check(route.Opportunities.Count == 0 && route.Position(Data("Custom", 0)) == -1, "Unknown stage generators fail closed");
 Check(new Route(Dungeon(new CustomChoiceStage { name = "CustomChoice", firstFloor = Normal() }), new()).Opportunities.Count == 0,
@@ -79,8 +86,8 @@ var missionB = Data("Grassland", 1, "mission-b", "Defense");
 var missionC = Data("Grassland", 4, "mission-c", "Miniboss");
 int a = route.Position(missionA), b = route.Position(missionB), c = route.Position(missionC);
 Check(a < b && b < c, "Board missions follow arrival order instead of their randomly assigned nodeProgress");
-Check(route.FloorNumber(a) == 1 && route.FloorNumber(b) == 2 && route.FloorNumber(c) == 3,
-    "Board earliest-floor conditions use actual mission order rather than arbitrary native mission IDs");
+Check(route.FloorNumber(a) == 1 && route.FloorNumber(b) == 1 && route.FloorNumber(c) == 1,
+    "Board mission visits have separate schedule positions but share one stage HP/eligibility number");
 Check(route.Position(missionA) == a && new Route(dungeon, save).Position(missionB) == b, "Revisits and run reloads preserve saved board ordinals");
 Check(route.Position(Data("Grassland", 1, "board-boss")) > c, "Board boss position follows all required mission visits");
 Check(!route.Opportunities.Contains(route.Position(Data("Grassland", 2, "extra", "Extra"))), "Unexpected extra board missions cannot introduce new scheduled opportunities");
@@ -101,6 +108,45 @@ host.floorTravelHistory.Add(laterHistory.guid); route.ObserveHistory();
 Check(route.LatestPosition == route.Position(laterHistory) && route.LatestPosition > route.Position(missionA),
     "History recovery also advances ordinary-stage progress without allowing older board callbacks to move it backward");
 PlayerSpawner.MultiplayerList.Clear();
+// Exercise the real route together with scheduling and spawn conditions. The
+// isolated runtime fixture's one-map-per-stage shortcut cannot catch this bug.
+foreach (var definition in SephiriaOne.MerchantCatalog.All)
+for (int seed = 0; seed < 40; seed++)
+{
+    var multiMap = Choice("Stage1"); multiMap.steps = [Step(EFloorThreatType.Battle), Step(EFloorThreatType.Battle), Step(EFloorThreatType.Boss)];
+    var mainRoute = new SephiriaOne.MerchantRoute(Dungeon(multiMap, Choice("Stage2")), new SaveData());
+    var runState = new SaveData();
+    var schedule = new SephiriaOne.MerchantSchedule(runState, mainRoute, seed, definition);
+    schedule.Advance(mainRoute.Position(Data("Stage1", 0)), firstFloor: 2);
+    int target = runState.GetInt(schedule.State.SchedulePrefix + "Target", -1);
+    Check(mainRoute.FloorNumber(target) == 2, "A guarantee with from 2 must never select a later map in stage 1");
+    Check(!schedule.HasPendingOpportunity(3), "A nonexistent third main stage must not reserve a cap slot");
+    var settings = new SephiriaOne.MerchantSettings(true, 100, 2);
+    for (int depth = 0; depth < 3; depth++)
+    {
+        int position = mainRoute.Position(Data("Stage1", depth)); schedule.Advance(position, 2);
+        var context = new SephiriaOne.MerchantSpawnContext(mainRoute.FloorNumber(position), 0, 0, "Stage1");
+        Check(!schedule.IsDue(position) && !SephiriaOne.MerchantSpawnRules.Allows(definition, settings, context),
+            "Neither guaranteed nor chance merchants may pass from 2 in any stage-1 map");
+    }
+    schedule.Advance(mainRoute.Position(Data("Stage2", 0)), 2);
+    Check(runState.GetInt(schedule.State.SchedulePrefix + "Target", -1) == target,
+        "Progress and setting refreshes preserve an existing selected map");
+    schedule.Advance(mainRoute.LatestPosition, 3, false);
+    var reloaded = new SephiriaOne.MerchantSchedule(runState, mainRoute, seed, definition);
+    reloaded.Advance(mainRoute.LatestPosition, 2);
+    Check(runState.GetInt(schedule.State.SchedulePrefix + "Target", -1) == target,
+        "Minimum edits, guarantee toggles and runtime reconstruction cannot reroll the saved target");
+    int last = mainRoute.Position(Data("Stage2", 1)); reloaded.Advance(last, 2);
+    Check(reloaded.IsDue(last), "A target delayed by settings remains due on an unused eligible map");
+    reloaded.State.RecordSpawn(true);
+    Check(!new SephiriaOne.MerchantSchedule(runState, mainRoute, seed, definition).IsDue(last),
+        "Completed guarantees remain completed after reload");
+}
+var mainAfterUnknown = new SephiriaOne.MerchantRoute(Dungeon(
+    new UnknownStage { name = "Unknown", firstFloor = Normal() }, Choice("Known")), new SaveData());
+Check(mainAfterUnknown.FloorNumber(mainAfterUnknown.Position(Data("Known", 0))) == 2,
+    "Unsupported main stages still occupy their native stage ordinal");
 Console.WriteLine($"Passed {checks} native merchant route checks.");
 
 // Reflection keeps the initial missing-adapter test executable before production exists.

@@ -140,6 +140,7 @@ public class SaveData
 {
     public readonly Dictionary<string, bool> Flags = new();
     public readonly Dictionary<string, int> Ints = new();
+    public bool ContainsKey(string key) => Ints.ContainsKey(key) || Flags.ContainsKey(key);
     public int GetInt(string key, int fallback = 0) => Ints.TryGetValue(key, out int value) ? value : fallback;
     public void SetInt(string key, int value) => Ints[key] = value;
     public bool GetBool(string key, bool fallback = false) => Flags.TryGetValue(key, out bool value) ? value : fallback;
@@ -161,8 +162,9 @@ public class DungeonManager : NetworkBehaviour
 {
     public static DungeonManager Instance;
     public UnityEngine.Object Race = new();
-    public int DestinySeed;
+    public int DestinySeed, raceId;
     public int[] Opportunities = new[] { 0 };
+    public readonly Dictionary<int, int> MainStageNumbers = new();
     public readonly Dictionary<string, FloorData> generatedFloors = new();
     public CharacterBuff crimeDebuff = new();
     public int CrimeCalls;
@@ -272,7 +274,8 @@ namespace SephiriaOne
         public MerchantRoute(DungeonManager dungeon, SaveData run) { this.dungeon = dungeon; initialized = dungeon.Race; }
         public IReadOnlyList<int> Opportunities => initialized ? dungeon.Opportunities : Array.Empty<int>();
         public int LatestPosition { get; private set; } = -1;
-        public int FloorNumber(int position) => position < 0 ? 0 : dungeon.Opportunities.Count(value => value <= position);
+        public int FloorNumber(int position) => dungeon.MainStageNumbers.TryGetValue(position, out int stage) ? stage :
+            position < 0 ? 0 : dungeon.Opportunities.Count(value => value <= position);
         public int Position(FloorData data)
         {
             if (!initialized || data.isHidden || data.pocketDimension) return -1;
