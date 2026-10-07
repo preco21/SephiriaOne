@@ -41,8 +41,9 @@ remain supported and keep guarantees on. Run history is never reset by these opt
   during a run selects from current/future progression. It does not populate passed
   main-route floors just because their generators remain loaded. Optional stages
   outside that finite schedule retain their existing chance-only behavior.
-- Since `0.28.2`, added merchant **base HP uses the main dungeon stage number**:
-  stage 1 = ×1, stage 3 = ×3. Maps within a stage share that factor and the same
+- Since `0.28.3`, added merchant **base HP uses main-stage multipliers
+  1/2/4/5/7/8 for stages 1–6**, with ×8 retained on later stages.
+  Maps within a stage share that factor and the same
   `from` threshold; earlier versions incorrectly counted individual maps. Native
   stage and multiplayer HP bonuses still apply. Optional rooms use the current main stage; unknown progress
   uses ×1. This is computed only at spawn and also applies to Papyrus and Taz.

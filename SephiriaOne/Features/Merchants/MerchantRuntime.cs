@@ -164,7 +164,7 @@ namespace SephiriaOne
                 Debug.Log("[SephiriaOne] Spawned hostile " + definition.Id + " merchant on floor " + floor.guid +
                     "; stage=" + context.StageName + "; mainFloor=" + context.FloorNumber +
                     "; route=" + positionInRun + "; target=" + schedule.Target + "; guaranteed=" + guaranteed +
-                    "; hpFactor=" + Math.Max(1, context.FloorNumber) + "; baseHp=" + avatar.maxHp + "; maxHp=" + avatar.MaxHp + ".");
+                    "; hpFactor=" + HealthFactor(context.FloorNumber) + "; baseHp=" + avatar.maxHp + "; maxHp=" + avatar.MaxHp + ".");
             }
             catch (Exception error)
             {
@@ -204,7 +204,7 @@ namespace SephiriaOne
                 throw new InvalidOperationException("Native merchant HP is invalid.");
             // Scale only this new actor's base HP, preserving the native percentage
             // bonuses. Settings refreshes never revisit already-consumed floor rolls.
-            int factor = Math.Max(1, floorNumber);
+            int factor = HealthFactor(floorNumber);
             if (factor > 1)
             {
                 float extraBase = (float)((double)avatar.maxHp * (factor - 1));
@@ -221,6 +221,19 @@ namespace SephiriaOne
         }
 
         private static bool ValidHealth(float value) => value > 0 && !float.IsNaN(value) && !float.IsInfinity(value);
+
+        private static int HealthFactor(int floorNumber)
+        {
+            if (floorNumber <= 1) return 1;
+            switch (floorNumber)
+            {
+                case 2: return 2;
+                case 3: return 4;
+                case 4: return 5;
+                case 5: return 7;
+                default: return 8; // Floor 6 and later retain the final configured tier.
+            }
+        }
 
         private static void Prune()
         {

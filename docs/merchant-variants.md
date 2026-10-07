@@ -12,7 +12,7 @@ existing assets, combat controllers, inventory networking and RPCs.
 Each type defaults to **spawns off, guarantee on, 25% chance, first eligible floor
 1, unlimited per run**. Version **0.25.0** adds the independent guarantee toggle.
 Existing Wandering settings are retained. Since **0.26.0**, all three types multiply
-base HP by the current floor number while retaining native stage and
+base HP by a floor-based factor while retaining native stage and
 multiplayer HP/attack bonuses. Added actors are
 hostile, cannot talk and receive the same exact-instance crime exemption. Natural
 merchants remain unchanged.
@@ -118,10 +118,20 @@ The game saves these values on its normal cadence; the addon does not force save
 
 ## Floor-based health
 
-At spawn, each added merchant uses `base HP × max(1, floor number)`, then retains
-the normal native stage and multiplayer percentage bonuses. Floor 1 is ×1,
-floor 2 is ×2, floor 3 is ×3, and so on. This applies to guaranteed and chance-based
-encounters of every type without a separate setting or preset migration.
+Since **0.28.3**, each added merchant uses the following base-HP multiplier at
+spawn, retaining the normal native stage and multiplayer percentage bonuses:
+
+| Main dungeon stage | Base-HP multiplier |
+| --- | --- |
+| 1 | ×1 |
+| 2 | ×2 |
+| 3 | ×4 |
+| 4 | ×5 |
+| 5 | ×7 |
+| 6 and later | ×8 |
+
+This applies to guaranteed and chance-based encounters of every type without a
+separate setting or preset migration.
 
 The floor number is the same main dungeon stage number used by `from`. Maps and
 Grassland missions within one stage all use the same factor. Main-stage ordinals
@@ -130,8 +140,8 @@ not shift them. A playable lobby uses ×1. Optional rooms inherit the current
 main-route stage; unsupported or unknown progress falls back to ×1. A
 delayed guarantee uses the floor where it actually spawns, not its original target.
 
-For example, 2,500 base HP in main stage 3 becomes 7,500 before native
-percentage bonuses. With a total native +230% bonus it becomes 24,750 final HP.
+For example, 2,500 base HP in main stage 3 becomes 10,000 before native
+percentage bonuses. With a total native +230% bonus it becomes 33,000 final HP.
 Attack and defense keep their existing scaling. The native synchronized base-HP
 setter and full heal propagate to unmodified guests without new network fields.
 

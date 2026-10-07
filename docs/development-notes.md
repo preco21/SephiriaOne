@@ -9,6 +9,14 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.28.3` tunes all hostile merchant types to base-HP multipliers
+**1/2/4/5/7/8** on main dungeon stages **1–6**, retaining ×8 on later stages.
+Unknown progress uses ×1. Native stage/co-op bonuses still apply once; existing
+actors keep their spawn-time health. Spawn diagnostics and EN/KO panel guidance
+use the same curve. Regression fixtures cover every tier with one/five players,
+all three types, optional maps, delayed guarantees and overflow handling.
+No deployment or live gameplay test.
+
 Version `0.28.2` corrects [merchant floor numbering and restart handling](merchant-variants.md#restart-and-numbering-correction-0282).
 Minimum-floor conditions, guarantee eligibility/cap reservations and HP factors
 now use main dungeon stages rather than counting maps within a stage. Existing
