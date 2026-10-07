@@ -31,12 +31,13 @@ namespace SephiriaOne
     {
         internal static event Action SettingsChanged;
         internal static RabbitPotionSettings RabbitPotionsForDisplay { get; set; }
-        internal static void Change(bool infinite, bool share, bool consumeMp = false, bool suppressSurvival = false, int mpCost = 10)
+        internal static void Change(bool infinite, bool share, bool consumeMp = false, bool suppressSurvival = false, int mpCost = 10, bool levelUpPotion = false)
         {
-            RabbitPotionsForDisplay = new RabbitPotionSettings(infinite, share, consumeMp, suppressSurvival, mpCost);
+            RabbitPotionsForDisplay = new RabbitPotionSettings(infinite, share, consumeMp, suppressSurvival, mpCost, levelUpPotion);
             SettingsChanged?.Invoke();
         }
     }
     internal static class RabbitPotionFeature { internal static bool Available { get; set; } }
+    internal static class RabbitLevelUpFeature { internal static bool Available { get; set; } = true; }
     internal static class HarmonyRuntime { internal static void EnsureLoaded() { } }
 }

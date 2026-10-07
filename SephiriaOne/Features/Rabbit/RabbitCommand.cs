@@ -4,7 +4,7 @@ using System.Globalization;
 
 namespace SephiriaOne
 {
-    internal enum RabbitOption { Infinite, Share, ConsumeMp, SuppressSurvival, Reset, MpAmount }
+    internal enum RabbitOption { Infinite, Share, ConsumeMp, SuppressSurvival, Reset, MpAmount, LevelUpPotion }
     internal enum RabbitParseResult { NotCommand, Help, Status, Invalid, Valid }
 
     internal readonly struct RabbitCommand
@@ -14,7 +14,8 @@ namespace SephiriaOne
         public int Amount { get; }
         public bool IsReset => Option == RabbitOption.Reset || (Option != RabbitOption.MpAmount && !Enabled);
         public static string Usage => L.T("Host only: /one rabbit infinite on|off, /one rabbit share on|off, /one rabbit mp-cost on|off|<0..10000>, /one rabbit suppress-survival on|off, /one rabbit reset, /one rabbit status. A number sets the MP fee and enables it; on/off retain the amount. Applies to Wing-Eared Rabbit HP potions. Save for future sessions: /one save.") + " " +
-            L.T("Potion of Regeneration (Sample) retains Survival's random-stat bonus.");
+            L.T("Potion of Regeneration (Sample) retains Survival's random-stat bonus.") + " " +
+            L.T("/one rabbit level-up-potion on|off: gain one random non-HP/MP potion on each level-up while wearing Wing-Eared Rabbit.");
 
         public RabbitCommand(RabbitOption option, bool enabled, int amount = RabbitPotionSettings.DefaultMpCostPerDrink)
         { Option = option; Enabled = enabled; Amount = amount; }
@@ -41,6 +42,7 @@ namespace SephiriaOne
             else if (parts[2].Equals("share", StringComparison.OrdinalIgnoreCase)) option = RabbitOption.Share;
             else if (parts[2].Equals("mp-cost", StringComparison.OrdinalIgnoreCase)) option = RabbitOption.ConsumeMp;
             else if (parts[2].Equals("suppress-survival", StringComparison.OrdinalIgnoreCase)) option = RabbitOption.SuppressSurvival;
+            else if (parts[2].Equals("level-up-potion", StringComparison.OrdinalIgnoreCase)) option = RabbitOption.LevelUpPotion;
             else return RabbitParseResult.Invalid;
             if (option == RabbitOption.ConsumeMp && TryParseMpCost(parts[3], out int amount))
             {

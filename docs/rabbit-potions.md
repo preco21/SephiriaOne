@@ -4,7 +4,12 @@ Since `0.27.0`, the costume also receives [Crest of the Iron Wall as a starting
 artifact](rabbit-starting-artifact.md). That costume-bound addition is independent
 of the optional potion settings below.
 
-Added in `0.16.0`, extended in `0.17.0` and `0.18.0`. All four options are **off by default** and apply only while a
+Since `0.28.0`, a fifth independent toggle grants a [random non-HP/MP potion on
+each earned level](rabbit-level-up-potions.md): `/one rabbit level-up-potion on|off`.
+It is off by default, works with unmodified guests, and is saved in v10 presets
+when enabled. `/one rabbit reset` also disables it.
+
+Added in `0.16.0`, extended in `0.17.0` and `0.18.0`. All four HP-potion options are **off by default** and apply only while a
 player wears Wing-Eared Rabbit (`HolyRabbit`). The host needs the addon; guests
 use the ordinary game's potion controls, inventory and HP synchronization.
 

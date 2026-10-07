@@ -382,5 +382,15 @@
   "{0}: {1}; other-floor chance {2}%; first eligible floor {3}; per-run limit {4} (0 = unlimited).": "{0}: {1}; 다른 층 등장 확률 {2}%; 시작 가능 층 {3}; 탐험당 등장 제한 {4}(0 = 무제한).",
   "Each enabled type has its own guaranteed encounter on a randomly selected eligible floor, including the first when allowed by its conditions. Other eligible floors roll before and after the guarantee.": "켜진 유형마다 조건에 맞는 무작위 층에서 한 번의 등장이 보장됩니다. 조건이 허용하면 첫 층도 선택될 수 있습니다. 다른 조건에 맞는 층은 보장된 등장 전후 모두 추첨합니다.",
   "Eligible floors use this type's configured chance.": "조건에 맞는 층마다 이 유형에 설정한 확률을 적용합니다.",
-  "At most one of each type per floor; different types can coexist. Added merchants are hostile with 1x normal HP, cannot talk, and have no negotiation/crime penalty. Off/reset stop future spawns; existing added merchants stay exempt until floor teardown.": "층마다 유형별로 최대 한 명까지 추가되며 서로 다른 유형은 함께 등장할 수 있습니다. 추가 상인은 적대적이며 기본 HP의 1배이고, 대화할 수 없으며 협상/범죄 페널티가 없습니다. off/reset은 이후 등장을 막고, 이미 추가된 상인은 해당 층이 정리될 때까지 페널티 면제를 유지합니다."
+  "At most one of each type per floor; different types can coexist. Added merchants are hostile with 1x normal HP, cannot talk, and have no negotiation/crime penalty. Off/reset stop future spawns; existing added merchants stay exempt until floor teardown.": "층마다 유형별로 최대 한 명까지 추가되며 서로 다른 유형은 함께 등장할 수 있습니다. 추가 상인은 적대적이며 기본 HP의 1배이고, 대화할 수 없으며 협상/범죄 페널티가 없습니다. off/reset은 이후 등장을 막고, 이미 추가된 상인은 해당 층이 정리될 때까지 페널티 면제를 유지합니다.",
+  "/one rabbit level-up-potion on|off: gain one random non-HP/MP potion on each level-up while wearing Wing-Eared Rabbit.": "/one rabbit level-up-potion on|off: 날개귀 토끼를 착용한 동안 레벨이 오를 때마다 HP/MP와 무관한 무작위 물약을 하나 얻습니다.",
+  "Rabbit level-up potion compatibility checks failed. Off/reset remain available; see Player.log.": "토끼 레벨업 물약 호환성 검사에 실패했습니다. 끄기/초기화는 사용할 수 있습니다. Player.log를 확인하세요.",
+  "Level-up non-HP/MP potion: {0}.": "레벨업 시 HP/MP 외 물약 지급: {0}.",
+  " Level-up potion hooks unavailable; no level-up reward is granted. See Player.log.": " 레벨업 물약 기능을 사용할 수 없어 보상을 지급하지 않습니다. Player.log를 확인하세요.",
+  "Level-up potion": "레벨업 물약",
+  "Non-HP/MP potion on level-up: {0}": "레벨업 시 HP/MP 외 물약: {0}",
+  "Each earned level grants one random non-HP/MP potion while wearing Wing-Eared Rabbit.": "날개귀 토끼를 착용한 동안 레벨이 오를 때마다 HP/MP와 무관한 무작위 물약을 하나 얻습니다.",
+  "HP potion options apply only while wearing Wing-Eared Rabbit. Insufficient MP blocks the drink; keep one potion to use.": "HP 물약 옵션은 날개귀 토끼 착용 시에만 적용됩니다. MP가 부족하면 사용이 차단됩니다. 사용할 물약을 하나 이상 보유하세요.",
+  "Level-up potion hooks unavailable; no level-up reward is granted.": "레벨업 물약 기능을 사용할 수 없어 보상을 지급하지 않습니다.",
+  "- <indent=10>Each earned level grants one random non-HP/MP potion while wearing Wing-Eared Rabbit.</indent>": "- <indent=10>레벨이 오를 때마다 HP/MP와 무관한 무작위 물약을 하나 얻습니다.</indent>"
 }

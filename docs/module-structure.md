@@ -45,7 +45,7 @@ SephiriaOne/
 | `Features/Fountain/` | Fountain command parsing/planning, point writes, and carryover-cap operations. |
 | `Features/Merchants/` | Host encounter toggle/chance parsing, native room placement, run-scoped spawn bookkeeping and actor-specific crime/retaliation guards. |
 | `Features/Names/` | Gradient formatting, native publication controller, and synchronized name state. |
-| `Features/Rabbit/` | Potion option parsing/settings, native successful-drink hooks and host costume-description adapter. |
+| `Features/Rabbit/` | Potion option parsing/settings, native drink and earned-level hooks, audited reward catalog, costume starting artifact and host description adapter. |
 | `Features/Resources/` | Starting grants, capacity/budget policy and native resource boundaries. |
 | `Features/Stats/` | Character stat catalog, commands, exact arithmetic, and host batch updates. |
 | `Infrastructure/` | Shared embedded Harmony runtime loading. |

@@ -382,5 +382,15 @@
   "{0}: {1}; other-floor chance {2}%; first eligible floor {3}; per-run limit {4} (0 = unlimited).": "{0}: {1}; other-floor chance {2}%; first eligible floor {3}; per-run limit {4} (0 = unlimited).",
   "Each enabled type has its own guaranteed encounter on a randomly selected eligible floor, including the first when allowed by its conditions. Other eligible floors roll before and after the guarantee.": "Each enabled type has its own guaranteed encounter on a randomly selected eligible floor, including the first when allowed by its conditions. Other eligible floors roll before and after the guarantee.",
   "Eligible floors use this type's configured chance.": "Eligible floors use this type's configured chance.",
-  "At most one of each type per floor; different types can coexist. Added merchants are hostile with 1x normal HP, cannot talk, and have no negotiation/crime penalty. Off/reset stop future spawns; existing added merchants stay exempt until floor teardown.": "At most one of each type per floor; different types can coexist. Added merchants are hostile with 1x normal HP, cannot talk, and have no negotiation/crime penalty. Off/reset stop future spawns; existing added merchants stay exempt until floor teardown."
+  "At most one of each type per floor; different types can coexist. Added merchants are hostile with 1x normal HP, cannot talk, and have no negotiation/crime penalty. Off/reset stop future spawns; existing added merchants stay exempt until floor teardown.": "At most one of each type per floor; different types can coexist. Added merchants are hostile with 1x normal HP, cannot talk, and have no negotiation/crime penalty. Off/reset stop future spawns; existing added merchants stay exempt until floor teardown.",
+  "/one rabbit level-up-potion on|off: gain one random non-HP/MP potion on each level-up while wearing Wing-Eared Rabbit.": "/one rabbit level-up-potion on|off: gain one random non-HP/MP potion on each level-up while wearing Wing-Eared Rabbit.",
+  "Rabbit level-up potion compatibility checks failed. Off/reset remain available; see Player.log.": "Rabbit level-up potion compatibility checks failed. Off/reset remain available; see Player.log.",
+  "Level-up non-HP/MP potion: {0}.": "Level-up non-HP/MP potion: {0}.",
+  " Level-up potion hooks unavailable; no level-up reward is granted. See Player.log.": " Level-up potion hooks unavailable; no level-up reward is granted. See Player.log.",
+  "Level-up potion": "Level-up potion",
+  "Non-HP/MP potion on level-up: {0}": "Non-HP/MP potion on level-up: {0}",
+  "Each earned level grants one random non-HP/MP potion while wearing Wing-Eared Rabbit.": "Each earned level grants one random non-HP/MP potion while wearing Wing-Eared Rabbit.",
+  "HP potion options apply only while wearing Wing-Eared Rabbit. Insufficient MP blocks the drink; keep one potion to use.": "HP potion options apply only while wearing Wing-Eared Rabbit. Insufficient MP blocks the drink; keep one potion to use.",
+  "Level-up potion hooks unavailable; no level-up reward is granted.": "Level-up potion hooks unavailable; no level-up reward is granted.",
+  "- <indent=10>Each earned level grants one random non-HP/MP potion while wearing Wing-Eared Rabbit.</indent>": "- <indent=10>Each earned level grants one random non-HP/MP potion while wearing Wing-Eared Rabbit.</indent>"
 }

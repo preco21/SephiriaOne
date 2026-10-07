@@ -18,6 +18,7 @@ namespace SephiriaOne
             SessionBoundaryFeature.Initialize();
             ResourceFeature.Initialize();
             RabbitPotionFeature.Initialize();
+            RabbitLevelUpFeature.Initialize();
             RabbitDescriptionFeature.Initialize();
             MerchantFeature.Initialize();
             DisconnectDiagnosticsFeature.Initialize();
@@ -37,6 +38,7 @@ namespace SephiriaOne
         private void OnDatabasesReady()
         {
             RabbitStartingArtifactFeature.Apply();
+            RabbitLevelUpFeature.OnDatabasesReady();
             Debug.Log("[SephiriaOne] All databases ready");
         }
 
@@ -48,6 +50,7 @@ namespace SephiriaOne
             ResourceFeature.Shutdown();
             RabbitDescriptionFeature.Shutdown();
             RabbitStartingArtifactFeature.Shutdown();
+            RabbitLevelUpFeature.Shutdown();
             RabbitPotionFeature.Shutdown();
             DisconnectDiagnosticsFeature.Shutdown();
             if (settingsPanel)

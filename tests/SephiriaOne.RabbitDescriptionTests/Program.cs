@@ -14,6 +14,8 @@ string Show(string costume, bool infinite, bool share, bool compatible = true) =
 
 Check(Show(rabbit, false, false) == native, "both options off retains native text");
 Check(RabbitDescriptionText.Decorate("", rabbit, true, true, true) == "", "locked or empty native tooltip stays empty");
+Check(RabbitDescriptionText.Decorate("", rabbit, true, true, false, levelUpPotion: true, levelUpCompatible: true) == "",
+    "level-up rewards keep locked or empty native tooltips empty");
 Check(Show("PinkRabbit", true, true) == native, "other costumes retain native text");
 Check(Show(rabbit, true, true, false) == native, "gameplay incompatibility hides claims");
 
@@ -47,6 +49,31 @@ Check(RabbitDescriptionFeature.Available, "native panel signature accepts hook")
 var panel = new UI_CostumePanel();
 panel.Select(new CostumeEntity(rabbit));
 Check(panel.tooltipEffectText.text == native, "initially off retains native UI");
+SessionSettings.Change(false, false, levelUpPotion: true);
+Check(panel.tooltipEffectText.text.Contains("Each earned level grants one random non-HP/MP potion"), "level-up potion refreshes current tooltip");
+RabbitPotionFeature.Available = false;
+SessionSettings.Change(true, true, true, true, 25, true);
+Check(panel.tooltipEffectText.text.Contains("Each earned level grants one random non-HP/MP potion") &&
+    !panel.tooltipEffectText.text.Contains("not consumed") && !panel.tooltipEffectText.text.Contains("Nearby allies") &&
+    !panel.tooltipEffectText.text.Contains("25 MP") && !panel.tooltipEffectText.text.Contains("Survival"),
+    "level-up reward claim remains visible when only drinking compatibility fails");
+RabbitPotionFeature.Available = true;
+RabbitLevelUpFeature.Available = false;
+RabbitDescriptionFeature.Refresh();
+Check(!panel.tooltipEffectText.text.Contains("Each earned level") && panel.tooltipEffectText.text.Contains("25 MP"),
+    "level-up compatibility failure hides only the reward claim");
+RabbitPotionFeature.Available = false;
+RabbitDescriptionFeature.Refresh();
+Check(panel.tooltipEffectText.text == native, "both hook failures remove all added claims");
+RabbitPotionFeature.Available = true;
+RabbitLevelUpFeature.Available = true;
+SessionSettings.Change(false, false, levelUpPotion: true);
+panel.Select(new CostumeEntity("PinkRabbit"));
+Check(panel.tooltipEffectText.text == native, "level-up potion does not decorate another costume");
+panel.Select(new CostumeEntity(rabbit));
+Check(panel.tooltipEffectText.text.Split("Each earned level").Length == 2, "reselecting adds the level-up line once");
+SessionSettings.Change(false, false);
+Check(panel.tooltipEffectText.text == native, "disabling level-up potion restores the native tooltip");
 SessionSettings.Change(true, false);
 Check(panel.tooltipEffectText.text.Contains("not consumed"), "policy event refreshes current tooltip");
 SessionSettings.Change(true, true);

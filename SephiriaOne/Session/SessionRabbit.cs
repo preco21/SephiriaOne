@@ -16,8 +16,14 @@ namespace SephiriaOne
         {
             message = L.T("Only the host can change Wing-Eared Rabbit settings.");
             if (!NetworkServer.active) return false;
-            if (!command.IsReset && !RabbitPotionFeature.Available)
-            { message = L.T("Rabbit potion compatibility checks failed. Off/reset remain available; see Player.log."); return false; }
+            bool available = command.Option == RabbitOption.LevelUpPotion ? RabbitLevelUpFeature.Available : RabbitPotionFeature.Available;
+            if (!command.IsReset && !available)
+            {
+                message = command.Option == RabbitOption.LevelUpPotion ?
+                    L.T("Rabbit level-up potion compatibility checks failed. Off/reset remain available; see Player.log.") :
+                    L.T("Rabbit potion compatibility checks failed. Off/reset remain available; see Player.log.");
+                return false;
+            }
             if (!PrepareCommand("rabbit", command.IsReset, out HostCommandContext context, out message)) return false;
             if (!Commit("rabbit", context.CreateBatch(), () => policy.Record(command), out message)) return false;
             message = DescribeRabbit(policy.RabbitPotions);
@@ -27,6 +33,7 @@ namespace SephiriaOne
         internal static string DescribeRabbit(RabbitPotionSettings settings) =>
             L.F("Wing-Eared Rabbit HP potions: infinite uses {0}; nearby healing {1}; {2} MP per drink {3}; Survival random-stat suppression {4}.",
                 L.T(settings.Infinite ? "on" : "off"), L.T(settings.Share ? "on" : "off"), settings.MpCostPerDrink,
-                L.T(settings.ConsumeMp ? "on" : "off"), L.T(settings.SuppressSurvival ? "on" : "off"));
+                L.T(settings.ConsumeMp ? "on" : "off"), L.T(settings.SuppressSurvival ? "on" : "off")) + " " +
+            L.F("Level-up non-HP/MP potion: {0}.", L.T(settings.LevelUpPotion ? "on" : "off"));
     }
 }

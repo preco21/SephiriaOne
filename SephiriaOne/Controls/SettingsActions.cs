@@ -102,7 +102,8 @@ namespace SephiriaOne
                         SettingsSnapshot snapshot = SessionSettings.ReadSnapshot();
                         if (!snapshot.HostActive || snapshot.SessionIdentity == null) return Reply(false, snapshot.AvailabilityReason);
                         return Reply(true, SessionSettings.DescribeRabbit(snapshot.RabbitPotions) +
-                            (snapshot.RabbitPotionsAvailable ? "" : L.T(" Potion hooks unavailable; native behavior continues. See Player.log.")));
+                            (snapshot.RabbitPotionsAvailable ? "" : L.T(" Potion hooks unavailable; native behavior continues. See Player.log.")) +
+                            (snapshot.RabbitLevelUpPotionsAvailable ? "" : L.T(" Level-up potion hooks unavailable; no level-up reward is granted. See Player.log.")));
                     }
                     bool success = SessionSettings.TryExecuteRabbit(rabbitCommand, out string rabbitMessage);
                     return Reply(success, rabbitMessage);

@@ -9,6 +9,15 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.28.0` adds an off-by-default [Rabbit level-up potion reward](rabbit-level-up-potions.md).
+`/one rabbit level-up-potion on|off` and the Rabbit panel grant one random native
+non-HP/MP potion per earned level. The audited pool includes 19 potions and
+excludes random-stat potions that can grant MP regeneration. Shared session policy,
+native host inventory replication, independent compatibility, EN/KO presentation
+and v10 presets cover current and joining players. Restore paths do not replay
+past rewards; overflow uses native transient temporary inventory. Nested inventory
+permissions preserve the caller's scope. No deployment or live gameplay test.
+
 Version `0.27.2` excludes Potion of Regeneration (Sample), item `37`, from the
 Rabbit Survival-suppression option. Its native bonus remains active on completed
 drinks, including death during an admitted drink. Infinite use, MP cost and

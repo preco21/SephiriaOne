@@ -17,6 +17,7 @@ namespace SephiriaOne
         private const string MerchantPresetHeader = "SephiriaOne preset v7";
         private const string MerchantTypesPresetHeader = "SephiriaOne preset v8";
         private const string MerchantGuaranteePresetHeader = "SephiriaOne preset v9";
+        private const string RabbitLevelUpPresetHeader = "SephiriaOne preset v10";
         private static readonly string[] ChoiceNames = { "item", "weapon", "miracle" };
 
         private bool UsesMerchantGuaranteePreset
@@ -61,6 +62,7 @@ namespace SephiriaOne
             if (RabbitPotions.SuppressSurvival) lines.Add("rabbit suppress-survival 1");
             if (RabbitPotions.MpCostPerDrink != RabbitPotionSettings.DefaultMpCostPerDrink)
                 lines.Add("rabbit mp-amount " + RabbitPotions.MpCostPerDrink.ToString(CultureInfo.InvariantCulture));
+            if (RabbitPotions.LevelUpPotion) lines.Add("rabbit level-up-potion 1");
             bool merchantTypes = UsesMerchantTypesPreset;
             foreach (var definition in MerchantCatalog.All)
             {
@@ -79,7 +81,7 @@ namespace SephiriaOne
         {
             bool multiplier = HasFountainMultiplier;
             foreach (Setting setting in stats.Values) multiplier |= setting.Multiplier;
-            return (UsesMerchantGuaranteePreset ? MerchantGuaranteePresetHeader : UsesMerchantTypesPreset ? MerchantTypesPresetHeader : Merchants.HasChanges ? MerchantPresetHeader : RabbitPotions.MpCostPerDrink != RabbitPotionSettings.DefaultMpCostPerDrink ? RabbitCostPresetHeader :
+            return (RabbitPotions.LevelUpPotion ? RabbitLevelUpPresetHeader : UsesMerchantGuaranteePreset ? MerchantGuaranteePresetHeader : UsesMerchantTypesPreset ? MerchantTypesPresetHeader : Merchants.HasChanges ? MerchantPresetHeader : RabbitPotions.MpCostPerDrink != RabbitPotionSettings.DefaultMpCostPerDrink ? RabbitCostPresetHeader :
                 RabbitPotions.ConsumeMp || RabbitPotions.SuppressSurvival ? RabbitBalancePresetHeader :
                 RabbitPotions.HasChanges ? RabbitPresetHeader : Resources.HasChanges ? ResourcePresetHeader : multiplier ? MultiplierPresetHeader : PresetHeader) + "\n" +
                 (HasChanges ? string.Join("\n", DescribeSettings()) + "\n" : "");
@@ -91,8 +93,9 @@ namespace SephiriaOne
             error = L.T("Invalid saved preset; no saved settings were applied.");
             if (text == null || text.Length > MaximumPresetLength) return false;
             string[] lines = text.Replace("\r\n", "\n").Split('\n');
-            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader && lines[0] != RabbitBalancePresetHeader && lines[0] != RabbitCostPresetHeader && lines[0] != MerchantPresetHeader && lines[0] != MerchantTypesPresetHeader && lines[0] != MerchantGuaranteePresetHeader)) return false;
-            bool allowMerchantGuarantee = lines[0] == MerchantGuaranteePresetHeader;
+            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader && lines[0] != RabbitBalancePresetHeader && lines[0] != RabbitCostPresetHeader && lines[0] != MerchantPresetHeader && lines[0] != MerchantTypesPresetHeader && lines[0] != MerchantGuaranteePresetHeader && lines[0] != RabbitLevelUpPresetHeader)) return false;
+            bool allowLevelUpPotion = lines[0] == RabbitLevelUpPresetHeader;
+            bool allowMerchantGuarantee = lines[0] == MerchantGuaranteePresetHeader || allowLevelUpPotion;
             bool allowMerchantTypes = lines[0] == MerchantTypesPresetHeader || allowMerchantGuarantee;
             bool allowMerchant = lines[0] == MerchantPresetHeader || allowMerchantTypes;
             bool allowCost = lines[0] == RabbitCostPresetHeader || allowMerchant;
@@ -146,6 +149,7 @@ namespace SephiriaOne
                     else if (parts[1] == "share") option = RabbitOption.Share;
                     else if (allowBalance && parts[1] == "mp-cost") option = RabbitOption.ConsumeMp;
                     else if (allowBalance && parts[1] == "suppress-survival") option = RabbitOption.SuppressSurvival;
+                    else if (allowLevelUpPotion && parts[1] == "level-up-potion") option = RabbitOption.LevelUpPotion;
                     else return false;
                     pending.Record(new RabbitCommand(option, value == 1));
                     continue;

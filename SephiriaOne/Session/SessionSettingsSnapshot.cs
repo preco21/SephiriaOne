@@ -68,7 +68,8 @@ namespace SephiriaOne
             {
                 lines.Add(L.T("Active session settings: ") + (active.Count == 0 ? L.T("none.") : string.Join("; ", active)));
                 lines.Add(DescribeRabbit(sameSession ? policy.RabbitPotions : default) +
-                    (RabbitPotionFeature.Available ? "" : L.T(" Potion hooks unavailable; native behavior continues. See Player.log.")));
+                    (RabbitPotionFeature.Available ? "" : L.T(" Potion hooks unavailable; native behavior continues. See Player.log.")) +
+                    (RabbitLevelUpFeature.Available ? "" : L.T(" Level-up potion hooks unavailable; no level-up reward is granted. See Player.log.")));
                 lines.Add(DescribeMerchants(sameSession ? policy.Merchants.Snapshot : null) +
                     (MerchantFeature.Available ? "" : L.T(" Merchant hooks unavailable; native behavior continues. See Player.log.")));
                 DescribeSynchronization(lines, sameSession);
@@ -180,7 +181,7 @@ namespace SephiriaOne
                 RabbitPotionFeature.Available, RabbitDescriptionFeature.Available,
                 sameSession && policy.MerchantSpawns, MerchantFeature.Available,
                 sameSession ? policy.MerchantSpawnChance : MerchantCommand.DefaultChance,
-                sameSession ? policy.Merchants.Snapshot : null);
+                sameSession ? policy.Merchants.Snapshot : null, RabbitLevelUpFeature.Available);
         }
 
         private static string Signed(int value) => value.ToString("+0;-0;0", CultureInfo.InvariantCulture);

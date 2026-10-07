@@ -52,6 +52,7 @@ namespace SephiriaOne
         public bool ChoicesAvailable { get; }
         public RabbitPotionSettings RabbitPotions { get; }
         public bool RabbitPotionsAvailable { get; }
+        public bool RabbitLevelUpPotionsAvailable { get; }
         public bool RabbitDescriptionAvailable { get; }
         public IReadOnlyDictionary<string, MerchantSettings> Merchants { get; }
         public bool MerchantSpawns => Merchants[MerchantCatalog.DefaultId].Enabled;
@@ -73,12 +74,13 @@ namespace SephiriaOne
             IEnumerable<string> savedSettings, string savedSummary, RabbitPotionSettings rabbitPotions = default,
             bool rabbitPotionsAvailable = false, bool rabbitDescriptionAvailable = false,
             bool merchantSpawns = false, bool merchantsAvailable = false, int merchantSpawnChance = MerchantCommand.DefaultChance,
-            IReadOnlyDictionary<string, MerchantSettings> merchants = null)
+            IReadOnlyDictionary<string, MerchantSettings> merchants = null, bool rabbitLevelUpPotionsAvailable = false)
         {
             SessionIdentity = sessionIdentity; Epoch = epoch; RunGeneration = runGeneration; Revision = revision;
             HostActive = hostActive; CanMutate = canMutate; CanSave = canSave; CanForget = canForget;
             ChoicesAvailable = choicesAvailable; SavedValid = savedValid;
             RabbitPotions = rabbitPotions; RabbitPotionsAvailable = rabbitPotionsAvailable;
+            RabbitLevelUpPotionsAvailable = rabbitLevelUpPotionsAvailable;
             RabbitDescriptionAvailable = rabbitDescriptionAvailable;
             var merchantCopy = new Dictionary<string, MerchantSettings>();
             foreach (var definition in MerchantCatalog.All)

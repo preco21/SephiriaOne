@@ -41,6 +41,14 @@ while that type's spawns are off. Run targets, completed guarantees, consumed
 floor rolls and counts survive option changes; turning a guarantee back on never
 resets them or bypasses the current cap.
 
+Version `0.28.0` adds v10 when [Rabbit level-up potion rewards](rabbit-level-up-potions.md)
+are enabled: `rabbit level-up-potion 1`. All previous setting families, including
+typed merchant conditions and guarantees, remain supported in v10. Missing rows
+and v1-v9 presets leave rewards off. Loading a preset changes future level-up
+behavior; it never grants items for past levels. Invalid/duplicate rows reject
+the whole preset. Off/reset return exports to the oldest applicable version;
+older addon versions cannot load v10.
+
 Version `0.16.0` stores enabled [rabbit potion options](rabbit-potions.md) in v4
 as `rabbit infinite 1` and `rabbit share 1`. Missing/off options remain native.
 v1-v3 are still readable; v4 supports all prior setting families. These flags are

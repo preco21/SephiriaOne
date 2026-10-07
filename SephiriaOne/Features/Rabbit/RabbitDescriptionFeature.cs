@@ -101,7 +101,8 @@ namespace SephiriaOne
             RabbitPotionSettings settings = SessionSettings.RabbitPotionsForDisplay;
             renderedDescription = RabbitDescriptionText.Decorate(nativeDescription,
                 costumeId, settings.Infinite, settings.Share, RabbitPotionFeature.Available,
-                settings.ConsumeMp, settings.SuppressSurvival, settings.MpCostPerDrink);
+                settings.ConsumeMp, settings.SuppressSurvival, settings.MpCostPerDrink,
+                settings.LevelUpPotion, RabbitLevelUpFeature.Available);
             panel.tooltipEffectText.text = renderedDescription;
         }
 

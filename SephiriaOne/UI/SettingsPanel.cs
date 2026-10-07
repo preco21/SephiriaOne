@@ -109,15 +109,18 @@ namespace SephiriaOne
                 window.localScale = Vector3.one * Mathf.Max(0.1f, scale);
             }
             bool choicesReady = page == 7 ? snapshot.MerchantsAvailable : page == 6 ? snapshot.RabbitPotionsAvailable : page == 2 ? snapshot.ChoicesAvailable : page != 3 || ResourceFeature.IsAvailable(ResourceCatalog.All[resourceIndex].Kind);
+            bool levelUpReady = page != 6 || snapshot.RabbitLevelUpPotionsAvailable;
             availability.text = !snapshot.CanMutate ? snapshot.AvailabilityReason : !choicesReady ?
                 (page == 7 ? L.T("Merchant compatibility checks failed. Off/reset remain available; see Player.log.") :
                 page == 6 ? L.T("Rabbit potion compatibility checks failed. Off/reset remain available; see Player.log.") :
                 page == 3 ? ResourceFeature.UnavailableReason(ResourceCatalog.All[resourceIndex].Kind) :
                 L.T("Extra-choice compatibility guard failed. Reset remains available; see Player.log.")) :
+                !levelUpReady ? L.T("Rabbit level-up potion compatibility checks failed. Off/reset remain available; see Player.log.") :
                 L.F("{0} ready player(s). Changes apply when you press an action button.", snapshot.Players.Count);
-            availability.color = snapshot.CanMutate && choicesReady ? PanelWidgets.Muted : (Color)new Color32(255, 200, 122, 255);
+            availability.color = snapshot.CanMutate && choicesReady && levelUpReady ? PanelWidgets.Muted : (Color)new Color32(255, 200, 122, 255);
             foreach (var button in changeButtons) button.interactable = snapshot.CanMutate && choicesReady;
             foreach (var button in rabbitOffButtons) button.interactable = snapshot.CanMutate;
+            if (rabbitLevelUpOn) rabbitLevelUpOn.interactable = snapshot.CanMutate && snapshot.RabbitLevelUpPotionsAvailable;
             if (merchantOff) merchantOff.interactable = snapshot.CanMutate;
             if (merchantGuaranteeOff) merchantGuaranteeOff.interactable = snapshot.CanMutate;
             if (amount) amount.interactable = snapshot.CanMutate && choicesReady;
@@ -157,7 +160,7 @@ namespace SephiriaOne
         {
             page = target; draft.Clear(); changeButtons.Clear();
             rabbitOffButtons.Clear();
-            amount = null; resetOne = resetAll = save = forget = merchantOff = merchantGuaranteeOff = null;
+            amount = null; resetOne = resetAll = save = forget = merchantOff = merchantGuaranteeOff = rabbitLevelUpOn = null;
             if (pageRoot) { widgets.Forget(pageRoot); pageRoot.gameObject.SetActive(false); Destroy(pageRoot.gameObject); }
             pageRoot = PanelWidgets.Rect(window, "Page", 0, 110, 600, 162);
             if (page < 4) BuildEditor();
