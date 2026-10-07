@@ -18,10 +18,12 @@ internal static class LocalizationDescriptionTests
         {
             panel.Select(new CostumeEntity("HolyRabbit"));
             string english = panel.tooltipEffectText.text;
-            Check(english.StartsWith(native + "\n") && english.Contains("25 MP"), "English tooltip shows current amount");
+            Check(english.StartsWith(native + "\n") && english.Contains("25 MP") &&
+                english.Contains("except Potion of Regeneration (Sample)"), "English tooltip shows current amount and Sample exception");
             selectLanguage("ko");
             Check(panel.tooltipEffectText.text.StartsWith(native + "\n") && panel.tooltipEffectText.text.Contains("25 MP") &&
-                panel.tooltipEffectText.text.Contains("생존") && !panel.tooltipEffectText.text.Contains("Survival"),
+                panel.tooltipEffectText.text.Contains("생존") && panel.tooltipEffectText.text.Contains("맛보기 샘플") &&
+                !panel.tooltipEffectText.text.Contains("Survival"),
                 "An open tooltip refreshes addon text on language change");
             Check(panel.tooltipEffectText.text.Split("<indent=10>").Length == 6,
                 "Language refresh does not duplicate addon tooltip lines");

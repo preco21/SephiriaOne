@@ -4,7 +4,7 @@ namespace SephiriaOne
     {
         private const string Infinite = "- <indent=10>HP potions are not consumed after a successful drink (requires one potion).</indent>";
         private const string Share = "- <indent=10>Nearby allies within 5 tiles receive the same HP potion healing.</indent>";
-        private const string Survival = "- <indent=10>HP potion drinks do not trigger Survival rank 5 random-stat gains.</indent>";
+        private const string Survival = "- <indent=10>HP potion drinks, except Potion of Regeneration (Sample), do not trigger Survival rank 5 random-stat gains.</indent>";
 
         internal static string Decorate(string original, string costumeId, bool infinite, bool share, bool compatible,
             bool consumeMp = false, bool suppressSurvival = false, int mpCost = RabbitPotionSettings.DefaultMpCostPerDrink)

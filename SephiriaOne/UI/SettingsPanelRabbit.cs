@@ -38,6 +38,7 @@ namespace SephiriaOne
             "\n" + L.F("{0} MP per HP potion: {1}", snapshot.RabbitPotions.MpCostPerDrink, L.T(snapshot.RabbitPotions.ConsumeMp ? "ON" : "OFF")) +
             "\n" + L.F("Suppress Survival rank 5 random stats: {0}", L.T(snapshot.RabbitPotions.SuppressSurvival ? "ON" : "OFF")) +
             "\n\n" + L.T("Only Wing-Eared Rabbit HP potions are affected. Insufficient MP blocks the drink; keep one potion to use.") +
+            "\n\n" + L.T("Potion of Regeneration (Sample) retains Survival's random-stat bonus.") +
             "\n\n" + L.T("MP cost: whole numbers 0..10000. Set & on applies the amount and enables charging. Off retains it; Reset restores 10 and all options off.") +
             "\n\n" + L.T("Sharing uses potion strength within 5 tiles on the same floor. Recipients retain their own healing penalties.") +
             "\n\n" + L.T("Host settings also apply to unmodified guests wearing Wing-Eared Rabbit.") +

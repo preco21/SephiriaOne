@@ -9,6 +9,13 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.27.2` excludes Potion of Regeneration (Sample), item `37`, from the
+Rabbit Survival-suppression option. Its native bonus remains active on completed
+drinks, including death during an admitted drink. Infinite use, MP cost and
+HP-only recipient healing retain their independent behavior. EN/KO command help,
+panel guidance and costume text describe the exception; regression fixtures cover
+all option combinations, nested drinks and death/wield cleanup. No deployment.
+
 Version `0.27.1` defaults newly created localization configs to Korean (`ko`).
 Existing saved language choices are preserved, and invalid-file startup fallback
 remains English. No gameplay or deployment changes.

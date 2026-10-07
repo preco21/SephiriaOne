@@ -109,6 +109,7 @@ namespace SephiriaOne
         {
             DrinkContext drink = drinks != null && drinks.Count != 0 ? drinks.Peek() : null;
             return !IsNativeCompletion(drink) ||
+                !CanSuppressSurvival(drink.EntityId) ||
                 !ReferenceEquals(__instance.player, drink.Player) || !ReferenceEquals(effect, drink.Effect) ||
                 !drink.Settings.SuppressSurvival || !SessionSettings.RabbitPotionsForUse.SuppressSurvival || !Current(drink, retainDeath: true);
         }

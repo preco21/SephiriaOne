@@ -175,7 +175,8 @@ namespace SephiriaOne
                 potion.effect == null || potion.effect.GetType() != typeof(PotionEffect_Regeneration) ||
                 !Allowed(potion.entityID)) return null;
             RabbitPotionSettings settings = SessionSettings.RabbitPotionsForUse;
-            if (!settings.Infinite && !settings.Share && !settings.ConsumeMp && !settings.SuppressSurvival) return null;
+            if (!settings.Infinite && !settings.Share && !settings.ConsumeMp &&
+                !(settings.SuppressSurvival && CanSuppressSurvival(potion.entityID))) return null;
             ItemController controller = potion.NetworkController;
             PlayerAvatar player = controller?.Avatar as PlayerAvatar;
             PlayerSpawner spawner = player?.spawner;
@@ -299,6 +300,10 @@ namespace SephiriaOne
         }
 
         private static bool Allowed(int id) => id == 0 || id == 1 || id == 37;
+
+        // Sample regeneration (37) retains native Survival procs, even while
+        // other Rabbit options still admit the drink into a completion scope.
+        private static bool CanSuppressSurvival(int id) => id == 0 || id == 1;
         private static bool IsFinitePositive(float value) => value > 0f && !float.IsNaN(value) && !float.IsInfinity(value);
     }
 }

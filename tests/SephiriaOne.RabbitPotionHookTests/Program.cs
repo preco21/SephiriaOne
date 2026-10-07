@@ -219,17 +219,18 @@ Check("server shutdown within event restores native Survival", () =>
     Install(); controller.RunDrink();
     Assert(passive.StatGains == 1, "Stopped server retained suppression scope");
 });
+foreach (int potionId in new[] { 0, 1, 37 })
 foreach (int flags in Enumerable.Range(0, 16))
-    Check("independent option combination " + flags, () =>
+    Check($"potion {potionId}, independent option combination {flags}", () =>
     {
         bool infinite = (flags & 1) != 0, share = (flags & 2) != 0, mp = (flags & 4) != 0, suppress = (flags & 8) != 0;
-        var (player, controller, _, item) = Setup(); var near = new PlayerAvatar(); _ = new PlayerSpawner(near);
+        var (player, controller, _, item) = Setup(potionId); var near = new PlayerAvatar(); _ = new PlayerSpawner(near);
         var passive = new PassiveObject_PotionAndRandomStat(); passive.Enable(player);
         var recipientPassive = new PassiveObject_PotionAndRandomStat(); recipientPassive.Enable(near);
         SessionSettings.RabbitPotionsForUse = new(infinite, share, mp, suppress);
         Install(); controller.RunDrink();
         Assert(item.Quantity == (infinite ? 3 : 2) && near.Heals.Count == (share ? 1 : 0) &&
-            player.mp == (mp ? 20 : 30) && passive.StatGains == (suppress ? 0 : 1) &&
+            player.mp == (mp ? 20 : 30) && passive.StatGains == (suppress && potionId != 37 ? 0 : 1) &&
             recipientPassive.StatGains == 0 && near.DrinkEvents == 0, "Option coupling or recipient gained potion stats");
     });
 foreach (int id in new[] { 0, 1, 37 })
@@ -244,7 +245,7 @@ foreach (int id in new[] { 0, 1, 37 })
                 int recipientEvents = 0; recipient.controller.OnDrinkPotionServerside += _ => recipientEvents++;
                 SessionSettings.RabbitPotionsForUse = new(true, true, true, suppress);
                 Install(); source.controller.RunDrink();
-                Assert(sourcePassive.StatGains == (suppress ? 0 : 1) && recipientPassive.StatGains == 0,
+                Assert(sourcePassive.StatGains == (suppress && id != 37 ? 0 : 1) && recipientPassive.StatGains == 0,
                     "Shared potion granted recipient Survival or changed source suppression");
                 Assert(recipient.player.Hp == 40 && recipient.player.Heals.Count == 1 && recipient.player.DrinkEvents == 0 &&
                     recipientEvents == 0 && recipient.item.Quantity == 3 && recipient.player.mp == 30,
@@ -368,6 +369,19 @@ Check("nested eligible controller charges independently and restores outer suppr
     Assert(first.player.mp == 20 && second.player.mp == 20 && one.StatGains == 0 && two.StatGains == 0 &&
         first.player.Heals.Count == 1 && second.player.Heals.Count == 1, "Nested completion scopes leaked");
 });
+foreach (int outerId in new[] { 0, 37 })
+    Check($"nested sample/regular drinks preserve separate Survival policy, outer {outerId}", () =>
+    {
+        var outer = Setup(outerId); var inner = Setup(outerId == 0 ? 37 : 0);
+        var outerPassive = new PassiveObject_PotionAndRandomStat(); outerPassive.Enable(outer.player);
+        var innerPassive = new PassiveObject_PotionAndRandomStat(); innerPassive.Enable(inner.player);
+        outer.player.OnPotionEvent = () => inner.controller.RunDrink();
+        SessionSettings.RabbitPotionsForUse = new(false, false, true, true);
+        Install(); outer.controller.RunDrink();
+        Assert(outerPassive.StatGains == (outerId == 37 ? 1 : 0) &&
+            innerPassive.StatGains == (outerId == 37 ? 0 : 1) && outer.player.mp == 20 && inner.player.mp == 20,
+            "Nested sample exemption leaked into another drink or changed MP charging");
+    });
 Check("live guest ownership is required and inactive client stays native", () =>
 {
     SessionSettings.RabbitPotionsForUse = new(true, true, true, true); Install();
@@ -462,11 +476,12 @@ Check("disabled saved custom amount leaves native MP and consumption unchanged",
     Install(); controller.RunDrink();
     Assert(player.mp == 30 && player.MpWrites == 0 && player.Heals.Count == 1 && item.Quantity == 2, "Disabled custom cost changed native drink");
 });
+foreach (int potionId in new[] { 0, 1, 37 })
 foreach (int phase in new[] { 0, 1, 2 })
     foreach (bool unwield in new[] { false, true })
-        Check($"death at potion phase {phase}, wield cleanup {unwield} retains admitted protections", () =>
+        Check($"potion {potionId}, death at phase {phase}, wield cleanup {unwield} retains admitted policy", () =>
         {
-            var (player, controller, potion, item) = Setup();
+            var (player, controller, potion, item) = Setup(potionId);
             var passive = new PassiveObject_PotionAndRandomStat(); passive.Enable(player);
             var recipient = new PlayerAvatar(); _ = new PlayerSpawner(recipient);
             void Die()
@@ -479,12 +494,21 @@ foreach (int phase in new[] { 0, 1, 2 })
             if (phase == 2) controller.OnDrinkPotionServerside += _ => Die();
             SessionSettings.RabbitPotionsForUse = new(true, true, true, true);
             Install(); controller.RunDrink();
-            Assert(passive.StatGains == 0, "Death bypassed Survival suppression");
+            Assert(passive.StatGains == (potionId == 37 ? 1 : 0), "Death changed the potion's Survival suppression policy");
             Assert(item.Quantity == 3, "Death bypassed infinite potion consumption");
             Assert(player.IsDead && player.Hp == 0 && player.mp == 20 && player.MpWrites == 1 && controller.CleanupCalls == 1,
                 "Death, charged MP or native completion cleanup was altered");
             Assert(recipient.Heals.Count == (phase == 2 ? 1 : 0), "Dead source started shared healing");
         });
+Check("sample with only suppression enabled preserves the native late-completion path", () =>
+{
+    var (player, controller, _, item) = Setup(37); player.IsDead = true; player.Hp = 0;
+    var passive = new PassiveObject_PotionAndRandomStat(); passive.Enable(player);
+    SessionSettings.RabbitPotionsForUse = new(false, false, false, true);
+    Install(); controller.RunDrink();
+    Assert(passive.StatGains == 1 && player.DrinkEvents == 1 && item.Quantity == 2 &&
+        player.mp == 30 && controller.CleanupCalls == 1, "Inapplicable suppression still intercepted the sample");
+});
 Check("late HP potion completion after death rejects all effects without cost or consumption", () =>
 {
     var (player, controller, _, item) = Setup(); player.IsDead = true; player.Hp = 0;

@@ -98,11 +98,15 @@ status, panel, description and preset. No per-player fee cache is needed.
 callback for the current eligible Rabbit HP-potion drink. It does not disable
 the Survival talent, remove its allocation or other effects, undo stats already
 earned, or suppress other potion-use passives. Normal Survival behavior remains
-for other costumes and non-HP potions. This option also works when infinite uses
+for other costumes and non-HP potions. Since **0.27.2**, **Potion of Regeneration
+(Sample)** (`37`, Korean: 재생의 포션 (맛보기 샘플)) is also exempt: a completed drink
+still runs the native Survival callback with suppression enabled. This exemption
+does not bypass the selected MP cost or alter infinite uses/shared healing.
+Other supported HP potions (`0`, `1`) retain suppression. This option also works when infinite uses
 and/or sharing are off.
 
-With suppression on, neither the Rabbit drinker nor nearby healing recipients
-gain Survival stats from that shared potion. Recipients of any costume are already
+With suppression on, regular HP potions do not grant the Rabbit drinker Survival
+stats; the Sample potion still can. Recipients of any costume are already
 protected by the HP-only sharing path: `HealPercent` changes HP without emitting
 `OnDrinkPotion`, the event Survival subscribes to. Receiving shared healing never
 grants a Survival bonus, even when suppression is off. The toggle controls the
@@ -126,9 +130,13 @@ replay after death.
 If the player is already dead when an eligible pending completion reaches the
 controller guard, the addon rejects it before MP charges, potion events, healing
 or item consumption. The game's normal animation cleanup still runs. This applies
-only to Rabbit HP potions with at least one Rabbit option enabled; all-off settings
+only to Rabbit HP potions with at least one applicable Rabbit option enabled.
+For the Sample potion, suppression alone is not an applicable option and does not
+intercept its native completion path. All-off settings
 (including a remembered disabled fee), other costumes and non-HP potions remain
 native. No per-player death flag or delayed operation survives the call stack.
+The Sample exemption uses the captured entity ID, so it also holds if death
+destroys the wielded potion during a drink admitted by the other options.
 
 ## Synchronization and compatibility
 
@@ -164,7 +172,7 @@ Wing-Eared Rabbit effect description. The shared settings-change notification
 refreshes the displayed text after policy commits, scope resets and preset loads.
 Native costume selection refreshes are also covered. The adapter modifies rendered
 text only, preserves native localized effects, and removes its lines on reset,
-close or unload. Added lines are English.
+close or unload. Added lines follow the addon's English/Korean language setting.
 
 **Unmodified guests retain their native costume description.** That text is built
 locally and has no host-controlled replication path. Gameplay still uses the
@@ -179,6 +187,13 @@ nested/failed calls, recipient filtering, cleanup and UI refresh. Installed-game
 signature/IL checks and builds target Sephiria 1.0.33; see the assembly fingerprint
 in [the investigation](healing-item-investigation.md). These do not replace live
 multiplayer or UI verification. Development builds are not automatically deployed.
+
+Verification for `0.27.2` on 2026-10-08: Debug/Release builds and installed-game
+contracts passed, alongside 214 potion-hook scenarios, 12 localized alerts,
+824 session/runtime checks, 42 description checks and the portable/catalog suite.
+The Sample exception passed all 16 option combinations, nested Sample/regular
+drinks, shared recipients, all three death phases and wield teardown. Independent
+review found no actionable defects. No deployment or live gameplay test.
 
 Verification for `0.18.0` on 2026-09-26: Debug and Release builds passed with zero
 warnings and errors using `-p:DeployMod=false`. Four affected test runners passed
@@ -245,9 +260,9 @@ Manual smoke tests:
    must leave HP, items, potion passives and nearby players unchanged. Successful
    drinks cost exactly 10; cancelled drinking costs zero. Repeat with an unmodified
    guest and with infinite/share enabled.
-8. Give Rabbit and non-Rabbit players Survival 5. With suppression on, Rabbit HP
-   potions must not grant random stats, while non-Rabbit drinks, Rabbit non-HP
-   potions and unrelated potion passives behave normally. Turn suppression off
+8. Give Rabbit and non-Rabbit players Survival 5. With suppression on, regular Rabbit HP
+   potions must not grant random stats, while the Sample potion, non-Rabbit drinks,
+   Rabbit non-HP potions and unrelated potion passives behave normally. Turn suppression off
    and verify Survival works again for the drinker. Nearby recipients should gain
    HP without random stats with either toggle setting. Confirm recipients' own
    non-Rabbit HP or any non-HP potion still triggers their normal Survival bonus.
@@ -260,11 +275,13 @@ Manual smoke tests:
     description. Try zero, invalid input and insufficient MP. Turn charging off,
     save and restart: the chosen amount should remain, without enabling charging.
     Reenable it and test with a rejoining unmodified guest. Reset restores 10/off.
-11. With infinite and suppression enabled and Survival 5 allocated, finish an HP
+11. With infinite and suppression enabled and Survival 5 allocated, finish a regular HP
     potion immediately before a lethal hit. Verify the item remains and no random
     stat is granted. Repeat when death precedes the pending completion: no MP,
     healing, potion events or consumption should occur. Revive and drink again,
     then repeat with an unmodified guest and with each option disabled separately.
+    Repeat the alive-to-dead completed drink with the Sample potion: it must retain
+    the native Survival bonus while infinite use still protects its quantity.
 12. Set MP cost to 25 and attempt healing with less MP as host/single player and
     as an unmodified guest. Verify the balance/cost text, local timed message and
     guest floating text; other players must see neither alert. Repeat with a new

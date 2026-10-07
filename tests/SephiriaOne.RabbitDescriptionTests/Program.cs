@@ -32,6 +32,7 @@ string costOnly = RabbitDescriptionText.Decorate(native, rabbit, false, false, t
 Check(costOnly.Contains("10 MP") && costOnly.Contains("HP potion") && !costOnly.Contains("Survival"), "MP cost appears only when enabled");
 string suppressOnly = RabbitDescriptionText.Decorate(native, rabbit, false, false, true, false, true);
 Check(suppressOnly.Contains("Survival") && suppressOnly.Contains("HP potion") && !suppressOnly.Contains("10 MP"), "Survival suppression appears only when enabled");
+Check(suppressOnly.Contains("except Potion of Regeneration (Sample)"), "Suppression tooltip identifies the Sample exception");
 Check(RabbitDescriptionText.Decorate(native, rabbit, false, false, false, true, true) == native,
     "Compatibility loss hides balance claims");
 Check(RabbitDescriptionText.Decorate(native, "PinkRabbit", false, false, true, true, true) == native,
