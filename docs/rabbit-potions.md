@@ -1,5 +1,9 @@
 # Wing-Eared Rabbit potion options
 
+Since `0.27.0`, the costume also receives [Crest of the Iron Wall as a starting
+artifact](rabbit-starting-artifact.md). That costume-bound addition is independent
+of the optional potion settings below.
+
 Added in `0.16.0`, extended in `0.17.0` and `0.18.0`. All four options are **off by default** and apply only while a
 player wears Wing-Eared Rabbit (`HolyRabbit`). The host needs the addon; guests
 use the ordinary game's potion controls, inventory and HP synchronization.

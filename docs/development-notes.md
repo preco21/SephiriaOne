@@ -1,6 +1,6 @@
 # SephiriaOne development notes
 
-Recorded: 2026-09-23; updated: 2026-09-30 (Asia/Seoul).
+Recorded: 2026-09-23; updated: 2026-10-08 (Asia/Seoul).
 
 This document records the project history, current implementation, and modding
 findings collected during the initial investigation. Installed-game observations
@@ -8,6 +8,15 @@ apply to the assembly fingerprint below. Reference repositories and documentatio
 can change independently of that installed game version.
 
 ## Current status
+
+Version `0.27.0` adds [Crest of the Iron Wall as Wing-Eared Rabbit's starting
+artifact](rabbit-starting-artifact.md), retaining its native Blessing item. The
+official database-ready event adds the existing artifact to `HolyRabbit` only;
+native costume ownership grants/removes the exact instance, restocks new runs,
+and replicates inventory to unmodified guests. The Crest retains its native
+Sword and Shield requirement. No polling, new guest assets, custom network
+messages or preset changes were added. Registration and installed-game lifecycle
+checks pass; deployment and live gameplay testing were not performed.
 
 Version `0.26.1` completes a [performance review](performance-review.md). Merchant
 placement avoids a native lookup's repeated debug logs while retaining its live

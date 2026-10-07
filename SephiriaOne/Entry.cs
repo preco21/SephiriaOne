@@ -36,6 +36,7 @@ namespace SephiriaOne
 
         private void OnDatabasesReady()
         {
+            RabbitStartingArtifactFeature.Apply();
             Debug.Log("[SephiriaOne] All databases ready");
         }
 
@@ -46,6 +47,7 @@ namespace SephiriaOne
             MerchantFeature.Shutdown();
             ResourceFeature.Shutdown();
             RabbitDescriptionFeature.Shutdown();
+            RabbitStartingArtifactFeature.Shutdown();
             RabbitPotionFeature.Shutdown();
             DisconnectDiagnosticsFeature.Shutdown();
             if (settingsPanel)
