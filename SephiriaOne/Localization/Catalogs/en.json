@@ -392,5 +392,7 @@
   "Each earned level grants one random non-HP/MP potion while wearing Wing-Eared Rabbit.": "Each earned level grants one random non-HP/MP potion while wearing Wing-Eared Rabbit.",
   "HP potion options apply only while wearing Wing-Eared Rabbit. Insufficient MP blocks the drink; keep one potion to use.": "HP potion options apply only while wearing Wing-Eared Rabbit. Insufficient MP blocks the drink; keep one potion to use.",
   "Level-up potion hooks unavailable; no level-up reward is granted.": "Level-up potion hooks unavailable; no level-up reward is granted.",
-  "- <indent=10>Each earned level grants one random non-HP/MP potion while wearing Wing-Eared Rabbit.</indent>": "- <indent=10>Each earned level grants one random non-HP/MP potion while wearing Wing-Eared Rabbit.</indent>"
+  "- <indent=10>Each earned level grants one random non-HP/MP potion while wearing Wing-Eared Rabbit.</indent>": "- <indent=10>Each earned level grants one random non-HP/MP potion while wearing Wing-Eared Rabbit.</indent>",
+  "- <indent=10>HP potions, except Potion of Regeneration (Sample), are not consumed after a successful drink (requires one potion).</indent>": "- <indent=10>HP potions, except Potion of Regeneration (Sample), are not consumed after a successful drink (requires one potion).</indent>",
+  "Potion of Regeneration (Sample) is consumed normally and retains Survival's random-stat bonus.": "Potion of Regeneration (Sample) is consumed normally and retains Survival's random-stat bonus."
 }

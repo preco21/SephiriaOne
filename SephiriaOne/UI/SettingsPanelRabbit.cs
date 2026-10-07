@@ -43,7 +43,7 @@ namespace SephiriaOne
             "\n" + L.F("Non-HP/MP potion on level-up: {0}", L.T(snapshot.RabbitPotions.LevelUpPotion ? "ON" : "OFF")) +
             "\n\n" + L.T("Each earned level grants one random non-HP/MP potion while wearing Wing-Eared Rabbit.") +
             "\n\n" + L.T("HP potion options apply only while wearing Wing-Eared Rabbit. Insufficient MP blocks the drink; keep one potion to use.") +
-            "\n\n" + L.T("Potion of Regeneration (Sample) retains Survival's random-stat bonus.") +
+            "\n\n" + L.T("Potion of Regeneration (Sample) is consumed normally and retains Survival's random-stat bonus.") +
             "\n\n" + L.T("MP cost: whole numbers 0..10000. Set & on applies the amount and enables charging. Off retains it; Reset restores 10 and all options off.") +
             "\n\n" + L.T("Sharing uses potion strength within 5 tiles on the same floor. Recipients retain their own healing penalties.") +
             "\n\n" + L.T("Host settings also apply to unmodified guests wearing Wing-Eared Rabbit.") +

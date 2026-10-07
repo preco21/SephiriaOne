@@ -14,7 +14,7 @@ namespace SephiriaOne
         public int Amount { get; }
         public bool IsReset => Option == RabbitOption.Reset || (Option != RabbitOption.MpAmount && !Enabled);
         public static string Usage => L.T("Host only: /one rabbit infinite on|off, /one rabbit share on|off, /one rabbit mp-cost on|off|<0..10000>, /one rabbit suppress-survival on|off, /one rabbit reset, /one rabbit status. A number sets the MP fee and enables it; on/off retain the amount. Applies to Wing-Eared Rabbit HP potions. Save for future sessions: /one save.") + " " +
-            L.T("Potion of Regeneration (Sample) retains Survival's random-stat bonus.") + " " +
+            L.T("Potion of Regeneration (Sample) is consumed normally and retains Survival's random-stat bonus.") + " " +
             L.T("/one rabbit level-up-potion on|off: gain one random non-HP/MP potion on each level-up while wearing Wing-Eared Rabbit.");
 
         public RabbitCommand(RabbitOption option, bool enabled, int amount = RabbitPotionSettings.DefaultMpCostPerDrink)

@@ -9,6 +9,14 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.28.1` also excludes Potion of Regeneration (Sample), item `37`, from
+Rabbit infinite-potion retention. A completed Sample drink consumes one unit
+normally and retains its Survival bonus, including death during completion.
+Neither infinite use nor Survival suppression alone admits a Sample drink into
+the addon death guard. Independent MP cost/shared healing and regular HP-potion
+protections remain. EN/KO command, panel and tooltip text state the exception.
+No deployment or live gameplay test.
+
 Version `0.28.0` adds an off-by-default [Rabbit level-up potion reward](rabbit-level-up-potions.md).
 `/one rabbit level-up-potion on|off` and the Rabbit panel grant one random native
 non-HP/MP potion per earned level. The audited pool includes 19 potions and

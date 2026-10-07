@@ -45,6 +45,10 @@ items. Mana, buff, status and other non-HP potions keep their native consumption
 and talent behavior, even with every Rabbit option enabled. Other costumes are unchanged.
 Supported native regeneration potions are Restorative Potion (20%), Large
 Restorative Potion (50%) and Sample potion (1%); IDs 0, 1 and 37.
+Since `0.28.1`, infinite use applies only to IDs 0/1. **Potion of Regeneration
+(Sample) always follows native consumption**, reducing its count by one after
+a completed drink, even with infinite use enabled. Sample still supports the
+independent MP-cost and shared-healing options.
 
 **Shared potion healing** forwards the actual native healing percentage,
 including the drinker's potion bonus, to other alive, ready players on the same
@@ -106,7 +110,8 @@ earned, or suppress other potion-use passives. Normal Survival behavior remains
 for other costumes and non-HP potions. Since **0.27.2**, **Potion of Regeneration
 (Sample)** (`37`, Korean: 재생의 포션 (맛보기 샘플)) is also exempt: a completed drink
 still runs the native Survival callback with suppression enabled. This exemption
-does not bypass the selected MP cost or alter infinite uses/shared healing.
+does not bypass the selected MP cost or alter shared healing. Since `0.28.1`,
+Sample is also excluded from infinite use and consumes normally.
 Other supported HP potions (`0`, `1`) retain suppression. This option also works when infinite uses
 and/or sharing are off.
 
@@ -136,8 +141,8 @@ If the player is already dead when an eligible pending completion reaches the
 controller guard, the addon rejects it before MP charges, potion events, healing
 or item consumption. The game's normal animation cleanup still runs. This applies
 only to Rabbit HP potions with at least one applicable Rabbit option enabled.
-For the Sample potion, suppression alone is not an applicable option and does not
-intercept its native completion path. All-off settings
+For the Sample potion, neither suppression nor infinite use is an applicable
+option; those toggles alone do not intercept its native completion path. All-off settings
 (including a remembered disabled fee), other costumes and non-HP potions remain
 native. No per-player death flag or delayed operation survives the call stack.
 The Sample exemption uses the captured entity ID, so it also holds if death
@@ -192,6 +197,14 @@ nested/failed calls, recipient filtering, cleanup and UI refresh. Installed-game
 signature/IL checks and builds target Sephiria 1.0.33; see the assembly fingerprint
 in [the investigation](healing-item-investigation.md). These do not replace live
 multiplayer or UI verification. Development builds are not automatically deployed.
+
+The `0.28.1` consumption regression reproduces the prior retention with infinite
+use enabled. Coverage checks all option combinations, local/guest owners,
+last-unit consumption, nested Sample/regular drinks, all three death phases and
+wield teardown. Standard HP potions retain their infinite/suppression protection.
+Debug/Release builds, installed-game contracts, 217 potion scenarios plus 12
+localized alerts, 834 runtime checks, 44 description plus 6 localized checks and
+the portable/catalog suite passed. No deployment or live gameplay test.
 
 Verification for `0.27.2` on 2026-10-08: Debug/Release builds and installed-game
 contracts passed, alongside 214 potion-hook scenarios, 12 localized alerts,
@@ -286,7 +299,8 @@ Manual smoke tests:
     healing, potion events or consumption should occur. Revive and drink again,
     then repeat with an unmodified guest and with each option disabled separately.
     Repeat the alive-to-dead completed drink with the Sample potion: it must retain
-    the native Survival bonus while infinite use still protects its quantity.
+    the native Survival bonus and consume exactly one unit, even with infinite
+    use enabled. Repeat with the final unit of the Sample stack.
 12. Set MP cost to 25 and attempt healing with less MP as host/single player and
     as an unmodified guest. Verify the balance/cost text, local timed message and
     guest floating text; other players must see neither alert. Repeat with a new

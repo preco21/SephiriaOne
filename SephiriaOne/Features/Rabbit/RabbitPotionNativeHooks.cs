@@ -175,7 +175,7 @@ namespace SephiriaOne
                 potion.effect == null || potion.effect.GetType() != typeof(PotionEffect_Regeneration) ||
                 !Allowed(potion.entityID)) return null;
             RabbitPotionSettings settings = SessionSettings.RabbitPotionsForUse;
-            if (!settings.Infinite && !settings.Share && !settings.ConsumeMp &&
+            if (!(settings.Infinite && CanRetainPotion(potion.entityID)) && !settings.Share && !settings.ConsumeMp &&
                 !(settings.SuppressSurvival && CanSuppressSurvival(potion.entityID))) return null;
             ItemController controller = potion.NetworkController;
             PlayerAvatar player = controller?.Avatar as PlayerAvatar;
@@ -243,7 +243,7 @@ namespace SephiriaOne
             {
                 if (!Current(__state, retainDeath: true) || __state.HealCalls != 1) return;
                 RabbitPotionSettings now = SessionSettings.RabbitPotionsForUse;
-                if (__state.Settings.Infinite && now.Infinite && itemDecreased) itemDecreased = false;
+                if (CanRetainPotion(__state.EntityId) && __state.Settings.Infinite && now.Infinite && itemDecreased) itemDecreased = false;
                 if (__state.Settings.Share && now.Share && IsFinitePositive(__state.HealStrength) && Current(__state)) Share(__state);
             }
             catch { /* An optional callback must never cancel the native drink. */ }
@@ -300,6 +300,10 @@ namespace SephiriaOne
         }
 
         private static bool Allowed(int id) => id == 0 || id == 1 || id == 37;
+
+        // Sample regeneration (37) always uses the native consumption decision.
+        // Use the captured ID so death/wield cleanup cannot change this policy.
+        private static bool CanRetainPotion(int id) => id == 0 || id == 1;
 
         // Sample regeneration (37) retains native Survival procs, even while
         // other Rabbit options still admit the drink into a completion scope.

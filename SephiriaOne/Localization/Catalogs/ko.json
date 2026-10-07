@@ -392,5 +392,7 @@
   "Each earned level grants one random non-HP/MP potion while wearing Wing-Eared Rabbit.": "날개귀 토끼를 착용한 동안 레벨이 오를 때마다 HP/MP와 무관한 무작위 물약을 하나 얻습니다.",
   "HP potion options apply only while wearing Wing-Eared Rabbit. Insufficient MP blocks the drink; keep one potion to use.": "HP 물약 옵션은 날개귀 토끼 착용 시에만 적용됩니다. MP가 부족하면 사용이 차단됩니다. 사용할 물약을 하나 이상 보유하세요.",
   "Level-up potion hooks unavailable; no level-up reward is granted.": "레벨업 물약 기능을 사용할 수 없어 보상을 지급하지 않습니다.",
-  "- <indent=10>Each earned level grants one random non-HP/MP potion while wearing Wing-Eared Rabbit.</indent>": "- <indent=10>레벨이 오를 때마다 HP/MP와 무관한 무작위 물약을 하나 얻습니다.</indent>"
+  "- <indent=10>Each earned level grants one random non-HP/MP potion while wearing Wing-Eared Rabbit.</indent>": "- <indent=10>레벨이 오를 때마다 HP/MP와 무관한 무작위 물약을 하나 얻습니다.</indent>",
+  "- <indent=10>HP potions, except Potion of Regeneration (Sample), are not consumed after a successful drink (requires one potion).</indent>": "- <indent=10>재생의 포션 (맛보기 샘플)을 제외한 HP 물약은 사용해도 소모되지 않습니다(물약 1개 필요).</indent>",
+  "Potion of Regeneration (Sample) is consumed normally and retains Survival's random-stat bonus.": "재생의 포션 (맛보기 샘플)은 정상적으로 소모되며 생존 특성의 무작위 능력치 보너스도 유지됩니다."
 }
