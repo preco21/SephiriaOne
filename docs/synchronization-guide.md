@@ -18,6 +18,7 @@ Version `0.13.0` adds a [host settings panel](control-panel.md) on the same serv
 | Native Fountain grant and new candidate generation | `SessionSettings.BeforeNativeRead` / `EnsureFresh` | Native consumer and existing generation guards |
 | Owned name publication | Shared coordinator and readiness; bounded native-command acknowledgment retry | Format name and use the owned native transport |
 | Rabbit potion options | Policy, command authority/batch commit, presets and snapshots | Read current host intent on the native drink event; never replay healing during reconciliation |
+| Bat costume HP steal | Policy, command preflight/paired write readback, inheritance, presets and scope cleanup | Change the native costume-owned status and matching synchronized contribution; native removal uses the exact applied amount |
 | Read-only settings views | `SessionSettings.SettingsChanged` after commit, preset load and scope clear; isolated callback failures | Refresh rendered text from current read-only policy without gameplay writes |
 
 Native equipment, costume, preset, passive-menu, buff, and spent hard-mode point

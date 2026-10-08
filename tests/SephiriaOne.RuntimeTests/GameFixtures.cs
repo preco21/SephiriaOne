@@ -58,7 +58,7 @@ public sealed class PlayerSpawner : UnityEngine.Object
         Math.Min(PlayerAvatar.Inventory.dimensionPocket, DungeonManager.Instance.constValueDictionary["DIMENSIONPOCKETLIMIT"]);
 }
 
-public sealed class PlayerAvatar : UnityEngine.Object
+public sealed partial class PlayerAvatar : UnitAvatar
 {
     public bool isClient = true;
     public readonly List<string> NameRequests = new();
@@ -92,12 +92,13 @@ public sealed class PlayerAvatar : UnityEngine.Object
 public sealed class FixtureStats : Dictionary<string, int>, IDictionary<string, int>
 {
     public Action<string, int> BeforeWrite;
+    public Action<string, int> AfterWrite;
     public Action<string> BeforeRemove;
     public int Writes;
     public new int this[string key]
     {
         get => base[key];
-        set { BeforeWrite?.Invoke(key, value); Writes++; base[key] = value; }
+        set { BeforeWrite?.Invoke(key, value); Writes++; base[key] = value; AfterWrite?.Invoke(key, value); }
     }
     int IDictionary<string, int>.this[string key] { get => this[key]; set => this[key] = value; }
     public new bool Remove(string key) { BeforeRemove?.Invoke(key); return base.Remove(key); }

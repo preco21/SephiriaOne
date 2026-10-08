@@ -9,6 +9,15 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.33.0` adds a default-off [Wingless Bat HP-steal reduction](wingless-bat.md).
+`/one bat hp-steal on|off`, reset/status, a Bat panel and v14 presets reduce only
+the costume's own bonus from 5 to 1. Native owned-status lifetime and synchronized
+stats preserve other sources and remove the correct amount on costume changes.
+Fresh applications read current host intent; live toggles use shared command
+batches with paired stat/status readback. Fault regressions cover switching
+costumes, rejoining, new sessions, and shutdown after interrupted writes.
+No per-frame work, deployment or live multiplayer testing was added/performed.
+
 Version `0.32.0` adds [Mystic Jar spawn-rate settings](mystic-jar.md): exact
 percentages or multipliers of each location's native chance, `/one jars`, a Jars
 panel and v13 presets. Normal random placements only are affected; hidden-room

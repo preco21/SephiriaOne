@@ -3,6 +3,13 @@
 Added in `0.10.0`. Only the host needs the addon; preset commands and their
 feedback remain local. Guests receive gameplay changes through native sync.
 
+Version `0.33.0` adds v14 for [Wingless Bat](wingless-bat.md): `bat hp-steal 1`
+enables the costume-specific reduction. Missing rows and v1–v13 keep it off;
+`bat hp-steal 0` normalizes away. Invalid and duplicate rows reject the entire
+preset. Reset/off exports the oldest remaining applicable schema. Only intent is
+saved; status instances and calculated HP-steal totals are never serialized by
+this option. Costume status ownership is reconstructed by the native game.
+
 Version `0.32.0` adds v13 for [Mystic Jar spawn rates](mystic-jar.md). One optional
 row, `jars chance 50` or `jars multiplier 2`, stores the chosen override. Percentages
 accept 0–100 with up to two decimals; multipliers follow the shared `xN` bounds.

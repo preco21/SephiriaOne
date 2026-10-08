@@ -440,5 +440,18 @@
   "Reset restores each location's native chance. Changes affect future spawn checks only.": "Reset restores each location's native chance. Changes affect future spawn checks only.",
   "Normal random Jar locations only. Chapter gates, guaranteed placements and hidden-room rewards keep native behavior.": "Normal random Jar locations only. Chapter gates, guaranteed placements and hidden-room rewards keep native behavior.",
   "100% fills eligible random locations; it does not create new locations or guarantee a Jar on every floor. 0% disables these random spawns.": "100% fills eligible random locations; it does not create new locations or guarantee a Jar on every floor. 0% disables these random spawns.",
-  "Existing Jars are not rerolled or refilled. Host settings also apply to unmodified guests.": "Existing Jars are not rerolled or refilled. Host settings also apply to unmodified guests."
+  "Existing Jars are not rerolled or refilled. Host settings also apply to unmodified guests.": "Existing Jars are not rerolled or refilled. Host settings also apply to unmodified guests.",
+  "Host only: /one bat hp-steal on|off; /one bat status|reset. On reduces Wingless Bat's costume HP steal from 5 to 1. Default off. /one save persists settings.": "Host only: /one bat hp-steal on|off; /one bat status|reset. On reduces Wingless Bat's costume HP steal from 5 to 1. Default off. /one save persists settings.",
+  "Only the host can change Wingless Bat settings.": "Only the host can change Wingless Bat settings.",
+  "Bat costume compatibility checks failed. Off/reset remain available; see Player.log.": "Bat costume compatibility checks failed. Off/reset remain available; see Player.log.",
+  "Wingless Bat costume HP steal: 1 (reduction on; native 5). Other HP-steal sources are unchanged.": "Wingless Bat costume HP steal: 1 (reduction on; native 5). Other HP-steal sources are unchanged.",
+  "Wingless Bat costume HP steal: native 5 (reduction off).": "Wingless Bat costume HP steal: native 5 (reduction off).",
+  " Bat costume hooks unavailable; see Player.log.": " Bat costume hooks unavailable; see Player.log.",
+  " /one bat help lists Wingless Bat options.": " /one bat help lists Wingless Bat options.",
+  "Bat": "Bat",
+  "Wingless Bat HP steal": "Wingless Bat HP steal",
+  "On reduces the costume's HP steal from 5 to 1. Default off; other HP-steal sources are unchanged.": "On reduces the costume's HP steal from 5 to 1. Default off; other HP-steal sources are unchanged.",
+  "Applies only while Wingless Bat is equipped, including unmodified guests. Off/reset restores the native costume bonus. Equipment, buffs and stat multipliers keep their normal behavior.": "Applies only while Wingless Bat is equipped, including unmodified guests. Off/reset restores the native costume bonus. Equipment, buffs and stat multipliers keep their normal behavior.",
+  "The native costume selection preview still shows 5. The character's effective HP steal and healing use the host's setting.": "The native costume selection preview still shows 5. The character's effective HP steal and healing use the host's setting.",
+  "Resolve the faulted {0} write before unloading the addon. Inspect /one status.": "Resolve the faulted {0} write before unloading the addon. Inspect /one status."
 }

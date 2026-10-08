@@ -440,5 +440,18 @@
   "Reset restores each location's native chance. Changes affect future spawn checks only.": "초기화하면 각 위치의 기본 확률을 복원합니다. 변경 사항은 이후 출현 판정부터 적용됩니다.",
   "Normal random Jar locations only. Chapter gates, guaranteed placements and hidden-room rewards keep native behavior.": "일반 무작위 항아리 배치 위치에만 적용합니다. 챕터 조건, 확정 배치 및 숨겨진 방의 보상은 기본 게임 규칙을 따릅니다.",
   "100% fills eligible random locations; it does not create new locations or guarantee a Jar on every floor. 0% disables these random spawns.": "100%는 조건을 충족한 무작위 배치 위치에서 출현하게 합니다. 새 위치를 만들거나 모든 층에 항아리를 보장하지는 않습니다. 0%는 이러한 무작위 출현을 막습니다.",
-  "Existing Jars are not rerolled or refilled. Host settings also apply to unmodified guests.": "기존 항아리를 다시 추첨하거나 사용 횟수를 회복하지 않습니다. 모드를 설치하지 않은 게스트에게도 호스트 설정이 적용됩니다."
+  "Existing Jars are not rerolled or refilled. Host settings also apply to unmodified guests.": "기존 항아리를 다시 추첨하거나 사용 횟수를 회복하지 않습니다. 모드를 설치하지 않은 게스트에게도 호스트 설정이 적용됩니다.",
+  "Host only: /one bat hp-steal on|off; /one bat status|reset. On reduces Wingless Bat's costume HP steal from 5 to 1. Default off. /one save persists settings.": "호스트 전용: /one bat hp-steal on|off; /one bat status|reset. 켜면 날개 잃은 박쥐 의상의 체력 흡혈이 5에서 1로 줄어듭니다. 기본값은 끄기입니다. /one save로 설정을 저장합니다.",
+  "Only the host can change Wingless Bat settings.": "호스트만 날개 잃은 박쥐 설정을 변경할 수 있습니다.",
+  "Bat costume compatibility checks failed. Off/reset remain available; see Player.log.": "박쥐 의상 호환성 검사에 실패했습니다. 끄기/초기화는 사용할 수 있습니다. Player.log를 확인하세요.",
+  "Wingless Bat costume HP steal: 1 (reduction on; native 5). Other HP-steal sources are unchanged.": "날개 잃은 박쥐 의상의 체력 흡혈: 1 (감소 켜짐, 원래 5). 다른 효과로 얻는 체력 흡혈은 유지됩니다.",
+  "Wingless Bat costume HP steal: native 5 (reduction off).": "날개 잃은 박쥐 의상의 체력 흡혈: 원래 값 5 (감소 꺼짐).",
+  " Bat costume hooks unavailable; see Player.log.": " 박쥐 의상 기능을 사용할 수 없습니다. Player.log를 확인하세요.",
+  " /one bat help lists Wingless Bat options.": " /one bat help로 날개 잃은 박쥐 옵션을 확인합니다.",
+  "Bat": "박쥐",
+  "Wingless Bat HP steal": "날개 잃은 박쥐 체력 흡혈",
+  "On reduces the costume's HP steal from 5 to 1. Default off; other HP-steal sources are unchanged.": "켜면 의상의 체력 흡혈이 5에서 1로 줄어듭니다. 기본값은 끄기이며, 다른 효과로 얻는 체력 흡혈은 유지됩니다.",
+  "Applies only while Wingless Bat is equipped, including unmodified guests. Off/reset restores the native costume bonus. Equipment, buffs and stat multipliers keep their normal behavior.": "날개 잃은 박쥐를 착용 중일 때만 적용되며, 모드가 없는 게스트에게도 적용됩니다. 끄기/초기화는 원래 의상 보너스를 복원합니다. 장비, 버프, 능력치 배율은 원래대로 작동합니다.",
+  "The native costume selection preview still shows 5. The character's effective HP steal and healing use the host's setting.": "기본 의상 선택 미리보기에는 여전히 5가 표시됩니다. 캐릭터의 실제 체력 흡혈과 회복에는 호스트 설정이 적용됩니다.",
+  "Resolve the faulted {0} write before unloading the addon. Inspect /one status.": "모드를 해제하기 전에 {0} 쓰기 오류를 복구하세요. /one status를 확인하세요."
 }

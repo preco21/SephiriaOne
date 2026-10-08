@@ -81,6 +81,7 @@ namespace SephiriaOne
 
         private static void ClearScope()
         {
+            RestoreBat();
             ItemRestrictionFeature.Clear();
             MerchantFeature.Clear();
             ChoicePoints.ClearCleanup();
@@ -270,6 +271,7 @@ namespace SephiriaOne
             }
             var context = new HostCommandContext(dungeon, new[] { subject });
             StateWriteBatch batch = context.CreateBatch();
+            if (BatCostumeFeature.Available) BatCostumeRuntime.Append(batch, player, policy.BatHpSteal);
             if (plan.Fountain != null) NativeStateWrites.Fountain(batch, dungeon, new[] { player }, plan.Fountain);
             foreach (SessionStatWrite write in plan.Stats)
                 NativeStateWrites.Stat(batch, player, write.Key, write.Marker, write.Raw, write.Contribution);

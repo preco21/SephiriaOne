@@ -24,6 +24,7 @@ namespace SephiriaOne
             ItemRestrictionFeature.Initialize();
             FriendlyFireFeature.Initialize();
             JarSpawnFeature.Initialize();
+            BatCostumeFeature.Initialize();
             DisconnectDiagnosticsFeature.Initialize();
             if (!nameColor)
             {
@@ -48,6 +49,7 @@ namespace SephiriaOne
         protected override void OnModUnloaded()
         {
             // Keep controllers/guards available if verified cleanup needs recovery.
+            BatCostumeFeature.Shutdown();
             ChoiceFeature.Shutdown();
             JarSpawnFeature.Shutdown();
             FriendlyFireFeature.Shutdown();
