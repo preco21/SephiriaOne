@@ -41,7 +41,7 @@ GNU Affero General Public License (AGPL)
 
 누구나 본 프로젝트의 코드와 산출물의 판매/배포/공유/변경을 자유롭게 할 수 있습니다.
 
-## 크래딧 (Attribution)
+## 크레딧 (Attribution)
 
 https://github.com/Mira090 님이 작성하신 모드를 레퍼런스로 참고하였습니다.
 
