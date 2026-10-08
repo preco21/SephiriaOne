@@ -2,7 +2,8 @@
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>disable</Nullable></PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Lib.Harmony" Version="2.4.2" />
-    <Compile Include="../../SephiriaOne/Features/Spawns/Jar*.cs" Exclude="../../SephiriaOne/Features/Spawns/JarSpawnFeature.cs" Link="%(Filename)%(Extension)" />
+    <Compile Include="../../SephiriaOne/Features/Spawns/EventSpawnSettings.cs" Link="EventSpawnSettings.cs" />
+    <Compile Include="../../SephiriaOne/Features/Spawns/EventSpawnHooks.cs" Link="EventSpawnHooks.cs" />
     <Compile Include="../../SephiriaOne/Controls/RelativeMultiplier.cs" Link="RelativeMultiplier.cs" />
   </ItemGroup>
 </Project>

@@ -4,6 +4,24 @@ namespace SephiriaOne
 {
     internal static partial class SessionSettings
     {
+        internal static EventSpawnSettings EventSpawnsForGeneration => EnsureResourceScope() ? policy.EventSpawns : default;
+
+        internal static bool TryExecuteEventSpawn(EventSpawnSettings settings, out string message)
+        {
+            message = L.T("Only the host can change random event rates.");
+            if (!NetworkServer.active) return false;
+            if (settings.HasChanges && !EventSpawnFeature.Available)
+            { message = L.T("Random event compatibility checks failed. Reset remains available; see Player.log."); return false; }
+            if (!PrepareCommand("events", !settings.HasChanges, out HostCommandContext context, out message)) return false;
+            if (!Commit("events", context.CreateBatch(), () => policy.RecordEventSpawns(settings), out message)) return false;
+            message = DescribeEventSpawns(policy.EventSpawns);
+            return true;
+        }
+        internal static string DescribeEventSpawns(EventSpawnSettings settings) => (!settings.HasChanges ?
+            L.T("Random event room chance: native (no override).") :
+            L.F("Random event room chance: native x{0}; each probability capped at 100%, at most two event rooms.", settings.Number)) +
+            " " + L.T("Applies when new chapter floor data is generated. Already-generated floors keep their encounters.");
+
         internal static JarSpawnSettings JarSpawnsForGeneration => EnsureResourceScope() ? policy.JarSpawns : default;
 
         internal static bool TryExecuteJarSpawn(JarSpawnSettings settings, out string message)

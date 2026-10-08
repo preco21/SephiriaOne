@@ -4,7 +4,7 @@ Added in `0.32.0`. The host can change the chance at normal random Mystic Jar
 locations. Unmodified guests receive the result through the game's existing
 object visibility synchronization. Default/reset leaves native chances intact.
 
-Open `/one ui` and select **Jars**, or use:
+Open `/one ui` and select **Spawns → Mystic Jar spawn chance**, or use:
 
 | Command | Effect |
 | --- | --- |

@@ -48,7 +48,7 @@ namespace SephiriaOne
             var close = widgets.Button(window, "X", 563, 10, 23, 23, Close);
             defaultSelectable = close.gameObject;
             availability = widgets.Text(window, "Availability", "", 16, 54, 568, 22, 10);
-            string[] pages = { "Stats", "Fountain", "Choices", "Resources", "Presets", "Status", "Rabbit", "Merchant", "Items", "Combat", "Jars", "Costumes" };
+            string[] pages = { "Stats", "Fountain", "Choices", "Resources", "Presets", "Status", "Rabbit", "Merchant", "Items", "Combat", "Spawns", "Costumes" };
             for (int i = 0; i < pages.Length; i++)
             {
                 int target = i;
@@ -108,11 +108,11 @@ namespace SephiriaOne
                 float scale = Mathf.Min(1, Mathf.Min(rootRect.rect.width / 640f, rootRect.rect.height / 384f));
                 window.localScale = Vector3.one * Mathf.Max(0.1f, scale);
             }
-            bool choicesReady = page == 11 ? snapshot.BatAvailable && snapshot.CollinAvailable : page == 10 ? snapshot.JarSpawnsAvailable : page == 9 ? snapshot.FriendlyFireAvailable : page == 8 ? snapshot.ItemRestrictionsAvailable : page == 7 ? snapshot.MerchantsAvailable : page == 6 ? snapshot.RabbitPotionsAvailable : page == 2 ? snapshot.ChoicesAvailable : page != 3 || ResourceFeature.IsAvailable(ResourceCatalog.All[resourceIndex].Kind);
+            bool choicesReady = page == 11 ? snapshot.BatAvailable && snapshot.CollinAvailable : page == 10 ? (eventSpawnsSelected ? snapshot.EventSpawnsAvailable : snapshot.JarSpawnsAvailable) : page == 9 ? snapshot.FriendlyFireAvailable : page == 8 ? snapshot.ItemRestrictionsAvailable : page == 7 ? snapshot.MerchantsAvailable : page == 6 ? snapshot.RabbitPotionsAvailable : page == 2 ? snapshot.ChoicesAvailable : page != 3 || ResourceFeature.IsAvailable(ResourceCatalog.All[resourceIndex].Kind);
             bool levelUpReady = page != 6 || snapshot.RabbitLevelUpPotionsAvailable;
             availability.text = !snapshot.CanMutate ? snapshot.AvailabilityReason : !choicesReady ?
                 (page == 11 ? L.T("Some costume controls are unavailable. See the details on the right and Player.log.") :
-                page == 10 ? L.T("Mystic Jar compatibility checks failed. Reset remains available; see Player.log.") :
+                page == 10 ? (eventSpawnsSelected ? L.T("Random event compatibility checks failed. Reset remains available; see Player.log.") : L.T("Mystic Jar compatibility checks failed. Reset remains available; see Player.log.")) :
                 page == 9 ? L.T("Friendly-fire compatibility checks failed. Off/reset remain available; see Player.log.") :
                 page == 8 ? L.T("Item restriction compatibility checks failed. Off/reset remain available; see Player.log.") :
                 page == 7 ? L.T("Merchant compatibility checks failed. Off/reset remain available; see Player.log.") :
@@ -137,7 +137,7 @@ namespace SephiriaOne
                 (snapshot.FaultedFeature == "collin" || snapshot.FaultedFeature == "inheritance"));
             if (amount) amount.interactable = snapshot.CanMutate && choicesReady;
             // Full-family reset is intentionally available for the existing recovery path.
-            string family = page == 0 ? "stats" : page == 1 ? "fountain" : page == 3 ? "resources" : page == 6 ? "rabbit" : page == 7 ? "merchant" : page == 8 ? "items" : page == 9 ? "combat" : page == 10 ? "jars" : page == 11 ? "bat" : "choices";
+            string family = page == 0 ? "stats" : page == 1 ? "fountain" : page == 3 ? "resources" : page == 6 ? "rabbit" : page == 7 ? "merchant" : page == 8 ? "items" : page == 9 ? "combat" : page == 10 ? (eventSpawnsSelected ? "events" : "jars") : page == 11 ? "bat" : "choices";
             bool recovery = snapshot.HostActive && snapshot.SessionIdentity != null &&
                 (snapshot.FaultedFeature == family || snapshot.FaultedFeature == "inheritance");
             if (resetAll) resetAll.interactable = snapshot.CanMutate || recovery;
@@ -149,7 +149,7 @@ namespace SephiriaOne
             else if (page == 7) readout.SetText(MerchantValues(snapshot));
             else if (page == 8) readout.SetText(ItemValues(snapshot));
             else if (page == 9) readout.SetText(CombatValues(snapshot));
-            else if (page == 10) readout.SetText(JarValues(snapshot));
+            else if (page == 10) readout.SetText(eventSpawnsSelected ? EventValues(snapshot) : JarValues(snapshot));
             else if (page == 11) readout.SetText(CostumeValues(snapshot));
             else if (page == 4) readout.SetText(PresetValues(snapshot));
             else readout.SetText(L.T("Automatic name gradient: #408af1 -> #a8d7fa\nHost's native multiplayer character name; colors are fixed.") +
@@ -186,7 +186,7 @@ namespace SephiriaOne
             else if (page == 7) BuildMerchantEditor();
             else if (page == 8) BuildItemEditor();
             else if (page == 9) BuildCombatEditor();
-            else if (page == 10) BuildJarEditor();
+            else if (page == 10) BuildSpawnEditor();
             else if (page == 11) BuildCostumeEditor();
             else
             {

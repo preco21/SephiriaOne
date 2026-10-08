@@ -24,6 +24,7 @@ namespace SephiriaOne
             ItemRestrictionFeature.Initialize();
             FriendlyFireFeature.Initialize();
             JarSpawnFeature.Initialize();
+            EventSpawnFeature.Initialize();
             BatCostumeFeature.Initialize();
             CollinFeature.Initialize();
             DisconnectDiagnosticsFeature.Initialize();
@@ -54,6 +55,7 @@ namespace SephiriaOne
             BatCostumeFeature.Shutdown();
             CollinFeature.Shutdown();
             ChoiceFeature.Shutdown();
+            EventSpawnFeature.Shutdown();
             JarSpawnFeature.Shutdown();
             FriendlyFireFeature.Shutdown();
             ItemRestrictionFeature.Shutdown();

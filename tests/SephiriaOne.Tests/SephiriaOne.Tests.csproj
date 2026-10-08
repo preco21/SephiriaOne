@@ -37,6 +37,8 @@
     <Compile Include="../../SephiriaOne/Features/Choices/ChoiceTranspilers.cs" Link="Source/Features/Choices/ChoiceTranspilers.cs" />
     <PackageReference Include="Lib.Harmony" Version="2.4.2" />
     <Compile Include="../../SephiriaOne/Features/Combat/FriendlyFireSettings.cs" Link="FriendlyFireSettings.cs" />
+    <Compile Include="../../SephiriaOne/Features/Spawns/EventSpawnSettings.cs" Link="EventSpawnSettings.cs" />
+    <Compile Include="../../SephiriaOne/Features/Spawns/EventSpawnCommand.cs" Link="EventSpawnCommand.cs" />
     <Compile Include="../../SephiriaOne/Features/Spawns/JarSpawnSettings.cs" Link="JarSpawnSettings.cs" />
   </ItemGroup>
 </Project>

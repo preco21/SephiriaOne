@@ -59,6 +59,7 @@ Console.WriteLine($"Passed {StartingResourceTests.Run()} starting resource check
 Console.WriteLine($"Passed {PresetTests.Run()} preset parser/storage checks.");
 Console.WriteLine($"Passed {ItemRestrictionTests.Run()} item restriction checks.");
 Console.WriteLine($"Passed {FriendlyFirePolicyTests.Run()} friendly-fire policy/preset checks.");
+Console.WriteLine($"Passed {EventSpawnPolicyTests.Run()} event spawn policy/preset checks.");
 Console.WriteLine($"Passed {JarSpawnPolicyTests.Run()} Mystic Jar policy/preset checks.");
 Console.WriteLine($"Passed {BatPolicyTests.Run()} Bat policy/preset checks.");
 Console.WriteLine($"Passed {CollinPolicyTests.Run()} Collin policy/preset checks.");

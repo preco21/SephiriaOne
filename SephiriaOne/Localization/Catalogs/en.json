@@ -465,5 +465,21 @@
   "Mole / Farmer Squirrel / Turtle. Applies on the next costume equip or fresh-run restock. Default off.": "Mole / Farmer Squirrel / Turtle. Applies on the next costume equip or fresh-run restock. Default off.",
   "Switch away from these costumes to remove the granted Collin. Independently obtained copies are preserved. Saved runs resume their native inventory; no extra Collin is injected.": "Switch away from these costumes to remove the granted Collin. Independently obtained copies are preserved. Saved runs resume their native inventory; no extra Collin is injected.",
   "Some costume controls are unavailable. See the details on the right and Player.log.": "Some costume controls are unavailable. See the details on the right and Player.log.",
-  "Multiple Collin crests keep the game's shared NPC and leader behavior; a separate companion per player is not guaranteed.": "Multiple Collin crests keep the game's shared NPC and leader behavior; a separate companion per player is not guaranteed."
+  "Multiple Collin crests keep the game's shared NPC and leader behavior; a separate companion per player is not guaranteed.": "Multiple Collin crests keep the game's shared NPC and leader behavior; a separate companion per player is not guaranteed.",
+  "Random events: /one events chance xN; /one events status|reset. N: 0..10000, up to 2 decimals. x1/reset restores native. Affects future chapter generation only; /one save persists settings.": "Random events: /one events chance xN; /one events status|reset. N: 0..10000, up to 2 decimals. x1/reset restores native. Affects future chapter generation only; /one save persists settings.",
+  "Only the host can change random event rates.": "Only the host can change random event rates.",
+  "Random event compatibility checks failed. Reset remains available; see Player.log.": "Random event compatibility checks failed. Reset remains available; see Player.log.",
+  "Random event room chance: native (no override).": "Random event room chance: native (no override).",
+  "Random event room chance: native x{0}; each probability capped at 100%, at most two event rooms.": "Random event room chance: native x{0}; each probability capped at 100%, at most two event rooms.",
+  "Applies when new chapter floor data is generated. Already-generated floors keep their encounters.": "Applies when new chapter floor data is generated. Already-generated floors keep their encounters.",
+  " Random event hooks unavailable; see Player.log.": " Random event hooks unavailable; see Player.log.",
+  " /one events help lists random event options.": " /one events help lists random event options.",
+  "Spawns": "Spawns",
+  "Random event rooms": "Random event rooms",
+  "xN (native chance × N); x1 restores native": "xN (native chance × N); x1 restores native",
+  "New chapters only. Existing floor data is not rerolled. x0 disables optional event rooms; x2 doubles their native probabilities.": "New chapters only. Existing floor data is not rerolled. x0 disables optional event rooms; x2 doubles their native probabilities.",
+  "Optional event rooms include blood donation, obelisks and magic fountains. Native room selection and encounter conditions remain in effect.": "Optional event rooms include blood donation, obelisks and magic fountains. Native room selection and encounter conditions remain in effect.",
+  "Native odds: 4.3% for at least one room, including 0.3% for two rooms. These cumulative probabilities are multiplied, with a two-room maximum.": "Native odds: 4.3% for at least one room, including 0.3% for two rooms. These cumulative probabilities are multiplied, with a two-room maximum.",
+  "Scheduled merchants and travelers (including Collin), hostile merchant options and Mystic Jar chances are separate.": "Scheduled merchants and travelers (including Collin), hostile merchant options and Mystic Jar chances are separate.",
+  "Generated encounters are saved and synchronized by the game. Unmodified guests use the same floor data, including after reconnecting.": "Generated encounters are saved and synchronized by the game. Unmodified guests use the same floor data, including after reconnecting."
 }

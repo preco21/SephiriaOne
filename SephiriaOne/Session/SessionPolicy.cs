@@ -71,6 +71,8 @@ namespace SephiriaOne
         public ResourcePolicy Resources { get; } = new ResourcePolicy();
         public bool ItemUnlock { get; private set; }
         public FriendlyFireSettings FriendlyFire { get; private set; }
+        public EventSpawnSettings EventSpawns { get; private set; }
+        public void RecordEventSpawns(EventSpawnSettings settings) => EventSpawns = settings;
         public JarSpawnSettings JarSpawns { get; private set; }
         public void RecordJarSpawns(JarSpawnSettings settings) => JarSpawns = settings;
         public void Record(FriendlyFireCommand command) => FriendlyFire = FriendlyFire.Apply(command);
@@ -85,7 +87,7 @@ namespace SephiriaOne
         public void RecordBat(bool reduce) => BatHpSteal = reduce;
         public bool CollinStartingArtifact { get; private set; }
         public void RecordCollin(bool grant) => CollinStartingArtifact = grant;
-        public bool HasChanges => fountain.HasValue || choices.Count != 0 || stats.Count != 0 || Resources.HasChanges || RabbitPotions.HasChanges || Merchants.HasChanges || ItemUnlock || FriendlyFire.HasChanges || JarSpawns.HasChanges || BatHpSteal || CollinStartingArtifact;
+        public bool HasChanges => fountain.HasValue || choices.Count != 0 || stats.Count != 0 || Resources.HasChanges || RabbitPotions.HasChanges || Merchants.HasChanges || ItemUnlock || FriendlyFire.HasChanges || JarSpawns.HasChanges || EventSpawns.HasChanges || BatHpSteal || CollinStartingArtifact;
         public bool HasFountainSetting => fountain.HasValue;
         public bool HasFountainMultiplier => fountain.HasValue && fountain.Value.Multiplier;
 
@@ -129,6 +131,7 @@ namespace SephiriaOne
             ItemUnlock = false;
             FriendlyFire = default;
             JarSpawns = default;
+            EventSpawns = default;
             BatHpSteal = false;
             CollinStartingArtifact = false;
             RabbitPotions = default;

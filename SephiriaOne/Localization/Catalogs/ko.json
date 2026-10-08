@@ -465,5 +465,21 @@
   "Mole / Farmer Squirrel / Turtle. Applies on the next costume equip or fresh-run restock. Default off.": "두더지 / 농부 다람쥐 / 거북이. 다음 의상 착용 또는 새 탐험의 시작 아이템 보충 시 적용됩니다. 기본값은 꺼짐입니다.",
   "Switch away from these costumes to remove the granted Collin. Independently obtained copies are preserved. Saved runs resume their native inventory; no extra Collin is injected.": "해당 의상에서 다른 의상으로 바꾸면 지급된 콜린이 제거됩니다. 별도로 획득한 콜린은 유지됩니다. 저장된 탐험을 이어갈 때는 기존 인벤토리를 복원하며 콜린을 추가 지급하지 않습니다.",
   "Some costume controls are unavailable. See the details on the right and Player.log.": "일부 의상 기능을 사용할 수 없습니다. 오른쪽의 상세 설명과 Player.log를 확인하세요.",
-  "Multiple Collin crests keep the game's shared NPC and leader behavior; a separate companion per player is not guaranteed.": "콜린 문장이 여러 개여도 게임의 기존 NPC 공유 및 주인 변경 동작을 따릅니다. 각 플레이어에게 별도의 동료가 생기는 것은 아닙니다."
+  "Multiple Collin crests keep the game's shared NPC and leader behavior; a separate companion per player is not guaranteed.": "콜린 문장이 여러 개여도 게임의 기존 NPC 공유 및 주인 변경 동작을 따릅니다. 각 플레이어에게 별도의 동료가 생기는 것은 아닙니다.",
+  "Random events: /one events chance xN; /one events status|reset. N: 0..10000, up to 2 decimals. x1/reset restores native. Affects future chapter generation only; /one save persists settings.": "무작위 이벤트: /one events chance xN; /one events status|reset. N: 0~10000, 소수점 둘째 자리까지. x1/reset은 원래 확률로 복원합니다. 이후 생성되는 챕터에만 적용되며 /one save로 저장합니다.",
+  "Only the host can change random event rates.": "호스트만 무작위 이벤트 확률을 변경할 수 있습니다.",
+  "Random event compatibility checks failed. Reset remains available; see Player.log.": "무작위 이벤트 호환성 검사 실패. 초기화는 가능합니다. Player.log를 확인하세요.",
+  "Random event room chance: native (no override).": "무작위 이벤트 방 확률: 게임 기본값 (변경 없음).",
+  "Random event room chance: native x{0}; each probability capped at 100%, at most two event rooms.": "무작위 이벤트 방 확률: 기본 확률 x{0}. 각 확률은 최대 100%, 이벤트 방은 최대 2개입니다.",
+  "Applies when new chapter floor data is generated. Already-generated floors keep their encounters.": "새 챕터의 층 데이터 생성 시 적용됩니다. 이미 생성된 층의 이벤트는 유지됩니다.",
+  " Random event hooks unavailable; see Player.log.": " 무작위 이벤트 기능을 사용할 수 없습니다. Player.log를 확인하세요.",
+  " /one events help lists random event options.": " /one events help로 무작위 이벤트 옵션을 확인하세요.",
+  "Spawns": "등장 확률",
+  "Random event rooms": "무작위 이벤트 방",
+  "xN (native chance × N); x1 restores native": "xN (기본 확률 × N); x1은 기본값",
+  "New chapters only. Existing floor data is not rerolled. x0 disables optional event rooms; x2 doubles their native probabilities.": "새 챕터에만 적용됩니다. 기존 층은 다시 추첨하지 않습니다. x0은 추가 이벤트 방을 끄고, x2는 기본 확률을 두 배로 합니다.",
+  "Optional event rooms include blood donation, obelisks and magic fountains. Native room selection and encounter conditions remain in effect.": "추가 이벤트 방에는 헌혈, 오벨리스크, 마법 분수 등이 포함됩니다. 방 선택과 이벤트 조건은 게임의 기존 규칙을 따릅니다.",
+  "Native odds: 4.3% for at least one room, including 0.3% for two rooms. These cumulative probabilities are multiplied, with a two-room maximum.": "기본 확률은 방 1개 이상이 4.3%이며, 그중 방 2개 확률은 0.3%입니다. 이 누적 확률에 배수를 적용하며 방은 최대 2개입니다.",
+  "Scheduled merchants and travelers (including Collin), hostile merchant options and Mystic Jar chances are separate.": "지정된 상인과 여행자(콜린 포함), 적대적 상인 옵션, 신비한 항아리 확률은 별개입니다.",
+  "Generated encounters are saved and synchronized by the game. Unmodified guests use the same floor data, including after reconnecting.": "생성된 이벤트는 게임에서 저장하고 동기화합니다. 모드가 없는 게스트도 재접속 시 같은 층 데이터를 사용합니다."
 }
