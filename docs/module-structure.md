@@ -49,7 +49,7 @@ SephiriaOne/
 | `Features/Names/` | Gradient formatting, native publication controller, and synchronized name state. |
 | `Features/Rabbit/` | Potion option parsing/settings, native drink and earned-level hooks, audited reward catalog, costume starting artifact and host description adapter. |
 | `Features/Resources/` | Starting grants, capacity/budget policy and native resource boundaries. |
-| `Features/Stats/` | Character stat catalog, commands, exact arithmetic, and host batch updates. |
+| `Features/Stats/` | Explicit C-menu stat allowlist and shared display metadata (`StatCatalog.cs`), commands, exact arithmetic, and host batch updates. |
 | `Infrastructure/` | Shared embedded Harmony runtime loading. |
 | `Session/` | Policy, registered inheritance/maintenance rules, scope lifecycle, diagnostics, read-only settings capture/change notifications, and critical native read boundaries. |
 | `Synchronization/Core/` | Unity-independent reconciliation, reference identity, outcome records, and journaled write batches. |

@@ -235,7 +235,7 @@ namespace SephiriaOne
                 {
                     var lines = new List<string>();
                     foreach (StatDefinition definition in StatCatalog.All)
-                        lines.Add(L.F("{0}: {1}..{2} {3}; ", definition.Name, definition.Minimum, definition.Maximum, L.T(definition.Unit)) +
+                        lines.Add(L.F("{0} ({1}): {2}..{3} {4}; ", definition.Name, L.T(definition.Label), definition.Minimum, definition.Maximum, L.T(definition.Unit)) +
                             (definition.Scale == 100 ? L.T("up to 2 decimal places.") : L.T("whole numbers.")));
                     return new SettingsActionResult(true, true, false, lines);
                 }

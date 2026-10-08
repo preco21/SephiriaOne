@@ -8,66 +8,6 @@ namespace SephiriaOne
     internal enum StatParseResult { NotCommand, Help, List, Invalid, Valid }
     internal enum StatOperation { Set, Add, Subtract, Reset, Multiply }
 
-    internal sealed class StatDefinition
-    {
-        public string Name { get; }
-        public string Key { get; }
-        public int Scale { get; }
-        public int Offset { get; }
-        public int Minimum { get; }
-        public int Maximum { get; }
-        public string Unit { get; }
-        public string Marker { get; }
-
-        public StatDefinition(string name, string key, string unit, int scale = 1,
-            int offset = 0, int minimum = 0, int maximum = 10000)
-        {
-            Name = name;
-            Key = key;
-            Marker = "SEPHIRIAONE_STAT_" + key;
-            Unit = unit;
-            Scale = scale;
-            Offset = offset;
-            Minimum = minimum;
-            Maximum = maximum;
-        }
-
-        public decimal Display(int effective) => (decimal)effective / Scale + Offset;
-    }
-
-    internal static class StatCatalog
-    {
-        public static readonly IReadOnlyList<StatDefinition> All = Array.AsReadOnly(new[]
-        {
-            new StatDefinition("luck", "LUCK", "points"),
-            new StatDefinition("defense", "DAMAGEREDUCTION", "defense points"),
-            new StatDefinition("attackspeed", "ATTACKSPEED", "total % (100 = normal)", offset: 100, minimum: 1, maximum: 1000),
-            new StatDefinition("critical", "CRITICAL", "chance %", scale: 100, maximum: 100),
-            new StatDefinition("criticaldamage", "CRITICALDAMAGEBONUS", "bonus % (50 = default)", offset: 50),
-            new StatDefinition("evasion", "EVASION", "rating, not dodge %", scale: 100, maximum: 100),
-            new StatDefinition("cooldown", "COOLDOWNRECOVERYSPEED", "recovery points"),
-            new StatDefinition("mpregen", "MPREGEN", "regeneration points"),
-            new StatDefinition("negotiation", "NEGOTIATION", "points"),
-            new StatDefinition("truedamage", "TRUEDAMAGE", "points")
-        });
-
-        public static StatDefinition? Find(string name)
-        {
-            switch (name.ToLowerInvariant())
-            {
-                case "armor": name = "defense"; break;
-                case "attack-speed": name = "attackspeed"; break;
-                case "crit": case "crit-chance": name = "critical"; break;
-                case "critdamage": case "crit-damage": name = "criticaldamage"; break;
-                case "cooldownrecovery": name = "cooldown"; break;
-                case "mp-regen": name = "mpregen"; break;
-            }
-            foreach (StatDefinition stat in All)
-                if (stat.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) return stat;
-            return null;
-        }
-    }
-
     internal readonly struct StatCommand
     {
         public StatDefinition? Stat { get; }

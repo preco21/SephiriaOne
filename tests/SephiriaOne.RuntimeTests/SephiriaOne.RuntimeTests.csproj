@@ -35,6 +35,7 @@
     <Compile Include="../../SephiriaOne/Features/Fountain/FountainPoints.cs" Link="Source/Features/Fountain/FountainPoints.cs" />
     <Compile Include="../../SephiriaOne/Features/Choices/ChoiceCommand.cs" Link="Source/Features/Choices/ChoiceCommand.cs" />
     <Compile Include="../../SephiriaOne/Features/Choices/ChoicePoints.cs" Link="Source/Features/Choices/ChoicePoints.cs" />
+    <Compile Include="../../SephiriaOne/Features/Stats/StatCatalog.cs" Link="Source/Features/Stats/StatCatalog.cs" />
     <Compile Include="../../SephiriaOne/Features/Stats/StatCommand.cs" Link="Source/Features/Stats/StatCommand.cs" />
     <Compile Include="../../SephiriaOne/Features/Stats/StatPlan.cs" Link="Source/Features/Stats/StatPlan.cs" />
     <Compile Include="../../SephiriaOne/Features/Stats/CharacterStats.cs" Link="Source/Features/Stats/CharacterStats.cs" />

@@ -31,7 +31,10 @@ internal static class LocalizationCatalogTests
             foreach (var entry in korean)
                 Check(!string.IsNullOrWhiteSpace(entry.Value) && L.T(entry.Key) == entry.Value, "Korean entry was rejected or missing: " + entry.Key);
             foreach (var stat in StatCatalog.All)
+            {
                 Check(korean.ContainsKey(stat.Unit), "Missing stat unit translation: " + stat.Unit);
+                Check(korean.ContainsKey(stat.Label), "Missing stat label translation: " + stat.Label);
+            }
             foreach (var resource in ResourceCatalog.All)
                 Check(korean.ContainsKey(resource.Label), "Missing resource label translation: " + resource.Label);
             foreach (var merchant in MerchantCatalog.All)

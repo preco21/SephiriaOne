@@ -20,6 +20,7 @@ namespace SephiriaOne
         private const string RabbitLevelUpPresetHeader = "SephiriaOne preset v10";
         private const string ItemUnlockPresetHeader = "SephiriaOne preset v11";
         private const string CombatPresetHeader = "SephiriaOne preset v12";
+        private const string ExpandedStatsPresetHeader = "SephiriaOne preset v17";
         private const string EventPresetHeader = "SephiriaOne preset v16";
         private const string CollinPresetHeader = "SephiriaOne preset v15";
         private const string BatPresetHeader = "SephiriaOne preset v14";
@@ -92,9 +93,11 @@ namespace SephiriaOne
 
         public string ToPresetText()
         {
+            bool expandedStats = false;
+            foreach (var stat in stats.Keys) expandedStats |= stat.RequiresExpandedPreset;
             bool multiplier = HasFountainMultiplier;
             foreach (Setting setting in stats.Values) multiplier |= setting.Multiplier;
-            return (EventSpawns.HasChanges ? EventPresetHeader : CollinStartingArtifact ? CollinPresetHeader : BatHpSteal ? BatPresetHeader : JarSpawns.HasChanges ? JarPresetHeader : FriendlyFire.HasChanges ? CombatPresetHeader : ItemUnlock ? ItemUnlockPresetHeader : RabbitPotions.LevelUpPotion ? RabbitLevelUpPresetHeader : UsesMerchantGuaranteePreset ? MerchantGuaranteePresetHeader : UsesMerchantTypesPreset ? MerchantTypesPresetHeader : Merchants.HasChanges ? MerchantPresetHeader : RabbitPotions.MpCostPerDrink != RabbitPotionSettings.DefaultMpCostPerDrink ? RabbitCostPresetHeader :
+            return (expandedStats ? ExpandedStatsPresetHeader : EventSpawns.HasChanges ? EventPresetHeader : CollinStartingArtifact ? CollinPresetHeader : BatHpSteal ? BatPresetHeader : JarSpawns.HasChanges ? JarPresetHeader : FriendlyFire.HasChanges ? CombatPresetHeader : ItemUnlock ? ItemUnlockPresetHeader : RabbitPotions.LevelUpPotion ? RabbitLevelUpPresetHeader : UsesMerchantGuaranteePreset ? MerchantGuaranteePresetHeader : UsesMerchantTypesPreset ? MerchantTypesPresetHeader : Merchants.HasChanges ? MerchantPresetHeader : RabbitPotions.MpCostPerDrink != RabbitPotionSettings.DefaultMpCostPerDrink ? RabbitCostPresetHeader :
                 RabbitPotions.ConsumeMp || RabbitPotions.SuppressSurvival ? RabbitBalancePresetHeader :
                 RabbitPotions.HasChanges ? RabbitPresetHeader : Resources.HasChanges ? ResourcePresetHeader : multiplier ? MultiplierPresetHeader : PresetHeader) + "\n" +
                 (HasChanges ? string.Join("\n", DescribeSettings()) + "\n" : "");
@@ -106,8 +109,9 @@ namespace SephiriaOne
             error = L.T("Invalid saved preset; no saved settings were applied.");
             if (text == null || text.Length > MaximumPresetLength) return false;
             string[] lines = text.Replace("\r\n", "\n").Split('\n');
-            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader && lines[0] != RabbitBalancePresetHeader && lines[0] != RabbitCostPresetHeader && lines[0] != MerchantPresetHeader && lines[0] != MerchantTypesPresetHeader && lines[0] != MerchantGuaranteePresetHeader && lines[0] != RabbitLevelUpPresetHeader && lines[0] != ItemUnlockPresetHeader && lines[0] != CombatPresetHeader && lines[0] != JarPresetHeader && lines[0] != BatPresetHeader && lines[0] != CollinPresetHeader && lines[0] != EventPresetHeader)) return false;
-            bool allowEvents = lines[0] == EventPresetHeader;
+            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader && lines[0] != RabbitBalancePresetHeader && lines[0] != RabbitCostPresetHeader && lines[0] != MerchantPresetHeader && lines[0] != MerchantTypesPresetHeader && lines[0] != MerchantGuaranteePresetHeader && lines[0] != RabbitLevelUpPresetHeader && lines[0] != ItemUnlockPresetHeader && lines[0] != CombatPresetHeader && lines[0] != JarPresetHeader && lines[0] != BatPresetHeader && lines[0] != CollinPresetHeader && lines[0] != EventPresetHeader && lines[0] != ExpandedStatsPresetHeader)) return false;
+            bool allowExpandedStats = lines[0] == ExpandedStatsPresetHeader;
+            bool allowEvents = lines[0] == EventPresetHeader || allowExpandedStats;
             bool allowCollin = lines[0] == CollinPresetHeader || allowEvents;
             bool allowBat = lines[0] == BatPresetHeader || allowCollin;
             bool allowJars = lines[0] == JarPresetHeader || allowBat;
@@ -264,7 +268,7 @@ namespace SephiriaOne
                 else
                 {
                     StatDefinition? stat = StatCatalog.Find(parts[1]);
-                    if (stat == null || stat.Name != parts[1] || !seen.Add("stats " + stat.Name) ||
+                    if (stat == null || (stat.RequiresExpandedPreset && !allowExpandedStats) || stat.Name != parts[1] || !seen.Add("stats " + stat.Name) ||
                         (!multiplier && value * stat.Scale != decimal.Truncate(value * stat.Scale)) ||
                         (setting.Absolute && (value < stat.Minimum || value > stat.Maximum))) return false;
                     if (!setting.Empty) pending.stats.Add(stat, setting);

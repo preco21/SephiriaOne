@@ -26,6 +26,7 @@
     <Compile Include="../../SephiriaOne/Features/Names/NameGradient.cs" Link="Source/Features/Names/NameGradient.cs" />
     <Compile Include="../../SephiriaOne/Features/Fountain/FountainCommand.cs" Link="Source/Features/Fountain/FountainCommand.cs" />
     <Compile Include="../../SephiriaOne/Features/Choices/ChoiceCommand.cs" Link="Source/Features/Choices/ChoiceCommand.cs" />
+    <Compile Include="../../SephiriaOne/Features/Stats/StatCatalog.cs" Link="Source/Features/Stats/StatCatalog.cs" />
     <Compile Include="../../SephiriaOne/Features/Stats/StatCommand.cs" Link="Source/Features/Stats/StatCommand.cs" />
     <Compile Include="../../SephiriaOne/Features/Stats/StatPlan.cs" Link="Source/Features/Stats/StatPlan.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionPolicy.cs" Link="Source/Session/SessionPolicy.cs" />

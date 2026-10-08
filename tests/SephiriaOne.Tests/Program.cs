@@ -47,6 +47,7 @@ Console.WriteLine($"Passed {NetworkNameRetryTests.Run()} name retry checks.");
 Console.WriteLine($"Passed {NameGradientTests.Run()} name gradient checks.");
 Console.WriteLine($"Passed {FountainCommandTests.Run()} Fountain command checks.");
 Console.WriteLine($"Passed {FountainResetTests.Run()} Fountain reset checks.");
+Console.WriteLine($"Passed {VisibleStatTests.Run()} expanded visible stat checks.");
 Console.WriteLine($"Passed {StatCommandTests.Run()} character stat command checks.");
 Console.WriteLine($"Passed {SessionPolicyTests.Run()} session inheritance checks.");
 Console.WriteLine($"Passed {RelativeStatPolicyTests.Run()} relative stat consistency checks.");

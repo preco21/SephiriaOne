@@ -22,13 +22,6 @@ namespace SephiriaOne
         private int languageRevision;
         private PanelControlLifetime<UIBase> lifetime;
         private static readonly string[] Choices = { "all", "item", "weapon", "miracle" };
-        private static readonly IReadOnlyDictionary<string, string> StatNames = new Dictionary<string, string>
-        {
-            ["luck"] = "Luck", ["defense"] = "Defense", ["attackspeed"] = "Attack speed",
-            ["critical"] = "Critical chance", ["criticaldamage"] = "Critical damage",
-            ["evasion"] = "Evasion rating", ["cooldown"] = "Cooldown recovery",
-            ["mpregen"] = "MP regeneration", ["negotiation"] = "Negotiation", ["truedamage"] = "True damage"
-        };
         public override bool CanBeSearchedByTypeHash => false;
 
         internal void Initialize(UIManager owner, UIRoot root, TMP_FontAsset font)
@@ -256,7 +249,7 @@ namespace SephiriaOne
             if (page == 0)
             {
                 var stat = StatCatalog.All[statIndex];
-                selection.text = StatNames.TryGetValue(stat.Name, out string label) ? L.T(label) : stat.Name;
+                selection.text = L.T(stat.Label);
                 units.text = L.F("{0}  |  {1}..{2}  |  {3}", L.T(stat.Unit), stat.Minimum, stat.Maximum,
                     L.T(stat.Scale == 100 ? "2 decimal places" : "whole numbers"));
             }

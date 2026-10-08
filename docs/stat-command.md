@@ -1,5 +1,10 @@
 # Character stat commands
 
+Version `0.36.0` adds 17 verified C-menu modifiers. See the
+[expanded stat list and native visibility audit](visible-stat-modifiers.md) for
+commands, units, synchronization behavior and exclusions. The original ten
+modifiers below retain their existing behavior.
+
 ## Design
 
 Add `/stats` to the existing local chat interceptor. Match Fountain's authority:

@@ -104,8 +104,8 @@ namespace SephiriaOne
                 string label = includeDiagnostics ? L.T("Player #") + player.netId + ": " : "";
                 player.customStats.TryGetValue(FountainPoints.ContributionKey, out int fountainOffset);
                 if (includeDiagnostics) lines.Add(label + L.F("Fountain={0} (addon {1}).", player.Inventory.dimensionPocket, Signed(fountainOffset)));
-                var stats = new Dictionary<string, decimal>();
-                var statDescriptions = includeDiagnostics ? new List<string>() : null;
+                var stats = new Dictionary<string, decimal>(StatCatalog.All.Count);
+                var statDescriptions = includeDiagnostics ? new List<string>(StatCatalog.All.Count) : null;
                 foreach (StatDefinition stat in StatCatalog.All)
                 {
                     decimal value = stat.Display(player.GetCustomStatUnsafe(stat.Key));
@@ -135,7 +135,7 @@ namespace SephiriaOne
                     }
                 }
                 if (includeDiagnostics) lines.Add(label + L.T("extra choices: ") + string.Join(", ", choiceDescriptions));
-                var resources = new Dictionary<string, string>();
+                var resources = new Dictionary<string, string>(ResourceCatalog.All.Count);
                 foreach (var definition in ResourceCatalog.All)
                 {
                     string description;
