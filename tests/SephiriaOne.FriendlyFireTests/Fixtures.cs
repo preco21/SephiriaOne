@@ -17,23 +17,26 @@ namespace SephiriaOne
 {
     internal static class SessionSettings { internal static FriendlyFireSettings FriendlyFireForHit; }
 }
-public enum EApplyDamageResult { Success, Fail_Absolute }
+public enum EApplyDamageResult { Success, Fail_Absolute, Fail_Block }
+public enum EDamageFailType { None, Deny, Block }
 public enum EMonsterType { Normal, Dummy }
 public enum EPersonality { Aggressive }
-public enum ERelationBehaviour { Friendly, Hostile }
+public enum ERelationBehaviour { Neutral, Friendly, Hostile }
 public class CombatBehaviour : UnityEngine.Object { }
 public class DamageInstance
 {
     public CombatBehaviour origin;
     public long targetFactionLayers;
     public bool isSystemDamage;
+    public EDamageFailType failed;
     public float damage = 10;
 }
 public class RuntimeFactionManager : UnityEngine.Object
 {
-    public static RuntimeFactionManager Instance = new();
+    public static RuntimeFactionManager Instance { get; } = new();
     public ERelationBehaviour GetRelationBehaviour(string a, string b, EPersonality personality) =>
         a == b || a == "friends" || b == "friends" ? ERelationBehaviour.Friendly : ERelationBehaviour.Hostile;
+    public int GetRelationValue(string a, string b) => a == b ? 100 : 50;
 }
 public static class CombatManager
 {
@@ -44,6 +47,8 @@ public class UnitAvatar : CombatBehaviour
     public string faction = "players";
     public string Name { get; set; } = "Unit";
     public bool IsDead, IsInvulnerable, isForcedChaosDamage;
+    public bool IsGuarding;
+    public int GuardHits;
     public EMonsterType monsterType;
     public EPersonality attackableTargetSelector;
     public UnitAvatar NetworkLeader { [MethodImpl(MethodImplOptions.NoInlining)] get; set; }
@@ -54,6 +59,7 @@ public class UnitAvatar : CombatBehaviour
     public int Mp = 100;
     public bool IsMpShield;
     public Action<DamageInstance> OnCalculateDamage;
+    public Action<UnitAvatar, DamageInstance> OnAttackUnitBeforeOperation;
     public Action<DamageInstance> OnDeath;
     public bool Revive;
     public int Hits;
@@ -73,7 +79,12 @@ public class UnitAvatar : CombatBehaviour
         }
         if (result == EApplyDamageResult.Success)
         {
+            attacker?.OnAttackUnitBeforeOperation?.Invoke(this, damage);
+            // Native guard feedback precedes the check of the attacker's veto.
+            if (IsGuarding) { GuardHits++; Mp -= 10; damage.failed = EDamageFailType.Block; return EApplyDamageResult.Fail_Block; }
             OnCalculateDamage?.Invoke(damage);
+            if (damage.failed != EDamageFailType.None)
+                return damage.failed == EDamageFailType.Deny ? EApplyDamageResult.Fail_Absolute : EApplyDamageResult.Fail_Block;
             float resolved = damage.damage - Defense + TrueDamage;
             if (resolved > 0)
             {
@@ -98,11 +109,84 @@ public class UnitAvatar : CombatBehaviour
         IsDead = true; NetworkLeader = null; OnDeath?.Invoke(diedFrom);
     }
 }
-public class PlayerAvatar : UnitAvatar { }
+public class PlayerAvatar : UnitAvatar
+{
+    public bool safeMode;
+    public PlayerAvatar() { OnAttackUnitBeforeOperation += HandleBeforeAttack; }
+    [MethodImpl(MethodImplOptions.NoInlining)] private void HandleBeforeAttack(UnitAvatar target, DamageInstance damage)
+    {
+        if (RuntimeFactionManager.Instance.GetRelationBehaviour(target.faction, faction, target.attackableTargetSelector) == ERelationBehaviour.Hostile) return;
+        if (RuntimeFactionManager.Instance.GetRelationValue(target.faction, faction) >= 80) damage.failed = EDamageFailType.Deny;
+        else if (target.monsterType != EMonsterType.Dummy)
+        {
+            if (safeMode) damage.failed = EDamageFailType.Deny;
+            else if (!DungeonManager.Instance.BreakShieldOfReason(target)) damage.failed = EDamageFailType.Block;
+        }
+    }
+    public void InvokeBeforeAttack(UnitAvatar target, DamageInstance damage) => HandleBeforeAttack(target, damage);
+}
 public class DungeonManager : UnityEngine.Object
 {
-    public static DungeonManager Instance = new();
+    public static DungeonManager Instance { get; } = new();
     public bool isServer = true;
     public List<string> Messages = new();
+    public int ReasonChecks;
+    public bool ReasonShieldAllows = true;
+    public bool BreakShieldOfReason(UnitAvatar target) { ReasonChecks++; return ReasonShieldAllows; }
     public void Chat(PlayerAvatar avatar, string name, string message) => Messages.Add(message);
+}
+
+// Compact native relation and decision fixture; native IL checks verify the
+// installed game's search/update consumers and guard placement separately.
+public class UnitAI_NewBasic
+{
+    public UnitAvatar Avatar { get; set; }
+    public UnitAvatar CurrentTarget { get; set; }
+    private ERelationBehaviour behaviourInPrevFrame;
+    private bool targetFound;
+    private bool targetSearched;
+    private bool isInBattleActiveByAI;
+    public int LostTargets;
+    [MethodImpl(MethodImplOptions.NoInlining)] public ERelationBehaviour GetRelation(UnitAvatar target)
+    {
+        if (!target) return ERelationBehaviour.Neutral;
+        if (Avatar.NetworkLeader)
+            return RuntimeFactionManager.Instance.GetRelationBehaviour(target.faction, Avatar.NetworkLeader.faction, target.attackableTargetSelector);
+        return RuntimeFactionManager.Instance.GetRelationBehaviour(Avatar.faction, target.faction, Avatar.attackableTargetSelector);
+    }
+    public bool ShouldAttack => CurrentTarget && !CurrentTarget.IsDead && !CurrentTarget.IsInvulnerable && GetRelation(CurrentTarget) == ERelationBehaviour.Hostile;
+    public void SetTarget(UnitAvatar target)
+    {
+        if (targetFound) { OnLostTarget(); targetFound = false; }
+        CurrentTarget = target;
+        if (CurrentTarget) targetFound = true;
+    }
+    protected virtual void OnLostTarget() { LostTargets++; }
+    protected virtual void OnAIUpdate_FoundEnemy() { }
+    protected virtual void OnAIUpdate_FollowLeader(UnitAvatar leader) { }
+    public void SearchForFixture(UnitAvatar target) { targetSearched = true; SetTarget(target); }
+    [MethodImpl(MethodImplOptions.NoInlining)] protected virtual void OnAIUpdate()
+    {
+        var relation = CurrentTarget ? GetRelation(CurrentTarget) : ERelationBehaviour.Friendly;
+        if (targetSearched) behaviourInPrevFrame = relation;
+        if (relation == ERelationBehaviour.Hostile)
+        {
+            if (!isInBattleActiveByAI) isInBattleActiveByAI = true;
+            OnAIUpdate_FoundEnemy();
+        }
+        else
+        {
+            if (isInBattleActiveByAI) isInBattleActiveByAI = false;
+            if (Avatar.NetworkLeader) OnAIUpdate_FollowLeader(Avatar.NetworkLeader);
+        }
+    }
+    public void Tick() => OnAIUpdate();
+}
+
+// Native archers release held weapon input on target loss, not on following.
+public sealed class ArcherFixture : UnitAI_NewBasic
+{
+    public bool TriggerHeld;
+    protected override void OnAIUpdate_FoundEnemy() { TriggerHeld = true; }
+    protected override void OnLostTarget() { base.OnLostTarget(); TriggerHeld = false; }
 }

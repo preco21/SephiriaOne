@@ -418,6 +418,7 @@
   " /one friendlyfire help lists allied-damage options.": " /one friendlyfire help로 아군 피해 옵션을 확인하세요.",
   "Friendly fire: {0} killed {1}.": "아군 피해: {0}님이 {1}님을 처치했습니다.",
   "Friendly fire": "아군 피해",
+  "Companions attack other players, never their owner. Off or 0% stops this targeting and blocks their hits on players immediately.": "동료는 주인을 제외한 다른 플레이어를 공격합니다. 끄거나 피해를 0%로 설정하면 플레이어를 공격 대상으로 삼지 않으며, 이미 발사한 공격도 플레이어에게 즉시 피해를 주지 않게 됩니다.",
   "Combat": "전투",
   "Apply damage": "피해 배율 적용",
   "0–300% (100% = normal)": "0–300% (기본 100%)",

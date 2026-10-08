@@ -418,6 +418,7 @@
   " /one friendlyfire help lists allied-damage options.": " /one friendlyfire help lists allied-damage options.",
   "Friendly fire: {0} killed {1}.": "Friendly fire: {0} killed {1}.",
   "Friendly fire": "Friendly fire",
+  "Companions attack other players, never their owner. Off or 0% stops this targeting and blocks their hits on players immediately.": "Companions attack other players, never their owner. Off or 0% stops this targeting and blocks their hits on players immediately.",
   "Combat": "Combat",
   "Apply damage": "Apply damage",
   "0–300% (100% = normal)": "0–300% (100% = normal)",

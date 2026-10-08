@@ -28,6 +28,9 @@ See [Mystic Jar scope and verification](mystic-jar.md).
 Version `0.31.0` adds **Combat**: friendly fire On/Off, a 0–300% allied-damage
 slider with **Apply damage**, and Reset (off/100%). Dragging is a local draft;
 the Apply button uses the same `/one friendlyfire damage` service as chat.
+Since `0.37.0`, enabling this also makes companions target other players while
+protecting their owner. Off/reset or 0% stops player targeting and immediately
+blocks companion hits against players, including attacks already in flight.
 See [friendly-fire scope and verification](friendly-fire.md).
 
 Since `0.21.0`, `/one language en` or `/one language ko` selects the panel and

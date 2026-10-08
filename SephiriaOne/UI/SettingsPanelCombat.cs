@@ -49,6 +49,7 @@ namespace SephiriaOne
         private static string CombatValues(SettingsSnapshot snapshot) => SessionSettings.DescribeFriendlyFire(snapshot.FriendlyFire) +
             "\n\n" + L.T("Default off. Host settings apply to all players, including unmodified guests.") +
             "\n\n" + L.T("Melee/projectile hits can hurt other players and allies. Enemy-seeking skills keep their normal targets; self and enemy damage are unchanged.") +
+            "\n\n" + L.T("Companions attack other players, never their owner. Off or 0% stops this targeting and blocks their hits on players immediately.") +
             "\n\n" + L.T("Damage scales after defenses, before shields. Zero blocks allied hits. Nested friendly retaliation is blocked to prevent loops.") +
             "\n\n" + L.T("Confirmed friendly-fire kills are announced in chat. Safe areas and invulnerability retain native protection.") +
             "\n\n" + L.T("Save these options from Presets for future sessions.");

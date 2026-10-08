@@ -11,6 +11,7 @@ namespace SephiriaOne
         {
             internal UnitAvatar Victim;
             internal PlayerAvatar Attacker;
+            internal UnitAvatar Source;
             internal DamageInstance Damage;
             internal bool Friendly, InFriendlyChain;
             internal int Percent;
@@ -24,17 +25,31 @@ namespace SephiriaOne
             __state = current;
             current = new HitContext { InFriendlyChain = __state.InFriendlyChain };
             if (!NetworkServer.active || damage == null || damage.isSystemDamage ||
-                !(damage.origin is PlayerAvatar attacker) || !attacker || !__instance || attacker == __instance) return true;
+                !(damage.origin is UnitAvatar source) || !source || !__instance || source == __instance) return true;
+            var attacker = source as PlayerAvatar;
+            bool companion = !attacker;
+            if (companion)
+            {
+                attacker = source.NetworkLeader as PlayerAvatar;
+                // Companion hostility is restricted to other players. Native
+                // monster/NPC damage and target selection remain unchanged.
+                if (!attacker || !(__instance is PlayerAvatar)) return true;
+            }
             try
             {
                 var settings = SessionSettings.FriendlyFireForHit;
+                // Recheck at impact: even a projectile fired while enabled (or
+                // with a broad native mask) cannot hurt the owner or hit players
+                // after off/reset. Reject before guard costs and attack procs.
+                if (companion && (attacker == __instance || !settings.Enabled))
+                { __result = EApplyDamageResult.Fail_Absolute; return false; }
                 if (!settings.Enabled || !Allied(attacker, __instance)) return true;
                 // Native thorns can fire before hit invulnerability is established.
                 // Block nested ally hits, including those reached via an enemy proc.
                 if (__state.InFriendlyChain || settings.DamagePercent == 0 || damage.damage < 0 ||
                     float.IsNaN(damage.damage) || float.IsInfinity(damage.damage))
                 { __result = EApplyDamageResult.Fail_Absolute; return false; }
-                current = new HitContext { Victim = __instance, Attacker = attacker, Damage = damage, Friendly = true,
+                current = new HitContext { Victim = __instance, Attacker = attacker, Source = source, Damage = damage, Friendly = true,
                     InFriendlyChain = true, Percent = settings.DamagePercent };
             }
             catch (Exception error) { Warn(error); }
@@ -52,6 +67,51 @@ namespace SephiriaOne
 
         internal static Exception AfterHit(Exception __exception, HitContext __state)
         { current = __state; return __exception; }
+
+        internal static void AfterCompanionRelation(UnitAI_NewBasic __instance, UnitAvatar target, ref ERelationBehaviour __result)
+        {
+            if (!NetworkServer.active || !(target is PlayerAvatar) || !target) return;
+            var avatar = __instance.Avatar;
+            if (!avatar || avatar is PlayerAvatar || !(avatar.NetworkLeader is PlayerAvatar owner) || !owner) return;
+            try
+            {
+                var settings = SessionSettings.FriendlyFireForHit;
+                // SearchTarget and OnAIUpdate both use this query. No retained
+                // target hostility survives off/reset or a change of owner.
+                __result = target != owner && settings.Enabled && settings.DamagePercent > 0
+                    ? ERelationBehaviour.Hostile : ERelationBehaviour.Friendly;
+            }
+            catch (Exception error) { Warn(error); }
+        }
+
+        internal static void BeforeCompanionUpdate(UnitAI_NewBasic __instance, bool ___isInBattleActiveByAI)
+        {
+            if (!NetworkServer.active || !___isInBattleActiveByAI || !(__instance.CurrentTarget is PlayerAvatar target)) return;
+            var avatar = __instance.Avatar;
+            if (!avatar || avatar is PlayerAvatar || !(avatar.NetworkLeader is PlayerAvatar owner) || !owner) return;
+            try
+            {
+                var settings = SessionSettings.FriendlyFireForHit;
+                if (target == owner || !settings.Enabled || settings.DamagePercent == 0)
+                    // Native target loss releases held attacks (including archers
+                    // whose follow handler alone would leave the trigger held).
+                    // Use native battle state: prior relation isn't populated
+                    // until the first search, but retaliation can attack sooner.
+                    __instance.SetTarget(null);
+            }
+            catch (Exception error) { Warn(error); }
+        }
+
+        // PlayerAvatar has a second team-protection callback after the faction
+        // admission check. Skip only that callback for the exact active team hit;
+        // other subscribers may still block it. Ordinary NPC safe-mode/crime
+        // handling must keep running, even when the initial faction gate passed.
+        internal static bool BeforePlayerAttack(PlayerAvatar __instance, UnitAvatar target, DamageInstance damage) =>
+            !NetworkServer.active || !current.Friendly ||
+            !ReferenceEquals(current.Source, __instance) || !ReferenceEquals(current.Victim, target) ||
+            !ReferenceEquals(current.Damage, damage) ||
+            !(target is PlayerAvatar || target.NetworkLeader is PlayerAvatar);
+
         internal static bool ProtectLeader(bool native) => native && !current.Friendly;
         internal static bool AllowFaction(bool native) => native || current.Friendly;
         internal static float Scale(float resolved)

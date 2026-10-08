@@ -9,6 +9,16 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.37.0` fixes friendly-fire HP damage by bypassing the native player's
+team-protection callback only for the exact admitted player/team hit. Native
+guard MP, other callbacks and NPC safe-mode/crime checks remain intact. Player-led
+companions such as Collin now target other players under the same option and
+damage scale, while protecting their owner. Off/reset or 0% blocks their hits
+immediately and restores peaceful targeting on the next AI update. Ownership and
+policy are read live; no faction mutation, custom guest state or new polling.
+See [friendly-fire scope and verification](friendly-fire.md). Not deployed or
+tested in live multiplayer.
+
 Version `0.34.0` adds default-off [costume-bound Collin](collin-starting-artifact.md)
 for Mole, Farmer Squirrel and Turtle, `/one collin`, shared Costumes controls and
 v15 presets. Native starting-item registration/removal supports stock guests.
