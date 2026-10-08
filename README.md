@@ -1,0 +1,38 @@
+# SephiriaOne
+
+> 개인적으로 놀려고 만든 잡탕 모드 (aka. 금수저런)
+
+UI/명령어를 지원하긴 하지만 아직 부실한 점 양해 바랍니다.
+
+## 설치 방법
+
+- 릴리즈에서 받은 ZIP 파일내 SephiriaOne 폴더를 압축 해제합니다.
+- 게임 설치 경로(Steam > `Sephiria` 우클릭 > 관리 > 로컬 파일 탐색)에서 `Sephiria/AddOns` 폴더를 찾아 위 내용물을 폴더째로 넣습니다. 만약 `AddOns` 폴더가 없다면 직접 생성합니다.
+
+## 모드 기능
+
+- 기본 스텟 배수 변경: 예를 들어 행운 스탯을 캐릭터의 3배로 설정하거나 마법서가속을 3배 더 빠르게 설정할 수 있습니다.
+- 보상 선택지 배수 변경
+- 주사위 배수 변경
+- 잎 배수 변경
+- 닉네임 색상 변경
+- 황금고블린 스폰 기능
+- 힐러 포지션 추가
+- 힐러 포지션 밀어주기용 박쥐 너프
+- 항아리 스폰 확률 변경
+- 팀킬 기능
+- 초반에 얻은 아이템 판매 (코스튬/분수 포함) 허용
+- 등등..
+
+## 개발 관련
+
+- OpenAI Codex `xhigh` effort + [superpowers](https://github.com/obra/superpowers)로 작업했습니다.
+- [Visual Studio 2026](https://visualstudio.microsoft.com/downloads/)에서 작업했습니다. 설치시 인스톨러에서 `.Net desktop development` 개발 도구를 함께 설치해야 빌드가 가능합니다.
+
+## 라이센스
+
+GNU Affero General Public License (AGPL)
+
+본 모드 수정시 더 많은 분들이 혜택을 누릴 수 있도록 소스코드 공개를 해주시면 감사하겠습니다.
+
+그외 누구나 본 코드와 산출물의 판매/배포/공유/변경를 자유롭게 할 수 있습니다.
