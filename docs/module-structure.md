@@ -15,6 +15,7 @@ SephiriaOne/
   Chat/
   Controls/
   Features/
+    Collin/
     Choices/
     Fountain/
     Merchants/
@@ -42,6 +43,7 @@ SephiriaOne/
 | `Localization/` | Cached English/Korean JSON catalogs, validated formatting, local config, atomic reload and presentation revision notifications. |
 | `UI/` | Addon-owned host panel, pause-menu binding, native control-stack lifetime, widgets and session-bound drafts. |
 | `Features/Choices/` | Candidate command parsing/planning, host writes, and Harmony generation guards. |
+| `Features/Collin/` | Costume-bound native Collin starting grants, exact ownership, restart provenance and boundary hooks. |
 | `Features/Fountain/` | Fountain command parsing/planning, point writes, and carryover-cap operations. |
 | `Features/Merchants/` | Host encounter toggle/chance parsing, native room placement, run-scoped spawn bookkeeping and actor-specific crime/retaliation guards. |
 | `Features/Names/` | Gradient formatting, native publication controller, and synchronized name state. |

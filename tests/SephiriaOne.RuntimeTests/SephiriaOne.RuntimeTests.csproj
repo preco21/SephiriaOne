@@ -6,6 +6,8 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../SephiriaOne/Features/Collin/CollinCommand.cs" Link="CollinCommand.cs" />
+    <Compile Include="../../SephiriaOne/Session/SessionCollin.cs" Link="SessionCollin.cs" />
     <Compile Include="../../SephiriaOne/Features/Bat/*.cs" Exclude="../../SephiriaOne/Features/Bat/BatCostumeFeature.cs" Link="Source/Features/Bat/%(Filename)%(Extension)" />
     <Compile Include="../../SephiriaOne/Session/SessionBat.cs" Link="Source/Session/SessionBat.cs" />
     <Compile Include="../../SephiriaOne/Features/Items/ItemRestrictionCommand.cs" Link="Source/Features/Items/ItemRestrictionCommand.cs" />

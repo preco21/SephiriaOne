@@ -9,6 +9,15 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.34.0` adds default-off [costume-bound Collin](collin-starting-artifact.md)
+for Mole, Farmer Squirrel and Turtle, `/one collin`, shared Costumes controls and
+v15 presets. Native starting-item registration/removal supports stock guests.
+Settings apply at the next costume equip or fresh-run restock; saved inventory
+resumes unchanged. Weak avatar/dungeon receipts preserve exact grant provenance
+through native restart metadata clearing, including off/reset and transferred
+grant cleanup. Native Collin retains its shared-NPC leader behavior. No frame
+loop, custom follower assets, deployment or live multiplayer test was added.
+
 Version `0.33.0` adds a default-off [Wingless Bat HP-steal reduction](wingless-bat.md).
 `/one bat hp-steal on|off`, reset/status, a Bat panel and v14 presets reduce only
 the costume's own bonus from 5 to 1. Native owned-status lifetime and synchronized

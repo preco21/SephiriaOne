@@ -453,5 +453,17 @@
   "On reduces the costume's HP steal from 5 to 1. Default off; other HP-steal sources are unchanged.": "켜면 의상의 체력 흡혈이 5에서 1로 줄어듭니다. 기본값은 끄기이며, 다른 효과로 얻는 체력 흡혈은 유지됩니다.",
   "Applies only while Wingless Bat is equipped, including unmodified guests. Off/reset restores the native costume bonus. Equipment, buffs and stat multipliers keep their normal behavior.": "날개 잃은 박쥐를 착용 중일 때만 적용되며, 모드가 없는 게스트에게도 적용됩니다. 끄기/초기화는 원래 의상 보너스를 복원합니다. 장비, 버프, 능력치 배율은 원래대로 작동합니다.",
   "The native costume selection preview still shows 5. The character's effective HP steal and healing use the host's setting.": "기본 의상 선택 미리보기에는 여전히 5가 표시됩니다. 캐릭터의 실제 체력 흡혈과 회복에는 호스트 설정이 적용됩니다.",
-  "Resolve the faulted {0} write before unloading the addon. Inspect /one status.": "모드를 해제하기 전에 {0} 쓰기 오류를 복구하세요. /one status를 확인하세요."
+  "Resolve the faulted {0} write before unloading the addon. Inspect /one status.": "모드를 해제하기 전에 {0} 쓰기 오류를 복구하세요. /one status를 확인하세요.",
+  "Host only: /one collin on|off|status|reset. Grants Hiring Crest Collin to Mole, Farmer Squirrel and Turtle at the next costume equip or fresh-run restock. Default off. /one save persists settings.": "호스트 전용: /one collin on|off|status|reset. 다음 의상 착용 또는 새 탐험의 시작 아이템 보충 시 두더지, 농부 다람쥐, 거북이에게 고용의 문장 콜린을 지급합니다. 기본값은 꺼짐입니다. /one save로 설정을 저장합니다.",
+  "Only the host can change Collin starting-artifact settings.": "콜린 시작 유물 설정은 호스트만 변경할 수 있습니다.",
+  "Collin compatibility checks failed. Off/reset remain available; see Player.log.": "콜린 호환성 검사에 실패했습니다. 끄기/초기화는 사용할 수 있습니다. Player.log를 확인하세요.",
+  "Collin starting artifact for Mole, Farmer Squirrel and Turtle: {0}. Applies at the next costume equip or fresh-run restock; current run inventory stays unchanged.": "두더지, 농부 다람쥐, 거북이의 콜린 시작 유물: {0}. 다음 의상 착용 또는 새 탐험의 시작 아이템 보충 시 적용되며, 현재 탐험의 인벤토리는 그대로 유지됩니다.",
+  " Collin starting-artifact hooks unavailable; see Player.log.": " 콜린 시작 유물 기능을 사용할 수 없습니다. Player.log를 확인하세요.",
+  " /one collin help lists costume starting-artifact options.": " /one collin help로 의상 시작 유물 옵션을 확인할 수 있습니다.",
+  "Costumes": "의상",
+  "Collin starting artifact": "콜린 시작 유물",
+  "Mole / Farmer Squirrel / Turtle. Applies on the next costume equip or fresh-run restock. Default off.": "두더지 / 농부 다람쥐 / 거북이. 다음 의상 착용 또는 새 탐험의 시작 아이템 보충 시 적용됩니다. 기본값은 꺼짐입니다.",
+  "Switch away from these costumes to remove the granted Collin. Independently obtained copies are preserved. Saved runs resume their native inventory; no extra Collin is injected.": "해당 의상에서 다른 의상으로 바꾸면 지급된 콜린이 제거됩니다. 별도로 획득한 콜린은 유지됩니다. 저장된 탐험을 이어갈 때는 기존 인벤토리를 복원하며 콜린을 추가 지급하지 않습니다.",
+  "Some costume controls are unavailable. See the details on the right and Player.log.": "일부 의상 기능을 사용할 수 없습니다. 오른쪽의 상세 설명과 Player.log를 확인하세요.",
+  "Multiple Collin crests keep the game's shared NPC and leader behavior; a separate companion per player is not guaranteed.": "콜린 문장이 여러 개여도 게임의 기존 NPC 공유 및 주인 변경 동작을 따릅니다. 각 플레이어에게 별도의 동료가 생기는 것은 아닙니다."
 }

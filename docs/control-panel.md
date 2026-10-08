@@ -10,7 +10,13 @@ The host uses this panel to change settings for **all current and joining
 players**. Guests can use the unmodified game. The panel itself is host-local;
 effects use the same native synchronization as the existing commands.
 
-Version `0.33.0` adds **Bat**: On changes Wingless Bat's costume HP-steal bonus
+Version `0.34.0` groups Bat and default-off [Collin](collin-starting-artifact.md)
+controls under **Costumes** (의상). Collin On/Off/Reset takes effect at the next
+costume equip or fresh-run restock for Mole, Farmer Squirrel and Turtle. Each
+control has its own compatibility gate, so an unavailable Collin hook does not
+disable working Bat controls. EN/KO details explain current intent and timing.
+
+Version `0.33.0` added **Bat**: On changes Wingless Bat's costume HP-steal bonus
 from 5 to 1; Off/Reset restores native 5. Other HP-steal sources remain independent.
 See [scope, preview limits and verification](wingless-bat.md).
 

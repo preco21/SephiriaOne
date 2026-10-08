@@ -74,6 +74,22 @@ namespace SephiriaOne
                         new[] { L.T("Only the host can open the session settings panel.") });
                 }
 
+                var collin = CollinCommand.Parse(command, out bool collinEnabled);
+                if (collin != CollinParseResult.NotCommand)
+                {
+                    recognized = true;
+                    if (collin == CollinParseResult.Help) return Reply(true, CollinCommand.Usage);
+                    if (collin == CollinParseResult.Invalid) return Reply(false, CollinCommand.Usage);
+                    if (collin == CollinParseResult.Status)
+                    {
+                        var snapshot = SessionSettings.ReadSnapshot();
+                        if (!snapshot.HostActive || snapshot.SessionIdentity == null) return Reply(false, snapshot.AvailabilityReason);
+                        return Reply(true, SessionSettings.DescribeCollin(snapshot.CollinStartingArtifact) +
+                            (snapshot.CollinAvailable ? "" : L.T(" Collin starting-artifact hooks unavailable; see Player.log.")));
+                    }
+                    return Reply(SessionSettings.TryExecuteCollin(collinEnabled, out string collinMessage), collinMessage);
+                }
+
                 var bat = BatCommand.Parse(command, out bool batEnabled);
                 if (bat != BatParseResult.NotCommand)
                 {
@@ -194,7 +210,7 @@ namespace SephiriaOne
                 {
                     if (preset == PresetAction.Help)
                         return Reply(true, presetError + L.T(" /one ui opens the host settings panel. /one rabbit help lists potion options. /one merchant help lists extra merchant options.") +
-                            L.T(" /one items help lists given-item options.") + L.T(" /one friendlyfire help lists allied-damage options.") + L.T(" /one jars help lists Mystic Jar spawn options.") + L.T(" /one bat help lists Wingless Bat options.") + L.T(" Language: /one language en|ko|reload|status."));
+                            L.T(" /one items help lists given-item options.") + L.T(" /one friendlyfire help lists allied-damage options.") + L.T(" /one jars help lists Mystic Jar spawn options.") + L.T(" /one bat help lists Wingless Bat options.") + L.T(" /one collin help lists costume starting-artifact options.") + L.T(" Language: /one language en|ko|reload|status."));
                     if (preset == PresetAction.Invalid) return Reply(false, presetError);
                     bool success = SessionSettings.TryExecutePreset(preset, out string[] messages);
                     return new SettingsActionResult(true, success, false, messages);

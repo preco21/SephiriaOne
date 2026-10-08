@@ -1,5 +1,12 @@
 # Active settings and saved preset
 
+Version `0.34.0` adds v15 for [Collin costume starting gifts](collin-starting-artifact.md).
+`collin starting 1` enables the option. Missing rows and older schemas keep it off;
+explicit 0 normalizes away. Invalid/duplicate rows reject the entire preset.
+The saved setting affects native costume equip and fresh-run restock boundaries,
+without replaying grants on settings notifications. Off/reset exports the oldest
+remaining applicable schema. Instance ownership stays separate from saved intent.
+
 Added in `0.10.0`. Only the host needs the addon; preset commands and their
 feedback remain local. Guests receive gameplay changes through native sync.
 

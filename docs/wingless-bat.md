@@ -3,7 +3,7 @@
 Added in `0.33.0`. Default **off**. The installed English name is **Wingless Bat**
 (the requested “Wings lost bat”); Korean is **날개 잃은 박쥐**, costume ID `Bat`.
 
-Open `/one ui` → **Bat**, or use:
+Open `/one ui` → **Costumes** (renamed from Bat in `0.34.0`), or use:
 
 | Command | Effect |
 | --- | --- |

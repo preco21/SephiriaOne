@@ -75,6 +75,8 @@ namespace SephiriaOne
                 DescribeSynchronization(lines, sameSession);
                 lines.Add(DescribeBat(sameSession && policy.BatHpSteal) +
                     (BatCostumeFeature.Available ? "" : L.T(" Bat costume hooks unavailable; see Player.log.")));
+                lines.Add(DescribeCollin(sameSession && policy.CollinStartingArtifact) +
+                    (CollinFeature.Available ? "" : L.T(" Collin starting-artifact hooks unavailable; see Player.log.")));
                 lines.Add(DescribeJarSpawns(sameSession ? policy.JarSpawns : default) +
                     (JarSpawnFeature.Available ? "" : L.T(" Mystic Jar hooks unavailable; see Player.log.")));
                 lines.Add(DescribeFriendlyFire(sameSession ? policy.FriendlyFire : default) +
@@ -193,7 +195,8 @@ namespace SephiriaOne
                 sameSession && policy.ItemUnlock, ItemRestrictionFeature.Available,
                 sameSession ? policy.FriendlyFire : default, FriendlyFireFeature.Available,
                 sameSession ? policy.JarSpawns : default, JarSpawnFeature.Available,
-                sameSession && policy.BatHpSteal, BatCostumeFeature.Available);
+                sameSession && policy.BatHpSteal, BatCostumeFeature.Available,
+                sameSession && policy.CollinStartingArtifact, CollinFeature.Available);
         }
 
         private static string Signed(int value) => value.ToString("+0;-0;0", CultureInfo.InvariantCulture);

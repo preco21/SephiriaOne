@@ -25,6 +25,7 @@ namespace SephiriaOne
             FriendlyFireFeature.Initialize();
             JarSpawnFeature.Initialize();
             BatCostumeFeature.Initialize();
+            CollinFeature.Initialize();
             DisconnectDiagnosticsFeature.Initialize();
             if (!nameColor)
             {
@@ -42,6 +43,7 @@ namespace SephiriaOne
         private void OnDatabasesReady()
         {
             RabbitStartingArtifactFeature.Apply();
+            CollinFeature.OnDatabasesReady();
             RabbitLevelUpFeature.OnDatabasesReady();
             Debug.Log("[SephiriaOne] All databases ready");
         }
@@ -50,6 +52,7 @@ namespace SephiriaOne
         {
             // Keep controllers/guards available if verified cleanup needs recovery.
             BatCostumeFeature.Shutdown();
+            CollinFeature.Shutdown();
             ChoiceFeature.Shutdown();
             JarSpawnFeature.Shutdown();
             FriendlyFireFeature.Shutdown();

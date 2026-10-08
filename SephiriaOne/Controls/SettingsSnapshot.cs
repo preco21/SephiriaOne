@@ -52,6 +52,8 @@ namespace SephiriaOne
         public bool ChoicesAvailable { get; }
         public bool BatHpSteal { get; }
         public bool BatAvailable { get; }
+        public bool CollinStartingArtifact { get; }
+        public bool CollinAvailable { get; }
         public JarSpawnSettings JarSpawns { get; }
         public bool JarSpawnsAvailable { get; }
         public FriendlyFireSettings FriendlyFire { get; }
@@ -86,13 +88,15 @@ namespace SephiriaOne
             bool itemUnlock = false, bool itemRestrictionsAvailable = false,
             FriendlyFireSettings friendlyFire = default, bool friendlyFireAvailable = false,
             JarSpawnSettings jarSpawns = default, bool jarSpawnsAvailable = false,
-            bool batHpSteal = false, bool batAvailable = false)
+            bool batHpSteal = false, bool batAvailable = false,
+            bool collinStartingArtifact = false, bool collinAvailable = false)
         {
             SessionIdentity = sessionIdentity; Epoch = epoch; RunGeneration = runGeneration; Revision = revision;
             HostActive = hostActive; CanMutate = canMutate; CanSave = canSave; CanForget = canForget;
             ChoicesAvailable = choicesAvailable; SavedValid = savedValid;
             JarSpawns = jarSpawns; JarSpawnsAvailable = jarSpawnsAvailable;
             BatHpSteal = batHpSteal; BatAvailable = batAvailable;
+            CollinStartingArtifact = collinStartingArtifact; CollinAvailable = collinAvailable;
             FriendlyFire = friendlyFire; FriendlyFireAvailable = friendlyFireAvailable;
             ItemUnlock = itemUnlock; ItemRestrictionsAvailable = itemRestrictionsAvailable;
             RabbitPotions = rabbitPotions; RabbitPotionsAvailable = rabbitPotionsAvailable;

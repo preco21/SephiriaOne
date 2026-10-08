@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../SephiriaOne/Features/Collin/CollinCommand.cs" Link="CollinCommand.cs" />
     <Compile Include="../../SephiriaOne/Features/Bat/BatCommand.cs" Link="BatCommand.cs" />
     <Compile Include="../../SephiriaOne/Features/Items/ItemRestrictionOverlay.cs" Link="Source/Features/Items/ItemRestrictionOverlay.cs" />
     <Compile Include="../../SephiriaOne/Features/Rabbit/RabbitDescriptionText.cs" Link="Source/Features/Rabbit/RabbitDescriptionText.cs" />

@@ -83,7 +83,9 @@ namespace SephiriaOne
         public void Record(MerchantCommand command) => Merchants.Record(command);
         public bool BatHpSteal { get; private set; }
         public void RecordBat(bool reduce) => BatHpSteal = reduce;
-        public bool HasChanges => fountain.HasValue || choices.Count != 0 || stats.Count != 0 || Resources.HasChanges || RabbitPotions.HasChanges || Merchants.HasChanges || ItemUnlock || FriendlyFire.HasChanges || JarSpawns.HasChanges || BatHpSteal;
+        public bool CollinStartingArtifact { get; private set; }
+        public void RecordCollin(bool grant) => CollinStartingArtifact = grant;
+        public bool HasChanges => fountain.HasValue || choices.Count != 0 || stats.Count != 0 || Resources.HasChanges || RabbitPotions.HasChanges || Merchants.HasChanges || ItemUnlock || FriendlyFire.HasChanges || JarSpawns.HasChanges || BatHpSteal || CollinStartingArtifact;
         public bool HasFountainSetting => fountain.HasValue;
         public bool HasFountainMultiplier => fountain.HasValue && fountain.Value.Multiplier;
 
@@ -128,6 +130,7 @@ namespace SephiriaOne
             FriendlyFire = default;
             JarSpawns = default;
             BatHpSteal = false;
+            CollinStartingArtifact = false;
             RabbitPotions = default;
             Merchants.Clear();
         }

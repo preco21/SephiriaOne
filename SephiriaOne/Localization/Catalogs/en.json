@@ -453,5 +453,17 @@
   "On reduces the costume's HP steal from 5 to 1. Default off; other HP-steal sources are unchanged.": "On reduces the costume's HP steal from 5 to 1. Default off; other HP-steal sources are unchanged.",
   "Applies only while Wingless Bat is equipped, including unmodified guests. Off/reset restores the native costume bonus. Equipment, buffs and stat multipliers keep their normal behavior.": "Applies only while Wingless Bat is equipped, including unmodified guests. Off/reset restores the native costume bonus. Equipment, buffs and stat multipliers keep their normal behavior.",
   "The native costume selection preview still shows 5. The character's effective HP steal and healing use the host's setting.": "The native costume selection preview still shows 5. The character's effective HP steal and healing use the host's setting.",
-  "Resolve the faulted {0} write before unloading the addon. Inspect /one status.": "Resolve the faulted {0} write before unloading the addon. Inspect /one status."
+  "Resolve the faulted {0} write before unloading the addon. Inspect /one status.": "Resolve the faulted {0} write before unloading the addon. Inspect /one status.",
+  "Host only: /one collin on|off|status|reset. Grants Hiring Crest Collin to Mole, Farmer Squirrel and Turtle at the next costume equip or fresh-run restock. Default off. /one save persists settings.": "Host only: /one collin on|off|status|reset. Grants Hiring Crest Collin to Mole, Farmer Squirrel and Turtle at the next costume equip or fresh-run restock. Default off. /one save persists settings.",
+  "Only the host can change Collin starting-artifact settings.": "Only the host can change Collin starting-artifact settings.",
+  "Collin compatibility checks failed. Off/reset remain available; see Player.log.": "Collin compatibility checks failed. Off/reset remain available; see Player.log.",
+  "Collin starting artifact for Mole, Farmer Squirrel and Turtle: {0}. Applies at the next costume equip or fresh-run restock; current run inventory stays unchanged.": "Collin starting artifact for Mole, Farmer Squirrel and Turtle: {0}. Applies at the next costume equip or fresh-run restock; current run inventory stays unchanged.",
+  " Collin starting-artifact hooks unavailable; see Player.log.": " Collin starting-artifact hooks unavailable; see Player.log.",
+  " /one collin help lists costume starting-artifact options.": " /one collin help lists costume starting-artifact options.",
+  "Costumes": "Costumes",
+  "Collin starting artifact": "Collin starting artifact",
+  "Mole / Farmer Squirrel / Turtle. Applies on the next costume equip or fresh-run restock. Default off.": "Mole / Farmer Squirrel / Turtle. Applies on the next costume equip or fresh-run restock. Default off.",
+  "Switch away from these costumes to remove the granted Collin. Independently obtained copies are preserved. Saved runs resume their native inventory; no extra Collin is injected.": "Switch away from these costumes to remove the granted Collin. Independently obtained copies are preserved. Saved runs resume their native inventory; no extra Collin is injected.",
+  "Some costume controls are unavailable. See the details on the right and Player.log.": "Some costume controls are unavailable. See the details on the right and Player.log.",
+  "Multiple Collin crests keep the game's shared NPC and leader behavior; a separate companion per player is not guaranteed.": "Multiple Collin crests keep the game's shared NPC and leader behavior; a separate companion per player is not guaranteed."
 }
