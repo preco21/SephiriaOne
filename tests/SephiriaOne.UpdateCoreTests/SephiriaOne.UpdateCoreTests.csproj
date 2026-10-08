@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <AssemblyName>SephiriaOne</AssemblyName>
+    <Version>1.2.3</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../SephiriaOne/Updates/UpdateRelease.cs" Link="UpdateRelease.cs" />
+    <Compile Include="../../SephiriaOne/Updates/GitHubReleaseClient.cs" Link="GitHubReleaseClient.cs" />
+    <Compile Include="../../SephiriaOne/Updates/UpdateInstaller.cs" Link="UpdateInstaller.cs" />
+  </ItemGroup>
+</Project>

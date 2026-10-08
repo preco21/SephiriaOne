@@ -73,8 +73,11 @@ internal static class GamePanelCompatibilityTests
             throw new Exception("Polling must use the panel's current snapshot detail selection.");
         var entryUnload = PatchProcessor.GetOriginalInstructions(Required(addon.GetType("SephiriaOne.Entry", true)!, "OnModUnloaded"));
         int cleanup = entryUnload.FindIndex(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "ChoiceFeature" && m.Name == "Shutdown");
-        int disable = entryUnload.FindIndex(i => i.operand is MethodInfo m && m.Name == "set_enabled");
-        if (cleanup < 0 || disable < cleanup)
+        // Local updater disposal may precede gameplay cleanup. Recovery depends
+        // specifically on retaining the panel/chat/session/name controllers.
+        var controls = new[] { "settingsPanel", "chatCommands", "sessionSettings", "nameColor" };
+        if (cleanup < 0 || controls.Any(name => entryUnload.FindIndex(i =>
+            i.operand is FieldInfo f && f.DeclaringType?.Name == "Entry" && f.Name == name) < cleanup))
             throw new Exception("Faulted contribution cleanup must retain recovery controls.");
         Console.WriteLine("Verified native panel stack, cancel, shared chat/UI dispatch and cleanup ordering (not live rendering/input).");
     }

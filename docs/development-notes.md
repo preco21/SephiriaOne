@@ -9,6 +9,13 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.38.0` adds local GitHub release discovery with chat/UI notices and both
+`/one update install` and an Update button. Downloads and installation require
+an explicit action. The updater verifies the package, stages an immutable
+versioned DLL and atomically selects it through metadata for the next full
+restart. Previous DLL/metadata and user settings remain available. See
+[GitHub updates](github-updates.md) for controls, packaging, rollback and test limits.
+
 Version `0.37.2` fixes missing Korean text after addon upgrades. All 507 bundled
 keys already had translations, but older saved catalogs replaced the bundled
 lookup table and omitted new keys. Load/reload now fills missing entries from

@@ -4,6 +4,10 @@ Investigated 2026-10-09 against the installed game loader, current addon source,
 and the public GitHub Releases API. This is a feasibility report and proposed
 architecture, not an implemented or approved updater specification.
 
+Implementation follow-up: the user approved both command and button. See
+[the implemented 0.38.0 behavior](github-updates.md); this report records the
+earlier investigation rather than the final implementation contract.
+
 ## Conclusion
 
 Automatic updates are feasible without changes on unmodified multiplayer guests.

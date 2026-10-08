@@ -44,6 +44,8 @@ namespace SephiriaOne
             try
             {
                 string[] parts = (command ?? "").Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+                if (UpdateCommand.Execute(parts, out bool updateSuccess, out string updateMessage))
+                    return Reply(updateSuccess, updateMessage);
                 // Language is a local presentation preference, including on guests
                 // and outside a hosted session. Never enter gameplay reconciliation.
                 if (parts.Length >= 2 && parts[0].Equals("/one", StringComparison.OrdinalIgnoreCase) &&
@@ -226,7 +228,7 @@ namespace SephiriaOne
                 {
                     if (preset == PresetAction.Help)
                         return Reply(true, presetError + L.T(" /one ui opens the host settings panel. /one rabbit help lists potion options. /one merchant help lists extra merchant options.") +
-                            L.T(" /one items help lists given-item options.") + L.T(" /one friendlyfire help lists allied-damage options.") + L.T(" /one jars help lists Mystic Jar spawn options.") + L.T(" /one events help lists random event options.") + L.T(" /one bat help lists Wingless Bat options.") + L.T(" /one collin help lists costume starting-artifact options.") + L.T(" Language: /one language en|ko|reload|status."));
+                            L.T(" /one items help lists given-item options.") + L.T(" /one friendlyfire help lists allied-damage options.") + L.T(" /one jars help lists Mystic Jar spawn options.") + L.T(" /one events help lists random event options.") + L.T(" /one bat help lists Wingless Bat options.") + L.T(" /one collin help lists costume starting-artifact options.") + L.T(" Language: /one language en|ko|reload|status.") + " " + UpdateCommand.Usage);
                     if (preset == PresetAction.Invalid) return Reply(false, presetError);
                     bool success = SessionSettings.TryExecutePreset(preset, out string[] messages);
                     return new SettingsActionResult(true, success, false, messages);

@@ -61,6 +61,8 @@ if (args.Length == 1 && (args[0] == "--perf" || args[0] == "--perf-check"))
 }
 
 var host = Start();
+UpdateRuntimeTests.Run(Start, Check);
+host = Start();
 Check(Fountain("+10") && Stats("luck +10") && Choices("all 5"), "Host commands succeed before first LateUpdate");
 Check(Points(host) == 14 && Value(host) == 15 && Value(host, "EXTRAITEMCHOICES") == 7, "Current host receives one adjustment");
 SessionSettings.Synchronize();

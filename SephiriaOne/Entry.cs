@@ -8,6 +8,7 @@ namespace SephiriaOne
         private ModChatCommands chatCommands;
         private SessionSettingsController sessionSettings;
         private SettingsPanelController settingsPanel;
+        private UpdateController updates;
 
         protected override void OnModLoaded()
         {
@@ -32,6 +33,7 @@ namespace SephiriaOne
             {
                 var controller = new GameObject("SephiriaOne.Controllers");
                 Object.DontDestroyOnLoad(controller);
+                updates = controller.AddComponent<UpdateController>();
                 sessionSettings = controller.AddComponent<SessionSettingsController>();
                 settingsPanel = controller.AddComponent<SettingsPanelController>();
                 nameColor = controller.AddComponent<MultiplayerNameController>();
@@ -51,6 +53,7 @@ namespace SephiriaOne
 
         protected override void OnModUnloaded()
         {
+            if (updates) { updates.enabled = false; updates = null; }
             // Keep controllers/guards available if verified cleanup needs recovery.
             BatCostumeFeature.Shutdown();
             CollinFeature.Shutdown();

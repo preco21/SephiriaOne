@@ -37,7 +37,10 @@ namespace SephiriaOne
             window.anchorMin = window.anchorMax = window.pivot = new Vector2(0.5f, 0.5f);
             window.gameObject.AddComponent<Image>().color = new Color32(23, 35, 50, 255);
             widgets.Text(window, "Title", "SephiriaOne", 16, 10, 480, 24, 18);
-            widgets.Text(window, "Scope", "Host controls  /  All current and joining players", 16, 35, 555, 16, 10).color = PanelWidgets.Muted;
+            scopeLabel = widgets.Text(window, "Scope", "Host controls  /  All current and joining players", 16, 35, 555, 16, 10);
+            scopeLabel.color = PanelWidgets.Muted;
+            var updates = widgets.Button(window, "Updates", 418, 10, 135, 23, () => SelectPage(12));
+            updateLabel = updates.GetComponentInChildren<TMP_Text>();
             var close = widgets.Button(window, "X", 563, 10, 23, 23, Close);
             defaultSelectable = close.gameObject;
             availability = widgets.Text(window, "Availability", "", 16, 54, 568, 22, 10);
@@ -90,6 +93,7 @@ namespace SephiriaOne
         internal void Refresh(SettingsSnapshot snapshot)
         {
             RefreshLanguage();
+            RefreshUpdateHeader();
             if (draft.Observe(snapshot.SessionIdentity, snapshot.Epoch, snapshot.RunGeneration))
             {
                 ClearInput();
@@ -101,6 +105,7 @@ namespace SephiriaOne
                 float scale = Mathf.Min(1, Mathf.Min(rootRect.rect.width / 640f, rootRect.rect.height / 384f));
                 window.localScale = Vector3.one * Mathf.Max(0.1f, scale);
             }
+            if (page == 12) { RefreshUpdates(); return; }
             bool choicesReady = page == 11 ? snapshot.BatAvailable && snapshot.CollinAvailable : page == 10 ? (eventSpawnsSelected ? snapshot.EventSpawnsAvailable : snapshot.JarSpawnsAvailable) : page == 9 ? snapshot.FriendlyFireAvailable : page == 8 ? snapshot.ItemRestrictionsAvailable : page == 7 ? snapshot.MerchantsAvailable : page == 6 ? snapshot.RabbitPotionsAvailable : page == 2 ? snapshot.ChoicesAvailable : page != 3 || ResourceFeature.IsAvailable(ResourceCatalog.All[resourceIndex].Kind);
             bool levelUpReady = page != 6 || snapshot.RabbitLevelUpPotionsAvailable;
             availability.text = !snapshot.CanMutate ? snapshot.AvailabilityReason : !choicesReady ?
@@ -171,6 +176,7 @@ namespace SephiriaOne
             rabbitOffButtons.Clear();
             amount = null; resetOne = resetAll = save = forget = merchantOff = merchantGuaranteeOff = rabbitLevelUpOn = itemsOff = friendlyOff = batOff = null;
             batOn = collinOn = collinOff = collinReset = null;
+            updateInstall = updateCheck = updateAutoOn = updateAutoOff = null;
             friendlyDamage = null; friendlyPercent = null; friendlyDraft = false;
             if (pageRoot) { widgets.Forget(pageRoot); pageRoot.gameObject.SetActive(false); Destroy(pageRoot.gameObject); }
             pageRoot = PanelWidgets.Rect(window, "Page", 0, 134, 600, 162);
@@ -181,6 +187,7 @@ namespace SephiriaOne
             else if (page == 9) BuildCombatEditor();
             else if (page == 10) BuildSpawnEditor();
             else if (page == 11) BuildCostumeEditor();
+            else if (page == 12) BuildUpdatesEditor();
             else
             {
                 if (page == 4)
