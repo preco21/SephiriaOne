@@ -40,3 +40,9 @@ GNU Affero General Public License (AGPL)
 본 모드 수정시 더 많은 분들이 혜택을 누릴 수 있도록 소스코드를 공개해주시면 감사하겠습니다.
 
 누구나 본 프로젝트의 코드와 산출물의 판매/배포/공유/변경을 자유롭게 할 수 있습니다.
+
+## 크래딧 (Attribution)
+
+https://github.com/Mira090 님이 작성하신 모드를 레퍼런스로 참고하였습니다.
+
+Thanks!
