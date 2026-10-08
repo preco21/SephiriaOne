@@ -87,6 +87,37 @@ Run("initialization preserves customized catalogs and config", (folder, warnings
     Equal("사용자 번역", L.T("Hello"));
     Equal(custom, File.ReadAllText(Path.Combine(folder, "ko.json")));
 });
+Run("older catalogs inherit new bundled translations without rewriting files", (folder, warnings) =>
+{
+    Catalog(folder, "en", ("Hello", "Customized English"));
+    Catalog(folder, "ko", ("Hello", "사용자 번역"), ("Custom key", "사용자 항목"));
+    string english = File.ReadAllText(Path.Combine(folder, "en.json"));
+    string korean = File.ReadAllText(Path.Combine(folder, "ko.json"));
+    Korean(folder, warnings);
+    Equal("사용자 번역", L.T("Hello"));
+    Equal("사용자 항목", L.T("Custom key"));
+    Equal("P 플레이어: 2.5", L.F("Player {0}: {1:0.0}", "P", 2.5));
+    Equal("English fallback", L.T("Only English"));
+    Equal(english, File.ReadAllText(Path.Combine(folder, "en.json")));
+    Equal(korean, File.ReadAllText(Path.Combine(folder, "ko.json")));
+    Equal(0, warnings.Count);
+});
+Run("removing an override restores the bundled translation on reload and restart", (folder, warnings) =>
+{
+    Catalog(folder, "ko", ("Hello", "사용자 번역"), ("Custom key", "사용자 항목"));
+    Korean(folder, warnings);
+    Catalog(folder, "en"); Catalog(folder, "ko");
+    int changed = 0;
+    L.Changed += () => changed++;
+    Check(L.Reload(out var error), error);
+    Equal("안녕하세요", L.T("Hello"));
+    Equal("English fallback", L.T("Only English"));
+    Equal("Custom key", L.T("Custom key"));
+    Equal(1, changed);
+    L.Shutdown(); L.Initialize(folder, warnings.Add);
+    Equal("안녕하세요", L.T("Hello"));
+    Equal("{}", File.ReadAllText(Path.Combine(folder, "ko.json")));
+});
 Run("language selection persists and notifies once", (folder, warnings) =>
 {
     L.Initialize(folder, warnings.Add);

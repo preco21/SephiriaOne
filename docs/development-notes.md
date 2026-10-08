@@ -9,6 +9,13 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.37.2` fixes missing Korean text after addon upgrades. All 507 bundled
+keys already had translations, but older saved catalogs replaced the bundled
+lookup table and omitted new keys. Load/reload now fills missing entries from
+bundled defaults while preserving explicit custom values, invalid-entry fallback
+and existing JSON files. No extra work is added to text lookup or gameplay updates.
+See [localization](localization.md). No deployment or live UI test.
+
 Version `0.37.1` adds bounded native reflection to friendly fire. Thorns, weapon
 reflection and the default Venom Spore Pouch parry counter may return damage along
 the exact reverse of an admitted allied hit, using the current host damage scale.

@@ -29,7 +29,13 @@ internal static class LocalizationCatalogTests
                 Check(entry.Key == entry.Value && L.T(entry.Key) == entry.Key, "Default English wording changed: " + entry.Key);
             Check(L.TrySetLanguage("ko", out error), error);
             foreach (var entry in korean)
+            {
                 Check(!string.IsNullOrWhiteSpace(entry.Value) && L.T(entry.Key) == entry.Value, "Korean entry was rejected or missing: " + entry.Key);
+                // Presence alone misses English copied into ko.json. Product
+                // names and purely symbolic templates intentionally stay intact.
+                if (entry.Key != "SephiriaOne" && Regex.IsMatch(entry.Key, "[A-Za-z]{2}"))
+                    Check(Regex.IsMatch(entry.Value, "[가-힣]"), "Korean wording is untranslated: " + entry.Key);
+            }
             foreach (var stat in StatCatalog.All)
             {
                 Check(korean.ContainsKey(stat.Unit), "Missing stat unit translation: " + stat.Unit);
@@ -51,6 +57,18 @@ internal static class LocalizationCatalogTests
                     string key = JsonConvert.DeserializeObject<string>(match.Groups[1].Value)!;
                     Check(korean.ContainsKey(key), "Missing explicit translation in " + Path.GetFileName(file) + ": " + key);
                 }
+
+            // Real installed catalogs survive addon upgrades and may predate
+            // hundreds of keys. Every bundled Korean entry must remain usable.
+            const string oldKorean = "{\"Stats\":\"사용자 능력치\"}";
+            File.WriteAllText(Path.Combine(folder, "ko.json"), oldKorean);
+            File.WriteAllText(Path.Combine(folder, "en.json"), "{}");
+            Check(L.Reload(out error), error);
+            foreach (var entry in korean)
+                Check(L.T(entry.Key) == (entry.Key == "Stats" ? "사용자 능력치" : entry.Value),
+                    "Older Korean catalog lost bundled translation: " + entry.Key);
+            Check(File.ReadAllText(Path.Combine(folder, "ko.json")) == oldKorean,
+                "Catalog upgrades preserve customized files exactly");
         }
         finally { L.Shutdown(); }
         return checks;

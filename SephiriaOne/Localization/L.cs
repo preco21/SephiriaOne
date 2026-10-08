@@ -17,6 +17,7 @@ namespace SephiriaOne
         private const int MaxAlignment = 1024;
         private static readonly Encoding Utf8 = new UTF8Encoding(false, true);
         private static Snapshot current = Snapshot.Empty;
+        private static Snapshot bundled = Snapshot.Empty;
         private static string directory;
         private static Action<string> warning;
 
@@ -61,13 +62,13 @@ namespace SephiriaOne
         {
             warning = warn;
             directory = null;
-            current = Snapshot.Empty;
+            current = bundled = Snapshot.Empty;
             try
             {
                 string englishDefault = ReadEmbedded("en");
                 string koreanDefault = ReadEmbedded("ko");
                 int ignored = 0;
-                current = new Snapshot("en", ValidateCatalog(ReadObject(englishDefault), ref ignored),
+                current = bundled = new Snapshot("en", ValidateCatalog(ReadObject(englishDefault), ref ignored),
                     ValidateCatalog(ReadObject(koreanDefault), ref ignored));
                 directory = Path.GetFullPath(folder);
                 Directory.CreateDirectory(directory);
@@ -132,7 +133,7 @@ namespace SephiriaOne
             Changed = null;
             warning = null;
             directory = null;
-            current = Snapshot.Empty;
+            current = bundled = Snapshot.Empty;
             Revision++;
         }
 
@@ -147,9 +148,21 @@ namespace SephiriaOne
             if (config.Count != 1 || !config.TryGetValue("language", out string language) || !Supported(language))
                 throw new InvalidDataException("config.json must contain a language of en or ko.");
             ignored = 0;
-            var english = ValidateCatalog(ReadObject(ReadFile("en.json")), ref ignored);
-            var korean = ValidateCatalog(ReadObject(ReadFile("ko.json")), ref ignored);
+            var english = LoadCatalog("en.json", bundled.English, ref ignored);
+            var korean = LoadCatalog("ko.json", bundled.Korean, ref ignored);
             return new Snapshot(language, english, korean);
+        }
+
+        private static Dictionary<string, string> LoadCatalog(string file, Dictionary<string, string> defaults, ref int ignored)
+        {
+            var entries = ReadObject(ReadFile(file));
+            var result = ValidateCatalog(entries, ref ignored);
+            // Older/custom catalogs are sparse overrides. Fill only absent
+            // keys from this DLL's defaults, never a prior edited snapshot.
+            // Explicit invalid overrides retain the documented English fallback.
+            foreach (var entry in defaults)
+                if (!entries.ContainsKey(entry.Key)) result.Add(entry.Key, entry.Value);
+            return result;
         }
 
         private static Dictionary<string, string> ValidateCatalog(Dictionary<string, string> entries, ref int ignored)
