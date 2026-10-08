@@ -50,6 +50,38 @@ Since `0.28.1`, infinite use applies only to IDs 0/1. **Potion of Regeneration
 a completed drink, even with infinite use enabled. Sample still supports the
 independent MP-cost and shared-healing options.
 
+**Tension boss-combat exception (`0.29.0`):** With infinite use enabled,
+Wing-Eared Rabbit can use regular/large HP potions (IDs 0/1) even while Root's
+Retreat's Tension Plan Shard blocks potion use during a boss fight. This is part
+of the existing infinite-use toggle; there is no separate option or preset change.
+Sample (37), MP, buff and other potions remain blocked. Other costumes and Rabbit
+players with infinite use off retain normal Tension behavior. MP fees, low-MP
+rejection, drinking time/cancellation, death guards and Survival settings still
+apply. Host-only installation covers both the host and unmodified guests.
+
+The installed game's internal Tension key is `HOSTILITY`.
+`ItemController.LocalUseItemKeyDown` runs for local use and received guest
+commands. It checks the selected potion's `CanDrink`, then
+`IsHostilityBlockingPotion`, before spawning a wielded potion or starting its
+animation. The addon preserves this method and filters only the Tension Boolean
+result, passing the exact native inventory item. It never removes the shard,
+edits `hardModeEnvironment`, suppresses boss-combat state or changes guest code.
+
+The filter reads current costume, infinite setting, live connection ownership,
+selected-item identity and native regeneration effect on each attempted use. It
+does not cache a per-player permission, so costume/preset changes and reconnects
+take effect immediately. A changed selection or stale connection keeps the native
+block. Native-shape guards reject incompatible game updates and shutdown removes
+the hook with the other potion patches. There is no per-frame work or new RPC.
+
+Verification for `0.29.0`: all 239 potion scenarios, 46 description checks,
+6 localized description checks, 834 runtime checks and 48 localization checks
+pass. Debug/Release builds have zero warnings or errors. The full portable and
+installed-game suite passes, including the host/guest Tension entry points,
+preserved native instructions and rejection of changed hook shapes. Independent
+review found no actionable issues. Live boss combat remains to be checked; no
+deployment was performed.
+
 **Shared potion healing** forwards the actual native healing percentage,
 including the drinker's potion bonus, to other alive, ready players on the same
 floor within 5 tiles (strictly less than 10 world units). Each recipient applies
@@ -307,3 +339,9 @@ Manual smoke tests:
     fee, after reconnect and with enough MP. Rejected attempts must preserve the
     potion and grant neither healing nor Survival stats. No low-MP notice should
     appear after cancellation, death, turning the fee off, or setting it to zero.
+13. Enable Tension and infinite use, then enter boss combat as host and with an
+    unmodified Rabbit guest. Verify regular/large HP potions can be used and
+    retained, including MP fees, insufficient-MP rejection and Survival settings.
+    Sample, MP and buff potions must remain blocked. Switch costumes or turn
+    infinite use off and confirm HP potions become blocked too. Rejoin and repeat;
+    outside boss combat, ordinary potion use must remain unchanged.

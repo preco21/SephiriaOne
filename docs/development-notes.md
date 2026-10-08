@@ -9,6 +9,16 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.29.0` extends Rabbit infinite HP potions with a scoped Tension exception.
+While infinite use is on, Wing-Eared Rabbit's regular/large HP potions bypass the
+native boss-combat potion block. Sample, MP/buff potions and other costumes keep
+native behavior. The host filters only the server's Tension result for the exact
+selected item, with current ownership/readiness checks shared with drink completion.
+Existing MP fees, Survival suppression, death guards and sharing remain in effect.
+Local and unmodified guest input use this same native boundary. EN/KO command,
+panel and enabled costume description explain the exception. No deployment or
+live multiplayer test.
+
 Version `0.28.3` tunes all hostile merchant types to base-HP multipliers
 **1/2/4/5/7/8** on main dungeon stages **1–6**, retaining ×8 on later stages.
 Unknown progress uses ×1. Native stage/co-op bonuses still apply once; existing

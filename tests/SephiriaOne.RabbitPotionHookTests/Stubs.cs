@@ -5,7 +5,12 @@ using UnityEngine;
 namespace UnityEngine
 {
     public class Object { public bool Destroyed; public static implicit operator bool(Object value) => value != null && !value.Destroyed; }
-    public class GameObject : Object { }
+    public class GameObject : Object
+    {
+        public object Component;
+        public T GetComponent<T>() where T : class => Component as T;
+        public bool TryGetComponent<T>(out T value) where T : class { value = GetComponent<T>(); return value != null; }
+    }
     public readonly record struct Vector3(float x, float y, float z)
     {
         public static Vector3 operator -(Vector3 a, Vector3 b) => new(a.x - b.x, a.y - b.y, a.z - b.z);
@@ -84,7 +89,17 @@ namespace Mirror
     }
     public static class NetworkServer { public static bool active = true; public static readonly Dictionary<int, NetworkConnectionToClient> connections = new(); }
 }
-public sealed class NewItemOwnInstance { public int EntityID, InstanceID; public sbyte Quantity = 1; }
+public enum EItemType { Potion, Artifact }
+public class ItemEntity : UnityEngine.Object
+{
+    public EItemType type = EItemType.Potion;
+    public GameObject resourcePrefab = new() { Component = new PotionEffect_Regeneration() };
+}
+public sealed class NewItemOwnInstance
+{
+    public int EntityID, InstanceID; public sbyte Quantity = 1;
+    public ItemEntity Entity = new();
+}
 public readonly record struct ItemPosition(sbyte x, sbyte y);
 public class GridInventory : NetworkBehaviour
 {
@@ -189,6 +204,32 @@ public class ItemController : NetworkBehaviour
     public readonly List<QuickSlot> quickSlotTable = new() { new QuickSlot { idx = 0 } };
     public event Action<WieldingPotion> OnDrinkPotionServerside;
     public int CleanupCalls;
+    public int StartedDrinks, BlockedNotices;
+    public bool IsAttacking;
+    public void UseItemKeyDown() { if (!Avatar.IsDead) LocalUseItemKeyDown(); }
+    public void GuestUseItemKeyDown() => LocalUseItemKeyDown();
+    [MethodImpl(MethodImplOptions.NoInlining)] private void LocalUseItemKeyDown()
+    {
+        if (!NetworkServer.active) return;
+        if (SelectedQuickSlotIdx == -1 || IsAttacking) return;
+        var pos = Avatar.Inventory.IdxToPos(quickSlotTable[SelectedQuickSlotIdx].idx);
+        var item = Avatar.Inventory.FindItem(pos);
+        if (item == null) return;
+        if (item.Entity.type == EItemType.Potion && item.Entity.resourcePrefab &&
+            item.Entity.resourcePrefab.TryGetComponent<PotionEffect>(out var effect) && !effect.CanDrink()) return;
+        if (item.Entity.type == EItemType.Potion && IsHostilityBlockingPotion())
+        { BlockedNotices++; return; }
+        NetworkcurrentWieldingItem = new WieldingPotion { entityID = item.EntityID,
+            effect = item.Entity.resourcePrefab.GetComponent<PotionEffect>(), NetworkController = this };
+        StartedDrinks++;
+    }
+    [MethodImpl(MethodImplOptions.NoInlining)] private bool IsHostilityBlockingPotion()
+    {
+        if (!NetworkServer.active || DungeonManager.Instance == null) return false;
+        if (!DungeonManager.Instance.hardModeEnvironment.ContainsKey("HOSTILITY")) return false;
+        var floor = FloorGenerator.FindByGuid((Avatar as PlayerAvatar)?.currentFloorGuid);
+        return floor != null && BossSpawner.IsBossBattleInProgressOnFloor(floor);
+    }
     private void RpcWieldItem(int id) { CleanupCalls++; }
     public void CancelAction()
     {
@@ -230,6 +271,9 @@ public class WieldingPotion : WieldingItem
 }
 public class PotionEffect : NetworkBehaviour
 {
+    public bool DrinkAllowed = true;
+    public Action OnCanDrink;
+    public virtual bool CanDrink() { OnCanDrink?.Invoke(); return DrinkAllowed; }
     public virtual bool DecreaseItemOnDrink => true;
     public virtual void CreateEffect_OnDrink(UnitAvatar avatar) { if (DecreaseItemOnDrink) avatar.ReceivePotionDrinkEvent(this); }
 }
@@ -253,7 +297,21 @@ public class PassiveObject_PotionAndRandomStat : PassiveObject
     [MethodImpl(MethodImplOptions.NoInlining)] private void HandleDrinkPotion(PotionEffect effect) { StatGains++; }
 }
 public static class SaveManager { public static object CurrentRun = new(); }
-public class DungeonManager { public static DungeonManager Instance = new(); }
+public class DungeonManager
+{
+    public static DungeonManager Instance = new();
+    public readonly Dictionary<string, int> hardModeEnvironment = new();
+}
+public class FloorGenerator
+{
+    public static readonly Dictionary<string, FloorGenerator> All = new();
+    public bool BossBattle;
+    public static FloorGenerator FindByGuid(string guid) => guid == null ? null : All.GetValueOrDefault(guid);
+}
+public static class BossSpawner
+{
+    public static bool IsBossBattleInProgressOnFloor(FloorGenerator floor) => floor.BossBattle;
+}
 public class CombatManager
 {
     public static CombatManager Instance { get; } = new();

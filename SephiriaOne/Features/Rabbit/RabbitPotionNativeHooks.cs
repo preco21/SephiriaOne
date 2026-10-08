@@ -57,11 +57,12 @@ namespace SephiriaOne
                     nameof(ItemController.DrinkPotionAnimation), Type.EmptyTypes);
                 MethodInfo survival = AccessTools.DeclaredMethod(typeof(PassiveObject_PotionAndRandomStat),
                     "HandleDrinkPotion", new[] { typeof(PotionEffect) });
+                MethodInfo useItem = AccessTools.DeclaredMethod(typeof(ItemController), "LocalUseItemKeyDown", Type.EmptyTypes);
                 if (drink == null || drink.ReturnType != typeof(void) || heal == null || heal.ReturnType != typeof(void) ||
                     consumer == null || consumer.ReturnType != typeof(void) ||
                     survival == null || survival.ReturnType != typeof(void) ||
-                    !ValidateMpSetter() || !ValidateDrinkShape(drink) || !ValidateConsumerShape(consumer))
-                { Debug.LogWarning("[SephiriaOne] Rabbit potion Drink/consumer signature or IL changed; optional hooks are disabled."); return; }
+                    !ValidateMpSetter() || !ValidateDrinkShape(drink) || !ValidateConsumerShape(consumer) || !ValidateTensionShape(useItem))
+                { Debug.LogWarning("[SephiriaOne] Rabbit potion Drink/consumer/Tension signature or IL changed; optional hooks are disabled."); return; }
                 var instance = new Harmony(Owner);
                 harmony = instance;
                 try
@@ -69,6 +70,7 @@ namespace SephiriaOne
                     instance.Patch(heal, transpiler: new HarmonyMethod(typeof(RabbitPotionNativeHooks), nameof(CaptureHealCall)));
                     instance.Patch(consumer, transpiler: new HarmonyMethod(typeof(RabbitPotionNativeHooks), nameof(GuardCompletedDrink)));
                     instance.Patch(survival, prefix: new HarmonyMethod(typeof(RabbitPotionNativeHooks), nameof(AllowSurvival)));
+                    instance.Patch(useItem, transpiler: new HarmonyMethod(typeof(RabbitPotionNativeHooks), nameof(AllowRabbitThroughTension)));
                     instance.Patch(drink, prefix: new HarmonyMethod(typeof(RabbitPotionNativeHooks), nameof(BeginDrink)),
                         postfix: new HarmonyMethod(typeof(RabbitPotionNativeHooks), nameof(CompleteDrink)),
                         finalizer: new HarmonyMethod(typeof(RabbitPotionNativeHooks), nameof(EndDrink)));
@@ -197,11 +199,15 @@ namespace SephiriaOne
         private static bool SourceReady(WieldingPotion potion, ItemController controller, PlayerAvatar player, PlayerSpawner spawner,
             bool allowDead = false)
         {
-            bool deathCleanup = allowDead && player && player.IsDead;
+            return PlayerReady(controller, player, spawner, allowDead) &&
+                (ReferenceEquals(controller.NetworkcurrentWieldingItem, potion) ||
+                    (allowDead && player.IsDead && !controller.NetworkcurrentWieldingItem));
+        }
+
+        private static bool PlayerReady(ItemController controller, PlayerAvatar player, PlayerSpawner spawner, bool allowDead = false)
+        {
             if (!controller || !controller.isServer || controller.netId == 0 ||
                 !ReferenceEquals(controller.Avatar, player) ||
-                (!ReferenceEquals(controller.NetworkcurrentWieldingItem, potion) &&
-                    !(deathCleanup && !controller.NetworkcurrentWieldingItem)) ||
                 !player || (player.IsDead && !allowDead) || player.currentCostume != "HolyRabbit" || !spawner ||
                 !ReferenceEquals(spawner.PlayerAvatar, player) || !HostStateAdapter.IsReady(spawner) ||
                 !PlayerSpawner.MultiplayerList.Contains(spawner)) return false;

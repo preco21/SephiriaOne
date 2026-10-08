@@ -22,11 +22,13 @@ Check(Show(rabbit, true, true, false) == native, "gameplay incompatibility hides
 string infiniteOnly = Show(rabbit, true, false);
 Check(infiniteOnly.StartsWith(native + "\n"), "native text remains first");
 Check(infiniteOnly.Contains("except Potion of Regeneration (Sample)") && infiniteOnly.Contains("are not consumed"), "infinite line appears");
+Check(infiniteOnly.Contains("Tension"), "Infinite HP potion tooltip explains the boss-combat exception");
 Check(!infiniteOnly.Contains("Nearby allies"), "share line is absent");
 
 string shareOnly = Show(rabbit, false, true);
 Check(shareOnly.Contains("Nearby allies"), "share line appears");
 Check(!shareOnly.Contains("not consumed"), "infinite line is absent");
+Check(!shareOnly.Contains("Tension"), "Sharing alone must not claim a Tension exemption");
 
 string both = Show(rabbit, true, true);
 Check(both.Contains("not consumed") && both.Contains("Nearby allies"), "both lines appear");
@@ -107,12 +109,12 @@ SessionSettings.Change(true, true);
 RabbitDescriptionFeature.Shutdown();
 Check(!RabbitDescriptionFeature.Available && panel.tooltipEffectText.text == native, "unload removes rendered text and hook");
 
-const string nativeIdentical = native + "\n- <indent=10>HP potions, except Potion of Regeneration (Sample), are not consumed after a successful drink (requires one potion).</indent>";
+const string nativeIdentical = native + "\n- <indent=10>HP potions, except Potion of Regeneration (Sample), are not consumed after a successful drink (requires one potion). These potions can be used during boss combat with Tension.</indent>";
 UI_CostumePanel.NativeDescription = nativeIdentical;
 RabbitDescriptionFeature.Initialize();
 panel.Select(new CostumeEntity(rabbit));
 SessionSettings.Change(true, false);
-Check(panel.tooltipEffectText.text == nativeIdentical + "\n- <indent=10>HP potions, except Potion of Regeneration (Sample), are not consumed after a successful drink (requires one potion).</indent>",
+Check(panel.tooltipEffectText.text == nativeIdentical + "\n- <indent=10>HP potions, except Potion of Regeneration (Sample), are not consumed after a successful drink (requires one potion). These potions can be used during boss combat with Tension.</indent>",
     "option line is appended even when native text coincidentally ends with it");
 SessionSettings.Change(false, false);
 Check(panel.tooltipEffectText.text == nativeIdentical, "reset preserves identical native trailing line");

@@ -2,7 +2,7 @@ namespace SephiriaOne
 {
     internal static class RabbitDescriptionText
     {
-        private const string Infinite = "- <indent=10>HP potions, except Potion of Regeneration (Sample), are not consumed after a successful drink (requires one potion).</indent>";
+        private const string Infinite = "- <indent=10>HP potions, except Potion of Regeneration (Sample), are not consumed after a successful drink (requires one potion). These potions can be used during boss combat with Tension.</indent>";
         private const string Share = "- <indent=10>Nearby allies within 5 tiles receive the same HP potion healing.</indent>";
         private const string Survival = "- <indent=10>HP potion drinks, except Potion of Regeneration (Sample), do not trigger Survival rank 5 random-stat gains.</indent>";
 

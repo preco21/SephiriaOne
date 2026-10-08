@@ -14,6 +14,7 @@ internal static class GameRabbitCompatibilityTests
         var hooks = addon.GetType("SephiriaOne.RabbitPotionNativeHooks", true)!;
         VerifyAlerts(game, addon);
         VerifySharedHealVisuals(game, addon);
+        GameRabbitTensionCompatibilityTests.Run(game, addon);
         if (!(bool)AccessTools.DeclaredMethod(hooks, "ValidateMpSetter")!.Invoke(null, null)!)
             throw new Exception("MP fee requires the native callback-free synchronized setter.");
         foreach (var boundary in new[] { ("ValidateDrinkShape", drink), ("ValidateConsumerShape", consume) })

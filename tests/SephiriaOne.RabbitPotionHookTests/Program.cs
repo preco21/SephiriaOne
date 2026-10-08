@@ -9,6 +9,7 @@ void Check(string name, Action action)
     NetworkServer.active = true;
     NetworkServer.connections.Clear();
     PlayerSpawner.MultiplayerList.Clear();
+    DungeonManager.Instance = new(); FloorGenerator.All.Clear();
     SessionSettings.RabbitPotionsForUse = default;
     try { action(); Console.WriteLine("PASS " + name); passed++; }
     catch (Exception error) { Console.WriteLine("FAIL " + name + ": " + error); failed++; }
@@ -26,6 +27,8 @@ void Assert(bool ok, string reason) { if (!ok) throw new Exception(reason); }
     return (player, controller, potion, item);
 }
 void Install() { RabbitPotionFeature.Initialize(); Assert(RabbitPotionFeature.Available, "Hook unavailable"); }
+
+TensionTests.Run(Check, Assert, Setup, Install);
 
 Check("off preserves native consumption, healing and both events", () =>
 {
