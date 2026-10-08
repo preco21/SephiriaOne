@@ -1,5 +1,58 @@
 # Synchronization performance review
 
+## Follow-up: 0.36.1 (2026-10-09)
+
+Reviewed synchronization and status capture after expanding the stat catalog to
+27 entries, plus panel refresh, native damage, costume grants, item restrictions
+and event/merchant spawn entry points. Baseline was `df0b920` (0.36.0). The
+[plan](plans/2026-10-09-performance-review.md) records scope and validation.
+
+The full Status report allocated temporary lists and status objects for each
+player/stat reconciliation result. It also assembled many intermediate strings
+for rule descriptions and the 27-stat player rows. These costs scale with the
+number of players and enabled relative settings, even when values stay unchanged.
+
+- Reconciliation statuses are now immutable values. `AppendStatuses` copies
+  already-recorded outcomes into a caller-owned list. It does not enroll subjects,
+  observe native inputs, apply rules, consume invalidations or advance revisions.
+  `Describe` still returns an independent snapshot for existing callers.
+- Status and disconnect diagnostics reuse one status list and text builder
+  **within each report**. Player stat rows are built directly in another local
+  builder. No mutable buffers or rendered text are cached across captures.
+- Text, ordering, current EN/KO labels, historical fault details and number
+  formatting remain unchanged. Captures still read current native values and
+  return detached, read-only player snapshots.
+
+Release .NET 10 fixture, five players with all 27 relative stats and existing
+Fountain/Choices/resource settings active:
+
+| Path | Before | After |
+| --- | ---: | ---: |
+| Full Status snapshot | 195,602 B/refresh | 116,558 B/refresh |
+| Non-Status snapshot | about 25,433 B/refresh | about 25,433 B/refresh |
+| Unchanged synchronization, all three workloads | 0 B/tick | 0 B/tick |
+
+The full report reduction is **79,044 bytes (40.4%) per refresh**, or about
+316 KB/second at the existing four refreshes per second while Status is open.
+This is managed allocation avoided, not an FPS or whole-game memory claim.
+Full-report sample time changed from 176.94 to 150.52 microseconds; timings vary
+with JIT/runtime state and are not asserted. The new 160 KiB full-report ceiling
+failed on the original implementation and passes after optimization. Existing
+compact-report and unchanged-sync budgets remain intact.
+
+Preserved after review: per-frame native observations and critical boundary
+flushes, write/readback/recovery checks, native baseline arithmetic, gameplay
+messages, inventory/talent safety scans, merchant schedule/placement order and
+costume grant timing. Spawn and costume operations remain event-driven. No new
+polling, network writes, persistent caches, dependencies or assets were added.
+
+Regression coverage includes exact stat/rule output, buffered read order and all
+reconciliation states, pending and unknown subjects, late rule registration,
+revisions, re-entry, forgetting/teardown, immutable earlier snapshots, and current
+EN/KO native-fallback diagnostics. Runtime fixtures also retain their existing
+restart, native-edit, authority, preset and partial-write recovery coverage.
+No deployment or live Unity/Mono/multiplayer performance test was performed.
+
 ## Follow-up: 0.26.1 (2026-09-30)
 
 Reviewed the current session/stat/resource reconciliation, names, panel/chat and

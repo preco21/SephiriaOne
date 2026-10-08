@@ -140,7 +140,55 @@ internal static class ReconciliationTests
                 "Only verified application or native fallback is fresh: " + result.State);
             Check(calls == (result.State == ReconcileState.WaitingForReadiness ? 2 : 1),
                 "Fallback and unresolved stable outcomes do not busy retry: " + result.State);
+            var states = new List<ReconciliationStatus>();
+            readiness.AppendStatuses(subject, states);
+            var copied = readiness.Describe(subject)[0];
+            Check(states.Count == 1 && states[0].Id == copied.Id && states[0].State == result.State &&
+                states[0].Detail == result.Detail && states[0].Revision == copied.Revision,
+                "Buffered diagnostics preserve complete state: " + result.State);
         }
+        var diagnostics = new ReconciliationCoordinator<Subject>();
+        int observations = 0, applications = 0;
+        diagnostics.Register(ReconciliationRule<Subject>.ObserveValue("first", SyncDomain.Stats, SyncDomain.Limits,
+            ReconcileMode.OnChange, s => true, s => { observations++; return s.Input; }, s =>
+            { applications++; return ReconcileResult.Applied("original detail"); }));
+        var inspected = new Subject();
+        var buffer = new List<ReconciliationStatus>();
+        diagnostics.AppendStatuses(inspected, buffer);
+        Check(buffer.Count == 0 && observations == 0 && applications == 0, "Unknown subject inspection does not enroll or observe it");
+        diagnostics.Invalidate(inspected, SyncDomain.Stats);
+        diagnostics.AppendStatuses(inspected, buffer);
+        Check(buffer.Count == 1 && buffer[0].State == ReconcileState.WaitingForReadiness && buffer[0].Revision == 0 &&
+            buffer[0].Detail == "Not observed yet." && observations == 0 && applications == 0, "Pending diagnostics cannot acknowledge or apply invalidation");
+        diagnostics.Reconcile(inspected);
+        var retained = diagnostics.Describe(inspected);
+        diagnostics.AppendStatuses(inspected, buffer);
+        Check(buffer.Count == 2 && buffer[0].Revision == 0 && buffer[1].Revision == 1, "Append preserves caller entries and copies outcomes by value");
+        diagnostics.Register(ReconciliationRule<Subject>.ObserveValue("later", SyncDomain.Limits, SyncDomain.None,
+            ReconcileMode.OnChange, s => true, s => s.Input, s => ReconcileResult.Applied()));
+        buffer.Clear(); diagnostics.AppendStatuses(inspected, buffer);
+        Check(buffer.Count == 1, "Diagnostics cannot initialize a newly registered rule");
+        inspected.Input++;
+        diagnostics.Reconcile(inspected);
+        buffer.Clear(); diagnostics.AppendStatuses(inspected, buffer);
+        Check(buffer.Select(s => s.Id).SequenceEqual(new[] { "first", "later" }) && buffer[0].Revision == 2 &&
+            retained.Count == 1 && retained[0].Revision == 1 && retained[0].Detail == "original detail",
+            "Buffered diagnostics preserve rule order and independent snapshots across changes");
+        int previousObservations = observations, previousApplications = applications;
+        for (int i = 0; i < 1000; i++) { buffer.Clear(); diagnostics.AppendStatuses(inspected, buffer); }
+        allocated = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 5000; i++) { buffer.Clear(); diagnostics.AppendStatuses(inspected, buffer); }
+        Check(GC.GetAllocatedBytesForCurrentThread() - allocated < 1024 && observations == previousObservations && applications == previousApplications,
+            "Repeated buffered reads avoid per-status allocation and never invoke observers or writes");
+        diagnostics.Forget(inspected);
+        buffer.Clear(); diagnostics.AppendStatuses(inspected, buffer);
+        Check(buffer.Count == 0 && retained[0].Revision == 1, "Forget clears live diagnostics without altering earlier snapshots");
+        diagnostics.Reconcile(inspected);
+        buffer.Clear(); diagnostics.AppendStatuses(inspected, buffer);
+        Check(buffer.Count == 2 && buffer[0].Revision == 1, "Reentry creates fresh diagnostic revisions");
+        diagnostics.Clear();
+        buffer.Clear(); diagnostics.AppendStatuses(inspected, buffer);
+        Check(buffer.Count == 0, "Scope teardown leaves no buffered live outcome");
         return checks;
     }
 }

@@ -30,7 +30,7 @@ namespace SephiriaOne
         public static ReconcileResult Faulted(string detail) => new ReconcileResult(ReconcileState.Faulted, detail);
     }
 
-    internal sealed class ReconciliationStatus
+    internal readonly struct ReconciliationStatus
     {
         public string Id { get; }
         public ReconcileState State { get; }

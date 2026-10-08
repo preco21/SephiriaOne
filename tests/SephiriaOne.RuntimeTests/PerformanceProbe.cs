@@ -54,6 +54,8 @@ internal static class PerformanceProbe
                 // capture path to allocate a second copy of each player dictionary.
                 if (checkBudget && compact > 25 * 1024)
                     throw new Exception("Five-player non-Status snapshots exceed the 25 KiB allocation budget.");
+                if (checkBudget && full > 160 * 1024)
+                    throw new Exception("Five-player full reports exceed the 160 KiB allocation budget.");
             }
         }
         SessionSettings.Stop();

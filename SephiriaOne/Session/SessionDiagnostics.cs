@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text;
 
 namespace SephiriaOne
 {
@@ -20,12 +21,15 @@ namespace SephiriaOne
             {
                 if (!spawner || !spawner.PlayerAvatar || spawner.PlayerAvatar.netId != id) continue;
                 PlayerAvatar player = spawner.PlayerAvatar;
+                var states = new List<ReconciliationStatus>();
+                var text = new StringBuilder(128);
+                string label = L.T("Player #") + id;
                 if (subjects.TryGetValue(player, out HostPlayer subject))
-                    DescribeRules(lines, L.T("Player #") + id, players.Describe(subject));
-                else lines.Add(L.T("Player #") + id + " has not been enrolled.");
+                    DescribeRules(lines, label, players, subject, states, text);
+                else lines.Add(label + " has not been enrolled.");
                 if (relativeStats.TryGetValue(player, out var targets))
                     foreach (var target in targets.Values)
-                        DescribeRules(lines, L.T("Player #") + id + " " + target.Stat.Name, relative.Describe(target));
+                        DescribeRules(lines, label + " " + target.Stat.Name, relative, target, states, text);
                 if (player.Inventory)
                     lines.Add($"native slots={player.Inventory.CurrentInventoryStorage}; fountain={player.Inventory.dimensionPocket}; talents={player.maxPassivePoint}");
                 foreach (StatDefinition stat in StatCatalog.All) DescribeRawStat(lines, player, stat.Key, stat.Marker);
@@ -53,12 +57,17 @@ namespace SephiriaOne
                 L.T(", choices=") + L.T(ChoiceFeature.Available ? "True" : "False") + ".");
             if (sameSession)
             {
+                var states = new List<ReconciliationStatus>();
+                var text = new StringBuilder(128);
                 foreach (var subject in subjects.Values)
-                    DescribeRules(lines, L.T("Player #") + subject.Id, players.Describe(subject));
+                    DescribeRules(lines, L.T("Player #") + subject.Id, players, subject, states, text);
                 foreach (var entry in relativeStats)
+                {
+                    string label = L.T("Player #") + entry.Key.netId + " ";
                     foreach (var target in entry.Value.Values)
-                        DescribeRules(lines, L.T("Player #") + entry.Key.netId + " " + target.Stat.Name, relative.Describe(target));
-                DescribeRules(lines, L.T("Session"), session.Describe(dungeon));
+                        DescribeRules(lines, label + target.Stat.Name, relative, target, states, text);
+                }
+                DescribeRules(lines, L.T("Session"), session, dungeon, states, text);
                 foreach (var boundary in boundaries)
                     lines.Add(L.T(boundary.Key) + L.T(": last boundary ") + (boundary.Value ? L.T("fresh.") : L.T("unavailable; native behavior continued.")));
                 if (failedBatch != null)
@@ -72,16 +81,23 @@ namespace SephiriaOne
             lines.Add(L.T("Native replication carries gameplay state; peer delivery/rendering is not acknowledged by this status."));
         }
 
-        private static void DescribeRules(List<string> lines, string subject, IReadOnlyList<ReconciliationStatus> states)
+        private static void DescribeRules<T>(List<string> lines, string subject, ReconciliationCoordinator<T> coordinator,
+            T target, List<ReconciliationStatus> states, StringBuilder text) where T : class
         {
+            states.Clear();
+            coordinator.AppendStatuses(target, states);
             foreach (var state in states)
             {
                 // Translate the coordinator's two stable readiness labels at read
                 // time. Previously captured fault details remain historical text.
                 string detail = state.Detail == "Not observed yet." ? L.T("Not observed yet.") :
                     state.Detail == "Required state or authority is not ready." ? L.T("Required state or authority is not ready.") : state.Detail;
-                lines.Add(subject + " / " + state.Id + ": " + L.T(state.State.ToString()) + L.T(" (revision ") + state.Revision + ")" +
-                    (string.IsNullOrEmpty(detail) ? "." : ": " + detail));
+                text.Clear();
+                text.Append(subject).Append(" / ").Append(state.Id).Append(": ").Append(L.T(state.State.ToString()))
+                    .Append(L.T(" (revision ")).Append(state.Revision).Append(')');
+                if (string.IsNullOrEmpty(detail)) text.Append('.');
+                else text.Append(": ").Append(detail);
+                lines.Add(text.ToString());
             }
         }
     }

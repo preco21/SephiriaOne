@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Text;
 using Mirror;
 
 namespace SephiriaOne
@@ -91,6 +92,7 @@ namespace SephiriaOne
 
             bool allReady = true;
             var seen = new HashSet<PlayerAvatar>(ReferenceComparer<PlayerAvatar>.Instance);
+            StringBuilder statDescription = null;
             foreach (PlayerSpawner spawner in PlayerSpawner.MultiplayerList)
             {
                 if (!IsReady(spawner))
@@ -105,7 +107,13 @@ namespace SephiriaOne
                 player.customStats.TryGetValue(FountainPoints.ContributionKey, out int fountainOffset);
                 if (includeDiagnostics) lines.Add(label + L.F("Fountain={0} (addon {1}).", player.Inventory.dimensionPocket, Signed(fountainOffset)));
                 var stats = new Dictionary<string, decimal>(StatCatalog.All.Count);
-                var statDescriptions = includeDiagnostics ? new List<string>(StatCatalog.All.Count) : null;
+                if (includeDiagnostics)
+                {
+                    if (statDescription == null) statDescription = new StringBuilder(1024);
+                    else statDescription.Clear();
+                    statDescription.Append(label);
+                }
+                bool firstStat = true;
                 foreach (StatDefinition stat in StatCatalog.All)
                 {
                     decimal value = stat.Display(player.GetCustomStatUnsafe(stat.Key));
@@ -113,13 +121,16 @@ namespace SephiriaOne
                     if (includeDiagnostics)
                     {
                         player.customStats.TryGetValue(stat.Marker, out int contribution);
-                        statDescriptions.Add(stat.Name + "=" + value.ToString("0.##", CultureInfo.InvariantCulture) +
-                            (contribution == 0 ? "" : L.T(" (base adjustment ") + Signed(contribution) + ")") +
-                            (sameSession && IsRelativeStatState(player, stat, ReconcileState.NativeFallback) ? L.T(" (native fallback)") :
-                                sameSession && IsRelativeStatState(player, stat, ReconcileState.Suspended) ? L.T(" (relative setting suspended)") : ""));
+                        if (!firstStat) statDescription.Append(", ");
+                        firstStat = false;
+                        statDescription.Append(stat.Name).Append('=').Append(value.ToString("0.##", CultureInfo.InvariantCulture));
+                        if (contribution != 0)
+                            statDescription.Append(L.T(" (base adjustment ")).Append(Signed(contribution)).Append(')');
+                        if (sameSession && IsRelativeStatState(player, stat, ReconcileState.NativeFallback)) statDescription.Append(L.T(" (native fallback)"));
+                        else if (sameSession && IsRelativeStatState(player, stat, ReconcileState.Suspended)) statDescription.Append(L.T(" (relative setting suspended)"));
                     }
                 }
-                if (includeDiagnostics) lines.Add(label + string.Join(", ", statDescriptions) + L.T(". Units: /stats list."));
+                if (includeDiagnostics) lines.Add(statDescription.Append(L.T(". Units: /stats list.")).ToString());
                 var choices = new Dictionary<string, int>();
                 var choiceDescriptions = includeDiagnostics ? new List<string>() : null;
                 string[] names = { "item", "weapon", "miracle" };

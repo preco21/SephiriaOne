@@ -137,11 +137,19 @@ namespace SephiriaOne
         public IReadOnlyList<ReconciliationStatus> Describe(T subject)
         {
             var result = new List<ReconciliationStatus>();
+            AppendStatuses(subject, result);
+            return result;
+        }
+
+        // Copy only recorded outcomes. Do not create/capture observations here:
+        // callers may inspect pending, forgotten or faulted subjects. The caller
+        // owns the buffer; no native objects or mutable records are exposed.
+        public void AppendStatuses(T subject, List<ReconciliationStatus> destination)
+        {
             if (subjects.TryGetValue(subject, out var records))
                 foreach (var rule in rules)
                     if (records.TryGetValue(rule.Id, out var record))
-                        result.Add(new ReconciliationStatus(rule.Id, record.Result, record.Revision));
-            return result;
+                        destination.Add(new ReconciliationStatus(rule.Id, record.Result, record.Revision));
         }
 
         public bool TryGetResult(T subject, string id, out ReconcileResult result)

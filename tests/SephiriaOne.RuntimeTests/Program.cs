@@ -749,6 +749,7 @@ foreach (bool useCommand in new[] { false, true })
 
 ChoiceCleanupLifetimeTests.Run(Check, Start);
 SettingsControlsTests.Run(Check, Start, Add);
+DiagnosticSnapshotTests.Run(Start, Check);
 RabbitRuntimeTests.Run(Start, Add, Check);
 MerchantRuntimeTests.Run(Start, Check);
 PenaltyMultiplierRuntimeTests.Run(Check, Start, Add);

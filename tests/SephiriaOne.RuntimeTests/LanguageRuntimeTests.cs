@@ -44,6 +44,16 @@ internal static class LanguageRuntimeTests
                 "Custom translations preserve exact native penalty fallback");
             check(new StatUpdate(-50, 0, "").UsesNativeFallback && !new StatUpdate(-50, 0).UsesNativeFallback,
                 "Fallback classification is typed state even when translated reason becomes empty");
+            foreach (string language in new[] { "ko", "en" })
+            {
+                check(L.TrySetLanguage(language, out _), "Select diagnostic language " + language);
+                var report = SessionSettings.ReadSnapshot();
+                check(report.Lines.Any(line => line.Contains("cooldown=-50" + L.T(" (native fallback)"))) &&
+                    report.Lines.Any(line => line.Contains("cooldown / relative-stat: " + L.T("NativeFallback") + L.T(" (revision ") + "1)")),
+                    "Diagnostic formatting retains current localization and native fallback suffix: " + language);
+                check(SessionSettings.DescribeDisconnect(1).Any(line => line.Contains("cooldown / relative-stat: " + L.T("NativeFallback"))),
+                    "Disconnect diagnostics share current language without replaying state: " + language);
+            }
         }
         finally { NetworkServer.active = true; L.Shutdown(); }
     }
