@@ -3,6 +3,14 @@
 Added in `0.10.0`. Only the host needs the addon; preset commands and their
 feedback remain local. Guests receive gameplay changes through native sync.
 
+Version `0.32.0` adds v13 for [Mystic Jar spawn rates](mystic-jar.md). One optional
+row, `jars chance 50` or `jars multiplier 2`, stores the chosen override. Percentages
+accept 0–100 with up to two decimals; multipliers follow the shared `xN` bounds.
+Absent rows, reset and x1 restore native behavior. Invalid or duplicate jar rows
+reject the whole preset. v1–v12 remain supported with native jar behavior, and
+exports use the oldest applicable schema when no jar override remains. Saving
+records intent only; loading does not reroll existing jars.
+
 Version `0.31.0` adds v12 for [friendly fire](friendly-fire.md). Optional rows
 `friendlyfire enabled 1` and `friendlyfire damage 25` store the toggle and whole
 percentage (0–300). Missing rows mean off/100%. Turning it off retains the chosen

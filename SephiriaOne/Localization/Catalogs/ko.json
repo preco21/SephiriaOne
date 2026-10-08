@@ -424,5 +424,21 @@
   "Allied damage: {0}%": "아군에게 주는 피해: {0}%",
   "Melee/projectile hits can hurt other players and allies. Enemy-seeking skills keep their normal targets; self and enemy damage are unchanged.": "근접 공격과 투사체가 다른 플레이어 및 아군에게 피해를 줄 수 있습니다. 적을 자동으로 찾는 스킬의 대상과 자신/적에게 주는 피해는 유지됩니다.",
   "Damage scales after defenses, before shields. Zero blocks allied hits. Nested friendly retaliation is blocked to prevent loops.": "방어 계산 후, 보호막 흡수 전에 배율을 적용합니다. 0%는 아군 피격을 차단합니다. 무한 반복을 막기 위해 같은 피격 중 연쇄 아군 반격을 차단합니다.",
-  "Confirmed friendly-fire kills are announced in chat. Safe areas and invulnerability retain native protection.": "아군 피해로 인한 처치를 채팅에 알립니다. 안전 구역과 무적 상태의 기본 보호는 유지됩니다."
+  "Confirmed friendly-fire kills are announced in chat. Safe areas and invulnerability retain native protection.": "아군 피해로 인한 처치를 채팅에 알립니다. 안전 구역과 무적 상태의 기본 보호는 유지됩니다.",
+  "Mystic Jar: /one jars chance 0..100|xN; /one jars status|reset. Percentages allow 2 decimals; xN uses each native chance (capped at 100%). x1/reset restores native. /one save persists settings.": "신비한 항아리: /one jars chance 0..100|xN; /one jars status|reset. 확률은 소수점 2자리까지 입력할 수 있습니다. xN은 각 위치의 기본 확률을 배수로 조정합니다(최대 100%). x1/reset은 기본값을 복원합니다. /one save로 저장합니다.",
+  "Only the host can change Mystic Jar spawn rates.": "호스트만 신비한 항아리 출현 확률을 변경할 수 있습니다.",
+  "Mystic Jar compatibility checks failed. Reset remains available; see Player.log.": "신비한 항아리 호환성 검사에 실패했습니다. 초기화는 사용할 수 있습니다. Player.log를 확인하세요.",
+  "Mystic Jar spawn chance: native (no override).": "신비한 항아리 출현 확률: 기본값(변경 없음).",
+  "Mystic Jar spawn chance: {0}% at each eligible random location.": "신비한 항아리 출현 확률: 조건을 충족한 각 무작위 배치 위치에서 {0}%.",
+  "Mystic Jar spawn chance: native x{0}, capped at 100% per eligible random location.": "신비한 항아리 출현 확률: 각 위치의 기본 확률 x{0}, 조건을 충족한 무작위 배치 위치당 최대 100%.",
+  " Mystic Jar hooks unavailable; see Player.log.": " 신비한 항아리 기능을 사용할 수 없습니다. Player.log를 확인하세요.",
+  " /one jars help lists Mystic Jar spawn options.": " /one jars help로 신비한 항아리 출현 옵션을 확인하세요.",
+  "Jars": "항아리",
+  "Mystic Jar spawn chance": "신비한 항아리 출현 확률",
+  "0–100% or xN (native chance × N)": "0–100% 또는 xN (기본 확률 × N)",
+  "Apply": "적용",
+  "Reset restores each location's native chance. Changes affect future spawn checks only.": "초기화하면 각 위치의 기본 확률을 복원합니다. 변경 사항은 이후 출현 판정부터 적용됩니다.",
+  "Normal random Jar locations only. Chapter gates, guaranteed placements and hidden-room rewards keep native behavior.": "일반 무작위 항아리 배치 위치에만 적용합니다. 챕터 조건, 확정 배치 및 숨겨진 방의 보상은 기본 게임 규칙을 따릅니다.",
+  "100% fills eligible random locations; it does not create new locations or guarantee a Jar on every floor. 0% disables these random spawns.": "100%는 조건을 충족한 무작위 배치 위치에서 출현하게 합니다. 새 위치를 만들거나 모든 층에 항아리를 보장하지는 않습니다. 0%는 이러한 무작위 출현을 막습니다.",
+  "Existing Jars are not rerolled or refilled. Host settings also apply to unmodified guests.": "기존 항아리를 다시 추첨하거나 사용 횟수를 회복하지 않습니다. 모드를 설치하지 않은 게스트에게도 호스트 설정이 적용됩니다."
 }

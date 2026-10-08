@@ -50,6 +50,8 @@ namespace SephiriaOne
         public bool CanSave { get; }
         public bool CanForget { get; }
         public bool ChoicesAvailable { get; }
+        public JarSpawnSettings JarSpawns { get; }
+        public bool JarSpawnsAvailable { get; }
         public FriendlyFireSettings FriendlyFire { get; }
         public bool FriendlyFireAvailable { get; }
         public bool ItemUnlock { get; }
@@ -80,11 +82,13 @@ namespace SephiriaOne
             bool merchantSpawns = false, bool merchantsAvailable = false, int merchantSpawnChance = MerchantCommand.DefaultChance,
             IReadOnlyDictionary<string, MerchantSettings> merchants = null, bool rabbitLevelUpPotionsAvailable = false,
             bool itemUnlock = false, bool itemRestrictionsAvailable = false,
-            FriendlyFireSettings friendlyFire = default, bool friendlyFireAvailable = false)
+            FriendlyFireSettings friendlyFire = default, bool friendlyFireAvailable = false,
+            JarSpawnSettings jarSpawns = default, bool jarSpawnsAvailable = false)
         {
             SessionIdentity = sessionIdentity; Epoch = epoch; RunGeneration = runGeneration; Revision = revision;
             HostActive = hostActive; CanMutate = canMutate; CanSave = canSave; CanForget = canForget;
             ChoicesAvailable = choicesAvailable; SavedValid = savedValid;
+            JarSpawns = jarSpawns; JarSpawnsAvailable = jarSpawnsAvailable;
             FriendlyFire = friendlyFire; FriendlyFireAvailable = friendlyFireAvailable;
             ItemUnlock = itemUnlock; ItemRestrictionsAvailable = itemRestrictionsAvailable;
             RabbitPotions = rabbitPotions; RabbitPotionsAvailable = rabbitPotionsAvailable;

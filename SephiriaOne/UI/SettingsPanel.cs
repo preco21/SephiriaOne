@@ -40,7 +40,7 @@ namespace SephiriaOne
             widgets = new PanelWidgets(font);
             languageRevision = L.Revision;
             gameObject.AddComponent<Image>().color = new Color(0.01f, 0.025f, 0.05f, 0.9f);
-            window = PanelWidgets.Rect(transform, "Settings", 0, 0, 600, 332);
+            window = PanelWidgets.Rect(transform, "Settings", 0, 0, 600, 356);
             window.anchorMin = window.anchorMax = window.pivot = new Vector2(0.5f, 0.5f);
             window.gameObject.AddComponent<Image>().color = new Color32(23, 35, 50, 255);
             widgets.Text(window, "Title", "SephiriaOne", 16, 10, 480, 24, 18);
@@ -48,13 +48,13 @@ namespace SephiriaOne
             var close = widgets.Button(window, "X", 563, 10, 23, 23, Close);
             defaultSelectable = close.gameObject;
             availability = widgets.Text(window, "Availability", "", 16, 54, 568, 22, 10);
-            string[] pages = { "Stats", "Fountain", "Choices", "Resources", "Presets", "Status", "Rabbit", "Merchant", "Items", "Combat" };
+            string[] pages = { "Stats", "Fountain", "Choices", "Resources", "Presets", "Status", "Rabbit", "Merchant", "Items", "Combat", "Jars" };
             for (int i = 0; i < pages.Length; i++)
             {
                 int target = i;
-                widgets.Button(window, pages[i], 16 + 57 * i, 80, 55, 22, () => SelectPage(target));
+                widgets.Button(window, pages[i], 16 + 95 * (i % 6), 80 + 24 * (i / 6), 90, 22, () => SelectPage(target));
             }
-            feedback = widgets.Text(window, "Feedback", "Choose an action to apply. Native menus and offers refresh normally.", 16, 282, 568, 40, 10);
+            feedback = widgets.Text(window, "Feedback", "Choose an action to apply. Native menus and offers refresh normally.", 16, 306, 568, 40, 10);
             SelectPage(0);
         }
 
@@ -105,13 +105,14 @@ namespace SephiriaOne
             var rootRect = ParentRoot ? ParentRoot.transform as RectTransform : null;
             if (rootRect)
             {
-                float scale = Mathf.Min(1, Mathf.Min(rootRect.rect.width / 640f, rootRect.rect.height / 360f));
+                float scale = Mathf.Min(1, Mathf.Min(rootRect.rect.width / 640f, rootRect.rect.height / 384f));
                 window.localScale = Vector3.one * Mathf.Max(0.1f, scale);
             }
-            bool choicesReady = page == 9 ? snapshot.FriendlyFireAvailable : page == 8 ? snapshot.ItemRestrictionsAvailable : page == 7 ? snapshot.MerchantsAvailable : page == 6 ? snapshot.RabbitPotionsAvailable : page == 2 ? snapshot.ChoicesAvailable : page != 3 || ResourceFeature.IsAvailable(ResourceCatalog.All[resourceIndex].Kind);
+            bool choicesReady = page == 10 ? snapshot.JarSpawnsAvailable : page == 9 ? snapshot.FriendlyFireAvailable : page == 8 ? snapshot.ItemRestrictionsAvailable : page == 7 ? snapshot.MerchantsAvailable : page == 6 ? snapshot.RabbitPotionsAvailable : page == 2 ? snapshot.ChoicesAvailable : page != 3 || ResourceFeature.IsAvailable(ResourceCatalog.All[resourceIndex].Kind);
             bool levelUpReady = page != 6 || snapshot.RabbitLevelUpPotionsAvailable;
             availability.text = !snapshot.CanMutate ? snapshot.AvailabilityReason : !choicesReady ?
-                (page == 9 ? L.T("Friendly-fire compatibility checks failed. Off/reset remain available; see Player.log.") :
+                (page == 10 ? L.T("Mystic Jar compatibility checks failed. Reset remains available; see Player.log.") :
+                page == 9 ? L.T("Friendly-fire compatibility checks failed. Off/reset remain available; see Player.log.") :
                 page == 8 ? L.T("Item restriction compatibility checks failed. Off/reset remain available; see Player.log.") :
                 page == 7 ? L.T("Merchant compatibility checks failed. Off/reset remain available; see Player.log.") :
                 page == 6 ? L.T("Rabbit potion compatibility checks failed. Off/reset remain available; see Player.log.") :
@@ -129,7 +130,7 @@ namespace SephiriaOne
             if (itemsOff) itemsOff.interactable = snapshot.CanMutate;
             if (amount) amount.interactable = snapshot.CanMutate && choicesReady;
             // Full-family reset is intentionally available for the existing recovery path.
-            string family = page == 0 ? "stats" : page == 1 ? "fountain" : page == 3 ? "resources" : page == 6 ? "rabbit" : page == 7 ? "merchant" : page == 8 ? "items" : page == 9 ? "combat" : "choices";
+            string family = page == 0 ? "stats" : page == 1 ? "fountain" : page == 3 ? "resources" : page == 6 ? "rabbit" : page == 7 ? "merchant" : page == 8 ? "items" : page == 9 ? "combat" : page == 10 ? "jars" : "choices";
             bool recovery = snapshot.HostActive && snapshot.SessionIdentity != null &&
                 (snapshot.FaultedFeature == family || snapshot.FaultedFeature == "inheritance");
             if (resetAll) resetAll.interactable = snapshot.CanMutate || recovery;
@@ -141,6 +142,7 @@ namespace SephiriaOne
             else if (page == 7) readout.SetText(MerchantValues(snapshot));
             else if (page == 8) readout.SetText(ItemValues(snapshot));
             else if (page == 9) readout.SetText(CombatValues(snapshot));
+            else if (page == 10) readout.SetText(JarValues(snapshot));
             else if (page == 4) readout.SetText(PresetValues(snapshot));
             else readout.SetText(L.T("Automatic name gradient: #408af1 -> #a8d7fa\nHost's native multiplayer character name; colors are fixed.") +
                 "\n\n" + string.Join("\n\n", snapshot.Lines));
@@ -169,12 +171,13 @@ namespace SephiriaOne
             amount = null; resetOne = resetAll = save = forget = merchantOff = merchantGuaranteeOff = rabbitLevelUpOn = itemsOff = friendlyOff = null;
             friendlyDamage = null; friendlyPercent = null; friendlyDraft = false;
             if (pageRoot) { widgets.Forget(pageRoot); pageRoot.gameObject.SetActive(false); Destroy(pageRoot.gameObject); }
-            pageRoot = PanelWidgets.Rect(window, "Page", 0, 110, 600, 162);
+            pageRoot = PanelWidgets.Rect(window, "Page", 0, 134, 600, 162);
             if (page < 4) BuildEditor();
             else if (page == 6) BuildRabbitEditor();
             else if (page == 7) BuildMerchantEditor();
             else if (page == 8) BuildItemEditor();
             else if (page == 9) BuildCombatEditor();
+            else if (page == 10) BuildJarEditor();
             else
             {
                 if (page == 4)

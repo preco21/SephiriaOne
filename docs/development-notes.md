@@ -9,6 +9,14 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.32.0` adds [Mystic Jar spawn-rate settings](mystic-jar.md): exact
+percentages or multipliers of each location's native chance, `/one jars`, a Jars
+panel and v13 presets. Normal random placements only are affected; hidden-room
+rewards, guaranteed placements and chapter gates retain native behavior. Settings
+are read on server generation and use native visibility synchronization for stock
+guests, without rerolling existing jars or adding update-loop work. Panel tabs now
+wrap to two rows. No deployment or live gameplay test was performed.
+
 Version `0.31.0` adds default-off host friendly fire, `/one friendlyfire` commands,
 a Combat tab with a 0–300% damage slider, confirmed-kill chat notices and v12
 presets. Native server damage/death/chat paths support stock guests without

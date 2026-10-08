@@ -23,6 +23,7 @@ namespace SephiriaOne
             MerchantFeature.Initialize();
             ItemRestrictionFeature.Initialize();
             FriendlyFireFeature.Initialize();
+            JarSpawnFeature.Initialize();
             DisconnectDiagnosticsFeature.Initialize();
             if (!nameColor)
             {
@@ -48,6 +49,7 @@ namespace SephiriaOne
         {
             // Keep controllers/guards available if verified cleanup needs recovery.
             ChoiceFeature.Shutdown();
+            JarSpawnFeature.Shutdown();
             FriendlyFireFeature.Shutdown();
             ItemRestrictionFeature.Shutdown();
             MerchantFeature.Shutdown();

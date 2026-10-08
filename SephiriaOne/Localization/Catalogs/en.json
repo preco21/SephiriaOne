@@ -424,5 +424,21 @@
   "Allied damage: {0}%": "Allied damage: {0}%",
   "Melee/projectile hits can hurt other players and allies. Enemy-seeking skills keep their normal targets; self and enemy damage are unchanged.": "Melee/projectile hits can hurt other players and allies. Enemy-seeking skills keep their normal targets; self and enemy damage are unchanged.",
   "Damage scales after defenses, before shields. Zero blocks allied hits. Nested friendly retaliation is blocked to prevent loops.": "Damage scales after defenses, before shields. Zero blocks allied hits. Nested friendly retaliation is blocked to prevent loops.",
-  "Confirmed friendly-fire kills are announced in chat. Safe areas and invulnerability retain native protection.": "Confirmed friendly-fire kills are announced in chat. Safe areas and invulnerability retain native protection."
+  "Confirmed friendly-fire kills are announced in chat. Safe areas and invulnerability retain native protection.": "Confirmed friendly-fire kills are announced in chat. Safe areas and invulnerability retain native protection.",
+  "Mystic Jar: /one jars chance 0..100|xN; /one jars status|reset. Percentages allow 2 decimals; xN uses each native chance (capped at 100%). x1/reset restores native. /one save persists settings.": "Mystic Jar: /one jars chance 0..100|xN; /one jars status|reset. Percentages allow 2 decimals; xN uses each native chance (capped at 100%). x1/reset restores native. /one save persists settings.",
+  "Only the host can change Mystic Jar spawn rates.": "Only the host can change Mystic Jar spawn rates.",
+  "Mystic Jar compatibility checks failed. Reset remains available; see Player.log.": "Mystic Jar compatibility checks failed. Reset remains available; see Player.log.",
+  "Mystic Jar spawn chance: native (no override).": "Mystic Jar spawn chance: native (no override).",
+  "Mystic Jar spawn chance: {0}% at each eligible random location.": "Mystic Jar spawn chance: {0}% at each eligible random location.",
+  "Mystic Jar spawn chance: native x{0}, capped at 100% per eligible random location.": "Mystic Jar spawn chance: native x{0}, capped at 100% per eligible random location.",
+  " Mystic Jar hooks unavailable; see Player.log.": " Mystic Jar hooks unavailable; see Player.log.",
+  " /one jars help lists Mystic Jar spawn options.": " /one jars help lists Mystic Jar spawn options.",
+  "Jars": "Jars",
+  "Mystic Jar spawn chance": "Mystic Jar spawn chance",
+  "0–100% or xN (native chance × N)": "0–100% or xN (native chance × N)",
+  "Apply": "Apply",
+  "Reset restores each location's native chance. Changes affect future spawn checks only.": "Reset restores each location's native chance. Changes affect future spawn checks only.",
+  "Normal random Jar locations only. Chapter gates, guaranteed placements and hidden-room rewards keep native behavior.": "Normal random Jar locations only. Chapter gates, guaranteed placements and hidden-room rewards keep native behavior.",
+  "100% fills eligible random locations; it does not create new locations or guarantee a Jar on every floor. 0% disables these random spawns.": "100% fills eligible random locations; it does not create new locations or guarantee a Jar on every floor. 0% disables these random spawns.",
+  "Existing Jars are not rerolled or refilled. Host settings also apply to unmodified guests.": "Existing Jars are not rerolled or refilled. Host settings also apply to unmodified guests."
 }

@@ -10,6 +10,11 @@ The host uses this panel to change settings for **all current and joining
 players**. Guests can use the unmodified game. The panel itself is host-local;
 effects use the same native synchronization as the existing commands.
 
+Version `0.32.0` adds **Jars** and wraps the tabs onto two rows. Enter a percentage
+or `xN`, then Apply; Reset restores each random location's native spawn chance.
+Only future normal random spawn checks change. Hidden-room rewards remain native.
+See [Mystic Jar scope and verification](mystic-jar.md).
+
 Version `0.31.0` adds **Combat**: friendly fire On/Off, a 0–300% allied-damage
 slider with **Apply damage**, and Reset (off/100%). Dragging is a local draft;
 the Apply button uses the same `/one friendlyfire damage` service as chat.
@@ -31,6 +36,8 @@ unapplied drafts without sending any gameplay command.
 | Presets | Save current applied settings, forget the saved copy, or refresh it from disk. Active intent and saved intent are shown separately. |
 | Status | Current intent, player values, revisions, synchronization outcomes, native name status and fault details. Scroll for the complete readout. |
 | Items | Default-off On/Off and Reset controls for given-item sale restrictions and owner-bound drops, including Fountain sharing. See [scope and native limits](item-restrictions.md); intrinsic costume-curse no-drop properties remain. |
+| Combat | Friendly fire On/Off, a 0–300% damage slider with Apply damage, and Reset (off/100%). |
+| Jars | Apply a 0–100% chance or native-rate multiplier such as x2. Reset restores native. Does not reroll existing jars, change hidden-room rewards or create new spawn locations. |
 | Rabbit | Independent On/Off controls for Wing-Eared Rabbit infinite HP potions, nearby potion healing, MP cost, Survival rank-5 suppression and random non-HP/MP potions on level-up. Enter 0..10000 MP and press Set & on to choose a fee; Off remembers it. Reset restores 10 MP and disables all five options. Shows active state and separate drink/level-up compatibility. |
 | Merchant | Select Wandering Merchant, Papyrus or Taz. Each has spawn On/Off, a separate Guarantee On/Off (default on), chance 0..100%, first main dungeon stage 1..1000, run limit 0..1000 (0 = unlimited), and Reset selected. Enter a number, then choose its action. Guarantee off leaves chance rolls active and releases the reserved cap slot. Multiple types can share a floor. Added merchant base HP uses main-stage multipliers 1/2/4/5/7/8 for stages 1–6 (later stages stay ×8; maps within a stage share the factor), retaining native HP bonuses and no crime penalty. |
 

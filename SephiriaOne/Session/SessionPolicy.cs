@@ -71,6 +71,8 @@ namespace SephiriaOne
         public ResourcePolicy Resources { get; } = new ResourcePolicy();
         public bool ItemUnlock { get; private set; }
         public FriendlyFireSettings FriendlyFire { get; private set; }
+        public JarSpawnSettings JarSpawns { get; private set; }
+        public void RecordJarSpawns(JarSpawnSettings settings) => JarSpawns = settings;
         public void Record(FriendlyFireCommand command) => FriendlyFire = FriendlyFire.Apply(command);
         public void RecordItemUnlock(bool enabled) => ItemUnlock = enabled;
         public RabbitPotionSettings RabbitPotions { get; private set; }
@@ -79,7 +81,7 @@ namespace SephiriaOne
         public bool MerchantSpawns => Merchants.Get(MerchantCatalog.DefaultId).Enabled;
         public int MerchantSpawnChance => Merchants.Get(MerchantCatalog.DefaultId).Chance;
         public void Record(MerchantCommand command) => Merchants.Record(command);
-        public bool HasChanges => fountain.HasValue || choices.Count != 0 || stats.Count != 0 || Resources.HasChanges || RabbitPotions.HasChanges || Merchants.HasChanges || ItemUnlock || FriendlyFire.HasChanges;
+        public bool HasChanges => fountain.HasValue || choices.Count != 0 || stats.Count != 0 || Resources.HasChanges || RabbitPotions.HasChanges || Merchants.HasChanges || ItemUnlock || FriendlyFire.HasChanges || JarSpawns.HasChanges;
         public bool HasFountainSetting => fountain.HasValue;
         public bool HasFountainMultiplier => fountain.HasValue && fountain.Value.Multiplier;
 
@@ -122,6 +124,7 @@ namespace SephiriaOne
             Resources.Clear();
             ItemUnlock = false;
             FriendlyFire = default;
+            JarSpawns = default;
             RabbitPotions = default;
             Merchants.Clear();
         }

@@ -51,5 +51,7 @@
     <Compile Include="../../SephiriaOne/Session/Presets/SessionPresetCommands.cs" Link="Source/Session/Presets/SessionPresetCommands.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/FriendlyFireSettings.cs" Link="FriendlyFireSettings.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionCombat.cs" Link="SessionCombat.cs" />
+    <Compile Include="../../SephiriaOne/Features/Spawns/JarSpawnSettings.cs" Link="JarSpawnSettings.cs" />
+    <Compile Include="../../SephiriaOne/Session/SessionSpawns.cs" Link="SessionSpawns.cs" />
   </ItemGroup>
 </Project>
