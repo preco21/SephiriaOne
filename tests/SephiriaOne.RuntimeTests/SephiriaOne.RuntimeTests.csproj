@@ -49,5 +49,7 @@
     <Compile Include="../../SephiriaOne/Session/Presets/PresetCommand.cs" Link="Source/Session/Presets/PresetCommand.cs" />
     <Compile Include="../../SephiriaOne/Session/Presets/PresetStore.cs" Link="Source/Session/Presets/PresetStore.cs" />
     <Compile Include="../../SephiriaOne/Session/Presets/SessionPresetCommands.cs" Link="Source/Session/Presets/SessionPresetCommands.cs" />
+    <Compile Include="../../SephiriaOne/Features/Combat/FriendlyFireSettings.cs" Link="FriendlyFireSettings.cs" />
+    <Compile Include="../../SephiriaOne/Session/SessionCombat.cs" Link="SessionCombat.cs" />
   </ItemGroup>
 </Project>

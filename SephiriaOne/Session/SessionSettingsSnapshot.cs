@@ -73,6 +73,8 @@ namespace SephiriaOne
                 lines.Add(DescribeMerchants(sameSession ? policy.Merchants.Snapshot : null) +
                     (MerchantFeature.Available ? "" : L.T(" Merchant hooks unavailable; native behavior continues. See Player.log.")));
                 DescribeSynchronization(lines, sameSession);
+                lines.Add(DescribeFriendlyFire(sameSession ? policy.FriendlyFire : default) +
+                    (FriendlyFireFeature.Available ? "" : L.T(" Friendly-fire hooks unavailable; see Player.log.")));
                 lines.Add(DescribeItemUnlock(sameSession && policy.ItemUnlock) +
                     (ItemRestrictionFeature.Available ? "" : L.T(" Item restriction hooks unavailable; see Player.log.")));
                 if (!SessionBoundaryFeature.Available)
@@ -184,7 +186,8 @@ namespace SephiriaOne
                 sameSession && policy.MerchantSpawns, MerchantFeature.Available,
                 sameSession ? policy.MerchantSpawnChance : MerchantCommand.DefaultChance,
                 sameSession ? policy.Merchants.Snapshot : null, RabbitLevelUpFeature.Available,
-                sameSession && policy.ItemUnlock, ItemRestrictionFeature.Available);
+                sameSession && policy.ItemUnlock, ItemRestrictionFeature.Available,
+                sameSession ? policy.FriendlyFire : default, FriendlyFireFeature.Available);
         }
 
         private static string Signed(int value) => value.ToString("+0;-0;0", CultureInfo.InvariantCulture);

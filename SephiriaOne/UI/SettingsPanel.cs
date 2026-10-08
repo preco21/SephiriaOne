@@ -48,11 +48,11 @@ namespace SephiriaOne
             var close = widgets.Button(window, "X", 563, 10, 23, 23, Close);
             defaultSelectable = close.gameObject;
             availability = widgets.Text(window, "Availability", "", 16, 54, 568, 22, 10);
-            string[] pages = { "Stats", "Fountain", "Choices", "Resources", "Presets", "Status", "Rabbit", "Merchant", "Items" };
+            string[] pages = { "Stats", "Fountain", "Choices", "Resources", "Presets", "Status", "Rabbit", "Merchant", "Items", "Combat" };
             for (int i = 0; i < pages.Length; i++)
             {
                 int target = i;
-                widgets.Button(window, pages[i], 16 + 63 * i, 80, 60, 22, () => SelectPage(target));
+                widgets.Button(window, pages[i], 16 + 57 * i, 80, 55, 22, () => SelectPage(target));
             }
             feedback = widgets.Text(window, "Feedback", "Choose an action to apply. Native menus and offers refresh normally.", 16, 282, 568, 40, 10);
             SelectPage(0);
@@ -108,10 +108,11 @@ namespace SephiriaOne
                 float scale = Mathf.Min(1, Mathf.Min(rootRect.rect.width / 640f, rootRect.rect.height / 360f));
                 window.localScale = Vector3.one * Mathf.Max(0.1f, scale);
             }
-            bool choicesReady = page == 8 ? snapshot.ItemRestrictionsAvailable : page == 7 ? snapshot.MerchantsAvailable : page == 6 ? snapshot.RabbitPotionsAvailable : page == 2 ? snapshot.ChoicesAvailable : page != 3 || ResourceFeature.IsAvailable(ResourceCatalog.All[resourceIndex].Kind);
+            bool choicesReady = page == 9 ? snapshot.FriendlyFireAvailable : page == 8 ? snapshot.ItemRestrictionsAvailable : page == 7 ? snapshot.MerchantsAvailable : page == 6 ? snapshot.RabbitPotionsAvailable : page == 2 ? snapshot.ChoicesAvailable : page != 3 || ResourceFeature.IsAvailable(ResourceCatalog.All[resourceIndex].Kind);
             bool levelUpReady = page != 6 || snapshot.RabbitLevelUpPotionsAvailable;
             availability.text = !snapshot.CanMutate ? snapshot.AvailabilityReason : !choicesReady ?
-                (page == 8 ? L.T("Item restriction compatibility checks failed. Off/reset remain available; see Player.log.") :
+                (page == 9 ? L.T("Friendly-fire compatibility checks failed. Off/reset remain available; see Player.log.") :
+                page == 8 ? L.T("Item restriction compatibility checks failed. Off/reset remain available; see Player.log.") :
                 page == 7 ? L.T("Merchant compatibility checks failed. Off/reset remain available; see Player.log.") :
                 page == 6 ? L.T("Rabbit potion compatibility checks failed. Off/reset remain available; see Player.log.") :
                 page == 3 ? ResourceFeature.UnavailableReason(ResourceCatalog.All[resourceIndex].Kind) :
@@ -124,10 +125,11 @@ namespace SephiriaOne
             if (rabbitLevelUpOn) rabbitLevelUpOn.interactable = snapshot.CanMutate && snapshot.RabbitLevelUpPotionsAvailable;
             if (merchantOff) merchantOff.interactable = snapshot.CanMutate;
             if (merchantGuaranteeOff) merchantGuaranteeOff.interactable = snapshot.CanMutate;
+            RefreshCombat(snapshot);
             if (itemsOff) itemsOff.interactable = snapshot.CanMutate;
             if (amount) amount.interactable = snapshot.CanMutate && choicesReady;
             // Full-family reset is intentionally available for the existing recovery path.
-            string family = page == 0 ? "stats" : page == 1 ? "fountain" : page == 3 ? "resources" : page == 6 ? "rabbit" : page == 7 ? "merchant" : page == 8 ? "items" : "choices";
+            string family = page == 0 ? "stats" : page == 1 ? "fountain" : page == 3 ? "resources" : page == 6 ? "rabbit" : page == 7 ? "merchant" : page == 8 ? "items" : page == 9 ? "combat" : "choices";
             bool recovery = snapshot.HostActive && snapshot.SessionIdentity != null &&
                 (snapshot.FaultedFeature == family || snapshot.FaultedFeature == "inheritance");
             if (resetAll) resetAll.interactable = snapshot.CanMutate || recovery;
@@ -138,6 +140,7 @@ namespace SephiriaOne
             else if (page == 6) readout.SetText(RabbitValues(snapshot));
             else if (page == 7) readout.SetText(MerchantValues(snapshot));
             else if (page == 8) readout.SetText(ItemValues(snapshot));
+            else if (page == 9) readout.SetText(CombatValues(snapshot));
             else if (page == 4) readout.SetText(PresetValues(snapshot));
             else readout.SetText(L.T("Automatic name gradient: #408af1 -> #a8d7fa\nHost's native multiplayer character name; colors are fixed.") +
                 "\n\n" + string.Join("\n\n", snapshot.Lines));
@@ -163,13 +166,15 @@ namespace SephiriaOne
         {
             page = target; draft.Clear(); changeButtons.Clear();
             rabbitOffButtons.Clear();
-            amount = null; resetOne = resetAll = save = forget = merchantOff = merchantGuaranteeOff = rabbitLevelUpOn = itemsOff = null;
+            amount = null; resetOne = resetAll = save = forget = merchantOff = merchantGuaranteeOff = rabbitLevelUpOn = itemsOff = friendlyOff = null;
+            friendlyDamage = null; friendlyPercent = null; friendlyDraft = false;
             if (pageRoot) { widgets.Forget(pageRoot); pageRoot.gameObject.SetActive(false); Destroy(pageRoot.gameObject); }
             pageRoot = PanelWidgets.Rect(window, "Page", 0, 110, 600, 162);
             if (page < 4) BuildEditor();
             else if (page == 6) BuildRabbitEditor();
             else if (page == 7) BuildMerchantEditor();
             else if (page == 8) BuildItemEditor();
+            else if (page == 9) BuildCombatEditor();
             else
             {
                 if (page == 4)
@@ -276,7 +281,7 @@ namespace SephiriaOne
         }
 
         private void RefreshSaved() { Refresh(ReadCurrentSnapshot(true)); feedback.text = L.T("Refreshed current values and the saved copy."); }
-        private void ClearInput() { if (amount) amount.SetTextWithoutNotify(""); }
+        private void ClearInput() { friendlyDraft = false; if (amount) amount.SetTextWithoutNotify(""); }
 
         private static string PresetValues(SettingsSnapshot snapshot)
         {

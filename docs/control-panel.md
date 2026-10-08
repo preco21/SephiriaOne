@@ -10,6 +10,11 @@ The host uses this panel to change settings for **all current and joining
 players**. Guests can use the unmodified game. The panel itself is host-local;
 effects use the same native synchronization as the existing commands.
 
+Version `0.31.0` adds **Combat**: friendly fire On/Off, a 0–300% allied-damage
+slider with **Apply damage**, and Reset (off/100%). Dragging is a local draft;
+the Apply button uses the same `/one friendlyfire damage` service as chat.
+See [friendly-fire scope and verification](friendly-fire.md).
+
 Since `0.21.0`, `/one language en` or `/one language ko` selects the panel and
 message language. Editable JSON catalogs and config are described in
 [localization](localization.md). Language changes refresh open views and clear

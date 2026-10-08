@@ -3,6 +3,12 @@
 Added in `0.10.0`. Only the host needs the addon; preset commands and their
 feedback remain local. Guests receive gameplay changes through native sync.
 
+Version `0.31.0` adds v12 for [friendly fire](friendly-fire.md). Optional rows
+`friendlyfire enabled 1` and `friendlyfire damage 25` store the toggle and whole
+percentage (0–300). Missing rows mean off/100%. Turning it off retains the chosen
+percentage; reset clears both. Older schemas remain supported with safe defaults.
+Invalid, duplicate or out-of-range rows reject the entire preset.
+
 Since `0.13.0`, the [host settings panel](control-panel.md) provides the same
 save/forget/status operations through `/one ui` or the pause-menu button.
 Its Presets tab separates active intent from the saved copy; saving excludes

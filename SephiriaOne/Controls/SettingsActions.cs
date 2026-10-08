@@ -74,6 +74,22 @@ namespace SephiriaOne
                         new[] { L.T("Only the host can open the session settings panel.") });
                 }
 
+                var combat = FriendlyFireCommand.Parse(command, out var combatCommand);
+                if (combat != FriendlyFireParseResult.NotCommand)
+                {
+                    recognized = true;
+                    if (combat == FriendlyFireParseResult.Help) return Reply(true, FriendlyFireCommand.Usage);
+                    if (combat == FriendlyFireParseResult.Invalid) return Reply(false, FriendlyFireCommand.Usage);
+                    if (combat == FriendlyFireParseResult.Status)
+                    {
+                        var snapshot = SessionSettings.ReadSnapshot();
+                        if (!snapshot.HostActive || snapshot.SessionIdentity == null) return Reply(false, snapshot.AvailabilityReason);
+                        return Reply(true, SessionSettings.DescribeFriendlyFire(snapshot.FriendlyFire) +
+                            (snapshot.FriendlyFireAvailable ? "" : L.T(" Friendly-fire hooks unavailable; see Player.log.")));
+                    }
+                    return Reply(SessionSettings.TryExecuteFriendlyFire(combatCommand, out string combatMessage), combatMessage);
+                }
+
                 ItemRestrictionParseResult items = ItemRestrictionCommand.Parse(command, out bool unlock);
                 if (items != ItemRestrictionParseResult.NotCommand)
                 {
@@ -146,7 +162,7 @@ namespace SephiriaOne
                 {
                     if (preset == PresetAction.Help)
                         return Reply(true, presetError + L.T(" /one ui opens the host settings panel. /one rabbit help lists potion options. /one merchant help lists extra merchant options.") +
-                            L.T(" /one items help lists given-item options.") + L.T(" Language: /one language en|ko|reload|status."));
+                            L.T(" /one items help lists given-item options.") + L.T(" /one friendlyfire help lists allied-damage options.") + L.T(" Language: /one language en|ko|reload|status."));
                     if (preset == PresetAction.Invalid) return Reply(false, presetError);
                     bool success = SessionSettings.TryExecutePreset(preset, out string[] messages);
                     return new SettingsActionResult(true, success, false, messages);

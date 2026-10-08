@@ -27,6 +27,7 @@ internal static class GameChoiceCompatibilityTests
         GameRabbitLevelUpCompatibilityTests.Run(game, addon);
         GameMerchantCompatibilityTests.Run(game, addon);
         GameItemRestrictionCompatibilityTests.Run(game, addon);
+        GameFriendlyFireCompatibilityTests.Run(game, addon);
         var guards = addon.GetType("SephiriaOne.ChoiceSafety", throwOnError: true)!;
         var freshness = AccessTools.DeclaredMethod(guards, "BeforeGeneration");
         if (freshness == null || !freshness.IsStatic || freshness.ReturnType != typeof(void) || freshness.GetParameters().Length != 0 ||

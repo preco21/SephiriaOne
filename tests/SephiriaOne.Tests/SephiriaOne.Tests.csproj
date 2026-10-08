@@ -34,5 +34,6 @@
     <Compile Include="../../SephiriaOne/Session/Presets/PresetStore.cs" Link="Source/Session/Presets/PresetStore.cs" />
     <Compile Include="../../SephiriaOne/Features/Choices/ChoiceTranspilers.cs" Link="Source/Features/Choices/ChoiceTranspilers.cs" />
     <PackageReference Include="Lib.Harmony" Version="2.4.2" />
+    <Compile Include="../../SephiriaOne/Features/Combat/FriendlyFireSettings.cs" Link="FriendlyFireSettings.cs" />
   </ItemGroup>
 </Project>

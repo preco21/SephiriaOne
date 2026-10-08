@@ -19,6 +19,7 @@ namespace SephiriaOne
         private const string MerchantGuaranteePresetHeader = "SephiriaOne preset v9";
         private const string RabbitLevelUpPresetHeader = "SephiriaOne preset v10";
         private const string ItemUnlockPresetHeader = "SephiriaOne preset v11";
+        private const string CombatPresetHeader = "SephiriaOne preset v12";
         private static readonly string[] ChoiceNames = { "item", "weapon", "miracle" };
 
         private bool UsesMerchantGuaranteePreset
@@ -49,6 +50,8 @@ namespace SephiriaOne
         {
             var lines = new List<string>();
             if (ItemUnlock) lines.Add("items unlock 1");
+            if (FriendlyFire.Enabled) lines.Add("friendlyfire enabled 1");
+            if (FriendlyFire.DamagePercent != 100) lines.Add("friendlyfire damage " + FriendlyFire.DamagePercent.ToString(CultureInfo.InvariantCulture));
             string Describe(Setting setting) => (setting.Multiplier ? "multiplier " : setting.Absolute ? "set " : "offset ") +
                 setting.Value.ToString("0.##", CultureInfo.InvariantCulture);
             if (fountain.HasValue) lines.Add("fountain " + Describe(fountain.Value));
@@ -83,7 +86,7 @@ namespace SephiriaOne
         {
             bool multiplier = HasFountainMultiplier;
             foreach (Setting setting in stats.Values) multiplier |= setting.Multiplier;
-            return (ItemUnlock ? ItemUnlockPresetHeader : RabbitPotions.LevelUpPotion ? RabbitLevelUpPresetHeader : UsesMerchantGuaranteePreset ? MerchantGuaranteePresetHeader : UsesMerchantTypesPreset ? MerchantTypesPresetHeader : Merchants.HasChanges ? MerchantPresetHeader : RabbitPotions.MpCostPerDrink != RabbitPotionSettings.DefaultMpCostPerDrink ? RabbitCostPresetHeader :
+            return (FriendlyFire.HasChanges ? CombatPresetHeader : ItemUnlock ? ItemUnlockPresetHeader : RabbitPotions.LevelUpPotion ? RabbitLevelUpPresetHeader : UsesMerchantGuaranteePreset ? MerchantGuaranteePresetHeader : UsesMerchantTypesPreset ? MerchantTypesPresetHeader : Merchants.HasChanges ? MerchantPresetHeader : RabbitPotions.MpCostPerDrink != RabbitPotionSettings.DefaultMpCostPerDrink ? RabbitCostPresetHeader :
                 RabbitPotions.ConsumeMp || RabbitPotions.SuppressSurvival ? RabbitBalancePresetHeader :
                 RabbitPotions.HasChanges ? RabbitPresetHeader : Resources.HasChanges ? ResourcePresetHeader : multiplier ? MultiplierPresetHeader : PresetHeader) + "\n" +
                 (HasChanges ? string.Join("\n", DescribeSettings()) + "\n" : "");
@@ -95,8 +98,9 @@ namespace SephiriaOne
             error = L.T("Invalid saved preset; no saved settings were applied.");
             if (text == null || text.Length > MaximumPresetLength) return false;
             string[] lines = text.Replace("\r\n", "\n").Split('\n');
-            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader && lines[0] != RabbitBalancePresetHeader && lines[0] != RabbitCostPresetHeader && lines[0] != MerchantPresetHeader && lines[0] != MerchantTypesPresetHeader && lines[0] != MerchantGuaranteePresetHeader && lines[0] != RabbitLevelUpPresetHeader && lines[0] != ItemUnlockPresetHeader)) return false;
-            bool allowItemUnlock = lines[0] == ItemUnlockPresetHeader;
+            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader && lines[0] != RabbitBalancePresetHeader && lines[0] != RabbitCostPresetHeader && lines[0] != MerchantPresetHeader && lines[0] != MerchantTypesPresetHeader && lines[0] != MerchantGuaranteePresetHeader && lines[0] != RabbitLevelUpPresetHeader && lines[0] != ItemUnlockPresetHeader && lines[0] != CombatPresetHeader)) return false;
+            bool allowCombat = lines[0] == CombatPresetHeader;
+            bool allowItemUnlock = lines[0] == ItemUnlockPresetHeader || allowCombat;
             bool allowLevelUpPotion = lines[0] == RabbitLevelUpPresetHeader || allowItemUnlock;
             bool allowMerchantGuarantee = lines[0] == MerchantGuaranteePresetHeader || allowLevelUpPotion;
             bool allowMerchantTypes = lines[0] == MerchantTypesPresetHeader || allowMerchantGuarantee;
@@ -114,6 +118,17 @@ namespace SephiriaOne
                 if (parts.Length == 0) continue;
                 if (!decimal.TryParse(parts[parts.Length - 1], NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint,
                     CultureInfo.InvariantCulture, out decimal value) || value < -int.MaxValue || value > int.MaxValue) return false;
+                if (parts[0] == "friendlyfire")
+                {
+                    if (!allowCombat || parts.Length != 3 || !seen.Add("friendlyfire " + parts[1]) ||
+                        parts[2] != value.ToString("0", CultureInfo.InvariantCulture)) return false;
+                    if (parts[1] == "enabled" && (value == 0 || value == 1))
+                        pending.Record(new FriendlyFireCommand(value == 1));
+                    else if (parts[1] == "damage" && value >= 0 && value <= 300 && value == decimal.Truncate(value))
+                        pending.Record(new FriendlyFireCommand(false, (int)value));
+                    else return false;
+                    continue;
+                }
                 if (parts[0] == "items")
                 {
                     if (!allowItemUnlock || parts.Length != 3 || parts[1] != "unlock" ||

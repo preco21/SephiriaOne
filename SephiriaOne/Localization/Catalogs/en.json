@@ -409,5 +409,20 @@
   "Unlocks starting/given-item sale restrictions and owner-bound drops, including Wishing Fountain items. Fountain items can already be sold normally.": "Unlocks starting/given-item sale restrictions and owner-bound drops, including Wishing Fountain items. Fountain items can already be sold normally.",
   "The same native flag also unlocks Fountain storage for given items. Intrinsic item destruction/no-drop rules and merchant trade rules still apply.": "The same native flag also unlocks Fountain storage for given items. Intrinsic item destruction/no-drop rules and merchant trade rules still apply.",
   "Off/reset restores recorded restrictions without undoing completed trades. Costume item grant/removal and restocking still follow the game.": "Off/reset restores recorded restrictions without undoing completed trades. Costume item grant/removal and restocking still follow the game.",
-  "Costume curse tablets keep their intrinsic no-drop rule on unmodified guests.": "Costume curse tablets keep their intrinsic no-drop rule on unmodified guests."
+  "Costume curse tablets keep their intrinsic no-drop rule on unmodified guests.": "Costume curse tablets keep their intrinsic no-drop rule on unmodified guests.",
+  "Friendly fire: /one friendlyfire on|off|status|reset; /one friendlyfire damage 0..300 (percent, default 100). /one save persists settings.": "Friendly fire: /one friendlyfire on|off|status|reset; /one friendlyfire damage 0..300 (percent, default 100). /one save persists settings.",
+  "Only the host can change friendly fire.": "Only the host can change friendly fire.",
+  "Friendly-fire compatibility checks failed. Off/reset remain available; see Player.log.": "Friendly-fire compatibility checks failed. Off/reset remain available; see Player.log.",
+  "Friendly fire: {0}; allied damage: {1}%.": "Friendly fire: {0}; allied damage: {1}%.",
+  " Friendly-fire hooks unavailable; see Player.log.": " Friendly-fire hooks unavailable; see Player.log.",
+  " /one friendlyfire help lists allied-damage options.": " /one friendlyfire help lists allied-damage options.",
+  "Friendly fire: {0} killed {1}.": "Friendly fire: {0} killed {1}.",
+  "Friendly fire": "Friendly fire",
+  "Combat": "Combat",
+  "Apply damage": "Apply damage",
+  "0–300% (100% = normal)": "0–300% (100% = normal)",
+  "Allied damage: {0}%": "Allied damage: {0}%",
+  "Melee/projectile hits can hurt other players and allies. Enemy-seeking skills keep their normal targets; self and enemy damage are unchanged.": "Melee/projectile hits can hurt other players and allies. Enemy-seeking skills keep their normal targets; self and enemy damage are unchanged.",
+  "Damage scales after defenses, before shields. Zero blocks allied hits. Nested friendly retaliation is blocked to prevent loops.": "Damage scales after defenses, before shields. Zero blocks allied hits. Nested friendly retaliation is blocked to prevent loops.",
+  "Confirmed friendly-fire kills are announced in chat. Safe areas and invulnerability retain native protection.": "Confirmed friendly-fire kills are announced in chat. Safe areas and invulnerability retain native protection."
 }

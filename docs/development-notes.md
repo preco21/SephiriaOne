@@ -9,6 +9,14 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.31.0` adds default-off host friendly fire, `/one friendlyfire` commands,
+a Combat tab with a 0–300% damage slider, confirmed-kill chat notices and v12
+presets. Native server damage/death/chat paths support stock guests without
+faction changes or per-player caches. Numeric guards and scoped retaliation
+protection cover invalid damage and recursive on-hit effects. See
+[behavior, limits and verification](friendly-fire.md). No deployment or live
+multiplayer testing was performed.
+
 Version `0.30.0` adds default-off `/one items unlock on|off`, status/reset, an Items
 panel and v11 presets. It projects native starting-item restrictions and owner
 bindings into synchronized metadata for stock guests, preserving originals for
