@@ -57,6 +57,7 @@ Console.WriteLine($"Passed {RabbitPotionSettingsTests.Run()} rabbit potion setti
 Console.WriteLine($"Passed {MerchantSettingsTests.Run()} merchant settings checks.");
 Console.WriteLine($"Passed {StartingResourceTests.Run()} starting resource checks.");
 Console.WriteLine($"Passed {PresetTests.Run()} preset parser/storage checks.");
+Console.WriteLine($"Passed {ItemRestrictionTests.Run()} item restriction checks.");
 Console.WriteLine($"Passed {ChoiceCommandTests.Run()} candidate command checks.");
 Console.WriteLine($"Passed {ChoiceTranspilerTests.Run()} candidate generation guard checks.");
 Console.WriteLine($"Passed {LocalizationCatalogTests.Run()} bundled catalog checks.");

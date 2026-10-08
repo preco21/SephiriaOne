@@ -69,13 +69,15 @@ namespace SephiriaOne
         private readonly Dictionary<string, int> choices = new Dictionary<string, int>();
         private readonly Dictionary<StatDefinition, Setting> stats = new Dictionary<StatDefinition, Setting>();
         public ResourcePolicy Resources { get; } = new ResourcePolicy();
+        public bool ItemUnlock { get; private set; }
+        public void RecordItemUnlock(bool enabled) => ItemUnlock = enabled;
         public RabbitPotionSettings RabbitPotions { get; private set; }
         public void Record(RabbitCommand command) => RabbitPotions = RabbitPotions.Apply(command);
         public MerchantPolicy Merchants { get; } = new MerchantPolicy();
         public bool MerchantSpawns => Merchants.Get(MerchantCatalog.DefaultId).Enabled;
         public int MerchantSpawnChance => Merchants.Get(MerchantCatalog.DefaultId).Chance;
         public void Record(MerchantCommand command) => Merchants.Record(command);
-        public bool HasChanges => fountain.HasValue || choices.Count != 0 || stats.Count != 0 || Resources.HasChanges || RabbitPotions.HasChanges || Merchants.HasChanges;
+        public bool HasChanges => fountain.HasValue || choices.Count != 0 || stats.Count != 0 || Resources.HasChanges || RabbitPotions.HasChanges || Merchants.HasChanges || ItemUnlock;
         public bool HasFountainSetting => fountain.HasValue;
         public bool HasFountainMultiplier => fountain.HasValue && fountain.Value.Multiplier;
 
@@ -116,6 +118,7 @@ namespace SephiriaOne
             choices.Clear();
             stats.Clear();
             Resources.Clear();
+            ItemUnlock = false;
             RabbitPotions = default;
             Merchants.Clear();
         }

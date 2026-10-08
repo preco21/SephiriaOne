@@ -73,6 +73,8 @@ namespace SephiriaOne
                 lines.Add(DescribeMerchants(sameSession ? policy.Merchants.Snapshot : null) +
                     (MerchantFeature.Available ? "" : L.T(" Merchant hooks unavailable; native behavior continues. See Player.log.")));
                 DescribeSynchronization(lines, sameSession);
+                lines.Add(DescribeItemUnlock(sameSession && policy.ItemUnlock) +
+                    (ItemRestrictionFeature.Available ? "" : L.T(" Item restriction hooks unavailable; see Player.log.")));
                 if (!SessionBoundaryFeature.Available)
                     lines.Add(L.T("Fountain grant synchronization guard is unavailable; frame polling remains active. Check Player.log."));
             }
@@ -181,7 +183,8 @@ namespace SephiriaOne
                 RabbitPotionFeature.Available, RabbitDescriptionFeature.Available,
                 sameSession && policy.MerchantSpawns, MerchantFeature.Available,
                 sameSession ? policy.MerchantSpawnChance : MerchantCommand.DefaultChance,
-                sameSession ? policy.Merchants.Snapshot : null, RabbitLevelUpFeature.Available);
+                sameSession ? policy.Merchants.Snapshot : null, RabbitLevelUpFeature.Available,
+                sameSession && policy.ItemUnlock, ItemRestrictionFeature.Available);
         }
 
         private static string Signed(int value) => value.ToString("+0;-0;0", CultureInfo.InvariantCulture);

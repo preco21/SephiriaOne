@@ -396,5 +396,18 @@
   "Added merchant base HP multipliers by main stage: 1 = x1, 2 = x2, 3 = x4, 4 = x5, 5 = x7, 6+ = x8. Maps within a stage share the same factor. Native stage and multiplayer bonuses still apply. Unknown progress uses x1. Health is set once at spawn.": "주 던전 구역별 추가 상인의 기본 HP 배율: 1구역 x1, 2구역 x2, 3구역 x4, 4구역 x5, 5구역 x7, 6구역 이후 x8. 같은 구역 내부의 맵은 동일한 배율을 사용합니다. 기본 게임의 구역 및 멀티플레이 보너스도 적용됩니다. 진행도를 알 수 없으면 x1을 사용하며, HP는 생성 시 한 번만 설정됩니다.",
   "At most one of each type per map; different types can coexist. First eligible floor and base HP scaling use the main dungeon stage number, not the number of maps visited. HP retains native stage and multiplayer bonuses. They are hostile, cannot talk, and have no negotiation/crime penalty. Off/reset stop future spawns; existing added merchants stay exempt until floor teardown.": "맵마다 각 유형은 최대 한 명까지 등장하며 서로 다른 유형은 함께 등장할 수 있습니다. 시작 가능 층과 기본 HP 배율에는 방문한 맵 수가 아니라 주 던전 구역 번호를 사용합니다. 기본 게임의 구역 및 멀티플레이 HP 보너스는 유지됩니다. 추가 상인은 적대적이며 대화할 수 없고 협상력/범죄 페널티가 없습니다. off/reset은 이후 생성을 중단하며, 기존 추가 상인은 층이 정리될 때까지 페널티가 면제됩니다.",
   "The 'from' value counts main dungeon stages, not maps within a stage.": "from 값은 구역 내부의 맵 수가 아니라 주 던전 구역 번호를 의미합니다.",
-  "With infinite HP potions enabled, Wing-Eared Rabbit can use regular HP potions during Tension boss combat. Sample, MP and other potions remain restricted.": "HP 포션 무제한 사용이 켜져 있으면 날개귀 토끼는 보스 전투 중 포션 사용 제한이 적용되어도 일반 HP 포션을 사용할 수 있습니다. 맛보기 샘플, MP 및 기타 포션에는 제한이 유지됩니다."
+  "With infinite HP potions enabled, Wing-Eared Rabbit can use regular HP potions during Tension boss combat. Sample, MP and other potions remain restricted.": "HP 포션 무제한 사용이 켜져 있으면 날개귀 토끼는 보스 전투 중 포션 사용 제한이 적용되어도 일반 HP 포션을 사용할 수 있습니다. 맛보기 샘플, MP 및 기타 포션에는 제한이 유지됩니다.",
+  "Host only: /one items unlock on|off, /one items status, /one items reset. Default off. Save for future sessions: /one save.": "호스트 전용: /one items unlock on|off, /one items status, /one items reset. 기본값은 꺼짐입니다. 다음 세션에도 적용하려면 /one save를 사용하세요.",
+  "Only the host can change given-item restrictions.": "지급 아이템 제한은 호스트만 변경할 수 있습니다.",
+  "Item restriction compatibility checks failed. Off/reset remain available; see Player.log.": "아이템 제한 호환성 검사에 실패했습니다. 끄기/초기화는 사용할 수 있습니다. Player.log를 확인하세요.",
+  "Given-item trade/drop/sell unlock: {0}.": "지급 아이템 거래/버리기/판매 제한 해제: {0}.",
+  " Item restriction hooks unavailable; see Player.log.": " 아이템 제한 기능을 사용할 수 없습니다. Player.log를 확인하세요.",
+  " /one items help lists given-item options.": " /one items help로 지급 아이템 옵션을 확인하세요.",
+  "Items": "아이템",
+  "Unlock given items": "지급 아이템 제한 해제",
+  "Default off. Host settings apply to all players, including unmodified guests.": "기본값은 꺼짐입니다. 모드를 설치하지 않은 게스트를 포함한 모든 플레이어에게 호스트 설정이 적용됩니다.",
+  "Unlocks starting/given-item sale restrictions and owner-bound drops, including Wishing Fountain items. Fountain items can already be sold normally.": "시작/지급 아이템의 판매 제한과 버린 아이템의 소유자 귀속을 해제합니다. 소원의 샘 아이템의 귀속도 해제됩니다. 샘 아이템은 원래 정상적으로 판매할 수 있습니다.",
+  "The same native flag also unlocks Fountain storage for given items. Intrinsic item destruction/no-drop rules and merchant trade rules still apply.": "같은 기본 게임 플래그를 사용하므로 지급 아이템의 샘 보관 제한도 해제됩니다. 아이템 자체의 파괴/버리기 금지 속성과 상인 거래 규칙은 유지됩니다.",
+  "Off/reset restores recorded restrictions without undoing completed trades. Costume item grant/removal and restocking still follow the game.": "끄기/초기화는 완료된 거래를 되돌리지 않고 기록된 제한을 복원합니다. 의상 아이템의 지급/회수와 재지급은 기본 게임 규칙을 따릅니다.",
+  "Costume curse tablets keep their intrinsic no-drop rule on unmodified guests.": "모드를 설치하지 않은 게스트에게는 의상 저주 석판 자체의 버리기 금지 속성이 유지됩니다."
 }

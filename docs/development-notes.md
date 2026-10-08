@@ -1,6 +1,6 @@
 # SephiriaOne development notes
 
-Recorded: 2026-09-23; updated: 2026-10-08 (Asia/Seoul).
+Recorded: 2026-09-23; updated: 2026-10-09 (Asia/Seoul).
 
 This document records the project history, current implementation, and modding
 findings collected during the initial investigation. Installed-game observations
@@ -8,6 +8,16 @@ apply to the assembly fingerprint below. Reference repositories and documentatio
 can change independently of that installed game version.
 
 ## Current status
+
+Version `0.30.0` adds default-off `/one items unlock on|off`, status/reset, an Items
+panel and v11 presets. It projects native starting-item restrictions and owner
+bindings into synchronized metadata for stock guests, preserving originals for
+reset/unload and native saves. Fountain items already allow selling; only their
+owner binding changes. Existing ground drops become server-owned while unlocked,
+so an original guest's disconnect cannot destroy them. Event callbacks cover
+new grants, saved loads, native sales, re-entry and second-run dictionary clears;
+there is no item scan per frame. Intrinsic no-drop curse tablets still require
+client-side definition changes and remain restricted. See [findings and checks](item-restrictions.md).
 
 Version `0.29.0` extends Rabbit infinite HP potions with a scoped Tension exception.
 While infinite use is on, Wing-Eared Rabbit's regular/large HP potions bypass the

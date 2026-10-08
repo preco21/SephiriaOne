@@ -1,0 +1,93 @@
+using SephiriaOne;
+using Mirror;
+
+int checks = 0;
+void Check(bool value, string message) { if (!value) throw new Exception(message); checks++; }
+var dungeon = DungeonManager.Instance = new DungeonManager();
+var connection = new NetworkConnectionToClient { connectionId = 7 };
+NetworkServer.connections[7] = connection;
+var owner = new PlayerSpawner { currentPlayerIdx = 2 };
+owner.netIdentity.AssignClientAuthority(connection); PlayerSpawner.MultiplayerList.Add(owner);
+ItemRestrictionFeature.Initialize();
+Check(ItemRestrictionFeature.Available, "Actual native hooks install successfully");
+dungeon.BoundOnServer(10, 2); dungeon.OwnRestrictionOnServer(10, ERestrictedOwnType.StartingItem);
+Check(dungeon.GetGlobalItemStatValue(10, "Bound") == "2", "Default off preserves native grants");
+var drop = new Item { itemInstanceID = 10, isBound = true };
+drop.netIdentity.AssignClientAuthority(connection); Item.managedItemInstances.Add(drop);
+SessionSettings.Intent = true; ItemRestrictionFeature.SetEnabled(true);
+Check(!drop.isBound && dungeon.GetGlobalItemStatValue(10, "OwnRestriction") == "", "Toggle unlocks existing ground loot and stock guest sale metadata");
+Check(drop.connectionToClient == null, "Unlocked preexisting drop survives original guest disconnection");
+dungeon.BoundOnServer(11, 2);
+Check(dungeon.GetGlobalItemStatValue(11, "Bound") == "", "New Fountain grant unlocks before next synchronization frame");
+dungeon.OwnRestrictionOnServer(11, ERestrictedOwnType.StartingItem);
+Check(dungeon.GetGlobalItemStatValue(11, "OwnRestriction") == "", "Starting restrictions added after binding also unlock");
+var newDrop = new Item { itemInstanceID = 11 }; Item.managedItemInstances.Add(newDrop);
+int writes = dungeon.globalItemStatTable.Writes;
+dungeon.SaveCurrentSessionData("floor");
+Check(dungeon.globalItemStatTable.Writes == writes && !drop.isBound, "Saving causes no live metadata writes or temporary rebindings");
+Dictionary<string, string> ReadSave()
+{
+    var saved = new Dictionary<string, string>();
+    for (int i = 0; i < (int)SaveManager.CurrentRun.Values["GlobalItemStatCount"]; i++)
+        saved[(string)SaveManager.CurrentRun.Values[$"GlobalItemStatCount{i}_Key"]] = (string)SaveManager.CurrentRun.Values[$"GlobalItemStatCount{i}_Value"];
+    return saved;
+}
+Check(ReadSave()["10/Bound"] == "2" && ReadSave()["11/OwnRestriction"] == "1", "Native save retains restrictions for addon-free resume");
+ItemRestrictionFeature.SetEnabled(false);
+Check(drop.isBound && newDrop.isBound && ReferenceEquals(newDrop.connectionToClient, connection), "Off restores bound drops and authority for drops spawned while unlocked");
+ItemRestrictionFeature.SetEnabled(true); dungeon.UnboundOnServer(10);
+ItemRestrictionFeature.SetEnabled(false);
+Check(!drop.isBound && !dungeon.globalItemStatTable.ContainsKey("10/Bound"), "Native sale/unbinding is not reversed");
+ItemRestrictionFeature.SetEnabled(true);
+var save = ReadSave(); dungeon.globalItemStatTable.Clear(); Item.managedItemInstances.Clear();
+foreach (var entry in save) dungeon.globalItemStatTable.Add(entry.Key, entry.Value);
+Check(dungeon.GetGlobalItemStatValue(10, "OwnRestriction") == "", "Direct saved-run loading is observed without grant hooks");
+ItemRestrictionFeature.SetEnabled(false);
+Check(dungeon.GetGlobalItemStatValue(10, "Bound") == "2", "Restored run can return to native state");
+ItemRestrictionFeature.SetEnabled(true); dungeon.globalItemStatTable.Clear();
+dungeon.BoundOnServer(10, 4); ItemRestrictionFeature.SetEnabled(false);
+Check(dungeon.GetGlobalItemStatValue(10, "Bound") == "4" && !dungeon.globalItemStatTable.ContainsKey("11/OwnRestriction"), "Second run does not reuse old originals");
+ItemRestrictionFeature.SetEnabled(true);
+var prior = dungeon;
+DungeonManager.Instance = dungeon = new DungeonManager();
+dungeon.BoundOnServer(20, 2);
+Check(dungeon.GetGlobalItemStatValue(20, "Bound") == "" && prior.GetGlobalItemStatValue(10, "Bound") == "4", "New session binds before first grant and restores departing scope");
+int listeners = prior.globalItemStatTable.OnChange?.GetInvocationList().Length ?? 0;
+Check(listeners == 0, "Departing scope detaches callbacks");
+for (int i = 0; i < 100; i++) SessionSettings.EnsureResourceScope();
+Check(dungeon.globalItemStatTable.OnChange.GetInvocationList().Length == 1, "Repeated joins/scope checks cannot accumulate listeners");
+writes = dungeon.globalItemStatTable.Writes;
+for (int i = 0; i < 100; i++) SessionSettings.EnsureResourceScope();
+Check(writes == dungeon.globalItemStatTable.Writes, "Idle scope checks do not write or scan items");
+var reconnectDrop = new Item { itemInstanceID = 20 }; Item.managedItemInstances.Add(reconnectDrop);
+NetworkServer.connections.Clear(); PlayerSpawner.MultiplayerList.Clear();
+var newConnection = new NetworkConnectionToClient { connectionId = 8 };
+NetworkServer.connections[8] = newConnection;
+var rejoined = new PlayerSpawner { currentPlayerIdx = 2 }; rejoined.netIdentity.AssignClientAuthority(newConnection);
+PlayerSpawner.MultiplayerList.Add(rejoined);
+Check(dungeon.GetGlobalItemStatValue(20, "Bound") == "" && !reconnectDrop.isBound, "Rejoining client receives current unlocked metadata and drop state");
+ItemRestrictionFeature.SetEnabled(false);
+Check(reconnectDrop.isBound && ReferenceEquals(reconnectDrop.connectionToClient, newConnection), "Reset uses current rejoined owner, never stale connection");
+ItemRestrictionFeature.SetEnabled(true);
+reconnectDrop.netIdentity.RejectAuthority = true;
+bool failed = false;
+try { ItemRestrictionFeature.SetEnabled(false); } catch (InvalidOperationException) { failed = true; }
+Check(failed && ItemRestrictionFeature.Fault != null, "Partial ground authority restoration is reported and retained");
+reconnectDrop.netIdentity.RejectAuthority = false;
+ItemRestrictionFeature.SetEnabled(false);
+Check(reconnectDrop.isBound && ItemRestrictionFeature.Fault == null, "Retry completes ground authority restoration");
+dungeon.globalItemStatTable.AfterWrite = (key, value) => { if (key == "20/Bound" && value == "") throw new InvalidOperationException("after-write failure"); };
+failed = false;
+try { ItemRestrictionFeature.SetEnabled(true); } catch (InvalidOperationException) { failed = true; }
+Check(failed && !ItemRestrictionFeature.Enabled && ItemRestrictionFeature.Fault != null, "Partial enable retains journal even before enabled flag commits");
+dungeon.SaveCurrentSessionData("floor");
+Check(ReadSave()["20/Bound"] == "2", "Save restores originals even after a partial enable failure");
+dungeon.globalItemStatTable.AfterWrite = null;
+ItemRestrictionFeature.SetEnabled(false);
+Check(dungeon.GetGlobalItemStatValue(20, "Bound") == "2" && ItemRestrictionFeature.Available, "Off repairs a partially enabled overlay");
+ItemRestrictionFeature.SetEnabled(true);
+ItemRestrictionFeature.Shutdown();
+Check(dungeon.GetGlobalItemStatValue(20, "Bound") == "2" && dungeon.globalItemStatTable.OnChange == null, "Unload restores metadata and detaches callbacks");
+dungeon.BoundOnServer(21, 2);
+Check(dungeon.GetGlobalItemStatValue(21, "Bound") == "2", "Unload removes Harmony grant hooks");
+Console.WriteLine($"Passed {checks} item restriction native-hook/lifecycle fixture checks.");

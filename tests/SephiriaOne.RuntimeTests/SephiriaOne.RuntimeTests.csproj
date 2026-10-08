@@ -6,6 +6,8 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../SephiriaOne/Features/Items/ItemRestrictionCommand.cs" Link="Source/Features/Items/ItemRestrictionCommand.cs" />
+    <Compile Include="../../SephiriaOne/Session/SessionItems.cs" Link="Source/Session/SessionItems.cs" />
     <Compile Include="../../SephiriaOne/Features/Merchants/MerchantCommand.cs" Link="Source/Features/Merchants/MerchantCommand.cs" />
     <Compile Include="../../SephiriaOne/Features/Merchants/MerchantCatalog.cs" Link="Source/Features/Merchants/MerchantCatalog.cs" />
     <Compile Include="../../SephiriaOne/Features/Merchants/MerchantSettings.cs" Link="Source/Features/Merchants/MerchantSettings.cs" />

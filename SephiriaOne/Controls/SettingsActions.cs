@@ -74,6 +74,22 @@ namespace SephiriaOne
                         new[] { L.T("Only the host can open the session settings panel.") });
                 }
 
+                ItemRestrictionParseResult items = ItemRestrictionCommand.Parse(command, out bool unlock);
+                if (items != ItemRestrictionParseResult.NotCommand)
+                {
+                    recognized = true;
+                    if (items == ItemRestrictionParseResult.Help) return Reply(true, ItemRestrictionCommand.Usage);
+                    if (items == ItemRestrictionParseResult.Invalid) return Reply(false, ItemRestrictionCommand.Usage);
+                    if (items == ItemRestrictionParseResult.Status)
+                    {
+                        SettingsSnapshot snapshot = SessionSettings.ReadSnapshot();
+                        if (!snapshot.HostActive || snapshot.SessionIdentity == null) return Reply(false, snapshot.AvailabilityReason);
+                        return Reply(true, SessionSettings.DescribeItemUnlock(snapshot.ItemUnlock) +
+                            (snapshot.ItemRestrictionsAvailable ? "" : L.T(" Item restriction hooks unavailable; see Player.log.")));
+                    }
+                    return Reply(SessionSettings.TryExecuteItemUnlock(unlock, out string itemMessage), itemMessage);
+                }
+
                 MerchantParseResult merchant = MerchantCommand.Parse(command, out MerchantCommand merchantCommand, out string merchantError);
                 if (merchant != MerchantParseResult.NotCommand)
                 {
@@ -130,7 +146,7 @@ namespace SephiriaOne
                 {
                     if (preset == PresetAction.Help)
                         return Reply(true, presetError + L.T(" /one ui opens the host settings panel. /one rabbit help lists potion options. /one merchant help lists extra merchant options.") +
-                            L.T(" Language: /one language en|ko|reload|status."));
+                            L.T(" /one items help lists given-item options.") + L.T(" Language: /one language en|ko|reload|status."));
                     if (preset == PresetAction.Invalid) return Reply(false, presetError);
                     bool success = SessionSettings.TryExecutePreset(preset, out string[] messages);
                     return new SettingsActionResult(true, success, false, messages);

@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>disable</Nullable></PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Lib.Harmony" Version="2.4.2" />
+    <Compile Include="../../SephiriaOne/Features/Items/ItemRestrictionOverlay.cs" Link="ItemRestrictionOverlay.cs" />
+    <Compile Include="../../SephiriaOne/Features/Items/ItemRestrictionRuntime.cs" Link="ItemRestrictionRuntime.cs" />
+    <Compile Include="../../SephiriaOne/Features/Items/ItemRestrictionHooks.cs" Link="ItemRestrictionHooks.cs" />
+    <Compile Include="../../SephiriaOne/Features/Items/ItemRestrictionFeature.cs" Link="ItemRestrictionFeature.cs" />
+  </ItemGroup>
+</Project>

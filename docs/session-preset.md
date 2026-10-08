@@ -49,6 +49,15 @@ behavior; it never grants items for past levels. Invalid/duplicate rows reject
 the whole preset. Off/reset return exports to the oldest applicable version;
 older addon versions cannot load v10.
 
+Version `0.30.0` adds v11 for [given-item restriction unlocking](item-restrictions.md):
+`items unlock 1`. Missing rows and v1-v10 presets keep the default off. Invalid,
+duplicate and old-version item rows reject the whole preset. All other option
+families continue to work in v11; disabling this option exports the oldest
+applicable version. `/one save` persists intent, while native run saves always
+retain the original restriction metadata so resuming without the addon remains
+safe. New/rejoining players use the current shared metadata, not a saved per-player
+permission.
+
 Version `0.16.0` stores enabled [rabbit potion options](rabbit-potions.md) in v4
 as `rabbit infinite 1` and `rabbit share 1`. Missing/off options remain native.
 v1-v3 are still readable; v4 supports all prior setting families. These flags are

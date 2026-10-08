@@ -81,6 +81,7 @@ namespace SephiriaOne
 
         private static void ClearScope()
         {
+            ItemRestrictionFeature.Clear();
             MerchantFeature.Clear();
             ChoicePoints.ClearCleanup();
             policy.Clear();
@@ -191,6 +192,7 @@ namespace SephiriaOne
             {
                 ClearScope(); dungeon = current; epoch++;
                 if (current) LoadPreset();
+                ItemRestrictionFeature.Bind(current, policy.ItemUnlock);
             }
             return dungeon;
         }

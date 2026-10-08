@@ -21,6 +21,7 @@ namespace SephiriaOne
             RabbitLevelUpFeature.Initialize();
             RabbitDescriptionFeature.Initialize();
             MerchantFeature.Initialize();
+            ItemRestrictionFeature.Initialize();
             DisconnectDiagnosticsFeature.Initialize();
             if (!nameColor)
             {
@@ -46,6 +47,7 @@ namespace SephiriaOne
         {
             // Keep controllers/guards available if verified cleanup needs recovery.
             ChoiceFeature.Shutdown();
+            ItemRestrictionFeature.Shutdown();
             MerchantFeature.Shutdown();
             ResourceFeature.Shutdown();
             RabbitDescriptionFeature.Shutdown();
