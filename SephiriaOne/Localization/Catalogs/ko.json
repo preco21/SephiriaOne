@@ -424,7 +424,7 @@
   "0–300% (100% = normal)": "0–300% (기본 100%)",
   "Allied damage: {0}%": "아군에게 주는 피해: {0}%",
   "Melee/projectile hits can hurt other players and allies. Enemy-seeking skills keep their normal targets; self and enemy damage are unchanged.": "근접 공격과 투사체가 다른 플레이어 및 아군에게 피해를 줄 수 있습니다. 적을 자동으로 찾는 스킬의 대상과 자신/적에게 주는 피해는 유지됩니다.",
-  "Damage scales after defenses, before shields. Zero blocks allied hits. Nested friendly retaliation is blocked to prevent loops.": "방어 계산 후, 보호막 흡수 전에 배율을 적용합니다. 0%는 아군 피격을 차단합니다. 무한 반복을 막기 위해 같은 피격 중 연쇄 아군 반격을 차단합니다.",
+  "Damage scales after defenses, before shields. Zero blocks allied hits. Native reflection can return damage to the attacker; repeated reflection and other nested ally hits are blocked.": "방어 계산 후 보호막 흡수 전에 배율을 적용합니다. 0%는 아군 피격을 차단합니다. 기본 반사 효과는 공격자에게 피해를 돌려줄 수 있지만, 재반사와 다른 연쇄 아군 공격은 차단합니다.",
   "Confirmed friendly-fire kills are announced in chat. Safe areas and invulnerability retain native protection.": "아군 피해로 인한 처치를 채팅에 알립니다. 안전 구역과 무적 상태의 기본 보호는 유지됩니다.",
   "Mystic Jar: /one jars chance 0..100|xN; /one jars status|reset. Percentages allow 2 decimals; xN uses each native chance (capped at 100%). x1/reset restores native. /one save persists settings.": "신비한 항아리: /one jars chance 0..100|xN; /one jars status|reset. 확률은 소수점 2자리까지 입력할 수 있습니다. xN은 각 위치의 기본 확률을 배수로 조정합니다(최대 100%). x1/reset은 기본값을 복원합니다. /one save로 저장합니다.",
   "Only the host can change Mystic Jar spawn rates.": "호스트만 신비한 항아리 출현 확률을 변경할 수 있습니다.",

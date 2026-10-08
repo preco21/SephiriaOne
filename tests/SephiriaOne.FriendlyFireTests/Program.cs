@@ -162,6 +162,7 @@ changedProtection = protection.Select(i => new CodeInstruction(i)).ToList();
 changedProtection.Add(CodeInstruction.Call(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.Clear)));
 Check(!FriendlyFireHooks.ValidatePlayerProtection(changedProtection), "Additional callback work is not silently skipped");
 CompanionTests.Run(Check);
+ReflectionTests.Run(Check);
 var relationCode = PatchProcessor.GetOriginalInstructions(AccessTools.Method(typeof(UnitAI_NewBasic), "GetRelation")).ToList();
 Check(FriendlyFireHooks.ValidateCompanionRelation(relationCode), "Companion relation fixture matches native contract");
 relationCode.RemoveAt(relationCode.FindIndex(i => i.operand is MethodInfo m && m.Name == "get_NetworkLeader"));

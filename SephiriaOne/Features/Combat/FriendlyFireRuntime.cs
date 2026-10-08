@@ -13,7 +13,7 @@ namespace SephiriaOne
             internal PlayerAvatar Attacker;
             internal UnitAvatar Source;
             internal DamageInstance Damage;
-            internal bool Friendly, InFriendlyChain;
+            internal bool Friendly, InFriendlyChain, Reflection;
             internal int Percent;
         }
         [ThreadStatic] private static HitContext current;
@@ -38,23 +38,37 @@ namespace SephiriaOne
             try
             {
                 var settings = SessionSettings.FriendlyFireForHit;
+                bool reflection = IsNativeReflection(damage);
                 // Recheck at impact: even a projectile fired while enabled (or
                 // with a broad native mask) cannot hurt the owner or hit players
                 // after off/reset. Reject before guard costs and attack procs.
                 if (companion && (attacker == __instance || !settings.Enabled))
                 { __result = EApplyDamageResult.Fail_Absolute; return false; }
+                // Native reflection uses an all-faction mask. Off must reject
+                // team returns before guarding can spend MP, including when
+                // policy changes during the original hit's callbacks.
+                if (reflection && !settings.Enabled && (__instance is PlayerAvatar || __instance.NetworkLeader is PlayerAvatar))
+                { __result = EApplyDamageResult.Fail_Absolute; return false; }
                 if (!settings.Enabled || !Allied(attacker, __instance)) return true;
-                // Native thorns can fire before hit invulnerability is established.
-                // Block nested ally hits, including those reached via an enemy proc.
-                if (__state.InFriendlyChain || settings.DamagePercent == 0 || damage.damage < 0 ||
+                // Admit a recognized return only along the exact reverse of the
+                // immediate allied hit. Reflected hits cannot reflect again;
+                // unrelated procs and enemy-mediated chains remain blocked.
+                bool returnHit = reflection && __state.Friendly && !__state.Reflection &&
+                    ReferenceEquals(source, __state.Victim) && ReferenceEquals(__instance, __state.Source);
+                if (__state.InFriendlyChain && !returnHit || settings.DamagePercent == 0 || damage.damage < 0 ||
                     float.IsNaN(damage.damage) || float.IsInfinity(damage.damage))
                 { __result = EApplyDamageResult.Fail_Absolute; return false; }
                 current = new HitContext { Victim = __instance, Attacker = attacker, Source = source, Damage = damage, Friendly = true,
-                    InFriendlyChain = true, Percent = settings.DamagePercent };
+                    InFriendlyChain = true, Reflection = reflection, Percent = settings.DamagePercent };
             }
             catch (Exception error) { Warn(error); }
             return true;
         }
+
+        // Audited native direct-return effects. Keep this list narrow: an
+        // arbitrary on-hit proc is not permission to re-enter allied damage.
+        private static bool IsNativeReflection(DamageInstance damage) => damage.fromType == EDamageFromType.None &&
+            (damage.id == "Ability_Thorns" || damage.id == "Weapon_Reflect" || damage.id == "Charm_VenomSporePouch");
 
         private static bool Allied(PlayerAvatar attacker, UnitAvatar victim)
         {

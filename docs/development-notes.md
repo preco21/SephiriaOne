@@ -9,6 +9,14 @@ can change independently of that installed game version.
 
 ## Current status
 
+Version `0.37.1` adds bounded native reflection to friendly fire. Thorns, weapon
+reflection and the default Venom Spore Pouch parry counter may return damage along
+the exact reverse of an admitted allied hit, using the current host damage scale.
+A return cannot reflect again; unrelated nested procs remain blocked. Reflection
+uses the actual source rather than a companion's owner, preserves native formulas
+and uses the existing replicated HP/death/chat path. No new hooks, queues, cached
+player state or RPCs; no deployment or live multiplayer test.
+
 Version `0.37.0` fixes friendly-fire HP damage by bypassing the native player's
 team-protection callback only for the exact admitted player/team hit. Native
 guard MP, other callbacks and NPC safe-mode/crime checks remain intact. Player-led

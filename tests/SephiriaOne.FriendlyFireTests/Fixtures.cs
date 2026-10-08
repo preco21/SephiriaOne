@@ -19,6 +19,7 @@ namespace SephiriaOne
 }
 public enum EApplyDamageResult { Success, Fail_Absolute, Fail_Block }
 public enum EDamageFailType { None, Deny, Block }
+public enum EDamageFromType { None, BasicAttack, Magic }
 public enum EMonsterType { Normal, Dummy }
 public enum EPersonality { Aggressive }
 public enum ERelationBehaviour { Neutral, Friendly, Hostile }
@@ -30,6 +31,8 @@ public class DamageInstance
     public bool isSystemDamage;
     public EDamageFailType failed;
     public float damage = 10;
+    public string id = "";
+    public EDamageFromType fromType;
 }
 public class RuntimeFactionManager : UnityEngine.Object
 {
@@ -48,6 +51,9 @@ public class UnitAvatar : CombatBehaviour
     public string Name { get; set; } = "Unit";
     public bool IsDead, IsInvulnerable, isForcedChaosDamage;
     public bool IsGuarding;
+    public bool IsParrying;
+    public Action<DamageInstance> OnParry;
+    public Action<DamageInstance> OnGuardSucceeded;
     public int GuardHits;
     public EMonsterType monsterType;
     public EPersonality attackableTargetSelector;
@@ -80,8 +86,14 @@ public class UnitAvatar : CombatBehaviour
         if (result == EApplyDamageResult.Success)
         {
             attacker?.OnAttackUnitBeforeOperation?.Invoke(this, damage);
-            // Native guard feedback precedes the check of the attacker's veto.
-            if (IsGuarding) { GuardHits++; Mp -= 10; damage.failed = EDamageFailType.Block; return EApplyDamageResult.Fail_Block; }
+            // Native parry and guard callbacks run before ordinary damage/veto.
+            if (IsParrying) { OnParry?.Invoke(damage); return EApplyDamageResult.Fail_Block; }
+            if (IsGuarding)
+            {
+                GuardHits++; damage.failed = EDamageFailType.Block;
+                OnGuardSucceeded?.Invoke(damage); Mp -= 10;
+                return EApplyDamageResult.Fail_Block;
+            }
             OnCalculateDamage?.Invoke(damage);
             if (damage.failed != EDamageFailType.None)
                 return damage.failed == EDamageFailType.Deny ? EApplyDamageResult.Fail_Absolute : EApplyDamageResult.Fail_Block;

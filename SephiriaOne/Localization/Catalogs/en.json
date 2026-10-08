@@ -424,7 +424,7 @@
   "0–300% (100% = normal)": "0–300% (100% = normal)",
   "Allied damage: {0}%": "Allied damage: {0}%",
   "Melee/projectile hits can hurt other players and allies. Enemy-seeking skills keep their normal targets; self and enemy damage are unchanged.": "Melee/projectile hits can hurt other players and allies. Enemy-seeking skills keep their normal targets; self and enemy damage are unchanged.",
-  "Damage scales after defenses, before shields. Zero blocks allied hits. Nested friendly retaliation is blocked to prevent loops.": "Damage scales after defenses, before shields. Zero blocks allied hits. Nested friendly retaliation is blocked to prevent loops.",
+  "Damage scales after defenses, before shields. Zero blocks allied hits. Native reflection can return damage to the attacker; repeated reflection and other nested ally hits are blocked.": "Damage scales after defenses, before shields. Zero blocks allied hits. Native reflection can return damage to the attacker; repeated reflection and other nested ally hits are blocked.",
   "Confirmed friendly-fire kills are announced in chat. Safe areas and invulnerability retain native protection.": "Confirmed friendly-fire kills are announced in chat. Safe areas and invulnerability retain native protection.",
   "Mystic Jar: /one jars chance 0..100|xN; /one jars status|reset. Percentages allow 2 decimals; xN uses each native chance (capped at 100%). x1/reset restores native. /one save persists settings.": "Mystic Jar: /one jars chance 0..100|xN; /one jars status|reset. Percentages allow 2 decimals; xN uses each native chance (capped at 100%). x1/reset restores native. /one save persists settings.",
   "Only the host can change Mystic Jar spawn rates.": "Only the host can change Mystic Jar spawn rates.",

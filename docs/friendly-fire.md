@@ -1,5 +1,10 @@
 # Friendly fire
 
+Version 0.37.1 allows native Thorns, weapon reflection and the default Venom Spore
+Pouch parry return to damage the original attacker using the friendly-fire scale.
+Reflected hits cannot reflect again. Off/reset or 0% blocks reflected team damage
+before guard costs or callbacks.
+
 Version 0.37.0 fixes the native player-protection veto that prevented HP damage
 while sword-and-shield guarding could still spend MP. It also enables companion
 attacks against other players under the same host option.
@@ -50,8 +55,21 @@ reject the entire preset.
   At 0%, the allied hit is rejected before shields, protection points or on-hit
   callbacks. Negative/non-finite input and non-finite derived damage are guarded;
   extreme values are capped below the native integer conversion limit.
-- Nested player/companion-to-ally retaliation is rejected within the same hit chain. This
-  prevents thorns/on-hit feedback loops before native hit invulnerability starts.
+- Native direct reflection can return one hit per effect to the actual attacker.
+  The supported identifiers are `Ability_Thorns`, `Weapon_Reflect` and the default
+  `Charm_VenomSporePouch`, each with native `fromType=None`. During an allied hit,
+  only that hit's victim may reflect to its source. Reflection of reflection,
+  unrelated nested ally procs and chains routed through enemies are rejected.
+  This prevents recursion before native hit invulnerability starts while allowing
+  ordinary reflection. Unrecognized/custom reflection identifiers remain blocked
+  within the hit chain until their paths are audited.
+- Reflection keeps its native formula and gets the same percentage once after
+  the return victim's defenses, before shields. Weapon reflection uses incoming
+  raw damage and its normal effect bonuses; Thorns uses native defense/thorns
+  values. For example, a native weapon return of 40 becomes 10 at 25% before
+  shields, assuming defenses do not change it. Enemy return damage stays native.
+- When a companion attacks a player, the player's return hits the companion, not
+  its owner. A companion's own reflection still cannot damage its owner.
 - Confirmed allied deaths produce a localized `SephiriaOne` chat notice naming
   killer and victim. Extra-life revival does not count as a kill. Names have markup
   and control characters removed and are length-limited. The host's language is
@@ -110,9 +128,14 @@ attack is in flight, and off/reset. Check enemy-targeted skills still target
 enemies, and verify Combat slider focus/drag/Apply and EN/KO labels in game. With
 Collin already attacking a player, turn off/reset and confirm attacks stop and
 in-flight hits neither hurt nor spend guard MP; re-enable without respawning Collin.
+Also test A attacking B with Thorns or a reflecting shield, both players equipped
+with reflection, 25/100/200%, shield/MP-shield overflow, reflected kills and off.
 
-Version 0.37.0 verification on 2026-10-09: Debug and Release builds passed without
-warnings; 101 executable combat checks, 29 policy/preset checks, 1,250 shared
+Version 0.37.1 verification on 2026-10-09: Debug and Release builds passed without
+warnings; 171 executable combat checks, 29 policy/preset checks, 1,250 shared
 runtime checks, 69 Bat lifecycle checks, 48 localization checks, 1,449 catalog
 checks, and the full portable/native
 compatibility suite passed. Independent code review found no remaining issues.
+Native reflection checks cover return IDs/types, incoming-source identity,
+guard/parry binding, raw weapon formula input, Thorns before hit invulnerability
+and pooled damage metadata resets. No live multiplayer test was performed.
