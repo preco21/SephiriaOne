@@ -3,7 +3,8 @@ namespace UnityEngine
 {
     public class Object
     {
-        public static implicit operator bool(Object obj) => obj is not null;
+        public bool Destroyed;
+        public static implicit operator bool(Object obj) => obj is not null && !obj.Destroyed;
         public static bool operator ==(Object a, Object b) => ReferenceEquals(a,b);
         public static bool operator !=(Object a, Object b) => !ReferenceEquals(a,b);
         public override bool Equals(object obj) => ReferenceEquals(this,obj);
@@ -20,6 +21,7 @@ namespace SephiriaOne
 public enum EApplyDamageResult { Success, Fail_Absolute, Fail_Block }
 public enum EDamageFailType { None, Deny, Block }
 public enum EDamageFromType { None, BasicAttack, Magic }
+public enum EDamageType { Slice, Projectile, ElementalEffectDamage }
 public enum EMonsterType { Normal, Dummy }
 public enum EPersonality { Aggressive }
 public enum ERelationBehaviour { Neutral, Friendly, Hostile }
@@ -33,6 +35,7 @@ public class DamageInstance
     public float damage = 10;
     public string id = "";
     public EDamageFromType fromType;
+    public EDamageType damageType;
 }
 public class RuntimeFactionManager : UnityEngine.Object
 {
@@ -47,6 +50,7 @@ public static class CombatManager
 }
 public class UnitAvatar : CombatBehaviour
 {
+    public uint netId;
     public string faction = "players";
     public string Name { get; set; } = "Unit";
     public bool IsDead, IsInvulnerable, isForcedChaosDamage;
@@ -70,6 +74,16 @@ public class UnitAvatar : CombatBehaviour
     public bool Revive;
     public int Hits;
     public Action<UnitAvatar, DamageInstance> OnHit;
+    public bool DebuffImmune;
+    public int DebuffApplications;
+    [MethodImpl(MethodImplOptions.NoInlining)] public long GetHostileFactionLayers(EDamageFromType type) => faction == "enemy" ? -1 : 1;
+    [MethodImpl(MethodImplOptions.NoInlining)] public virtual void ApplyDebuff(CharacterDebuff debuffPrefab, UnitAvatar caster)
+    {
+        if (debuffPrefab == null || DebuffImmune || !caster) return;
+        DebuffApplications++;
+        debuffPrefab.InitializeAndSpawn(caster, this);
+        debuffPrefab.OnApply?.Invoke(caster, this);
+    }
     [MethodImpl(MethodImplOptions.NoInlining)] private float GetCustomStatUnsafe(string key) => key == "MPSHIELD" && IsMpShield ? 1 : 0;
     [MethodImpl(MethodImplOptions.NoInlining)] public EApplyDamageResult ApplyDamage(DamageInstance damage)
     {
@@ -95,7 +109,7 @@ public class UnitAvatar : CombatBehaviour
                 return EApplyDamageResult.Fail_Block;
             }
             OnCalculateDamage?.Invoke(damage);
-            if (damage.failed != EDamageFailType.None)
+            if (damage.failed != EDamageFailType.None && damage.damageType != EDamageType.ElementalEffectDamage)
                 return damage.failed == EDamageFailType.Deny ? EApplyDamageResult.Fail_Absolute : EApplyDamageResult.Fail_Block;
             float resolved = damage.damage - Defense + TrueDamage;
             if (resolved > 0)
@@ -123,6 +137,7 @@ public class UnitAvatar : CombatBehaviour
 }
 public class PlayerAvatar : UnitAvatar
 {
+    public PlayerSpawner spawner;
     public bool safeMode;
     public PlayerAvatar() { OnAttackUnitBeforeOperation += HandleBeforeAttack; }
     [MethodImpl(MethodImplOptions.NoInlining)] private void HandleBeforeAttack(UnitAvatar target, DamageInstance damage)
@@ -136,6 +151,11 @@ public class PlayerAvatar : UnitAvatar
         }
     }
     public void InvokeBeforeAttack(UnitAvatar target, DamageInstance damage) => HandleBeforeAttack(target, damage);
+}
+public class PlayerSpawner : UnityEngine.Object
+{
+    public PlayerAvatar PlayerAvatar;
+    public int currentPlayerIdx = -1;
 }
 public class DungeonManager : UnityEngine.Object
 {

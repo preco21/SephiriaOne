@@ -39,6 +39,7 @@ namespace SephiriaOne
                 harmony.Patch(beforeAttack, prefix: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.BeforePlayerAttack)));
                 harmony.Patch(relation, postfix: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.AfterCompanionRelation)));
                 harmony.Patch(update, prefix: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.BeforeCompanionUpdate)));
+                FriendlyFireEffectHooks.Install(harmony);
             }
             catch { harmony.UnpatchAll(Id); throw; }
         }

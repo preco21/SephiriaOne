@@ -1,11 +1,10 @@
 using System;
-using System.Text;
 using Mirror;
 using UnityEngine;
 
 namespace SephiriaOne
 {
-    internal static class FriendlyFireRuntime
+    internal static partial class FriendlyFireRuntime
     {
         internal struct HitContext
         {
@@ -14,23 +13,27 @@ namespace SephiriaOne
             internal UnitAvatar Source;
             internal DamageInstance Damage;
             internal bool Friendly, InFriendlyChain, Reflection;
+            internal bool InDebuffDamage, InBurnExplosion;
             internal int Percent;
         }
         [ThreadStatic] private static HitContext current;
         private static bool warned;
-        internal static void Clear() { current = default; warned = false; }
+        internal static void Clear() { current = default; debuffScope = default; ClearDebuffOrigins(); warned = false; }
 
         internal static bool BeforeHit(UnitAvatar __instance, DamageInstance damage, ref EApplyDamageResult __result, out HitContext __state)
         {
             __state = current;
-            current = new HitContext { InFriendlyChain = __state.InFriendlyChain };
+            current = new HitContext { InFriendlyChain = __state.InFriendlyChain,
+                InDebuffDamage = __state.InDebuffDamage, InBurnExplosion = __state.InBurnExplosion };
+            if (NetworkServer.active && BlockOrphanedDebuffHit(__instance, damage))
+            { __result = EApplyDamageResult.Fail_Absolute; return false; }
             if (!NetworkServer.active || damage == null || damage.isSystemDamage ||
                 !(damage.origin is UnitAvatar source) || !source || !__instance || source == __instance) return true;
             var attacker = source as PlayerAvatar;
             bool companion = !attacker;
             if (companion)
             {
-                attacker = source.NetworkLeader as PlayerAvatar;
+                attacker = TeamOwner(source);
                 // Companion hostility is restricted to other players. Native
                 // monster/NPC damage and target selection remain unchanged.
                 if (!attacker || !(__instance is PlayerAvatar)) return true;
@@ -39,15 +42,14 @@ namespace SephiriaOne
             {
                 var settings = SessionSettings.FriendlyFireForHit;
                 bool reflection = IsNativeReflection(damage);
+                // Native debuff ticks use an all-faction mask and bypass the
+                // normal player veto. Recheck policy before every team impact.
+                if (IsPlayerTeamPair(source, __instance) && (!settings.Enabled || settings.DamagePercent == 0))
+                { __result = EApplyDamageResult.Fail_Absolute; return false; }
                 // Recheck at impact: even a projectile fired while enabled (or
                 // with a broad native mask) cannot hurt the owner or hit players
                 // after off/reset. Reject before guard costs and attack procs.
-                if (companion && (attacker == __instance || !settings.Enabled))
-                { __result = EApplyDamageResult.Fail_Absolute; return false; }
-                // Native reflection uses an all-faction mask. Off must reject
-                // team returns before guarding can spend MP, including when
-                // policy changes during the original hit's callbacks.
-                if (reflection && !settings.Enabled && (__instance is PlayerAvatar || __instance.NetworkLeader is PlayerAvatar))
+                if (companion && attacker == __instance)
                 { __result = EApplyDamageResult.Fail_Absolute; return false; }
                 if (!settings.Enabled || !Allied(attacker, __instance)) return true;
                 // Admit a recognized return only along the exact reverse of the
@@ -55,11 +57,16 @@ namespace SephiriaOne
                 // unrelated procs and enemy-mediated chains remain blocked.
                 bool returnHit = reflection && __state.Friendly && !__state.Reflection &&
                     ReferenceEquals(source, __state.Victim) && ReferenceEquals(__instance, __state.Source);
-                if (__state.InFriendlyChain && !returnHit || settings.DamagePercent == 0 || damage.damage < 0 ||
+                bool debuffHit = CanNestDebuff(__state, source, __instance, damage);
+                bool burnExplosion = IsBurnExplosion(damage);
+                bool burnProc = burnExplosion && __state.Friendly && !__state.Reflection && !__state.InBurnExplosion &&
+                    __state.Victim && __state.Victim.IsDead && ReferenceEquals(source, __state.Source);
+                if (__state.InFriendlyChain && !returnHit && !debuffHit && !burnProc || settings.DamagePercent == 0 || damage.damage < 0 ||
                     float.IsNaN(damage.damage) || float.IsInfinity(damage.damage))
                 { __result = EApplyDamageResult.Fail_Absolute; return false; }
                 current = new HitContext { Victim = __instance, Attacker = attacker, Source = source, Damage = damage, Friendly = true,
-                    InFriendlyChain = true, Reflection = reflection, Percent = settings.DamagePercent };
+                    InFriendlyChain = true, Reflection = reflection, Percent = settings.DamagePercent,
+                    InDebuffDamage = __state.InDebuffDamage || debuffHit, InBurnExplosion = __state.InBurnExplosion || burnExplosion };
             }
             catch (Exception error) { Warn(error); }
             return true;
@@ -139,39 +146,6 @@ namespace SephiriaOne
         internal static float Sanitize(float resolved) => !current.Friendly ? resolved :
             float.IsNaN(resolved) || float.IsInfinity(resolved) || resolved < 0 ? 0 : Math.Min(resolved, 2147483520f);
 
-        internal static void BeforeDeath(UnitAvatar __instance, DamageInstance diedFrom, out bool __state) =>
-            __state = NetworkServer.active && !__instance.IsDead && current.Friendly &&
-                current.Victim == __instance && ReferenceEquals(current.Damage, diedFrom);
-
-        internal static void AfterDeath(UnitAvatar __instance, DamageInstance diedFrom, bool __state)
-        {
-            if (!__state || !__instance.IsDead) return;
-            try
-            {
-                var dungeon = DungeonManager.Instance;
-                if (!NetworkServer.active || !NetworkClient.active || !dungeon || !dungeon.isServer) return;
-                // DamageInstance is pooled; death callbacks can reuse it.
-                var attacker = current.Attacker;
-                if (!attacker) return;
-                // Null avatar makes this a system-style chat notice, not a bubble
-                // impersonating the killer. The stock RpcChat reaches every guest.
-                dungeon.Chat(null, "SephiriaOne", L.F("Friendly fire: {0} killed {1}.", SafeName(attacker.Name), SafeName(__instance.Name)));
-            }
-            catch (Exception error) { Warn(error); } // A notice cannot interrupt death/respawn.
-        }
-
-        internal static string SafeName(string name)
-        {
-            var text = new StringBuilder(32);
-            bool tag = false;
-            foreach (char c in name ?? "")
-            {
-                if (c == '<') { tag = true; continue; }
-                if (c == '>') { tag = false; continue; }
-                if (!tag && !char.IsControl(c) && text.Length < 32) text.Append(c);
-            }
-            return text.Length == 0 ? "?" : text.ToString();
-        }
         private static void Warn(Exception error)
         {
             if (warned) return;

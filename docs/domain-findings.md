@@ -176,7 +176,18 @@ Companions read live leader/policy and never attack their owner. Off/reset/0%
 blocks in-flight allied hits immediately; the next native AI update releases an
 invalid player target. Reflection permits only audited native effects along the
 exact reverse of an admitted hit, with the same damage scale and no reflection
-chain. Preserve hostile targeting and unrelated procs. See [combat](friendly-fire.md).
+chain. Since `0.39.2`, six audited burn/debuff item selectors also read this policy;
+do not globally change faction masks used by healing and unrelated skills.
+`ApplyDebuff` has no faction veto, but upstream selectors and nested electric
+damage needed separate treatment. Preserve immunity, proc chance and duration.
+
+Debuffs can outlive their caster, and companion death clears `NetworkLeader`.
+Current-owner-only classification therefore loses scaling/off protection. Weak
+per-debuff origin records carry that classification only through native effect
+operations; lost caster/owner or owner transfer ends the old effect safely.
+Capture kill names/companion ownership before death callbacks, and distinguish
+unnamed NPCs from missing player names with typed localized fallbacks.
+See [combat and the native audit](friendly-fire.md).
 
 One concrete disconnect risk was a recognized talent-budget rejection escaping a
 Mirror command handler. Its targeted containment is distinct from initialization,

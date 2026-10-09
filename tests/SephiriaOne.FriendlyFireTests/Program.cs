@@ -172,7 +172,15 @@ var targetCode = PatchProcessor.GetOriginalInstructions(AccessTools.Method(typeo
 Check(FriendlyFireHooks.ValidateCompanionUpdate(updateCode, targetCode), "Native battle-state/target-loss fixture is recognized");
 targetCode.RemoveAt(targetCode.FindIndex(i => i.operand is MethodInfo m && m.Name == "OnLostTarget"));
 Check(!FriendlyFireHooks.ValidateCompanionUpdate(updateCode, targetCode), "Missing native attack cleanup rejects companion update hook");
+KillLogTests.Run(Check);
+EffectTests.Run(Check);
 FriendlyFireHooks.Uninstall();
+var nativeRing = new WeaponAddonCommon_BurnRing { NetworkAvatar = new PlayerAvatar(), Target = new PlayerAvatar() };
+nativeRing.DamageNearbyEnemies();
+Check(!nativeRing.Selected, "Unload restores native item filters");
+Check(PatchProcessor.GetPatchInfo(AccessTools.Method(typeof(UnitAvatar), "ApplyDebuff"))?.Prefixes.Count is null or 0 &&
+    PatchProcessor.GetPatchInfo(AccessTools.Method(typeof(CharacterDebuff), "Update"))?.Prefixes.Count is null or 0,
+    "Unload removes debuff admission and lifetime hooks");
 victim = new PlayerAvatar(); victim.ApplyDamage(Hit());
 Check(victim.Hp == 100, "Unload removes ally exception and restores native behavior");
 Check(PatchProcessor.GetPatchInfo(AccessTools.Method(typeof(PlayerAvatar), "HandleBeforeAttack"))?.Prefixes.Count is null or 0,

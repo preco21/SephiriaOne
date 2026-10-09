@@ -14,6 +14,14 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+Version `0.39.2` repairs friendly-fire kill attribution and audited burn/debuff
+item selection. Death notices capture identity before callbacks and use typed
+EN/KO fallbacks. Six offensive selectors share current team policy; native
+debuffs retain immunity/chance/duration, with bounded nested electric and burning
+explosion damage. Weak effect-origin records preserve scaling after companion
+death and end effects safely when their caster disappears or ownership changes.
+See [the audit and remaining live checks](friendly-fire.md). No deployment.
+
 Version `0.39.1` fully excludes Potion of Regeneration (Sample) from Wing-Eared
 Rabbit's HP-potion options. Earlier exceptions preserved consumption and Survival
 but still admitted Sample for MP charges and sharing. Shared eligibility now

@@ -1,4 +1,7 @@
 {
+  "Player #{0}": "Player #{0}",
+  "Companion of {0}": "Companion of {0}",
+  "Unnamed ally #{0}": "Unnamed ally #{0}",
   "SephiriaOne shortcut": "SephiriaOne shortcut",
   "Set / Change": "Set / Change",
   "Clear": "Clear",
@@ -436,8 +439,8 @@
   "Apply damage": "Apply damage",
   "0–300% (100% = normal)": "0–300% (100% = normal)",
   "Allied damage: {0}%": "Allied damage: {0}%",
-  "Melee/projectile hits can hurt other players and allies. Enemy-seeking skills keep their normal targets; self and enemy damage are unchanged.": "Melee/projectile hits can hurt other players and allies. Enemy-seeking skills keep their normal targets; self and enemy damage are unchanged.",
-  "Damage scales after defenses, before shields. Zero blocks allied hits. Native reflection can return damage to the attacker; repeated reflection and other nested ally hits are blocked.": "Damage scales after defenses, before shields. Zero blocks allied hits. Native reflection can return damage to the attacker; repeated reflection and other nested ally hits are blocked.",
+  "Melee, projectiles and supported burn/debuff items can affect other players. Healing and unrelated automatic skills keep native targeting.": "Melee, projectiles and supported burn/debuff items can affect other players. Healing and unrelated automatic skills keep native targeting.",
+  "Damage, including debuff ticks, scales after defenses and before shields. Off or 0% blocks new allied debuffs and damage. Reflection, immediate debuff damage and burning-death explosions are allowed with recursion limits.": "Damage, including debuff ticks, scales after defenses and before shields. Off or 0% blocks new allied debuffs and damage. Reflection, immediate debuff damage and burning-death explosions are allowed with recursion limits.",
   "Confirmed friendly-fire kills are announced in chat. Safe areas and invulnerability retain native protection.": "Confirmed friendly-fire kills are announced in chat. Safe areas and invulnerability retain native protection.",
   "Mystic Jar: /one jars chance 0..100|xN; /one jars status|reset. Percentages allow 2 decimals; xN uses each native chance (capped at 100%). x1/reset restores native. /one save persists settings.": "Mystic Jar: /one jars chance 0..100|xN; /one jars status|reset. Percentages allow 2 decimals; xN uses each native chance (capped at 100%). x1/reset restores native. /one save persists settings.",
   "Only the host can change Mystic Jar spawn rates.": "Only the host can change Mystic Jar spawn rates.",
