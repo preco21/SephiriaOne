@@ -16,6 +16,7 @@ namespace SephiriaOne
             }
             if (!exists) return;
             policy = saved;
+            FriendlyFireKda.SetEnabled(policy.FriendlyFire.Enabled);
             MerchantFeature.Refresh();
             NotifySettingsChanged();
             Report(L.T("Loaded saved preset for this hosted session. Use /one status to inspect it."), true);

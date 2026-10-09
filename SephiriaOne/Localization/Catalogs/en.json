@@ -433,6 +433,7 @@
   " Friendly-fire hooks unavailable; see Player.log.": " Friendly-fire hooks unavailable; see Player.log.",
   " /one friendlyfire help lists allied-damage options.": " /one friendlyfire help lists allied-damage options.",
   "Friendly fire: {0} killed {1}.": "Friendly fire: {0} killed {1}.",
+  "Player kill logs show K/D/A. Assists count each player who damaged the victim during that life. Toggling friendly fire resets all scores and pending assists.": "Player kill logs show K/D/A. Assists count each player who damaged the victim during that life. Toggling friendly fire resets all scores and pending assists.",
   "Friendly fire": "Friendly fire",
   "Companions attack other players, never their owner. Off or 0% stops this targeting and blocks their hits on players immediately.": "Companions attack other players, never their owner. Off or 0% stops this targeting and blocks their hits on players immediately.",
   "Combat": "Combat",

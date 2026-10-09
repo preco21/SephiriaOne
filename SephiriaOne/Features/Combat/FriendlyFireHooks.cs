@@ -18,7 +18,12 @@ namespace SephiriaOne
             var relation = AccessTools.DeclaredMethod(typeof(UnitAI_NewBasic), "GetRelation", new[] { typeof(UnitAvatar) });
             var update = AccessTools.DeclaredMethod(typeof(UnitAI_NewBasic), "OnAIUpdate", Type.EmptyTypes);
             var setTarget = AccessTools.DeclaredMethod(typeof(UnitAI_NewBasic), "SetTarget", new[] { typeof(UnitAvatar) });
+            var received = AccessTools.DeclaredMethod(typeof(UnitAvatar), "AddReceivedDamage", new[] { typeof(float) });
+            var revive = AccessTools.DeclaredMethod(typeof(UnitAvatar), "Revive", new[] { typeof(float) });
             if (apply == null || apply.ReturnType != typeof(EApplyDamageResult) || die == null ||
+                received == null || received.ReturnType != typeof(void) || received.IsStatic ||
+                revive == null || revive.ReturnType != typeof(void) || revive.IsStatic ||
+                !ValidateReceivedDamage(PatchProcessor.GetOriginalInstructions(apply)) ||
                 beforeAttack == null || beforeAttack.IsStatic || beforeAttack.ReturnType != typeof(void) ||
                 relation == null || relation.IsStatic || relation.ReturnType != typeof(ERelationBehaviour) ||
                 !ValidateCompanionRelation(PatchProcessor.GetOriginalInstructions(relation)) ||
@@ -35,13 +40,23 @@ namespace SephiriaOne
                     transpiler: new HarmonyMethod(typeof(FriendlyFireTranspiler), nameof(FriendlyFireTranspiler.Rewrite)),
                     finalizer: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.AfterHit)));
                 harmony.Patch(die, prefix: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.BeforeDeath)),
-                    postfix: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.AfterDeath)));
+                    finalizer: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.FinishDeath)));
+                harmony.Patch(received, postfix: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.AfterReceivedDamage)));
+                harmony.Patch(revive, prefix: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.BeforeRevive)));
                 harmony.Patch(beforeAttack, prefix: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.BeforePlayerAttack)));
                 harmony.Patch(relation, postfix: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.AfterCompanionRelation)));
                 harmony.Patch(update, prefix: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.BeforeCompanionUpdate)));
                 FriendlyFireEffectHooks.Install(harmony);
             }
             catch { harmony.UnpatchAll(Id); throw; }
+        }
+
+        internal static bool ValidateReceivedDamage(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = instructions.ToList();
+            var accounting = code.FindAll(i => i.operand is MethodInfo m && m.DeclaringType == typeof(UnitAvatar) && m.Name == "AddReceivedDamage");
+            int death = code.FindIndex(i => i.operand is MethodInfo m && m.DeclaringType == typeof(UnitAvatar) && m.Name == "Die");
+            return accounting.Count == 3 && death >= 0 && accounting.All(i => code.IndexOf(i) < death);
         }
 
         internal static bool ValidateCompanionUpdate(IEnumerable<CodeInstruction> update, IEnumerable<CodeInstruction> setTarget)

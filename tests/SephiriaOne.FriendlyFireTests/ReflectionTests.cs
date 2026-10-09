@@ -160,7 +160,7 @@ internal static class ReflectionTests
         second.OnHit = (_, d) => ((UnitAvatar)d.origin).ApplyDamage(Return(second, "Ability_Thorns", 20));
         second.ApplyDamage(new() { origin = first, damage = 10 });
         check(first.IsDead && DungeonManager.Instance.Messages.Count == notices + 1 &&
-            DungeonManager.Instance.Messages[^1].Contains("Reflector killed Attacker"), "Reflected lethal damage credits the reflecting player");
+            DungeonManager.Instance.Messages[^1].Contains("Reflector(") && DungeonManager.Instance.Messages[^1].Contains(" killed Attacker("), "Reflected lethal damage credits the reflecting player");
 
         first = new PlayerAvatar(); second = new PlayerAvatar();
         var reused = Return(second, "Ability_Thorns", 20);

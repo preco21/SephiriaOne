@@ -15,7 +15,8 @@ namespace SephiriaOne
             if (!command.IsReset && !FriendlyFireFeature.Available)
             { message = L.T("Friendly-fire compatibility checks failed. Off/reset remain available; see Player.log."); return false; }
             if (!PrepareCommand("combat", command.IsReset, out HostCommandContext context, out message)) return false;
-            if (!Commit("combat", context.CreateBatch(), () => policy.Record(command), out message)) return false;
+            if (!Commit("combat", context.CreateBatch(), () =>
+                { policy.Record(command); FriendlyFireKda.SetEnabled(policy.FriendlyFire.Enabled); }, out message)) return false;
             message = DescribeFriendlyFire(policy.FriendlyFire);
             return true;
         }

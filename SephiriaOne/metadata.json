@@ -1,6 +1,6 @@
 {
   "modName": "SephiriaOne",
-  "modVersion": "0.39.2",
+  "modVersion": "0.40.0",
   "modAuthor": "preco21",
   "dllFile": "SephiriaOne.dll",
   "entryClass": "SephiriaOne.Entry"

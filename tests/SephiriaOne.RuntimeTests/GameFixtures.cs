@@ -33,6 +33,7 @@ namespace Mirror
 
 public sealed class PlayerSpawner : UnityEngine.Object
 {
+    public ulong steamID;
     public static readonly List<PlayerSpawner> MultiplayerList = new();
     public bool isServer = true;
     public uint netId;
@@ -60,6 +61,7 @@ public sealed class PlayerSpawner : UnityEngine.Object
 
 public sealed partial class PlayerAvatar : UnitAvatar
 {
+    public bool IsDead;
     public bool isClient = true;
     public readonly List<string> NameRequests = new();
     public void SetPlayerName(string value) => NameRequests.Add(value);

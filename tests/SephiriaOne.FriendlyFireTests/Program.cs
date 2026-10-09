@@ -37,7 +37,7 @@ victim.ApplyDamage(Hit()); Check(victim.Hp == 65 && attacker.Hp == 100, "Recursi
 victim.OnHit = null;
 var reused = Hit(); victim.ApplyDamage(reused); enemy.ApplyDamage(reused);
 Check(reused.damage == 10 && victim.Hp == 35 && enemy.Hp == 80, "Reused damage object does not leak allied scaling to enemies");
-victim.Revive = true; victim.ApplyDamage(Hit(100));
+victim.ExtraLife = true; victim.ApplyDamage(Hit(100));
 Check(!victim.IsDead && DungeonManager.Instance.Messages.Count == 0, "Extra life does not log a kill");
 victim.OnDeath = d => d.origin = enemy;
 victim.ApplyDamage(Hit(100));
@@ -172,9 +172,14 @@ var targetCode = PatchProcessor.GetOriginalInstructions(AccessTools.Method(typeo
 Check(FriendlyFireHooks.ValidateCompanionUpdate(updateCode, targetCode), "Native battle-state/target-loss fixture is recognized");
 targetCode.RemoveAt(targetCode.FindIndex(i => i.operand is MethodInfo m && m.Name == "OnLostTarget"));
 Check(!FriendlyFireHooks.ValidateCompanionUpdate(updateCode, targetCode), "Missing native attack cleanup rejects companion update hook");
+KdaTests.Run(Check);
 KillLogTests.Run(Check);
 EffectTests.Run(Check);
 FriendlyFireHooks.Uninstall();
+Check(PatchProcessor.GetPatchInfo(AccessTools.Method(typeof(UnitAvatar), "AddReceivedDamage"))?.Postfixes.Count is null or 0 &&
+    PatchProcessor.GetPatchInfo(AccessTools.Method(typeof(UnitAvatar), "Revive"))?.Prefixes.Count is null or 0 &&
+    PatchProcessor.GetPatchInfo(AccessTools.Method(typeof(UnitAvatar), "Die"))?.Finalizers.Count is null or 0,
+    "Unload removes KDA accounting, revival and death hooks");
 var nativeRing = new WeaponAddonCommon_BurnRing { NetworkAvatar = new PlayerAvatar(), Target = new PlayerAvatar() };
 nativeRing.DamageNearbyEnemies();
 Check(!nativeRing.Selected, "Unload restores native item filters");

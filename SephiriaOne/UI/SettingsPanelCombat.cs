@@ -49,6 +49,7 @@ namespace SephiriaOne
             "\n\n" + L.T("Companions attack other players, never their owner. Off or 0% stops this targeting and blocks their hits on players immediately.") +
             "\n\n" + L.T("Damage, including debuff ticks, scales after defenses and before shields. Off or 0% blocks new allied debuffs and damage. Reflection, immediate debuff damage and burning-death explosions are allowed with recursion limits.") +
             "\n\n" + L.T("Confirmed friendly-fire kills are announced in chat. Safe areas and invulnerability retain native protection.") +
+            "\n\n" + L.T("Player kill logs show K/D/A. Assists count each player who damaged the victim during that life. Toggling friendly fire resets all scores and pending assists.") +
             "\n\n" + L.T("Save these options from Presets for future sessions.");
     }
 }

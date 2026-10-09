@@ -14,6 +14,13 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+Version `0.40.0` adds player K/D/A to friendly-fire kill notices. Native landed
+damage records unique contributors; confirmed player deaths credit the final
+blow, victim and other contributors. Toggle changes reset all totals immediately.
+Run/revive/departure clear pending life contributions; session totals survive
+reconnect by Steam identity and never persist to presets. The host broadcasts
+updated scores through stock chat for unmodified guests. See [friendly fire](friendly-fire.md).
+
 Version `0.39.2` repairs friendly-fire kill attribution and audited burn/debuff
 item selection. Death notices capture identity before callbacks and use typed
 EN/KO fallbacks. Six offensive selectors share current team policy; native

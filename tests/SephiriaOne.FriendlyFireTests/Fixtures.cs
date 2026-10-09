@@ -16,7 +16,12 @@ namespace Mirror { public static class NetworkServer { public static bool active
 namespace Mirror { public class SyncList<T> : List<T> { [MethodImpl(MethodImplOptions.NoInlining)] public new bool Contains(T item) => base.Contains(item); } }
 namespace SephiriaOne
 {
-    internal static class SessionSettings { internal static FriendlyFireSettings FriendlyFireForHit; }
+    internal static class SessionSettings
+    {
+        private static FriendlyFireSettings settings;
+        internal static FriendlyFireSettings FriendlyFireForHit
+        { get => settings; set { settings = value; FriendlyFireKda.SetEnabled(value.Enabled); } }
+    }
 }
 public enum EApplyDamageResult { Success, Fail_Absolute, Fail_Block }
 public enum EDamageFailType { None, Deny, Block }
@@ -71,7 +76,7 @@ public class UnitAvatar : CombatBehaviour
     public Action<DamageInstance> OnCalculateDamage;
     public Action<UnitAvatar, DamageInstance> OnAttackUnitBeforeOperation;
     public Action<DamageInstance> OnDeath;
-    public bool Revive;
+    public bool ExtraLife;
     public int Hits;
     public Action<UnitAvatar, DamageInstance> OnHit;
     public bool DebuffImmune;
@@ -112,23 +117,31 @@ public class UnitAvatar : CombatBehaviour
             if (damage.failed != EDamageFailType.None && damage.damageType != EDamageType.ElementalEffectDamage)
                 return damage.failed == EDamageFailType.Deny ? EApplyDamageResult.Fail_Absolute : EApplyDamageResult.Fail_Block;
             float resolved = damage.damage - Defense + TrueDamage;
+            float shieldDamage = 0, mpDamage = 0;
             if (resolved > 0)
             {
             resolved -= GetCustomStatUnsafe("TOUGHNESS");
             if (resolved < 1) resolved = 1;
-            if (Shield > 0) { float absorbed = Math.Min(resolved,Shield); Shield -= absorbed; resolved -= absorbed; }
+            if (Shield > 0) { float absorbed = Math.Min(resolved,Shield); Shield -= absorbed; resolved -= absorbed; shieldDamage = absorbed; }
             }
             if (GetCustomStatUnsafe("MPSHIELD") > 0)
             {
+                int oldMp = Mp;
                 if ((float)Mp < resolved) { resolved -= Mp; Mp = 0; }
                 else { Mp -= (int)resolved; resolved = 0; }
+                mpDamage = oldMp - Mp;
             }
+            if (shieldDamage > 0 && !damage.isSystemDamage) AddReceivedDamage(shieldDamage);
+            if (mpDamage > 0 && !damage.isSystemDamage) AddReceivedDamage(mpDamage);
             Hp -= resolved; Hits++;
+            if (resolved > 0 && !damage.isSystemDamage) AddReceivedDamage(resolved);
             OnHit?.Invoke(this,damage);
-            if (Hp <= 0) { if (Revive) { Hp = 60; Revive = false; } else Die(5, damage); }
+            if (Hp <= 0) { if (ExtraLife) { Hp = 60; ExtraLife = false; } else Die(5, damage); }
         }
         return result;
     }
+    [MethodImpl(MethodImplOptions.NoInlining)] public virtual void AddReceivedDamage(float damage) { }
+    [MethodImpl(MethodImplOptions.NoInlining)] public void Revive(float hpAmount) { IsDead = false; Hp = hpAmount; }
     [MethodImpl(MethodImplOptions.NoInlining)] public virtual void Die(int hitLevel, DamageInstance diedFrom)
     {
         if (IsDead) return;
@@ -154,6 +167,7 @@ public class PlayerAvatar : UnitAvatar
 }
 public class PlayerSpawner : UnityEngine.Object
 {
+    public ulong steamID;
     public PlayerAvatar PlayerAvatar;
     public int currentPlayerIdx = -1;
 }

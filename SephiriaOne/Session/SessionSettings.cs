@@ -84,6 +84,7 @@ namespace SephiriaOne
             RestoreBat();
             ItemRestrictionFeature.Clear();
             MerchantFeature.Clear();
+            FriendlyFireKda.Reset();
             ChoicePoints.ClearCleanup();
             policy.Clear();
             relativeStats.Clear(); relative.Clear();
@@ -106,7 +107,7 @@ namespace SephiriaOne
         private static void OnStartSession(bool isSaved)
         {
             if (enabled && NetworkServer.active && dungeon && ReferenceEquals(dungeon, DungeonManager.Instance))
-            { runGeneration++; restoreFountainLimit = true; session.Invalidate(dungeon, SyncDomain.Limits); }
+            { runGeneration++; FriendlyFireKda.ClearLives(); restoreFountainLimit = true; session.Invalidate(dungeon, SyncDomain.Limits); }
         }
 
         public static bool IsReady(PlayerSpawner spawner) => HostStateAdapter.IsReady(spawner);
@@ -253,6 +254,7 @@ namespace SephiriaOne
 
         private static void Forget(HostPlayer subject)
         {
+            FriendlyFireKda.ForgetLife(subject.Player);
             players.Forget(subject);
             ForgetRelativeStats(subject.Player);
             ResourceRuntime.Forget(subject.Player);

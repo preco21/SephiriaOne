@@ -54,7 +54,7 @@ SephiriaOne/
 | `Features/Bat/` | Costume-owned HP-steal adjustment and paired native stat/status handling. |
 | `Features/Choices/` | Candidate command parsing/planning, host writes, and Harmony generation guards. |
 | `Features/Collin/` | Costume-bound native Collin starting grants, exact ownership, restart provenance and boundary hooks. |
-| `Features/Combat/` | Friendly-fire admission/scaling, companion targeting, audited item selectors, scoped debuff lifetimes, bounded reflection/procs and kill notices. |
+| `Features/Combat/` | Friendly-fire admission/scaling, companion targeting, audited item selectors, scoped debuff lifetimes, bounded reflection/procs, session KDA/life contributions and kill notices. |
 | `Features/Fountain/` | Fountain command parsing/planning, point writes, and carryover-cap operations. |
 | `Features/Items/` | Event-driven given-item restriction overlays, native ownership and reset/save handling. |
 | `Features/Merchants/` | Host encounter toggle/chance parsing, native room placement, run-scoped spawn bookkeeping and actor-specific crime/retaliation guards. |

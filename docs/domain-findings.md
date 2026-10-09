@@ -187,6 +187,15 @@ per-debuff origin records carry that classification only through native effect
 operations; lost caster/owner or owner transfer ends the old effect safely.
 Capture kill names/companion ownership before death callbacks, and distinguish
 unnamed NPCs from missing player names with typed localized fallbacks.
+For KDA (`0.40.0`), use native `AddReceivedDamage` accounting instead of attempted
+hit counts or post-callback HP comparisons: shield/MP-shield/HP damage is already
+resolved, and the player's override calls the base method before death. Keep
+scores separate from weak per-avatar-life contribution sets. A native extra life
+does not call `Die`; `ForceDie` bypasses it, so actual `Revive` must clear old-life
+contributions too. Use nonzero `PlayerSpawner.steamID` for session score identity,
+never display names or reusable slots. A generation token prevents in-flight
+deaths from undoing toggle/run resets. These counters are host-only chat metadata,
+not new player SyncVars or saved preset fields.
 See [combat and the native audit](friendly-fire.md).
 
 One concrete disconnect risk was a recognized talent-budget rejection escaping a

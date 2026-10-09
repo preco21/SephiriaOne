@@ -15,10 +15,11 @@ namespace SephiriaOne
             internal bool Friendly, InFriendlyChain, Reflection;
             internal bool InDebuffDamage, InBurnExplosion;
             internal int Percent;
+            internal long KdaEpoch;
         }
         [ThreadStatic] private static HitContext current;
         private static bool warned;
-        internal static void Clear() { current = default; debuffScope = default; ClearDebuffOrigins(); warned = false; }
+        internal static void Clear() { current = default; debuffScope = default; ClearDebuffOrigins(); FriendlyFireKda.Reset(); warned = false; }
 
         internal static bool BeforeHit(UnitAvatar __instance, DamageInstance damage, ref EApplyDamageResult __result, out HitContext __state)
         {
@@ -41,6 +42,7 @@ namespace SephiriaOne
             try
             {
                 var settings = SessionSettings.FriendlyFireForHit;
+                FriendlyFireKda.SetEnabled(settings.Enabled);
                 bool reflection = IsNativeReflection(damage);
                 // Native debuff ticks use an all-faction mask and bypass the
                 // normal player veto. Recheck policy before every team impact.
@@ -65,7 +67,7 @@ namespace SephiriaOne
                     float.IsNaN(damage.damage) || float.IsInfinity(damage.damage))
                 { __result = EApplyDamageResult.Fail_Absolute; return false; }
                 current = new HitContext { Victim = __instance, Attacker = attacker, Source = source, Damage = damage, Friendly = true,
-                    InFriendlyChain = true, Reflection = reflection, Percent = settings.DamagePercent,
+                    InFriendlyChain = true, Reflection = reflection, Percent = settings.DamagePercent, KdaEpoch = FriendlyFireKda.Epoch,
                     InDebuffDamage = __state.InDebuffDamage || debuffHit, InBurnExplosion = __state.InBurnExplosion || burnExplosion };
             }
             catch (Exception error) { Warn(error); }
@@ -88,6 +90,14 @@ namespace SephiriaOne
 
         internal static Exception AfterHit(Exception __exception, HitContext __state)
         { current = __state; return __exception; }
+
+        internal static void AfterReceivedDamage(UnitAvatar __instance, float damage)
+        {
+            if (!NetworkServer.active || !current.Friendly || !ReferenceEquals(current.Victim, __instance) ||
+                !(__instance is PlayerAvatar victim) || damage <= 0 || float.IsNaN(damage) || float.IsInfinity(damage)) return;
+            try { FriendlyFireKda.Damage(current.Attacker, victim, current.KdaEpoch); }
+            catch (Exception error) { Warn(error); }
+        }
 
         internal static void AfterCompanionRelation(UnitAI_NewBasic __instance, UnitAvatar target, ref ERelationBehaviour __result)
         {

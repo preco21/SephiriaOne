@@ -14,6 +14,13 @@ internal static class GameFriendlyFireCompatibilityTests
         var apply = Code("UnitAvatar", "ApplyDamage");
         Require((bool)AccessTools.Method(transpiler,"Validate").Invoke(null,new object[] { apply })!, "native ally/shield anchors");
         var hooks = addon.GetType("SephiriaOne.FriendlyFireHooks", true)!;
+        Require((bool)AccessTools.Method(hooks, "ValidateReceivedDamage").Invoke(null, new object[] { apply })!, "three native received-damage accounting calls precede death");
+        var changedAccounting = apply.Select(i => new CodeInstruction(i)).ToList();
+        changedAccounting.RemoveAt(changedAccounting.FindIndex(i => i.operand is MethodInfo m && m.Name == "AddReceivedDamage"));
+        Require(!(bool)AccessTools.Method(hooks, "ValidateReceivedDamage").Invoke(null, new object[] { changedAccounting })!, "changed accounting path rejects KDA hooks");
+        Require(Calls(Code("PlayerAvatar", "AddReceivedDamage"), "UnitAvatar", "AddReceivedDamage"), "player accounting reaches patched base hook");
+        Require(AccessTools.Field(Type("PlayerSpawner"), "steamID")?.FieldType == typeof(ulong), "session account identity retains native ulong representation");
+        Require(Calls(Code("UnitAvatar", "Revive"), "UnitAvatar", "set_NetworkIsDead"), "native revival marks a new living avatar");
         var protection = Code("PlayerAvatar", "HandleBeforeAttack");
         Require((bool)AccessTools.Method(hooks,"ValidatePlayerProtection").Invoke(null,new object[] { protection })!, "native second player-protection callback");
         var changedProtection = protection.Select(i => new CodeInstruction(i)).ToList();

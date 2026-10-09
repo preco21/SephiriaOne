@@ -1,5 +1,10 @@
 # Friendly fire
 
+Version `0.40.0` adds K/D/A to player kill notices, for example
+`PlayerA(1/2/3) killed PlayerB(1/1/3)`, inside the existing localized chat message.
+The displayed totals include that death. Enabling or disabling friendly fire
+resets all scores and pending assists immediately.
+
 Version `0.39.2` fixes unnamed kill notices and extends the audited offensive
 item selectors to player targets. It also permits bounded immediate debuff and
 burning-death explosion damage, and preserves debuff ownership through companion
@@ -103,6 +108,48 @@ reject the entire preset.
 
 ## Synchronization and performance
 
+### Player KDA
+
+- A confirmed player death awards one kill to the final attacker and one death
+  to the victim. Player-owned companions credit their owner. Reflection and
+  ongoing debuff damage use their already-resolved source player.
+- Each other player who dealt positive HP, shield or MP-shield damage to the
+  victim during that life gets one assist, regardless of hit count. There is no
+  time cutoff or damage threshold. Guard/parry costs, invulnerability, denied
+  hits, self damage, NPC/system damage and zero-percent hits earn no assist.
+- Extra-life prevention is not a death and does not erase contributions. Actual
+  death/revival starts a new life; environmental deaths clear contributions but
+  award no K/D/A. Killing a companion or NPC does not award a player kill.
+- A change of the enabled flag resets every total and pending contribution.
+  Damage-slider edits and repeated `on` commands preserve them. `/one friendlyfire
+  reset` turns the option off. New runs clear life contributions but preserve
+  totals until a toggle/session end. KDA is not saved in presets.
+- Nonzero native `PlayerSpawner.steamID` identifies session scores across rejoin
+  and nickname changes. Uninitialized/offline identities use the exact spawner
+  (or avatar) object, never a nickname or reusable slot. Rejoining avatars get
+  fresh contribution lists. Leaving drops that victim's old life. Existing
+  contributions by a departed attacker retain their score identity.
+- The host owns counters and uses existing chat to send formatted names/totals.
+  Guests need no addon or custom RPC. An unavailable local chat UI does not stop
+  scoring. The Combat panel explains KDA/reset behavior in EN and KO.
+
+Native `UnitAvatar.AddReceivedDamage(float)` is called for actual shield,
+MP-shield and HP loss before `Die`; `PlayerAvatar`'s override calls the base
+method. An exact active friendly-hit scope filters its postfix. No health,
+faction, damage or network state is changed by bookkeeping. `Die` snapshots
+names/score receipts before callbacks and completes after `IsDead` is confirmed,
+including when a later callback throws. Native `Revive(float)` clears the old
+life, including forced deaths which bypass `Die`. Epoch checks discard an
+in-flight receipt after a toggle or run transition. Session hooks explicitly
+handle committed settings, loaded presets, run start, departed players and stop.
+
+Score dictionaries hold no player objects. Weak object-keyed life/fallback maps
+release old avatars; memory is bounded by the session's accounts and current
+contributors. Repeated contribution checks allocate nothing after their first
+registration. There are no added frame scans, timers or combat packets.
+
+### Damage and effects
+
 Only the host needs the addon. UnitAvatar's native health/shield/MP/death writes
 and existing `DungeonManager.Chat` RPC replicate outcomes to stock clients. There
 are no custom guest messages, assets, altered player stats or faction mutations.
@@ -139,6 +186,23 @@ The native DamageInstance is not modified by the addon, so shared attacks cannot
 carry a reduced multiplier from an ally to an enemy.
 
 ## Verification
+
+### KDA (`0.40.0`, 2026-10-10)
+
+Executable tests cover updated message totals, unique assists, blocked/zero
+hits, shields, extra lives and revival, environmental/forced death, NPC exclusion,
+companion and debuff credit, exceptions, toggle during damage, same-state and
+damage-only commands, run transitions, departure/rejoin, duplicate/changed names,
+preset/controller lifetime, and chat-independent scoring. Native contracts
+check all three accounting calls precede death, the player's base accounting
+call, native identity type and revival method. The warmed contribution fixture
+performs 1,000 updates with zero allocated bytes. Live multiplayer verification
+must still confirm native kill/assist messages and toggles with stock guests.
+
+Validation: 253 executable combat checks, 1,265 runtime integration checks, and
+portable/catalog/installed-game contracts pass. Debug and Release builds have
+zero warnings/errors. Independent review found no actionable issues. No deployment
+or live multiplayer test was performed.
 
 ### Burn/debuff and kill-name audit (`0.39.2`, 2026-10-10)
 

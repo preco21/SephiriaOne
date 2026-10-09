@@ -4,13 +4,14 @@ internal static class KillLogTests
 {
     internal static void Run(Action<bool, string> check)
     {
+        FriendlyFireRuntime.Clear();
         SessionSettings.FriendlyFireForHit = new(true, 100);
         var killer = new PlayerAvatar { Name = "<color=blue>Alice</color>" };
         var victim = new PlayerAvatar { Name = "Bob" };
         victim.OnDeath = _ => { killer.Name = ""; victim.Name = ""; };
         int before = DungeonManager.Instance.Messages.Count;
         victim.ApplyDamage(new() { origin = killer, damage = 200 });
-        check(DungeonManager.Instance.Messages[before] == "Friendly fire: Alice killed Bob.",
+        check(DungeonManager.Instance.Messages[before] == "Friendly fire: Alice(1/0/0) killed Bob(0/1/0).",
             "Death callbacks cannot erase snapshotted killer/victim names");
         killer.Name = "Alice";
         foreach (string missing in new[] { "", "?", " \n\t", "<color=red></color>" })
@@ -18,7 +19,7 @@ internal static class KillLogTests
             victim = new PlayerAvatar { Name = missing, netId = 42 };
             victim.spawner = new PlayerSpawner { PlayerAvatar = victim, currentPlayerIdx = 2 };
             victim.ApplyDamage(new() { origin = killer, damage = 200 });
-            check(DungeonManager.Instance.Messages.Last() == "Friendly fire: Alice killed Player #3.",
+            check(DungeonManager.Instance.Messages.Last().Contains(" killed Player #3(0/1/0)."),
                 "Missing player name has an identifiable player-slot fallback: " + missing);
         }
         victim = new PlayerAvatar { Name = "", netId = 42 };
