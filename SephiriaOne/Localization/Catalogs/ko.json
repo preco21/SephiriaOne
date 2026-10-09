@@ -1,4 +1,17 @@
 {
+  "SephiriaOne shortcut": "SephiriaOne 단축키",
+  "Set / Change": "설정 / 변경",
+  "Clear": "해제",
+  "Current shortcut: ": "현재 단축키: ",
+  "Unassigned": "미지정",
+  "Shortcut unavailable; chat commands remain available.": "단축키를 사용할 수 없습니다. 채팅 명령은 계속 사용할 수 있습니다.",
+  "Press an unused keyboard key. Cancel keeps the current shortcut.": "사용하지 않는 키를 누르세요. 취소하면 현재 단축키가 유지됩니다.",
+  "Shortcut saved.": "단축키를 저장했습니다.",
+  "Shortcut cleared.": "단축키를 해제했습니다.",
+  "Could not save shortcut; previous shortcut was kept.": "단축키를 저장하지 못했습니다. 이전 단축키를 유지합니다.",
+  "Shortcut capture cancelled.": "단축키 설정을 취소했습니다.",
+  "This key is reserved for native navigation or modifiers.": "이 키는 기본 메뉴 탐색 또는 조합 키로 예약되어 있습니다.",
+  "This key is already bound to a native action.": "이 키는 이미 게임 동작에 지정되어 있습니다.",
   "Added merchants are hostile, cannot talk, and have no negotiation/crime penalty. Natural merchants keep their usual behavior.": "추가 상인은 적대적이며 대화할 수 없고, 협상력/범죄 페널티가 없습니다. 자연 출현 상인은 기존 동작을 유지합니다.",
   "Guarantee": "확정 출현",
   "Guarantee: {0}": "확정 출현: {0}",
@@ -528,5 +541,9 @@
   "Running: {0} | Installed for next launch: {1}": "현재 실행 버전: {0} | 다음 실행에 적용할 버전: {1}",
   "Automatic update checks: {0}": "자동 업데이트 확인: {0}",
   "Downloading and installing require your Update action. Saved settings and translations are preserved.": "업데이트 설치를 선택해야 다운로드와 설치가 진행됩니다. 저장된 설정과 번역은 유지됩니다.",
-  "Local addon updates. New code activates after a full game restart.": "로컬 모드 업데이트입니다. 새 버전은 게임을 완전히 재시작한 뒤 적용됩니다."
+  "Local addon updates. New code activates after a full game restart.": "로컬 모드 업데이트입니다. 새 버전은 게임을 완전히 재시작한 뒤 적용됩니다.",
+  "Center": "가운데로",
+  "Close": "닫기",
+  "Another native menu currently owns input.": "현재 다른 기본 메뉴에서 입력을 사용 중입니다.",
+  "{0} ready player(s). Checkboxes apply immediately; amounts require an action.": "준비된 플레이어 {0}명. 체크박스는 즉시 적용되며, 수치는 작업 버튼으로 적용합니다."
 }

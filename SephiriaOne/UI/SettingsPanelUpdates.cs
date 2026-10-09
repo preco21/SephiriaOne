@@ -7,7 +7,8 @@ namespace SephiriaOne
     public sealed partial class SettingsPanel
     {
         private TMP_Text updateLabel, scopeLabel;
-        private Button updateInstall, updateCheck, updateAutoOn, updateAutoOff;
+        private Toggle updateAutomatic;
+        private Button updateInstall, updateCheck;
 
         private void BuildUpdatesEditor()
         {
@@ -16,8 +17,12 @@ namespace SephiriaOne
             widgets.Button(pageRoot, "Open releases", 398, 0, 186, 25,
                 () => Application.OpenURL("https://github.com/preco21/SephiriaOne/releases"));
             widgets.Text(pageRoot, "UpdateAuto", "Automatic checks", 16, 32, 180, 23, 10);
-            updateAutoOn = widgets.Button(pageRoot, "On", 207, 32, 86, 23, () => Execute("/one update auto on", false));
-            updateAutoOff = widgets.Button(pageRoot, "Off", 301, 32, 86, 23, () => Execute("/one update auto off", false));
+            updateAutomatic = widgets.Checkbox(pageRoot, "Automatic checks", 207, 32, 180, 23);
+            updateAutomatic.onValueChanged.AddListener(value => {
+                Execute("/one update auto " + (value ? "on" : "off"), false);
+                var state = UpdateFeature.Snapshot;
+                updateAutomatic.SetIsOnWithoutNotify(state != null && state.Automatic);
+            });
             readout = widgets.Scroll(pageRoot, 16, 62, 568, 100);
         }
 
@@ -37,8 +42,8 @@ namespace SephiriaOne
             availability.color = PanelWidgets.Muted;
             updateCheck.interactable = state != null && !state.Busy && state.Phase != UpdatePhase.RestartRequired;
             updateInstall.interactable = state != null && state.CanInstall;
-            updateAutoOn.interactable = state != null && !state.Busy && !state.Automatic;
-            updateAutoOff.interactable = state != null && !state.Busy && state.Automatic;
+            updateAutomatic.interactable = state != null && !state.Busy;
+            updateAutomatic.SetIsOnWithoutNotify(state != null && state.Automatic);
             readout.SetText(UpdateText.Status(state));
         }
     }

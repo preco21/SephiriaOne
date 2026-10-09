@@ -5,6 +5,7 @@ refactor preserved behavior; `0.12.0` added reusable synchronization modules.
 Version `0.12.2` removes the local-only presentation layer and keeps native
 multiplayer synchronization.
 Version `0.13.0` adds shared settings controls and an addon-owned host panel.
+Version `0.39.0` adds tabbed window interaction helpers and local hotkey controls.
 The SDK project discovers source files recursively; namespaces remain stable.
 
 ```text
@@ -37,6 +38,7 @@ SephiriaOne/
     Game/
   Properties/
   UI/
+    Hotkeys/
   Updates/
 ```
 
@@ -46,7 +48,8 @@ SephiriaOne/
 | `Chat/` | Local chat interception and forwarding to the shared settings dispatcher. |
 | `Controls/` | Shared action dispatch/results and immutable settings/player snapshots used by chat and UI. |
 | `Localization/` | Cached English/Korean JSON catalogs, validated formatting, local config, atomic reload and presentation revision notifications. |
-| `UI/` | Addon-owned host panel, pause-menu binding, native control-stack lifetime, widgets and session-bound drafts. |
+| `UI/` | Tabbed host window, pause launcher, native control-stack lifetime, reusable widgets, drag geometry and session-bound drafts. |
+| `UI/Hotkeys/` | Local keyboard preference, capture/input policy and addon-owned controls in native Settings. No gameplay synchronization or native binding mutation. |
 | `Updates/` | Local GitHub release discovery, explicit installation, persistence and controller; independent of gameplay session policy. |
 | `Features/Bat/` | Costume-owned HP-steal adjustment and paired native stat/status handling. |
 | `Features/Choices/` | Candidate command parsing/planning, host writes, and Harmony generation guards. |

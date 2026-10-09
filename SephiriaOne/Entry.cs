@@ -9,6 +9,7 @@ namespace SephiriaOne
         private SessionSettingsController sessionSettings;
         private SettingsPanelController settingsPanel;
         private UpdateController updates;
+        private HotkeyController hotkeys;
 
         protected override void OnModLoaded()
         {
@@ -36,6 +37,7 @@ namespace SephiriaOne
                 updates = controller.AddComponent<UpdateController>();
                 sessionSettings = controller.AddComponent<SessionSettingsController>();
                 settingsPanel = controller.AddComponent<SettingsPanelController>();
+                hotkeys = controller.AddComponent<HotkeyController>();
                 nameColor = controller.AddComponent<MultiplayerNameController>();
                 chatCommands = controller.AddComponent<ModChatCommands>();
             }
@@ -69,6 +71,7 @@ namespace SephiriaOne
             RabbitLevelUpFeature.Shutdown();
             RabbitPotionFeature.Shutdown();
             DisconnectDiagnosticsFeature.Shutdown();
+            if (hotkeys) { hotkeys.enabled = false; hotkeys = null; }
             if (settingsPanel)
             {
                 settingsPanel.enabled = false;

@@ -5,8 +5,6 @@ namespace SephiriaOne
 {
     public sealed partial class SettingsPanel
     {
-        private readonly List<Button> rabbitOffButtons = new List<Button>();
-        private Button rabbitLevelUpOn;
 
         private void BuildRabbitEditor()
         {
@@ -17,13 +15,12 @@ namespace SephiriaOne
             {
                 string option = options[i];
                 int y = 25 + i * 22;
-                widgets.Text(pageRoot, "Rabbit" + option, labels[i], 16, y, 139, 20, 10);
-                Button on = widgets.Button(pageRoot, "On", 161, y, 60, 20,
-                    () => Execute("/one rabbit " + option + " on", true));
-                if (option == "level-up-potion") rabbitLevelUpOn = on;
-                else changeButtons.Add(on);
-                rabbitOffButtons.Add(widgets.Button(pageRoot, "Off", 229, y, 60, 20,
-                    () => Execute("/one rabbit " + option + " off", true)));
+                int index = i;
+                AddCheckbox(labels[i], 16, y, 273, 20,
+                    snapshot => index == 0 ? snapshot.RabbitPotions.Infinite : index == 1 ? snapshot.RabbitPotions.Share :
+                        index == 2 ? snapshot.RabbitPotions.ConsumeMp : index == 3 ? snapshot.RabbitPotions.SuppressSurvival : snapshot.RabbitPotions.LevelUpPotion,
+                    snapshot => index == 4 ? snapshot.RabbitLevelUpPotionsAvailable : snapshot.RabbitPotionsAvailable,
+                    "/one rabbit " + option);
             }
             widgets.Text(pageRoot, "RabbitMpAmount", "MP cost", 16, 139, 57, 23, 10);
             amount = widgets.Input(pageRoot, 79, 137, 64, draft.Edit);

@@ -1,6 +1,6 @@
 # SephiriaOne development notes
 
-Recorded: 2026-09-23; updated: 2026-10-09 (Asia/Seoul).
+Recorded: 2026-09-23; updated: 2026-10-10 (Asia/Seoul).
 
 This document records the project history, current implementation, and modding
 findings collected during the initial investigation. Installed-game observations
@@ -13,6 +13,14 @@ For agent/contributor onboarding, start with the [documentation index](README.md
 the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
+
+Version `0.39.0` turns the existing host UI into a separate translucent,
+draggable window with 13 feature tabs, real checkboxes and a scrollable stat
+selector. Native Settings exposes an optional local keyboard shortcut, initially
+unassigned. Window interaction and key capture are separate from authoritative
+settings services; numeric drafts, recovery actions, presets and native guest
+synchronization retain their existing paths. See
+[window architecture, controls and live-test limits](tabbed-settings-ui.md).
 
 Version `0.38.0` adds local GitHub release discovery with chat/UI notices and both
 `/one update install` and an Update button. Downloads and installation require

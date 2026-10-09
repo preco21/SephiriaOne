@@ -4,16 +4,14 @@ namespace SephiriaOne
 {
     public sealed partial class SettingsPanel
     {
-        private Button batOn, batOff, collinOn, collinOff, collinReset;
+        private Button collinReset;
         private void BuildCostumeEditor()
         {
             widgets.Text(pageRoot, "BatTitle", "Wingless Bat HP steal", 16, 0, 273, 24, 14);
-            batOn = widgets.Button(pageRoot, "On", 16, 26, 82, 25, () => Execute("/one bat hp-steal on", true));
-            batOff = widgets.Button(pageRoot, "Off", 108, 26, 82, 25, () => Execute("/one bat hp-steal off", true));
+            AddCheckbox("Wingless Bat HP steal", 16, 26, 174, 25, s => s.BatHpSteal, s => s.BatAvailable, "/one bat hp-steal");
             resetAll = widgets.Button(pageRoot, "Reset", 200, 26, 89, 25, () => Execute("/one bat reset", true));
             widgets.Text(pageRoot, "CollinTitle", "Collin starting artifact", 16, 68, 273, 24, 14);
-            collinOn = widgets.Button(pageRoot, "On", 16, 94, 82, 25, () => Execute("/one collin on", true));
-            collinOff = widgets.Button(pageRoot, "Off", 108, 94, 82, 25, () => Execute("/one collin off", true));
+            AddCheckbox("Collin starting artifact", 16, 94, 174, 25, s => s.CollinStartingArtifact, s => s.CollinAvailable, "/one collin");
             collinReset = widgets.Button(pageRoot, "Reset", 200, 94, 89, 25, () => Execute("/one collin reset", true));
             widgets.Text(pageRoot, "CollinHelp", "Mole / Farmer Squirrel / Turtle. Applies on the next costume equip or fresh-run restock. Default off.", 16, 125, 273, 36, 9);
             readout = widgets.Scroll(pageRoot, 312, 0, 272, 162);

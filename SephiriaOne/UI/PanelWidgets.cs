@@ -78,11 +78,56 @@ namespace SephiriaOne
             colors.disabledColor = new Color32(32, 39, 48, 255);
             button.colors = colors;
             // Mouse/keyboard first. Native cancel still handles the panel.
-            button.navigation = new Navigation { mode = Navigation.Mode.None };
+            button.navigation = new Navigation { mode = Navigation.Mode.Automatic };
             var label = Text(rect, "Label", value, 2, 0, width - 4, height, 10);
             label.alignment = TextAlignmentOptions.Center;
             button.onClick.AddListener(action);
             return button;
+        }
+
+        public TMP_Dropdown Dropdown(Transform parent, float x, float y, float width, float height,
+            List<string> options, UnityAction<int> changed)
+        {
+            var rect = Rect(parent, "Stat selection", x, y, width, height);
+            rect.gameObject.AddComponent<Image>().color = new Color32(25, 42, 62, 255);
+            var dropdown = rect.gameObject.AddComponent<TMP_Dropdown>();
+            dropdown.captionText = Text(rect, "Selection", "", 6, 0, width - 12, height, 12);
+            var template = Rect(rect, "Template", 0, height, width, 150);
+            template.pivot = new Vector2(0, 1);
+            template.gameObject.AddComponent<Image>().color = new Color32(17, 27, 40, 255);
+            var scroll = template.gameObject.AddComponent<ScrollRect>();
+            var viewport = Rect(template, "Viewport", 0, 0, width, 150);
+            viewport.gameObject.AddComponent<Image>().color = new Color32(17, 27, 40, 255);
+            viewport.gameObject.AddComponent<RectMask2D>();
+            var content = Rect(viewport, "Content", 0, 0, width, 26);
+            var item = Rect(content, "Item", 0, 0, width, 26);
+            var background = item.gameObject.AddComponent<Image>(); background.color = new Color32(39, 59, 82, 255);
+            var toggle = item.gameObject.AddComponent<Toggle>(); toggle.targetGraphic = background;
+            var label = Text(item, "Name", "", 6, 0, width - 12, 26, 11);
+            dropdown.itemText = label;
+            dropdown.template = template; scroll.viewport = viewport; scroll.content = content;
+            scroll.horizontal = false; scroll.movementType = ScrollRect.MovementType.Clamped; scroll.scrollSensitivity = 26;
+            template.gameObject.SetActive(false);
+            dropdown.AddOptions(options); dropdown.onValueChanged.AddListener(changed);
+            return dropdown;
+        }
+
+        public Toggle Checkbox(Transform parent, string value, float x, float y, float width, float height)
+        {
+            var rect = Rect(parent, value, x, y, width, height);
+            var background = rect.gameObject.AddComponent<Image>();
+            background.color = new Color32(25, 42, 62, 255);
+            var toggle = rect.gameObject.AddComponent<Toggle>();
+            var box = Rect(rect, "Checkbox", 4, 3, height - 6, height - 6);
+            box.gameObject.AddComponent<Image>().color = new Color32(12, 21, 32, 255);
+            var check = Rect(box, "Check", 3, 3, height - 12, height - 12).gameObject.AddComponent<Image>();
+            check.color = Accent;
+            toggle.targetGraphic = background; toggle.graphic = check;
+            toggle.toggleTransition = Toggle.ToggleTransition.None;
+            var label = Text(rect, "Label", value, height + 3, 0, width - height - 7, height, 11);
+            label.alignment = TextAlignmentOptions.MidlineLeft;
+            toggle.navigation = new Navigation { mode = Navigation.Mode.Automatic };
+            return toggle;
         }
 
         public TMP_InputField Input(Transform parent, float x, float y, float width, UnityAction<string> edited)

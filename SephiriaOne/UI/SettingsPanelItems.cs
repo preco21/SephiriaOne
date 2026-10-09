@@ -4,12 +4,10 @@ namespace SephiriaOne
 {
     public sealed partial class SettingsPanel
     {
-        private Button itemsOff;
         private void BuildItemEditor()
         {
             widgets.Text(pageRoot, "ItemsTitle", "Unlock given items", 16, 0, 275, 24, 14);
-            changeButtons.Add(widgets.Button(pageRoot, "On", 16, 32, 82, 25, () => Execute("/one items unlock on", true)));
-            itemsOff = widgets.Button(pageRoot, "Off", 108, 32, 82, 25, () => Execute("/one items unlock off", true));
+            AddCheckbox("Unlock given items", 16, 32, 174, 25, s => s.ItemUnlock, s => s.ItemRestrictionsAvailable, "/one items unlock");
             resetAll = widgets.Button(pageRoot, "Reset", 200, 32, 89, 25, () => Execute("/one items reset", true));
             widgets.Text(pageRoot, "ItemsHelp", "Default off. Host settings apply to all players, including unmodified guests.", 16, 69, 273, 80, 10);
             readout = widgets.Scroll(pageRoot, 312, 0, 272, 162);

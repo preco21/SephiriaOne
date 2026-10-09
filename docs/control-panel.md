@@ -1,15 +1,16 @@
 # Host settings panel
 
-For the 2026-10-09 comparison of native Settings integration, a separate
-translucent/draggable window and a refresh of this panel, see the
-[UI revamp investigation](ui-revamp-investigation.md). It is a proposal; the
-implementation described below remains current.
+Version `0.39.0` implements the separate translucent, draggable window selected
+from the [UI comparison](ui-revamp-investigation.md). Every feature panel is a
+tab. Drag the title bar, use **Center** to reposition the window, and select a
+stat from the dropdown. See [window and hotkey details](tabbed-settings-ui.md).
 
 Added in `0.13.0`. In a hosted town or run, open the pause menu and click
 **SephiriaOne** in its upper-right corner, or enter **`/one ui`** in chat.
-Close with **X** or the game's existing Escape/cancel action. No new hotkey or
-binding is installed. The first version uses mouse controls and keyboard entry;
-full gamepad navigation is not implemented.
+Close with **Close** or the game's existing Escape/cancel action. Configure an
+optional shortcut in native **Settings → Keyboard controls → SephiriaOne**;
+it starts unassigned. The panel uses mouse controls and keyboard entry;
+full gamepad behavior has not been verified.
 
 The host uses this panel to change settings for **all current and joining
 players**. Guests can use the unmodified game. The panel itself is host-local;
@@ -47,7 +48,7 @@ unapplied drafts without sending any gameplay command.
 
 | Tab | Actions and observations |
 | --- | --- |
-| Stats | Select one of the ten supported stats with the arrows, enter an amount, then Set, Add or Subtract. Reset selected or all stats. Current per-player values use the stat's displayed units. |
+| Stats | Select one of the 27 supported visible stats with the dropdown or arrows, enter an amount, then Set, Add or Subtract. Reset selected or all stats. Current per-player values use the stat's displayed units. |
 | Fountain | Set, add or subtract whole-number points for everyone; reset the addon adjustment. Shows current capacity and tracked contribution per player. |
 | Choices | Select all, item, weapon or miracle. Set/add/subtract **extra** candidates, or reset selected/all categories. Shows current effective native extra-choice stats. |
 | Resources | Select dice, inventory slots, talents, fruit-skewer budget or leaves. Set/add/subtract, `xN`, and selected/all resets. Dice/leaves show current balance separately from the next fresh starting allowance. |
@@ -55,12 +56,14 @@ unapplied drafts without sending any gameplay command.
 | Status | Current intent, player values, revisions, synchronization outcomes, native name status and fault details. Scroll for the complete readout. |
 | Items | Default-off On/Off and Reset controls for given-item sale restrictions and owner-bound drops, including Fountain sharing. See [scope and native limits](item-restrictions.md); intrinsic costume-curse no-drop properties remain. |
 | Combat | Friendly fire On/Off, a 0–300% damage slider with Apply damage, and Reset (off/100%). |
-| Jars | Apply a 0–100% chance or native-rate multiplier such as x2. Reset restores native. Does not reroll existing jars, change hidden-room rewards or create new spawn locations. |
-| Bat | Default-off reduction of Wingless Bat's own HP-steal bonus from 5 to 1. On/Off, Reset and active status; equipment and buff bonuses remain native. |
+| Spawns | Choose Mystic Jars or random events. Apply a chance or native-rate multiplier using the selected feature's existing limits; Reset restores native. Existing generated results are preserved. |
+| Costumes | Independent Bat HP-steal reduction and Collin starting-artifact toggles, resets and compatibility readouts. |
 | Rabbit | Independent On/Off controls for Wing-Eared Rabbit infinite HP potions, nearby potion healing, MP cost, Survival rank-5 suppression and random non-HP/MP potions on level-up. Enter 0..10000 MP and press Set & on to choose a fee; Off remembers it. Reset restores 10 MP and disables all five options. Shows active state and separate drink/level-up compatibility. |
 | Merchant | Select Wandering Merchant, Papyrus or Taz. Each has spawn On/Off, a separate Guarantee On/Off (default on), chance 0..100%, first main dungeon stage 1..1000, run limit 0..1000 (0 = unlimited), and Reset selected. Enter a number, then choose its action. Guarantee off leaves chance rolls active and releases the reserved cap slot. Multiple types can share a floor. Added merchant base HP uses main-stage multipliers 1/2/4/5/7/8 for stages 1–6 (later stages stay ×8; maps within a stage share the factor), retaining native HP bonuses and no crime penalty. |
+| Updates | Local automatic-check toggle, check now, update installation button and release/status details. Explicit installation still requires a full game restart to activate. |
 
-Actions only run when clicked. Typing, switching tabs and refreshing observations
+On/Off settings appear as checkboxes. Actions only run on deliberate input.
+Typing, switching tabs and refreshing observations
 never send a settings command. Successful actions clear the amount field. Changing
 the stat/category or session/run clears stale drafts. Per-player rows are
 observations, not controls for targeting individual players.
@@ -147,7 +150,8 @@ and metadata, with its existing embedded Harmony dependency.
 Automated checks do not execute Unity's event loop or a real multiplayer session.
 No deployment was performed for this change. After manual installation, verify:
 
-1. Open through both entry points, close with X/Escape, and reopen repeatedly.
+1. Open through chat, pause launcher and the configured hotkey, close with
+   Close/Escape, and reopen repeatedly. Drag, center and resize the window.
    Confirm native menu focus is restored and held movement/attack input does not
    leak through the open panel. Check scrolling, numeric typing and screen scaling.
 2. Compare panel and chat actions for every family, including rejection messages,

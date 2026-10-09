@@ -5,8 +5,6 @@ namespace SephiriaOne
 {
     public sealed partial class SettingsPanel
     {
-        private Button merchantOff;
-        private Button merchantGuaranteeOff;
 
         private void BuildMerchantEditor()
         {
@@ -14,17 +12,13 @@ namespace SephiriaOne
             widgets.Button(pageRoot, ">", 265, 0, 24, 23, () => MoveMerchantSelection(1));
             selection = widgets.Text(pageRoot, "MerchantSelection", "", 47, 1, 212, 24, 12);
             selection.text = L.T(MerchantCatalog.All[merchantIndex].Name);
-            changeButtons.Add(widgets.Button(pageRoot, "On", 16, 27, 83, 22,
-                () => Execute(MerchantPrefix() + " on", true)));
-            merchantOff = widgets.Button(pageRoot, "Off", 111, 27, 83, 22,
-                () => Execute(MerchantPrefix() + " off", true));
+            AddCheckbox("Merchant", 16, 27, 178, 22,
+                s => s.Merchants[MerchantCatalog.All[merchantIndex].Id].Enabled, s => s.MerchantsAvailable, MerchantPrefix());
             resetAll = widgets.Button(pageRoot, "Reset selected", 206, 27, 83, 22,
                 () => Execute(MerchantPrefix() + " reset", true));
-            widgets.Text(pageRoot, "MerchantGuarantee", "Guarantee", 16, 54, 130, 22, 10);
-            changeButtons.Add(widgets.Button(pageRoot, "On", 157, 54, 60, 22,
-                () => Execute(MerchantPrefix() + " guarantee on", true)));
-            merchantGuaranteeOff = widgets.Button(pageRoot, "Off", 229, 54, 60, 22,
-                () => Execute(MerchantPrefix() + " guarantee off", true));
+            AddCheckbox("Guarantee", 16, 54, 273, 22,
+                s => s.Merchants[MerchantCatalog.All[merchantIndex].Id].Guarantee,
+                s => s.MerchantsAvailable && MerchantCatalog.All[merchantIndex].HasGuarantee, MerchantPrefix() + " guarantee");
             amount = widgets.Input(pageRoot, 16, 81, 78, draft.Edit);
             changeButtons.Add(widgets.Button(pageRoot, "Set chance", 103, 81, 186, 25,
                 () => Execute(MerchantPrefix() + " chance " + draft.Text, true)));
@@ -43,10 +37,7 @@ namespace SephiriaOne
         private void MoveMerchantSelection(int delta)
         {
             merchantIndex = (merchantIndex + delta + MerchantCatalog.All.Count) % MerchantCatalog.All.Count;
-            draft.Clear(); ClearInput();
-            selection.text = L.T(MerchantCatalog.All[merchantIndex].Name);
-            readout.SetText("", resetScroll: true);
-            Refresh(ReadCurrentSnapshot());
+            SelectPage(7);
         }
 
         private string MerchantValues(SettingsSnapshot snapshot)

@@ -1,6 +1,6 @@
 # General development findings
 
-Consolidated 2026-10-09 (Asia/Seoul) from repository research through `0.38.0`.
+Consolidated 2026-10-10 (Asia/Seoul) from repository research through `0.39.0`.
 This is an onboarding guide for agents and contributors, with links to the
 detailed evidence. See the [index](README.md), [domain findings](domain-findings.md)
 and [reference catalog](references.md).
@@ -155,3 +155,12 @@ package IO run off the Unity thread, results publish on the controller, and
 installation requires an explicit command/button. Versioned DLL staging plus
 atomic metadata selection avoids replacing the loaded assembly. A restart is
 still required; package validation is not a game-compatibility guarantee.
+
+For UI extensions, reuse registered native roots and `UIBase` control ownership.
+Opening an addon window directly must not depend on the pause launcher. Native
+Options keyboard content uses a layout group and size fitter, so an owned child
+can be added and removed without replacing tab arrays or native listeners.
+`RebindActionUI` is not a safe general shortcut picker: its conflict handling can
+modify other native bindings. Local shortcuts need their own persistence,
+read-only conflict checks and capture/focus lifetime. See
+[tabbed UI and hotkey findings](tabbed-settings-ui.md).

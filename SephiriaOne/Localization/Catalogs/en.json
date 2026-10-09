@@ -1,4 +1,17 @@
 {
+  "SephiriaOne shortcut": "SephiriaOne shortcut",
+  "Set / Change": "Set / Change",
+  "Clear": "Clear",
+  "Current shortcut: ": "Current shortcut: ",
+  "Unassigned": "Unassigned",
+  "Shortcut unavailable; chat commands remain available.": "Shortcut unavailable; chat commands remain available.",
+  "Press an unused keyboard key. Cancel keeps the current shortcut.": "Press an unused keyboard key. Cancel keeps the current shortcut.",
+  "Shortcut saved.": "Shortcut saved.",
+  "Shortcut cleared.": "Shortcut cleared.",
+  "Could not save shortcut; previous shortcut was kept.": "Could not save shortcut; previous shortcut was kept.",
+  "Shortcut capture cancelled.": "Shortcut capture cancelled.",
+  "This key is reserved for native navigation or modifiers.": "This key is reserved for native navigation or modifiers.",
+  "This key is already bound to a native action.": "This key is already bound to a native action.",
   "Added merchants are hostile, cannot talk, and have no negotiation/crime penalty. Natural merchants keep their usual behavior.": "Added merchants are hostile, cannot talk, and have no negotiation/crime penalty. Natural merchants keep their usual behavior.",
   "Guarantee": "Guarantee",
   "Guarantee: {0}": "Guarantee: {0}",
@@ -528,5 +541,9 @@
   "Running: {0} | Installed for next launch: {1}": "Running: {0} | Installed for next launch: {1}",
   "Automatic update checks: {0}": "Automatic update checks: {0}",
   "Downloading and installing require your Update action. Saved settings and translations are preserved.": "Downloading and installing require your Update action. Saved settings and translations are preserved.",
-  "Local addon updates. New code activates after a full game restart.": "Local addon updates. New code activates after a full game restart."
+  "Local addon updates. New code activates after a full game restart.": "Local addon updates. New code activates after a full game restart.",
+  "Center": "Center",
+  "Close": "Close",
+  "Another native menu currently owns input.": "Another native menu currently owns input.",
+  "{0} ready player(s). Checkboxes apply immediately; amounts require an action.": "{0} ready player(s). Checkboxes apply immediately; amounts require an action."
 }

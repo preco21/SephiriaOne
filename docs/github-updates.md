@@ -17,8 +17,8 @@ download or install an update. No GitHub account, hotkey or guest addon is neede
 | Disable automatic startup checks | `/one update auto off` |
 
 In the host's existing SephiriaOne panel (`/one ui` or the pause-menu button),
-choose **Updates** at the top, then **Update**. The same view has **Check for
-updates**, automatic-check On/Off, and **Open releases**. The header shows an
+choose the **Updates** tab, then **Update**. The same view has **Check for
+updates**, an automatic-check checkbox, and **Open releases**. The header shows an
 available-update indicator on other pages too. The Update button and install
 command use the same service. Commands work locally even without host authority;
 the existing gameplay panel remains host-only.

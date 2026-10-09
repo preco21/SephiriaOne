@@ -5,6 +5,7 @@ internal static class GamePanelCompatibilityTests
 {
     internal static void Run(Assembly game, Assembly addon)
     {
+        GameHotkeyCompatibilityTests.Run(game, addon);
         var ui = game.GetType("UIBase", true)!;
         var root = game.GetType("UIRoot", true)!;
         var open = Required(ui, "Open");
@@ -79,6 +80,44 @@ internal static class GamePanelCompatibilityTests
         if (cleanup < 0 || controls.Any(name => entryUnload.FindIndex(i =>
             i.operand is FieldInfo f && f.DeclaringType?.Name == "Entry" && f.Name == name) < cleanup))
             throw new Exception("Faulted contribution cleanup must retain recovery controls.");
+        var controller = addon.GetType("SephiriaOne.SettingsPanelController", true)!;
+        var bindingLifetime = addon.GetType("SephiriaOne.PanelBindingLifetime", true)!;
+        if (!Calls(Required(controller, "Update"), Required(bindingLifetime, "TryRebind")))
+            throw new Exception("Native binding updates must use the tested manager/launcher lifetime protocol.");
+        var launcherRelease = PatchProcessor.GetOriginalInstructions(Required(controller, "ReleaseLauncher"));
+        if (launcherRelease.Any(i => i.operand is FieldInfo f && f.DeclaringType == controller &&
+            (f.Name == "panel" || f.Name == "root" || f.Name == "font")) ||
+            launcherRelease.Any(i => i.operand is MethodInfo m && m.Name == "DisposePanel"))
+            throw new Exception("Optional launcher replacement must preserve window/root/font lifetime.");
+        if (!Calls(Required(controller, "Release"), Required(controller, "DisposePanel")) ||
+            !Calls(Required(controller, "Release"), Required(controller, "ReleaseLauncher")))
+            throw new Exception("Manager teardown must still release both window and launcher.");
+        var togglePanel = Required(controller, "TryToggle");
+        if (!togglePanel.IsPublic || !togglePanel.IsStatic || togglePanel.ReturnType != typeof(bool) ||
+            togglePanel.GetParameters().Single().ParameterType != typeof(string).MakeByRefType() ||
+            !Calls(togglePanel, close) ||
+            !Calls(togglePanel, Required(controller, "TryOpen")))
+            throw new Exception("Hotkey adapter requires the owned-window toggle API.");
+        if (PatchProcessor.GetOriginalInstructions(togglePanel).Any(i => i.operand is MethodInfo m && m.Name == "CloseAllControl"))
+            throw new Exception("Window toggle must never close unrelated panels.");
+        var rootLookup = PatchProcessor.GetOriginalInstructions(Required(controller, "ResolveRoot"));
+        if (!rootLookup.Any(i => i.operand is FieldInfo f && f.DeclaringType == manager && f.Name == "uiRoots"))
+            throw new Exception("Window must use registered native roots.");
+        if (PatchProcessor.GetOriginalInstructions(Required(controller, "TryOpen")).Any(i =>
+            i.operand is FieldInfo f && f.DeclaringType == controller && f.Name == "pause"))
+            throw new Exception("Direct opening must not require the optional pause launcher.");
+        var drag = addon.GetType("SephiriaOne.PanelWindowDrag", true)!;
+        foreach (string contract in new[] { "IBeginDragHandler", "IDragHandler" })
+            if (!drag.GetInterfaces().Any(i => i.Name == contract)) throw new Exception("Title dragging requires " + contract);
+        var checkbox = addon.GetType("SephiriaOne.PanelCheckbox", true)!;
+        var observation = PatchProcessor.GetOriginalInstructions(Required(checkbox, "Refresh"));
+        if (!observation.Any(i => i.operand is MethodInfo m && m.Name == "SetIsOnWithoutNotify") ||
+            observation.Any(i => i.operand is MethodInfo m && m.Name == "Execute"))
+            throw new Exception("Snapshot checkbox refresh must use no-notify observation.");
+        var widgets = addon.GetType("SephiriaOne.PanelWidgets", true)!;
+        if (Required(widgets, "Checkbox").ReturnType.Name != "Toggle" || Required(widgets, "Dropdown").ReturnType.Name != "TMP_Dropdown")
+            throw new Exception("Window must expose real checkbox and stat selection widgets.");
+        Console.WriteLine("Verified draggable-window interfaces, registered root lookup, owned toggle and no-notify checkbox/stat widgets (not live rendering/input).");
         Console.WriteLine("Verified native panel stack, cancel, shared chat/UI dispatch and cleanup ordering (not live rendering/input).");
     }
 

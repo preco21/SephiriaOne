@@ -5,6 +5,10 @@ feedback, current status labels, addon costume-description lines and low-MP
 notifications. Choose Korean (`ko`, the default since `0.27.1`) or English (`en`).
 Existing saved selections are preserved. The game's own language setting is independent.
 
+Version `0.39.0` also localizes the tabbed window controls and the addon hotkey
+block inside native Settings. The surrounding native menu keeps the game's own
+language. New bundled keys continue to fill gaps in older custom catalog files.
+
 Since `0.37.2`, older or partial catalog files inherit missing entries from the
 current DLL's bundled translations. This fixes new features appearing in English
 after an upgrade even though Korean is selected. Existing custom values and files

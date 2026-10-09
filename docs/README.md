@@ -1,12 +1,15 @@
 # Development knowledge index
 
-Maintained: 2026-10-09 (Asia/Seoul), addon `0.38.0`.
+Maintained: 2026-10-10 (Asia/Seoul), addon `0.39.0`.
 
 Agents and contributors can refer to `docs/*` for research, implementation
 materials, native game findings and references. Start here before repeating an
 investigation. Repository workflow and deployment rules are in [AGENTS.md](../AGENTS.md).
 
 ## Start here
+
+UI follow-up: [tabbed draggable window and native Settings hotkey](tabbed-settings-ui.md)
+implements the approved option 2; the [panel guide](control-panel.md) covers usage.
 
 | Document | Use it for |
 | --- | --- |

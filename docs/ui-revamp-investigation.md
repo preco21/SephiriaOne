@@ -1,6 +1,11 @@
 # Settings UI revamp investigation
 
 Investigated 2026-10-09 (Asia/Seoul), repository `78ab740`, addon `0.38.0`.
+
+**2026-10-10 follow-up:** the user approved option 2 with tabs and native Settings
+hotkey configuration. Version `0.39.0` implements that direction; see the
+[current implementation and verification limits](tabbed-settings-ui.md).
+The comparison and proposal below record the earlier investigation.
 Scope: compare native Settings integration, a separate translucent/draggable
 window, and a refresh of the existing panel before implementation. Text, inputs,
 buttons, sliders and checkbox toggles are required. This record contains a

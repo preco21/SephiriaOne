@@ -9,14 +9,12 @@ namespace SephiriaOne
     {
         private Slider friendlyDamage;
         private TMP_Text friendlyPercent;
-        private Button friendlyOff;
         private bool friendlyDraft;
 
         private void BuildCombatEditor()
         {
             widgets.Text(pageRoot, "FriendlyTitle", "Friendly fire", 16, 0, 273, 24, 14);
-            changeButtons.Add(widgets.Button(pageRoot, "On", 16, 28, 82, 25, () => Execute("/one friendlyfire on", true)));
-            friendlyOff = widgets.Button(pageRoot, "Off", 108, 28, 82, 25, () => Execute("/one friendlyfire off", true));
+            AddCheckbox("Friendly fire", 16, 28, 174, 25, s => s.FriendlyFire.Enabled, s => s.FriendlyFireAvailable, "/one friendlyfire");
             resetAll = widgets.Button(pageRoot, "Reset", 200, 28, 89, 25, () => Execute("/one friendlyfire reset", true));
             friendlyPercent = widgets.Text(pageRoot, "FriendlyPercent", "", 16, 62, 273, 22, 11);
             var track = PanelWidgets.Rect(pageRoot, "AlliedDamageSlider", 24, 90, 255, 24);
@@ -39,7 +37,6 @@ namespace SephiriaOne
 
         private void RefreshCombat(SettingsSnapshot snapshot)
         {
-            if (friendlyOff) friendlyOff.interactable = snapshot.CanMutate;
             if (!friendlyDamage) return;
             friendlyDamage.interactable = snapshot.CanMutate && snapshot.FriendlyFireAvailable;
             if (!friendlyDraft) friendlyDamage.SetValueWithoutNotify(snapshot.FriendlyFire.DamagePercent);
