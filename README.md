@@ -46,4 +46,4 @@ GNU Affero General Public License (AGPL)
 
 https://github.com/Mira090 님이 작성하신 모드를 레퍼런스로 참고하였습니다.
 
-Thanks!
+ありがとう！ Thanks! 
