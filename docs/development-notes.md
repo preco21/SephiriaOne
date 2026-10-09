@@ -14,6 +14,15 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+Version `0.39.1` fully excludes Potion of Regeneration (Sample) from Wing-Eared
+Rabbit's HP-potion options. Earlier exceptions preserved consumption and Survival
+but still admitted Sample for MP charges and sharing. Shared eligibility now
+limits every healing hook to regular/large HP potions (IDs 0/1); Sample retains
+native behavior even at zero MP or during death transitions. EN/KO command,
+panel and costume descriptions document the exception. See
+[Rabbit behavior and regression coverage](rabbit-potions.md). No deployment or
+live multiplayer test.
+
 Version `0.39.0` turns the existing host UI into a separate translucent,
 draggable window with 13 feature tabs, real checkboxes and a scrollable stat
 selector. Native Settings exposes an optional local keyboard shortcut, initially

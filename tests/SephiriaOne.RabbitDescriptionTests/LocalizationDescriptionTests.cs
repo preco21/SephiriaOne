@@ -32,6 +32,17 @@ internal static class LocalizationDescriptionTests
                 "Language refresh does not duplicate addon tooltip lines");
             selectLanguage("en");
             Check(panel.tooltipEffectText.text == english, "Switching back exactly restores the English tooltip");
+            foreach (string language in new[] { "en", "ko" })
+            {
+                selectLanguage(language);
+                string sample = language == "ko" ? "맛보기 샘플" : "except Potion of Regeneration (Sample)";
+                SessionSettings.Change(false, true);
+                Check(panel.tooltipEffectText.text.Contains(sample),
+                    language + " sharing-only tooltip identifies the Sample exception");
+                SessionSettings.Change(false, false, true, false, 25);
+                Check(panel.tooltipEffectText.text.Contains(sample) && panel.tooltipEffectText.text.Contains("25 MP"),
+                    language + " MP-only tooltip identifies the Sample exception");
+            }
             RabbitDescriptionFeature.Shutdown();
             Check(panel.tooltipEffectText.text == native, "Shutdown restores the native tooltip");
             selectLanguage("ko");

@@ -43,12 +43,13 @@ native potion effects and drink-triggered passives remain intact unless Survival
 suppression is explicitly enabled. It does not create or periodically refill
 items. Mana, buff, status and other non-HP potions keep their native consumption
 and talent behavior, even with every Rabbit option enabled. Other costumes are unchanged.
-Supported native regeneration potions are Restorative Potion (20%), Large
-Restorative Potion (50%) and Sample potion (1%); IDs 0, 1 and 37.
-Since `0.28.1`, infinite use applies only to IDs 0/1. **Potion of Regeneration
-(Sample) always follows native consumption**, reducing its count by one after
-a completed drink, even with infinite use enabled. Sample still supports the
-independent MP-cost and shared-healing options.
+Only Restorative Potion (20%) and Large Restorative Potion (50%), IDs 0/1,
+support these options. Since `0.39.1`, **Potion of Regeneration (Sample)** (1%,
+ID 37) is excluded from every Rabbit HP-potion option: no addon MP cost,
+low-MP rejection/alert, shared healing/particles, infinite use or Survival
+suppression. It keeps native healing, consumption and Survival behavior, even
+with all options enabled and zero MP. This extends the earlier Survival
+(`0.27.2`) and consumption (`0.28.1`) exceptions to the entire healing path.
 
 **Tension boss-combat exception (`0.29.0`):** With infinite use enabled,
 Wing-Eared Rabbit can use regular/large HP potions (IDs 0/1) even while Root's
@@ -141,9 +142,9 @@ the Survival talent, remove its allocation or other effects, undo stats already
 earned, or suppress other potion-use passives. Normal Survival behavior remains
 for other costumes and non-HP potions. Since **0.27.2**, **Potion of Regeneration
 (Sample)** (`37`, Korean: 재생의 포션 (맛보기 샘플)) is also exempt: a completed drink
-still runs the native Survival callback with suppression enabled. This exemption
-does not bypass the selected MP cost or alter shared healing. Since `0.28.1`,
-Sample is also excluded from infinite use and consumes normally.
+still runs the native Survival callback with suppression enabled. Since `0.39.1`,
+Sample is excluded from all Rabbit HP-potion options, including MP cost and
+shared healing, and continues to consume normally.
 Other supported HP potions (`0`, `1`) retain suppression. This option also works when infinite uses
 and/or sharing are off.
 
@@ -173,12 +174,13 @@ If the player is already dead when an eligible pending completion reaches the
 controller guard, the addon rejects it before MP charges, potion events, healing
 or item consumption. The game's normal animation cleanup still runs. This applies
 only to Rabbit HP potions with at least one applicable Rabbit option enabled.
-For the Sample potion, neither suppression nor infinite use is an applicable
-option; those toggles alone do not intercept its native completion path. All-off settings
+For the Sample potion, none of these options is applicable; even with all
+enabled, the addon does not intercept its native completion path. All-off settings
 (including a remembered disabled fee), other costumes and non-HP potions remain
 native. No per-player death flag or delayed operation survives the call stack.
-The Sample exemption uses the captured entity ID, so it also holds if death
-destroys the wielded potion during a drink admitted by the other options.
+The shared eligibility predicate excludes Sample before creating a Rabbit drink
+context. Nested drinks retain separate scopes, so an admitted regular drink
+cannot apply its MP, consumption or Survival policy to a nested Sample drink.
 
 ## Synchronization and compatibility
 
@@ -229,6 +231,18 @@ nested/failed calls, recipient filtering, cleanup and UI refresh. Installed-game
 signature/IL checks and builds target Sephiria 1.0.33; see the assembly fingerprint
 in [the investigation](healing-item-investigation.md). These do not replace live
 multiplayer or UI verification. Development builds are not automatically deployed.
+
+The `0.39.1` regression reproduces Sample MP charges and sharing left behind by
+the earlier partial exclusions. One eligibility predicate now admits only IDs
+0/1 for healing, retention, Survival suppression and Tension. Real Harmony
+fixtures cover all 16 flag combinations, local/guest ownership, zero MP with
+a maximum fee, native healing bonuses, nested drinks, last-unit consumption,
+three death phases, wield teardown and late completion. The potion suite passes
+255 scenarios plus 12 localized alert checks; descriptions pass 48 checks plus
+10 localized checks, including share-only and MP-only EN/KO Sample exclusions.
+Debug/Release builds pass with zero warnings/errors, alongside the portable
+and installed-game contracts and 1,255 runtime integration checks. These are
+fixture/contract results, not live gameplay verification; no deployment.
 
 The `0.28.1` consumption regression reproduces the prior retention with infinite
 use enabled. Coverage checks all option combinations, local/guest owners,
@@ -332,7 +346,10 @@ Manual smoke tests:
     then repeat with an unmodified guest and with each option disabled separately.
     Repeat the alive-to-dead completed drink with the Sample potion: it must retain
     the native Survival bonus and consume exactly one unit, even with infinite
-    use enabled. Repeat with the final unit of the Sample stack.
+    use enabled. Repeat with the final unit of the Sample stack. With every
+    Rabbit option enabled, Sample must cost no MP or share healing/particles.
+    Repeat at zero MP: native self-healing, consumption and Survival must still
+    work, with no low-MP alert. Check both the host and an unmodified guest.
 12. Set MP cost to 25 and attempt healing with less MP as host/single player and
     as an unmodified guest. Verify the balance/cost text, local timed message and
     guest floating text; other players must see neither alert. Repeat with a new

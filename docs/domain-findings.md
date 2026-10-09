@@ -109,10 +109,13 @@ potion-use passives. Recipients whose HP increases receive native
 `UnitAvatar.RpcBloodFestivalHealFx()` green particles; a visual failure must not
 repeat healing.
 
-Regular/large HP potions (IDs 0/1) support infinite use and Survival suppression.
-Regeneration Sample (37) is consumed normally and retains its Survival bonus;
-its independent MP-cost/shared-healing options still apply. MP is checked/charged
-at successful completion using current policy. Death/callback timing requires
+Only regular/large HP potions (IDs 0/1) enter Rabbit healing scopes. Since
+`0.39.1`, Regeneration Sample (37) stays entirely native: normal consumption,
+self-healing and Survival, without addon MP cost, low-MP blocking/alerts or
+shared healing/particles. Keep eligibility shared across the healing, retention,
+Survival and Tension paths; partial exclusions previously left MP charges active.
+For eligible potions, MP is checked/charged at completion using current policy.
+Death/callback timing requires
 scoped protection through completion, not a later inventory refund. Tension's
 internal key is `HOSTILITY`; only infinite Rabbit regular/large HP potion use
 bypasses its boss-combat block. Other potion types/costumes keep native rules.

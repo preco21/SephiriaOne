@@ -46,7 +46,7 @@ Check("infinite retains item after native effect and both events", () =>
     Assert(item.Quantity == 3 && player.Heals.SequenceEqual(new[] { 20f }) && player.DrinkEvents == 1 && serverEvents == 1, "Infinite behavior incorrect");
 });
 foreach (bool local in new[] { false, true })
-Check("Sample consumes each unit and retains Survival with every option enabled, local " + local, () =>
+Check("Sample stays fully native with every option enabled, local " + local, () =>
 {
     var (player, controller, _, item) = Setup(37, local); item.Quantity = 2;
     var passive = new PassiveObject_PotionAndRandomStat(); passive.Enable(player);
@@ -55,8 +55,23 @@ Check("Sample consumes each unit and retains Survival with every option enabled,
     Install(); controller.RunDrink();
     Assert(item.Quantity == 1 && passive.StatGains == 1, "First Sample was retained or Survival was suppressed");
     controller.RunDrink();
-    Assert(item.Quantity == 0 && passive.StatGains == 2 && player.mp == 10 && near.Heals.Count == 2,
-        "Last Sample was retained or independent MP/sharing behavior changed");
+    Assert(item.Quantity == 0 && passive.StatGains == 2 && player.mp == 30 && player.MpWrites == 0 &&
+        player.Heals.Count == 2 && near.Heals.Count == 0 && near.HealVisuals == 0,
+        "Sample was charged MP, shared healing/FX or lost native consumption/healing/Survival");
+});
+foreach (bool local in new[] { false, true })
+Check("Sample works at zero MP without a low-MP alert, local " + local, () =>
+{
+    var (player, controller, potion, item) = Setup(37, local); player.mp = 0;
+    ((PotionEffect_Regeneration)potion.effect).healPercent = 1;
+    player.PotionBonus = 100;
+    var passive = new PassiveObject_PotionAndRandomStat(); passive.Enable(player);
+    SessionSettings.RabbitPotionsForUse = new(true, true, true, true, 10000);
+    Install(); controller.RunDrink();
+    Assert(player.Heals.SequenceEqual(new[] { 2f }) && item.Quantity == 2 && passive.StatGains == 1 &&
+        player.mp == 0 && player.MpWrites == 0, "Rabbit fee blocked the native Sample or changed its healing");
+    Assert(player.SystemMessages.Count == 0 && player.spawner.connectionToClient.Notices.Count == 0,
+        "Sample emitted an addon low-MP alert");
 });
 Check("share forwards actual bonus adjusted percentage once within strict radius", () =>
 {
@@ -245,8 +260,8 @@ foreach (int flags in Enumerable.Range(0, 16))
         var recipientPassive = new PassiveObject_PotionAndRandomStat(); recipientPassive.Enable(near);
         SessionSettings.RabbitPotionsForUse = new(infinite, share, mp, suppress);
         Install(); controller.RunDrink();
-        Assert(item.Quantity == (infinite && potionId != 37 ? 3 : 2) && near.Heals.Count == (share ? 1 : 0) &&
-            player.mp == (mp ? 20 : 30) && passive.StatGains == (suppress && potionId != 37 ? 0 : 1) &&
+        Assert(item.Quantity == (infinite && potionId != 37 ? 3 : 2) && near.Heals.Count == (share && potionId != 37 ? 1 : 0) &&
+            player.mp == (mp && potionId != 37 ? 20 : 30) && passive.StatGains == (suppress && potionId != 37 ? 0 : 1) &&
             recipientPassive.StatGains == 0 && near.DrinkEvents == 0, "Option coupling or recipient gained potion stats");
     });
 foreach (int id in new[] { 0, 1, 37 })
@@ -263,7 +278,7 @@ foreach (int id in new[] { 0, 1, 37 })
                 Install(); source.controller.RunDrink();
                 Assert(sourcePassive.StatGains == (suppress && id != 37 ? 0 : 1) && recipientPassive.StatGains == 0,
                     "Shared potion granted recipient Survival or changed source suppression");
-                Assert(recipient.player.Hp == 40 && recipient.player.Heals.Count == 1 && recipient.player.DrinkEvents == 0 &&
+                Assert(recipient.player.Hp == (id == 37 ? 20 : 40) && recipient.player.Heals.Count == (id == 37 ? 0 : 1) && recipient.player.DrinkEvents == 0 &&
                     recipientEvents == 0 && recipient.item.Quantity == 3 && recipient.player.mp == 30,
                     "Recipient must gain only healing, without potion events, inventory loss or MP cost");
             });
@@ -395,7 +410,8 @@ foreach (int outerId in new[] { 0, 37 })
         SessionSettings.RabbitPotionsForUse = new(true, false, true, true);
         Install(); outer.controller.RunDrink();
         Assert(outerPassive.StatGains == (outerId == 37 ? 1 : 0) &&
-            innerPassive.StatGains == (outerId == 37 ? 0 : 1) && outer.player.mp == 20 && inner.player.mp == 20,
+            innerPassive.StatGains == (outerId == 37 ? 0 : 1) &&
+            outer.player.mp == (outerId == 37 ? 30 : 20) && inner.player.mp == (outerId == 37 ? 20 : 30),
             "Nested sample exemption leaked into another drink or changed MP charging");
         Assert(outer.item.Quantity == (outerId == 37 ? 2 : 3) && inner.item.Quantity == (outerId == 37 ? 3 : 2),
             "Nested Sample consumption exemption leaked into the regular potion");
@@ -514,16 +530,17 @@ foreach (int phase in new[] { 0, 1, 2 })
             Install(); controller.RunDrink();
             Assert(passive.StatGains == (potionId == 37 ? 1 : 0), "Death changed the potion's Survival suppression policy");
             Assert(item.Quantity == (potionId == 37 ? 2 : 3), "Death changed the potion's consumption policy");
-            Assert(player.IsDead && player.Hp == 0 && player.mp == 20 && player.MpWrites == 1 && controller.CleanupCalls == 1,
+            Assert(player.IsDead && player.Hp == 0 && player.mp == (potionId == 37 ? 30 : 20) &&
+                player.MpWrites == (potionId == 37 ? 0 : 1) && controller.CleanupCalls == 1,
                 "Death, charged MP or native completion cleanup was altered");
-            Assert(recipient.Heals.Count == (phase == 2 ? 1 : 0), "Dead source started shared healing");
+            Assert(recipient.Heals.Count == (phase == 2 && potionId != 37 ? 1 : 0), "Dead source or Sample started shared healing");
         });
-foreach (bool infinite in new[] { false, true })
-Check("sample with inapplicable infinite/suppression preserves native late completion, infinite " + infinite, () =>
+foreach (int flags in Enumerable.Range(0, 16))
+Check("Sample preserves native late completion with options " + flags, () =>
 {
     var (player, controller, _, item) = Setup(37); player.IsDead = true; player.Hp = 0;
     var passive = new PassiveObject_PotionAndRandomStat(); passive.Enable(player);
-    SessionSettings.RabbitPotionsForUse = new(infinite, false, false, true);
+    SessionSettings.RabbitPotionsForUse = new((flags & 1) != 0, (flags & 2) != 0, (flags & 4) != 0, (flags & 8) != 0);
     Install(); controller.RunDrink();
     Assert(passive.StatGains == 1 && player.DrinkEvents == 1 && item.Quantity == 2 &&
         player.mp == 30 && controller.CleanupCalls == 1, "Inapplicable options still intercepted the sample");

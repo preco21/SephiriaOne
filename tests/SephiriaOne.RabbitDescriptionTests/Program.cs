@@ -27,6 +27,7 @@ Check(!infiniteOnly.Contains("Nearby allies"), "share line is absent");
 
 string shareOnly = Show(rabbit, false, true);
 Check(shareOnly.Contains("Nearby allies"), "share line appears");
+Check(shareOnly.Contains("except Potion of Regeneration (Sample)"), "Sharing tooltip excludes Sample");
 Check(!shareOnly.Contains("not consumed"), "infinite line is absent");
 Check(!shareOnly.Contains("Tension"), "Sharing alone must not claim a Tension exemption");
 
@@ -34,6 +35,7 @@ string both = Show(rabbit, true, true);
 Check(both.Contains("not consumed") && both.Contains("Nearby allies"), "both lines appear");
 string costOnly = RabbitDescriptionText.Decorate(native, rabbit, false, false, true, true, false);
 Check(costOnly.Contains("10 MP") && costOnly.Contains("HP potion") && !costOnly.Contains("Survival"), "MP cost appears only when enabled");
+Check(costOnly.Contains("except Potion of Regeneration (Sample)"), "MP cost tooltip excludes Sample");
 string suppressOnly = RabbitDescriptionText.Decorate(native, rabbit, false, false, true, false, true);
 Check(suppressOnly.Contains("Survival") && suppressOnly.Contains("HP potion") && !suppressOnly.Contains("10 MP"), "Survival suppression appears only when enabled");
 Check(suppressOnly.Contains("except Potion of Regeneration (Sample)"), "Suppression tooltip identifies the Sample exception");

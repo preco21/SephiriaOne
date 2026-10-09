@@ -305,15 +305,15 @@ namespace SephiriaOne
             }
         }
 
-        private static bool Allowed(int id) => id == 0 || id == 1 || id == 37;
+        // Only regular/large HP potions enter Rabbit healing scopes. Sample (37)
+        // stays entirely native, including MP, sharing, consumption and Survival.
+        private static bool Allowed(int id) => id == 0 || id == 1;
 
         // Sample regeneration (37) always uses the native consumption decision.
         // Use the captured ID so death/wield cleanup cannot change this policy.
-        private static bool CanRetainPotion(int id) => id == 0 || id == 1;
+        private static bool CanRetainPotion(int id) => Allowed(id);
 
-        // Sample regeneration (37) retains native Survival procs, even while
-        // other Rabbit options still admit the drink into a completion scope.
-        private static bool CanSuppressSurvival(int id) => id == 0 || id == 1;
+        private static bool CanSuppressSurvival(int id) => Allowed(id);
         private static bool IsFinitePositive(float value) => value > 0f && !float.IsNaN(value) && !float.IsInfinity(value);
     }
 }
