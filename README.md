@@ -31,7 +31,7 @@ UI/명령어를 지원하긴 하지만 아직 부실한 점 양해 바랍니다.
 
 - OpenAI Codex `xhigh` effort + [superpowers](https://github.com/obra/superpowers)로 작업했습니다.
 - [Visual Studio 2026](https://visualstudio.microsoft.com/downloads/)에서 작업했습니다. 설치시 인스톨러에서 `.Net desktop development` 개발 도구를 함께 설치해야 빌드가 가능합니다.
-- 개발에 필요한 모든 문서는 `docs/` 디렉토리 하위에 있습니다. AI를 사용하여 개발할 경우를 대비하여 `AGENTS.md` 도 준비되어 있습니다. GitHub 계정이 있다면 우상단 `Fork` 기능을 활용하여 손쉽게 사본을 만들 수 있습니다.
+- 개발 자료는 [문서 색인](docs/README.md)에서 찾을 수 있습니다. 일반 개발 지식, 게임 도메인 조사 결과, 기능별 설계와 참고 자료를 `docs/`에 정리했습니다. 다른 AI 에이전트도 이 자료를 참고하여 작업하도록 `AGENTS.md`에 안내되어 있습니다. GitHub 계정이 있다면 우상단 `Fork` 기능을 활용하여 손쉽게 사본을 만들 수 있습니다.
 - 수정 후 빠르게 게임에서 결과물을 확인할 수 있도록 배포 스크립트(Deploy Mod)가 내장되어 있습니다. `scripts/Deploy-Mod.ps1` 또는 Visual Studio 솔루션의 상단 `Deploy Mod` 버튼을 이용하세요. (로컬의 `C:\Program Files (x86)\Steam\steamapps\common\Sephiria\AddOns` 경로로 배포됩니다)
 
 ## 라이센스

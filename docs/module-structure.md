@@ -15,13 +15,17 @@ SephiriaOne/
   Chat/
   Controls/
   Features/
+    Bat/
     Collin/
     Choices/
+    Combat/
     Fountain/
+    Items/
     Merchants/
     Names/
     Rabbit/
     Resources/
+    Spawns/
     Stats/
   Infrastructure/
   Localization/
@@ -33,6 +37,7 @@ SephiriaOne/
     Game/
   Properties/
   UI/
+  Updates/
 ```
 
 | Location | Responsibility |
@@ -42,13 +47,18 @@ SephiriaOne/
 | `Controls/` | Shared action dispatch/results and immutable settings/player snapshots used by chat and UI. |
 | `Localization/` | Cached English/Korean JSON catalogs, validated formatting, local config, atomic reload and presentation revision notifications. |
 | `UI/` | Addon-owned host panel, pause-menu binding, native control-stack lifetime, widgets and session-bound drafts. |
+| `Updates/` | Local GitHub release discovery, explicit installation, persistence and controller; independent of gameplay session policy. |
+| `Features/Bat/` | Costume-owned HP-steal adjustment and paired native stat/status handling. |
 | `Features/Choices/` | Candidate command parsing/planning, host writes, and Harmony generation guards. |
 | `Features/Collin/` | Costume-bound native Collin starting grants, exact ownership, restart provenance and boundary hooks. |
+| `Features/Combat/` | Friendly-fire admission/scaling, companion targeting, bounded reflection and kill notices. |
 | `Features/Fountain/` | Fountain command parsing/planning, point writes, and carryover-cap operations. |
+| `Features/Items/` | Event-driven given-item restriction overlays, native ownership and reset/save handling. |
 | `Features/Merchants/` | Host encounter toggle/chance parsing, native room placement, run-scoped spawn bookkeeping and actor-specific crime/retaliation guards. |
 | `Features/Names/` | Gradient formatting, native publication controller, and synchronized name state. |
 | `Features/Rabbit/` | Potion option parsing/settings, native drink and earned-level hooks, audited reward catalog, costume starting artifact and host description adapter. |
 | `Features/Resources/` | Starting grants, capacity/budget policy and native resource boundaries. |
+| `Features/Spawns/` | Native Mystic Jar and optional event-room probability controls and generation hooks. |
 | `Features/Stats/` | Explicit C-menu stat allowlist and shared display metadata (`StatCatalog.cs`), commands, exact arithmetic, and host batch updates. |
 | `Infrastructure/` | Shared embedded Harmony runtime loading. |
 | `Session/` | Policy, registered inheritance/maintenance rules, scope lifecycle, diagnostics, read-only settings capture/change notifications, and critical native read boundaries. |
@@ -80,6 +90,9 @@ launch profile and deployment script retain their previous locations. Build with
 `-p:DeployMod=false` when deployment is not intended.
 
 See the [extension guide](synchronization-guide.md) for adding native state rules.
+The [documentation index](README.md) links shared findings and feature research.
+Additional feature-specific executable fixtures live under `tests/`; updater
+tests are in `SephiriaOne.UpdateCoreTests` and `SephiriaOne.UpdateTests`.
 
 ## Initial folder-refactor verification (0.11.1)
 

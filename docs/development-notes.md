@@ -7,6 +7,11 @@ findings collected during the initial investigation. Installed-game observations
 apply to the assembly fingerprint below. Reference repositories and documentation
 can change independently of that installed game version.
 
+For agent/contributor onboarding, start with the [documentation index](README.md),
+[general findings](general-findings.md), [domain findings](domain-findings.md) and
+[collected references](references.md). These consolidate the research below and
+the later feature documents; dated historical entries remain as evidence.
+
 ## Current status
 
 Version `0.38.0` adds local GitHub release discovery with chat/UI notices and both
