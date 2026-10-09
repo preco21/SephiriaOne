@@ -211,6 +211,15 @@ uses exact-avatar event wrappers to continue later subscribers and native tail,
 logs callback warnings, and preserves ordinary native invocation outside it.
 See [combat and the native audit](friendly-fire.md).
 
+Timed deathmatch recovery adds a second ordering constraint: stopping from inside
+`UnitAvatar.Die` must wait for its finalizer, because native `RpcDie` follows
+server death callbacks. Sending revival inside a callback would let a later death
+RPC hide an already-alive guest. Also invalidate both active timers and stop
+cleanup on any native revival; exact avatar identity alone cannot distinguish two
+lives of the same avatar. Native `DungeonManager.Chat` with an avatar supplies
+stock overhead bubble replacement even for dead avatars. See [deathmatch findings
+and tests](deathmatch.md) for the shared implementation and limits.
+
 One concrete disconnect risk was a recognized talent-budget rejection escaping a
 Mirror command handler. Its targeted containment is distinct from initialization,
 where unsafe saved allocations must still stop loading. Host logs also showed

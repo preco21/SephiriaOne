@@ -95,9 +95,10 @@ namespace SephiriaOne
         // Keep only this exact friendly-fire death recoverable; no global
         // game-over flag or exemption survives the active damage scope.
         internal static bool BeforeGameOverCheck(PlayerSpawner __instance, DamageInstance damage) =>
-            !NetworkServer.active || !ReviveAllFeature.Available || !current.Friendly || !(current.Victim is PlayerAvatar victim) ||
+            !NetworkServer.active || !ReviveAllFeature.Available || !DeathmatchRuntime.ProtectDeath(__instance.PlayerAvatar) &&
+            (!current.Friendly || !(current.Victim is PlayerAvatar victim) ||
             !ReferenceEquals(__instance.PlayerAvatar, victim) || !victim.IsDead ||
-            !ReferenceEquals(current.Damage, damage);
+            !ReferenceEquals(current.Damage, damage));
 
         internal static void AfterReceivedDamage(UnitAvatar __instance, float damage)
         {

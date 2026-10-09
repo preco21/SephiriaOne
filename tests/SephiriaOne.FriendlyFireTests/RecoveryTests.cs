@@ -18,5 +18,11 @@ internal static class RecoveryTests
         victim.ApplyDamage(new() { origin = killer, damage = 200 });
         check(spawner.GameOvers == 4, "Unavailable recovery preserves native game over instead of stranding the party");
         ReviveAllFeature.Available = true;
+        DeathmatchRuntime.Protect = true;
+        victim.Revive(100); victim.Die(5, new() { isSystemDamage = true });
+        check(spawner.GameOvers == 4 && ReferenceEquals(DeathmatchRuntime.LastDead, victim), "Active match death uses respawn scheduling and prevents environmental game over");
+        victim.Revive(100);
+        check(ReferenceEquals(DeathmatchRuntime.LastRevived, victim), "Native revival invalidates match life timer");
+        DeathmatchRuntime.Protect = false;
     }
 }

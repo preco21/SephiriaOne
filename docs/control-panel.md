@@ -1,5 +1,10 @@
 # Host settings panel
 
+Version `0.42.0` adds a **Deathmatch** tab with a duration input (seconds),
+**Apply duration**, **Start deathmatch** and **Stop deathmatch**. The Combat
+friendly-fire toggle reflects the match's effective state; touching it stops
+the match. See [timing, results and recovery](deathmatch.md).
+
 Version `0.39.0` implements the separate translucent, draggable window selected
 from the [UI comparison](ui-revamp-investigation.md). Every feature panel is a
 tab. Drag the title bar, use **Center** to reposition the window, and select a
@@ -62,6 +67,7 @@ unapplied drafts without sending any gameplay command.
 | Status | Current intent, player values, revisions, synchronization outcomes, native name status and fault details. Scroll for the complete readout. |
 | Items | Default-off On/Off and Reset controls for given-item sale restrictions and owner-bound drops, including Fountain sharing. See [scope and native limits](item-restrictions.md); intrinsic costume-curse no-drop properties remain. |
 | Combat | Friendly fire On/Off, a 0–300% damage slider with Apply damage, Reset (off/100%), and Revive all players. |
+| Deathmatch | Set duration (10–3600 seconds, default 300), Start/Stop and live remaining-time readout. |
 | Spawns | Choose Mystic Jars or random events. Apply a chance or native-rate multiplier using the selected feature's existing limits; Reset restores native. Existing generated results are preserved. |
 | Costumes | Independent Bat HP-steal reduction and Collin starting-artifact toggles, resets and compatibility readouts. |
 | Rabbit | Independent On/Off controls for Wing-Eared Rabbit infinite HP potions, nearby potion healing, MP cost, Survival rank-5 suppression and random non-HP/MP potions on level-up. Sample is excluded from all HP-potion options and keeps native behavior. Enter 0..10000 MP and press Set & on to choose a fee; Off remembers it. Reset restores 10 MP and disables all five options. Shows active state and separate drink/level-up compatibility. |

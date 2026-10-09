@@ -18,5 +18,5 @@ public partial class UnitAvatar
     }
     [MethodImpl(MethodImplOptions.NoInlining)] public void StartReviveInvulnerable() { ReviveProtectionCalls++; }
     [MethodImpl(MethodImplOptions.NoInlining)] public void TakeRemoteInventory() { RemoteInventoryCalls++; }
-    [MethodImpl(MethodImplOptions.NoInlining)] private void RpcRevive() { ReviveRpcCalls++; }
+    [MethodImpl(MethodImplOptions.NoInlining)] private void RpcRevive() { ReviveRpcCalls++; Lifecycle.Add("RpcRevive"); }
 }

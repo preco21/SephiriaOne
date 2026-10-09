@@ -46,6 +46,8 @@ namespace SephiriaOne
                 string[] parts = (command ?? "").Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
                 if (UpdateCommand.Execute(parts, out bool updateSuccess, out string updateMessage))
                     return Reply(updateSuccess, updateMessage);
+                if (DeathmatchCommand.Execute(parts, out bool deathmatchSuccess, out string deathmatchMessage))
+                    return Reply(deathmatchSuccess, deathmatchMessage);
                 if (parts.Length >= 2 && parts[0].Equals("/one", StringComparison.OrdinalIgnoreCase) &&
                     parts[1].Equals("reviveall", StringComparison.OrdinalIgnoreCase))
                 {
@@ -235,7 +237,7 @@ namespace SephiriaOne
                 if (isPreset)
                 {
                     if (preset == PresetAction.Help)
-                        return Reply(true, presetError + " " + ReviveAllAction.Usage + L.T(" /one ui opens the host settings panel. /one rabbit help lists potion options. /one merchant help lists extra merchant options.") +
+                        return Reply(true, presetError + " " + ReviveAllAction.Usage + " " + DeathmatchCommand.Usage + L.T(" /one ui opens the host settings panel. /one rabbit help lists potion options. /one merchant help lists extra merchant options.") +
                             L.T(" /one items help lists given-item options.") + L.T(" /one friendlyfire help lists allied-damage options.") + L.T(" /one jars help lists Mystic Jar spawn options.") + L.T(" /one events help lists random event options.") + L.T(" /one bat help lists Wingless Bat options.") + L.T(" /one collin help lists costume starting-artifact options.") + L.T(" Language: /one language en|ko|reload|status.") + " " + UpdateCommand.Usage);
                     if (preset == PresetAction.Invalid) return Reply(false, presetError);
                     bool success = SessionSettings.TryExecutePreset(preset, out string[] messages);

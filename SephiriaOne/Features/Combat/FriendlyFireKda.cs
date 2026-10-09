@@ -44,7 +44,7 @@ namespace SephiriaOne
         internal static void ClearLives() { lives = new ConditionalWeakTable<PlayerAvatar, Life>(); Epoch++; }
         internal static void ForgetLife(PlayerAvatar player) { if (!ReferenceEquals(player, null)) lives.Remove(player); }
 
-        private static Score For(PlayerAvatar player)
+        internal static Score For(PlayerAvatar player)
         {
             var spawner = player.spawner;
             bool owns = spawner && ReferenceEquals(spawner.PlayerAvatar, player);

@@ -15,7 +15,8 @@ namespace SephiriaOne
         private void BuildCombatEditor()
         {
             widgets.Text(pageRoot, "FriendlyTitle", "Friendly fire", 16, 0, 273, 24, 14);
-            AddCheckbox("Friendly fire", 16, 28, 174, 25, s => s.FriendlyFire.Enabled, s => s.FriendlyFireAvailable, "/one friendlyfire");
+            AddCheckbox("Friendly fire", 16, 28, 174, 25, s => s.FriendlyFire.Enabled, s => s.FriendlyFireAvailable, "/one friendlyfire",
+                s => s.CanMutate || DeathmatchRuntime.IsRunning && s.HostActive && s.SessionIdentity != null);
             resetAll = widgets.Button(pageRoot, "Reset", 200, 28, 89, 25, () => Execute("/one friendlyfire reset", true));
             friendlyPercent = widgets.Text(pageRoot, "FriendlyPercent", "", 16, 62, 273, 22, 11);
             var track = PanelWidgets.Rect(pageRoot, "AlliedDamageSlider", 24, 90, 255, 24);

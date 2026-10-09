@@ -26,6 +26,7 @@ namespace SephiriaOne
             ItemRestrictionFeature.Initialize();
             FriendlyFireFeature.Initialize();
             ReviveAllFeature.Initialize();
+            DeathmatchFeature.Initialize();
             JarSpawnFeature.Initialize();
             EventSpawnFeature.Initialize();
             BatCostumeFeature.Initialize();
@@ -58,6 +59,7 @@ namespace SephiriaOne
         {
             if (updates) { updates.enabled = false; updates = null; }
             // Keep controllers/guards available if verified cleanup needs recovery.
+            DeathmatchFeature.Shutdown();
             BatCostumeFeature.Shutdown();
             CollinFeature.Shutdown();
             ChoiceFeature.Shutdown();

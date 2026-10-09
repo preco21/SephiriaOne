@@ -2,6 +2,6 @@
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>disable</Nullable><Optimize>true</Optimize></PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Lib.Harmony" Version="2.4.2" />
-    <Compile Include="../../SephiriaOne/Features/Combat/*.cs" Exclude="../../SephiriaOne/Features/Combat/FriendlyFireFeature.cs;../../SephiriaOne/Features/Combat/ReviveAll*.cs" Link="%(Filename)%(Extension)" />
+    <Compile Include="../../SephiriaOne/Features/Combat/*.cs" Exclude="../../SephiriaOne/Features/Combat/FriendlyFireFeature.cs;../../SephiriaOne/Features/Combat/ReviveAll*.cs;../../SephiriaOne/Features/Combat/Deathmatch*.cs" Link="%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

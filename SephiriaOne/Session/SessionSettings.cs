@@ -8,7 +8,7 @@ namespace SephiriaOne
     public sealed class SessionSettingsController : MonoBehaviour
     {
         private void OnEnable() => SessionSettings.Start();
-        private void LateUpdate() => SessionSettings.Synchronize();
+        private void LateUpdate() { SessionSettings.Synchronize(); DeathmatchRuntime.Tick(); }
         private void OnDisable() => SessionSettings.Stop();
     }
 
@@ -81,6 +81,7 @@ namespace SephiriaOne
 
         private static void ClearScope()
         {
+            DeathmatchRuntime.Stop(false, false);
             RestoreBat();
             ItemRestrictionFeature.Clear();
             MerchantFeature.Clear();
@@ -107,7 +108,7 @@ namespace SephiriaOne
         private static void OnStartSession(bool isSaved)
         {
             if (enabled && NetworkServer.active && dungeon && ReferenceEquals(dungeon, DungeonManager.Instance))
-            { runGeneration++; FriendlyFireKda.ClearLives(); restoreFountainLimit = true; session.Invalidate(dungeon, SyncDomain.Limits); }
+            { DeathmatchRuntime.Stop(false, false); runGeneration++; FriendlyFireKda.ClearLives(); restoreFountainLimit = true; session.Invalidate(dungeon, SyncDomain.Limits); }
         }
 
         public static bool IsReady(PlayerSpawner spawner) => HostStateAdapter.IsReady(spawner);

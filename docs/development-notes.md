@@ -14,6 +14,14 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+Version `0.42.0` adds a temporary host deathmatch: configurable duration, Start/
+Stop commands and a dedicated tab, three-second opening/respawn countdowns using
+native chat bubbles, shared full-HP recovery and top-five KDA results. The match
+and friendly-fire toggle share effective state; a manual toggle immediately
+cancels and recovers pending players. Only duration is added to presets (v18).
+Tests cover death-callback RPC ordering, replaced lives, reconnects, scope changes
+and zero-allocation idle/living-player ticks. See [deathmatch](deathmatch.md).
+
 Version `0.41.0` adds host `/one reviveall` and the Combat-tab **Revive all players**
 button. Dead ready players receive native full-HP revival, including stock guest
 rendering/camera recovery and native invulnerability. The action preserves living

@@ -16,6 +16,16 @@ namespace Mirror { public static class NetworkServer { public static bool active
 namespace Mirror { public class SyncList<T> : List<T> { [MethodImpl(MethodImplOptions.NoInlining)] public new bool Contains(T item) => base.Contains(item); } }
 namespace SephiriaOne
 {
+    internal static class DeathmatchRuntime
+    {
+        internal static bool Protect;
+        internal static PlayerAvatar LastDead, LastRevived;
+        internal static bool ProtectDeath(PlayerAvatar player) => Protect && player != null;
+        internal static void Died(PlayerAvatar player) => LastDead = player;
+        internal static void Reviving(PlayerAvatar player) => LastRevived = player;
+        internal static bool EnterDeath(PlayerAvatar player) => false;
+        internal static void LeaveDeath(PlayerAvatar player, bool entered) { }
+    }
     internal static class ReviveAllFeature { internal static bool Available = true; }
     internal static class SessionSettings
     {
@@ -151,6 +161,7 @@ public class UnitAvatar : CombatBehaviour
 }
 public class PlayerAvatar : UnitAvatar
 {
+    public string playerNameSource = "";
     public PlayerSpawner spawner;
     public bool safeMode;
     public PlayerAvatar() { OnAttackUnitBeforeOperation += HandleBeforeAttack; }

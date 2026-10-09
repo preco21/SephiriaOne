@@ -52,7 +52,7 @@ namespace SephiriaOne
             scopeLabel = widgets.Text(window, "Scope", "Host controls  /  All current and joining players", 16, 44, 768, 22, 12);
             scopeLabel.color = PanelWidgets.Muted;
             availability = widgets.Text(window, "Availability", "", 16, 68, 768, 28, 12);
-            string[] pages = { "Stats", "Fountain", "Choices", "Resources", "Presets", "Status", "Rabbit", "Merchant", "Items", "Combat", "Spawns", "Costumes", "Updates" };
+            string[] pages = { "Stats", "Fountain", "Choices", "Resources", "Presets", "Status", "Rabbit", "Merchant", "Items", "Combat", "Spawns", "Costumes", "Updates", "Deathmatch" };
             for (int i = 0; i < pages.Length; i++)
             {
                 int target = i;
@@ -112,6 +112,7 @@ namespace SephiriaOne
             FitWindow();
             foreach (var checkbox in checkboxes) checkbox.Refresh(snapshot);
             if (page == 12) { RefreshUpdates(); return; }
+            if (page == 13) { RefreshDeathmatch(snapshot); return; }
             bool choicesReady = page == 11 ? snapshot.BatAvailable && snapshot.CollinAvailable : page == 10 ? (eventSpawnsSelected ? snapshot.EventSpawnsAvailable : snapshot.JarSpawnsAvailable) : page == 9 ? snapshot.FriendlyFireAvailable : page == 8 ? snapshot.ItemRestrictionsAvailable : page == 7 ? snapshot.MerchantsAvailable : page == 6 ? snapshot.RabbitPotionsAvailable : page == 2 ? snapshot.ChoicesAvailable : page != 3 || ResourceFeature.IsAvailable(ResourceCatalog.All[resourceIndex].Kind);
             bool levelUpReady = page != 6 || snapshot.RabbitLevelUpPotionsAvailable;
             availability.text = !snapshot.CanMutate ? snapshot.AvailabilityReason : !choicesReady ?
@@ -136,6 +137,7 @@ namespace SephiriaOne
             bool recovery = snapshot.HostActive && snapshot.SessionIdentity != null &&
                 (snapshot.FaultedFeature == family || snapshot.FaultedFeature == "inheritance");
             if (resetAll) resetAll.interactable = snapshot.CanMutate || recovery;
+            if (page == 9 && resetAll && DeathmatchRuntime.IsRunning && snapshot.HostActive && snapshot.SessionIdentity != null) resetAll.interactable = true;
             if (resetOne) resetOne.interactable = snapshot.CanMutate;
             if (save) save.interactable = snapshot.CanSave;
             if (forget) forget.interactable = snapshot.CanForget;
@@ -186,6 +188,7 @@ namespace SephiriaOne
             else if (page == 10) BuildSpawnEditor();
             else if (page == 11) BuildCostumeEditor();
             else if (page == 12) BuildUpdatesEditor();
+            else if (page == 13) BuildDeathmatchEditor();
             else
             {
                 if (page == 4)
@@ -315,10 +318,10 @@ namespace SephiriaOne
         }
         private void CenterWindow() { geometry.Center(); window.anchoredPosition = Vector2.zero; }
         private void AddCheckbox(string label, float x, float y, float width, float height,
-            Func<SettingsSnapshot, bool> value, Func<SettingsSnapshot, bool> available, string prefix)
+            Func<SettingsSnapshot, bool> value, Func<SettingsSnapshot, bool> available, string prefix, Func<SettingsSnapshot, bool> mutable = null)
         {
             checkboxes.Add(new PanelCheckbox(widgets.Checkbox(pageRoot, label, x, y, width, height), value, available,
-                enabled => Execute(prefix + (enabled ? " on" : " off"), true)));
+                enabled => Execute(prefix + (enabled ? " on" : " off"), true), mutable));
         }
 
         private void RefreshSaved() { Refresh(ReadCurrentSnapshot(true)); feedback.text = L.T("Refreshed current values and the saved copy."); }

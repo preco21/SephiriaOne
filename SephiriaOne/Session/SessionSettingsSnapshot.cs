@@ -82,7 +82,7 @@ namespace SephiriaOne
                     (EventSpawnFeature.Available ? "" : L.T(" Random event hooks unavailable; see Player.log.")));
                 lines.Add(DescribeJarSpawns(sameSession ? policy.JarSpawns : default) +
                     (JarSpawnFeature.Available ? "" : L.T(" Mystic Jar hooks unavailable; see Player.log.")));
-                lines.Add(DescribeFriendlyFire(sameSession ? policy.FriendlyFire : default) +
+                lines.Add(DescribeFriendlyFire(sameSession ? DeathmatchRuntime.Effective(policy.FriendlyFire) : default) +
                     (FriendlyFireFeature.Available ? "" : L.T(" Friendly-fire hooks unavailable; see Player.log.")));
                 lines.Add(DescribeItemUnlock(sameSession && policy.ItemUnlock) +
                     (ItemRestrictionFeature.Available ? "" : L.T(" Item restriction hooks unavailable; see Player.log.")));
@@ -206,7 +206,7 @@ namespace SephiriaOne
                 sameSession ? policy.MerchantSpawnChance : MerchantCommand.DefaultChance,
                 sameSession ? policy.Merchants.Snapshot : null, RabbitLevelUpFeature.Available,
                 sameSession && policy.ItemUnlock, ItemRestrictionFeature.Available,
-                sameSession ? policy.FriendlyFire : default, FriendlyFireFeature.Available,
+                sameSession ? DeathmatchRuntime.Effective(policy.FriendlyFire) : default, FriendlyFireFeature.Available,
                 sameSession ? policy.JarSpawns : default, JarSpawnFeature.Available,
                 sameSession && policy.BatHpSteal, BatCostumeFeature.Available,
                 sameSession && policy.CollinStartingArtifact, CollinFeature.Available,

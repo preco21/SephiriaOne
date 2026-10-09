@@ -1,5 +1,10 @@
 # Friendly fire
 
+Version `0.42.0` adds [temporary deathmatches](deathmatch.md) with synchronized
+friendly-fire toggles, timed respawns and top-five results. Deathmatch uses these
+same damage, attribution, KDA and native recovery paths. Outside a match the
+existing behavior below is preserved.
+
 Version `0.41.0` adds [revive-all recovery](#revive-all-recovery) through command and
 Combat UI, including protection against friendly-fire-triggered run settlement.
 

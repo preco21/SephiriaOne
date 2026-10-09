@@ -33,6 +33,7 @@ namespace Mirror
 
 public sealed class PlayerSpawner : UnityEngine.Object
 {
+    public int currentPlayerIdx;
     public ulong steamID;
     public static readonly List<PlayerSpawner> MultiplayerList = new();
     public bool isServer = true;
@@ -65,7 +66,6 @@ public sealed partial class PlayerAvatar : UnitAvatar
     public readonly List<string> NameRequests = new();
     public void SetPlayerName(string value) => NameRequests.Add(value);
     public bool isServer = true;
-    public uint netId;
     public UnityEngine.Object Race = new();
     public string playerNameSource = "Player";
     public string currentFloorGuid = "town";
@@ -163,6 +163,8 @@ public static class SaveManager { public static SaveData CurrentRun = new(), Cur
 
 public sealed class DungeonManager : UnityEngine.Object
 {
+    public readonly List<(PlayerAvatar Player, string Message)> ChatMessages = new();
+    public void Chat(PlayerAvatar player, string name, string message) => ChatMessages.Add((player, message));
     public bool requestLeaveOnHost;
     public int victoryType;
     public static DungeonManager Instance;

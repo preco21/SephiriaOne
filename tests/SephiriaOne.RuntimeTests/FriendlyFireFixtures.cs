@@ -1,5 +1,6 @@
 namespace SephiriaOne
 {
+    internal static class DeathmatchFeature { internal static bool Available = true; }
     internal static class ReviveAllFeature { internal static bool Available = true; }
     internal static class FriendlyFireFeature
     {

@@ -10,6 +10,7 @@ namespace SephiriaOne
     internal static class ReviveAllAction
     {
         private static bool executing;
+        internal static bool IsExecuting => executing;
         [ThreadStatic] private static PlayerAvatar reviving;
         private static Func<bool> currentScope;
         private static int callbackErrors;
@@ -29,7 +30,14 @@ namespace SephiriaOne
             }
         }
 
-        internal static bool TryExecute(out string message)
+        internal static bool TryExecute(out string message) => Execute(null, null, out message);
+
+        // Timed recovery shares the same native callback containment and exact
+        // avatar validation as the manual party action. Never revive a new life
+        // or a replacement avatar on behalf of an expired match timer.
+        internal static bool TryRevive(HostPlayer player, Func<bool> scope, out string message) => Execute(player, scope, out message);
+
+        private static bool Execute(HostPlayer only, Func<bool> scope, out string message)
         {
             message = L.T("Only the host can revive all players.");
             if (!NetworkServer.active) return false;
@@ -47,9 +55,13 @@ namespace SephiriaOne
             uint dungeonId = dungeon.netId;
             bool CurrentScope() => NetworkServer.active && dungeon && dungeon.isServer && dungeon.netId == dungeonId &&
                 ReferenceEquals(dungeon, DungeonManager.Instance) && ReferenceEquals(run, SaveManager.CurrentRun) &&
-                generation == SessionSettings.ResourceGeneration && run.enableSave && dungeon.victoryType == 0 && !dungeon.requestLeaveOnHost;
+                generation == SessionSettings.ResourceGeneration && run.enableSave && dungeon.victoryType == 0 && !dungeon.requestLeaveOnHost &&
+                (scope == null || scope());
+            if (!CurrentScope()) return false;
             var candidates = new List<HostPlayer>();
             var seen = new HashSet<PlayerAvatar>(ReferenceComparer<PlayerAvatar>.Instance);
+            if (only != null) candidates.Add(only);
+            else
             foreach (PlayerSpawner spawner in PlayerSpawner.MultiplayerList)
                 if (spawner && spawner.isServer && spawner.PlayerAvatar && spawner.PlayerAvatar.IsDead && seen.Add(spawner.PlayerAvatar))
                     candidates.Add(new HostPlayer(spawner));

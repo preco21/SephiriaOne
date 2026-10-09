@@ -66,5 +66,6 @@ internal static class GameFriendlyFireCompatibilityTests
         GameFriendlyFireReflectionTests.Run(game);
         GameFriendlyFireEffectTests.Run(game, addon);
         GameReviveAllTests.Run(game, addon);
+        GameDeathmatchTests.Run(game, addon);
     }
 }

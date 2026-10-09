@@ -71,6 +71,12 @@ namespace SephiriaOne
         public ResourcePolicy Resources { get; } = new ResourcePolicy();
         public bool ItemUnlock { get; private set; }
         public FriendlyFireSettings FriendlyFire { get; private set; }
+        public int DeathmatchDuration { get; private set; } = DeathmatchSettings.DefaultDuration;
+        public void RecordDeathmatchDuration(int seconds)
+        {
+            if (!DeathmatchSettings.ValidDuration(seconds)) throw new ArgumentOutOfRangeException(nameof(seconds));
+            DeathmatchDuration = seconds;
+        }
         public EventSpawnSettings EventSpawns { get; private set; }
         public void RecordEventSpawns(EventSpawnSettings settings) => EventSpawns = settings;
         public JarSpawnSettings JarSpawns { get; private set; }
@@ -87,7 +93,7 @@ namespace SephiriaOne
         public void RecordBat(bool reduce) => BatHpSteal = reduce;
         public bool CollinStartingArtifact { get; private set; }
         public void RecordCollin(bool grant) => CollinStartingArtifact = grant;
-        public bool HasChanges => fountain.HasValue || choices.Count != 0 || stats.Count != 0 || Resources.HasChanges || RabbitPotions.HasChanges || Merchants.HasChanges || ItemUnlock || FriendlyFire.HasChanges || JarSpawns.HasChanges || EventSpawns.HasChanges || BatHpSteal || CollinStartingArtifact;
+        public bool HasChanges => fountain.HasValue || choices.Count != 0 || stats.Count != 0 || Resources.HasChanges || RabbitPotions.HasChanges || Merchants.HasChanges || ItemUnlock || FriendlyFire.HasChanges || JarSpawns.HasChanges || EventSpawns.HasChanges || BatHpSteal || CollinStartingArtifact || DeathmatchDuration != DeathmatchSettings.DefaultDuration;
         public bool HasFountainSetting => fountain.HasValue;
         public bool HasFountainMultiplier => fountain.HasValue && fountain.Value.Multiplier;
 
@@ -130,6 +136,7 @@ namespace SephiriaOne
             Resources.Clear();
             ItemUnlock = false;
             FriendlyFire = default;
+            DeathmatchDuration = DeathmatchSettings.DefaultDuration;
             JarSpawns = default;
             EventSpawns = default;
             BatHpSteal = false;
