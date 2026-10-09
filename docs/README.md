@@ -26,6 +26,7 @@ investigation. Repository workflow and deployment rules are in [AGENTS.md](../AG
 | Fountain and choices | [Fountain](fountain-command.md), [second-run carryover](fountain-run-restart.md), [bond-artifact investigation](bond-artifact-fountain-investigation.md), [choices](choice-command.md) |
 | Starting resources and capacity | [Commands](resource-command.md), [native investigation](resource-settings-investigation.md), [implementation/follow-ups](resource-settings-implementation.md), [leaves departure timing](leaves-departure-fix.md) |
 | Persistence and UI | [Presets](session-preset.md), [control panel](control-panel.md), [panel implementation](control-panel-implementation.md), [localization](localization.md) |
+| UI revamp options | [Native Settings vs separate draggable window vs current-panel refresh](ui-revamp-investigation.md), including widget support, input/lifecycle constraints and the recommended direction |
 | Names and stock guests | [Compatibility scope](presentation-compatibility.md), [gradient](name-gradient.md), [historical UI omissions](name-ui-follow-up.md) |
 | Rabbit healing | [Potion options](rabbit-potions.md), [shared particles](rabbit-shared-healing-visuals.md), [healing-book feasibility](healing-item-investigation.md), [level-up potions](rabbit-level-up-potions.md) |
 | Costume-owned effects and items | [Rabbit starting artifact](rabbit-starting-artifact.md), [Collin grants](collin-starting-artifact.md), [Bat HP steal](wingless-bat.md), [given-item restrictions](item-restrictions.md) |

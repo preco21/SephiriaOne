@@ -1,5 +1,10 @@
 # Host settings panel
 
+For the 2026-10-09 comparison of native Settings integration, a separate
+translucent/draggable window and a refresh of this panel, see the
+[UI revamp investigation](ui-revamp-investigation.md). It is a proposal; the
+implementation described below remains current.
+
 Added in `0.13.0`. In a hosted town or run, open the pause menu and click
 **SephiriaOne** in its upper-right corner, or enter **`/one ui`** in chat.
 Close with **X** or the game's existing Escape/cancel action. No new hotkey or
