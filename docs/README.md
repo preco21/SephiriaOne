@@ -1,6 +1,6 @@
 # Development knowledge index
 
-Maintained: 2026-10-10 (Asia/Seoul), addon `0.40.0`.
+Maintained: 2026-10-10 (Asia/Seoul), addon `0.41.0`.
 
 Agents and contributors can refer to `docs/*` for research, implementation
 materials, native game findings and references. Start here before repeating an
@@ -34,7 +34,7 @@ implements the approved option 2; the [panel guide](control-panel.md) covers usa
 | Rabbit healing | [Potion options](rabbit-potions.md), [shared particles](rabbit-shared-healing-visuals.md), [healing-book feasibility](healing-item-investigation.md), [level-up potions](rabbit-level-up-potions.md) |
 | Costume-owned effects and items | [Rabbit starting artifact](rabbit-starting-artifact.md), [Collin grants](collin-starting-artifact.md), [Bat HP steal](wingless-bat.md), [given-item restrictions](item-restrictions.md) |
 | Encounters and spawning | [Merchant variants/current rules](merchant-variants.md), [initial Wandering Merchant design](wandering-merchant.md), [Mystic Jar](mystic-jar.md), [random event rooms](random-events.md) |
-| Combat | [Friendly fire, companions and reflection](friendly-fire.md) |
+| Combat | [Friendly fire, KDA, companions, reflection and revive-all recovery](friendly-fire.md) |
 | Reliability and performance | [Disconnect investigation](disconnect-investigation.md), [penalty warnings/transport evidence](penalty-stat-sync-review.md), [performance reviews](performance-review.md) |
 | Releases and dependencies | [GitHub updater](github-updates.md), [updater investigation](github-release-updates-investigation.md), [third-party notices](third-party-notices.md) |
 

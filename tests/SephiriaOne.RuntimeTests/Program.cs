@@ -764,6 +764,7 @@ Check(SettingsActions.IsCommand("/resources slots +6"), "Resource command family
 LanguageRuntimeTests.Run(Start, Check);
 ItemRestrictionRuntimeTests.Run(Start, Check);
 FriendlyFireRuntimeTests.Run(Start, id => Add(id), Check);
+ReviveAllTests.Run(Start, id => Add(id), Check);
         JarSpawnRuntimeTests.Run(Start, id => Add(id), Check);
         EventSpawnRuntimeTests.Run(Start, id => Add(id), Check);
         BatRuntimeTests.Run(Start, id => Add(id), Check);

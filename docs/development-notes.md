@@ -14,6 +14,14 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+Version `0.41.0` adds host `/one reviveall` and the Combat-tab **Revive all players**
+button. Dead ready players receive native full-HP revival, including stock guest
+rendering/camera recovery and native invulnerability. The action preserves living
+players and KDA totals and works with friendly fire off. An exact friendly-death
+guard prevents the native all-dead callback from settling/deleting the run; normal
+enemy/environment game over stays native. Already settled runs cannot be undone.
+See [recovery behavior and native evidence](friendly-fire.md#revive-all-recovery).
+
 Version `0.40.0` adds player K/D/A to friendly-fire kill notices. Native landed
 damage records unique contributors; confirmed player deaths credit the final
 blow, victim and other contributors. Toggle changes reset all totals immediately.

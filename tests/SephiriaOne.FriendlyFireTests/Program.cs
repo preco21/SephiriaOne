@@ -173,9 +173,12 @@ Check(FriendlyFireHooks.ValidateCompanionUpdate(updateCode, targetCode), "Native
 targetCode.RemoveAt(targetCode.FindIndex(i => i.operand is MethodInfo m && m.Name == "OnLostTarget"));
 Check(!FriendlyFireHooks.ValidateCompanionUpdate(updateCode, targetCode), "Missing native attack cleanup rejects companion update hook");
 KdaTests.Run(Check);
+RecoveryTests.Run(Check);
 KillLogTests.Run(Check);
 EffectTests.Run(Check);
 FriendlyFireHooks.Uninstall();
+Check(PatchProcessor.GetPatchInfo(AccessTools.Method(typeof(PlayerSpawner), "HandleDieServerside"))?.Prefixes.Count is null or 0,
+    "Unload restores native game-over handling");
 Check(PatchProcessor.GetPatchInfo(AccessTools.Method(typeof(UnitAvatar), "AddReceivedDamage"))?.Postfixes.Count is null or 0 &&
     PatchProcessor.GetPatchInfo(AccessTools.Method(typeof(UnitAvatar), "Revive"))?.Prefixes.Count is null or 0 &&
     PatchProcessor.GetPatchInfo(AccessTools.Method(typeof(UnitAvatar), "Die"))?.Finalizers.Count is null or 0,

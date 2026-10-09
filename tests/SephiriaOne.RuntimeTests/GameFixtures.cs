@@ -61,7 +61,6 @@ public sealed class PlayerSpawner : UnityEngine.Object
 
 public sealed partial class PlayerAvatar : UnitAvatar
 {
-    public bool IsDead;
     public bool isClient = true;
     public readonly List<string> NameRequests = new();
     public void SetPlayerName(string value) => NameRequests.Add(value);
@@ -152,6 +151,7 @@ public static class KeywordDatabase
 }
 public sealed class SaveData
 {
+    public bool enableSave = true;
     public readonly Dictionary<string, object> Values = new();
     public bool ContainsKey(string key) => Values.ContainsKey(key);
     public int GetInt(string key, int fallback) => Values.TryGetValue(key, out var value) ? (int)value : fallback;
@@ -163,6 +163,8 @@ public static class SaveManager { public static SaveData CurrentRun = new(), Cur
 
 public sealed class DungeonManager : UnityEngine.Object
 {
+    public bool requestLeaveOnHost;
+    public int victoryType;
     public static DungeonManager Instance;
     public bool isServer = true;
     public uint netId = 100;

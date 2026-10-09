@@ -16,6 +16,7 @@ namespace Mirror { public static class NetworkServer { public static bool active
 namespace Mirror { public class SyncList<T> : List<T> { [MethodImpl(MethodImplOptions.NoInlining)] public new bool Contains(T item) => base.Contains(item); } }
 namespace SephiriaOne
 {
+    internal static class ReviveAllFeature { internal static bool Available = true; }
     internal static class SessionSettings
     {
         private static FriendlyFireSettings settings;
@@ -170,6 +171,12 @@ public class PlayerSpawner : UnityEngine.Object
     public ulong steamID;
     public PlayerAvatar PlayerAvatar;
     public int currentPlayerIdx = -1;
+    public bool AllDead = true;
+    public int GameOvers;
+    public void BindDeath(PlayerAvatar player) { PlayerAvatar = player; player.spawner = this; player.OnDeath += HandleDieServerside; }
+    [MethodImpl(MethodImplOptions.NoInlining)] private void HandleDieServerside(DamageInstance damage)
+    { if (PlayerAvatar.IsDead && AllDead) RpcGameOver(); }
+    [MethodImpl(MethodImplOptions.NoInlining)] public void RpcGameOver() { GameOvers++; }
 }
 public class DungeonManager : UnityEngine.Object
 {

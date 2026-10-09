@@ -91,6 +91,14 @@ namespace SephiriaOne
         internal static Exception AfterHit(Exception __exception, HitContext __state)
         { current = __state; return __exception; }
 
+        // The native all-dead callback emits an irreversible game-over RPC.
+        // Keep only this exact friendly-fire death recoverable; no global
+        // game-over flag or exemption survives the active damage scope.
+        internal static bool BeforeGameOverCheck(PlayerSpawner __instance, DamageInstance damage) =>
+            !NetworkServer.active || !ReviveAllFeature.Available || !current.Friendly || !(current.Victim is PlayerAvatar victim) ||
+            !ReferenceEquals(__instance.PlayerAvatar, victim) || !victim.IsDead ||
+            !ReferenceEquals(current.Damage, damage);
+
         internal static void AfterReceivedDamage(UnitAvatar __instance, float damage)
         {
             if (!NetworkServer.active || !current.Friendly || !ReferenceEquals(current.Victim, __instance) ||

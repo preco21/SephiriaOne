@@ -10,6 +10,7 @@ namespace SephiriaOne
         private Slider friendlyDamage;
         private TMP_Text friendlyPercent;
         private bool friendlyDraft;
+        private Button reviveAll;
 
         private void BuildCombatEditor()
         {
@@ -31,20 +32,24 @@ namespace SephiriaOne
             friendlyDamage.onValueChanged.AddListener(value => { friendlyDraft = true; RefreshFriendlyPercent(); });
             changeButtons.Add(widgets.Button(pageRoot, "Apply damage", 16, 126, 135, 25, () =>
                 Execute("/one friendlyfire damage " + ((int)friendlyDamage.value).ToString(CultureInfo.InvariantCulture), true)));
-            widgets.Text(pageRoot, "FriendlyRange", "0–300% (100% = normal)", 162, 127, 128, 24, 9);
+            reviveAll = widgets.Button(pageRoot, "Revive all players", 162, 126, 127, 25, () => Execute("/one reviveall", true));
             readout = widgets.Scroll(pageRoot, 312, 0, 272, 162);
         }
 
         private void RefreshCombat(SettingsSnapshot snapshot)
         {
             if (!friendlyDamage) return;
+            if (reviveAll) reviveAll.interactable = ReviveAllAction.CanExecute;
             friendlyDamage.interactable = snapshot.CanMutate && snapshot.FriendlyFireAvailable;
             if (!friendlyDraft) friendlyDamage.SetValueWithoutNotify(snapshot.FriendlyFire.DamagePercent);
             RefreshFriendlyPercent();
         }
         private void RefreshFriendlyPercent() => friendlyPercent.text = L.F("Allied damage: {0}%", (int)friendlyDamage.value);
         private static string CombatValues(SettingsSnapshot snapshot) => SessionSettings.DescribeFriendlyFire(snapshot.FriendlyFire) +
+            (ReviveAllFeature.Available ? "" : "\n\n" + L.T("Revive-all compatibility checks failed. Inspect Player.log; no players were changed.")) +
             "\n\n" + L.T("Default off. Host settings apply to all players, including unmodified guests.") +
+            "\n\n" + L.T("0–300% (100% = normal)") +
+            "\n\n" + L.T("Revive all restores dead players at full HP, including the host. It also works with friendly fire off. Living players and KDA totals are unchanged.") +
             "\n\n" + L.T("Melee, projectiles and supported burn/debuff items can affect other players. Healing and unrelated automatic skills keep native targeting.") +
             "\n\n" + L.T("Companions attack other players, never their owner. Off or 0% stops this targeting and blocks their hits on players immediately.") +
             "\n\n" + L.T("Damage, including debuff ticks, scales after defenses and before shields. Off or 0% blocks new allied debuffs and damage. Reflection, immediate debuff damage and burning-death explosions are allowed with recursion limits.") +

@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
 using SephiriaOne;
 
-public class UnitAvatar : UnityEngine.Object
+public partial class UnitAvatar : UnityEngine.Object
 {
     [MethodImpl(MethodImplOptions.NoInlining)]
     public void AddCustomStat(ECustomStat stat, int amount)

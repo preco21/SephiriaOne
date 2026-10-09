@@ -196,6 +196,19 @@ contributions too. Use nonzero `PlayerSpawner.steamID` for session score identit
 never display names or reusable slots. A generation token prevents in-flight
 deaths from undoing toggle/run resets. These counters are host-only chat metadata,
 not new player SyncVars or saved preset fields.
+For recovery (`0.41.0`), call `UnitAvatar.Revive(MaxHp)` on the server instead of
+writing death/HP flags: it invokes native inventory, protection and RPC paths,
+and `GameCamera.OnRevive` resets the spectator target. `PlayerSpawner`'s
+`HandleDieServerside` emits game over on a party wipe. This must be prevented at
+the exact friendly-fire death boundary if the host is to recover that party:
+`UI_GameOverLabel.OnOpened` disables/deletes the current run save and game-over
+events settle quests. Native revival cannot undo that process on stock guests.
+The action rejects terminal save/victory/leave state and does not attempt rollback.
+Revival also clears `IsDead` before HP/revival callbacks and only then sends the
+guest RPC. Catching an exception around the entire `Revive` call is insufficient:
+retry would skip that alive-but-incompletely-restored player. The recovery action
+uses exact-avatar event wrappers to continue later subscribers and native tail,
+logs callback warnings, and preserves ordinary native invocation outside it.
 See [combat and the native audit](friendly-fire.md).
 
 One concrete disconnect risk was a recognized talent-budget rejection escaping a

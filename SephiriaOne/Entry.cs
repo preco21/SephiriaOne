@@ -25,6 +25,7 @@ namespace SephiriaOne
             MerchantFeature.Initialize();
             ItemRestrictionFeature.Initialize();
             FriendlyFireFeature.Initialize();
+            ReviveAllFeature.Initialize();
             JarSpawnFeature.Initialize();
             EventSpawnFeature.Initialize();
             BatCostumeFeature.Initialize();
@@ -63,6 +64,7 @@ namespace SephiriaOne
             EventSpawnFeature.Shutdown();
             JarSpawnFeature.Shutdown();
             FriendlyFireFeature.Shutdown();
+            ReviveAllFeature.Shutdown();
             ItemRestrictionFeature.Shutdown();
             MerchantFeature.Shutdown();
             ResourceFeature.Shutdown();

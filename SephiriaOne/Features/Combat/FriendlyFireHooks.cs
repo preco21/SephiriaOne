@@ -20,9 +20,12 @@ namespace SephiriaOne
             var setTarget = AccessTools.DeclaredMethod(typeof(UnitAI_NewBasic), "SetTarget", new[] { typeof(UnitAvatar) });
             var received = AccessTools.DeclaredMethod(typeof(UnitAvatar), "AddReceivedDamage", new[] { typeof(float) });
             var revive = AccessTools.DeclaredMethod(typeof(UnitAvatar), "Revive", new[] { typeof(float) });
+            var gameOver = AccessTools.DeclaredMethod(typeof(PlayerSpawner), "HandleDieServerside", new[] { typeof(DamageInstance) });
             if (apply == null || apply.ReturnType != typeof(EApplyDamageResult) || die == null ||
                 received == null || received.ReturnType != typeof(void) || received.IsStatic ||
                 revive == null || revive.ReturnType != typeof(void) || revive.IsStatic ||
+                gameOver == null || gameOver.ReturnType != typeof(void) || gameOver.IsStatic ||
+                !ValidateGameOverCheck(PatchProcessor.GetOriginalInstructions(gameOver)) ||
                 !ValidateReceivedDamage(PatchProcessor.GetOriginalInstructions(apply)) ||
                 beforeAttack == null || beforeAttack.IsStatic || beforeAttack.ReturnType != typeof(void) ||
                 relation == null || relation.IsStatic || relation.ReturnType != typeof(ERelationBehaviour) ||
@@ -43,6 +46,7 @@ namespace SephiriaOne
                     finalizer: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.FinishDeath)));
                 harmony.Patch(received, postfix: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.AfterReceivedDamage)));
                 harmony.Patch(revive, prefix: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.BeforeRevive)));
+                harmony.Patch(gameOver, prefix: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.BeforeGameOverCheck)));
                 harmony.Patch(beforeAttack, prefix: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.BeforePlayerAttack)));
                 harmony.Patch(relation, postfix: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.AfterCompanionRelation)));
                 harmony.Patch(update, prefix: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.BeforeCompanionUpdate)));
@@ -57,6 +61,15 @@ namespace SephiriaOne
             var accounting = code.FindAll(i => i.operand is MethodInfo m && m.DeclaringType == typeof(UnitAvatar) && m.Name == "AddReceivedDamage");
             int death = code.FindIndex(i => i.operand is MethodInfo m && m.DeclaringType == typeof(UnitAvatar) && m.Name == "Die");
             return accounting.Count == 3 && death >= 0 && accounting.All(i => code.IndexOf(i) < death);
+        }
+
+        internal static bool ValidateGameOverCheck(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = instructions.ToList();
+            return code.Count(i => i.operand is MethodInfo m && m.DeclaringType == typeof(PlayerSpawner) && m.Name == "RpcGameOver") == 1 &&
+                code.Any(i => i.opcode == OpCodes.Ldfld && i.operand is FieldInfo f && f.DeclaringType == typeof(UnitAvatar) && f.Name == "IsDead") &&
+                !code.Any(i => i.opcode == OpCodes.Stfld || i.opcode == OpCodes.Stsfld) &&
+                !code.Any(i => i.operand is MethodInfo m && m.DeclaringType == typeof(PlayerSpawner) && m.Name != "RpcGameOver" && m.Name != "get_PlayerAvatar");
         }
 
         internal static bool ValidateCompanionUpdate(IEnumerable<CodeInstruction> update, IEnumerable<CodeInstruction> setTarget)

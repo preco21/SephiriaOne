@@ -1,5 +1,8 @@
 # Friendly fire
 
+Version `0.41.0` adds [revive-all recovery](#revive-all-recovery) through command and
+Combat UI, including protection against friendly-fire-triggered run settlement.
+
 Version `0.40.0` adds K/D/A to player kill notices, for example
 `PlayerA(1/2/3) killed PlayerB(1/1/3)`, inside the existing localized chat message.
 The displayed totals include that death. Enabling or disabling friendly fire
@@ -106,6 +109,55 @@ reject the entire preset.
   available). Unnamed companions identify their owner; other unnamed allies use
   an explicit NPC fallback. Both EN/KO catalogs contain these labels.
 
+## Revive-all recovery
+
+Use `/one reviveall` or **Combat → Revive all players**. The host can use it while
+dead, with friendly fire off, or while unrelated settings are faulted. It is an
+immediate action, not a saved setting. Help is available at `/one reviveall help`
+and `/one help`. The button and messages have English/Korean translations.
+
+- Calls native `UnitAvatar.Revive(player.MaxHp)` once for every ready dead player
+  currently in the host roster. Each player's own finite positive maximum HP is
+  used. Living HP, MP, inventories, current location and KDA totals are not reset
+  by addon writes. Native revival still performs its normal inventory/event work.
+- Native revival restores `IsDead`/HP SyncVars, invokes server revival callbacks,
+  clears delayed HP restoration, grants brief revival invulnerability and runs
+  `TakeRemoteInventory`/`RpcRevive`. Stock guests restore visible bodies and the
+  camera's alternate/spectator target via `OnReviveClientside`. No guest addon or
+  custom RPC is needed. The next life starts with no old KDA contributors.
+- Repeated use with nobody dead is a no-op. Loading/invalid/departed players and
+  native callback failures are reported; other ready candidates are still
+  attempted. The host can retry after players finish loading. Authority, exact
+  avatar identity, save object, run generation and settlement flags are checked
+  around callbacks. A new session/run is never processed by an old action.
+- Native `Revive` marks the player alive before its HP/revival callbacks, and
+  sends the guest RPC only afterward. During this action, two audited event
+  invocation wrappers isolate subscriber exceptions for the exact player being
+  restored. Later subscribers and native inventory/protection/RPC work still
+  run; callback warnings are reported. Other native/nested avatars retain normal
+  callback behavior. Scope changes abort before the remaining native tail.
+  This avoids an alive server avatar whose guest never received revival, without
+  replaying events or toggling death flags manually.
+- The exact admitted friendly-fire player's death skips
+  `PlayerSpawner.HandleDieServerside`, whose only gameplay action is to emit
+  `RpcGameOver` when all connected players are dead. This prevents a final team
+  kill (including reflection/owned companion damage) from irreversibly ending the
+  run, leaving the host able to revive the party. Normal death replication, KDA
+  and death effects still run. Enemy/environmental deaths retain native game over.
+  If independent recovery compatibility checks fail, native game over remains
+  available rather than trapping an all-dead party without a recovery action.
+- **Already settled runs cannot safely resume.** Native `ClientGameOver` settles
+  quests and resets combat; `UI_GameOverLabel.OnOpened` disables saving and deletes
+  the run save, including backups. This is more than a dead flag. The action
+  rejects disabled run saves, victory settlement and requested lobby/restart
+  transitions. It does not close guests' result screens, recreate saves or undo
+  rewards. Start a new run if settlement already occurred before this patch.
+
+There is no automatic revival, forced teleport or new timer. Candidate collection
+and readiness checks happen only when the host presses the button or runs the
+command. The button reuses the shared service and remains independent of
+friendly-fire patch availability and normal setting-write readiness.
+
 ## Synchronization and performance
 
 ### Player KDA
@@ -186,6 +238,27 @@ The native DamageInstance is not modified by the addon, so shared attacks cannot
 carry a reduced multiplier from an ally to an enemy.
 
 ## Verification
+
+### Revive all (`0.41.0`, 2026-10-10)
+
+Debug and Release builds pass with zero warnings/errors. All 1,306 shared-runtime
+checks, 259 executable combat-hook checks, 69 Bat lifecycle checks, 2,721 catalog
+checks and the full portable/installed-game compatibility suite pass with
+`-p:DeployMod=false`. Recovery regressions cover dead hosts, distinct native HP,
+living-player preservation, repeated use, loading/disconnected/replaced avatars,
+invalid HP, independent compatibility gates, callback failures and session/run
+changes. Tests confirm scope changes abort before the guest RPC. Independent
+review found the native callback exception trap; event isolation was added and
+verified before the final review found no further actionable issue.
+
+Installed-game checks verify native death/HP writes, revival events, inventory,
+invulnerability, stock guest RPC and camera restoration, plus the irreversible
+game-over boundary. These are contract and fixture checks, not a live multiplayer
+test. No deployment or game launch was performed. In game, verify both entry
+points with a dead host and unmodified guest, a final friendly-fire/reflected or
+companion kill, retry after a loading guest becomes ready, a second run and EN/KO
+labels. Confirm normal enemy-triggered game over remains unchanged and already
+settled runs reject recovery.
 
 ### KDA (`0.40.0`, 2026-10-10)
 

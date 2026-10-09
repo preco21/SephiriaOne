@@ -16,6 +16,12 @@ The host uses this panel to change settings for **all current and joining
 players**. Guests can use the unmodified game. The panel itself is host-local;
 effects use the same native synchronization as the existing commands.
 
+Version `0.41.0` adds **Combat → Revive all players**, also available through
+`/one reviveall`. This host action restores ready dead players at full HP through
+native revival, including the host, while leaving living players and KDA totals
+unchanged. It works with friendly fire off and unmodified guests. Runs already
+settled by native game over cannot be resumed; see [recovery boundaries](friendly-fire.md#revive-all-recovery).
+
 Version `0.34.0` groups Bat and default-off [Collin](collin-starting-artifact.md)
 controls under **Costumes** (의상). Collin On/Off/Reset takes effect at the next
 costume equip or fresh-run restock for Mole, Farmer Squirrel and Turtle. Each
@@ -55,7 +61,7 @@ unapplied drafts without sending any gameplay command.
 | Presets | Save current applied settings, forget the saved copy, or refresh it from disk. Active intent and saved intent are shown separately. |
 | Status | Current intent, player values, revisions, synchronization outcomes, native name status and fault details. Scroll for the complete readout. |
 | Items | Default-off On/Off and Reset controls for given-item sale restrictions and owner-bound drops, including Fountain sharing. See [scope and native limits](item-restrictions.md); intrinsic costume-curse no-drop properties remain. |
-| Combat | Friendly fire On/Off, a 0–300% damage slider with Apply damage, and Reset (off/100%). |
+| Combat | Friendly fire On/Off, a 0–300% damage slider with Apply damage, Reset (off/100%), and Revive all players. |
 | Spawns | Choose Mystic Jars or random events. Apply a chance or native-rate multiplier using the selected feature's existing limits; Reset restores native. Existing generated results are preserved. |
 | Costumes | Independent Bat HP-steal reduction and Collin starting-artifact toggles, resets and compatibility readouts. |
 | Rabbit | Independent On/Off controls for Wing-Eared Rabbit infinite HP potions, nearby potion healing, MP cost, Survival rank-5 suppression and random non-HP/MP potions on level-up. Sample is excluded from all HP-potion options and keeps native behavior. Enter 0..10000 MP and press Set & on to choose a fee; Off remembers it. Reset restores 10 MP and disables all five options. Shows active state and separate drink/level-up compatibility. |

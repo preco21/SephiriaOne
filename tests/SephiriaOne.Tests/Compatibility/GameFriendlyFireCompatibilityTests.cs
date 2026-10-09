@@ -65,5 +65,6 @@ internal static class GameFriendlyFireCompatibilityTests
         Console.WriteLine("Verified native friendly-fire damage/player-veto anchors, shared companion AI and Collin stop/start paths, HP/death replication and stock guest chat (not live multiplayer).");
         GameFriendlyFireReflectionTests.Run(game);
         GameFriendlyFireEffectTests.Run(game, addon);
+        GameReviveAllTests.Run(game, addon);
     }
 }
