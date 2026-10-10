@@ -46,7 +46,7 @@ internal static class PresetTests
         Check(policy.ToPresetText() == header + "choices weapon 2\nchoices miracle 3\n", "Reset families stay out of saved data");
         foreach (string invalid in new[]
         {
-            "", "SephiriaOne preset v19\n", header + "unknown set 1", header + "choices armor 3",
+            "", "SephiriaOne preset v20\n", header + "unknown set 1", header + "choices armor 3",
             header + "fountain set 1\nfountain offset 2", header + "stats luck set 10\nstats luck offset 1",
             header + "choices item 1\nchoices item 2", header + "stats unknown set 10", header + "stats luck arbitrary 10",
             header + "fountain set -1", header + "fountain offset 2147483648", header + "fountain set 1.5",

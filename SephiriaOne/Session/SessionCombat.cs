@@ -35,6 +35,6 @@ namespace SephiriaOne
         }
 
         internal static string DescribeFriendlyFire(FriendlyFireSettings settings) =>
-            L.F("Friendly fire: {0}; allied damage: {1}%.", L.T(settings.Enabled ? "on" : "off"), settings.DamagePercent);
+            L.F("Friendly fire: {0}; allied damage: {1}%.", L.T(settings.Enabled ? "on" : "off"), settings.Number);
     }
 }

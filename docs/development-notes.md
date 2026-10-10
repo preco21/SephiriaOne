@@ -14,6 +14,14 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+Version `0.44.0` supports friendly-fire percentages with two decimal places,
+including `0.01` and `0.1` through `0.9`. The Combat tab adds exact numeric entry
+beside its fractional slider. Commands/status, presets and deathmatch retain the
+same precise value; existing whole-number presets keep their original schema.
+Only fractional combat presets require v19. Targeting stays enabled for positive
+sub-one scales, and all allied damage paths use the same double scale after
+native defenses. See [friendly fire](friendly-fire.md#fractional-damage-0440-2026-10-11).
+
 Version `0.43.2` repairs offensive artifact targeting under friendly fire:
 Snow Mountain Long-eared Bat, Storm Cloud, Thunder's Earring and the other
 audited offensive consumers share live hostility policy. Scoped combat checks,

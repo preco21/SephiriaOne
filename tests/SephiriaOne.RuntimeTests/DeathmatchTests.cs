@@ -52,9 +52,11 @@ internal static class DeathmatchTests
             check(guest.PlayerAvatar.ReviveCalls == revives, "Old respawn timer cannot fire after toggle: " + toggle);
         }
         host = start(); guest = add(90); At(0); SettingsActions.Execute("/one friendlyfire on"); SettingsActions.Execute("/one deathmatch start");
-        SettingsActions.Execute("/one friendlyfire damage 50");
+        SettingsActions.Execute("/one friendlyfire damage 0.1");
         check(!SessionSettings.FriendlyFireForHit.Enabled, "Damage edits cannot arm the warmup"); At(3);
-        check(DeathmatchRuntime.IsRunning && SessionSettings.FriendlyFireForHit.DamagePercent == 50, "Damage slider edits do not stop match");
+        check(DeathmatchRuntime.IsRunning && SessionSettings.FriendlyFireForHit.DamagePercent == 0.1m, "Fractional damage edits survive warmup without stopping match");
+        check(SettingsActions.Execute("/one friendlyfire damage 0.9").Success && DeathmatchRuntime.IsRunning &&
+            SessionSettings.FriendlyFireForHit.DamagePercent == 0.9m, "Active match adopts fractional damage edits immediately");
         var joiner = add(91); joiner.PlayerAvatar.IsDead = true; At(4); At(7);
         check(!joiner.PlayerAvatar.IsDead, "Newly joined dead player gets complete match respawn state");
         guest.PlayerAvatar.IsDead = true; DeathmatchRuntime.Died(guest.PlayerAvatar); PlayerSpawner.MultiplayerList.Remove(guest);

@@ -1,5 +1,8 @@
 # Friendly fire
 
+Version `0.44.0` adds [fractional percentages](#fractional-damage-0440-2026-10-11)
+down to `0.01%`, including precise entry beside the Combat slider.
+
 Version `0.43.2` expands [offensive artifact coverage](friendly-fire-artifacts.md),
 including bat, cloud and earring combat activation, scoped nearest searches,
 artifact homing and bounded triggered damage. Use that audit for the current
@@ -33,15 +36,17 @@ while sword-and-shield guarding could still spend MP. It also enables companion
 attacks against other players under the same host option.
 
 Friendly fire defaults to **off** with a
-100% allied-damage scale. Open `/one ui` → **Combat**, enable it, move the slider,
-and press **Apply damage**. Dragging the slider does not send gameplay updates.
-The range is 0–300% in whole percentage points.
+100% allied-damage scale. Open `/one ui` → **Combat**, enable it, move the slider
+or type an exact percentage, and press **Apply damage**. Dragging or typing does
+not send gameplay updates. The range is 0–300%, with up to two decimal places.
 
 Commands use the same host service as the panel:
 
 ```text
 /one friendlyfire on
 /one friendlyfire damage 25
+/one friendlyfire damage 0.1
+/one friendlyfire damage 0.05%
 /one friendlyfire damage 200
 /one friendlyfire off
 /one friendlyfire status
@@ -51,8 +56,9 @@ Commands use the same host service as the panel:
 
 `off` keeps the selected percentage for later; `reset` restores off/100%.
 `/one save` stores applied settings for future sessions. Old presets keep friendly
-fire off. Nondefault combat settings use preset v12; malformed or duplicate rows
-reject the entire preset.
+fire off. Nondefault whole-number combat settings use at least preset v12;
+fractional damage requires v19. Malformed or duplicate rows reject the entire
+preset. All older preset versions remain readable with their original rules.
 
 ## Behavior and boundaries
 
@@ -256,6 +262,53 @@ The native DamageInstance is not modified by the addon, so shared attacks cannot
 carry a reduced multiplier from an ally to an enemy.
 
 ## Verification
+
+### Fractional damage (`0.44.0`, 2026-10-11)
+
+Friendly-fire settings store an integer offset in hundredths of a percentage
+point: default zero offset means 100%, not 0%. Decimal validation/formatting is
+restricted to command, preset and UI paths. Native targeting uses an integer
+positive/zero check, and the admitted hit captures a double multiplier. A
+deathmatch overlay copies the validated offset while changing only the toggle,
+avoiding repeated decimal conversion at each target/hit query.
+
+`/one friendlyfire damage 0.1` and `0.1%` are equivalent. A dot is the decimal
+separator regardless of OS language. At 0.1%, 1,000 resolved damage becomes 1;
+at 0.9%, it becomes 9. The addon does not round the scaled result to an integer
+or force it back to one HP. Negative/out-of-range, nonfinite, exponent,
+multiplier and more-than-two-decimal inputs are rejected rather than rounded.
+The slider rounds its draft to two decimals; the numeric field allows exact
+entry below the slider's physical pixel resolution. Invalid edits stay visible
+until corrected; periodic refresh preserves drafts, and scope changes discard
+them. Apply uses the same host command and validation as chat.
+
+Fractional policy emits canonical v19 rows such as `friendlyfire damage 0.1`.
+Whole-number policies still emit their prior minimum schema. v19 also accepts
+the existing deathmatch duration and expanded-stat rows. Presets remain atomic;
+toggle/reset behavior and host authority are unchanged. Damage-only edits do
+not stop a deathmatch or reset KDA. Reconnects and new runs read current policy;
+save/reload retains the exact percentage.
+
+Installed damage contracts retain native defenses, the pre-scale minimum damage
+clamp, float HP/shields and existing guest SyncVars. Native MP shields and damage
+feedback still convert to integers: very small hits can display zero or consume
+zero MP under those native rules. Sword-and-shield guard costs remain native.
+No new RPC, per-player state, hit allocation or native hook is introduced.
+
+The initial parser regression failed on `0.01` before implementation. Tests cover
+all tenths below 1%, `0.01`, `1.25`, range/precision rejection, canonical/culture-
+independent persistence, old schemas, default/reset, reconnects, controller/run
+restart and deathmatch changes. Executable combat tests cover HP, ordinary and
+MP shields, reflection, electric damage, artifact procs, unchanged monsters,
+off and exact zero. Compiled UI contracts verify shared parser/Apply, fractional
+slider and no-notify draft wiring. Live Unity input/rendering and multiplayer
+verification remain outstanding; no deployment or game launch was performed.
+
+Validation: zero-warning Debug/Release builds; 694 combat checks, 1,452 runtime
+integration checks, 175 combat policy/preset checks, 69 Bat lifecycle checks,
+22 panel checks and the full portable/installed-game contract suite pass.
+The unchanged five-player runtime probe retains zero bytes/tick. Read-only review
+found no actionable issue; these fixtures are not a live Unity performance test.
 
 ### Revive all (`0.41.0`, 2026-10-10)
 

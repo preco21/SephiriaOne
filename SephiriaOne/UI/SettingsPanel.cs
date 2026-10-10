@@ -188,7 +188,7 @@ namespace SephiriaOne
             statPicker = null; amount = null; resetOne = resetAll = save = forget = null;
             collinReset = null;
             updateInstall = updateCheck = null; updateAutomatic = null;
-            friendlyDamage = null; friendlyPercent = null; friendlyDraft = false;
+            friendlyDamage = null; friendlyDraft = false;
             if (pageRoot) { widgets.Forget(pageRoot); pageRoot.gameObject.SetActive(false); Destroy(pageRoot.gameObject); }
             pageRoot = PanelWidgets.Rect(window, "Page", 4, 152, 600, 162);
             pageRoot.localScale = Vector3.one * 1.25f;

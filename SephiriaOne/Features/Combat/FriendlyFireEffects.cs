@@ -18,7 +18,7 @@ namespace SephiriaOne
         private static bool CanAffectTeam(UnitAvatar source, UnitAvatar target)
         {
             var settings = SessionSettings.FriendlyFireForHit;
-            return settings.Enabled && settings.DamagePercent > 0 &&
+            return settings.Enabled && settings.HasDamage &&
                 (source is PlayerAvatar || TeamOwner(source) != target);
         }
 

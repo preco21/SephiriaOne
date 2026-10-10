@@ -14,7 +14,7 @@ namespace SephiriaOne
             internal DamageInstance Damage;
             internal bool Friendly, InFriendlyChain, Reflection;
             internal bool InDebuffDamage, InBurnExplosion, InArtifactDamage;
-            internal int Percent;
+            internal double DamageScale;
             internal long KdaEpoch;
         }
         [ThreadStatic] private static HitContext current;
@@ -46,7 +46,7 @@ namespace SephiriaOne
                 bool reflection = IsNativeReflection(damage);
                 // Native debuff ticks use an all-faction mask and bypass the
                 // normal player veto. Recheck policy before every team impact.
-                if (IsPlayerTeamPair(source, __instance) && (!settings.Enabled || settings.DamagePercent == 0))
+                if (IsPlayerTeamPair(source, __instance) && (!settings.Enabled || !settings.HasDamage))
                 { __result = EApplyDamageResult.Fail_Absolute; return false; }
                 // Recheck at impact: even a projectile fired while enabled (or
                 // with a broad native mask) cannot hurt the owner or hit players
@@ -64,11 +64,11 @@ namespace SephiriaOne
                 bool burnExplosion = IsBurnExplosion(damage);
                 bool burnProc = burnExplosion && __state.Friendly && !__state.Reflection && !__state.InBurnExplosion &&
                     __state.Victim && __state.Victim.IsDead && ReferenceEquals(source, __state.Source);
-                if (__state.InFriendlyChain && !returnHit && !debuffHit && !burnProc && !artifactHit || settings.DamagePercent == 0 || damage.damage < 0 ||
+                if (__state.InFriendlyChain && !returnHit && !debuffHit && !burnProc && !artifactHit || !settings.HasDamage || damage.damage < 0 ||
                     float.IsNaN(damage.damage) || float.IsInfinity(damage.damage))
                 { __result = EApplyDamageResult.Fail_Absolute; return false; }
                 current = new HitContext { Victim = __instance, Attacker = attacker, Source = source, Damage = damage, Friendly = true,
-                    InFriendlyChain = true, Reflection = reflection, Percent = settings.DamagePercent, KdaEpoch = FriendlyFireKda.Epoch,
+                    InFriendlyChain = true, Reflection = reflection, DamageScale = settings.DamageScale, KdaEpoch = FriendlyFireKda.Epoch,
                     InDebuffDamage = __state.InDebuffDamage || debuffHit, InBurnExplosion = __state.InBurnExplosion || burnExplosion,
                     InArtifactDamage = __state.InArtifactDamage || ReferenceEquals(damage, artifactDamage) };
             }
@@ -120,7 +120,7 @@ namespace SephiriaOne
                 var settings = SessionSettings.FriendlyFireForHit;
                 // SearchTarget and OnAIUpdate both use this query. No retained
                 // target hostility survives off/reset or a change of owner.
-                __result = target != owner && settings.Enabled && settings.DamagePercent > 0
+                __result = target != owner && settings.Enabled && settings.HasDamage
                     ? ERelationBehaviour.Hostile : ERelationBehaviour.Friendly;
             }
             catch (Exception error) { Warn(error); }
@@ -134,7 +134,7 @@ namespace SephiriaOne
             try
             {
                 var settings = SessionSettings.FriendlyFireForHit;
-                if (target == owner || !settings.Enabled || settings.DamagePercent == 0)
+                if (target == owner || !settings.Enabled || !settings.HasDamage)
                     // Native target loss releases held attacks (including archers
                     // whose follow handler alone would leave the trigger held).
                     // Use native battle state: prior relation isn't populated
@@ -161,7 +161,7 @@ namespace SephiriaOne
             if (!current.Friendly) return resolved;
             // Avoid propagating NaN/infinity/overflow into native HP or SyncVars.
             if (float.IsNaN(resolved) || float.IsInfinity(resolved) || resolved <= 0) return 0;
-            return (float)Math.Min((double)resolved * current.Percent / 100d, 2147483520d);
+            return (float)Math.Min(resolved * current.DamageScale, 2147483520d);
         }
 
         internal static float Sanitize(float resolved) => !current.Friendly ? resolved :

@@ -48,7 +48,7 @@ namespace SephiriaOne
         internal static bool CanStart => !IsRunning && !stopping && !ticking && deathDepth == 0 && DeathmatchFeature.Available && FriendlyFireFeature.Available && ReviveAllAction.CanExecute;
         internal static bool CanResetScores => IsRunning && !stopping && CurrentScope && Now < endsAt;
         internal static FriendlyFireSettings Effective(FriendlyFireSettings normal) => !IsRunning ? normal :
-            new FriendlyFireSettings(phase == Phase.Active && CurrentScope && Now < endsAt, normal.DamagePercent);
+            normal.WithEnabled(phase == Phase.Active && CurrentScope && Now < endsAt);
 
         internal static bool ResetScores(out string message)
         {

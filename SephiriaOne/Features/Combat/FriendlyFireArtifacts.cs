@@ -17,7 +17,7 @@ namespace SephiriaOne
             if (source.IsInBattle) return true;
             if (!NetworkServer.active || !source || source.IsDead || !CombatManager.Instance || CombatManager.Instance.PeaceMode) return false;
             var settings = SessionSettings.FriendlyFireForHit;
-            if (!settings.Enabled || settings.DamagePercent <= 0) return false;
+            if (!settings.Enabled || !settings.HasDamage) return false;
             var owner = TeamOwner(source);
             if (!owner || string.IsNullOrEmpty(owner.currentFloorGuid)) return false;
             foreach (var spawner in PlayerSpawner.MultiplayerList)

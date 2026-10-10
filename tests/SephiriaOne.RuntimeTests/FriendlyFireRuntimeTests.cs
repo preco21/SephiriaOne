@@ -33,19 +33,24 @@ internal static class FriendlyFireRuntimeTests
         SettingsActions.Execute("/one friendlyfire on"); Damage();
         SettingsActions.Execute("/one friendlyfire damage 50"); Kill();
         check(Score(helper) == "P(0/0/1)", "Damage command does not reset assists");
-        SettingsActions.Execute("/one friendlyfire damage 25");
+        check(SettingsActions.Execute("/one friendlyfire damage 0.1%").Success, "Host can enter a sub-one percentage with optional suffix");
+        check(SessionSettings.ReadSnapshot().ActiveSettings.Contains("friendlyfire damage 0.1") &&
+            SettingsActions.Execute("/one friendlyfire status").Messages.Any(m => m.Contains("0.1%")), "Snapshot and status retain fractional percent");
         Damage(); PlayerSpawner.MultiplayerList.Remove(guest.spawner); SessionSettings.Synchronize();
         PlayerSpawner.MultiplayerList.Add(guest.spawner); SessionSettings.Synchronize(); Kill();
         check(Score(helper) == "P(0/0/1)", "Departure forgets old victim contributions even when object is reused");
         var connection = add(15); SessionSettings.Synchronize();
         PlayerSpawner.MultiplayerList.Remove(connection); SessionSettings.Synchronize();
         add(15);
-        check(SessionSettings.FriendlyFireForHit.DamagePercent == 25, "Replacement connection immediately uses complete current combat policy");
-        foreach (string bad in new[] { "-1", "301", "NaN", "1.5", "x2" })
+        check(SessionSettings.FriendlyFireForHit.DamagePercent == 0.1m, "Replacement connection immediately uses complete fractional combat policy");
+        HorayModAPI.StartSession();
+        check(SessionSettings.FriendlyFireForHit.DamagePercent == 0.1m, "Run restart retains fractional combat policy");
+        foreach (string bad in new[] { "-1", "301", "NaN", "0.001", "x2" })
             check(!SettingsActions.Execute("/one friendlyfire damage " + bad).Success, "Reject invalid damage percentage " + bad);
         check(SettingsActions.Execute("/one save").Success, "Friendly fire preset can be saved");
         SessionSettings.Stop(); SessionSettings.Start(); SessionSettings.Synchronize();
         check(SessionSettings.ReadSnapshot().ActiveSettings.Contains("friendlyfire enabled 1"), "Saved friendly fire restores after controller restart");
+        check(SessionSettings.FriendlyFireForHit.DamagePercent == 0.1m, "Saved sub-one scale restores exactly after controller restart");
         check(Score(host) == "P(0/0/0)", "Saved settings never persist KDA");
         Damage(); Kill();
         check(Score(host) == "P(1/0/0)", "Restored enabled preset activates fresh accounting");
