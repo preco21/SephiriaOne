@@ -28,7 +28,7 @@ namespace SephiriaOne
                 () => Execute(MerchantPrefix() + " limit " + draft.Text, true)));
             widgets.Text(pageRoot, "MerchantHelp", "Chance: 0..100%. First eligible floor: 1..1000. Run limit: 0..1000 (0 = unlimited).",
                 16, 137, 273, 25, 9);
-            widgets.Text(pageRoot, "MerchantStatus", "Current setting and behavior", 312, 0, 272, 22, 10).color = PanelWidgets.Muted;
+            widgets.Text(pageRoot, "MerchantStatus", "Current settings", 312, 0, 272, 22, 10).color = PanelWidgets.Muted;
             readout = widgets.Scroll(pageRoot, 312, 26, 272, 136);
         }
 
@@ -50,19 +50,13 @@ namespace SephiriaOne
                 "\n" + L.F("First eligible floor: {0}", settings.FirstFloor) +
                 "\n" + L.F("Per-run limit: {0}", settings.MaxPerRun == 0 ? L.T("Unlimited") : settings.MaxPerRun.ToString(CultureInfo.InvariantCulture)) +
                 "\n\n" + (settings.Guarantee && definition.HasGuarantee ?
-                    L.T("Each enabled type guarantees one encounter per run on a random floor that meets its conditions. At 0%, only that encounter remains. Other eligible floors use this type's chance.") :
-                    L.T("This type uses its own chance on each eligible floor; no encounter is guaranteed.")) +
-                "\n\n" + L.T("Types roll independently and can share a floor. At most one extra merchant of each type per eligible floor.") +
-                "\n\n" + L.T("The run limit counts all spawns of this type. With guarantee on, one slot is reserved while its encounter remains reachable. Guarantee off releases that slot for chance rolls.") +
-                "\n\n" + L.T("First eligible floor means the main dungeon stage (1, 2, ...), not each map within it. Optional maps use the current main stage. Boss-only floors, lobby, towns, and training are excluded.") +
-                "\n\n" + L.T("Added merchant base HP multipliers by main stage: 1 = x1, 2 = x2, 3 = x4, 4 = x5, 5 = x7, 6+ = x8. Maps within a stage share the same factor. Native stage and multiplayer bonuses still apply. Unknown progress uses x1. Health is set once at spawn.") +
-                "\n\n" + L.T("Added merchants are hostile, cannot talk, and have no negotiation/crime penalty. Natural merchants keep their usual behavior.") +
-                "\n\n" + L.F("Changing guarantee, chance or conditions keeps this type's spawn toggle. Reset selected restores spawns off, guarantee on, {0}%, first floor 1, and no run limit.", definition.DefaultChance) +
-                "\n\n" + L.T("Guarantee changes preserve saved targets, completed encounters, spawn counts and consumed floor rolls. Turning it back on cannot reroll floors or bypass the run limit.") +
-                "\n\n" + L.T("Off/reset stop future spawns; existing added merchants keep their penalty exemption until floor teardown.") +
-                "\n\n" + L.T("The host spawns merchants for all players, including unmodified guests.") +
-                (snapshot.MerchantsAvailable ? "" : "\n\n" + L.T("Merchant hooks unavailable; native behavior continues. See Player.log.")) +
-                "\n\n" + L.T("Save these options from Presets for future sessions.");
+                    L.T("One guaranteed encounter per type on a random eligible floor. At 0%, only the guarantee remains.") :
+                    L.T("Chance rolls only; no guaranteed encounter.")) +
+                "\n\n" + L.T("Types roll independently: up to 1 each per floor. The run cap includes the guarantee and reserves its slot while reachable.") +
+                "\n\n" + L.T("Floor = main dungeon stage. Normal rooms only; excludes boss-only floors, towns and training.") +
+                "\n\n" + L.T("Base HP by stage 1–6+: ×1/2/4/5/7/8. Native bonuses also apply; set once at spawn.") +
+                "\n\n" + L.T("Added merchants are hostile with no negotiation penalty. Off/reset stops future spawns; existing merchants stay unchanged.") +
+                (snapshot.MerchantsAvailable ? "" : "\n\n" + L.T("Merchant hooks unavailable; native behavior continues. See Player.log."));
         }
     }
 }

@@ -13,17 +13,15 @@ namespace SephiriaOne
             widgets.Text(pageRoot, "CollinTitle", "Collin starting artifact", 16, 68, 273, 24, 14);
             AddCheckbox("Collin starting artifact", 16, 94, 174, 25, s => s.CollinStartingArtifact, s => s.CollinAvailable, "/one collin");
             collinReset = widgets.Button(pageRoot, "Reset", 200, 94, 89, 25, () => Execute("/one collin reset", true));
-            widgets.Text(pageRoot, "CollinHelp", "Mole / Farmer Squirrel / Turtle. Applies on the next costume equip or fresh-run restock. Default off.", 16, 125, 273, 36, 9);
+            widgets.Text(pageRoot, "CollinHelp", "Mole / Farmer Squirrel / Turtle. Next equip or fresh-run restock.", 16, 125, 273, 36, 9);
             readout = widgets.Scroll(pageRoot, 312, 0, 272, 162);
         }
         private static string CostumeValues(SettingsSnapshot snapshot) => SessionSettings.DescribeCollin(snapshot.CollinStartingArtifact) +
             (snapshot.CollinAvailable ? "" : "\n" + L.T("Collin compatibility checks failed. Off/reset remain available; see Player.log.")) +
-            "\n\n" + L.T("Switch away from these costumes to remove the granted Collin. Independently obtained copies are preserved. Saved runs resume their native inventory; no extra Collin is injected.") +
-            "\n\n" + L.T("Multiple Collin crests keep the game's shared NPC and leader behavior; a separate companion per player is not guaranteed.") +
+            "\n\n" + L.T("Costume Collin is removed on costume change. Other copies and saved-run inventories stay unchanged.") +
+            "\n\n" + L.T("Multiple crests share the native Collin NPC.") +
             "\n\n" + SessionSettings.DescribeBat(snapshot.BatHpSteal) +
             (snapshot.BatAvailable ? "" : "\n" + L.T("Bat costume compatibility checks failed. Off/reset remain available; see Player.log.")) +
-            "\n\n" + L.T("Applies only while Wingless Bat is equipped, including unmodified guests. Off/reset restores the native costume bonus. Equipment, buffs and stat multipliers keep their normal behavior.") +
-            "\n\n" + L.T("The native costume selection preview still shows 5. The character's effective HP steal and healing use the host's setting.") +
-            "\n\n" + L.T("Save these options from Presets for future sessions.");
+            "\n\n" + L.T("Bat HP steal: 5 → 1 while equipped. Off/reset restores 5. The costume preview still shows 5.");
     }
 }

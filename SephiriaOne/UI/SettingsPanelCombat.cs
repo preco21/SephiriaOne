@@ -48,14 +48,9 @@ namespace SephiriaOne
         private void RefreshFriendlyPercent() => friendlyPercent.text = L.F("Allied damage: {0}%", (int)friendlyDamage.value);
         private static string CombatValues(SettingsSnapshot snapshot) => SessionSettings.DescribeFriendlyFire(snapshot.FriendlyFire) +
             (ReviveAllFeature.Available ? "" : "\n\n" + L.T("Revive-all compatibility checks failed. Inspect Player.log; no players were changed.")) +
-            "\n\n" + L.T("Default off. Host settings apply to all players, including unmodified guests.") +
             "\n\n" + L.T("0–300% (100% = normal)") +
-            "\n\n" + L.T("Revive all restores dead players at full HP, including the host. It also works with friendly fire off. Living players and KDA totals are unchanged.") +
-            "\n\n" + L.T("Melee, projectiles and supported burn/debuff items can affect other players. Healing and unrelated automatic skills keep native targeting.") +
-            "\n\n" + L.T("Companions attack other players, never their owner. Off or 0% stops this targeting and blocks their hits on players immediately.") +
-            "\n\n" + L.T("Damage, including debuff ticks, scales after defenses and before shields. Off or 0% blocks new allied debuffs and damage. Reflection, immediate debuff damage and burning-death explosions are allowed with recursion limits.") +
-            "\n\n" + L.T("Confirmed friendly-fire kills are announced in chat. Safe areas and invulnerability retain native protection.") +
-            "\n\n" + L.T("Player kill logs show K/D/A. Assists count each player who damaged the victim during that life. Toggling friendly fire resets all scores and pending assists.") +
-            "\n\n" + L.T("Save these options from Presets for future sessions.");
+            "\n\n" + L.T("Attacks, supported debuffs and reflection affect allies. Companions exclude their owner. Off/0% blocks allied hits and new debuffs.") +
+            "\n\n" + L.T("Safe areas and invulnerability stay native. Toggling resets K/D/A.") +
+            "\n\n" + L.T("Revive all: dead players return at full HP. Living players and K/D/A stay unchanged.");
     }
 }

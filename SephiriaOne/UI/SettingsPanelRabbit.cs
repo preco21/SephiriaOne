@@ -28,7 +28,7 @@ namespace SephiriaOne
                 () => Execute("/one rabbit mp-cost " + draft.Text, true)));
             resetAll = widgets.Button(pageRoot, "Reset", 225, 137, 64, 25,
                 () => Execute("/one rabbit reset", true));
-            widgets.Text(pageRoot, "RabbitStatus", "Current options and behavior", 312, 0, 272, 22, 10).color = PanelWidgets.Muted;
+            widgets.Text(pageRoot, "RabbitStatus", "Current settings", 312, 0, 272, 22, 10).color = PanelWidgets.Muted;
             readout = widgets.Scroll(pageRoot, 312, 26, 272, 136);
         }
 
@@ -38,16 +38,12 @@ namespace SephiriaOne
             "\n" + L.F("{0} MP per HP potion: {1}", snapshot.RabbitPotions.MpCostPerDrink, L.T(snapshot.RabbitPotions.ConsumeMp ? "ON" : "OFF")) +
             "\n" + L.F("Suppress Survival rank 5 random stats: {0}", L.T(snapshot.RabbitPotions.SuppressSurvival ? "ON" : "OFF")) +
             "\n" + L.F("Non-HP/MP potion on level-up: {0}", L.T(snapshot.RabbitPotions.LevelUpPotion ? "ON" : "OFF")) +
-            "\n\n" + L.T("Each earned level grants one random non-HP/MP potion while wearing Wing-Eared Rabbit.") +
-            "\n\n" + L.T("HP potion options apply only while wearing Wing-Eared Rabbit. Insufficient MP blocks the drink; keep one potion to use.") +
-            "\n\n" + L.T("Potion of Regeneration (Sample) is excluded from all Rabbit HP potion options: no MP cost or shared healing; normal consumption and Survival bonuses remain.") +
-            "\n\n" + L.T("With infinite HP potions enabled, Wing-Eared Rabbit can use regular HP potions during Tension boss combat. Sample, MP and other potions remain restricted.") +
-            "\n\n" + L.T("MP cost: whole numbers 0..10000. Set & on applies the amount and enables charging. Off retains it; Reset restores 10 and all options off.") +
-            "\n\n" + L.T("Sharing uses potion strength within 5 tiles on the same floor. Recipients retain their own healing penalties.") +
-            "\n\n" + L.T("Host settings also apply to unmodified guests wearing Wing-Eared Rabbit.") +
+            "\n\n" + L.T("Rabbit only. Keep 1 HP potion; insufficient MP blocks use. Infinite HP potions bypass Tension.") +
+            "\n\n" + L.T("Regeneration (Sample) stays native: consumed normally, no MP cost or sharing, Survival bonus allowed.") +
+            "\n\n" + L.T("MP cost: 0..10000. Set & on enables charging; Reset restores 10 and turns all options off.") +
+            "\n\n" + L.T("Shared healing: 5 tiles, same floor; recipient penalties apply. Level-up: 1 random non-HP/MP potion.") +
             (snapshot.RabbitPotionsAvailable ? "" : "\n" + L.T("Potion hooks unavailable; native behavior continues.")) +
             (snapshot.RabbitLevelUpPotionsAvailable ? "" : "\n" + L.T("Level-up potion hooks unavailable; no level-up reward is granted.")) +
-            "\n" + L.T(snapshot.RabbitDescriptionAvailable ? "Description additions appear on this host only." : "Description adapter unavailable; see Player.log.") +
-            "\n" + L.T("Save these options from Presets for future sessions.");
+            (snapshot.RabbitDescriptionAvailable ? "" : "\n" + L.T("Description adapter unavailable; see Player.log."));
     }
 }

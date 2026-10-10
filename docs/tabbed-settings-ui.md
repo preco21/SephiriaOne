@@ -12,8 +12,20 @@ move it. The title bar has a **Close** button; the Center button was removed
 on 2026-10-10. The window clamps to the current canvas and
 scales down for smaller screens. Its position lasts for the current UI instance.
 
+The 2026-10-10 compact pass reduces the window from 800×480 to 760×420. The
+14 tabs remain in two rows; forms use a 1.25 scale instead of 4/3. The title bar
+contains a short scope/update notice. Action feedback starts blank and retains
+autosizing for longer validation results. Add, Subtract and Close use `+`, `−`
+and `×` consistently through the shared button factory; callbacks and semantic
+object names are unchanged. Set, Reset, Save and recovery actions retain text.
+Repeated host/persistence instructions were removed and EN/KO feature notes
+shortened while retaining timing, limits, exceptions and compatibility warnings.
+This pass passed Debug/Release builds, existing window fixtures and the full
+portable/installed-game contract suite, including 3,066 catalog checks. No new
+input or gameplay hooks were added. Actual EN/KO rendering remains a manual check.
+
 All existing pages are tabs: **Stats, Fountain, Choices, Resources, Presets,
-Status, Rabbit, Merchant, Items, Combat, Spawns, Costumes and Updates**. Stats
+Status, Rabbit, Merchant, Items, Combat, Spawns, Costumes, Updates and Deathmatch**. Stats
 also has a scrollable selector for the 27 supported visible stats. Boolean
 settings use checkboxes. Text and slider edits remain drafts until their action
 button is pressed. Failed checkbox actions restore the observed state.

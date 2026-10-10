@@ -10,7 +10,8 @@ namespace SephiriaOne
 {
     public sealed partial class SettingsPanel : UIBase
     {
-        private readonly PanelWindowGeometry geometry = new PanelWindowGeometry(800, 480);
+        private const float WindowWidth = 760, WindowHeight = 420;
+        private readonly PanelWindowGeometry geometry = new PanelWindowGeometry(WindowWidth, WindowHeight);
         private readonly List<Button> tabs = new List<Button>();
         private readonly List<PanelCheckbox> checkboxes = new List<PanelCheckbox>();
         private Vector2 lastBounds;
@@ -39,27 +40,28 @@ namespace SephiriaOne
             languageRevision = L.Revision;
             // Transparent backdrop still consumes pointers; native UIBase gates gameplay input.
             gameObject.AddComponent<Image>().color = new Color(0.01f, 0.025f, 0.05f, 0.12f);
-            window = PanelWidgets.Rect(transform, "Settings", 0, 0, 800, 480);
+            window = PanelWidgets.Rect(transform, "Settings", 0, 0, WindowWidth, WindowHeight);
             window.anchorMin = window.anchorMax = window.pivot = new Vector2(0.5f, 0.5f);
             window.gameObject.AddComponent<Image>().color = new Color(0.09f, 0.14f, 0.20f, 0.88f);
-            var title = PanelWidgets.Rect(window, "TitleDrag", 0, 0, 560, 40);
+            var title = PanelWidgets.Rect(window, "TitleDrag", 0, 0, 700, 38);
             title.gameObject.AddComponent<Image>().color = new Color32(23, 35, 50, 255);
             title.gameObject.AddComponent<PanelWindowDrag>().Initialize((RectTransform)transform, window, geometry);
-            widgets.Text(title, "Title", "SephiriaOne", 16, 8, 530, 26, 20);
-            var close = widgets.Button(window, "Close", 688, 8, 94, 28, Close);
+            widgets.Text(title, "Title", "SephiriaOne", 16, 8, 190, 24, 18);
+            var close = widgets.Button(window, "Close", 714, 8, 28, 26, Close);
             defaultSelectable = close.gameObject;
-            scopeLabel = widgets.Text(window, "Scope", "Host controls  /  All current and joining players", 16, 44, 768, 22, 12);
+            scopeLabel = widgets.Text(title, "Scope", "Host · All players", 220, 8, 464, 26, 11);
             scopeLabel.color = PanelWidgets.Muted;
-            availability = widgets.Text(window, "Availability", "", 16, 68, 768, 28, 12);
+            availability = widgets.Text(window, "Availability", "", 16, 44, 728, 28, 12);
             string[] pages = { "Stats", "Fountain", "Choices", "Resources", "Presets", "Status", "Rabbit", "Merchant", "Items", "Combat", "Spawns", "Costumes", "Updates", "Deathmatch" };
             for (int i = 0; i < pages.Length; i++)
             {
                 int target = i;
-                var tab = widgets.Button(window, pages[i], 16 + 110 * (i % 7), 102 + 34 * (i / 7), 104, 30, () => SelectPage(target));
+                var tab = widgets.Button(window, pages[i], 16 + 104 * (i % 7), 78 + 32 * (i / 7), 98, 28, () => SelectPage(target));
                 tabs.Add(tab);
                 if (i == 12) updateLabel = tab.GetComponentInChildren<TMP_Text>();
             }
-            feedback = widgets.Text(window, "Feedback", "Choose an action to apply. Native menus and offers refresh normally.", 16, 422, 768, 48, 12);
+            feedback = widgets.Text(window, "Feedback", "", 16, 365, 728, 46, 12);
+            feedback.enableAutoSizing = true;
             SelectPage(0);
         }
 
@@ -106,7 +108,7 @@ namespace SephiriaOne
             if (draft.Observe(snapshot.SessionIdentity, snapshot.Epoch, snapshot.RunGeneration))
             {
                 ClearInput();
-                feedback.text = L.T("Session or run changed. Review the current values before applying.");
+                feedback.text = L.T("Session changed. Review values before applying.");
             }
             FitWindow();
             foreach (var checkbox in checkboxes) checkbox.Refresh(snapshot);
@@ -124,7 +126,7 @@ namespace SephiriaOne
                 page == 3 ? ResourceFeature.UnavailableReason(ResourceCatalog.All[resourceIndex].Kind) :
                 L.T("Extra-choice compatibility guard failed. Reset remains available; see Player.log.")) :
                 !levelUpReady ? L.T("Rabbit level-up potion compatibility checks failed. Off/reset remain available; see Player.log.") :
-                L.F("{0} ready player(s). Checkboxes apply immediately; amounts require an action.", snapshot.Players.Count);
+                L.F("Ready · {0} players", snapshot.Players.Count);
             availability.color = snapshot.CanMutate && choicesReady && levelUpReady ? PanelWidgets.Muted : (Color)new Color32(255, 200, 122, 255);
             foreach (var button in changeButtons) button.interactable = snapshot.CanMutate && choicesReady;
             RefreshCombat(snapshot);
@@ -148,7 +150,7 @@ namespace SephiriaOne
             else if (page == 10) readout.SetText(eventSpawnsSelected ? EventValues(snapshot) : JarValues(snapshot));
             else if (page == 11) readout.SetText(CostumeValues(snapshot));
             else if (page == 4) readout.SetText(PresetValues(snapshot));
-            else readout.SetText(L.T("Automatic name gradient: #408af1 -> #a8d7fa\nHost's native multiplayer character name; colors are fixed.") +
+            else readout.SetText(L.T("Name gradient: #408af1 → #a8d7fa") +
                 "\n\n" + string.Join("\n\n", snapshot.Lines));
         }
 
@@ -157,7 +159,7 @@ namespace SephiriaOne
             if (languageRevision == L.Revision) return;
             widgets.RefreshLocalization();
             BuildPage(page);
-            feedback.text = L.T("Language updated. Review the current values before applying.");
+            feedback.text = L.T("Language changed. Pending input cleared.");
             feedback.color = PanelWidgets.Muted;
             languageRevision = L.Revision;
         }
@@ -177,8 +179,8 @@ namespace SephiriaOne
             updateInstall = updateCheck = null; updateAutomatic = null;
             friendlyDamage = null; friendlyPercent = null; friendlyDraft = false;
             if (pageRoot) { widgets.Forget(pageRoot); pageRoot.gameObject.SetActive(false); Destroy(pageRoot.gameObject); }
-            pageRoot = PanelWidgets.Rect(window, "Page", 0, 184, 600, 162);
-            pageRoot.localScale = Vector3.one * (4f / 3f);
+            pageRoot = PanelWidgets.Rect(window, "Page", 4, 152, 600, 162);
+            pageRoot.localScale = Vector3.one * 1.25f;
             if (page < 4) BuildEditor();
             else if (page == 6) BuildRabbitEditor();
             else if (page == 7) BuildMerchantEditor();
@@ -192,16 +194,16 @@ namespace SephiriaOne
             {
                 if (page == 4)
                 {
-                    save = widgets.Button(pageRoot, "Save current settings", 16, 0, 182, 24, () => Execute("/one save", true));
-                    forget = widgets.Button(pageRoot, "Forget saved preset", 207, 0, 180, 24, () => Execute("/one forget", false));
-                    widgets.Button(pageRoot, "Refresh saved copy", 396, 0, 188, 24, RefreshSaved);
-                    widgets.Text(pageRoot, "SavedHelp", "Save stores applied settings for future hosted sessions. Unapplied input is excluded.", 16, 28, 568, 19, 9);
+                    save = widgets.Button(pageRoot, "Save preset", 16, 0, 182, 24, () => Execute("/one save", true));
+                    forget = widgets.Button(pageRoot, "Delete preset", 207, 0, 180, 24, () => Execute("/one forget", false));
+                    widgets.Button(pageRoot, "Refresh", 396, 0, 188, 24, RefreshSaved);
+                    widgets.Text(pageRoot, "SavedHelp", "Saves applied settings for future sessions.", 16, 28, 568, 19, 9);
                     readout = widgets.Scroll(pageRoot, 16, 50, 568, 112);
                 }
                 else
                 {
                     widgets.Button(pageRoot, "Refresh", 494, 0, 90, 22, RefreshSaved);
-                    widgets.Text(pageRoot, "StatusTitle", "Current settings and synchronization status", 16, 1, 470, 20, 11);
+                    widgets.Text(pageRoot, "StatusTitle", "Synchronization status", 16, 1, 470, 20, 11);
                     readout = widgets.Scroll(pageRoot, 16, 26, 568, 136);
                 }
             }
@@ -235,20 +237,20 @@ namespace SephiriaOne
                 changeButtons.Add(widgets.Button(pageRoot, labels[i], 120 + 57 * i, 56, 53, 25,
                     () => Execute(Prefix() + " " + op + " " + draft.Text, true)));
             }
-            string help = page == 0 ? "Set accepts x3 = each native stat times 3; x1 restores native. Add/subtract start a new offset after Set or xN." :
-                page == 1 ? "Set accepts x3 = each native allowance times 3; x1 restores native. Add/subtract after xN start a new offset." :
-                page == 3 ? "xN = native baseline times N. Dice: future starts. Leaves: change before first departure. Current balances stay unchanged; unsafe budget reductions are rejected." :
-                "Amounts are extra candidates, not totals. Existing offers stay cached; new offers use the updated stats.";
+            string help = page == 0 ? "Set xN: native × N; x1 restores native. +/− after Set or xN starts a new offset." :
+                page == 1 ? "Set xN: native × N; x1 restores native. +/− after xN starts a new offset." :
+                page == 3 ? "xN: native × N. Dice: next run. Leaves: before first departure. Current balances stay unchanged." :
+                "Extra candidates, not totals. New offers only.";
             widgets.Text(pageRoot, "Help", help, 16, 88, 273, 46, 9);
             if (page == 1)
-                resetAll = widgets.Button(pageRoot, "Reset Fountain", 16, 137, 273, 25, () => Execute("/fountain reset", true));
+                resetAll = widgets.Button(pageRoot, "Reset", 16, 137, 273, 25, () => Execute("/fountain reset", true));
             else
             {
                 resetOne = widgets.Button(pageRoot, "Reset selected", 16, 137, 132, 25, () => Execute(Prefix() + " reset", true));
                 resetAll = widgets.Button(pageRoot, page == 0 ? "Reset all stats" : page == 3 ? "Reset all resources" : "Reset all choices", 156, 137, 133, 25,
                     () => Execute(page == 0 ? "/stats reset" : page == 3 ? "/resources reset" : "/choices reset", true));
             }
-            widgets.Text(pageRoot, "Players", "Current player values  ·  scroll for more", 312, 0, 272, 22, 10).color = PanelWidgets.Muted;
+            widgets.Text(pageRoot, "Players", "Player values", 312, 0, 272, 22, 10).color = PanelWidgets.Muted;
             readout = widgets.Scroll(pageRoot, 312, 26, 272, 136);
             UpdateSelection();
         }
@@ -271,7 +273,7 @@ namespace SephiriaOne
                 units.text = L.F("{0}  |  {1}..{2}  |  {3}", L.T(stat.Unit), stat.Minimum, stat.Maximum,
                     L.T(stat.Scale == 100 ? "2 decimal places" : "whole numbers"));
             }
-            else if (page == 1) { selection.text = L.T("Wishing Fountain"); units.text = L.T("Whole-number points. Each resulting balance must be valid."); }
+            else if (page == 1) { selection.text = L.T("Wishing Fountain"); units.text = L.T("Points · whole numbers"); }
             else if (page == 3)
             {
                 var definition = ResourceCatalog.All[resourceIndex];
@@ -282,7 +284,7 @@ namespace SephiriaOne
             else
             {
                 selection.text = L.T(choiceIndex == 0 ? "All choice categories" : choiceIndex == 1 ? "item choices" : choiceIndex == 2 ? "weapon choices" : "miracle choices");
-                units.text = L.T("Extra candidates: 0..20. Native multipliers still apply.");
+                units.text = L.T("Extra: 0..20 · native multipliers apply");
             }
         }
 
@@ -322,16 +324,15 @@ namespace SephiriaOne
                 enabled => Execute(prefix + (enabled ? " on" : " off"), true), mutable));
         }
 
-        private void RefreshSaved() { Refresh(ReadCurrentSnapshot(true)); feedback.text = L.T("Refreshed current values and the saved copy."); }
+        private void RefreshSaved() { Refresh(ReadCurrentSnapshot(true)); feedback.text = L.T("Refreshed."); }
         private void ClearInput() { friendlyDraft = false; if (amount) amount.SetTextWithoutNotify(""); }
 
         private static string PresetValues(SettingsSnapshot snapshot)
         {
             string active = snapshot.ActiveSettings.Count == 0 ? L.T("None.") : string.Join("\n", snapshot.ActiveSettings);
             string saved = snapshot.SavedSettings.Count == 0 ? snapshot.SavedSummary : string.Join("\n", snapshot.SavedSettings);
-            return L.T("ACTIVE SETTINGS") + "\n" + active + "\n\n" + L.T("SAVED FOR FUTURE HOSTED SESSIONS") + "\n" + saved +
-                "\n\n" + L.T("Forget leaves the active settings unchanged. Resetting does not erase the saved copy.") +
-                "\n" + L.T("Setting rows retain command/preset syntax in every language.");
+            return L.T("ACTIVE SETTINGS") + "\n" + active + "\n\n" + L.T("SAVED PRESET") + "\n" + saved +
+                "\n\n" + L.T("Delete keeps active settings. Reset keeps the saved preset.");
         }
 
         private string PlayerValues(SettingsSnapshot snapshot)

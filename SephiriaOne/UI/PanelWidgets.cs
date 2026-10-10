@@ -79,7 +79,9 @@ namespace SephiriaOne
             button.colors = colors;
             // Mouse/keyboard first. Native cancel still handles the panel.
             button.navigation = new Navigation { mode = Navigation.Mode.Automatic };
-            var label = Text(rect, "Label", value, 2, 0, width - 4, height, 10);
+            // Keep semantic object names/callbacks; only the visible caption changes.
+            string caption = value == "Add" ? "+" : value == "Subtract" ? "−" : value == "Close" ? "×" : value;
+            var label = Text(rect, "Label", caption, 2, 0, width - 4, height, 10);
             label.alignment = TextAlignmentOptions.Center;
             button.onClick.AddListener(action);
             return button;

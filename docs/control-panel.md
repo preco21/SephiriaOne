@@ -1,7 +1,7 @@
 # Host settings panel
 
 Version `0.42.0` adds a **Deathmatch** tab with a duration input (seconds),
-**Apply duration**, **Start deathmatch** and **Stop deathmatch**. The Combat
+**Apply**, **Start match** and **Stop match**. The Combat
 friendly-fire toggle reflects the match's effective state; touching it stops
 the match. See [timing, results and recovery](deathmatch.md).
 
@@ -9,10 +9,12 @@ Version `0.39.0` implements the separate translucent, draggable window selected
 from the [UI comparison](ui-revamp-investigation.md). Every feature panel is a
 tab. Drag the title bar to reposition the window, and select a
 stat from the dropdown. See [window and hotkey details](tabbed-settings-ui.md).
+The compact layout is 760×420. `+` adds, `−` subtracts and `×` closes the window.
+Short notes cover timing and exceptions; errors and compatibility warnings remain.
 
 Added in `0.13.0`. In a hosted town or run, open the pause menu and click
 **SephiriaOne** in its upper-right corner, or enter **`/one ui`** in chat.
-Close with **Close** or the game's existing Escape/cancel action. Configure an
+Close with **×** or the game's existing Escape/cancel action. Configure an
 optional shortcut in native **Settings → Keyboard controls → SephiriaOne**;
 it starts unassigned. The panel uses mouse controls and keyboard entry;
 full gamepad behavior has not been verified.
@@ -59,7 +61,7 @@ unapplied drafts without sending any gameplay command.
 
 | Tab | Actions and observations |
 | --- | --- |
-| Stats | Select one of the 27 supported visible stats with the dropdown or arrows, enter an amount, then Set, Add or Subtract. Reset selected or all stats. Current per-player values use the stat's displayed units. |
+| Stats | Select one of the 27 supported visible stats with the dropdown or arrows, enter an amount, then Set, `+` or `−`. Reset selected or all stats. Current per-player values use the stat's displayed units. |
 | Fountain | Set, add or subtract whole-number points for everyone; reset the addon adjustment. Shows current capacity and tracked contribution per player. |
 | Choices | Select all, item, weapon or miracle. Set/add/subtract **extra** candidates, or reset selected/all categories. Shows current effective native extra-choice stats. |
 | Resources | Select dice, inventory slots, talents, fruit-skewer budget or leaves. Set/add/subtract, `xN`, and selected/all resets. Dice/leaves show current balance separately from the next fresh starting allowance. |
