@@ -1,4 +1,8 @@
 {
+  "Deathmatch: /one deathmatch start|stop|resetkda|status; /one deathmatch duration 10..3600 (seconds, default 300). Duration changes apply to the next match; /one save stores the duration.": "데스매치: /one deathmatch start|stop|resetkda|status; /one deathmatch duration 10..3600 (초, 기본 300). 시간 변경은 다음 경기에 적용되며 /one save로 저장합니다.",
+  "Reset K/D/A": "K/D/A 초기화",
+  "K/D/A reset requires a current deathmatch countdown or active match.": "데스매치 시작 카운트다운 또는 경기 진행 중에만 K/D/A를 초기화할 수 있습니다.",
+  "Deathmatch K/D/A scores reset.": "데스매치 K/D/A 기록을 초기화했습니다.",
   "Deathmatch: /one deathmatch start|stop|status; /one deathmatch duration 10..3600 (seconds, default 300). Duration changes apply to the next match; /one save stores the duration.": "데스매치: /one deathmatch start|stop|status; /one deathmatch duration 10..3600 (초, 기본 300). 시간 변경은 다음 경기에 적용되며 /one save로 저장합니다.",
   "Only the host can control deathmatch.": "호스트만 데스매치를 제어할 수 있습니다.",
   "Deathmatch stopped.": "데스매치를 중지했습니다.",

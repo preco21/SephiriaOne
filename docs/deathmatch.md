@@ -1,7 +1,7 @@
 # Temporary deathmatch
 
 Added in `0.42.0`. Open `/one ui` → **Deathmatch**, enter a duration in seconds,
-click **Apply duration**, then **Start deathmatch**. **Stop deathmatch** ends it
+click **Apply**, then **Start match**. **Stop match** ends it
 early. The shared host commands are:
 
 ```text
@@ -9,6 +9,7 @@ early. The shared host commands are:
 /one deathmatch start
 /one deathmatch status
 /one deathmatch stop
+/one deathmatch resetkda
 /one deathmatch help
 /one save
 ```
@@ -40,6 +41,14 @@ safe-area protection, invulnerability, guards and defenses remain in effect.
   deaths still respawn but do not award PvP KDA. Disconnected participants remain
   eligible for results. Native account identity preserves scores on reconnect;
   offline identities remain tied to the exact spawner, never a reused nickname.
+- In `0.43.0`, the host can use **Reset K/D/A** (**K/D/A 초기화**) or
+  `/one deathmatch resetkda` during the countdown or match. All totals and prior
+  assist contributions clear, including departed participants. New damage starts
+  fresh scoring; an already-unwinding hit/death cannot restore old points or its
+  kill notice. The match, friendly-fire setting, participant/tie-break identities
+  and existing respawn deadlines remain unchanged. Everyone receives a native
+  chat notice. Outside a current match, the action is unavailable and does not
+  reset ordinary friendly-fire scores.
 - Touching friendly-fire **On**, **Off**, or **Reset** immediately stops the match,
   including repeated commands selecting the current value. Pending players revive;
   the requested toggle selection then takes effect. Read-only status/help and
@@ -108,6 +117,16 @@ Warmed fixture checks measure zero allocations across 1,000 active ticks with
 living players and 1,000 idle ticks. Death, join and match-end work allocate small
 bounded collections; there are no per-player coroutines or custom network state.
 
+Score reset is event-only: `FriendlyFireKda.ResetScores` zeros existing account
+and weak offline score entries while retaining the enabled state, then invalidates
+life/assist receipts through the existing epoch. Deathmatch also zeros retained
+participant scores whose offline key may have been collected. The normal
+toggle/session `Reset` still discards score tables without modifying detached
+scores, because match-end standings capture those objects before disabling combat.
+The installed game's `mscorlib.dll` was inspected: its `ConditionalWeakTable`
+implements the generic enumerable interface used by the score-only reset. No new
+game hooks, frame work, native stat writes or guest protocol are introduced.
+
 Regression coverage includes commands/presets, both countdowns, ending with dead
 players, all manual toggle operations, slider edits preserving scores, warmup
 deaths, reconnect/reused slots, lifecycle changes inside callbacks, death/revival
@@ -126,3 +145,20 @@ countdowns, kill/respawn host and guests repeatedly, end with everyone dead,
 toggle during a countdown, quit/rejoin, move floors, start a second run, check
 EN/KO labels and native bubble placement above a dead player. No deployment or
 game launch was performed during implementation.
+
+Score-reset follow-up (`0.43.0`, 2026-10-10): the initial command regression failed
+before the action existed, then passed after implementation. Coverage includes
+all totals/assists, repeated reset, stable and offline identities, disconnected
+and rejoining participants, unchanged phase/deadlines/intent revision, pending
+joins and unrelated write faults, malformed commands, authority loss, expiry,
+stale runs, reset inside native hit/death callbacks and rejection during end
+recovery. Independent review also caught pre-reset killer totals in NPC/companion
+death notices; a shared notice epoch now rejects them for every victim type.
+Both new notice regressions fail without that fix and pass with it. Korean
+command/help/button/guest notice is checked through localization.
+Debug/Release builds pass with zero warnings/errors; 1,413 runtime checks plus
+69 Bat lifecycle checks, 268 executable combat checks, 22 panel checks, allocation
+budgets and the complete portable/installed-game suite pass (3,085 catalog checks).
+The installed-code UI test verifies that the button calls the shared command and
+uses the runtime's current-match gate. No deployment or live multiplayer test was
+performed; visually verify **K/D/A 초기화** and the reset notice with stock guests.

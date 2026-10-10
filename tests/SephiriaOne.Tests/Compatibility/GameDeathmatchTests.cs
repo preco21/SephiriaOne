@@ -27,7 +27,9 @@ internal static class GameDeathmatchTests
         Require(Code(addon, "SephiriaOne.SettingsPanel", "BuildDeathmatchEditor").Any(i =>
             i.opcode == System.Reflection.Emit.OpCodes.Stfld && i.operand is FieldInfo f && f.Name == "deathmatchStart"),
             "dedicated tab retains its start control independently of its localized caption");
-        foreach (string command in new[] { "/one deathmatch start", "/one deathmatch stop", "/one deathmatch duration " })
+        Require(Calls(Code(addon, "SephiriaOne.SettingsPanel", "RefreshDeathmatch"), "get_CanResetScores"),
+            "score reset button uses the same current-match gate as its command");
+        foreach (string command in new[] { "/one deathmatch start", "/one deathmatch stop", "/one deathmatch resetkda", "/one deathmatch duration " })
             Require(panel.GetMethods(BindingFlags.Instance | BindingFlags.NonPublic).Any(m => m.GetMethodBody() != null &&
                 PatchProcessor.GetOriginalInstructions(m).Any(i => Equals(i.operand, command))), "UI reuses shared command: " + command);
         Console.WriteLine("Verified native host chat/bubble replacement on dead avatars, shared match death/revival hooks, controller and UI command paths (not live multiplayer).");

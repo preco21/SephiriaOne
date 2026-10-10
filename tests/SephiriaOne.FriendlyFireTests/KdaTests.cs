@@ -88,6 +88,37 @@ internal static class KdaTests
         check(Score(a) == "renamed(1/0/0)" && Score(b) == "same(0/1/0)", "Stable account retains scores across reconnect, rename and duplicate nicknames");
         b = Account(2, "B again"); Hit(b, a, 200);
         check(Score(b) == "B again(0/2/0)" && Score(c) == "C(0/0/1)", "Rejoined victim receives a new empty life but retains totals");
+        var retained = FriendlyFireKda.For(a);
+        FriendlyFireKda.ResetScores();
+        check(ReferenceEquals(retained, FriendlyFireKda.For(a)) && Score(a) == "renamed(0/0/0)" &&
+            Score(b) == "B again(0/0/0)" && Score(c) == "C(0/0/0)", "Score-only reset zeros stable account totals in place");
+        b.Revive(100); Hit(b, c, 10); Hit(b, a, 200);
+        check(Score(a) == "renamed(1/0/0)" && Score(c) == "C(0/0/1)", "Score-only reset leaves accounting enabled for new kills/assists");
+        Reset(); Hit(b, c, 10);
+        b.OnHit = (_, _) => FriendlyFireKda.ResetScores();
+        int messages = DungeonManager.Instance.Messages.Count;
+        Hit(b, a, 200);
+        check(Score(a) == "A(0/0/0)" && Score(b) == "B(0/0/0)" && Score(c) == "C(0/0/0)" &&
+            DungeonManager.Instance.Messages.Count == messages, "Reset during damage rejects pre-reset hit attribution and stale kill notice");
+        Reset(); Hit(b, c, 10);
+        b.OnDeath = _ => FriendlyFireKda.ResetScores();
+        messages = DungeonManager.Instance.Messages.Count;
+        Hit(b, a, 200);
+        check(Score(a) == "A(0/0/0)" && Score(b) == "B(0/0/0)" && Score(c) == "C(0/0/0)" &&
+            DungeonManager.Instance.Messages.Count == messages, "Reset during death rejects the old score receipt and notice");
+        foreach (bool owned in new[] { false, true })
+        {
+            Reset(); Hit(b, a, 200);
+            var ally = new UnitAvatar { faction = "friends", Name = "Ally", NetworkLeader = owned ? c : null };
+            ally.OnDeath = _ => FriendlyFireKda.ResetScores();
+            messages = DungeonManager.Instance.Messages.Count;
+            ally.ApplyDamage(new() { origin = a, damage = 200 });
+            check(ally.IsDead && Score(a) == "A(0/0/0)" && DungeonManager.Instance.Messages.Count == messages,
+                "NPC/companion death cannot publish pre-reset killer totals, owned=" + owned);
+        }
+        Reset(); SessionSettings.FriendlyFireForHit = default; FriendlyFireKda.ResetScores();
+        Hit(b, a, 200);
+        check(Score(a) == "A(0/0/0)", "Score-only reset never enables disabled accounting");
         Reset(); Hit(b, c, 10); FriendlyFireKda.ClearLives(); Hit(b, a, 200);
         check(Score(a) == "A(1/0/0)" && Score(c) == "C(0/0/0)", "New run drops pending assists");
         b.Revive(100); Hit(b, c, 10); FriendlyFireKda.ForgetLife(b); Hit(b, a, 200);

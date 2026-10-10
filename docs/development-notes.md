@@ -14,6 +14,12 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+Version `0.43.0` adds host `/one deathmatch resetkda` and the Deathmatch-tab
+**Reset K/D/A** button, with EN/KO help and a native chat notice. Scores and prior
+assist history reset without changing the current match or respawn timers.
+Participant identities survive; pre-reset death callbacks cannot restore scores.
+See [deathmatch](deathmatch.md).
+
 Version `0.42.0` adds a temporary host deathmatch: configurable duration, Start/
 Stop commands and a dedicated tab, three-second opening/respawn countdowns using
 native chat bubbles, shared full-HP recovery and top-five KDA results. The match

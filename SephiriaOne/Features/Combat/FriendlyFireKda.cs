@@ -11,6 +11,7 @@ namespace SephiriaOne
         internal sealed class Score
         {
             internal long Kills, Deaths, Assists;
+            internal void Clear() { Kills = Deaths = Assists = 0; }
             internal string Label(string name) => name + "(" + Kills.ToString(CultureInfo.InvariantCulture) + "/" +
                 Deaths.ToString(CultureInfo.InvariantCulture) + "/" + Assists.ToString(CultureInfo.InvariantCulture) + ")";
         }
@@ -40,6 +41,15 @@ namespace SephiriaOne
         {
             enabled = false; accounts.Clear(); offline = new ConditionalWeakTable<UnityEngine.Object, Score>();
             ClearLives();
+        }
+        // A scoreboard reset keeps accounting and identity intact. Invalidate
+        // old damage/death receipts and assists, not the current combat policy.
+        // Keep Reset above separate: match-end results retain the discarded scores.
+        internal static void ResetScores()
+        {
+            ClearLives();
+            foreach (Score score in accounts.Values) score.Clear();
+            foreach (var entry in offline) entry.Value.Clear();
         }
         internal static void ClearLives() { lives = new ConditionalWeakTable<PlayerAvatar, Life>(); Epoch++; }
         internal static void ForgetLife(PlayerAvatar player) { if (!ReferenceEquals(player, null)) lives.Remove(player); }

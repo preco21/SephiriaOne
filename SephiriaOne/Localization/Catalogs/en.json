@@ -1,4 +1,8 @@
 {
+  "Deathmatch: /one deathmatch start|stop|resetkda|status; /one deathmatch duration 10..3600 (seconds, default 300). Duration changes apply to the next match; /one save stores the duration.": "Deathmatch: /one deathmatch start|stop|resetkda|status; /one deathmatch duration 10..3600 (seconds, default 300). Duration changes apply to the next match; /one save stores the duration.",
+  "Reset K/D/A": "Reset K/D/A",
+  "K/D/A reset requires a current deathmatch countdown or active match.": "K/D/A reset requires a current deathmatch countdown or active match.",
+  "Deathmatch K/D/A scores reset.": "Deathmatch K/D/A scores reset.",
   "Deathmatch: /one deathmatch start|stop|status; /one deathmatch duration 10..3600 (seconds, default 300). Duration changes apply to the next match; /one save stores the duration.": "Deathmatch: /one deathmatch start|stop|status; /one deathmatch duration 10..3600 (seconds, default 300). Duration changes apply to the next match; /one save stores the duration.",
   "Only the host can control deathmatch.": "Only the host can control deathmatch.",
   "Deathmatch stopped.": "Deathmatch stopped.",

@@ -9,6 +9,7 @@ namespace SephiriaOne
         {
             internal string Killer, Victim;
             internal FriendlyFireKda.Death Kda;
+            internal long ScoreEpoch;
             internal bool MatchDeath;
         }
 
@@ -24,6 +25,7 @@ namespace SephiriaOne
                 if (__instance is PlayerAvatar victim)
                     __state.Kda = FriendlyFireKda.BeforeDeath(victim, attributed ? current.Attacker : null, current.KdaEpoch);
                 if (!attributed) return;
+                __state.ScoreEpoch = current.KdaEpoch;
                 // Death callbacks can clear names/ownership, destroy avatars or
                 // reuse pooled damage. Snapshot only on the death boundary.
                 __state.Killer = NoticeName(current.Attacker); __state.Victim = NoticeName(__instance);
@@ -38,9 +40,9 @@ namespace SephiriaOne
             try
             {
                 if (__instance is PlayerAvatar dead) DeathmatchRuntime.Died(dead);
-                // A toggle or run transition inside a death callback invalidates
-                // the old encounter and its notice as well as its score receipt.
-                if (__instance is PlayerAvatar && __state.Killer != null && __state.Kda.Epoch != FriendlyFireKda.Epoch) return;
+                // A reset/toggle/run transition invalidates every old notice,
+                // including killer totals captured for NPC/companion victims.
+                if (__state.Killer != null && __state.ScoreEpoch != FriendlyFireKda.Epoch) return;
                 if (__instance is PlayerAvatar victim && FriendlyFireKda.CompleteDeath(victim, __state.Kda))
                 {
                     __state.Killer = __state.Kda.Killer.Label(__state.Killer);

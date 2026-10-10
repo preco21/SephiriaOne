@@ -54,6 +54,13 @@ internal static class LanguageRuntimeTests
                 check(SessionSettings.DescribeDisconnect(1).Any(line => line.Contains("cooldown / relative-stat: " + L.T("NativeFallback"))),
                     "Disconnect diagnostics share current language without replaying state: " + language);
             }
+            start(); UnityEngine.Time.unscaledTime = 0;
+            check(L.TrySetLanguage("ko", out _) && SettingsActions.Execute("/one deathmatch start").Success &&
+                SettingsActions.Execute("/one deathmatch resetkda").Messages.Contains("데스매치 K/D/A 기록을 초기화했습니다.") &&
+                DungeonManager.Instance.ChatMessages.Any(x => x.Message == "데스매치 K/D/A 기록을 초기화했습니다.") &&
+                L.T("Reset K/D/A") == "K/D/A 초기화" && DeathmatchCommand.Usage.Contains("resetkda"),
+                "Deathmatch reset help, button, command feedback and native guest notice support Korean");
+            DeathmatchRuntime.Stop(false, false);
         }
         finally { NetworkServer.active = true; L.Shutdown(); }
     }

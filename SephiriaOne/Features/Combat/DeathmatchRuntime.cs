@@ -46,8 +46,22 @@ namespace SephiriaOne
             ReferenceEquals(dungeon, DungeonManager.Instance) && ReferenceEquals(run, SaveManager.CurrentRun) &&
             generation == SessionSettings.ResourceGeneration && run != null && run.enableSave && dungeon.victoryType == 0 && !dungeon.requestLeaveOnHost;
         internal static bool CanStart => !IsRunning && !stopping && !ticking && deathDepth == 0 && DeathmatchFeature.Available && FriendlyFireFeature.Available && ReviveAllAction.CanExecute;
+        internal static bool CanResetScores => IsRunning && !stopping && CurrentScope && Now < endsAt;
         internal static FriendlyFireSettings Effective(FriendlyFireSettings normal) => !IsRunning ? normal :
             new FriendlyFireSettings(phase == Phase.Active && CurrentScope && Now < endsAt, normal.DamagePercent);
+
+        internal static bool ResetScores(out string message)
+        {
+            message = L.T("K/D/A reset requires a current deathmatch countdown or active match.");
+            if (!CanResetScores) return false;
+            FriendlyFireKda.ResetScores();
+            // A departed offline participant can outlive its weak identity key.
+            // Keep that entry and its tie-break order, but clear its totals too.
+            foreach (var participant in participants.Values) participant.Score.Clear();
+            message = L.T("Deathmatch K/D/A scores reset.");
+            Broadcast(null, message);
+            return true;
+        }
 
         internal static bool Start(out string message)
         {
