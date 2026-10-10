@@ -176,7 +176,21 @@ KdaTests.Run(Check);
 RecoveryTests.Run(Check);
 KillLogTests.Run(Check);
 EffectTests.Run(Check);
+ArtifactTests.Run(Check);
 FriendlyFireHooks.Uninstall();
+SessionSettings.FriendlyFireForHit = new(true, 50);
+var nativeIceBat = new Charm_IceBat { NetworkAvatar = new PlayerAvatar { IsInBattle = true }, Target = new PlayerAvatar() };
+nativeIceBat.OnUpdate();
+Check(!nativeIceBat.Selected, "Unload reproduces native Ice Bat allied-target exclusion despite enabled policy and owned frostbite");
+var nativeCloud = new ComboEffect_DarkCloud { NetworkAvatar = new PlayerAvatar() };
+PlayerSpawner.MultiplayerList.Add(new() { PlayerAvatar = new PlayerAvatar() });
+nativeCloud.Update();
+Check(!nativeCloud.Activated, "Unload restores native Dark Cloud battle gating despite a nearby hostile player");
+PlayerSpawner.MultiplayerList.Clear();
+Check(PatchProcessor.GetPatchInfo(AccessTools.Method(typeof(Bullet), "Update"))?.Transpilers.Count is null or 0 &&
+    PatchProcessor.GetPatchInfo(AccessTools.Method(typeof(PlayerInputController), "SearchTargetNearestPoint"))?.Transpilers.Count is null or 0 &&
+    PatchProcessor.GetPatchInfo(AccessTools.Method(typeof(Charm_AttackChim), "HandleAddedDebuffOnTarget"))?.Transpilers.Count is null or 0,
+    "Unload removes artifact homing, nearest-mask and debuff-spread hooks");
 Check(PatchProcessor.GetPatchInfo(AccessTools.Method(typeof(PlayerSpawner), "HandleDieServerside"))?.Prefixes.Count is null or 0,
     "Unload restores native game-over handling");
 Check(PatchProcessor.GetPatchInfo(AccessTools.Method(typeof(UnitAvatar), "AddReceivedDamage"))?.Postfixes.Count is null or 0 &&

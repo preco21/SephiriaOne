@@ -11,6 +11,26 @@ namespace UnityEngine
         public override int GetHashCode() => base.GetHashCode();
     }
     public static class Debug { public static void LogWarning(object message) {} }
+    public struct Vector2
+    {
+        public float x, y;
+        public Vector2(float x, float y) { this.x = x; this.y = y; }
+        public float sqrMagnitude => x * x + y * y;
+        public static Vector2 operator -(Vector2 a, Vector2 b) => new(a.x - b.x, a.y - b.y);
+        public static float SqrMagnitude(Vector2 value) => value.sqrMagnitude;
+        public static float Distance(Vector2 a, Vector2 b) => MathF.Sqrt((a - b).sqrMagnitude);
+        public static implicit operator Vector2(Vector3 value) => new(value.x, value.y);
+    }
+    public struct Vector3
+    {
+        public float x, y, z;
+        public Vector3(float x, float y, float z = 0) { this.x = x; this.y = y; this.z = z; }
+        public float sqrMagnitude => x * x + y * y + z * z;
+        public static Vector3 operator -(Vector3 a, Vector3 b) => new(a.x - b.x, a.y - b.y, a.z - b.z);
+        public static implicit operator Vector3(Vector2 value) => new(value.x, value.y);
+    }
+    public class Transform { public Vector3 position; }
+    public class GameObject : Object { public bool activeSelf = true; public bool activeInHierarchy => activeSelf; }
 }
 namespace Mirror { public static class NetworkServer { public static bool active = true; } public static class NetworkClient { public static bool active = true; } }
 namespace Mirror { public class SyncList<T> : List<T> { [MethodImpl(MethodImplOptions.NoInlining)] public new bool Contains(T item) => base.Contains(item); } }
@@ -36,12 +56,23 @@ namespace SephiriaOne
 }
 public enum EApplyDamageResult { Success, Fail_Absolute, Fail_Block }
 public enum EDamageFailType { None, Deny, Block }
-public enum EDamageFromType { None, BasicAttack, Magic }
+public enum EDamageFromType { None, BasicAttack, Magic, DirectAttack }
 public enum EDamageType { Slice, Projectile, ElementalEffectDamage }
 public enum EMonsterType { Normal, Dummy }
 public enum EPersonality { Aggressive }
 public enum ERelationBehaviour { Neutral, Friendly, Hostile }
-public class CombatBehaviour : UnityEngine.Object { }
+public class CombatBehaviour : UnityEngine.Object
+{
+    public UnityEngine.Transform transform = new();
+    public UnityEngine.GameObject gameObject = new();
+    [MethodImpl(MethodImplOptions.NoInlining)] public virtual EApplyDamageResult ApplyDamage(DamageInstance damage) => EApplyDamageResult.Fail_Absolute;
+}
+public class BoolFlag
+{
+    public bool Value = true;
+    public bool IsFalse() => !Value;
+    public bool IsTrue() => Value;
+}
 public class DamageInstance
 {
     public CombatBehaviour origin;
@@ -59,9 +90,12 @@ public class RuntimeFactionManager : UnityEngine.Object
     public ERelationBehaviour GetRelationBehaviour(string a, string b, EPersonality personality) =>
         a == b || a == "friends" || b == "friends" ? ERelationBehaviour.Friendly : ERelationBehaviour.Hostile;
     public int GetRelationValue(string a, string b) => a == b ? 100 : 50;
+    [MethodImpl(MethodImplOptions.NoInlining)] public long FindFactionLayer(string faction) => faction == "enemy" ? 1 : 2;
 }
-public static class CombatManager
+public class CombatManager : UnityEngine.Object
 {
+    public static CombatManager Instance { get; } = new();
+    public bool PeaceMode;
     [MethodImpl(MethodImplOptions.NoInlining)] public static bool ContainsAttackableFaction(long layers, string faction) => faction == "enemy" || layers == -1;
 }
 public class UnitAvatar : CombatBehaviour
@@ -70,6 +104,9 @@ public class UnitAvatar : CombatBehaviour
     public string faction = "players";
     public string Name { get; set; } = "Unit";
     public bool IsDead, IsInvulnerable, isForcedChaosDamage;
+    public bool IsInBattle { [MethodImpl(MethodImplOptions.NoInlining)] get; set; }
+    public string currentFloorGuid = "floor-1";
+    public BoolFlag canBeTarget = new();
     public bool IsGuarding;
     public bool IsParrying;
     public Action<DamageInstance> OnParry;
@@ -101,7 +138,7 @@ public class UnitAvatar : CombatBehaviour
         debuffPrefab.OnApply?.Invoke(caster, this);
     }
     [MethodImpl(MethodImplOptions.NoInlining)] private float GetCustomStatUnsafe(string key) => key == "MPSHIELD" && IsMpShield ? 1 : 0;
-    [MethodImpl(MethodImplOptions.NoInlining)] public EApplyDamageResult ApplyDamage(DamageInstance damage)
+    [MethodImpl(MethodImplOptions.NoInlining)] public override EApplyDamageResult ApplyDamage(DamageInstance damage)
     {
         if (!Mirror.NetworkServer.active || IsDead || IsInvulnerable) return EApplyDamageResult.Fail_Absolute;
         EApplyDamageResult result = EApplyDamageResult.Success;
@@ -179,6 +216,7 @@ public class PlayerAvatar : UnitAvatar
 }
 public class PlayerSpawner : UnityEngine.Object
 {
+    public static List<PlayerSpawner> MultiplayerList { get; } = new();
     public ulong steamID;
     public PlayerAvatar PlayerAvatar;
     public int currentPlayerIdx = -1;

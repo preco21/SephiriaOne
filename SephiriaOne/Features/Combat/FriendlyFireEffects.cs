@@ -52,7 +52,7 @@ namespace SephiriaOne
         private static bool CanNestDebuff(HitContext parent, UnitAvatar source, UnitAvatar target, DamageInstance damage) =>
             parent.Friendly && !parent.Reflection && !parent.InDebuffDamage &&
             damage.damageType == EDamageType.ElementalEffectDamage && damage.fromType == EDamageFromType.None &&
-            ReferenceEquals(source, parent.Source) && ReferenceEquals(target, parent.Victim) &&
+            ReferenceEquals(source, parent.Source) && (ReferenceEquals(target, parent.Victim) || IsArtifactDebuffTarget(parent, source, target)) &&
             ReferenceEquals(source, debuffScope.Source) && ReferenceEquals(target, debuffScope.Target);
 
         private static bool IsBurnExplosion(DamageInstance damage) => damage.id == "Charm_BurnExplosion" &&

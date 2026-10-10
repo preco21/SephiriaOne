@@ -1,5 +1,10 @@
 # Friendly fire
 
+Version `0.43.2` expands [offensive artifact coverage](friendly-fire-artifacts.md),
+including bat, cloud and earring combat activation, scoped nearest searches,
+artifact homing and bounded triggered damage. Use that audit for the current
+consumer list and native prerequisites.
+
 Version `0.42.0` adds [temporary deathmatches](deathmatch.md) with synchronized
 friendly-fire toggles, timed respawns and top-five results. Deathmatch uses these
 same damage, attribution, KDA and native recovery paths. Outside a match the
@@ -62,9 +67,11 @@ reject the entire preset.
 - Burn Ring, Fire Feather, Flame Ground Meteor, Dark Cloud (including Blazing
   Stormcloud burn), Thunderous Steps and Fire Chakram include other players in
   their offensive target filters while enabled with a positive damage scale.
+  Version `0.43.2` adds bat, earring, glacier, ink, parry, ice weapons, planet and
+  other inspected artifact paths listed in the [artifact audit](friendly-fire-artifacts.md).
   Native range, height, alive/targetable checks, cooldowns and proc chances remain.
-  Other enemy-seeking spells, general projectile homing, healing and faction
-  relationships keep native targeting. This is an explicit audited list, not a
+  Unlisted enemy-seeking spells and homing, healing and faction relationships
+  keep native targeting. This is an explicit audited list, not a
   global faction change that makes every skill target allies.
 - Ordinary enemy/NPC attacks, self damage and system
   damage keep native behavior. Safe-area peace mode, invulnerability, dodge and
@@ -235,7 +242,10 @@ effect on its next update, with expiry damage blocked. A rejoining avatar cannot
 inherit the old object's receipt. Weak keys bound records to effect lifetimes;
 there is no periodic player scan, delayed replay or permanent player-name cache.
 
-There is no added combat polling, per-player cache, new scene scan or per-hit packet.
+There is no added central combat polling, per-player cache, scene scan or per-hit packet.
+Since `0.43.2`, six audited offensive artifact consumers may check the existing
+player roster for nearby opponents when native battle state is false. This is
+bounded by connected players and does not change global battle state.
 The AI hook reads policy only for a player-led companion querying a player target;
 it adds no allocations, target scans or timers to the native AI loop.
 Hit context is a thread-local value type, restored by a Harmony finalizer even

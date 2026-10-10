@@ -13,7 +13,7 @@ namespace SephiriaOne
             internal UnitAvatar Source;
             internal DamageInstance Damage;
             internal bool Friendly, InFriendlyChain, Reflection;
-            internal bool InDebuffDamage, InBurnExplosion;
+            internal bool InDebuffDamage, InBurnExplosion, InArtifactDamage;
             internal int Percent;
             internal long KdaEpoch;
         }
@@ -25,7 +25,7 @@ namespace SephiriaOne
         {
             __state = current;
             current = new HitContext { InFriendlyChain = __state.InFriendlyChain,
-                InDebuffDamage = __state.InDebuffDamage, InBurnExplosion = __state.InBurnExplosion };
+                InDebuffDamage = __state.InDebuffDamage, InBurnExplosion = __state.InBurnExplosion, InArtifactDamage = __state.InArtifactDamage };
             if (NetworkServer.active && BlockOrphanedDebuffHit(__instance, damage))
             { __result = EApplyDamageResult.Fail_Absolute; return false; }
             if (!NetworkServer.active || damage == null || damage.isSystemDamage ||
@@ -60,15 +60,17 @@ namespace SephiriaOne
                 bool returnHit = reflection && __state.Friendly && !__state.Reflection &&
                     ReferenceEquals(source, __state.Victim) && ReferenceEquals(__instance, __state.Source);
                 bool debuffHit = CanNestDebuff(__state, source, __instance, damage);
+                bool artifactHit = CanNestArtifact(__state, source, damage);
                 bool burnExplosion = IsBurnExplosion(damage);
                 bool burnProc = burnExplosion && __state.Friendly && !__state.Reflection && !__state.InBurnExplosion &&
                     __state.Victim && __state.Victim.IsDead && ReferenceEquals(source, __state.Source);
-                if (__state.InFriendlyChain && !returnHit && !debuffHit && !burnProc || settings.DamagePercent == 0 || damage.damage < 0 ||
+                if (__state.InFriendlyChain && !returnHit && !debuffHit && !burnProc && !artifactHit || settings.DamagePercent == 0 || damage.damage < 0 ||
                     float.IsNaN(damage.damage) || float.IsInfinity(damage.damage))
                 { __result = EApplyDamageResult.Fail_Absolute; return false; }
                 current = new HitContext { Victim = __instance, Attacker = attacker, Source = source, Damage = damage, Friendly = true,
                     InFriendlyChain = true, Reflection = reflection, Percent = settings.DamagePercent, KdaEpoch = FriendlyFireKda.Epoch,
-                    InDebuffDamage = __state.InDebuffDamage || debuffHit, InBurnExplosion = __state.InBurnExplosion || burnExplosion };
+                    InDebuffDamage = __state.InDebuffDamage || debuffHit, InBurnExplosion = __state.InBurnExplosion || burnExplosion,
+                    InArtifactDamage = __state.InArtifactDamage || ReferenceEquals(damage, artifactDamage) };
             }
             catch (Exception error) { Warn(error); }
             return true;

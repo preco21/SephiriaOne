@@ -182,6 +182,16 @@ do not globally change faction masks used by healing and unrelated skills.
 `ApplyDebuff` has no faction veto, but upstream selectors and nested electric
 damage needed separate treatment. Preserve immunity, proc chance and duration.
 
+The `0.43.2` [artifact audit](friendly-fire-artifacts.md) adds another boundary:
+offensive automatic effects can require `IsInBattle` before even searching for a
+target. Never globally set that flag for PvP; player healing and travel also read
+it. Scope the extra nearby-player check to audited offensive consumers. Likewise,
+wrap only artifact calls into generic nearest-target utilities and identify
+homing bullets by their current native identity, not a pooled-object cache.
+Native attack callbacks can apply damage synchronously; explicit callsite
+receipts and a bounded depth admit those procs without reopening recursive
+artifact/reflection loops. New consumers need native IL and executable coverage.
+
 Debuffs can outlive their caster, and companion death clears `NetworkLeader`.
 Current-owner-only classification therefore loses scaling/off protection. Weak
 per-debuff origin records carry that classification only through native effect

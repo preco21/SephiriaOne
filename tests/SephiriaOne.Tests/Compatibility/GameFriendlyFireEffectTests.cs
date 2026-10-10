@@ -12,7 +12,7 @@ internal static class GameFriendlyFireEffectTests
         void Require(bool condition, string why) { if (!condition) throw new Exception("Friendly-fire effect contract: " + why); }
         var hooks = addon.GetType("SephiriaOne.FriendlyFireEffectHooks", true)!;
         var selectors = ((IEnumerable<MethodInfo>)AccessTools.Method(hooks, "Selectors").Invoke(null, null)!).ToArray();
-        Require(selectors.Length == 5 && selectors.All(m => m != null), "all audited native item selectors resolve");
+        Require(selectors.Length == 15 && selectors.All(m => m != null), "all audited native item selectors resolve");
         foreach (var selector in selectors)
         {
             var code = PatchProcessor.GetOriginalInstructions(selector).ToList();
@@ -54,6 +54,7 @@ internal static class GameFriendlyFireEffectTests
         Require(PatchProcessor.GetOriginalInstructions(AccessTools.Constructor(Type("Charm_BurnExplosion"))).Any(i =>
             i.opcode == OpCodes.Ldstr && Equals(i.operand, "Charm_BurnExplosion")), "audited explosion identifier");
         Require(Code("PlayerAvatar", "get_Name").Any(i => i.operand is FieldInfo f && f.Name == "playerNameSource"), "PvP name source is the runtime player name");
+        GameFriendlyFireArtifactTests.Run(game, addon);
         Console.WriteLine("Verified audited burn/debuff target filters, stock debuff replication, nested electric damage, burn explosion identity and native player names (not live multiplayer).");
     }
 }

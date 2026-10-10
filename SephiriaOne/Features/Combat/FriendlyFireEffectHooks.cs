@@ -18,9 +18,19 @@ namespace SephiriaOne
             yield return AccessTools.DeclaredMethod(typeof(Charm_FlameGround_Meteor), "SearchTarget");
             yield return Iterator(typeof(ComboEffect_DarkCloud), "UseCloudCoroutine");
             yield return Iterator(typeof(Charm_ThunderousSteps), "CreateAttack");
+            yield return AccessTools.DeclaredMethod(typeof(Charm_IceBat), "OnUpdate");
+            yield return AccessTools.DeclaredMethod(typeof(Charm_ElectricEarring), "SearchTarget");
+            yield return AccessTools.DeclaredMethod(typeof(Charm_AttackChim), "SearchTarget");
+            yield return AccessTools.DeclaredMethod(typeof(Charm_EchoOfTheGlacier), "SearchTarget");
+            yield return AccessTools.DeclaredMethod(typeof(Charm_GrowthParry), "SearchNearestTarget");
+            yield return AccessTools.DeclaredMethod(typeof(Charm_Guillotine), "FindTargetsInRange");
+            yield return AccessTools.DeclaredMethod(typeof(Charm_IceHammer), "SearchTarget");
+            yield return AccessTools.DeclaredMethod(typeof(Charm_IceSpear), "SearchTarget");
+            yield return AccessTools.DeclaredMethod(typeof(Charm_IceSpear), "SearchTargetByWeaponDirection");
+            yield return AccessTools.DeclaredMethod(typeof(GreenBat), "SearchTarget");
         }
 
-        private static MethodInfo Iterator(Type type, string method)
+        internal static MethodInfo Iterator(Type type, string method)
         {
             var state = type.GetNestedTypes(BindingFlags.Public | BindingFlags.NonPublic)
                 .SingleOrDefault(t => t.Name.StartsWith("<" + method + ">", StringComparison.Ordinal));
@@ -48,16 +58,20 @@ namespace SephiriaOne
                 harmony.Patch(AccessTools.DeclaredMethod(typeof(CharacterDebuff), method, Type.EmptyTypes),
                     prefix: new HarmonyMethod(typeof(FriendlyFireRuntime), method == "Update" ? nameof(FriendlyFireRuntime.BeforeDebuffUpdate) : nameof(FriendlyFireRuntime.BeforeDebuffOperation)),
                     finalizer: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.AfterDebuffOperation)));
+            FriendlyFireArtifactHooks.Install(harmony);
         }
 
-        internal static IEnumerable<CodeInstruction> RewriteSelector(IEnumerable<CodeInstruction> instructions)
+        internal static IEnumerable<CodeInstruction> RewriteSelector(IEnumerable<CodeInstruction> instructions) =>
+            RewriteFaction(instructions, EDamageFromType.None, nameof(FriendlyFireRuntime.ItemTarget));
+
+        internal static List<CodeInstruction> RewriteFaction(IEnumerable<CodeInstruction> instructions, EDamageFromType type, string helper)
         {
             var code = instructions.Select(i => new CodeInstruction(i)).ToList();
             var filters = Enumerable.Range(0, code.Count).Where(i => Calls(code[i], typeof(CombatManager), "ContainsAttackableFaction")).ToArray();
             if (filters.Length != 1) throw new InvalidOperationException("Native offensive item selector changed.");
             int filter = filters[0];
             int mask = code.FindLastIndex(filter, i => Calls(i, typeof(UnitAvatar), "GetHostileFactionLayers"));
-            if (mask < 1 || filter - mask < 3 || filter - mask > 16 || !code[mask - 1].LoadsConstant((int)EDamageFromType.None) ||
+            if (mask < 1 || filter - mask < 3 || filter - mask > 16 || !code[mask - 1].LoadsConstant((int)type) ||
                 code[filter].labels.Count != 0 || code[filter].blocks.Count != 0 ||
                 code[filter - 1].opcode != OpCodes.Ldfld || !(code[filter - 1].operand is FieldInfo field) ||
                 field.DeclaringType != typeof(UnitAvatar) || field.Name != "faction" ||
@@ -69,7 +83,7 @@ namespace SephiriaOne
             code[mask].opcode = OpCodes.Nop; code[mask].operand = null;
             code[filter - 1].opcode = OpCodes.Nop; code[filter - 1].operand = null;
             code[filter].opcode = OpCodes.Call;
-            code[filter].operand = AccessTools.Method(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.ItemTarget));
+            code[filter].operand = AccessTools.Method(typeof(FriendlyFireRuntime), helper);
             return code;
         }
 

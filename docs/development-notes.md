@@ -14,6 +14,14 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+Version `0.43.2` repairs offensive artifact targeting under friendly fire:
+Snow Mountain Long-eared Bat, Storm Cloud, Thunder's Earring and the other
+audited offensive consumers share live hostility policy. Scoped combat checks,
+nearest searches, artifact homing and bounded synchronous procs preserve native
+prerequisites and ordinary enemy behavior. The bat still requires frostbite
+applied by its owner; Ice Magic Book is not itself a prerequisite. See the
+[artifact audit, extension guidance and test limits](friendly-fire-artifacts.md).
+
 Version `0.43.1` fixes late-run Deathmatch and Revive All availability. Native
 `victoryType` records chapter/outcome progress before actual game over, so a
 nonzero value no longer invalidates recovery or a running match. Both features
