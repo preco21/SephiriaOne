@@ -14,6 +14,13 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+Version `0.46.0` adds native **Blood of Obrus** (`1171`, Korean: **오브러스의 피**)
+to Wing-Eared Rabbit's costume starting items alongside Blessing and Iron Wall.
+Each addon artifact validates and owns its template addition independently;
+native grants, costume switching, restart restocking and guest synchronization
+remain responsible for inventory instances. No new gameplay hooks or frame work
+are introduced. See [Rabbit starting artifacts](rabbit-starting-artifact.md).
+
 Version `0.45.1` fixes score-reset availability for casual friendly fire. Combat
 now has its own Reset K/D/A button; both tabs and the `friendlyfire`/`deathmatch`
 `resetkda` commands share one action. Match reset retains its expiry/recovery

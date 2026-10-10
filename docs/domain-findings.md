@@ -122,8 +122,9 @@ internal key is `HOSTILITY`; only infinite Rabbit regular/large HP potion use
 bypasses its boss-combat block. Other potion types/costumes keep native rules.
 Read [Rabbit options and death handling](rabbit-potions.md) before changing this path.
 
-Rabbit's Iron Wall and optional Mole/Farmer Squirrel/Turtle Collin are native
-costume-bound starting grants. Preserve exact grant receipts through restart,
+Rabbit's Iron Wall and Blood of Obrus (added in `0.46.0`), and optional
+Mole/Farmer Squirrel/Turtle Collin, are native costume-bound starting grants.
+Preserve exact grant receipts through restart,
 restock, transfer and costume removal; an item of the same type is not necessarily
 the granted instance. Bat's optional 5→1 HP-steal change owns only the costume's
 contribution, with paired status/stat readback so later native removal subtracts
