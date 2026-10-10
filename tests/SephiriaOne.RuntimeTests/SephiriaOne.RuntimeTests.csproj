@@ -61,9 +61,12 @@
     <Compile Include="../../SephiriaOne/Features/Combat/FriendlyFireNames.cs" Link="FriendlyFireNames.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionDeathmatch.cs" Link="SessionDeathmatch.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/FriendlyFireKda.cs" Link="FriendlyFireKda.cs" />
+    <Compile Include="../../SephiriaOne/Features/Combat/FriendlyFireParticipants.cs" Link="FriendlyFireParticipants.cs" />
+    <Compile Include="../../SephiriaOne/Features/Combat/FriendlyFireParticipantHooks.cs" Link="FriendlyFireParticipantHooks.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/ReviveAllAction.cs" Link="ReviveAllAction.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/ReviveAllHooks.cs" Link="ReviveAllHooks.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionCombat.cs" Link="SessionCombat.cs" />
+    <Compile Include="../../SephiriaOne/Session/SessionCombatSelection.cs" Link="SessionCombatSelection.cs" />
     <Compile Include="../../SephiriaOne/Features/Spawns/EventSpawnSettings.cs" Link="EventSpawnSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Spawns/EventSpawnCommand.cs" Link="EventSpawnCommand.cs" />
     <Compile Include="../../SephiriaOne/Features/Spawns/JarSpawnSettings.cs" Link="JarSpawnSettings.cs" />

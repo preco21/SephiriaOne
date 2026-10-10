@@ -14,6 +14,13 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+Version `0.45.0` adds temporary player selections shared by friendly fire and
+deathmatch. Empty selection includes everyone; otherwise both players must be
+selected. Both tabs offer Select All and Reset selection alongside per-player
+checkboxes; commands use `/one friendlyfire player(s)`. Exact connection/run
+receipts prevent stale selection, damage and respawn reuse. See the
+[implementation, native evidence and verification limits](selective-friendly-fire.md).
+
 Version `0.44.0` supports friendly-fire percentages with two decimal places,
 including `0.01` and `0.1` through `0.9`. The Combat tab adds exact numeric entry
 beside its fractional slider. Commands/status, presets and deathmatch retain the

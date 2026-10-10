@@ -86,6 +86,8 @@ namespace SephiriaOne
             2 => SnapshotContent.Choices,
             3 => SnapshotContent.Resources,
             4 => SnapshotContent.Presets,
+            9 => SnapshotContent.Participants,
+            13 => SnapshotContent.Participants,
             _ when target >= 6 && target <= 13 => SnapshotContent.None,
             _ => SnapshotContent.All // Status, and safe defaults for future tabs.
         };
@@ -157,7 +159,7 @@ namespace SephiriaOne
             else if (page == 6) readout.SetText(RabbitValues(snapshot));
             else if (page == 7) readout.SetText(MerchantValues(snapshot));
             else if (page == 8) readout.SetText(ItemValues(snapshot));
-            else if (page == 9) readout.SetText(CombatValues(snapshot));
+            else if (page == 9) RefreshParticipants(snapshot);
             else if (page == 10) readout.SetText(eventSpawnsSelected ? EventValues(snapshot) : JarValues(snapshot));
             else if (page == 11) readout.SetText(CostumeValues(snapshot));
             else if (page == 4) readout.SetText(PresetValues(snapshot));
@@ -189,6 +191,7 @@ namespace SephiriaOne
             collinReset = null;
             updateInstall = updateCheck = null; updateAutomatic = null;
             friendlyDamage = null; friendlyDraft = false;
+            participantRows.Clear(); participantContent = null; participantSummary = null;
             if (pageRoot) { widgets.Forget(pageRoot); pageRoot.gameObject.SetActive(false); Destroy(pageRoot.gameObject); }
             pageRoot = PanelWidgets.Rect(window, "Page", 4, 152, 600, 162);
             pageRoot.localScale = Vector3.one * 1.25f;
@@ -302,7 +305,7 @@ namespace SephiriaOne
         private string Prefix() => page == 0 ? "/stats " + StatCatalog.All[statIndex].Name : page == 1 ? "/fountain" :
             page == 3 ? "/resources " + ResourceCatalog.All[resourceIndex].Name : "/choices " + Choices[choiceIndex];
 
-        private bool Execute(string command, bool requiresScope)
+        private bool Execute(string command, bool requiresScope, object expectedPlayer = null)
         {
             var current = ReadCurrentSnapshot();
             if (requiresScope && !draft.IsCurrent(current.SessionIdentity, current.Epoch, current.RunGeneration))
@@ -310,7 +313,7 @@ namespace SephiriaOne
                 Refresh(current); feedback.text = L.T("Session changed. Review the values and enter the action again."); return false;
             }
             // Button state is advisory; the shared services revalidate authority and inputs.
-            SettingsActionResult result = SettingsActions.Execute(command);
+            SettingsActionResult result = SettingsActions.Execute(command, expectedPlayer);
             if (result.Success) { draft.Clear(); ClearInput(); }
             Refresh(ReadCurrentSnapshot());
             feedback.text = string.Join("\n", result.Messages);

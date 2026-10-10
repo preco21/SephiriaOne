@@ -20,6 +20,7 @@ PlayerSpawner Add(uint id, int luck = 5, int points = 4, int itemChoices = 0)
     spawner.PlayerAvatar.customStats["LUCK"] = luck;
     spawner.PlayerAvatar.customStats["EXTRAITEMCHOICES"] = itemChoices;
     PlayerSpawner.MultiplayerList.Add(spawner);
+    FriendlyFireParticipantFixtures.Connect(spawner, id);
     return spawner;
 }
 PlayerSpawner Start()
@@ -27,9 +28,12 @@ PlayerSpawner Start()
     SessionSettings.Stop();
     SaveManager.CurrentRun = new();
     PlayerSpawner.MultiplayerList.Clear();
+    NetworkServer.connections.Clear();
+    NetworkServer.spawned.Clear();
     UnityEngine.Debug.Warnings.Clear();
     DungeonManager.Instance = new DungeonManager();
     NetworkServer.active = true;
+    new HorayNetworkManager().OnStartServer();
     ChoiceFeature.Available = true;
     ResourceFeature.Available = true;
     UnityEngine.Application.persistentDataPath = Path.Combine(testDataRoot, Guid.NewGuid().ToString("N"));
@@ -57,6 +61,13 @@ bool Choices(string args)
 if (args.Length == 1 && (args[0] == "--perf" || args[0] == "--perf-check"))
 {
     PerformanceProbe.Run(Start, Add, args[0] == "--perf-check");
+    return;
+}
+
+if (args.Length == 1 && args[0] == "--participants")
+{
+    FriendlyFireParticipantTests.Run(Start, id => Add(id), Check);
+    Console.WriteLine($"Passed {checks} participant lifecycle checks.");
     return;
 }
 
@@ -765,6 +776,8 @@ Check(SettingsActions.IsCommand("/resources slots +6"), "Resource command family
 LanguageRuntimeTests.Run(Start, Check);
 ItemRestrictionRuntimeTests.Run(Start, Check);
 FriendlyFireRuntimeTests.Run(Start, id => Add(id), Check);
+FriendlyFireSelectionTests.Run(Start, id => Add(id), Check);
+FriendlyFireParticipantTests.Run(Start, id => Add(id), Check);
 ReviveAllTests.Run(Start, id => Add(id), Check);
 DeathmatchTests.Run(Start, id => Add(id), Check);
 DeathmatchScoreResetTests.Run(Start, id => Add(id), Check);

@@ -239,3 +239,17 @@ peer closes, a timeout and queued-send-limit errors; these did not prove a singl
 addon or stat cause. Do not suppress arbitrary exceptions or weaken state guards
 to hide disconnect symptoms. See [investigation](disconnect-investigation.md) and
 [penalty/transport review](penalty-stat-sync-review.md).
+
+Per-player combat selection (`0.45.0`) is connection-bound, unlike KDA's session
+account identity. Mirror can leave `isReady` true in transport disconnect cleanup;
+host disconnect saves run before old dictionary membership is removed. Check the
+exact connection-map object, identity/spawn map and a retirement generation.
+Removing the last selection enables everyone else, never the retiring player.
+`PlayerSpawner.Initialize` resets session/avatar participation; ordinary costume
+equipping does not. See [native lifecycle contracts](selective-friendly-fire.md).
+
+Selection edits during a deathmatch revival must not cancel the admitted revival
+tail: native `IsDead=false` precedes callbacks and `RpcRevive`. Validate the captured
+connection/run until completion, while checking current selection only before
+admitting a new respawn. Floor-load readiness delays execution without replacing
+its original countdown. Excluded environmental deaths keep native game-over rules.

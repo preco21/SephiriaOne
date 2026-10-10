@@ -123,6 +123,7 @@ public class UnitAvatar : CombatBehaviour
     public bool IsMpShield;
     public Action<DamageInstance> OnCalculateDamage;
     public Action<UnitAvatar, DamageInstance> OnAttackUnitBeforeOperation;
+    public Action<UnitAvatar, UnitAvatar, DamageInstance> OnAttackUnitBeforeOperation_AsLeader;
     public Action<DamageInstance> OnDeath;
     public bool ExtraLife;
     public int Hits;
@@ -153,6 +154,8 @@ public class UnitAvatar : CombatBehaviour
         if (result == EApplyDamageResult.Success)
         {
             attacker?.OnAttackUnitBeforeOperation?.Invoke(this, damage);
+            if (attacker && attacker.NetworkLeader)
+                attacker.NetworkLeader.OnAttackUnitBeforeOperation_AsLeader?.Invoke(attacker, this, damage);
             // Native parry and guard callbacks run before ordinary damage/veto.
             if (IsParrying) { OnParry?.Invoke(damage); return EApplyDamageResult.Fail_Block; }
             if (IsGuarding)

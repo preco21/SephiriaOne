@@ -9,29 +9,67 @@ namespace SephiriaOne
         internal sealed class DebuffOrigin
         {
             internal UnitAvatar Source, Target;
-            internal PlayerAvatar Owner;
+            internal PlayerAvatar Owner, TargetOwner;
+            internal FriendlyFireParticipants.Receipt OwnerReceipt, TargetReceipt;
             internal bool Valid => Source && Target && Owner &&
-                (Source is PlayerAvatar || ReferenceEquals(Source.NetworkLeader, Owner) || Source.IsDead && !Source.NetworkLeader);
+                FriendlyFireParticipants.IsCurrent(OwnerReceipt) &&
+                (TargetReceipt == null || FriendlyFireParticipants.IsCurrent(TargetReceipt)) &&
+                OwnerMatches(Source, Owner) && (TargetOwner == null || OwnerMatches(Target, TargetOwner));
         }
+        private sealed class CompanionOwner
+        {
+            internal PlayerAvatar Owner;
+            internal FriendlyFireParticipants.Receipt Receipt;
+        }
+        private static ConditionalWeakTable<UnitAvatar, CompanionOwner> companionOwners = new ConditionalWeakTable<UnitAvatar, CompanionOwner>();
         private static ConditionalWeakTable<CharacterDebuff, DebuffOrigin> debuffOrigins = new ConditionalWeakTable<CharacterDebuff, DebuffOrigin>();
         [ThreadStatic] private static DebuffOrigin activeDebuff;
 
         private static void ClearDebuffOrigins()
-        { activeDebuff = null; debuffOrigins = new ConditionalWeakTable<CharacterDebuff, DebuffOrigin>(); }
+        {
+            activeDebuff = null; debuffOrigins = new ConditionalWeakTable<CharacterDebuff, DebuffOrigin>();
+            companionOwners = new ConditionalWeakTable<UnitAvatar, CompanionOwner>();
+        }
+
+        private static bool OwnerMatches(UnitAvatar source, PlayerAvatar owner) => ReferenceEquals(source, owner) ||
+            ReferenceEquals(source.NetworkLeader, owner) || source.IsDead && !source.NetworkLeader;
 
         private static PlayerAvatar TeamOwner(UnitAvatar source)
         {
+            if (ReferenceEquals(source, null)) return null;
             if (source is PlayerAvatar player) return player;
-            if (source.NetworkLeader is PlayerAvatar owner && owner) return owner;
-            return activeDebuff != null && activeDebuff.Valid && ReferenceEquals(activeDebuff.Source, source)
-                ? activeDebuff.Owner : null;
+            if (source && source.NetworkLeader is PlayerAvatar owner)
+            {
+                var receipt = FriendlyFireParticipants.Capture(owner);
+                if (!companionOwners.TryGetValue(source, out var previous) || !ReferenceEquals(previous.Owner, owner))
+                {
+                    companionOwners.Remove(source);
+                    companionOwners.Add(source, new CompanionOwner { Owner = owner, Receipt = receipt });
+                }
+                else if (!source.IsDead && receipt != null) previous.Receipt = receipt;
+                return owner;
+            }
+            if (activeDebuff != null && ReferenceEquals(activeDebuff.Source, source)) return activeDebuff.Owner;
+            // Native Die clears NetworkLeader before an already-fired projectile
+            // lands. Preserve classification, including a stale owner which must
+            // be rejected, rather than treating that projectile as NPC damage.
+            return companionOwners.TryGetValue(source, out var known) ? known.Owner : null;
         }
+
+        private static bool OwnerCurrent(UnitAvatar source, PlayerAvatar owner) => source && owner &&
+            OwnerMatches(source, owner) && (source is PlayerAvatar ||
+            companionOwners.TryGetValue(source, out var known) && ReferenceEquals(known.Owner, owner) && FriendlyFireParticipants.IsCurrent(known.Receipt));
+
+        private static void RememberCompanionOwner(UnitAvatar source)
+        { if (source && !(source is PlayerAvatar)) TeamOwner(source); }
 
         internal static void BeforeDebuffSpawn(UnitAvatar attacker, UnitAvatar target, out DebuffOrigin __state)
         {
             __state = null;
             if (!NetworkServer.active || !IsPlayerTeamPair(attacker, target)) return;
-            __state = new DebuffOrigin { Source = attacker, Target = target, Owner = TeamOwner(attacker) };
+            var owner = TeamOwner(attacker); var targetOwner = TeamOwner(target);
+            __state = new DebuffOrigin { Source = attacker, Target = target, Owner = owner, TargetOwner = targetOwner,
+                OwnerReceipt = FriendlyFireParticipants.Capture(owner), TargetReceipt = FriendlyFireParticipants.Capture(targetOwner) };
         }
 
         internal static void AfterDebuffSpawn(CharacterDebuff __instance, DebuffOrigin __state)

@@ -16,7 +16,7 @@ namespace SephiriaOne
             deathmatchStop = widgets.Button(pageRoot, "Stop match", 156, 94, 133, 28, () => Execute("/one deathmatch stop", true));
             deathmatchResetKda = widgets.Button(pageRoot, "Reset K/D/A", 16, 130, 273, 28,
                 () => Execute("/one deathmatch resetkda", true));
-            readout = widgets.Scroll(pageRoot, 312, 0, 272, 162);
+            BuildParticipantsEditor();
         }
         private void RefreshDeathmatch(SettingsSnapshot snapshot)
         {
@@ -25,15 +25,11 @@ namespace SephiriaOne
             deathmatchStop.interactable = host && DeathmatchRuntime.IsRunning;
             deathmatchResetKda.interactable = host && DeathmatchRuntime.CanResetScores;
             deathmatchApply.interactable = amount.interactable = host;
-            availability.text = L.T("Deathmatch · Temporary session");
+            availability.text = DeathmatchRuntime.Describe();
             availability.color = PanelWidgets.Muted;
-            readout.SetText(DeathmatchRuntime.Describe() + "\n\n" +
-                L.T("Changing friendly fire stops the match.") + "\n\n" +
-                (!DeathmatchFeature.Available || !FriendlyFireFeature.Available || !ReviveAllFeature.Available ?
-                    L.T("Deathmatch compatibility checks failed. Stop remains available; see Player.log.") + "\n\n" : "") +
-                L.T("Start: 3s countdown. Respawn: 3s, full HP. Safe areas stay protected.") + "\n\n" +
-                L.T("End: friendly fire off, pending players revived, top 5 announced. Rank: kills → fewer deaths → assists.") + "\n\n" +
-                L.T("Duration changes apply next match. Presets save duration only."));
+            if (!DeathmatchFeature.Available || !FriendlyFireFeature.Available || !ReviveAllFeature.Available)
+                availability.text = L.T("Deathmatch compatibility checks failed. Stop remains available; see Player.log.");
+            RefreshParticipants(snapshot);
         }
     }
 }

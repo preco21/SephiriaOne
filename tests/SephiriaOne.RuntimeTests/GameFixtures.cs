@@ -26,12 +26,12 @@ namespace UnityEngine
 
 namespace Mirror
 {
-    public static class NetworkServer { public static bool active; }
+    public static partial class NetworkServer { public static bool active; }
     public static class NetworkClient { public static bool active = true, ready = true; }
-    public sealed class NetworkConnectionToClient { public bool isReady = true; }
+    public sealed partial class NetworkConnectionToClient { public bool isReady = true; }
 }
 
-public sealed class PlayerSpawner : UnityEngine.Object
+public sealed partial class PlayerSpawner : UnityEngine.Object
 {
     public int currentPlayerIdx;
     public ulong steamID;
@@ -48,6 +48,7 @@ public sealed class PlayerSpawner : UnityEngine.Object
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
     private bool Initialize(int weaponId, string costumeName, string skinID, int loadingScreen)
     {
+        Initializing?.Invoke();
         RestoredSlots = 0;
         for (int i = 0; i < PlayerAvatar.Inventory.CurrentInventoryStorage; i++) RestoredSlots++;
         return true;

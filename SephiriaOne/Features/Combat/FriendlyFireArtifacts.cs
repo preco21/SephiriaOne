@@ -24,7 +24,7 @@ namespace SephiriaOne
             {
                 if (!spawner) continue;
                 var target = spawner.PlayerAvatar;
-                if (target && target != owner && !target.IsDead && !target.canBeTarget.IsFalse() && target.gameObject.activeSelf &&
+                if (target && target != owner && CanAffectTeam(source, target) && !target.IsDead && !target.canBeTarget.IsFalse() && target.gameObject.activeSelf &&
                     target.currentFloorGuid == owner.currentFloorGuid && (target.transform.position - source.transform.position).sqrMagnitude <= 100f)
                     return true;
             }

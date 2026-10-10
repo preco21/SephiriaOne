@@ -37,7 +37,7 @@ internal static class GamePanelCompatibilityTests
 
         var panel = addon.GetType("SephiriaOne.SettingsPanel", true)!;
         var contentForPage = Required(panel, "ContentForPage");
-        string[] expected = { "Stats", "None", "Choices", "Resources", "Presets", "All", "None", "None", "None", "None", "None", "None", "None", "None", "All" };
+        string[] expected = { "Stats", "None", "Choices", "Resources", "Presets", "All", "None", "None", "None", "Participants", "None", "None", "None", "Participants", "All" };
         for (int page = 0; page < expected.Length; page++)
             if (contentForPage.Invoke(null, new object[] { page })?.ToString() != expected[page])
                 throw new Exception("Panel snapshot must include every displayed section: page " + page);
@@ -123,6 +123,13 @@ internal static class GamePanelCompatibilityTests
             observation.Any(i => i.operand is MethodInfo m && m.Name == "Execute"))
             throw new Exception("Snapshot checkbox refresh must use no-notify observation.");
         var widgets = addon.GetType("SephiriaOne.PanelWidgets", true)!;
+        var participants = Required(panel, "BuildParticipantsEditor");
+        if (!Calls(Required(panel, "BuildCombatEditor"), participants) || !Calls(Required(panel, "BuildDeathmatchEditor"), participants))
+            throw new Exception("Combat and deathmatch must expose the same participant-list controls.");
+        var participantRefresh = PatchProcessor.GetOriginalInstructions(Required(panel, "RefreshParticipants"));
+        if (!participantRefresh.Any(i => i.operand is MethodInfo m && m.Name == "SetIsOnWithoutNotify") ||
+            participantRefresh.Any(i => Equals(i.operand, execute)))
+            throw new Exception("Player-selection refresh must observe state without issuing commands.");
         if (Required(widgets, "Checkbox").ReturnType.Name != "Toggle" || Required(widgets, "Dropdown").ReturnType.Name != "TMP_Dropdown")
             throw new Exception("Window must expose real checkbox and stat selection widgets.");
         Console.WriteLine("Verified draggable-window interfaces, registered root lookup, owned toggle and no-notify checkbox/stat widgets (not live rendering/input).");

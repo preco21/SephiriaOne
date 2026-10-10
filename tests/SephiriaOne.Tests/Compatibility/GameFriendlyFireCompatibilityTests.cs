@@ -6,12 +6,13 @@ internal static class GameFriendlyFireCompatibilityTests
 {
     internal static void Run(Assembly game, Assembly addon)
     {
+        GameFriendlyFireParticipantTests.Run(game, addon);
         Type Type(string name) => game.GetType(name, true)!;
         List<CodeInstruction> Code(string type, string method) => PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(Type(type), method)).ToList();
         bool Calls(IEnumerable<CodeInstruction> code, string owner, string method) => code.Any(i => i.operand is MethodInfo m && m.DeclaringType?.Name == owner && m.Name == method);
         void Require(bool value, string why) { if (!value) throw new Exception("Friendly fire contract: " + why); }
         var transpiler = addon.GetType("SephiriaOne.FriendlyFireTranspiler", true)!;
-        var apply = Code("UnitAvatar", "ApplyDamage");
+        var apply = PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(Type("UnitAvatar"), "ApplyDamage"), out var generator).ToList();
         Require((bool)AccessTools.Method(transpiler,"Validate").Invoke(null,new object[] { apply })!, "native ally/shield anchors");
         var hooks = addon.GetType("SephiriaOne.FriendlyFireHooks", true)!;
         Require((bool)AccessTools.Method(hooks, "ValidateReceivedDamage").Invoke(null, new object[] { apply })!, "three native received-damage accounting calls precede death");
@@ -51,8 +52,20 @@ internal static class GameFriendlyFireCompatibilityTests
         var search = Code("UnitAI_NewBasic", "SearchTarget");
         Require(search.Any(i => i.operand is FieldInfo f && f.Name == "IsDead") && Calls(search, "UnitAvatar", "get_IsInvulnerable") &&
             search.Any(i => i.operand is FieldInfo f && f.Name == "sightRadius"), "native target validity and sight range stay in force");
-        var rewritten = ((IEnumerable<CodeInstruction>)AccessTools.Method(transpiler,"Rewrite").Invoke(null,new object[] { apply })!).ToList();
-        Require(rewritten.Count(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "FriendlyFireRuntime") == 5, "exactly three guard helpers, one scale and one numeric check");
+        var rewritten = ((IEnumerable<CodeInstruction>)AccessTools.Method(transpiler,"Rewrite").Invoke(null,new object[] { apply, generator })!).ToList();
+        Require(rewritten.Count(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "FriendlyFireRuntime") == 6,
+            "exactly three faction/leader helpers, one callback permission check, one scale and one numeric check");
+        int recheck = rewritten.FindIndex(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "FriendlyFireRuntime" && m.Name == "ContinueHit");
+        int leaderCallback = rewritten.FindIndex(i => i.operand is FieldInfo f && f.Name == "OnAttackUnitBeforeOperation_AsLeader");
+        int rewrittenGuard = rewritten.FindIndex(i => i.operand is FieldInfo f && f.Name == "isGuardEnabled");
+        Require(leaderCallback < recheck && recheck < rewrittenGuard && rewritten[recheck].labels.Count >= 3 &&
+            rewritten[recheck + 1].opcode == OpCodes.Brtrue && rewritten[recheck + 2].LoadsConstant(Convert.ToInt32(Enum.Parse(Type("EApplyDamageResult"), "Fail_Absolute"))) &&
+            rewritten[recheck + 3].opcode == OpCodes.Ret && rewritten[recheck + 4].labels.Contains((Label)rewritten[recheck + 1].operand),
+            "all attacker/leader null-delegate paths recheck before protection/parry/guard with a local absolute-rejection return");
+        var changedCallback = apply.Select(i => new CodeInstruction(i)).ToList();
+        changedCallback.RemoveAt(changedCallback.FindIndex(i => i.operand is FieldInfo f && f.Name == "OnAttackUnitBeforeOperation_AsLeader"));
+        Require(!(bool)AccessTools.Method(transpiler, "Validate").Invoke(null, new object[] { changedCallback })!,
+            "missing leader callback anchor rejects the combat patch");
         Require(Calls(apply,"UnitAvatar","UseShield") && Calls(apply,"UnitAvatar","UseMp") && Calls(apply,"UnitAvatar","Die"), "native shield/MP/death handling");
         Require(Calls(Code("MeleeCollision","Attack"),"CombatBehaviour","ApplyDamage"), "server melee delivers damage");
         var bulletMethods = Type("Bullet").GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);

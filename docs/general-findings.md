@@ -170,3 +170,11 @@ can be added and removed without replacing tab arrays or native listeners.
 modify other native bindings. Local shortcuts need their own persistence,
 read-only conflict checks and capture/focus lifetime. See
 [tabbed UI and hotkey findings](tabbed-settings-ui.md).
+
+Temporary combat permissions (`0.45.0`) use the shared participant registry,
+not saved policy or delayed stat reconciliation. Always validate an exact current
+connection before interpreting an empty selection as everyone. Retirement must
+precede native disconnect callbacks while old objects are still mapped. Distinguish
+permission to begin a new operation from the identity/scope receipt needed to
+finish an admitted native death or revival. See [participant implementation and
+extension rules](selective-friendly-fire.md).

@@ -1,5 +1,11 @@
 # Temporary deathmatch
 
+Version `0.45.0` shares the [friendly-fire participant list](selective-friendly-fire.md).
+Empty selection includes everyone; otherwise only selected players enroll, revive
+or receive match game-over protection. Both tabs offer Select All/Reset selection;
+selection edits stop the match and recover pending participants. Unselected dead
+players remain untouched. Rejoining players start unselected.
+
 Added in `0.42.0`. Open `/one ui` → **Deathmatch**, enter a duration in seconds,
 click **Apply**, then **Start match**. **Stop match** ends it
 early. The shared host commands are:
@@ -25,7 +31,7 @@ safe-area protection, invulnerability, guards and defenses remain in effect.
 - The host broadcasts `3...`, `2...`, `1...`, then `Deathmatch start!` through
   native chat. Friendly fire stays off during the opening countdown and turns on
   at the start. KDA starts fresh, even if friendly fire was already enabled.
-- Every player death during the match gets a three-second respawn. Deaths during
+- Every participating player death during the match gets a three-second respawn. Deaths during
   the opening countdown use the same timer; players already dead when starting
   get their timer immediately. Extra-life prevention is not a death.
 - Native avatar chat displays `Respawn in: 3s`, then `2s`, then `1s`. Each message

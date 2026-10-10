@@ -1,5 +1,19 @@
 # Synchronization performance review
 
+## Participant selection (0.45.0, 2026-10-11)
+
+Shared combat receipts are cached per avatar lifetime. Lifecycle invalidation uses
+native hooks and weak identity tables, with cached delegates compatible with the
+addon's C# 8 compiler. Warmed receipt/eligibility reads allocate zero bytes in the
+runtime fixture; unchanged five-player synchronization still measures zero bytes
+per tick with no settings and with all tested settings active. Existing living-player
+deathmatch tick allocation checks remain in the runtime suite.
+
+Combat and Deathmatch request only the additional `Participants` snapshot section;
+unrelated tabs do not capture it. Their checkbox rows/listeners are reused while a
+tab is open. No per-frame scene search, custom network message, or polling coroutine
+was added. These .NET fixture measurements do not measure Unity FPS or network latency.
+
 ## Follow-up: 0.42.0 panel snapshots (2026-10-10)
 
 Reviewed the current periodic controllers, shared synchronization, deathmatch and

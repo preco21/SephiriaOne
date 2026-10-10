@@ -1,5 +1,10 @@
 # Host settings panel
 
+Version `0.45.0` adds the same scrolling participant checkboxes, **Select All**
+(모두 선택) and **Reset selection** (선택 초기화) to Combat and Deathmatch. Empty
+selection includes everyone; any selection limits both features to selected
+players. The list is temporary and never saved. See [participant rules](selective-friendly-fire.md).
+
 Version `0.42.0` adds a **Deathmatch** tab with a duration input (seconds),
 **Apply**, **Start match** and **Stop match**. The Combat
 friendly-fire toggle reflects the match's effective state; touching it stops
@@ -68,8 +73,8 @@ unapplied drafts without sending any gameplay command.
 | Presets | Save current applied settings, forget the saved copy, or refresh it from disk. Active intent and saved intent are shown separately. |
 | Status | Current intent, player values, revisions, synchronization outcomes, native name status and fault details. Scroll for the complete readout. |
 | Items | Default-off On/Off and Reset controls for given-item sale restrictions and owner-bound drops, including Fountain sharing. See [scope and native limits](item-restrictions.md); intrinsic costume-curse no-drop properties remain. |
-| Combat | Friendly fire On/Off, a 0–300% damage slider with Apply damage, Reset (off/100%), and Revive all players. |
-| Deathmatch | Set duration (10–3600 seconds, default 300), Start/Stop and live remaining-time readout. |
+| Combat | Friendly fire On/Off, a 0–300% damage slider/input with Apply damage, Reset (off/100%), Revive all players, shared participant checkboxes and Select All/Reset selection. |
+| Deathmatch | Set duration (10–3600 seconds, default 300), Start/Stop, Reset K/D/A, remaining time and the shared participant selection controls. |
 | Spawns | Choose Mystic Jars or random events. Apply a chance or native-rate multiplier using the selected feature's existing limits; Reset restores native. Existing generated results are preserved. |
 | Costumes | Independent Bat HP-steal reduction and Collin starting-artifact toggles, resets and compatibility readouts. |
 | Rabbit | Independent On/Off controls for Wing-Eared Rabbit infinite HP potions, nearby potion healing, MP cost, Survival rank-5 suppression and random non-HP/MP potions on level-up. Sample is excluded from all HP-potion options and keeps native behavior. Enter 0..10000 MP and press Set & on to choose a fee; Off remembers it. Reset restores 10 MP and disables all five options. Shows active state and separate drink/level-up compatibility. |

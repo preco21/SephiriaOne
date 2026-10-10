@@ -37,13 +37,15 @@ namespace SephiriaOne
                 prefix.Equals("/one", StringComparison.OrdinalIgnoreCase);
         }
 
-        public static SettingsActionResult Execute(string command)
+        public static SettingsActionResult Execute(string command, object expectedPlayer = null)
         {
             bool recognized = false;
             bool isPreset = false;
             try
             {
                 string[] parts = (command ?? "").Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+                if (FriendlyFireSelectionCommand.Execute(parts, expectedPlayer, out bool selectionSuccess, out string selectionMessage))
+                    return Reply(selectionSuccess, selectionMessage);
                 if (UpdateCommand.Execute(parts, out bool updateSuccess, out string updateMessage))
                     return Reply(updateSuccess, updateMessage);
                 if (DeathmatchCommand.Execute(parts, out bool deathmatchSuccess, out string deathmatchMessage))
@@ -154,13 +156,13 @@ namespace SephiriaOne
                 if (combat != FriendlyFireParseResult.NotCommand)
                 {
                     recognized = true;
-                    if (combat == FriendlyFireParseResult.Help) return Reply(true, FriendlyFireCommand.Usage);
-                    if (combat == FriendlyFireParseResult.Invalid) return Reply(false, FriendlyFireCommand.Usage);
+                    if (combat == FriendlyFireParseResult.Help) return Reply(true, FriendlyFireCommand.Usage + " " + FriendlyFireSelectionCommand.Usage);
+                    if (combat == FriendlyFireParseResult.Invalid) return Reply(false, FriendlyFireCommand.Usage + " " + FriendlyFireSelectionCommand.Usage);
                     if (combat == FriendlyFireParseResult.Status)
                     {
                         var snapshot = SessionSettings.ReadSnapshot();
                         if (!snapshot.HostActive || snapshot.SessionIdentity == null) return Reply(false, snapshot.AvailabilityReason);
-                        return Reply(true, SessionSettings.DescribeFriendlyFire(snapshot.FriendlyFire) +
+                        return Reply(true, SessionSettings.DescribeFriendlyFire(snapshot.FriendlyFire) + " " + SessionSettings.DescribeFriendlyFireSelection() +
                             (snapshot.FriendlyFireAvailable ? "" : L.T(" Friendly-fire hooks unavailable; see Player.log.")));
                     }
                     return Reply(SessionSettings.TryExecuteFriendlyFire(combatCommand, out string combatMessage), combatMessage);

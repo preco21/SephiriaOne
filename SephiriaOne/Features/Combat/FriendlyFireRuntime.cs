@@ -16,6 +16,8 @@ namespace SephiriaOne
             internal bool InDebuffDamage, InBurnExplosion, InArtifactDamage;
             internal double DamageScale;
             internal long KdaEpoch;
+            internal long ParticipantEpoch;
+            internal FriendlyFireParticipants.Receipt AttackerReceipt, VictimReceipt;
         }
         [ThreadStatic] private static HitContext current;
         private static bool warned;
@@ -29,7 +31,16 @@ namespace SephiriaOne
             if (NetworkServer.active && BlockOrphanedDebuffHit(__instance, damage))
             { __result = EApplyDamageResult.Fail_Absolute; return false; }
             if (!NetworkServer.active || damage == null || damage.isSystemDamage ||
-                !(damage.origin is UnitAvatar source) || !source || !__instance || source == __instance) return true;
+                !(damage.origin is UnitAvatar source) || !__instance || source == __instance) return true;
+            // Unity fake-null must not turn a recognizable player or previously
+            // owned companion into an unclassified native team-damage source.
+            // Already-fired attacks against native enemies retain their path.
+            if (!source)
+            {
+                if (IsPlayerTeamPair(source, __instance))
+                { __result = EApplyDamageResult.Fail_Absolute; return false; }
+                return true;
+            }
             var attacker = source as PlayerAvatar;
             bool companion = !attacker;
             if (companion)
@@ -37,7 +48,7 @@ namespace SephiriaOne
                 attacker = TeamOwner(source);
                 // Companion hostility is restricted to other players. Native
                 // monster/NPC damage and target selection remain unchanged.
-                if (!attacker || !(__instance is PlayerAvatar)) return true;
+                if (ReferenceEquals(attacker, null) || !(__instance is PlayerAvatar)) return true;
             }
             try
             {
@@ -46,7 +57,7 @@ namespace SephiriaOne
                 bool reflection = IsNativeReflection(damage);
                 // Native debuff ticks use an all-faction mask and bypass the
                 // normal player veto. Recheck policy before every team impact.
-                if (IsPlayerTeamPair(source, __instance) && (!settings.Enabled || !settings.HasDamage))
+                if (IsPlayerTeamPair(source, __instance) && !CanAffectTeam(source, __instance))
                 { __result = EApplyDamageResult.Fail_Absolute; return false; }
                 // Recheck at impact: even a projectile fired while enabled (or
                 // with a broad native mask) cannot hurt the owner or hit players
@@ -54,6 +65,10 @@ namespace SephiriaOne
                 if (companion && attacker == __instance)
                 { __result = EApplyDamageResult.Fail_Absolute; return false; }
                 if (!settings.Enabled || !Allied(attacker, __instance)) return true;
+                if (!CanAffectTeam(source, __instance))
+                { __result = EApplyDamageResult.Fail_Absolute; return false; }
+                if (__state.InFriendlyChain && !HitPermitted(__state))
+                { __result = EApplyDamageResult.Fail_Absolute; return false; }
                 // Admit a recognized return only along the exact reverse of the
                 // immediate allied hit. Reflected hits cannot reflect again;
                 // unrelated procs and enemy-mediated chains remain blocked.
@@ -70,7 +85,9 @@ namespace SephiriaOne
                 current = new HitContext { Victim = __instance, Attacker = attacker, Source = source, Damage = damage, Friendly = true,
                     InFriendlyChain = true, Reflection = reflection, DamageScale = settings.DamageScale, KdaEpoch = FriendlyFireKda.Epoch,
                     InDebuffDamage = __state.InDebuffDamage || debuffHit, InBurnExplosion = __state.InBurnExplosion || burnExplosion,
-                    InArtifactDamage = __state.InArtifactDamage || ReferenceEquals(damage, artifactDamage) };
+                    InArtifactDamage = __state.InArtifactDamage || ReferenceEquals(damage, artifactDamage),
+                    AttackerReceipt = FriendlyFireParticipants.Capture(attacker), VictimReceipt = FriendlyFireParticipants.Capture(TeamOwner(__instance)),
+                    ParticipantEpoch = FriendlyFireParticipants.Epoch };
             }
             catch (Exception error) { Warn(error); }
             return true;
@@ -93,6 +110,16 @@ namespace SephiriaOne
         internal static Exception AfterHit(Exception __exception, HitContext __state)
         { current = __state; return __exception; }
 
+        // Admission protects an already-delivered lethal hit through native Die.
+        // Permission for further writes/attribution must instead stay current
+        // across arbitrary native attack and damage callbacks.
+        private static bool CurrentHitPermitted() => HitPermitted(current);
+        internal static bool ContinueHit() => !current.Friendly || CurrentHitPermitted();
+        private static bool HitPermitted(HitContext hit) => hit.Friendly &&
+            FriendlyFireParticipants.IsCurrent(hit.AttackerReceipt) &&
+            (hit.VictimReceipt == null || FriendlyFireParticipants.IsCurrent(hit.VictimReceipt)) &&
+            CanAffectTeam(hit.Source, hit.Victim) && hit.ParticipantEpoch == FriendlyFireParticipants.Epoch;
+
         // The native all-dead callback emits an irreversible game-over RPC.
         // Keep only this exact friendly-fire death recoverable; no global
         // game-over flag or exemption survives the active damage scope.
@@ -104,7 +131,7 @@ namespace SephiriaOne
 
         internal static void AfterReceivedDamage(UnitAvatar __instance, float damage)
         {
-            if (!NetworkServer.active || !current.Friendly || !ReferenceEquals(current.Victim, __instance) ||
+            if (!NetworkServer.active || !CurrentHitPermitted() || !ReferenceEquals(current.Victim, __instance) ||
                 !(__instance is PlayerAvatar victim) || damage <= 0 || float.IsNaN(damage) || float.IsInfinity(damage)) return;
             try { FriendlyFireKda.Damage(current.Attacker, victim, current.KdaEpoch); }
             catch (Exception error) { Warn(error); }
@@ -117,10 +144,9 @@ namespace SephiriaOne
             if (!avatar || avatar is PlayerAvatar || !(avatar.NetworkLeader is PlayerAvatar owner) || !owner) return;
             try
             {
-                var settings = SessionSettings.FriendlyFireForHit;
                 // SearchTarget and OnAIUpdate both use this query. No retained
                 // target hostility survives off/reset or a change of owner.
-                __result = target != owner && settings.Enabled && settings.HasDamage
+                __result = CanAffectTeam(avatar, target)
                     ? ERelationBehaviour.Hostile : ERelationBehaviour.Friendly;
             }
             catch (Exception error) { Warn(error); }
@@ -133,8 +159,7 @@ namespace SephiriaOne
             if (!avatar || avatar is PlayerAvatar || !(avatar.NetworkLeader is PlayerAvatar owner) || !owner) return;
             try
             {
-                var settings = SessionSettings.FriendlyFireForHit;
-                if (target == owner || !settings.Enabled || !settings.HasDamage)
+                if (!CanAffectTeam(avatar, target))
                     // Native target loss releases held attacks (including archers
                     // whose follow handler alone would leave the trigger held).
                     // Use native battle state: prior relation isn't populated
@@ -149,23 +174,24 @@ namespace SephiriaOne
         // other subscribers may still block it. Ordinary NPC safe-mode/crime
         // handling must keep running, even when the initial faction gate passed.
         internal static bool BeforePlayerAttack(PlayerAvatar __instance, UnitAvatar target, DamageInstance damage) =>
-            !NetworkServer.active || !current.Friendly ||
+            !NetworkServer.active || !CurrentHitPermitted() ||
             !ReferenceEquals(current.Source, __instance) || !ReferenceEquals(current.Victim, target) ||
             !ReferenceEquals(current.Damage, damage) ||
             !(target is PlayerAvatar || target.NetworkLeader is PlayerAvatar);
 
-        internal static bool ProtectLeader(bool native) => native && !current.Friendly;
-        internal static bool AllowFaction(bool native) => native || current.Friendly;
+        internal static bool ProtectLeader(bool native) => native && !CurrentHitPermitted();
+        internal static bool AllowFaction(bool native) => native || CurrentHitPermitted();
         internal static float Scale(float resolved)
         {
             if (!current.Friendly) return resolved;
+            if (!CurrentHitPermitted()) return 0;
             // Avoid propagating NaN/infinity/overflow into native HP or SyncVars.
             if (float.IsNaN(resolved) || float.IsInfinity(resolved) || resolved <= 0) return 0;
             return (float)Math.Min(resolved * current.DamageScale, 2147483520d);
         }
 
         internal static float Sanitize(float resolved) => !current.Friendly ? resolved :
-            float.IsNaN(resolved) || float.IsInfinity(resolved) || resolved < 0 ? 0 : Math.Min(resolved, 2147483520f);
+            !CurrentHitPermitted() || float.IsNaN(resolved) || float.IsInfinity(resolved) || resolved < 0 ? 0 : Math.Min(resolved, 2147483520f);
 
         private static void Warn(Exception error)
         {

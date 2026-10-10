@@ -33,7 +33,7 @@ namespace SephiriaOne
             friendlyDamage.onValueChanged.AddListener(DragFriendlyDamage);
             changeButtons.Add(widgets.Button(pageRoot, "Apply damage", 16, 126, 135, 25, ApplyFriendlyDamage));
             reviveAll = widgets.Button(pageRoot, "Revive all players", 162, 126, 127, 25, () => Execute("/one reviveall", true));
-            readout = widgets.Scroll(pageRoot, 312, 0, 272, 162);
+            BuildParticipantsEditor();
         }
 
         private void RefreshCombat(SettingsSnapshot snapshot)
@@ -60,11 +60,5 @@ namespace SephiriaOne
             amount.SetTextWithoutNotify(percent.ToString("0.##", CultureInfo.InvariantCulture));
         }
         private void ApplyFriendlyDamage() => Execute("/one friendlyfire damage " + amount.text.Trim(), true);
-        private static string CombatValues(SettingsSnapshot snapshot) => SessionSettings.DescribeFriendlyFire(snapshot.FriendlyFire) +
-            (ReviveAllFeature.Available ? "" : "\n\n" + L.T("Revive-all compatibility checks failed. Inspect Player.log; no players were changed.")) +
-            "\n\n" + L.T("0–300% · 2 decimals (e.g. 0.1%)") +
-            "\n\n" + L.T("Attacks, supported debuffs and reflection affect allies. Companions exclude their owner. Off/0% blocks allied hits and new debuffs.") +
-            "\n\n" + L.T("Safe areas and invulnerability stay native. Toggling resets K/D/A.") +
-            "\n\n" + L.T("Revive all: dead players return at full HP. Living players and K/D/A stay unchanged.");
     }
 }

@@ -15,8 +15,19 @@ namespace SephiriaOne
         Resources = 4,
         Presets = 8,
         Diagnostics = 16,
+        Participants = 32,
         Values = Stats | Choices | Resources | Presets,
-        All = Values | Diagnostics
+        All = Values | Diagnostics | Participants
+    }
+
+    internal sealed class FriendlyFirePlayerSnapshot
+    {
+        public uint Id { get; }
+        public string Name { get; }
+        public object Identity { get; }
+        public bool Selected { get; }
+        internal FriendlyFirePlayerSnapshot(uint id, string name, object identity, bool selected)
+        { Id = id; Name = name; Identity = identity; Selected = selected; }
     }
 
     internal sealed class PlayerSettingsSnapshot
@@ -85,6 +96,8 @@ namespace SephiriaOne
         public bool JarSpawnsAvailable { get; }
         public FriendlyFireSettings FriendlyFire { get; }
         public bool FriendlyFireAvailable { get; }
+        public IReadOnlyList<FriendlyFirePlayerSnapshot> FriendlyFirePlayers { get; }
+        public int FriendlyFireSelectedCount { get; }
         public bool ItemUnlock { get; }
         public bool ItemRestrictionsAvailable { get; }
         public RabbitPotionSettings RabbitPotions { get; }
@@ -117,7 +130,8 @@ namespace SephiriaOne
             JarSpawnSettings jarSpawns = default, bool jarSpawnsAvailable = false,
             bool batHpSteal = false, bool batAvailable = false,
             bool collinStartingArtifact = false, bool collinAvailable = false,
-            EventSpawnSettings eventSpawns = default, bool eventSpawnsAvailable = false)
+            EventSpawnSettings eventSpawns = default, bool eventSpawnsAvailable = false,
+            IEnumerable<FriendlyFirePlayerSnapshot> friendlyFirePlayers = null, int friendlyFireSelectedCount = 0)
         {
             SessionIdentity = sessionIdentity; Epoch = epoch; RunGeneration = runGeneration; Revision = revision;
             HostActive = hostActive; CanMutate = canMutate; CanSave = canSave; CanForget = canForget;
@@ -127,6 +141,9 @@ namespace SephiriaOne
             BatHpSteal = batHpSteal; BatAvailable = batAvailable;
             CollinStartingArtifact = collinStartingArtifact; CollinAvailable = collinAvailable;
             FriendlyFire = friendlyFire; FriendlyFireAvailable = friendlyFireAvailable;
+            FriendlyFirePlayers = friendlyFirePlayers == null ? (IReadOnlyList<FriendlyFirePlayerSnapshot>)System.Array.Empty<FriendlyFirePlayerSnapshot>() :
+                new List<FriendlyFirePlayerSnapshot>(friendlyFirePlayers).AsReadOnly();
+            FriendlyFireSelectedCount = friendlyFireSelectedCount;
             ItemUnlock = itemUnlock; ItemRestrictionsAvailable = itemRestrictionsAvailable;
             RabbitPotions = rabbitPotions; RabbitPotionsAvailable = rabbitPotionsAvailable;
             RabbitLevelUpPotionsAvailable = rabbitLevelUpPotionsAvailable;

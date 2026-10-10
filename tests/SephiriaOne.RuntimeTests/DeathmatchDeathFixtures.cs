@@ -13,6 +13,9 @@ namespace SephiriaOne
             internal long KdaEpoch;
         }
         private static HitContext current;
+        private static void RememberCompanionOwner(UnitAvatar source) { }
+        private static bool CurrentHitPermitted() => current.Friendly && FriendlyFireParticipants.Includes(current.Attacker) &&
+            current.Victim is PlayerAvatar victim && FriendlyFireParticipants.Includes(victim);
         internal static void Attribute(PlayerAvatar killer, PlayerAvatar victim, DamageInstance damage) =>
             current = new HitContext { Friendly = true, Attacker = killer, Victim = victim, Damage = damage, KdaEpoch = FriendlyFireKda.Epoch };
         private static void Warn(Exception error) => UnityEngine.Debug.LogWarning(error);

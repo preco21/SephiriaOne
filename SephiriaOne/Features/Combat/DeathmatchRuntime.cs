@@ -13,8 +13,14 @@ namespace SephiriaOne
         private sealed class Respawn
         {
             internal HostPlayer Subject;
+            internal FriendlyFireParticipants.Receipt Receipt;
             internal double At;
             internal int Shown;
+        }
+        private sealed class RosterEntry
+        {
+            internal HostPlayer Subject;
+            internal FriendlyFireParticipants.Receipt Receipt;
         }
         private sealed class Participant
         {
@@ -32,9 +38,9 @@ namespace SephiriaOne
         private static bool stopping, ticking;
         private static List<Respawn> cleanup;
         private static int deathDepth;
-        private static readonly HashSet<PlayerAvatar> dying = new HashSet<PlayerAvatar>(ReferenceComparer<PlayerAvatar>.Instance);
+        private static readonly Dictionary<PlayerAvatar, FriendlyFireParticipants.Receipt> dying = new Dictionary<PlayerAvatar, FriendlyFireParticipants.Receipt>(ReferenceComparer<PlayerAvatar>.Instance);
         private static readonly Dictionary<PlayerAvatar, Respawn> pending = new Dictionary<PlayerAvatar, Respawn>(ReferenceComparer<PlayerAvatar>.Instance);
-        private static readonly Dictionary<PlayerAvatar, HostPlayer> roster = new Dictionary<PlayerAvatar, HostPlayer>(ReferenceComparer<PlayerAvatar>.Instance);
+        private static readonly Dictionary<PlayerAvatar, RosterEntry> roster = new Dictionary<PlayerAvatar, RosterEntry>(ReferenceComparer<PlayerAvatar>.Instance);
         private static readonly Dictionary<FriendlyFireKda.Score, Participant> participants = new Dictionary<FriendlyFireKda.Score, Participant>();
         private static readonly HashSet<PlayerAvatar> seen = new HashSet<PlayerAvatar>(ReferenceComparer<PlayerAvatar>.Instance);
         private static readonly List<PlayerAvatar> departed = new List<PlayerAvatar>();
@@ -115,7 +121,7 @@ namespace SephiriaOne
                 {
                     var respawn = due[i]; var player = respawn.Subject.Player;
                     if (!pending.TryGetValue(player, out var latest) || !ReferenceEquals(latest, respawn)) continue;
-                    if (!Connected(respawn.Subject) || !player.IsDead) { pending.Remove(player); continue; }
+                    if (!Connected(respawn.Subject, respawn.Receipt) || !Eligible(player) || !player.IsDead) { pending.Remove(player); continue; }
                     if (!respawn.Subject.IsReady) continue;
                     int seconds = Math.Max(0, (int)Math.Ceiling(respawn.At - now));
                     if (seconds > 0)
@@ -137,22 +143,33 @@ namespace SephiriaOne
             finally { due.Clear(); ticking = false; if (stopping) DrainRecovery(); }
         }
 
-        private static bool Connected(HostPlayer subject) => subject.Spawner && subject.Player && subject.Player.netId == subject.Id &&
+        private static bool Connected(HostPlayer subject, FriendlyFireParticipants.Receipt receipt) => FriendlyFireParticipants.IsCurrent(receipt) &&
+            subject.Spawner && subject.Player && subject.Player.netId == subject.Id &&
             ReferenceEquals(subject.Spawner.PlayerAvatar, subject.Player) && ReferenceEquals(subject.Player.spawner, subject.Spawner) &&
             PlayerSpawner.MultiplayerList.Contains(subject.Spawner);
 
+        // Loading temporarily blocks revival, not participation or its deadline.
+        // Capture still rejects retired/replaced connections even while loading.
+        private static bool Eligible(PlayerAvatar player) => FriendlyFireParticipants.Includes(player, requireReady: false);
+
         private static bool Restore(Respawn respawn, long current, out string failure) =>
-            ReviveAllAction.TryRevive(respawn.Subject, () => current == token && CurrentScope, out failure);
+            ReviveAllAction.TryRevive(respawn.Subject, () => current == token && CurrentScope &&
+                Connected(respawn.Subject, respawn.Receipt), out failure);
 
         private static void ObserveRoster()
         {
             seen.Clear(); departed.Clear();
             foreach (PlayerSpawner spawner in PlayerSpawner.MultiplayerList)
             {
-                if (!spawner || !spawner.isServer || !spawner.PlayerAvatar || !seen.Add(spawner.PlayerAvatar)) continue;
+                if (!spawner || !spawner.isServer || !spawner.PlayerAvatar || !Eligible(spawner.PlayerAvatar) ||
+                    !seen.Add(spawner.PlayerAvatar)) continue;
                 var player = spawner.PlayerAvatar;
-                if (!roster.TryGetValue(player, out var subject) || !Connected(subject))
-                    roster[player] = subject = new HostPlayer(spawner);
+                if (!roster.TryGetValue(player, out var entry) || !Connected(entry.Subject, entry.Receipt))
+                {
+                    if (pending.TryGetValue(player, out var prior) && !Connected(prior.Subject, prior.Receipt)) pending.Remove(player);
+                    roster[player] = entry = new RosterEntry { Subject = new HostPlayer(spawner), Receipt = FriendlyFireParticipants.Capture(player) };
+                }
+                var subject = entry.Subject;
                 if (!subject.IsReady) continue;
                 var score = FriendlyFireKda.For(player);
                 if (!participants.ContainsKey(score)) participants.Add(score, new Participant { Score = score, Name = CombatNames.Player(player), Order = participants.Count });
@@ -165,11 +182,16 @@ namespace SephiriaOne
 
         internal static void Died(PlayerAvatar player)
         {
-            if (!IsRunning || !CurrentScope || !player || !player.IsDead || pending.ContainsKey(player)) return;
+            if (!IsRunning || !CurrentScope || !player || !player.IsDead || !Eligible(player)) return;
+            if (pending.TryGetValue(player, out var prior))
+            {
+                if (Connected(prior.Subject, prior.Receipt)) return;
+                pending.Remove(player);
+            }
             var spawner = player.spawner;
             if (!spawner || !ReferenceEquals(spawner.PlayerAvatar, player) || !PlayerSpawner.MultiplayerList.Contains(spawner)) return;
             var subject = new HostPlayer(spawner);
-            pending.Add(player, new Respawn { Subject = subject, At = Now + 3, Shown = 3 });
+            pending.Add(player, new Respawn { Subject = subject, Receipt = FriendlyFireParticipants.Capture(player), At = Now + 3, Shown = 3 });
             var score = FriendlyFireKda.For(player);
             if (!participants.TryGetValue(score, out var entry)) participants.Add(score, entry = new Participant { Score = score, Order = participants.Count });
             entry.Name = CombatNames.Player(player);
@@ -184,21 +206,23 @@ namespace SephiriaOne
         internal static bool EnterDeath(PlayerAvatar player)
         {
             if (!IsRunning || !CurrentScope || !player || !player.spawner || !ReferenceEquals(player.spawner.PlayerAvatar, player) ||
-                !PlayerSpawner.MultiplayerList.Contains(player.spawner) || !dying.Add(player)) return false;
+                !PlayerSpawner.MultiplayerList.Contains(player.spawner) || !Eligible(player) || dying.ContainsKey(player)) return false;
+            dying.Add(player, FriendlyFireParticipants.Capture(player));
             deathDepth++; return true;
         }
         internal static void LeaveDeath(PlayerAvatar player, bool entered)
         {
             if (!entered) return;
-            dying.Remove(player); deathDepth--;
-            if (stopping && cleanup != null && CurrentScope && player && player.IsDead && player.spawner &&
+            dying.TryGetValue(player, out var receipt); dying.Remove(player); deathDepth--;
+            if (stopping && cleanup != null && CurrentScope && FriendlyFireParticipants.IsCurrent(receipt) && player && player.IsDead && player.spawner &&
                 ReferenceEquals(player.spawner.PlayerAvatar, player) && PlayerSpawner.MultiplayerList.Contains(player.spawner) &&
                 !cleanup.Exists(r => ReferenceEquals(r.Subject.Player, player)))
-                cleanup.Add(new Respawn { Subject = new HostPlayer(player.spawner) });
+                cleanup.Add(new Respawn { Subject = new HostPlayer(player.spawner), Receipt = receipt });
             if (stopping) DrainRecovery();
         }
-        internal static bool ProtectDeath(PlayerAvatar player) => (IsRunning || stopping && dying.Contains(player)) && CurrentScope && ReviveAllFeature.Available &&
-            player && player.IsDead && player.spawner && ReferenceEquals(player.spawner.PlayerAvatar, player) && PlayerSpawner.MultiplayerList.Contains(player.spawner);
+        internal static bool ProtectDeath(PlayerAvatar player) => player && player.IsDead && CurrentScope && ReviveAllFeature.Available &&
+            (dying.TryGetValue(player, out var receipt) && FriendlyFireParticipants.IsCurrent(receipt) && (IsRunning || stopping) ||
+                IsRunning && Eligible(player));
 
         // Called by manual toggles even when their value is unchanged. Timer
         // ownership ends before any revival can invoke user/game callbacks.
@@ -216,10 +240,12 @@ namespace SephiriaOne
             if (cleanup != null)
                 foreach (var spawner in PlayerSpawner.MultiplayerList)
                     if (spawner && spawner.isServer && spawner.PlayerAvatar && spawner.PlayerAvatar.IsDead &&
+                        Eligible(spawner.PlayerAvatar) &&
                         !cleanup.Exists(r => ReferenceEquals(r.Subject.Player, spawner.PlayerAvatar)))
-                        cleanup.Add(new Respawn { Subject = new HostPlayer(spawner) });
-            foreach (var subject in roster.Values)
-                if (Connected(subject) && participants.TryGetValue(FriendlyFireKda.For(subject.Player), out var participant)) participant.Name = CombatNames.Player(subject.Player);
+                        cleanup.Add(new Respawn { Subject = new HostPlayer(spawner), Receipt = FriendlyFireParticipants.Capture(spawner.PlayerAvatar) });
+            foreach (var entry in roster.Values)
+                if (Connected(entry.Subject, entry.Receipt) && participants.TryGetValue(FriendlyFireKda.For(entry.Subject.Player), out var participant))
+                    participant.Name = CombatNames.Player(entry.Subject.Player);
             var results = new List<Participant>(participants.Values);
             results.Sort((a, b) => { int c = b.Score.Kills.CompareTo(a.Score.Kills); if (c == 0) c = a.Score.Deaths.CompareTo(b.Score.Deaths);
                 if (c == 0) c = b.Score.Assists.CompareTo(a.Score.Assists); return c != 0 ? c : a.Order.CompareTo(b.Order); });
@@ -248,9 +274,9 @@ namespace SephiriaOne
                 while (cleanup != null && cleanup.Count > 0 && current == token && CurrentScope)
                 {
                     var respawn = cleanup[cleanup.Count - 1]; cleanup.RemoveAt(cleanup.Count - 1);
-                    if (Connected(respawn.Subject) && respawn.Subject.Player.IsDead)
+                    if (Connected(respawn.Subject, respawn.Receipt) && respawn.Subject.Player.IsDead)
                     {
-                        if (!ReviveAllAction.TryRevive(respawn.Subject, () => current == token && CurrentScope, out string failure)) Broadcast(null, failure);
+                        if (!ReviveAllAction.TryRevive(respawn.Subject, () => current == token && CurrentScope && Connected(respawn.Subject, respawn.Receipt), out string failure)) Broadcast(null, failure);
                         else Broadcast(respawn.Subject.Player, L.T("Respawned!"));
                     }
                 }

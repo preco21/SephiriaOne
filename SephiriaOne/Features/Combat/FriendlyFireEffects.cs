@@ -11,15 +11,19 @@ namespace SephiriaOne
         }
         [ThreadStatic] private static DebuffScope debuffScope;
 
-        private static bool IsPlayerTeamPair(UnitAvatar source, UnitAvatar target) => source && target && source != target &&
-            (source is PlayerAvatar ? target is PlayerAvatar || target.NetworkLeader is PlayerAvatar :
-                TeamOwner(source) && target is PlayerAvatar);
+        private static bool IsPlayerTeamPair(UnitAvatar source, UnitAvatar target) =>
+            !ReferenceEquals(source, null) && !ReferenceEquals(target, null) && !ReferenceEquals(source, target) &&
+            (source is PlayerAvatar ? target is PlayerAvatar || !ReferenceEquals(TeamOwner(target), null) :
+                !ReferenceEquals(TeamOwner(source), null) && target is PlayerAvatar);
 
         private static bool CanAffectTeam(UnitAvatar source, UnitAvatar target)
         {
             var settings = SessionSettings.FriendlyFireForHit;
-            return settings.Enabled && settings.HasDamage &&
-                (source is PlayerAvatar || TeamOwner(source) != target);
+            var owner = TeamOwner(source);
+            var targetOwner = TeamOwner(target);
+            return settings.Enabled && settings.HasDamage && OwnerCurrent(source, owner) && FriendlyFireParticipants.Includes(owner) &&
+                (ReferenceEquals(targetOwner, null) || OwnerCurrent(target, targetOwner) && FriendlyFireParticipants.Includes(targetOwner)) &&
+                (source is PlayerAvatar || owner != target);
         }
 
         // These helpers replace only audited offensive item target filters.
@@ -41,7 +45,7 @@ namespace SephiriaOne
             __state = debuffScope;
             debuffScope = default; // Unrelated nested applications cannot borrow admission.
             if (!NetworkServer.active || !IsPlayerTeamPair(caster, __instance)) return true;
-            if (!CanAffectTeam(caster, __instance)) return false;
+            if (!CanAffectTeam(caster, __instance) || current.InFriendlyChain && !CurrentHitPermitted()) return false;
             debuffScope = new DebuffScope { Source = caster, Target = __instance };
             return true;
         }

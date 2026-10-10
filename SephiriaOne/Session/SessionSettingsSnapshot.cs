@@ -203,6 +203,21 @@ namespace SephiriaOne
                 lines.Add(L.T("Current values include native bonuses; base adjustments are tracked raw stat units. Commands and resets change the active session; /one save updates the saved copy."));
             }
 
+            List<FriendlyFirePlayerSnapshot> combatPlayers = null;
+            int selectedPlayers = 0;
+            if (sameSession && (content & SnapshotContent.Participants) != 0)
+            {
+                combatPlayers = new List<FriendlyFirePlayerSnapshot>();
+                seen.Clear();
+                foreach (var spawner in PlayerSpawner.MultiplayerList)
+                {
+                    var receipt = spawner ? FriendlyFireParticipants.Capture(spawner.PlayerAvatar) : null;
+                    if (receipt == null || !seen.Add(spawner.PlayerAvatar)) continue;
+                    bool selected = FriendlyFireParticipants.IsSelected(spawner.PlayerAvatar);
+                    combatPlayers.Add(new FriendlyFirePlayerSnapshot(spawner.PlayerAvatar.netId, CombatNames.Player(spawner.PlayerAvatar), receipt, selected));
+                }
+                selectedPlayers = FriendlyFireParticipants.SelectedCount;
+            }
             return new SettingsSnapshot(sameSession ? dungeon : null, epoch, runGeneration, intentRevision, host,
                 canMutate, canSave, canForget, ChoiceFeature.Available, saved.Valid, unavailable, fault,
                 lines, currentPlayers, active, savedSettings, savedSummary, sameSession ? policy.RabbitPotions : default,
@@ -215,7 +230,7 @@ namespace SephiriaOne
                 sameSession ? policy.JarSpawns : default, JarSpawnFeature.Available,
                 sameSession && policy.BatHpSteal, BatCostumeFeature.Available,
                 sameSession && policy.CollinStartingArtifact, CollinFeature.Available,
-                sameSession ? policy.EventSpawns : default, EventSpawnFeature.Available);
+                sameSession ? policy.EventSpawns : default, EventSpawnFeature.Available, combatPlayers, selectedPlayers);
         }
 
         private static readonly string[] ChoiceSnapshotNames = { "item", "weapon", "miracle" };

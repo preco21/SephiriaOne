@@ -24,12 +24,14 @@ namespace SephiriaOne
                 message = L.T("Session changed. Review the values and enter the action again.");
                 if (!EnsureResourceScope() || !ReferenceEquals(previousDungeon, DungeonManager.Instance) ||
                     !ReferenceEquals(previousRun, SaveManager.CurrentRun) || previousGeneration != ResourceGeneration) return false;
-                policy.Record(command); FriendlyFireKda.SetEnabled(policy.FriendlyFire.Enabled);
+                policy.Record(command); if (command.Reset) FriendlyFireParticipants.ResetSelection();
+                FriendlyFireKda.SetEnabled(policy.FriendlyFire.Enabled);
                 DeathmatchChanged(); message = DescribeFriendlyFire(policy.FriendlyFire); return true;
             }
             if (!PrepareCommand("combat", command.IsReset, out HostCommandContext context, out message)) return false;
             if (!Commit("combat", context.CreateBatch(), () =>
-                { policy.Record(command); FriendlyFireKda.SetEnabled(DeathmatchRuntime.Effective(policy.FriendlyFire).Enabled); }, out message)) return false;
+                { policy.Record(command); if (command.Reset) FriendlyFireParticipants.ResetSelection();
+                    FriendlyFireKda.SetEnabled(DeathmatchRuntime.Effective(policy.FriendlyFire).Enabled); }, out message)) return false;
             message = DescribeFriendlyFire(DeathmatchRuntime.Effective(policy.FriendlyFire));
             return true;
         }

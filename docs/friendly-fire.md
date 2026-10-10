@@ -1,5 +1,10 @@
 # Friendly fire
 
+Version `0.45.0` adds [shared temporary participant selection](selective-friendly-fire.md):
+empty means everyone; a nonempty list requires both players selected. Combat and
+Deathmatch show the same checkboxes, Select All and Reset selection. Connections
+never inherit their previous selection after reconnect or a new run.
+
 Version `0.44.0` adds [fractional percentages](#fractional-damage-0440-2026-10-11)
 down to `0.01%`, including precise entry beside the Combat slider.
 

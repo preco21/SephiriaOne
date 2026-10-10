@@ -9,7 +9,7 @@ internal static class SnapshotDetailTests
         if (compact.Lines.Count != 0) throw new Exception("Non-Status panel snapshots must not build diagnostic lines.");
         foreach (var property in typeof(SettingsSnapshot).GetProperties())
         {
-            if (property.Name is "Lines" or "Players" or "ActiveSettings" or "SavedSettings" or "Merchants") continue;
+            if (property.Name is "Lines" or "Players" or "ActiveSettings" or "SavedSettings" or "Merchants" or "FriendlyFirePlayers" or "FriendlyFireSelectedCount") continue;
             if (!Equals(property.GetValue(full), property.GetValue(compact)))
                 throw new Exception("Compact snapshot changed " + property.Name);
         }
@@ -29,7 +29,7 @@ internal static class SnapshotDetailTests
         }
         foreach (var content in new[] { SnapshotContent.None, SnapshotContent.Stats, SnapshotContent.Choices,
             SnapshotContent.Resources, SnapshotContent.Presets, SnapshotContent.Stats | SnapshotContent.Resources,
-            SnapshotContent.Diagnostics, SnapshotContent.All })
+            SnapshotContent.Participants, SnapshotContent.Diagnostics, SnapshotContent.All })
             AssertSelectedValues(full, SessionSettings.ReadSnapshot(content), content);
     }
 
@@ -39,11 +39,24 @@ internal static class SnapshotDetailTests
         if (diagnostics) content = SnapshotContent.All;
         foreach (var property in typeof(SettingsSnapshot).GetProperties())
         {
-            if (property.Name is "Lines" or "Players" or "ActiveSettings" or "SavedSettings" or "SavedSummary" or "Merchants") continue;
+            if (property.Name is "Lines" or "Players" or "ActiveSettings" or "SavedSettings" or "SavedSummary" or "Merchants" or "FriendlyFirePlayers" or "FriendlyFireSelectedCount") continue;
             if (!Equals(property.GetValue(full), property.GetValue(selected)))
                 throw new Exception("Selected snapshot changed " + property.Name + ": " + content);
         }
         bool presets = (content & SnapshotContent.Presets) != 0;
+        if ((content & SnapshotContent.Participants) != 0)
+        {
+            if (selected.FriendlyFireSelectedCount != full.FriendlyFireSelectedCount || selected.FriendlyFirePlayers.Count != full.FriendlyFirePlayers.Count)
+                throw new Exception("Participant snapshot changed roster/selection");
+            for (int i = 0; i < selected.FriendlyFirePlayers.Count; i++)
+            {
+                var left = full.FriendlyFirePlayers[i]; var right = selected.FriendlyFirePlayers[i];
+                if (left.Id != right.Id || left.Name != right.Name || left.Selected != right.Selected || !ReferenceEquals(left.Identity, right.Identity))
+                    throw new Exception("Participant snapshot changed current player receipt");
+            }
+        }
+        else if (selected.FriendlyFirePlayers.Count != 0 || selected.FriendlyFireSelectedCount != 0)
+            throw new Exception("Unrelated tab captured unused participants");
         if (!(presets ? full.ActiveSettings.SequenceEqual(selected.ActiveSettings) &&
                 full.SavedSettings.SequenceEqual(selected.SavedSettings) && full.SavedSummary == selected.SavedSummary :
                 selected.ActiveSettings.Count == 0 && selected.SavedSettings.Count == 0 && selected.SavedSummary == "") ||

@@ -1,6 +1,6 @@
 # Development knowledge index
 
-Maintained: 2026-10-11 (Asia/Seoul), addon `0.44.0`.
+Maintained: 2026-10-11 (Asia/Seoul), addon `0.45.0`.
 
 Agents and contributors can refer to `docs/*` for research, implementation
 materials, native game findings and references. Start here before repeating an
@@ -41,6 +41,7 @@ distinguishes native chapter/outcome markers from actual run settlement.
 | Costume-owned effects and items | [Rabbit starting artifact](rabbit-starting-artifact.md), [Collin grants](collin-starting-artifact.md), [Bat HP steal](wingless-bat.md), [given-item restrictions](item-restrictions.md) |
 | Encounters and spawning | [Merchant variants/current rules](merchant-variants.md), [initial Wandering Merchant design](wandering-merchant.md), [Mystic Jar](mystic-jar.md), [random event rooms](random-events.md) |
 | Combat | [Friendly fire, KDA, companions, reflection and revive-all recovery](friendly-fire.md), [offensive artifact targeting audit](friendly-fire-artifacts.md) |
+| Combat participants | [Temporary selections, Select All/reset, connection lifetimes and shared deathmatch eligibility](selective-friendly-fire.md) |
 | Deathmatch | [Temporary timed matches, respawns, rankings and toggle synchronization](deathmatch.md) |
 | Reliability and performance | [Disconnect investigation](disconnect-investigation.md), [penalty warnings/transport evidence](penalty-stat-sync-review.md), [performance reviews](performance-review.md) |
 | Releases and dependencies | [GitHub updater](github-updates.md), [updater investigation](github-release-updates-investigation.md), [third-party notices](third-party-notices.md) |

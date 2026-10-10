@@ -39,6 +39,7 @@ namespace SephiriaOne
             var harmony = new Harmony(Id);
             try
             {
+                FriendlyFireParticipantHooks.Install(harmony);
                 harmony.Patch(apply, prefix: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.BeforeHit)),
                     transpiler: new HarmonyMethod(typeof(FriendlyFireTranspiler), nameof(FriendlyFireTranspiler.Rewrite)),
                     finalizer: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.AfterHit)));

@@ -10,6 +10,7 @@ namespace SephiriaOne
             internal string Killer, Victim;
             internal FriendlyFireKda.Death Kda;
             internal long ScoreEpoch;
+            internal long ParticipantEpoch;
             internal bool MatchDeath;
         }
 
@@ -20,12 +21,14 @@ namespace SephiriaOne
             if (__instance is PlayerAvatar dying) __state.MatchDeath = DeathmatchRuntime.EnterDeath(dying);
             try
             {
-                bool attributed = current.Friendly && current.Victim == __instance &&
+                RememberCompanionOwner(__instance);
+                bool attributed = CurrentHitPermitted() && current.Victim == __instance &&
                     ReferenceEquals(current.Damage, diedFrom) && current.Attacker && current.KdaEpoch == FriendlyFireKda.Epoch;
                 if (__instance is PlayerAvatar victim)
                     __state.Kda = FriendlyFireKda.BeforeDeath(victim, attributed ? current.Attacker : null, current.KdaEpoch);
                 if (!attributed) return;
                 __state.ScoreEpoch = current.KdaEpoch;
+                __state.ParticipantEpoch = FriendlyFireParticipants.Epoch;
                 // Death callbacks can clear names/ownership, destroy avatars or
                 // reuse pooled damage. Snapshot only on the death boundary.
                 __state.Killer = NoticeName(current.Attacker); __state.Victim = NoticeName(__instance);
@@ -42,7 +45,8 @@ namespace SephiriaOne
                 if (__instance is PlayerAvatar dead) DeathmatchRuntime.Died(dead);
                 // A reset/toggle/run transition invalidates every old notice,
                 // including killer totals captured for NPC/companion victims.
-                if (__state.Killer != null && __state.ScoreEpoch != FriendlyFireKda.Epoch) return;
+                if (__state.Killer != null && (!CurrentHitPermitted() || __state.ScoreEpoch != FriendlyFireKda.Epoch ||
+                    __state.ParticipantEpoch != FriendlyFireParticipants.Epoch)) return;
                 if (__instance is PlayerAvatar victim && FriendlyFireKda.CompleteDeath(victim, __state.Kda))
                 {
                     __state.Killer = __state.Kda.Killer.Label(__state.Killer);

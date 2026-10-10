@@ -82,6 +82,7 @@ namespace SephiriaOne
         private static void ClearScope()
         {
             DeathmatchRuntime.Stop(false, false);
+            FriendlyFireParticipants.Clear();
             RestoreBat();
             ItemRestrictionFeature.Clear();
             MerchantFeature.Clear();
@@ -107,6 +108,7 @@ namespace SephiriaOne
 
         private static void OnStartSession(bool isSaved)
         {
+            if (enabled && NetworkServer.active) FriendlyFireParticipants.Clear();
             if (enabled && NetworkServer.active && dungeon && ReferenceEquals(dungeon, DungeonManager.Instance))
             { DeathmatchRuntime.Stop(false, false); runGeneration++; FriendlyFireKda.ClearLives(); restoreFountainLimit = true; session.Invalidate(dungeon, SyncDomain.Limits); }
         }
