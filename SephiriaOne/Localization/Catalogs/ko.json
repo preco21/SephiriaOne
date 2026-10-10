@@ -584,7 +584,6 @@
   "Automatic update checks: {0}": "자동 업데이트 확인: {0}",
   "Downloading and installing require your Update action. Saved settings and translations are preserved.": "업데이트 설치를 선택해야 다운로드와 설치가 진행됩니다. 저장된 설정과 번역은 유지됩니다.",
   "Local addon updates. New code activates after a full game restart.": "로컬 모드 업데이트입니다. 새 버전은 게임을 완전히 재시작한 뒤 적용됩니다.",
-  "Center": "가운데로",
   "Close": "닫기",
   "Another native menu currently owns input.": "현재 다른 기본 메뉴에서 입력을 사용 중입니다.",
   "{0} ready player(s). Checkboxes apply immediately; amounts require an action.": "준비된 플레이어 {0}명. 체크박스는 즉시 적용되며, 수치는 작업 버튼으로 적용합니다."

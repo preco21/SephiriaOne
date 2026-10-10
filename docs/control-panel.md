@@ -7,7 +7,7 @@ the match. See [timing, results and recovery](deathmatch.md).
 
 Version `0.39.0` implements the separate translucent, draggable window selected
 from the [UI comparison](ui-revamp-investigation.md). Every feature panel is a
-tab. Drag the title bar, use **Center** to reposition the window, and select a
+tab. Drag the title bar to reposition the window, and select a
 stat from the dropdown. See [window and hotkey details](tabbed-settings-ui.md).
 
 Added in `0.13.0`. In a hosted town or run, open the pause menu and click
@@ -163,7 +163,7 @@ Automated checks do not execute Unity's event loop or a real multiplayer session
 No deployment was performed for this change. After manual installation, verify:
 
 1. Open through chat, pause launcher and the configured hotkey, close with
-   Close/Escape, and reopen repeatedly. Drag, center and resize the window.
+   Close/Escape, and reopen repeatedly. Drag and resize the window.
    Confirm native menu focus is restored and held movement/attack input does not
    leak through the open panel. Check scrolling, numeric typing and screen scaling.
 2. Compare panel and chat actions for every family, including rejection messages,

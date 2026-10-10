@@ -584,7 +584,6 @@
   "Automatic update checks: {0}": "Automatic update checks: {0}",
   "Downloading and installing require your Update action. Saved settings and translations are preserved.": "Downloading and installing require your Update action. Saved settings and translations are preserved.",
   "Local addon updates. New code activates after a full game restart.": "Local addon updates. New code activates after a full game restart.",
-  "Center": "Center",
   "Close": "Close",
   "Another native menu currently owns input.": "Another native menu currently owns input.",
   "{0} ready player(s). Checkboxes apply immediately; amounts require an action.": "{0} ready player(s). Checkboxes apply immediately; amounts require an action."

@@ -46,7 +46,6 @@ namespace SephiriaOne
             title.gameObject.AddComponent<Image>().color = new Color32(23, 35, 50, 255);
             title.gameObject.AddComponent<PanelWindowDrag>().Initialize((RectTransform)transform, window, geometry);
             widgets.Text(title, "Title", "SephiriaOne", 16, 8, 530, 26, 20);
-            widgets.Button(window, "Center", 582, 8, 94, 28, CenterWindow);
             var close = widgets.Button(window, "Close", 688, 8, 94, 28, Close);
             defaultSelectable = close.gameObject;
             scopeLabel = widgets.Text(window, "Scope", "Host controls  /  All current and joining players", 16, 44, 768, 22, 12);
@@ -316,7 +315,6 @@ namespace SephiriaOne
             window.localScale = Vector3.one * geometry.Scale;
             window.anchoredPosition = new Vector2(geometry.X, geometry.Y);
         }
-        private void CenterWindow() { geometry.Center(); window.anchoredPosition = Vector2.zero; }
         private void AddCheckbox(string label, float x, float y, float width, float height,
             Func<SettingsSnapshot, bool> value, Func<SettingsSnapshot, bool> available, string prefix, Func<SettingsSnapshot, bool> mutable = null)
         {

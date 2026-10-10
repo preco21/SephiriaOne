@@ -8,7 +8,8 @@ Unity uGUI/TextMeshPro components and the existing settings services.
 
 Open with `/one ui`, the **SephiriaOne** pause-menu button, or your configured
 shortcut. The window is separate from the pause menu. Drag its title bar to
-move it; **Center** restores its position. It clamps to the current canvas and
+move it. The title bar has a **Close** button; the Center button was removed
+on 2026-10-10. The window clamps to the current canvas and
 scales down for smaller screens. Its position lasts for the current UI instance.
 
 All existing pages are tabs: **Stats, Fountain, Choices, Resources, Presets,
@@ -121,8 +122,8 @@ not Unity canvas rendering or the complete addon.
 
 Automated fixtures and installed-DLL contracts do not run Unity's rendering or
 input event loop. No game launch or deployment is part of this work. After
-manual installation, check EN/KO wrapping, dropdown scrolling, dragging and
-Center at different resolutions; shortcut capture/cancel/clear and restart
+manual installation, check EN/KO wrapping, dropdown scrolling and dragging
+at different resolutions; shortcut capture/cancel/clear and restart
 persistence; native rebinding conflicts; chat/IME focus; repeated open/close,
 session re-entry and addon unload; and native focus restoration after closing.
 
