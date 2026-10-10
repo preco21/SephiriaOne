@@ -158,6 +158,8 @@ namespace SephiriaOne
                     recognized = true;
                     if (combat == FriendlyFireParseResult.Help) return Reply(true, FriendlyFireCommand.Usage + " " + FriendlyFireSelectionCommand.Usage);
                     if (combat == FriendlyFireParseResult.Invalid) return Reply(false, FriendlyFireCommand.Usage + " " + FriendlyFireSelectionCommand.Usage);
+                    if (combat == FriendlyFireParseResult.ResetScores)
+                        return Reply(SessionSettings.TryResetFriendlyFireScores(out string scoreMessage), scoreMessage);
                     if (combat == FriendlyFireParseResult.Status)
                     {
                         var snapshot = SessionSettings.ReadSnapshot();

@@ -8,6 +8,30 @@ namespace SephiriaOne
         // policy or rely on the joining connection's prior incarnation.
         internal static FriendlyFireSettings FriendlyFireForHit => EnsureResourceScope() ? DeathmatchRuntime.Effective(policy.FriendlyFire) : default;
 
+        internal static bool CanResetFriendlyFireScores => enabled && NetworkServer.active && !DeathmatchRuntime.RecoveryPending &&
+            (DeathmatchRuntime.IsRunning ? DeathmatchRuntime.CanResetScores :
+                dungeon && dungeon.isServer && dungeon.netId != 0 && ReferenceEquals(dungeon, DungeonManager.Instance) &&
+                ReviveAllAction.IsRunOpen(dungeon, SaveManager.CurrentRun));
+
+        internal static bool TryResetFriendlyFireScores(out string message)
+        {
+            message = L.T("Only the host can reset K/D/A.");
+            if (!NetworkServer.active) return false;
+            // Match reset also clears retained offline ranking entries. Do not
+            // fall through from an expired/closing match into the casual path.
+            if (DeathmatchRuntime.IsRunning || DeathmatchRuntime.RecoveryPending)
+                return DeathmatchRuntime.ResetScores(out message);
+            message = L.T("K/D/A reset requires a current hosted session that is not ending.");
+            if (!EnsureResourceScope() || !CanResetFriendlyFireScores) return false;
+            // Score-only: no policy write, reconciliation, selection edit, or
+            // native revival. Loading players and unrelated faults cannot veto it.
+            FriendlyFireKda.ResetScores();
+            message = L.T("Friendly-fire K/D/A scores reset.");
+            try { dungeon.Chat(null, "SephiriaOne", message); }
+            catch (System.Exception error) { UnityEngine.Debug.LogWarning("[SephiriaOne] Score reset notice failed: " + error); }
+            return true;
+        }
+
         internal static bool TryExecuteFriendlyFire(FriendlyFireCommand command, out string message)
         {
             message = L.T("Only the host can change friendly fire.");

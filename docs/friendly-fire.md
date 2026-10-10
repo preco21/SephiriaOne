@@ -1,5 +1,19 @@
 # Friendly fire
 
+Version `0.45.1` makes **Reset K/D/A** available in Combat and Deathmatch during
+ordinary hosted friendly fire, without starting a match. Use
+`/one friendlyfire resetkda`; `/one deathmatch resetkda` also routes to the same
+action. It clears all scores and prior assists while preserving friendly fire,
+damage scale, selections, and native lives. During deathmatch it also clears
+retained ranking entries without changing match or respawn timers. Unrelated
+stat faults/loading players do not block this score-only action. EN/KO feedback
+is broadcast through native chat; no guest addon is required.
+
+Verification for `0.45.1`: 1,546 runtime checks, 729 executable combat checks,
+the portable policy/localization suites and installed-game/UI wiring contracts
+passed. Debug/Release built with zero warnings/errors. No deployment or live
+Unity UI/multiplayer test was performed.
+
 Version `0.45.0` adds [shared temporary participant selection](selective-friendly-fire.md):
 empty means everyone; a nonempty list requires both players selected. Combat and
 Deathmatch show the same checkboxes, Select All and Reset selection. Connections
@@ -55,6 +69,7 @@ Commands use the same host service as the panel:
 /one friendlyfire damage 200
 /one friendlyfire off
 /one friendlyfire status
+/one friendlyfire resetkda
 /one friendlyfire reset
 /one save
 ```

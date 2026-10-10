@@ -1,4 +1,8 @@
 {
+  "Only the host can reset K/D/A.": "Only the host can reset K/D/A.",
+  "K/D/A reset requires a current hosted session that is not ending.": "K/D/A reset requires a current hosted session that is not ending.",
+  "Friendly-fire K/D/A scores reset.": "Friendly-fire K/D/A scores reset.",
+  "Friendly fire: /one friendlyfire on|off|status|reset|resetkda; /one friendlyfire damage 0..300 (percent, up to 2 decimals; e.g. 0.1). Default 100. /one save persists settings.": "Friendly fire: /one friendlyfire on|off|status|reset|resetkda; /one friendlyfire damage 0..300 (percent, up to 2 decimals; e.g. 0.1). Default 100. /one save persists settings.",
   "Host · Combat participants": "Host · Combat participants",
   "Players: /one friendlyfire players | player <id> on|off | players all|reset. No selection includes everyone.": "Players: /one friendlyfire players | player <id> on|off | players all|reset. No selection includes everyone.",
   "Player connection changed. Refresh the player list and try again.": "Player connection changed. Refresh the player list and try again.",

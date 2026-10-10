@@ -16,7 +16,7 @@ namespace SephiriaOne
             if (!Mirror.NetworkServer.active) { message = L.T("Only the host can control deathmatch."); return true; }
             if (parts.Length <= 3 && op == "status") { success = true; message = DeathmatchRuntime.Describe(); }
             else if (parts.Length == 3 && op == "start") success = DeathmatchRuntime.Start(out message);
-            else if (parts.Length == 3 && op == "resetkda") success = DeathmatchRuntime.ResetScores(out message);
+            else if (parts.Length == 3 && op == "resetkda") success = SessionSettings.TryResetFriendlyFireScores(out message);
             else if (parts.Length == 3 && op == "stop")
             { DeathmatchRuntime.Stop(true, true); success = true; message = L.T("Deathmatch stopped."); }
             else if (parts.Length == 4 && op == "duration" && int.TryParse(parts[3], NumberStyles.None, CultureInfo.InvariantCulture,

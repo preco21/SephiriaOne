@@ -61,6 +61,9 @@ internal static class LanguageRuntimeTests
                 L.T("Reset K/D/A") == "K/D/A 초기화" && DeathmatchCommand.Usage.Contains("resetkda"),
                 "Deathmatch reset help, button, command feedback and native guest notice support Korean");
             DeathmatchRuntime.Stop(false, false);
+            check(SettingsActions.Execute("/one friendlyfire resetkda").Messages.Contains("팀킬 K/D/A 기록을 초기화했습니다.") &&
+                DungeonManager.Instance.ChatMessages.Any(x => x.Message == "팀킬 K/D/A 기록을 초기화했습니다.") &&
+                FriendlyFireCommand.Usage.Contains("resetkda"), "Casual friendly-fire score reset feedback, help and guest notice support Korean");
         }
         finally { NetworkServer.active = true; L.Shutdown(); }
     }

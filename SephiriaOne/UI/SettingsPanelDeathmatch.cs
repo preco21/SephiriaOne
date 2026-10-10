@@ -23,7 +23,7 @@ namespace SephiriaOne
             bool host = snapshot.HostActive && snapshot.SessionIdentity != null;
             deathmatchStart.interactable = host && DeathmatchRuntime.CanStart;
             deathmatchStop.interactable = host && DeathmatchRuntime.IsRunning;
-            deathmatchResetKda.interactable = host && DeathmatchRuntime.CanResetScores;
+            deathmatchResetKda.interactable = host && SessionSettings.CanResetFriendlyFireScores;
             deathmatchApply.interactable = amount.interactable = host;
             availability.text = DeathmatchRuntime.Describe();
             availability.color = PanelWidgets.Muted;

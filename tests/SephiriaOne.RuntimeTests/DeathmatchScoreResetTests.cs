@@ -44,6 +44,9 @@ internal static class DeathmatchScoreResetTests
             "Reset preserves match duration, policy revision, friendly fire and pending respawn");
         check(DungeonManager.Instance.ChatMessages.Count(x => x.Message == "Deathmatch K/D/A scores reset.") == 1,
             "Reset announces once through stock guest chat");
+        check(SettingsActions.Execute("/one friendlyfire resetkda").Success && DeathmatchRuntime.IsRunning &&
+            DeathmatchRuntime.Describe() == remaining && guest.PlayerAvatar.IsDead && guest.PlayerAvatar.ReviveCalls == 0,
+            "Combat reset command also preserves the running match and its pending respawn");
         At(6); check(guest.PlayerAvatar.IsDead, "Reset does not shorten the old respawn deadline");
         At(7); check(!guest.PlayerAvatar.IsDead, "Reset does not extend the old respawn deadline");
         FriendlyFireKda.Damage(helper.PlayerAvatar, guest.PlayerAvatar, FriendlyFireKda.Epoch);
@@ -101,9 +104,10 @@ internal static class DeathmatchScoreResetTests
         UnityEngine.Time.unscaledTime = 13;
         check(!SettingsActions.Execute(Command).Success && FriendlyFireKda.For(host.PlayerAvatar).Kills == 4, "Expired match cannot reset results before its closing tick");
         At(13);
-        check(!SettingsActions.Execute(Command).Success, "Idle deathmatch cannot reset normal friendly-fire scores");
+        check(SettingsActions.Execute(Command).Success, "Existing reset command also works after a match has ended");
         SettingsActions.Execute("/one friendlyfire on"); FriendlyFireKda.For(host.PlayerAvatar).Kills = 6;
-        check(!SettingsActions.Execute(Command).Success && FriendlyFireKda.For(host.PlayerAvatar).Kills == 6, "Normal friendly-fire scores stay isolated");
+        check(SettingsActions.Execute(Command).Success && FriendlyFireKda.For(host.PlayerAvatar).Kills == 0 && SessionSettings.FriendlyFireForHit.Enabled,
+            "Existing deathmatch reset command resets casual scores without changing friendly fire");
         host = Begin(); FriendlyFireKda.For(host.PlayerAvatar).Kills = 7;
         SaveManager.CurrentRun = new();
         check(!SettingsActions.Execute(Command).Success && FriendlyFireKda.For(host.PlayerAvatar).Kills == 7, "Stale run cannot reset old match scores");

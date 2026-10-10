@@ -1,4 +1,8 @@
 {
+  "Only the host can reset K/D/A.": "호스트만 K/D/A 기록을 초기화할 수 있습니다.",
+  "K/D/A reset requires a current hosted session that is not ending.": "종료 중이 아닌 현재 호스트 세션에서만 K/D/A 기록을 초기화할 수 있습니다.",
+  "Friendly-fire K/D/A scores reset.": "팀킬 K/D/A 기록을 초기화했습니다.",
+  "Friendly fire: /one friendlyfire on|off|status|reset|resetkda; /one friendlyfire damage 0..300 (percent, up to 2 decimals; e.g. 0.1). Default 100. /one save persists settings.": "팀킬: /one friendlyfire on|off|status|reset|resetkda; /one friendlyfire damage 0..300 (%, 소수 둘째 자리까지; 예: 0.1). 기본값 100. /one save로 설정을 저장합니다.",
   "Host · Combat participants": "호스트 · 전투 참가자",
   "Players: /one friendlyfire players | player <id> on|off | players all|reset. No selection includes everyone.": "참가자: /one friendlyfire players | player <ID> on|off | players all|reset. 선택한 플레이어가 없으면 모두 참가합니다.",
   "Player connection changed. Refresh the player list and try again.": "플레이어 연결이 변경되었습니다. 목록을 새로 고친 뒤 다시 시도하세요.",

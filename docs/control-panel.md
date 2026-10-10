@@ -1,5 +1,9 @@
 # Host settings panel
 
+Version `0.45.1` exposes **Reset K/D/A** in both Combat and Deathmatch. Both
+buttons work for regular hosted friendly fire and active deathmatches without
+changing combat settings, selections, match duration or pending respawns.
+
 Version `0.45.0` adds the same scrolling participant checkboxes, **Select All**
 (모두 선택) and **Reset selection** (선택 초기화) to Combat and Deathmatch. Empty
 selection includes everyone; any selection limits both features to selected
@@ -73,7 +77,7 @@ unapplied drafts without sending any gameplay command.
 | Presets | Save current applied settings, forget the saved copy, or refresh it from disk. Active intent and saved intent are shown separately. |
 | Status | Current intent, player values, revisions, synchronization outcomes, native name status and fault details. Scroll for the complete readout. |
 | Items | Default-off On/Off and Reset controls for given-item sale restrictions and owner-bound drops, including Fountain sharing. See [scope and native limits](item-restrictions.md); intrinsic costume-curse no-drop properties remain. |
-| Combat | Friendly fire On/Off, a 0–300% damage slider/input with Apply damage, Reset (off/100%), Revive all players, shared participant checkboxes and Select All/Reset selection. |
+| Combat | Friendly fire On/Off, a 0–300% damage slider/input with Apply damage, Reset (off/100%), Reset K/D/A, Revive all players, shared participant checkboxes and Select All/Reset selection. |
 | Deathmatch | Set duration (10–3600 seconds, default 300), Start/Stop, Reset K/D/A, remaining time and the shared participant selection controls. |
 | Spawns | Choose Mystic Jars or random events. Apply a chance or native-rate multiplier using the selected feature's existing limits; Reset restores native. Existing generated results are preserved. |
 | Costumes | Independent Bat HP-steal reduction and Collin starting-artifact toggles, resets and compatibility readouts. |

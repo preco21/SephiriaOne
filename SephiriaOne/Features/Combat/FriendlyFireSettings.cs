@@ -29,7 +29,7 @@ namespace SephiriaOne
             command.Percent.HasValue ? new FriendlyFireSettings(Enabled, command.Percent.Value) : WithEnabled(command.Enabled);
     }
 
-    internal enum FriendlyFireParseResult { NotCommand, Help, Status, Invalid, Valid }
+    internal enum FriendlyFireParseResult { NotCommand, Help, Status, ResetScores, Invalid, Valid }
     internal readonly struct FriendlyFireCommand
     {
         public bool Reset { get; }
@@ -38,7 +38,7 @@ namespace SephiriaOne
         public FriendlyFireCommand(bool enabled, decimal? percent = null, bool reset = false)
         { Enabled = enabled; Percent = percent; Reset = reset; }
         public bool IsReset => Reset || !Percent.HasValue && !Enabled;
-        public static string Usage => L.T("Friendly fire: /one friendlyfire on|off|status|reset; /one friendlyfire damage 0..300 (percent, up to 2 decimals; e.g. 0.1). Default 100. /one save persists settings.");
+        public static string Usage => L.T("Friendly fire: /one friendlyfire on|off|status|reset|resetkda; /one friendlyfire damage 0..300 (percent, up to 2 decimals; e.g. 0.1). Default 100. /one save persists settings.");
         internal static bool TryPercent(string text, out decimal percent)
         {
             string number = (text ?? "").Trim();
@@ -59,6 +59,7 @@ namespace SephiriaOne
             {
                 if (op == "help") return FriendlyFireParseResult.Help;
                 if (op == "status") return FriendlyFireParseResult.Status;
+                if (op == "resetkda") return FriendlyFireParseResult.ResetScores;
                 if (op == "on" || op == "off" || op == "reset")
                 { command = new FriendlyFireCommand(op == "on", reset: op == "reset"); return FriendlyFireParseResult.Valid; }
             }

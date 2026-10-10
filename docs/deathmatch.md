@@ -53,8 +53,9 @@ safe-area protection, invulnerability, guards and defenses remain in effect.
   fresh scoring; an already-unwinding hit/death cannot restore old points or its
   kill notice. The match, friendly-fire setting, participant/tie-break identities
   and existing respawn deadlines remain unchanged. Everyone receives a native
-  chat notice. Outside a current match, the action is unavailable and does not
-  reset ordinary friendly-fire scores.
+  chat notice. Since `0.45.1`, the same action also resets ordinary friendly-fire
+  scores outside a match, from either tab or either `resetkda` command family.
+  Expired/closing matches still reject resets until their results finish.
 - Touching friendly-fire **On**, **Off**, or **Reset** immediately stops the match,
   including repeated commands selecting the current value. Pending players revive;
   the requested toggle selection then takes effect. Read-only status/help and

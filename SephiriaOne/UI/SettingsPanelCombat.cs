@@ -9,11 +9,13 @@ namespace SephiriaOne
     {
         private Slider friendlyDamage;
         private bool friendlyDraft;
-        private Button reviveAll;
+        private Button reviveAll, combatResetKda;
 
         private void BuildCombatEditor()
         {
-            widgets.Text(pageRoot, "FriendlyTitle", "Friendly fire", 16, 0, 273, 24, 14);
+            widgets.Text(pageRoot, "FriendlyTitle", "Friendly fire", 16, 0, 136, 24, 14);
+            combatResetKda = widgets.Button(pageRoot, "Reset K/D/A", 162, 0, 127, 24,
+                () => Execute("/one friendlyfire resetkda", true));
             AddCheckbox("Friendly fire", 16, 28, 174, 25, s => s.FriendlyFire.Enabled, s => s.FriendlyFireAvailable, "/one friendlyfire",
                 s => s.CanMutate || DeathmatchRuntime.IsRunning && s.HostActive && s.SessionIdentity != null);
             resetAll = widgets.Button(pageRoot, "Reset", 200, 28, 89, 25, () => Execute("/one friendlyfire reset", true));
@@ -40,6 +42,7 @@ namespace SephiriaOne
         {
             if (!friendlyDamage) return;
             if (reviveAll) reviveAll.interactable = ReviveAllAction.CanExecute;
+            if (combatResetKda) combatResetKda.interactable = snapshot.HostActive && snapshot.SessionIdentity != null && SessionSettings.CanResetFriendlyFireScores;
             amount.interactable = friendlyDamage.interactable = snapshot.CanMutate && snapshot.FriendlyFireAvailable;
             if (!friendlyDraft)
             {

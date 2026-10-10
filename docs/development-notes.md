@@ -14,6 +14,13 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+Version `0.45.1` fixes score-reset availability for casual friendly fire. Combat
+now has its own Reset K/D/A button; both tabs and the `friendlyfire`/`deathmatch`
+`resetkda` commands share one action. Match reset retains its expiry/recovery
+guards and offline ranking cleanup; ordinary score reset does not enter stat
+reconciliation or change toggle, scale, selection or lives. Regression coverage
+checks score identity, old receipts/assists, localization and both UI/command paths.
+
 Version `0.45.0` adds temporary player selections shared by friendly fire and
 deathmatch. Empty selection includes everyone; otherwise both players must be
 selected. Both tabs offer Select All and Reset selection alongside per-player
