@@ -31,6 +31,7 @@ implements the approved option 2; the [panel guide](control-panel.md) covers usa
 | Persistence and UI | [Presets](session-preset.md), [control panel](control-panel.md), [panel implementation](control-panel-implementation.md), [localization](localization.md) |
 | UI revamp options | [Native Settings vs separate draggable window vs current-panel refresh](ui-revamp-investigation.md), including widget support, input/lifecycle constraints and the recommended direction |
 | Names and stock guests | [Compatibility scope](presentation-compatibility.md), [gradient](name-gradient.md), [historical UI omissions](name-ui-follow-up.md) |
+| Portal ping audio | [Native notification/audio coupling and host-only limitation](portal-ping-investigation.md); research only, pending a scope decision |
 | Rabbit healing | [Potion options](rabbit-potions.md), [shared particles](rabbit-shared-healing-visuals.md), [healing-book feasibility](healing-item-investigation.md), [level-up potions](rabbit-level-up-potions.md) |
 | Costume-owned effects and items | [Rabbit starting artifact](rabbit-starting-artifact.md), [Collin grants](collin-starting-artifact.md), [Bat HP steal](wingless-bat.md), [given-item restrictions](item-restrictions.md) |
 | Encounters and spawning | [Merchant variants/current rules](merchant-variants.md), [initial Wandering Merchant design](wandering-merchant.md), [Mystic Jar](mystic-jar.md), [random event rooms](random-events.md) |
