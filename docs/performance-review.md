@@ -1,5 +1,64 @@
 # Synchronization performance review
 
+## Follow-up: 0.42.0 panel snapshots (2026-10-10)
+
+Reviewed the current periodic controllers, shared synchronization, deathmatch and
+companion guards, and panel snapshot consumers. Baseline was `c186f34`; the
+[plan](plans/2026-10-10-panel-snapshot-performance.md) records the scope. The
+unchanged synchronization workloads already allocate zero in the fixture. Native
+ownership/readiness checks, command validation, boundary flushes, combat rules,
+deathmatch cadence and merchant randomness remain unchanged.
+
+Every non-Status tab still captured all 27 player stats, extra choices and five
+resource descriptions four times per second. That included inventory/talent
+scans and formatting active/saved settings even on tabs displaying only toggles.
+Snapshots now accept explicit `SnapshotContent` sections. The panel requests
+Stats, Choices, Resources or Presets for those tabs, and base records for Fountain
+and feature-only tabs. Status and unknown future tabs request everything.
+
+Every capture still reads current session/run identity, ready-player membership,
+permissions, faults, compatibility flags, feature options and preset validity.
+The player records retain IDs/names and Fountain totals; omitted dictionaries
+are immutable empty views. Selected values are read afresh on every capture.
+Diagnostics imply all sections. The original full/compact API and chat output
+remain supported, and preset refresh/invalidation behavior is unchanged. No
+cross-frame gameplay or text cache, slower polling or new dependencies were added.
+The fixed choice-name array is also shared instead of allocated per player.
+
+Release .NET 10 fixture, five players with all 27 relative stats and existing
+Fountain/Choices/resource settings active:
+
+| Snapshot used by tab | Before | After | Allocation reduction |
+| --- | ---: | ---: | ---: |
+| Fountain, Rabbit, Merchant, Items, Combat, Spawns, Costumes, Updates, Deathmatch | 25,432 B | 1,760 B | 93.1% |
+| Stats | 25,432 B | 8,000 B | 68.5% |
+| Choices | 25,432 B | 3,040 B | 88.0% |
+| Resources | 25,432 B | 11,200 B | 56.0% |
+| Presets | 25,432 B | 8,232 B | 67.6% |
+| Full Status report | 116,558 B | 116,318 B | 0.2% |
+
+Amounts are per refresh. Feature-only tabs avoid about 95 KB/second of managed
+allocation at the existing four refreshes per second. All three unchanged-sync
+workloads still measure **0 B/tick**. Legacy captures of all values without
+diagnostics measure 25,192 B/refresh. Sample capture times were 1.45 microseconds
+for base records and 2.37–14.86 for selected sections, versus 31.59 for the old
+non-Status path; timings vary with JIT/runtime state and are not asserted.
+
+The new base-record allocation budget first failed with the old capture behavior
+(25,432 B against a 4 KiB ceiling) and passes with section selection. Regression
+checks compare selected sections, common fields and full diagnostics throughout
+the existing pending-join, fault recovery, native-edit, saved-file, host-replacement
+and EN/KO scenarios. Additional checks cover duplicate roster entries, immutable
+earlier snapshots and empty dictionaries, no writes or revision changes, teardown,
+and the actual compiled panel's tab-to-section selection and refresh entry points.
+
+Validation: 1,373 shared runtime checks plus 69 Bat lifecycle checks; all allocation
+budgets; 22 panel geometry/checkbox/lifetime checks; the portable and installed-game
+compatibility suite, including 3,066 localization checks; Debug/Release builds
+with zero warnings/errors. All used `-p:DeployMod=false`. No deployment, game
+launch, live Unity/Mono profiling or guest rendering test was performed. These
+figures measure fixture allocations, not whole-game FPS or network performance.
+
 ## Follow-up: 0.36.1 (2026-10-09)
 
 Reviewed synchronization and status capture after expanding the stat catalog to

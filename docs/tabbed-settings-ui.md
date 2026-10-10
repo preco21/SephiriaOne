@@ -94,8 +94,11 @@ read-only and owns its local preference and capture lifetime.
   and native Settings block. It calls the same owned-window `TryToggle` entry.
 
 Hidden panels do not request settings snapshots. Visible observations retain
-the 0.25-second cadence; full diagnostics are requested only on Status. Controls
-are rebuilt on tab/language changes, not during ordinary refresh. Text readouts
+the 0.25-second cadence. Each tab requests only its displayed snapshot sections;
+readiness, permissions and feature settings remain current on every capture.
+Full diagnostics are requested on Status; unknown future tabs default to a full
+capture until assigned their sections. See the [measured follow-up](performance-review.md).
+Controls are rebuilt on tab/language changes, not during ordinary refresh. Text readouts
 are remeasured only when their contents change. Dragging uses pointer events;
 there is no blur, extra render texture, external asset or guest protocol.
 

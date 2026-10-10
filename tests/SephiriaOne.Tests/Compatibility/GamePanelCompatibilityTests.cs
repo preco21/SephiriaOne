@@ -36,6 +36,16 @@ internal static class GamePanelCompatibilityTests
             throw new Exception("Native cancel no longer uses panel closing.");
 
         var panel = addon.GetType("SephiriaOne.SettingsPanel", true)!;
+        var contentForPage = Required(panel, "ContentForPage");
+        string[] expected = { "Stats", "None", "Choices", "Resources", "Presets", "All", "None", "None", "None", "None", "None", "None", "None", "None", "All" };
+        for (int page = 0; page < expected.Length; page++)
+            if (contentForPage.Invoke(null, new object[] { page })?.ToString() != expected[page])
+                throw new Exception("Panel snapshot must include every displayed section: page " + page);
+        if (!Calls(Required(panel, "ReadCurrentSnapshot"), contentForPage) ||
+            !PatchProcessor.GetOriginalInstructions(Required(panel, "ReadCurrentSnapshot")).Any(i =>
+                i.operand is MethodInfo m && m.Name == "ReadSnapshot" &&
+                m.GetParameters()[0].ParameterType.Name == "SnapshotContent"))
+            throw new Exception("Panel must request only its displayed snapshot sections.");
         if (panel.BaseType != ui) throw new Exception("Addon panel must participate in native UIBase lifecycle.");
         foreach (string method in new[] { "Show", "Close" })
         {
@@ -62,11 +72,9 @@ internal static class GamePanelCompatibilityTests
             throw new Exception("Refreshing the panel must not dispatch settings changes.");
         var snapshot = Required(panel, "ReadCurrentSnapshot");
         var snapshotInstructions = PatchProcessor.GetOriginalInstructions(snapshot);
-        if (!Calls(snapshot, Required(addon.GetType("SephiriaOne.SessionSettings", true)!, "ReadSnapshot")) ||
-            !snapshotInstructions.Any(i => i.operand is FieldInfo f && f.DeclaringType == panel && f.Name == "page") ||
-            !snapshotInstructions.Any(i => i.LoadsConstant(5)) ||
-            !snapshotInstructions.Any(i => i.opcode == System.Reflection.Emit.OpCodes.Ceq))
-            throw new Exception("Only the Status page should request full formatted diagnostics.");
+        if (!Calls(snapshot, contentForPage) ||
+            !snapshotInstructions.Any(i => i.operand is FieldInfo f && f.DeclaringType == panel && f.Name == "page"))
+            throw new Exception("Snapshot content must follow the current panel page.");
         foreach (string method in new[] { "Show", "SelectPage", "MoveSelection", "Execute", "RefreshSaved" })
             if (!Calls(Required(panel, method), snapshot))
                 throw new Exception("Panel snapshot detail selection is bypassed by " + method);

@@ -10,6 +10,8 @@ investigation. Repository workflow and deployment rules are in [AGENTS.md](../AG
 
 UI follow-up: [tabbed draggable window and native Settings hotkey](tabbed-settings-ui.md)
 implements the approved option 2; the [panel guide](control-panel.md) covers usage.
+The latest [performance review](performance-review.md) measures tab-specific
+snapshot capture while preserving current readiness and synchronization checks.
 
 | Document | Use it for |
 | --- | --- |

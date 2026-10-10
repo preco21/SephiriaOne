@@ -34,11 +34,17 @@ namespace SephiriaOne
 
         // No Prepare/Synchronize call is allowed here: inspecting a pending join
         // must never enroll it or apply retained settings. Only file reads cache.
-        // Ordinary panel pages need live values and permissions, but only Status
-        // and chat consume the formatted diagnostic report. Do not cache values:
+        // Panel pages request their displayed sections; existing callers retain
+        // complete values. Only Status/chat need diagnostics. Do not cache values:
         // native edits and language changes can occur without an intent revision.
-        public static SettingsSnapshot ReadSnapshot(bool refreshSaved = false, bool includeDiagnostics = true)
+        public static SettingsSnapshot ReadSnapshot(bool refreshSaved = false, bool includeDiagnostics = true) =>
+            ReadSnapshot(includeDiagnostics ? SnapshotContent.All : SnapshotContent.Values, refreshSaved);
+
+        public static SettingsSnapshot ReadSnapshot(SnapshotContent content, bool refreshSaved = false)
         {
+            bool includeDiagnostics = (content & SnapshotContent.Diagnostics) != 0;
+            if (includeDiagnostics) content = SnapshotContent.All;
+            bool includePresets = (content & SnapshotContent.Presets) != 0;
             bool host = NetworkServer.active;
             bool loaded = enabled && store != null;
             bool sameSession = host && loaded && dungeon && dungeon.isServer && dungeon.netId != 0 &&
@@ -61,10 +67,10 @@ namespace SephiriaOne
                 if (includeDiagnostics) lines.Add(unavailable);
                 return new SettingsSnapshot(null, epoch, runGeneration, intentRevision, host, false, false, false,
                     ChoiceFeature.Available, false, unavailable, "", lines, currentPlayers,
-                    Array.Empty<string>(), Array.Empty<string>(), unavailable);
+                    Array.Empty<string>(), Array.Empty<string>(), includePresets ? unavailable : "");
             }
 
-            IReadOnlyList<string> active = sameSession ? policy.DescribeSettings() : Array.Empty<string>();
+            IReadOnlyList<string> active = sameSession && includePresets ? policy.DescribeSettings() : Array.Empty<string>();
             if (includeDiagnostics)
             {
                 lines.Add(L.T("Active session settings: ") + (active.Count == 0 ? L.T("none.") : string.Join("; ", active)));
@@ -106,7 +112,7 @@ namespace SephiriaOne
                 string label = includeDiagnostics ? L.T("Player #") + player.netId + ": " : "";
                 player.customStats.TryGetValue(FountainPoints.ContributionKey, out int fountainOffset);
                 if (includeDiagnostics) lines.Add(label + L.F("Fountain={0} (addon {1}).", player.Inventory.dimensionPocket, Signed(fountainOffset)));
-                var stats = new Dictionary<string, decimal>(StatCatalog.All.Count);
+                var stats = (content & SnapshotContent.Stats) != 0 ? new Dictionary<string, decimal>(StatCatalog.All.Count) : null;
                 if (includeDiagnostics)
                 {
                     if (statDescription == null) statDescription = new StringBuilder(1024);
@@ -114,7 +120,7 @@ namespace SephiriaOne
                     statDescription.Append(label);
                 }
                 bool firstStat = true;
-                foreach (StatDefinition stat in StatCatalog.All)
+                if (stats != null) foreach (StatDefinition stat in StatCatalog.All)
                 {
                     decimal value = stat.Display(player.GetCustomStatUnsafe(stat.Key));
                     stats.Add(stat.Name, value);
@@ -131,23 +137,22 @@ namespace SephiriaOne
                     }
                 }
                 if (includeDiagnostics) lines.Add(statDescription.Append(L.T(". Units: /stats list.")).ToString());
-                var choices = new Dictionary<string, int>();
+                var choices = (content & SnapshotContent.Choices) != 0 ? new Dictionary<string, int>() : null;
                 var choiceDescriptions = includeDiagnostics ? new List<string>() : null;
-                string[] names = { "item", "weapon", "miracle" };
-                for (int i = 0; i < ChoiceCommand.Keys.Length; i++)
+                if (choices != null) for (int i = 0; i < ChoiceCommand.Keys.Length; i++)
                 {
                     string key = ChoiceCommand.Keys[i];
                     int value = player.GetCustomStatUnsafe(key);
-                    choices.Add(names[i], value);
+                    choices.Add(ChoiceSnapshotNames[i], value);
                     if (includeDiagnostics)
                     {
                         player.customStats.TryGetValue("SEPHIRIAONE_" + key, out int contribution);
-                        choiceDescriptions.Add(L.F("{0}={1} (addon {2})", names[i], value, Signed(contribution)));
+                        choiceDescriptions.Add(L.F("{0}={1} (addon {2})", ChoiceSnapshotNames[i], value, Signed(contribution)));
                     }
                 }
                 if (includeDiagnostics) lines.Add(label + L.T("extra choices: ") + string.Join(", ", choiceDescriptions));
-                var resources = new Dictionary<string, string>(ResourceCatalog.All.Count);
-                foreach (var definition in ResourceCatalog.All)
+                var resources = (content & SnapshotContent.Resources) != 0 ? new Dictionary<string, string>(ResourceCatalog.All.Count) : null;
+                if (resources != null) foreach (var definition in ResourceCatalog.All)
                 {
                     string description;
                     try
@@ -187,8 +192,8 @@ namespace SephiriaOne
                 canMutate = allReady && currentPlayers.Count > 0;
             }
             SavedPresetSnapshot saved = ReadSavedPreset(refreshSaved);
-            IReadOnlyList<string> savedSettings = saved.Valid && saved.Exists ? saved.Policy.DescribeSettings() : Array.Empty<string>();
-            string savedSummary = !saved.Valid ? saved.Error : !saved.Exists ?
+            IReadOnlyList<string> savedSettings = includePresets && saved.Valid && saved.Exists ? saved.Policy.DescribeSettings() : Array.Empty<string>();
+            string savedSummary = !includePresets ? "" : !saved.Valid ? saved.Error : !saved.Exists ?
                 L.T("Saved preset: none. Use /one save to store active settings.") :
                 L.T("Saved for future hosted sessions: ") + (saved.Policy.HasChanges ?
                     string.Join("; ", savedSettings) : L.T("empty (no adjustments)."));
@@ -213,6 +218,7 @@ namespace SephiriaOne
                 sameSession ? policy.EventSpawns : default, EventSpawnFeature.Available);
         }
 
+        private static readonly string[] ChoiceSnapshotNames = { "item", "weapon", "miracle" };
         private static string Signed(int value) => value.ToString("+0;-0;0", CultureInfo.InvariantCulture);
     }
 }

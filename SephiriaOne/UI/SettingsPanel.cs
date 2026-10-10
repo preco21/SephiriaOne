@@ -77,7 +77,18 @@ namespace SephiriaOne
         internal bool HasControlRegistration => lifetime != null && lifetime.IsRegistered;
 
         internal SettingsSnapshot ReadCurrentSnapshot(bool refreshSaved = false) =>
-            SessionSettings.ReadSnapshot(refreshSaved, includeDiagnostics: page == 5);
+            SessionSettings.ReadSnapshot(ContentForPage(page), refreshSaved);
+
+        internal static SnapshotContent ContentForPage(int target) => target switch
+        {
+            0 => SnapshotContent.Stats,
+            1 => SnapshotContent.None, // Fountain totals are part of the base player record.
+            2 => SnapshotContent.Choices,
+            3 => SnapshotContent.Resources,
+            4 => SnapshotContent.Presets,
+            _ when target >= 6 && target <= 13 => SnapshotContent.None,
+            _ => SnapshotContent.All // Status, and safe defaults for future tabs.
+        };
 
         public override void Close()
         {

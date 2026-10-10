@@ -145,6 +145,12 @@ RNG order, early-read guards, cleanup, readback and rollback constraints.
 The [performance reviews](performance-review.md) include allocation fixtures;
 their .NET measurements are not Unity FPS measurements.
 
+The settings panel requests explicit `SnapshotContent` sections through the
+shared read-only capture path. New tabs should select the sections they display;
+omitted player dictionaries are immutable empties, not cached previous values.
+Identity/readiness/permissions/feature settings are always read. Diagnostics imply
+all sections, and the original `ReadSnapshot` API still returns complete values.
+
 New user-facing text belongs in both bundled EN/KO JSON catalogs, with preserved
 format placeholders. Korean is the default; saved selections override it.
 Catalogs are cached and reload explicitly, and partial saved catalogs inherit

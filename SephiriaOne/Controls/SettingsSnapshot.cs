@@ -3,8 +3,31 @@ using System.Collections.ObjectModel;
 
 namespace SephiriaOne
 {
+    // Optional presentation data; identity, readiness, permissions and feature
+    // settings are always read. Diagnostics require all sections. Omitted
+    // sections are empty, not cached values from an earlier capture.
+    [System.Flags]
+    internal enum SnapshotContent
+    {
+        None = 0,
+        Stats = 1,
+        Choices = 2,
+        Resources = 4,
+        Presets = 8,
+        Diagnostics = 16,
+        Values = Stats | Choices | Resources | Presets,
+        All = Values | Diagnostics
+    }
+
     internal sealed class PlayerSettingsSnapshot
     {
+        private static readonly ReadOnlyDictionary<string, decimal> EmptyStats =
+            new ReadOnlyDictionary<string, decimal>(new Dictionary<string, decimal>());
+        private static readonly ReadOnlyDictionary<string, int> EmptyChoices =
+            new ReadOnlyDictionary<string, int>(new Dictionary<string, int>());
+        private static readonly ReadOnlyDictionary<string, string> EmptyResources =
+            new ReadOnlyDictionary<string, string>(new Dictionary<string, string>());
+
         public uint Id { get; }
         public string Name { get; }
         public int FountainPoints { get; }
@@ -24,11 +47,13 @@ namespace SephiriaOne
         // Only the capture path may transfer its newly created dictionaries here.
         // It must not retain or mutate them afterward; other callers use the
         // defensive constructor above. No native dictionaries are transferred.
+        // Null means the section was not requested; shared empties are read-only.
         internal static PlayerSettingsSnapshot FromOwnedCapture(uint id, string name, int fountainPoints, int fountainContribution,
             Dictionary<string, decimal> stats, Dictionary<string, int> extraChoices, Dictionary<string, string> resources) =>
             new PlayerSettingsSnapshot(id, name, fountainPoints, fountainContribution,
-                new ReadOnlyDictionary<string, decimal>(stats), new ReadOnlyDictionary<string, int>(extraChoices),
-                new ReadOnlyDictionary<string, string>(resources));
+                stats == null ? EmptyStats : new ReadOnlyDictionary<string, decimal>(stats),
+                extraChoices == null ? EmptyChoices : new ReadOnlyDictionary<string, int>(extraChoices),
+                resources == null ? EmptyResources : new ReadOnlyDictionary<string, string>(resources));
 
         private PlayerSettingsSnapshot(uint id, string name, int fountainPoints, int fountainContribution,
             ReadOnlyDictionary<string, decimal> stats, ReadOnlyDictionary<string, int> extraChoices, ReadOnlyDictionary<string, string> resources)

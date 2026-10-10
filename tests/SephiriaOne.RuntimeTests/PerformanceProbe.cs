@@ -56,21 +56,32 @@ internal static class PerformanceProbe
                     throw new Exception("Five-player non-Status snapshots exceed the 25 KiB allocation budget.");
                 if (checkBudget && full > 160 * 1024)
                     throw new Exception("Five-player full reports exceed the 160 KiB allocation budget.");
+                foreach (var content in new[] { SnapshotContent.None, SnapshotContent.Stats, SnapshotContent.Choices,
+                    SnapshotContent.Resources, SnapshotContent.Presets })
+                {
+                    double selected = MeasureSnapshot(false, content);
+                    int budget = content == SnapshotContent.Resources ? 16 * 1024 :
+                        content == SnapshotContent.Stats ? 12 * 1024 : content == SnapshotContent.Presets ? 10 * 1024 : 4 * 1024;
+                    if (checkBudget && selected > budget)
+                        throw new Exception($"Five-player {content} snapshot exceeds its {budget} B allocation budget.");
+                }
             }
         }
         SessionSettings.Stop();
     }
 
-    private static double MeasureSnapshot(bool includeDiagnostics)
+    private static double MeasureSnapshot(bool includeDiagnostics, SnapshotContent? content = null)
     {
-        for (int i = 0; i < 100; i++) SessionSettings.ReadSnapshot(includeDiagnostics: includeDiagnostics);
+        SettingsSnapshot Capture() => content.HasValue ? SessionSettings.ReadSnapshot(content.Value) :
+            SessionSettings.ReadSnapshot(includeDiagnostics: includeDiagnostics);
+        for (int i = 0; i < 100; i++) Capture();
         const int iterations = 1000;
         long before = GC.GetAllocatedBytesForCurrentThread();
         long time = Stopwatch.GetTimestamp();
-        for (int i = 0; i < iterations; i++) SessionSettings.ReadSnapshot(includeDiagnostics: includeDiagnostics);
+        for (int i = 0; i < iterations; i++) Capture();
         double us = Stopwatch.GetElapsedTime(time).TotalMicroseconds / iterations;
         double allocated = (GC.GetAllocatedBytesForCurrentThread() - before) / (double)iterations;
-        Console.WriteLine($"Five players / {(includeDiagnostics ? "full status" : "non-Status panel")} snapshot: {allocated:F0} bytes/refresh, {us:F2} us/refresh ({iterations} iterations)");
+        Console.WriteLine($"Five players / {(content.HasValue ? content.ToString() : includeDiagnostics ? "full status" : "all values, no diagnostics")} snapshot: {allocated:F0} bytes/refresh, {us:F2} us/refresh ({iterations} iterations)");
         return allocated;
     }
 }
