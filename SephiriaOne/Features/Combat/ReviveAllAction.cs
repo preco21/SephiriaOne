@@ -20,13 +20,19 @@ namespace SephiriaOne
         internal static void CallbackFailed(Exception error)
         { callbackErrors++; Debug.LogWarning("[SephiriaOne] Revive-all callback failed; continuing native recovery: " + error); }
         internal static string Usage => L.T("Host only: /one reviveall restores all dead players at full HP in the current session.");
+        // victoryType describes the eventual result, not whether play has ended:
+        // chapter progression sets it to 2/6 while the current run stays playable.
+        // UI_GameOverLabel.OnOpened disables the run save on actual settlement.
+        // Share this gate with deathmatch and recheck it after native callbacks.
+        internal static bool IsRunOpen(DungeonManager dungeon, SaveData run) =>
+            dungeon && run != null && run.enableSave && !dungeon.requestLeaveOnHost;
         internal static bool CanExecute
         {
             get
             {
                 var dungeon = DungeonManager.Instance;
                 return ReviveAllFeature.Available && !executing && NetworkServer.active && dungeon && dungeon.isServer && dungeon.netId != 0 &&
-                    SaveManager.CurrentRun != null && SaveManager.CurrentRun.enableSave && dungeon.victoryType == 0 && !dungeon.requestLeaveOnHost;
+                    IsRunOpen(dungeon, SaveManager.CurrentRun);
             }
         }
 
@@ -55,7 +61,7 @@ namespace SephiriaOne
             uint dungeonId = dungeon.netId;
             bool CurrentScope() => NetworkServer.active && dungeon && dungeon.isServer && dungeon.netId == dungeonId &&
                 ReferenceEquals(dungeon, DungeonManager.Instance) && ReferenceEquals(run, SaveManager.CurrentRun) &&
-                generation == SessionSettings.ResourceGeneration && run.enableSave && dungeon.victoryType == 0 && !dungeon.requestLeaveOnHost &&
+                generation == SessionSettings.ResourceGeneration && IsRunOpen(dungeon, run) &&
                 (scope == null || scope());
             if (!CurrentScope()) return false;
             var candidates = new List<HostPlayer>();

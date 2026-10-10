@@ -162,3 +162,54 @@ budgets and the complete portable/installed-game suite pass (3,085 catalog check
 The installed-code UI test verifies that the button calls the shared command and
 uses the runtime's current-match gate. No deployment or live multiplayer test was
 performed; visually verify **K/D/A 초기화** and the reset notice with stock guests.
+
+## Late-run availability fix (`0.43.1`, 2026-10-11)
+
+The host reported Deathmatch actions and Revive All unavailable during a run near
+chapter six, while friendly-fire toggle/damage and match duration remained usable.
+The shared recovery gate incorrectly required `DungeonManager.victoryType == 0`.
+Start used that gate and every running-match scope check repeated it, so progress
+could both prevent starting and cancel an existing match/respawn. Basic settings
+and duration edits do not use this recovery gate, explaining the different behavior.
+
+Fresh decompilation against the assembly fingerprint above confirmed:
+
+- `Desert_Chapter2Event.OnStartServer` writes `NetworkvictoryType = 2`.
+- `UnitAI_QBossAdv.CheckDeadlyDamage` writes `2` when beginning its dramatic death
+  sequence, and `C5_Escape.Update` writes `6` during the escape. The latter also
+  releases player snare state and records escape progress. These handlers do not
+  directly call `ClientGameOver`/`RpcGameOver` or disable the run save.
+- Actual `UI_GameOverLabel.OnOpened` disables `CurrentRun.enableSave` and deletes
+  the run save. Outcome classification by itself is not a terminal signal.
+
+The local log recorded Deathmatch rejection during chapter-six play, before the
+first result-screen/save-deletion entries. It did not record the rejected gate's
+field values, so it supports the timing but cannot independently prove which
+value was set. Runtime fixtures reproduce the rejection with native progress
+values, and installed-code tests pin the progress writers and settlement contract.
+Private logs and decompiled sources remain outside the repository.
+
+`ReviveAllAction.IsRunOpen` now owns the shared save-enabled/not-leaving predicate.
+Manual recovery, callback revalidation and all Deathmatch scope checks use it.
+Authority, exact dungeon/save identity, generation, avatar readiness, finite HP
+and callback containment remain unchanged. Real settlement, leaving, restart or
+session replacement still invalidate recovery. No new hooks, scans, RPC formats,
+polling or persistent state are introduced; existing UI gates consume the fix.
+
+Regression coverage exercises starting at markers 2/6, changes during warmup,
+active respawn and native revival callbacks, KDA reset, stop/expiry with pending
+players, and rejection after settlement at outcomes 0/2/6. The initial recovery
+regression failed on the old gate and passed with the shared correction. The old
+test incorrectly equating a nonzero outcome with settlement now models the real
+save-disabled boundary. Existing callback/scope and allocation checks remain.
+
+Verification: Debug and Release builds pass with zero warnings/errors; 1,447
+runtime integration checks, 69 Bat lifecycle checks, 268 combat hook checks, 22
+panel checks and the full portable/installed-game suite pass (3,085 catalog
+checks). Steady-state synchronization and idle/living-player match ticks retain
+zero allocations in fixtures. All commands used `-p:DeployMod=false`.
+
+Live validation remains: reach chapter six with a stock guest; start a match,
+reset KDA, respawn, stop with a dead player, and use manual Revive All. Verify
+these actions remain unavailable after actual results settlement and become
+available again in a fresh run. No deployment or game launch was performed.

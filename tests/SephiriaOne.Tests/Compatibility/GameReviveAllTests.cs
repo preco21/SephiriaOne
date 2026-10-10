@@ -39,6 +39,21 @@ internal static class GameReviveAllTests
         var settlement = Code("UI_GameOverLabel", "OnOpened");
         Require(settlement.Any(i => i.opcode == OpCodes.Stfld && i.operand is FieldInfo f && f.Name == "enableSave") && Calls(settlement, "DeleteFile"),
             "native settlement disables and deletes the run save; no recovery rollback is possible");
+        foreach (var progress in new[]
+        {
+            (Type: "Desert_Chapter2Event", Method: "OnStartServer", Value: 2),
+            (Type: "UnitAI_QBossAdv", Method: "CheckDeadlyDamage", Value: 2),
+            (Type: "C5_Escape", Method: "Update", Value: 6)
+        })
+        {
+            var code = Code(progress.Type, progress.Method);
+            int write = code.FindIndex(i => i.operand is MethodInfo m && m.Name == "set_NetworkvictoryType");
+            Require(write > 0 && code[write - 1].LoadsConstant(progress.Value),
+                progress.Type + " records a nonzero outcome during chapter progression");
+            Require(!Calls(code, "ClientGameOver") && !Calls(code, "RpcGameOver") &&
+                !code.Any(i => i.opcode == OpCodes.Stfld && i.operand is FieldInfo f && f.Name == "enableSave"),
+                progress.Type + " does not directly settle or disable the run when recording its outcome");
+        }
         Require(Calls(Code("PlayerSpawner", "ClientGameOver"), "ResetSession") && Calls(Code("QuestController", "Awake"), "add_OnGameOverServerside"),
             "game over settles combat and quest lifecycle");
         var panel = addon.GetType("SephiriaOne.SettingsPanel", true)!;
@@ -48,6 +63,6 @@ internal static class GameReviveAllTests
             PatchProcessor.GetOriginalInstructions(m).Any(i => Equals(i.operand, "/one reviveall"))), "button dispatches shared command");
         var execute = PatchProcessor.GetOriginalInstructions(AccessTools.Method(addon.GetType("SephiriaOne.SettingsActions", true)!, "Execute"));
         Require(execute.Any(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "ReviveAllAction" && m.Name == "TryExecute"), "chat and UI share recovery service");
-        Console.WriteLine("Verified native full revival, guest rendering/camera RPC, scoped friendly-fire game-over guard, terminal settlement and shared recovery button/command (not live multiplayer).");
+        Console.WriteLine("Verified native full revival, guest rendering/camera RPC, scoped friendly-fire game-over guard, chapter progress versus terminal settlement and shared recovery button/command (not live multiplayer).");
     }
 }

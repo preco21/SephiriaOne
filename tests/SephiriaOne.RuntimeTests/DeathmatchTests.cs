@@ -156,6 +156,7 @@ internal static class DeathmatchTests
         check(GC.GetAllocatedBytesForCurrentThread() == allocated, "Idle match tick allocates zero bytes");
         foreach (string presetText in new[] { "SephiriaOne preset v17\ndeathmatch duration 60\n", "SephiriaOne preset v18\ndeathmatch duration 60\ndeathmatch duration 61\n", "SephiriaOne preset v18\ndeathmatch duration 9\n" })
             check(!SessionPolicy.TryReadPreset(presetText, out _, out _), "Reject noncanonical/duplicate/invalid duration preset");
+        DeathmatchProgressTests.Run(start, add, check);
         harmony.UnpatchAll("Deathmatch.integration.tests"); ReviveAllHooks.Uninstall(); start();
     }
 }

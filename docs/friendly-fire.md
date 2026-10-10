@@ -154,8 +154,11 @@ and `/one help`. The button and messages have English/Korean translations.
 - **Already settled runs cannot safely resume.** Native `ClientGameOver` settles
   quests and resets combat; `UI_GameOverLabel.OnOpened` disables saving and deletes
   the run save, including backups. This is more than a dead flag. The action
-  rejects disabled run saves, victory settlement and requested lobby/restart
-  transitions. It does not close guests' result screens, recreate saves or undo
+  rejects disabled run saves (defeat or victory) and requested lobby/restart
+  transitions. A nonzero `victoryType` alone does not mean settlement: native
+  chapter progress sets it while play continues. This was corrected in `0.43.1`;
+  see the [shared availability fix](deathmatch.md#late-run-availability-fix-0431-2026-10-11).
+  The action does not close guests' result screens, recreate saves or undo
   rewards. Start a new run if settlement already occurred before this patch.
 
 There is no automatic revival, forced teleport or new timer. Candidate collection

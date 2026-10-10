@@ -44,7 +44,7 @@ namespace SephiriaOne
         private static double Now => Time.unscaledTime;
         private static bool CurrentScope => NetworkServer.active && NetworkClient.active && dungeon && dungeon.isServer && dungeon.netId == dungeonId &&
             ReferenceEquals(dungeon, DungeonManager.Instance) && ReferenceEquals(run, SaveManager.CurrentRun) &&
-            generation == SessionSettings.ResourceGeneration && run != null && run.enableSave && dungeon.victoryType == 0 && !dungeon.requestLeaveOnHost;
+            generation == SessionSettings.ResourceGeneration && ReviveAllAction.IsRunOpen(dungeon, run);
         internal static bool CanStart => !IsRunning && !stopping && !ticking && deathDepth == 0 && DeathmatchFeature.Available && FriendlyFireFeature.Available && ReviveAllAction.CanExecute;
         internal static bool CanResetScores => IsRunning && !stopping && CurrentScope && Now < endsAt;
         internal static FriendlyFireSettings Effective(FriendlyFireSettings normal) => !IsRunning ? normal :

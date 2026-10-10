@@ -25,10 +25,19 @@ internal static class ReviveAllTests
         guest.PlayerAvatar.IsDead = true; Mirror.NetworkServer.active = false;
         check(!SettingsActions.Execute("/one reviveall").Success && guest.PlayerAvatar.IsDead, "Guest cannot trigger host revival");
         Mirror.NetworkServer.active = true;
-        foreach (string unavailable in new[] { "settled", "victory", "leaving" })
+        foreach (int progress in new[] { 2, 6 })
         {
-            SaveManager.CurrentRun.enableSave = unavailable != "settled";
-            DungeonManager.Instance.victoryType = unavailable == "victory" ? 1 : 0;
+            host = start(); guest = add(90); guest.PlayerAvatar.IsDead = true;
+            DungeonManager.Instance.victoryType = progress;
+            check(ReviveAllAction.CanExecute && SettingsActions.Execute("/one reviveall").Success &&
+                !guest.PlayerAvatar.IsDead && guest.PlayerAvatar.ReviveRpcCalls == 1,
+                "Chapter progress marker does not block recovery: " + progress);
+        }
+        foreach (string unavailable in new[] { "settled", "victory-settled", "leaving" })
+        {
+            host = start(); guest = add(90); guest.PlayerAvatar.IsDead = true;
+            SaveManager.CurrentRun.enableSave = unavailable == "leaving";
+            DungeonManager.Instance.victoryType = unavailable == "victory-settled" ? 6 : 0;
             DungeonManager.Instance.requestLeaveOnHost = unavailable == "leaving";
             check(!ReviveAllAction.CanExecute && !SettingsActions.Execute("/one reviveall").Success && guest.PlayerAvatar.IsDead,
                 "Recovery refuses terminal run state: " + unavailable);
@@ -61,7 +70,13 @@ internal static class ReviveAllTests
         host = start(); guest = add(90); host.PlayerAvatar.IsDead = guest.PlayerAvatar.IsDead = true;
         host.PlayerAvatar.ReviveCallback = () => PlayerSpawner.MultiplayerList.Remove(guest);
         check(!SettingsActions.Execute("/one reviveall").Success && guest.PlayerAvatar.ReviveCalls == 0, "Disconnect inside revival cannot mutate a departed avatar");
-        foreach (string transition in new[] { "dungeon", "run", "generation", "settled" })
+        host = start(); guest = add(90); host.PlayerAvatar.IsDead = guest.PlayerAvatar.IsDead = true;
+        DungeonManager.Instance.victoryType = 2;
+        host.PlayerAvatar.ReviveCallback = () => DungeonManager.Instance.victoryType = 6;
+        check(SettingsActions.Execute("/one reviveall").Success && host.PlayerAvatar.ReviveRpcCalls == 1 &&
+            guest.PlayerAvatar.ReviveRpcCalls == 1,
+            "Chapter progress changing inside native revival preserves the recovery tail and remaining party");
+        foreach (string transition in new[] { "dungeon", "run", "generation", "settled", "leaving" })
         {
             host = start(); guest = add(90); SessionSettings.Synchronize();
             host.PlayerAvatar.IsDead = guest.PlayerAvatar.IsDead = true;
@@ -70,7 +85,8 @@ internal static class ReviveAllTests
                 if (transition == "dungeon") DungeonManager.Instance = new DungeonManager();
                 else if (transition == "run") SaveManager.CurrentRun = new SaveData();
                 else if (transition == "generation") HorayModAPI.StartSession();
-                else SaveManager.CurrentRun.enableSave = false;
+                else if (transition == "settled") SaveManager.CurrentRun.enableSave = false;
+                else DungeonManager.Instance.requestLeaveOnHost = true;
             };
             check(!SettingsActions.Execute("/one reviveall").Success && guest.PlayerAvatar.ReviveCalls == 0,
                 "Revival stops when callback changes " + transition);

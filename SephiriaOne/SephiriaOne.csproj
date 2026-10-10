@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>SephiriaOne</AssemblyName>
-    <Version>0.43.0</Version>
+    <Version>0.43.1</Version>
     <RootNamespace>SephiriaOne</RootNamespace>
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>disable</Nullable>

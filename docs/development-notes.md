@@ -1,6 +1,6 @@
 # SephiriaOne development notes
 
-Recorded: 2026-09-23; updated: 2026-10-10 (Asia/Seoul).
+Recorded: 2026-09-23; updated: 2026-10-11 (Asia/Seoul).
 
 This document records the project history, current implementation, and modding
 findings collected during the initial investigation. Installed-game observations
@@ -13,6 +13,12 @@ For agent/contributor onboarding, start with the [documentation index](README.md
 the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
+
+Version `0.43.1` fixes late-run Deathmatch and Revive All availability. Native
+`victoryType` records chapter/outcome progress before actual game over, so a
+nonzero value no longer invalidates recovery or a running match. Both features
+share the save-enabled/not-leaving gate; exact run, authority, generation and
+avatar checks remain. See the [native evidence and regression coverage](deathmatch.md#late-run-availability-fix-0431-2026-10-11).
 
 Version `0.43.0` adds host `/one deathmatch resetkda` and the Deathmatch-tab
 **Reset K/D/A** button, with EN/KO help and a native chat notice. Scores and prior

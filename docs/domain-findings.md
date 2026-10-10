@@ -25,6 +25,7 @@ promise to alter guest UI definitions.
 | --- | --- |
 | Hosted session | Owns current intent. A fresh run in the same session can retain intent; a new session resolves a new scope and explicitly saved preset. |
 | Run/save and dungeon | Restart can reuse avatars/dungeon while clearing native dictionaries. Track run generation/save identity; avatar presence alone cannot prove initialization is current. |
+| Chapter progress versus settlement | `DungeonManager.victoryType` is an outcome marker, not an ended-run flag. Chapter events set 2/6 before play ends. Recovery retains `CurrentRun.enableSave`, leave-request and exact-scope guards; see the [2026-10-11 correction](deathmatch.md#late-run-availability-fix-0431-2026-10-11). |
 | Avatar/connection | Re-entry can reuse IDs with different object lifetimes, even before a cleanup frame. Enroll the new ready lifetime against complete current intent. |
 | Durable resource checkpoint | Proves previously applied contributions, not current desired settings. Retain its applied command identity and native baseline separately. |
 | Native event | Check current authority, live ownership, participants and policy at the event. Do not cache a permission forever or replay a drink/grant on join. |
@@ -203,7 +204,8 @@ and `GameCamera.OnRevive` resets the spectator target. `PlayerSpawner`'s
 the exact friendly-fire death boundary if the host is to recover that party:
 `UI_GameOverLabel.OnOpened` disables/deletes the current run save and game-over
 events settle quests. Native revival cannot undo that process on stock guests.
-The action rejects terminal save/victory/leave state and does not attempt rollback.
+The action rejects disabled run saves and requested leave/restart transitions,
+not nonzero outcome markers from chapter progress, and does not attempt rollback.
 Revival also clears `IsDead` before HP/revival callbacks and only then sends the
 guest RPC. Catching an exception around the entire `Revive` call is insufficient:
 retry would skip that alive-but-incompletely-restored player. The recovery action

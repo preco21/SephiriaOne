@@ -1,6 +1,6 @@
 # Development knowledge index
 
-Maintained: 2026-10-10 (Asia/Seoul), addon `0.43.0`.
+Maintained: 2026-10-11 (Asia/Seoul), addon `0.43.1`.
 
 Agents and contributors can refer to `docs/*` for research, implementation
 materials, native game findings and references. Start here before repeating an
@@ -12,6 +12,9 @@ UI follow-up: [tabbed draggable window and native Settings hotkey](tabbed-settin
 implements the approved option 2; the [panel guide](control-panel.md) covers usage.
 The latest [performance review](performance-review.md) measures tab-specific
 snapshot capture while preserving current readiness and synchronization checks.
+
+Recovery follow-up: [late-run Deathmatch and Revive All availability](deathmatch.md#late-run-availability-fix-0431-2026-10-11)
+distinguishes native chapter/outcome markers from actual run settlement.
 
 | Document | Use it for |
 | --- | --- |
