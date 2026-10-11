@@ -128,13 +128,32 @@ public class Bullet : CombatBehaviour
     public EDamageFromType FromType;
     public string damageId;
     public UnitAvatar Candidate;
+    public bool isHomingTargetEnabled = true, autoDetectHomingTarget = true;
+    public float homingDetectLimitRange = 100;
+    public UnityEngine.Vector3 HomingTargetPos;
+    public readonly HashSet<UnitAvatar> ignored = new();
+    public List<UnitAvatar> Candidates;
     public UnitAvatar HomingTarget { [MethodImpl(MethodImplOptions.NoInlining)] get; private set; }
     public void SetHomingTarget(UnitAvatar value) => HomingTarget = value;
     [MethodImpl(MethodImplOptions.NoInlining)] public void Update()
     {
+        if (!isHomingTargetEnabled) return;
         if (HomingTarget && HomingTarget.IsDead) HomingTarget = null;
-        if (!HomingTarget && Candidate && CombatManager.ContainsAttackableFaction(NetworkOwner.GetHostileFactionLayers(EDamageFromType.None), Candidate.faction))
-            HomingTarget = Candidate;
+        if (!HomingTarget && autoDetectHomingTarget)
+        {
+            UnitAvatar result = null;
+            int count = Candidates?.Count ?? (Candidate ? 1 : 0);
+            for (int i = 0; i < count; i++)
+            {
+                var target = Candidates == null ? Candidate : Candidates[i];
+                if (ignored.Contains(target) || target == NetworkOwner || target.IsDead || target.canBeTarget.IsFalse() ||
+                    !CombatManager.ContainsAttackableFaction(NetworkOwner.GetHostileFactionLayers(EDamageFromType.None), target.faction) ||
+                    homingDetectLimitRange > 0 && (target.transform.position - transform.position).sqrMagnitude > homingDetectLimitRange * homingDetectLimitRange) continue;
+                if (!result || (target.transform.position - HomingTargetPos).sqrMagnitude < (result.transform.position - HomingTargetPos).sqrMagnitude)
+                    result = target;
+            }
+            HomingTarget = result;
+        }
     }
 }
 public static class PlayerInputController

@@ -1,6 +1,6 @@
 # SephiriaOne development notes
 
-Recorded: 2026-09-23; updated: 2026-10-11 (Asia/Seoul).
+Recorded: 2026-09-23; updated: 2026-10-12 (Asia/Seoul).
 
 This document records the project history, current implementation, and modding
 findings collected during the initial investigation. Installed-game observations
@@ -13,6 +13,14 @@ For agent/contributor onboarding, start with the [documentation index](README.md
 the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
+
+Version `0.47.1` fixes hostile-player acquisition for homing Bolt spells and
+audited related spell searches, including automatic casting, Fire Circus and
+chain lightning. Artifact and spell consumers share scoped targeting helpers,
+live participation/connection checks and native homing-target loss. The volley
+search also resolves players through their costume hitboxes. No new homing
+ability or global faction/input change is introduced. See
+[native evidence, covered spells and verification limits](friendly-fire-spells.md).
 
 Version `0.47.0` adds **Tournament**, a temporary one-on-one elimination mode
 sharing Deathmatch's KDA, participant list, native bubbles and scoped recovery.

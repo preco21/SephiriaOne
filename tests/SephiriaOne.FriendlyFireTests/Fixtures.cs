@@ -235,7 +235,7 @@ public class PlayerSpawner : UnityEngine.Object
     { if (PlayerAvatar.IsDead && AllDead) RpcGameOver(); }
     [MethodImpl(MethodImplOptions.NoInlining)] public void RpcGameOver() { GameOvers++; }
 }
-public class DungeonManager : UnityEngine.Object
+public partial class DungeonManager : UnityEngine.Object
 {
     public static DungeonManager Instance { get; } = new();
     public bool isServer = true;

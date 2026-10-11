@@ -4,6 +4,12 @@ Updated: 2026-10-11, addon `0.43.2`. This extends [friendly fire](friendly-fire.
 using its existing host toggle and damage percentage; no additional setting,
 preset field, asset or guest addon is introduced.
 
+Follow-up (`0.47.1`, 2026-10-12): [Bolt and shared spell targeting](friendly-fire-spells.md)
+extends the audited homing and offensive-search scope. Common nearest/homing
+helpers now live in `FriendlyFireTargeting` / `FriendlyFireTargetingHooks`; the
+artifact registry and bounded proc scopes retain their original behavior. The
+spell exclusions below describe the earlier `0.43.2` audit boundary.
+
 ## Findings and reported cases
 
 Three independent gates excluded players before the central damage hook:

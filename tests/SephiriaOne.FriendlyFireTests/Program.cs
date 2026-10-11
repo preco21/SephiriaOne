@@ -177,10 +177,20 @@ RecoveryTests.Run(Check);
 KillLogTests.Run(Check);
 EffectTests.Run(Check);
 ArtifactTests.Run(Check);
+SpellTests.Run(Check);
 FractionalDamageTests.Run(Check);
 SelectiveCombatTests.Run(Check);
 TournamentCombatTests.Run(Check);
 FriendlyFireHooks.Uninstall();
+var nativeSpell = new Bullet { NetworkOwner = new PlayerAvatar(), Candidate = new PlayerAvatar(), FromType = EDamageFromType.Magic, damageId = "Skill_FireBolt" };
+nativeSpell.Update();
+Check(nativeSpell.HomingTarget == null, "Unload restores native spell homing filters");
+foreach (var entry in new[] { (typeof(ActiveSkill_Ball), "Update"), (typeof(AutoMagicCaster), "SearchTarget"),
+    (typeof(AutoMagicCaster), "Update"), (typeof(DungeonManager), "SearchTargetForChainLightning") })
+{
+    var info = PatchProcessor.GetPatchInfo(AccessTools.Method(entry.Item1, entry.Item2));
+    Check((info?.Prefixes.Count ?? 0) == 0 && (info?.Transpilers.Count ?? 0) == 0, "Unload removes spell targeting hook: " + entry.Item1.Name + "." + entry.Item2);
+}
 SessionSettings.FriendlyFireForHit = new(true, 50);
 var nativeIceBat = new Charm_IceBat { NetworkAvatar = new PlayerAvatar { IsInBattle = true }, Target = new PlayerAvatar() };
 nativeIceBat.OnUpdate();

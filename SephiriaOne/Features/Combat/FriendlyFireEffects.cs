@@ -27,8 +27,8 @@ namespace SephiriaOne
                 (source is PlayerAvatar || owner != target);
         }
 
-        // These helpers replace only audited offensive item target filters.
-        // Factions, healing/buffs, AI and unrelated spell searches stay native.
+        // Reverse-mask offensive filters (artifacts and chain lightning).
+        // Factions, healing/buffs and unrelated searches stay native.
         internal static bool ItemTarget(UnitAvatar target, EDamageFromType type, UnitAvatar source)
         {
             if (NetworkServer.active && IsPlayerTeamPair(source, target)) return CanAffectTeam(source, target);

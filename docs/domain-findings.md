@@ -16,6 +16,12 @@ A different game build requires renewed contract/asset checks. Start with the
 
 ## State lifetimes and multiplayer
 
+Spell targeting (`0.47.1`) reuses the artifact hostility adapters but needs exact
+Magic projectile identities. Native homing acquisition is host-controlled;
+ordinary player-input aim is separate. A passing faction predicate is insufficient
+when a physics query first fails to resolve the player's costume hitbox to its
+avatar. See [Bolt/shared spell targeting](friendly-fire-spells.md).
+
 Tournament (`0.47.0`) shares `CombatMatchRuntime` with Deathmatch but captures a
 finite roster of connection receipts for its bracket. Do not key bracket progress
 by account or net ID: reconnects are new lifetimes. Pair changes invalidate combat

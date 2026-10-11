@@ -276,17 +276,17 @@ internal static class ArtifactTests
         PlayerInputController.Candidates.Clear(); PlayerInputController.Candidates.Add(ally);
         check(PlayerInputController.SearchTargetNearestPoint(source, new(0, 0), 4) == null,
             "Unscoped boundary probe remains native");
-        check(FriendlyFireRuntime.ArtifactNearestPoint(source, new(0, 0), 4) == ally,
+        check(FriendlyFireRuntime.OffensiveNearestPoint(source, new(0, 0), 4) == ally,
             "Artifact nearest search includes the native squared-distance radius boundary");
         enemy.transform.position = ally.transform.position; PlayerInputController.Candidates.Add(enemy);
         check(PlayerInputController.SearchTargetNearestPoint(source, new(0, 0), 4) == enemy,
             "Ordinary nearest search also admits a native enemy exactly on the radius boundary");
-        check(FriendlyFireRuntime.ArtifactNearestPoint(source, new(0, 0), 4) == ally,
+        check(FriendlyFireRuntime.OffensiveNearestPoint(source, new(0, 0), 4) == ally,
             "Artifact nearest search keeps the first eligible candidate when both lie on the radius boundary");
         PlayerInputController.Candidates.Reverse();
-        check(FriendlyFireRuntime.ArtifactNearestPoint(source, new(0, 0), 4) == enemy,
+        check(FriendlyFireRuntime.OffensiveNearestPoint(source, new(0, 0), 4) == enemy,
             "Reversing an equal-distance boundary tie preserves the new first candidate");
-        check(FriendlyFireRuntime.ArtifactNearestPoint(source, new(0, 0), 3.99f) == null &&
+        check(FriendlyFireRuntime.OffensiveNearestPoint(source, new(0, 0), 3.99f) == null &&
             PlayerInputController.SearchTargetNearestPoint(source, new(0, 0), 3.99f) == null,
             "Both artifact and ordinary nearest searches reject candidates beyond the squared radius");
         PlayerInputController.Candidates.Clear();

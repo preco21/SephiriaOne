@@ -9,8 +9,8 @@ namespace SephiriaOne
 {
     internal static class FriendlyFireEffectHooks
     {
-        // Explicit consumers keep a targeting fix out of healing, UI warnings
-        // and unrelated automatic spells. Add a contract test with each entry.
+        // Explicit artifact consumers keep these filters out of healing and UI
+        // warnings. Spell consumers are registered in FriendlyFireSpellHooks.
         internal static IEnumerable<MethodInfo> Selectors()
         {
             yield return AccessTools.DeclaredMethod(typeof(WeaponAddonCommon_BurnRing), "DamageNearbyEnemies");
@@ -59,6 +59,8 @@ namespace SephiriaOne
                     prefix: new HarmonyMethod(typeof(FriendlyFireRuntime), method == "Update" ? nameof(FriendlyFireRuntime.BeforeDebuffUpdate) : nameof(FriendlyFireRuntime.BeforeDebuffOperation)),
                     finalizer: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.AfterDebuffOperation)));
             FriendlyFireArtifactHooks.Install(harmony);
+            FriendlyFireTargetingHooks.Install(harmony);
+            FriendlyFireSpellHooks.Install(harmony);
         }
 
         internal static IEnumerable<CodeInstruction> RewriteSelector(IEnumerable<CodeInstruction> instructions) =>
