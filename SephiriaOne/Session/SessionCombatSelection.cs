@@ -27,7 +27,7 @@ namespace SephiriaOne
             var receipt = FriendlyFireParticipants.Capture(player);
             message = L.T("Player connection changed. Refresh the player list and try again.");
             if (receipt == null || expected != null && !ReferenceEquals(receipt, expected)) return false;
-            DeathmatchRuntime.Stop(true, true);
+            CombatMatchRuntime.Stop(true, true);
             // Recovery can run arbitrary native callbacks: reject a replacement
             // connection even if the network ID or UI row has been reused.
             if (!FriendlyFireParticipants.Set(receipt, selected)) return false;
@@ -47,7 +47,7 @@ namespace SephiriaOne
                 var receipt = spawner ? FriendlyFireParticipants.Capture(spawner.PlayerAvatar) : null;
                 if (receipt != null && !receipts.Contains(receipt)) receipts.Add(receipt);
             }
-            DeathmatchRuntime.Stop(true, true);
+            CombatMatchRuntime.Stop(true, true);
             message = L.T("Player connection changed. Refresh the player list and try again.");
             var current = new HashSet<FriendlyFireParticipants.Receipt>();
             foreach (var spawner in PlayerSpawner.MultiplayerList)
@@ -65,12 +65,12 @@ namespace SephiriaOne
         {
             if (!SelectionScope(out message)) return false;
             var currentDungeon = DungeonManager.Instance; var currentRun = SaveManager.CurrentRun; long currentGeneration = ResourceGeneration;
-            DeathmatchRuntime.Stop(true, true);
+            CombatMatchRuntime.Stop(true, true);
             message = L.T("Session changed. Review the values and enter the action again.");
             if (!EnsureResourceScope() || !ReferenceEquals(currentDungeon, DungeonManager.Instance) ||
                 !ReferenceEquals(currentRun, SaveManager.CurrentRun) || currentGeneration != ResourceGeneration) return false;
             FriendlyFireParticipants.ResetSelection(); DeathmatchChanged();
-            message = L.T("Selection reset. All players participate while friendly fire or deathmatch is enabled.");
+            message = L.T("Selection reset. All players are eligible for friendly fire, deathmatch and tournament.");
             return true;
         }
 

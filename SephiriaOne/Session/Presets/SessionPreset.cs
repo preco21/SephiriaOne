@@ -23,6 +23,7 @@ namespace SephiriaOne
         private const string ExpandedStatsPresetHeader = "SephiriaOne preset v17";
         private const string DeathmatchPresetHeader = "SephiriaOne preset v18";
         private const string FractionalCombatPresetHeader = "SephiriaOne preset v19";
+        private const string TournamentPresetHeader = "SephiriaOne preset v20";
         private const string EventPresetHeader = "SephiriaOne preset v16";
         private const string CollinPresetHeader = "SephiriaOne preset v15";
         private const string BatPresetHeader = "SephiriaOne preset v14";
@@ -57,6 +58,7 @@ namespace SephiriaOne
         {
             var lines = new List<string>();
             if (DeathmatchDuration != DeathmatchSettings.DefaultDuration) lines.Add("deathmatch duration " + DeathmatchDuration.ToString(CultureInfo.InvariantCulture));
+            if (TournamentDuration != TournamentSettings.DefaultDuration) lines.Add("tournament duration " + TournamentDuration.ToString(CultureInfo.InvariantCulture));
             if (EventSpawns.HasChanges) lines.Add("events multiplier " + EventSpawns.Number);
             if (CollinStartingArtifact) lines.Add("collin starting 1");
             if (BatHpSteal) lines.Add("bat hp-steal 1");
@@ -100,7 +102,7 @@ namespace SephiriaOne
             foreach (var stat in stats.Keys) expandedStats |= stat.RequiresExpandedPreset;
             bool multiplier = HasFountainMultiplier;
             foreach (Setting setting in stats.Values) multiplier |= setting.Multiplier;
-            return (FriendlyFire.HasFractionalPercent ? FractionalCombatPresetHeader : DeathmatchDuration != DeathmatchSettings.DefaultDuration ? DeathmatchPresetHeader : expandedStats ? ExpandedStatsPresetHeader : EventSpawns.HasChanges ? EventPresetHeader : CollinStartingArtifact ? CollinPresetHeader : BatHpSteal ? BatPresetHeader : JarSpawns.HasChanges ? JarPresetHeader : FriendlyFire.HasChanges ? CombatPresetHeader : ItemUnlock ? ItemUnlockPresetHeader : RabbitPotions.LevelUpPotion ? RabbitLevelUpPresetHeader : UsesMerchantGuaranteePreset ? MerchantGuaranteePresetHeader : UsesMerchantTypesPreset ? MerchantTypesPresetHeader : Merchants.HasChanges ? MerchantPresetHeader : RabbitPotions.MpCostPerDrink != RabbitPotionSettings.DefaultMpCostPerDrink ? RabbitCostPresetHeader :
+            return (TournamentDuration != TournamentSettings.DefaultDuration ? TournamentPresetHeader : FriendlyFire.HasFractionalPercent ? FractionalCombatPresetHeader : DeathmatchDuration != DeathmatchSettings.DefaultDuration ? DeathmatchPresetHeader : expandedStats ? ExpandedStatsPresetHeader : EventSpawns.HasChanges ? EventPresetHeader : CollinStartingArtifact ? CollinPresetHeader : BatHpSteal ? BatPresetHeader : JarSpawns.HasChanges ? JarPresetHeader : FriendlyFire.HasChanges ? CombatPresetHeader : ItemUnlock ? ItemUnlockPresetHeader : RabbitPotions.LevelUpPotion ? RabbitLevelUpPresetHeader : UsesMerchantGuaranteePreset ? MerchantGuaranteePresetHeader : UsesMerchantTypesPreset ? MerchantTypesPresetHeader : Merchants.HasChanges ? MerchantPresetHeader : RabbitPotions.MpCostPerDrink != RabbitPotionSettings.DefaultMpCostPerDrink ? RabbitCostPresetHeader :
                 RabbitPotions.ConsumeMp || RabbitPotions.SuppressSurvival ? RabbitBalancePresetHeader :
                 RabbitPotions.HasChanges ? RabbitPresetHeader : Resources.HasChanges ? ResourcePresetHeader : multiplier ? MultiplierPresetHeader : PresetHeader) + "\n" +
                 (HasChanges ? string.Join("\n", DescribeSettings()) + "\n" : "");
@@ -112,8 +114,9 @@ namespace SephiriaOne
             error = L.T("Invalid saved preset; no saved settings were applied.");
             if (text == null || text.Length > MaximumPresetLength) return false;
             string[] lines = text.Replace("\r\n", "\n").Split('\n');
-            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader && lines[0] != RabbitBalancePresetHeader && lines[0] != RabbitCostPresetHeader && lines[0] != MerchantPresetHeader && lines[0] != MerchantTypesPresetHeader && lines[0] != MerchantGuaranteePresetHeader && lines[0] != RabbitLevelUpPresetHeader && lines[0] != ItemUnlockPresetHeader && lines[0] != CombatPresetHeader && lines[0] != JarPresetHeader && lines[0] != BatPresetHeader && lines[0] != CollinPresetHeader && lines[0] != EventPresetHeader && lines[0] != ExpandedStatsPresetHeader && lines[0] != DeathmatchPresetHeader && lines[0] != FractionalCombatPresetHeader)) return false;
-            bool allowFractionalCombat = lines[0] == FractionalCombatPresetHeader;
+            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader && lines[0] != RabbitBalancePresetHeader && lines[0] != RabbitCostPresetHeader && lines[0] != MerchantPresetHeader && lines[0] != MerchantTypesPresetHeader && lines[0] != MerchantGuaranteePresetHeader && lines[0] != RabbitLevelUpPresetHeader && lines[0] != ItemUnlockPresetHeader && lines[0] != CombatPresetHeader && lines[0] != JarPresetHeader && lines[0] != BatPresetHeader && lines[0] != CollinPresetHeader && lines[0] != EventPresetHeader && lines[0] != ExpandedStatsPresetHeader && lines[0] != DeathmatchPresetHeader && lines[0] != FractionalCombatPresetHeader && lines[0] != TournamentPresetHeader)) return false;
+            bool allowTournament = lines[0] == TournamentPresetHeader;
+            bool allowFractionalCombat = lines[0] == FractionalCombatPresetHeader || allowTournament;
             bool allowDeathmatch = lines[0] == DeathmatchPresetHeader || allowFractionalCombat;
             bool allowExpandedStats = lines[0] == ExpandedStatsPresetHeader || allowDeathmatch;
             bool allowEvents = lines[0] == EventPresetHeader || allowExpandedStats;
@@ -152,6 +155,14 @@ namespace SephiriaOne
                         value != decimal.Truncate(value) || !DeathmatchSettings.ValidDuration((int)value) ||
                         parts[2] != value.ToString("0", CultureInfo.InvariantCulture)) return false;
                     pending.RecordDeathmatchDuration((int)value);
+                    continue;
+                }
+                if (parts[0] == "tournament")
+                {
+                    if (!allowTournament || parts.Length != 3 || parts[1] != "duration" || !seen.Add("tournament") ||
+                        value != decimal.Truncate(value) || !TournamentSettings.ValidDuration((int)value) ||
+                        parts[2] != value.ToString("0", CultureInfo.InvariantCulture)) return false;
+                    pending.RecordTournamentDuration((int)value);
                     continue;
                 }
                 if (parts[0] == "collin")

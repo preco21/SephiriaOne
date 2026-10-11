@@ -53,7 +53,7 @@ namespace SephiriaOne
             try
             {
                 var settings = SessionSettings.FriendlyFireForHit;
-                FriendlyFireKda.SetEnabled(settings.Enabled);
+                FriendlyFireKda.SetEnabled(CombatMatchRuntime.ScoresEnabled(settings.Enabled));
                 bool reflection = IsNativeReflection(damage);
                 // Native debuff ticks use an all-faction mask and bypass the
                 // normal player veto. Recheck policy before every team impact.
@@ -124,7 +124,7 @@ namespace SephiriaOne
         // Keep only this exact friendly-fire death recoverable; no global
         // game-over flag or exemption survives the active damage scope.
         internal static bool BeforeGameOverCheck(PlayerSpawner __instance, DamageInstance damage) =>
-            !NetworkServer.active || !ReviveAllFeature.Available || !DeathmatchRuntime.ProtectDeath(__instance.PlayerAvatar) &&
+            !NetworkServer.active || !ReviveAllFeature.Available || !CombatMatchRuntime.ProtectDeath(__instance.PlayerAvatar) &&
             (!current.Friendly || !(current.Victim is PlayerAvatar victim) ||
             !ReferenceEquals(__instance.PlayerAvatar, victim) || !victim.IsDead ||
             !ReferenceEquals(current.Damage, damage));

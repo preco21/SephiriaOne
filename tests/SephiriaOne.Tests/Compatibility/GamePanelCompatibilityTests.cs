@@ -37,7 +37,7 @@ internal static class GamePanelCompatibilityTests
 
         var panel = addon.GetType("SephiriaOne.SettingsPanel", true)!;
         var contentForPage = Required(panel, "ContentForPage");
-        string[] expected = { "Stats", "None", "Choices", "Resources", "Presets", "All", "None", "None", "None", "Participants", "None", "None", "None", "Participants", "All" };
+        string[] expected = { "Stats", "None", "Choices", "Resources", "Presets", "All", "None", "None", "None", "Participants", "None", "None", "None", "Participants", "Participants", "All" };
         for (int page = 0; page < expected.Length; page++)
             if (contentForPage.Invoke(null, new object[] { page })?.ToString() != expected[page])
                 throw new Exception("Panel snapshot must include every displayed section: page " + page);
@@ -124,7 +124,8 @@ internal static class GamePanelCompatibilityTests
             throw new Exception("Snapshot checkbox refresh must use no-notify observation.");
         var widgets = addon.GetType("SephiriaOne.PanelWidgets", true)!;
         var participants = Required(panel, "BuildParticipantsEditor");
-        if (!Calls(Required(panel, "BuildCombatEditor"), participants) || !Calls(Required(panel, "BuildDeathmatchEditor"), participants))
+        if (!Calls(Required(panel, "BuildCombatEditor"), participants) || !Calls(Required(panel, "BuildDeathmatchEditor"), participants) ||
+            !Calls(Required(panel, "BuildTournamentEditor"), participants))
             throw new Exception("Combat and deathmatch must expose the same participant-list controls.");
         var participantRefresh = PatchProcessor.GetOriginalInstructions(Required(panel, "RefreshParticipants"));
         if (!participantRefresh.Any(i => i.operand is MethodInfo m && m.Name == "SetIsOnWithoutNotify") ||

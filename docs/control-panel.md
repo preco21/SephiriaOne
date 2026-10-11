@@ -1,5 +1,14 @@
 # Host settings panel
 
+Tournament adds a separate **Tournament** tab with a round duration input
+(10–3600 seconds, default 30), **Apply**, **Start match**, **Stop match**, and
+**Reset K/D/A**. It shares Combat and Deathmatch's participant controls. Each
+mode's Start/Stop controls operate only that mode; only one match can run at a
+time. Changing the duration affects the next tournament. Saving a nondefault
+Tournament duration uses preset v20; earlier presets keep the 30-second default.
+Tournament progress and the temporary participant selection are never saved.
+The 760×420 window keeps two tab rows, now with eight columns.
+
 Version `0.45.1` exposes **Reset K/D/A** in both Combat and Deathmatch. Both
 buttons work for regular hosted friendly fire and active deathmatches without
 changing combat settings, selections, match duration or pending respawns.
@@ -79,6 +88,7 @@ unapplied drafts without sending any gameplay command.
 | Items | Default-off On/Off and Reset controls for given-item sale restrictions and owner-bound drops, including Fountain sharing. See [scope and native limits](item-restrictions.md); intrinsic costume-curse no-drop properties remain. |
 | Combat | Friendly fire On/Off, a 0–300% damage slider/input with Apply damage, Reset (off/100%), Reset K/D/A, Revive all players, shared participant checkboxes and Select All/Reset selection. |
 | Deathmatch | Set duration (10–3600 seconds, default 300), Start/Stop, Reset K/D/A, remaining time and the shared participant selection controls. |
+| Tournament | Set each round's duration (10–3600 seconds, default 30), Start/Stop, Reset K/D/A, current round status and the same participant selection controls. Selections are captured on start; changing selection ends the current match. |
 | Spawns | Choose Mystic Jars or random events. Apply a chance or native-rate multiplier using the selected feature's existing limits; Reset restores native. Existing generated results are preserved. |
 | Costumes | Independent Bat HP-steal reduction and Collin starting-artifact toggles, resets and compatibility readouts. |
 | Rabbit | Independent On/Off controls for Wing-Eared Rabbit infinite HP potions, nearby potion healing, MP cost, Survival rank-5 suppression and random non-HP/MP potions on level-up. Sample is excluded from all HP-potion options and keeps native behavior. Enter 0..10000 MP and press Set & on to choose a fee; Off remembers it. Reset restores 10 MP and disables all five options. Shows active state and separate drink/level-up compatibility. |

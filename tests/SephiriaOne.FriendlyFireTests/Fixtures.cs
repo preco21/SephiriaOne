@@ -36,8 +36,13 @@ namespace Mirror { public static class NetworkServer { public static bool active
 namespace Mirror { public class SyncList<T> : List<T> { [MethodImpl(MethodImplOptions.NoInlining)] public new bool Contains(T item) => base.Contains(item); } }
 namespace SephiriaOne
 {
-    internal static class DeathmatchRuntime
+    internal static class CombatMatchRuntime
     {
+        internal static Func<PlayerAvatar, PlayerAvatar, bool> PairRule;
+        internal static bool KeepScores;
+        internal static bool AllowsPair(PlayerAvatar a, PlayerAvatar b) => PairRule?.Invoke(a, b) ?? true;
+        internal static bool ScoresEnabled(bool normal) => KeepScores || normal;
+        internal static void SelectionChanged() { }
         internal static bool Protect;
         internal static PlayerAvatar LastDead, LastRevived;
         internal static bool ProtectDeath(PlayerAvatar player) => Protect && player != null;

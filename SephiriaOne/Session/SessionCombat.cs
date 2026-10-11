@@ -6,10 +6,10 @@ namespace SephiriaOne
     {
         // Same event-time scope resolution as potions. Never cache per-player
         // policy or rely on the joining connection's prior incarnation.
-        internal static FriendlyFireSettings FriendlyFireForHit => EnsureResourceScope() ? DeathmatchRuntime.Effective(policy.FriendlyFire) : default;
+        internal static FriendlyFireSettings FriendlyFireForHit => EnsureResourceScope() ? CombatMatchRuntime.Effective(policy.FriendlyFire) : default;
 
-        internal static bool CanResetFriendlyFireScores => enabled && NetworkServer.active && !DeathmatchRuntime.RecoveryPending &&
-            (DeathmatchRuntime.IsRunning ? DeathmatchRuntime.CanResetScores :
+        internal static bool CanResetFriendlyFireScores => enabled && NetworkServer.active && !CombatMatchRuntime.RecoveryPending &&
+            (CombatMatchRuntime.IsRunning ? CombatMatchRuntime.CanResetScores :
                 dungeon && dungeon.isServer && dungeon.netId != 0 && ReferenceEquals(dungeon, DungeonManager.Instance) &&
                 ReviveAllAction.IsRunOpen(dungeon, SaveManager.CurrentRun));
 
@@ -19,8 +19,8 @@ namespace SephiriaOne
             if (!NetworkServer.active) return false;
             // Match reset also clears retained offline ranking entries. Do not
             // fall through from an expired/closing match into the casual path.
-            if (DeathmatchRuntime.IsRunning || DeathmatchRuntime.RecoveryPending)
-                return DeathmatchRuntime.ResetScores(out message);
+            if (CombatMatchRuntime.IsRunning || CombatMatchRuntime.RecoveryPending)
+                return CombatMatchRuntime.ResetScores(out message);
             message = L.T("K/D/A reset requires a current hosted session that is not ending.");
             if (!EnsureResourceScope() || !CanResetFriendlyFireScores) return false;
             // Score-only: no policy write, reconciliation, selection edit, or
@@ -36,9 +36,9 @@ namespace SephiriaOne
         {
             message = L.T("Only the host can change friendly fire.");
             if (!NetworkServer.active) return false;
-            bool interrupted = DeathmatchRuntime.IsRunning && (!command.Percent.HasValue || command.Reset);
+            bool interrupted = CombatMatchRuntime.IsRunning && (!command.Percent.HasValue || command.Reset);
             var previousDungeon = DungeonManager.Instance; var previousRun = SaveManager.CurrentRun; long previousGeneration = ResourceGeneration;
-            if (!command.Percent.HasValue || command.Reset) DeathmatchRuntime.Stop(true, true);
+            if (!command.Percent.HasValue || command.Reset) CombatMatchRuntime.Stop(true, true);
             if (!command.IsReset && !FriendlyFireFeature.Available)
             { message = L.T("Friendly-fire compatibility checks failed. Off/reset remain available; see Player.log."); return false; }
             if (interrupted)
@@ -55,8 +55,8 @@ namespace SephiriaOne
             if (!PrepareCommand("combat", command.IsReset, out HostCommandContext context, out message)) return false;
             if (!Commit("combat", context.CreateBatch(), () =>
                 { policy.Record(command); if (command.Reset) FriendlyFireParticipants.ResetSelection();
-                    FriendlyFireKda.SetEnabled(DeathmatchRuntime.Effective(policy.FriendlyFire).Enabled); }, out message)) return false;
-            message = DescribeFriendlyFire(DeathmatchRuntime.Effective(policy.FriendlyFire));
+                    FriendlyFireKda.SetEnabled(CombatMatchRuntime.ScoresEnabled(CombatMatchRuntime.Effective(policy.FriendlyFire).Enabled)); }, out message)) return false;
+            message = DescribeFriendlyFire(CombatMatchRuntime.Effective(policy.FriendlyFire));
             return true;
         }
 

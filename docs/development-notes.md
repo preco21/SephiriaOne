@@ -14,6 +14,14 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+Version `0.47.0` adds **Tournament**, a temporary one-on-one elimination mode
+sharing Deathmatch's KDA, participant list, native bubbles and scoped recovery.
+Unresolved pairs get at most two attempts; new entrants precede previous winners.
+The new tab and `/one tournament` commands configure round duration (default 30s,
+preset v20), start/stop and reset scores. `CombatMatchRuntime` now owns both modes;
+round boundaries preserve totals while invalidating old hit/assist receipts.
+See [rules, lifecycle evidence and verification limits](tournament.md).
+
 Version `0.46.0` adds native **Blood of Obrus** (`1171`, Korean: **오브러스의 피**)
 to Wing-Eared Rabbit's costume starting items alongside Blessing and Iron Wall.
 Each addon artifact validates and owns its template addition independently;

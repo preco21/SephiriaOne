@@ -1,5 +1,10 @@
 # Friendly-fire and deathmatch participants
 
+Since `0.47.0`, [Tournament](tournament.md) also uses this selection. It captures
+eligible lifetimes at start; late joins wait for the next tournament. Every
+explicit selection action and automatic removal of a selected connection stops
+Tournament; empty-selection connection departures instead withdraw that entrant.
+
 Added in `0.45.0` (2026-10-11). The host controls one temporary participant list
 shared by friendly fire and deathmatch. Guests do not need the addon.
 

@@ -17,7 +17,7 @@ namespace SephiriaOne
             combatResetKda = widgets.Button(pageRoot, "Reset K/D/A", 162, 0, 127, 24,
                 () => Execute("/one friendlyfire resetkda", true));
             AddCheckbox("Friendly fire", 16, 28, 174, 25, s => s.FriendlyFire.Enabled, s => s.FriendlyFireAvailable, "/one friendlyfire",
-                s => s.CanMutate || DeathmatchRuntime.IsRunning && s.HostActive && s.SessionIdentity != null);
+                s => s.CanMutate || CombatMatchRuntime.IsRunning && s.HostActive && s.SessionIdentity != null);
             resetAll = widgets.Button(pageRoot, "Reset", 200, 28, 89, 25, () => Execute("/one friendlyfire reset", true));
             widgets.Text(pageRoot, "FriendlyPercent", "Allied damage (%)", 16, 62, 180, 25, 11);
             amount = widgets.Input(pageRoot, 200, 62, 89, EditFriendlyDamage);

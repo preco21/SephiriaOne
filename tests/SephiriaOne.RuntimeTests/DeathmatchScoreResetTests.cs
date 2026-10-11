@@ -7,7 +7,7 @@ internal static class DeathmatchScoreResetTests
 
     internal static void Run(Func<PlayerSpawner> start, Func<uint, PlayerSpawner> add, Action<bool, string> check)
     {
-        void At(float time) { UnityEngine.Time.unscaledTime = time; DeathmatchRuntime.Tick(); }
+        void At(float time) { UnityEngine.Time.unscaledTime = time; CombatMatchRuntime.Tick(); }
         PlayerSpawner Begin(bool warmup = false)
         {
             var player = start(); At(0);
@@ -21,7 +21,7 @@ internal static class DeathmatchScoreResetTests
             var receipt = FriendlyFireKda.BeforeDeath(victim, killer, FriendlyFireKda.Epoch);
             victim.IsDead = true;
             check(FriendlyFireKda.CompleteDeath(victim, receipt), "Confirm scored fixture death");
-            DeathmatchRuntime.Died(victim);
+            CombatMatchRuntime.Died(victim);
         }
         bool Zero(PlayerAvatar player) => FriendlyFireKda.Label(player, "P") == "P(0/0/0)";
         var host = Begin(); var guest = add(2); var helper = add(3);
@@ -31,21 +31,21 @@ internal static class DeathmatchScoreResetTests
         FriendlyFireKda.Damage(helper.PlayerAvatar, guest.PlayerAvatar, FriendlyFireKda.Epoch);
         Kill(host.PlayerAvatar, guest.PlayerAvatar);
         var retained = FriendlyFireKda.For(host.PlayerAvatar);
-        var remaining = DeathmatchRuntime.Describe();
+        var remaining = CombatMatchRuntime.Describe();
         var revision = SessionSettings.ReadSnapshot().Revision;
         long epoch = FriendlyFireKda.Epoch;
         check(SettingsActions.Execute(Command).Success, "Host command resets deathmatch K/D/A");
         check(Zero(host.PlayerAvatar) && Zero(guest.PlayerAvatar) && Zero(helper.PlayerAvatar) &&
             ReferenceEquals(retained, FriendlyFireKda.For(host.PlayerAvatar)) && FriendlyFireKda.Epoch != epoch,
             "Reset clears all totals and old attribution while retaining score identities");
-        check(DeathmatchRuntime.IsRunning && SessionSettings.FriendlyFireForHit.Enabled &&
-            DeathmatchRuntime.Describe() == remaining && SessionSettings.ReadSnapshot().Revision == revision &&
+        check(CombatMatchRuntime.IsRunning && SessionSettings.FriendlyFireForHit.Enabled &&
+            CombatMatchRuntime.Describe() == remaining && SessionSettings.ReadSnapshot().Revision == revision &&
             guest.PlayerAvatar.IsDead && guest.PlayerAvatar.ReviveCalls == 0,
             "Reset preserves match duration, policy revision, friendly fire and pending respawn");
         check(DungeonManager.Instance.ChatMessages.Count(x => x.Message == "Deathmatch K/D/A scores reset.") == 1,
             "Reset announces once through stock guest chat");
-        check(SettingsActions.Execute("/one friendlyfire resetkda").Success && DeathmatchRuntime.IsRunning &&
-            DeathmatchRuntime.Describe() == remaining && guest.PlayerAvatar.IsDead && guest.PlayerAvatar.ReviveCalls == 0,
+        check(SettingsActions.Execute("/one friendlyfire resetkda").Success && CombatMatchRuntime.IsRunning &&
+            CombatMatchRuntime.Describe() == remaining && guest.PlayerAvatar.IsDead && guest.PlayerAvatar.ReviveCalls == 0,
             "Combat reset command also preserves the running match and its pending respawn");
         At(6); check(guest.PlayerAvatar.IsDead, "Reset does not shorten the old respawn deadline");
         At(7); check(!guest.PlayerAvatar.IsDead, "Reset does not extend the old respawn deadline");
@@ -59,7 +59,7 @@ internal static class DeathmatchScoreResetTests
         Kill(host.PlayerAvatar, guest.PlayerAvatar);
         check(FriendlyFireKda.For(helper.PlayerAvatar).Assists == 1, "New damage can earn assists after reset");
         At(13);
-        check(!DeathmatchRuntime.IsRunning && !guest.PlayerAvatar.IsDead &&
+        check(!CombatMatchRuntime.IsRunning && !guest.PlayerAvatar.IsDead &&
             DungeonManager.Instance.ChatMessages.Any(x => x.Message.Contains("Host(2/0/0)")),
             "Original deadline and final rankings survive score reset");
 
@@ -85,7 +85,7 @@ internal static class DeathmatchScoreResetTests
             "Rankings keep departed players and do not duplicate reconnected participants after reset");
 
         host = Begin(true); guest = add(2);
-        guest.PlayerAvatar.IsDead = true; DeathmatchRuntime.Died(guest.PlayerAvatar);
+        guest.PlayerAvatar.IsDead = true; CombatMatchRuntime.Died(guest.PlayerAvatar);
         At(1); check(SettingsActions.Execute(Command).Success && !SessionSettings.FriendlyFireForHit.Enabled,
             "Warmup reset cannot arm friendly fire early");
         At(3); check(SessionSettings.FriendlyFireForHit.Enabled && !guest.PlayerAvatar.IsDead,
@@ -123,7 +123,7 @@ internal static class DeathmatchScoreResetTests
             var damage = new DamageInstance();
             FriendlyFireRuntime.Attribute(host.PlayerAvatar, guest.PlayerAvatar, damage);
             guest.PlayerAvatar.Die(1, damage);
-            check(Zero(host.PlayerAvatar) && Zero(guest.PlayerAvatar) && DeathmatchRuntime.IsRunning &&
+            check(Zero(host.PlayerAvatar) && Zero(guest.PlayerAvatar) && CombatMatchRuntime.IsRunning &&
                 !DungeonManager.Instance.ChatMessages.Any(x => x.Message.Contains(" killed ")),
                 "Death finalizer cannot restore cleared points or emit stale K/D/A notice");
             At(6);
@@ -134,7 +134,7 @@ internal static class DeathmatchScoreResetTests
             guest.PlayerAvatar.ReviveCallback = () => check(!SettingsActions.Execute(Command).Success,
                 "Reset is rejected while match-end recovery unwinds");
             SettingsActions.Execute("/one deathmatch stop");
-            check(!DeathmatchRuntime.IsRunning && !guest.PlayerAvatar.IsDead &&
+            check(!CombatMatchRuntime.IsRunning && !guest.PlayerAvatar.IsDead &&
                 DungeonManager.Instance.ChatMessages.Any(x => x.Message.Contains("(1/0/0)")),
                 "Rejected cleanup reset preserves results and recovery");
         }

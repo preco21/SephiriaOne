@@ -30,7 +30,7 @@ namespace SephiriaOne
             var state = UpdateFeature.Snapshot;
             bool notice = state != null && (state.CanInstall || state.Phase == UpdatePhase.RestartRequired || state.Busy);
             updateLabel.text = state != null && state.CanInstall ? L.T("Update available") : L.T("Updates");
-            scopeLabel.text = !notice ? L.T(page == 9 || page == 13 ? "Host · Combat participants" : "Host · All players") :
+            scopeLabel.text = !notice ? L.T(page == 9 || page == 13 || page == 14 ? "Host · Combat participants" : "Host · All players") :
                 state.Phase == UpdatePhase.Installing ? L.T("Installing update · Keep the game open") :
                 state.Phase == UpdatePhase.RestartRequired ? L.T("Update installed · Restart required") :
                 state.CanInstall ? L.F("Update {0} available", state.Candidate.Version) : L.T("Checking for updates...");

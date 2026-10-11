@@ -16,6 +16,12 @@ A different game build requires renewed contract/asset checks. Start with the
 
 ## State lifetimes and multiplayer
 
+Tournament (`0.47.0`) shares `CombatMatchRuntime` with Deathmatch but captures a
+finite roster of connection receipts for its bracket. Do not key bracket progress
+by account or net ID: reconnects are new lifetimes. Pair changes invalidate combat
+and assist receipts while retaining shared KDA totals, and selected-connection
+pruning cancels Tournament just like a selection command. See [Tournament](tournament.md).
+
 The project retains gameplay effects usable by unmodified guests through native
 state, existing items/prefabs and native RPC consumers. Local settings UI,
 translation, diagnostics and update controls support those features; they do not

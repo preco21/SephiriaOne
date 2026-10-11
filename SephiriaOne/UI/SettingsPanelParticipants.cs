@@ -18,7 +18,7 @@ namespace SephiriaOne
         private TMP_Text participantSummary;
         private Button selectAllPlayers, resetPlayerSelection;
 
-        // The same list controls both combat and deathmatch. Rows are pooled for
+        // Combat, Deathmatch and Tournament share this list. Rows are pooled for
         // the page's lifetime; refresh replaces data, never listeners or objects.
         private void BuildParticipantsEditor()
         {

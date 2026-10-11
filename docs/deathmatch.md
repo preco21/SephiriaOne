@@ -1,5 +1,9 @@
 # Temporary deathmatch
 
+Since `0.47.0`, `CombatMatchRuntime` owns the shared lifecycle for Deathmatch and
+[Tournament](tournament.md). The modes are mutually exclusive; each tab/command
+reports and stops its own mode. Existing Deathmatch behavior remains unchanged.
+
 Version `0.45.0` shares the [friendly-fire participant list](selective-friendly-fire.md).
 Empty selection includes everyone; otherwise only selected players enroll, revive
 or receive match game-over protection. Both tabs offer Select All/Reset selection;
@@ -99,7 +103,7 @@ HP or claiming successful recovery; `/one reviveall` remains the manual retry.
 
 ## Implementation and evidence
 
-- `Features/Combat/DeathmatchRuntime.cs`: scoped state machine, enrollment,
+- `Features/Combat/CombatMatchRuntime.cs`: shared scoped state machine, enrollment,
   countdown/respawn scheduling, cleanup and rankings.
 - `DeathmatchCommand.cs`, `Session/SessionDeathmatch.cs`: shared command and
   duration policy. `DeathmatchSettings.cs` provides bounds/defaults.

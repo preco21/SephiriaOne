@@ -23,6 +23,7 @@ namespace SephiriaOne
             var targetOwner = TeamOwner(target);
             return settings.Enabled && settings.HasDamage && OwnerCurrent(source, owner) && FriendlyFireParticipants.Includes(owner) &&
                 (ReferenceEquals(targetOwner, null) || OwnerCurrent(target, targetOwner) && FriendlyFireParticipants.Includes(targetOwner)) &&
+                CombatMatchRuntime.AllowsPair(owner, targetOwner) &&
                 (source is PlayerAvatar || owner != target);
         }
 

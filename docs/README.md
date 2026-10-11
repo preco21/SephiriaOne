@@ -1,6 +1,6 @@
 # Development knowledge index
 
-Maintained: 2026-10-11 (Asia/Seoul), addon `0.46.0`.
+Maintained: 2026-10-11 (Asia/Seoul), addon `0.47.0`.
 
 Agents and contributors can refer to `docs/*` for research, implementation
 materials, native game findings and references. Start here before repeating an
@@ -43,6 +43,7 @@ distinguishes native chapter/outcome markers from actual run settlement.
 | Combat | [Friendly fire, KDA, companions, reflection and revive-all recovery](friendly-fire.md), [offensive artifact targeting audit](friendly-fire-artifacts.md) |
 | Combat participants | [Temporary selections, Select All/reset, connection lifetimes and shared deathmatch eligibility](selective-friendly-fire.md) |
 | Deathmatch | [Temporary timed matches, respawns, rankings and toggle synchronization](deathmatch.md) |
+| Tournament | [Shared match runtime, one-on-one elimination, bounded draws, participant lifetimes and controls](tournament.md) |
 | Reliability and performance | [Disconnect investigation](disconnect-investigation.md), [penalty warnings/transport evidence](penalty-stat-sync-review.md), [performance reviews](performance-review.md) |
 | Releases and dependencies | [GitHub updater](github-updates.md), [updater investigation](github-release-updates-investigation.md), [third-party notices](third-party-notices.md) |
 

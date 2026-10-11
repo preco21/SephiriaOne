@@ -18,7 +18,7 @@ namespace SephiriaOne
         {
             __state = default;
             if (!NetworkServer.active || __instance.IsDead) return;
-            if (__instance is PlayerAvatar dying) __state.MatchDeath = DeathmatchRuntime.EnterDeath(dying);
+            if (__instance is PlayerAvatar dying) __state.MatchDeath = CombatMatchRuntime.EnterDeath(dying);
             try
             {
                 RememberCompanionOwner(__instance);
@@ -42,7 +42,7 @@ namespace SephiriaOne
             if (!NetworkServer.active || !__instance.IsDead) return;
             try
             {
-                if (__instance is PlayerAvatar dead) DeathmatchRuntime.Died(dead);
+                if (__instance is PlayerAvatar dead) CombatMatchRuntime.Died(dead);
                 // A reset/toggle/run transition invalidates every old notice,
                 // including killer totals captured for NPC/companion victims.
                 if (__state.Killer != null && (!CurrentHitPermitted() || __state.ScoreEpoch != FriendlyFireKda.Epoch ||
@@ -63,14 +63,14 @@ namespace SephiriaOne
         internal static Exception FinishDeath(Exception __exception, UnitAvatar __instance, DeathNotice __state)
         {
             try { AfterDeath(__instance, __state); }
-            finally { if (__instance is PlayerAvatar player) DeathmatchRuntime.LeaveDeath(player, __state.MatchDeath); }
+            finally { if (__instance is PlayerAvatar player) CombatMatchRuntime.LeaveDeath(player, __state.MatchDeath); }
             return __exception;
         }
 
         internal static void BeforeRevive(UnitAvatar __instance)
         {
             if (NetworkServer.active && __instance.IsDead && __instance is PlayerAvatar player)
-            { FriendlyFireKda.ForgetLife(player); DeathmatchRuntime.Reviving(player); }
+            { FriendlyFireKda.ForgetLife(player); CombatMatchRuntime.Reviving(player); }
         }
 
         private static string NoticeName(UnitAvatar avatar)

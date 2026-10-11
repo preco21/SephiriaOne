@@ -17,7 +17,7 @@ internal static class DeathmatchTests
         check(SettingsActions.Execute("/one deathmatch start").Success, "Host can start a temporary deathmatch through the shared command");
         check(!SettingsActions.Execute("/one deathmatch start").Success, "Cannot restart an ongoing countdown");
         check(!SessionSettings.FriendlyFireForHit.Enabled && !SessionSettings.ReadSnapshot().FriendlyFire.Enabled, "Warmup and UI both keep friendly fire off");
-        void At(float time) { UnityEngine.Time.unscaledTime = time; DeathmatchRuntime.Tick(); }
+        void At(float time) { UnityEngine.Time.unscaledTime = time; CombatMatchRuntime.Tick(); }
         At(1); At(2); At(3);
         check(SessionSettings.FriendlyFireForHit.Enabled && SessionSettings.ReadSnapshot().FriendlyFire.Enabled, "Match enables friendly fire and toggle together");
         var chat = DungeonManager.Instance.ChatMessages;
@@ -25,7 +25,7 @@ internal static class DeathmatchTests
         host.PlayerAvatar.playerNameSource = "Host"; guest.PlayerAvatar.playerNameSource = "Guest";
         FriendlyFireKda.Damage(host.PlayerAvatar, guest.PlayerAvatar, FriendlyFireKda.Epoch);
         var death = FriendlyFireKda.BeforeDeath(guest.PlayerAvatar, host.PlayerAvatar, FriendlyFireKda.Epoch);
-        guest.PlayerAvatar.IsDead = true; FriendlyFireKda.CompleteDeath(guest.PlayerAvatar, death); DeathmatchRuntime.Died(guest.PlayerAvatar);
+        guest.PlayerAvatar.IsDead = true; FriendlyFireKda.CompleteDeath(guest.PlayerAvatar, death); CombatMatchRuntime.Died(guest.PlayerAvatar);
         At(4); At(5);
         check(guest.PlayerAvatar.IsDead, "Player remains dead for full three-second respawn countdown");
         At(6);
@@ -35,17 +35,17 @@ internal static class DeathmatchTests
         check(damageEdit.Messages.Any(m => m.Contains("Friendly fire: on")), "Damage command reports the effective match toggle, not underlying preset state");
         check(FriendlyFireKda.Label(host.PlayerAvatar, "Host") == "Host(1/0/0)", "Damage edit during match preserves scoreboard identity and totals");
         check(SettingsActions.Execute("/one deathmatch duration 20").Success, "Editing duration is allowed during match");
-        At(12); guest.PlayerAvatar.IsDead = true; DeathmatchRuntime.Died(guest.PlayerAvatar);
+        At(12); guest.PlayerAvatar.IsDead = true; CombatMatchRuntime.Died(guest.PlayerAvatar);
         At(13);
-        check(!DeathmatchRuntime.IsRunning && !SessionSettings.FriendlyFireForHit.Enabled && !guest.PlayerAvatar.IsDead, "Expiry uses original duration, turns off friendly fire, revives pending players");
+        check(!CombatMatchRuntime.IsRunning && !SessionSettings.FriendlyFireForHit.Enabled && !guest.PlayerAvatar.IsDead, "Expiry uses original duration, turns off friendly fire, revives pending players");
         check(chat.Any(x => x.Message.Contains("(1/0/0)")) && chat.Any(x => x.Message.Contains("(0/1/0)")), "Final standings survive toggle score reset");
         check(FriendlyFireKda.Label(host.PlayerAvatar, "Host") == "Host(0/0/0)", "Normal friendly-fire KDA resets after match ends");
 
         foreach (string toggle in new[] { "on", "off", "reset" })
         {
             host = start(); guest = add(90); At(0); SettingsActions.Execute("/one deathmatch start"); At(3);
-            guest.PlayerAvatar.IsDead = true; DeathmatchRuntime.Died(guest.PlayerAvatar);
-            check(SettingsActions.Execute("/one friendlyfire " + toggle).Success && !DeathmatchRuntime.IsRunning && !guest.PlayerAvatar.IsDead,
+            guest.PlayerAvatar.IsDead = true; CombatMatchRuntime.Died(guest.PlayerAvatar);
+            check(SettingsActions.Execute("/one friendlyfire " + toggle).Success && !CombatMatchRuntime.IsRunning && !guest.PlayerAvatar.IsDead,
                 "Manual toggle stops match and recovers pending players: " + toggle);
             check(SessionSettings.FriendlyFireForHit.Enabled == (toggle == "on"), "Manual toggle selection wins: " + toggle);
             int revives = guest.PlayerAvatar.ReviveCalls; At(10);
@@ -54,17 +54,17 @@ internal static class DeathmatchTests
         host = start(); guest = add(90); At(0); SettingsActions.Execute("/one friendlyfire on"); SettingsActions.Execute("/one deathmatch start");
         SettingsActions.Execute("/one friendlyfire damage 0.1");
         check(!SessionSettings.FriendlyFireForHit.Enabled, "Damage edits cannot arm the warmup"); At(3);
-        check(DeathmatchRuntime.IsRunning && SessionSettings.FriendlyFireForHit.DamagePercent == 0.1m, "Fractional damage edits survive warmup without stopping match");
-        check(SettingsActions.Execute("/one friendlyfire damage 0.9").Success && DeathmatchRuntime.IsRunning &&
+        check(CombatMatchRuntime.IsRunning && SessionSettings.FriendlyFireForHit.DamagePercent == 0.1m, "Fractional damage edits survive warmup without stopping match");
+        check(SettingsActions.Execute("/one friendlyfire damage 0.9").Success && CombatMatchRuntime.IsRunning &&
             SessionSettings.FriendlyFireForHit.DamagePercent == 0.9m, "Active match adopts fractional damage edits immediately");
         var joiner = add(91); joiner.PlayerAvatar.IsDead = true; At(4); At(7);
         check(!joiner.PlayerAvatar.IsDead, "Newly joined dead player gets complete match respawn state");
-        guest.PlayerAvatar.IsDead = true; DeathmatchRuntime.Died(guest.PlayerAvatar); PlayerSpawner.MultiplayerList.Remove(guest);
+        guest.PlayerAvatar.IsDead = true; CombatMatchRuntime.Died(guest.PlayerAvatar); PlayerSpawner.MultiplayerList.Remove(guest);
         var replacement = add(90); At(8); At(11);
         check(guest.PlayerAvatar.ReviveCalls == 0 && replacement.PlayerAvatar.ReviveCalls == 0, "Disconnected/reused slot does not inherit old respawn timer");
-        guest = replacement; guest.PlayerAvatar.IsDead = true; DeathmatchRuntime.Died(guest.PlayerAvatar);
+        guest = replacement; guest.PlayerAvatar.IsDead = true; CombatMatchRuntime.Died(guest.PlayerAvatar);
         HorayModAPI.StartSession(); At(12);
-        check(!DeathmatchRuntime.IsRunning && !SessionSettings.FriendlyFireForHit.Enabled && guest.PlayerAvatar.ReviveCalls == 0, "New run cancels without reviving old avatars");
+        check(!CombatMatchRuntime.IsRunning && !SessionSettings.FriendlyFireForHit.Enabled && guest.PlayerAvatar.ReviveCalls == 0, "New run cancels without reviving old avatars");
 
         host = start(); At(0); SettingsActions.Execute("/one deathmatch duration 45"); SettingsActions.Execute("/one deathmatch start"); At(3);
         check(SettingsActions.Execute("/one save").Success, "Can save settings during match");
@@ -76,13 +76,13 @@ internal static class DeathmatchTests
             check(!SettingsActions.Execute("/one deathmatch duration " + value).Success, "Reject invalid duration: " + value);
         Mirror.NetworkServer.active = false;
         check(!SettingsActions.Execute("/one deathmatch stop").Success, "Guest cannot stop host match"); Mirror.NetworkServer.active = true;
-        DeathmatchRuntime.Stop(true, false);
+        CombatMatchRuntime.Stop(true, false);
         host = start(); guest = add(90); At(0); SettingsActions.Execute("/one deathmatch start"); At(3);
         host.PlayerAvatar.IsDead = guest.PlayerAvatar.IsDead = true;
-        DeathmatchRuntime.Died(host.PlayerAvatar); DeathmatchRuntime.Died(guest.PlayerAvatar);
+        CombatMatchRuntime.Died(host.PlayerAvatar); CombatMatchRuntime.Died(guest.PlayerAvatar);
         host.PlayerAvatar.ReviveCallback = () => SettingsActions.Execute("/one friendlyfire off");
         At(6); At(6.1f);
-        check(!DeathmatchRuntime.IsRunning && !host.PlayerAvatar.IsDead && !guest.PlayerAvatar.IsDead &&
+        check(!CombatMatchRuntime.IsRunning && !host.PlayerAvatar.IsDead && !guest.PlayerAvatar.IsDead &&
             host.PlayerAvatar.ReviveRpcCalls == 1 && guest.PlayerAvatar.ReviveRpcCalls == 1,
             "Toggle inside native revival completes current recovery and drains remaining respawns without stale RPCs");
         foreach (bool countdown in new[] { true, false })
@@ -91,10 +91,10 @@ internal static class DeathmatchTests
             guest.PlayerAvatar.DieCallback = _ =>
             {
                 SettingsActions.Execute("/one friendlyfire off");
-                check(guest.PlayerAvatar.ReviveCalls == 0 && DeathmatchRuntime.ProtectDeath(guest.PlayerAvatar), "In-flight native death stays protected until its tail finishes");
+                check(guest.PlayerAvatar.ReviveCalls == 0 && CombatMatchRuntime.ProtectDeath(guest.PlayerAvatar), "In-flight native death stays protected until its tail finishes");
             };
             guest.PlayerAvatar.Die(1, new());
-            check(!DeathmatchRuntime.IsRunning && !guest.PlayerAvatar.IsDead &&
+            check(!CombatMatchRuntime.IsRunning && !guest.PlayerAvatar.IsDead &&
                 guest.PlayerAvatar.Lifecycle.SequenceEqual(new[] { "RpcDie", "RpcRevive" }), "Stopping inside a death callback preserves death-before-revival RPC order: " + countdown);
         }
         host = start(); guest = add(90); At(0); SettingsActions.Execute("/one deathmatch start");
@@ -108,14 +108,14 @@ internal static class DeathmatchTests
         guest.PlayerAvatar.Die(1, new()); At(4); guest.PlayerAvatar.Revive(100); At(5); guest.PlayerAvatar.Die(1, new()); At(6);
         check(guest.PlayerAvatar.IsDead, "Native manual revival cancels old countdown; new death gets a fresh three seconds"); At(8);
         check(!guest.PlayerAvatar.IsDead && guest.PlayerAvatar.ReviveCalls == 2, "New life timer revives exactly once");
-        DeathmatchRuntime.Stop(true, false);
+        CombatMatchRuntime.Stop(true, false);
         host = start(); guest = add(90); At(0); SettingsActions.Execute("/one deathmatch start"); At(3);
         host.PlayerAvatar.Die(1, new()); guest.PlayerAvatar.Die(1, new());
         host.PlayerAvatar.ReviveCallback = () => { guest.PlayerAvatar.Revive(100); guest.PlayerAvatar.Die(1, new()); };
         At(6);
         check(guest.PlayerAvatar.IsDead && guest.PlayerAvatar.ReviveCalls == 1, "Copied due timer cannot consume a replacement life created by another player's callback");
         At(9); check(!guest.PlayerAvatar.IsDead && guest.PlayerAvatar.ReviveCalls == 2, "Replacement life retains its own complete countdown");
-        DeathmatchRuntime.Stop(true, false);
+        CombatMatchRuntime.Stop(true, false);
         host = start(); guest = add(90); At(0); SettingsActions.Execute("/one deathmatch start"); At(3);
         host.PlayerAvatar.Die(1, new()); guest.PlayerAvatar.Die(1, new());
         guest.PlayerAvatar.ReviveCallback = () => { host.PlayerAvatar.Revive(100); host.PlayerAvatar.Die(1, new()); };
@@ -124,7 +124,7 @@ internal static class DeathmatchTests
         host = start(); guest = add(90); At(0); SettingsActions.Execute("/one deathmatch start"); At(3);
         var loading = add(91); loading.connectionToClient.isReady = false;
         SessionSettings.RecordFault("stats", new StateWriteBatch(() => true), "test");
-        check(SettingsActions.Execute("/one friendlyfire on").Success && !DeathmatchRuntime.IsRunning && SessionSettings.FriendlyFireForHit.Enabled,
+        check(SettingsActions.Execute("/one friendlyfire on").Success && !CombatMatchRuntime.IsRunning && SessionSettings.FriendlyFireForHit.Enabled,
             "Manual toggle wins despite initializing joiner and unrelated fault");
         host = start(); At(0); SettingsActions.Execute("/one deathmatch start"); At(3);
         host.PlayerAvatar.DieCallback = _ =>
@@ -133,7 +133,7 @@ internal static class DeathmatchTests
             check(!SettingsActions.Execute("/one deathmatch start").Success, "Cannot start a new match inside an old run's dying stack");
         };
         host.PlayerAvatar.Die(1, new());
-        check(!DeathmatchRuntime.IsRunning && host.PlayerAvatar.ReviveCalls == 0, "Old run finalizer cannot revive into new run");
+        check(!CombatMatchRuntime.IsRunning && host.PlayerAvatar.ReviveCalls == 0, "Old run finalizer cannot revive into new run");
 
         host = start(); At(0); var ranked = new List<PlayerSpawner> { host };
         for (uint id = 2; id <= 6; id++) ranked.Add(add(id));
@@ -153,8 +153,8 @@ internal static class DeathmatchTests
         long allocated = GC.GetAllocatedBytesForCurrentThread();
         for (int i = 0; i < 1000; i++) At(10 + i * 0.11f);
         check(GC.GetAllocatedBytesForCurrentThread() == allocated, "Warmed active match tick with living players allocates zero bytes");
-        DeathmatchRuntime.Stop(false, false);
-        allocated = GC.GetAllocatedBytesForCurrentThread(); for (int i = 0; i < 1000; i++) DeathmatchRuntime.Tick();
+        CombatMatchRuntime.Stop(false, false);
+        allocated = GC.GetAllocatedBytesForCurrentThread(); for (int i = 0; i < 1000; i++) CombatMatchRuntime.Tick();
         check(GC.GetAllocatedBytesForCurrentThread() == allocated, "Idle match tick allocates zero bytes");
         foreach (string presetText in new[] { "SephiriaOne preset v17\ndeathmatch duration 60\n", "SephiriaOne preset v18\ndeathmatch duration 60\ndeathmatch duration 61\n", "SephiriaOne preset v18\ndeathmatch duration 9\n" })
             check(!SessionPolicy.TryReadPreset(presetText, out _, out _), "Reject noncanonical/duplicate/invalid duration preset");

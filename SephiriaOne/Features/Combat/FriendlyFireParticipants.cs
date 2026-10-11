@@ -171,6 +171,7 @@ namespace SephiriaOne
             if (stale.Count == 0) return;
             foreach (Receipt receipt in stale) selected.Remove(receipt);
             stale.Clear(); Changed(false);
+            CombatMatchRuntime.SelectionChanged();
         }
 
         private static Lifetime NewPlayerLifetime(PlayerSpawner _) => new Lifetime();
@@ -180,7 +181,10 @@ namespace SephiriaOne
         {
             epoch++;
             if (resetScores) FriendlyFireKda.ResetScores(); else FriendlyFireKda.ClearLives();
+            if (resetScores) CombatMatchRuntime.SelectionChanged();
         }
+
+        internal static void InvalidateCombat() { epoch++; FriendlyFireKda.ClearLives(); }
 
         internal static void Retire(PlayerSpawner spawner)
         {

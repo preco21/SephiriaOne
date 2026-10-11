@@ -27,14 +27,20 @@ internal static class GameDeathmatchTests
         Require(Code(addon, "SephiriaOne.SettingsPanel", "BuildDeathmatchEditor").Any(i =>
             i.opcode == System.Reflection.Emit.OpCodes.Stfld && i.operand is FieldInfo f && f.Name == "deathmatchStart"),
             "dedicated tab retains its start control independently of its localized caption");
-        foreach (string refresh in new[] { "RefreshDeathmatch", "RefreshCombat" })
+        foreach (string refresh in new[] { "RefreshDeathmatch", "RefreshCombat", "RefreshTournament" })
             Require(Calls(Code(addon, "SephiriaOne.SettingsPanel", refresh), "get_CanResetFriendlyFireScores"),
                 "both score reset buttons share the casual/match service gate: " + refresh);
-        foreach (string source in new[] { "SephiriaOne.SettingsActions", "SephiriaOne.DeathmatchCommand" })
+        foreach (string source in new[] { "SephiriaOne.SettingsActions", "SephiriaOne.DeathmatchCommand", "SephiriaOne.TournamentCommand" })
             Require(Calls(Code(addon, source, "Execute"), "TryResetFriendlyFireScores"), "both command aliases share the score-reset action");
         Require(Calls(Code(addon, "SephiriaOne.SessionSettings", "TryResetFriendlyFireScores"), "ResetScores") &&
             !Calls(Code(addon, "SephiriaOne.SessionSettings", "TryResetFriendlyFireScores"), "Stop"), "score-only action cannot stop an active match");
-        foreach (string command in new[] { "/one deathmatch start", "/one deathmatch stop", "/one deathmatch resetkda", "/one friendlyfire resetkda", "/one deathmatch duration " })
+        Require(Calls(Code(addon, "SephiriaOne.FriendlyFireRuntime", "CanAffectTeam"), "AllowsPair") &&
+            Calls(Code(addon, "SephiriaOne.FriendlyFireRuntime", "BeforeHit"), "ScoresEnabled"),
+            "shared combat gate restricts tournament pairs and preserves scores during warmup");
+        Require(Calls(Code(addon, "SephiriaOne.FriendlyFireParticipants", "Prune"), "SelectionChanged"),
+            "selected connection retirement also cancels tournament state");
+        foreach (string command in new[] { "/one deathmatch start", "/one deathmatch stop", "/one deathmatch resetkda", "/one friendlyfire resetkda", "/one deathmatch duration ",
+            "/one tournament start", "/one tournament stop", "/one tournament resetkda", "/one tournament duration " })
             Require(panel.GetMethods(BindingFlags.Instance | BindingFlags.NonPublic).Any(m => m.GetMethodBody() != null &&
                 PatchProcessor.GetOriginalInstructions(m).Any(i => Equals(i.operand, command))), "UI reuses shared command: " + command);
         Console.WriteLine("Verified native host chat/bubble replacement on dead avatars, shared match death/revival hooks, controller and UI command paths (not live multiplayer).");

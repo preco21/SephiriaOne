@@ -25,7 +25,7 @@ internal static class FriendlyFireScoreResetTests
         check(FriendlyFireKda.For(host.PlayerAvatar).Kills == 0 && FriendlyFireKda.For(guest.PlayerAvatar).Deaths == 0 &&
             FriendlyFireKda.For(helper.PlayerAvatar).Assists == 0 && ReferenceEquals(retained, FriendlyFireKda.For(host.PlayerAvatar)),
             "Casual reset clears all scores without replacing scoreboard identities");
-        check(!DeathmatchRuntime.IsRunning && SessionSettings.FriendlyFireForHit.Enabled &&
+        check(!CombatMatchRuntime.IsRunning && SessionSettings.FriendlyFireForHit.Enabled &&
             SessionSettings.FriendlyFireForHit.DamagePercent == 0.1m && FriendlyFireParticipants.SelectedCount == 3 &&
             SessionSettings.ReadSnapshot().Revision == revision && guest.PlayerAvatar.ReviveCalls == 0,
             "Score reset preserves master, damage, selection, session intent and native lives");

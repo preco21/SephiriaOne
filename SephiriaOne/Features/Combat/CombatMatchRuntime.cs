@@ -7,9 +7,9 @@ namespace SephiriaOne
 {
     // One host-owned, temporary match. No coroutines or per-player controllers.
     // Every callback/timer revalidates the captured run and avatar identities.
-    internal static class DeathmatchRuntime
+    internal static partial class CombatMatchRuntime
     {
-        private enum Phase { Idle, Countdown, Active }
+        private enum Phase { Idle, Countdown, Active, BetweenRounds }
         private sealed class Respawn
         {
             internal HostPlayer Subject;
@@ -52,39 +52,50 @@ namespace SephiriaOne
             ReferenceEquals(dungeon, DungeonManager.Instance) && ReferenceEquals(run, SaveManager.CurrentRun) &&
             generation == SessionSettings.ResourceGeneration && ReviveAllAction.IsRunOpen(dungeon, run);
         internal static bool CanStart => !IsRunning && !stopping && !ticking && deathDepth == 0 && DeathmatchFeature.Available && FriendlyFireFeature.Available && ReviveAllAction.CanExecute;
-        internal static bool CanResetScores => IsRunning && !stopping && CurrentScope && Now < endsAt;
+        internal static bool CanResetScores => IsRunning && !stopping && CurrentScope && (tournamentMode || Now < endsAt);
         internal static FriendlyFireSettings Effective(FriendlyFireSettings normal) => !IsRunning ? normal :
             normal.WithEnabled(phase == Phase.Active && CurrentScope && Now < endsAt);
+        // Round countdowns block damage without destroying accumulated scores.
+        internal static bool ScoresEnabled(bool normal) => tournamentMode && IsRunning && CurrentScope || normal;
 
         internal static bool ResetScores(out string message)
         {
-            message = L.T("K/D/A reset requires a current deathmatch countdown or active match.");
+            message = L.T("K/D/A reset requires a current combat match.");
             if (!CanResetScores) return false;
             FriendlyFireKda.ResetScores();
             // A departed offline participant can outlive its weak identity key.
             // Keep that entry and its tie-break order, but clear its totals too.
             foreach (var participant in participants.Values) participant.Score.Clear();
-            message = L.T("Deathmatch K/D/A scores reset.");
+            message = tournamentMode ? L.T("Tournament K/D/A scores reset.") : L.T("Deathmatch K/D/A scores reset.");
             Broadcast(null, message);
             return true;
         }
 
-        internal static bool Start(out string message)
+        internal static bool Start(out string message) => Start(false, out message);
+
+        private static bool Start(bool tournament, out string message)
         {
-            message = L.T("Deathmatch is unavailable, already running, or the session is ending. Check /one deathmatch status and Player.log.");
+            message = tournament ? L.T("Tournament is unavailable, already running, or the session is ending. Check /one tournament status and Player.log.") :
+                L.T("Deathmatch is unavailable, already running, or the session is ending. Check /one deathmatch status and Player.log.");
             if (!NetworkServer.active || !NetworkClient.active || !SessionSettings.EnsureResourceScope() || !CanStart ||
                 !HostStateAdapter.TryCollect(out var context, out message)) return false;
+            if (tournament && !CaptureTournament(out message)) return false;
             // Capture before entering callbacks. A fresh match never reuses a timer,
             // score, or connection from an earlier match.
             dungeon = context.Dungeon; dungeonId = dungeon.netId; run = SaveManager.CurrentRun;
             generation = SessionSettings.ResourceGeneration; token++;
-            duration = SessionSettings.DeathmatchDuration; startsAt = Now + 3; endsAt = startsAt + duration;
+            tournamentMode = tournament;
+            duration = tournament ? SessionSettings.TournamentDuration : SessionSettings.DeathmatchDuration;
+            startsAt = Now + 3; endsAt = startsAt + duration;
             openingShown = 3; nextScan = 0; phase = Phase.Countdown;
             pending.Clear(); roster.Clear(); participants.Clear(); FriendlyFireKda.SetEnabled(false);
+            if (tournament) { FriendlyFireKda.Reset(); FriendlyFireKda.SetEnabled(true); phase = Phase.BetweenRounds; }
             SessionSettings.DeathmatchChanged();
-            Broadcast(null, L.T("3..."));
+            if (!tournament) Broadcast(null, L.T("3..."));
             ObserveRoster();
-            message = L.F("Deathmatch starts in 3 seconds and lasts {0} seconds.", duration);
+            if (tournament) AdvanceTournament(Now);
+            message = tournament ? L.F("Tournament started with {0} players; each round lasts {1} seconds.", tournamentPlayers.Count, duration) :
+                L.F("Deathmatch starts in 3 seconds and lasts {0} seconds.", duration);
             return true;
         }
 
@@ -100,8 +111,10 @@ namespace SephiriaOne
                 { Stop(true, true); return; }
                 double now = Now;
                 // Expiry wins over a respawn due on the same frame.
-                if (now >= endsAt) { Stop(true, true); return; }
-                if (phase == Phase.Countdown)
+                if (!tournamentMode && now >= endsAt) { Stop(true, true); return; }
+                if (tournamentMode) AdvanceTournament(now);
+                if (!IsRunning) return;
+                if (!tournamentMode && phase == Phase.Countdown)
                 {
                     int seconds = (int)Math.Ceiling(startsAt - now);
                     if (seconds > 0)
@@ -137,9 +150,10 @@ namespace SephiriaOne
                     }
                     Broadcast(player, L.T("Respawned!"));
                 }
+                if (tournamentMode && IsRunning && current == token) AdvanceTournament(now);
             }
             catch (Exception error)
-            { Debug.LogWarning("[SephiriaOne] Deathmatch stopped after an error: " + error); Stop(true, true); }
+            { Debug.LogWarning("[SephiriaOne] Combat match stopped after an error: " + error); Stop(true, true); }
             finally { due.Clear(); ticking = false; if (stopping) DrainRecovery(); }
         }
 
@@ -150,7 +164,8 @@ namespace SephiriaOne
 
         // Loading temporarily blocks revival, not participation or its deadline.
         // Capture still rejects retired/replaced connections even while loading.
-        private static bool Eligible(PlayerAvatar player) => FriendlyFireParticipants.Includes(player, requireReady: false);
+        private static bool Eligible(PlayerAvatar player) => FriendlyFireParticipants.Includes(player, requireReady: false) &&
+            (!tournamentMode || TournamentEnrolled(player));
 
         private static bool Restore(Respawn respawn, long current, out string failure) =>
             ReviveAllAction.TryRevive(respawn.Subject, () => current == token && CurrentScope &&
@@ -161,8 +176,10 @@ namespace SephiriaOne
             seen.Clear(); departed.Clear();
             foreach (PlayerSpawner spawner in PlayerSpawner.MultiplayerList)
             {
+                if (!IsRunning) return;
                 if (!spawner || !spawner.isServer || !spawner.PlayerAvatar || !Eligible(spawner.PlayerAvatar) ||
                     !seen.Add(spawner.PlayerAvatar)) continue;
+                if (!IsRunning) return;
                 var player = spawner.PlayerAvatar;
                 if (!roster.TryGetValue(player, out var entry) || !Connected(entry.Subject, entry.Receipt))
                 {
@@ -183,6 +200,8 @@ namespace SephiriaOne
         internal static void Died(PlayerAvatar player)
         {
             if (!IsRunning || !CurrentScope || !player || !player.IsDead || !Eligible(player)) return;
+            if (!IsRunning) return; // Selection pruning may have stopped the match.
+            if (tournamentMode) TournamentDeath(player);
             if (pending.TryGetValue(player, out var prior))
             {
                 if (Connected(prior.Subject, prior.Receipt)) return;
@@ -207,6 +226,7 @@ namespace SephiriaOne
         {
             if (!IsRunning || !CurrentScope || !player || !player.spawner || !ReferenceEquals(player.spawner.PlayerAvatar, player) ||
                 !PlayerSpawner.MultiplayerList.Contains(player.spawner) || !Eligible(player) || dying.ContainsKey(player)) return false;
+            if (!IsRunning) return false;
             dying.Add(player, FriendlyFireParticipants.Capture(player));
             deathDepth++; return true;
         }
@@ -249,13 +269,14 @@ namespace SephiriaOne
             var results = new List<Participant>(participants.Values);
             results.Sort((a, b) => { int c = b.Score.Kills.CompareTo(a.Score.Kills); if (c == 0) c = a.Score.Deaths.CompareTo(b.Score.Deaths);
                 if (c == 0) c = b.Score.Assists.CompareTo(a.Score.Assists); return c != 0 ? c : a.Order.CompareTo(b.Order); });
+            bool wasTournament = tournamentMode;
             phase = Phase.Idle; pending.Clear(); roster.Clear(); participants.Clear();
             try
             {
                 SessionSettings.EndDeathmatch();
                 if (announce && same && CurrentScope)
                 {
-                    Broadcast(null, L.T("Deathmatch ended. Top 5 (K/D/A):"));
+                    Broadcast(null, wasTournament ? L.T("Tournament ended. Top 5 (K/D/A):") : L.T("Deathmatch ended. Top 5 (K/D/A):"));
                     for (int i = 0; i < Math.Min(5, results.Count); i++) Broadcast(null, L.F("{0}. {1}", i + 1, results[i].Score.Label(results[i].Name)));
                 }
             }
@@ -284,16 +305,16 @@ namespace SephiriaOne
             finally { FinishStop(); }
         }
         private static void FinishStop()
-        { cleanup = null; dungeon = null; run = null; stopping = false; SessionSettings.DeathmatchChanged(); }
+        { cleanup = null; dungeon = null; run = null; stopping = false; ClearTournament(); SessionSettings.DeathmatchChanged(); }
 
         private static void Broadcast(PlayerAvatar player, string message)
         {
             if (!CurrentScope) return;
             try { dungeon.Chat(player, "SephiriaOne", message); }
-            catch (Exception error) { Debug.LogWarning("[SephiriaOne] Deathmatch notice failed: " + error); }
+            catch (Exception error) { Debug.LogWarning("[SephiriaOne] Combat match notice failed: " + error); }
         }
         internal static string Describe() => L.F("Deathmatch: {0}. Configured duration: {1}s. Remaining: {2}s.",
-            L.T(phase == Phase.Countdown ? "countdown" : phase == Phase.Active ? "active" : "off"), SessionSettings.DeathmatchDuration,
-            IsRunning ? Math.Max(0, (int)Math.Ceiling((phase == Phase.Countdown ? startsAt : endsAt) - Now)) : 0);
+            L.T(IsTournament ? "off" : phase == Phase.Countdown ? "countdown" : phase == Phase.Active ? "active" : "off"), SessionSettings.DeathmatchDuration,
+            IsRunning && !IsTournament ? Math.Max(0, (int)Math.Ceiling((phase == Phase.Countdown ? startsAt : endsAt) - Now)) : 0);
     }
 }

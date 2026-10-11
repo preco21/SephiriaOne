@@ -4,7 +4,7 @@ internal static class SelectiveDeathmatchTests
 {
     internal static void Run(Func<PlayerSpawner> start, Func<uint, PlayerSpawner> add, Action<bool, string> check)
     {
-        void At(float time) { UnityEngine.Time.unscaledTime = time; DeathmatchRuntime.Tick(); }
+        void At(float time) { UnityEngine.Time.unscaledTime = time; CombatMatchRuntime.Tick(); }
         var loadingHost = start(); var loadingGuest = add(2);
         At(0); SettingsActions.Execute("/one deathmatch start"); At(3);
         loadingGuest.PlayerAvatar.Die(1, new()); loadingGuest.connectionToClient.isReady = false;
@@ -18,13 +18,13 @@ internal static class SelectiveDeathmatchTests
         SettingsActions.Execute("/one friendlyfire player 1 on"); SettingsActions.Execute("/one friendlyfire player 2 on");
         At(0); SettingsActions.Execute("/one deathmatch start"); At(3);
         guest.PlayerAvatar.Die(1, new()); bystander.PlayerAvatar.Die(1, new());
-        check(DeathmatchRuntime.ProtectDeath(guest.PlayerAvatar) && !DeathmatchRuntime.ProtectDeath(bystander.PlayerAvatar),
+        check(CombatMatchRuntime.ProtectDeath(guest.PlayerAvatar) && !CombatMatchRuntime.ProtectDeath(bystander.PlayerAvatar),
             "Deathmatch protects only selected participants' deaths");
         At(6);
         check(!guest.PlayerAvatar.IsDead && bystander.PlayerAvatar.IsDead && bystander.PlayerAvatar.ReviveCalls == 0,
             "Selected player respawns; excluded player's normal death is untouched");
         guest.PlayerAvatar.Die(1, new());
-        check(SettingsActions.Execute("/one friendlyfire players reset").Success && !DeathmatchRuntime.IsRunning &&
+        check(SettingsActions.Execute("/one friendlyfire players reset").Success && !CombatMatchRuntime.IsRunning &&
             !guest.PlayerAvatar.IsDead && bystander.PlayerAvatar.IsDead && FriendlyFireParticipants.SelectedCount == 0,
             "Reset selection stops match, restores pending participant and does not revive excluded bystander");
         check(!DungeonManager.Instance.ChatMessages.Any(m => m.Message.Contains("Bystander(")), "Excluded player never appears in deathmatch standings");
@@ -37,11 +37,11 @@ internal static class SelectiveDeathmatchTests
             guest.PlayerAvatar.DieCallback = _ =>
             {
                 check(SettingsActions.Execute(command).Success, "Selection action succeeds inside dying callback: " + command);
-                check(guest.PlayerAvatar.ReviveCalls == 0 && DeathmatchRuntime.ProtectDeath(guest.PlayerAvatar),
+                check(guest.PlayerAvatar.ReviveCalls == 0 && CombatMatchRuntime.ProtectDeath(guest.PlayerAvatar),
                     "Admitted death remains protected until native RpcDie finishes after selection edit");
             };
             guest.PlayerAvatar.Die(1, new());
-            check(!DeathmatchRuntime.IsRunning && !guest.PlayerAvatar.IsDead &&
+            check(!CombatMatchRuntime.IsRunning && !guest.PlayerAvatar.IsDead &&
                 guest.PlayerAvatar.Lifecycle.SequenceEqual(new[] { "RpcDie", "RpcRevive" }),
                 "Selection edit recovers exactly once in death-before-revival order: " + command);
         }
@@ -55,7 +55,7 @@ internal static class SelectiveDeathmatchTests
             "Rejoined player in everyone mode receives a fresh timer instead of old connection deadline");
         At(8);
         check(!replacement.PlayerAvatar.IsDead && replacement.PlayerAvatar.ReviveCalls == 1, "Fresh connection respawns on its own deadline");
-        DeathmatchRuntime.Stop(true, false);
+        CombatMatchRuntime.Stop(true, false);
 
         host = start(); guest = add(2);
         SettingsActions.Execute("/one friendlyfire players all");
@@ -65,7 +65,7 @@ internal static class SelectiveDeathmatchTests
         guest.PlayerAvatar.ReviveCallback = () => check(SettingsActions.Execute("/one friendlyfire player 2 off").Success,
             "A selection edit may stop deathmatch inside an admitted native revival");
         At(6);
-        check(!DeathmatchRuntime.IsRunning && !guest.PlayerAvatar.IsDead && guest.PlayerAvatar.ReviveRpcCalls == 1 &&
+        check(!CombatMatchRuntime.IsRunning && !guest.PlayerAvatar.IsDead && guest.PlayerAvatar.ReviveRpcCalls == 1 &&
             !host.PlayerAvatar.IsDead && host.PlayerAvatar.ReviveRpcCalls == 1 &&
             !FriendlyFireParticipants.IsSelected(guest.PlayerAvatar),
             "Deselecting reviving participant still completes native revival and guest RPC exactly once");
@@ -74,10 +74,10 @@ internal static class SelectiveDeathmatchTests
         SettingsActions.Execute("/one friendlyfire players all");
         At(0); SettingsActions.Execute("/one deathmatch start"); At(3);
         PlayerSpawner.MultiplayerList.Remove(guest); replacement = add(2); replacement.PlayerAvatar.IsDead = true;
-        DeathmatchRuntime.Died(replacement.PlayerAvatar); At(8);
-        check(replacement.PlayerAvatar.IsDead && !DeathmatchRuntime.ProtectDeath(replacement.PlayerAvatar),
+        CombatMatchRuntime.Died(replacement.PlayerAvatar); At(8);
+        check(replacement.PlayerAvatar.IsDead && !CombatMatchRuntime.ProtectDeath(replacement.PlayerAvatar),
             "Rejoining explicit participant is unselected and gets no stale deathmatch timer/protection");
-        DeathmatchRuntime.Stop(true, false);
+        CombatMatchRuntime.Stop(true, false);
         check(replacement.PlayerAvatar.IsDead, "Stop does not recover unselected returning player");
 
         host = start(); guest = add(2);
@@ -85,7 +85,7 @@ internal static class SelectiveDeathmatchTests
         At(0); SettingsActions.Execute("/one deathmatch start"); At(3);
         guest.PlayerAvatar.Die(1, new());
         guest.PlayerAvatar.ReviveCallback = () => { PlayerSpawner.MultiplayerList.Remove(host); add(1); };
-        check(!SettingsActions.Execute("/one friendlyfire players all").Success && !DeathmatchRuntime.IsRunning,
+        check(!SettingsActions.Execute("/one friendlyfire players all").Success && !CombatMatchRuntime.IsRunning,
             "Select All rejects atomic selection when match recovery replaces a captured connection");
         start();
     }

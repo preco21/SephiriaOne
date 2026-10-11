@@ -179,6 +179,7 @@ EffectTests.Run(Check);
 ArtifactTests.Run(Check);
 FractionalDamageTests.Run(Check);
 SelectiveCombatTests.Run(Check);
+TournamentCombatTests.Run(Check);
 FriendlyFireHooks.Uninstall();
 SessionSettings.FriendlyFireForHit = new(true, 50);
 var nativeIceBat = new Charm_IceBat { NetworkAvatar = new PlayerAvatar { IsInBattle = true }, Target = new PlayerAvatar() };

@@ -26,8 +26,8 @@ namespace SephiriaOne
         }
         internal static void Shutdown()
         {
-            DeathmatchRuntime.Stop(true, false);
-            if (DeathmatchRuntime.RecoveryPending)
+            CombatMatchRuntime.Stop(true, false);
+            if (CombatMatchRuntime.RecoveryPending)
                 throw new InvalidOperationException("Deathmatch recovery is finishing a native callback; retry unload after it completes.");
             Available = false;
         }

@@ -57,6 +57,9 @@
     <Compile Include="../../SephiriaOne/Session/Presets/SessionPresetCommands.cs" Link="Source/Session/Presets/SessionPresetCommands.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/FriendlyFireSettings.cs" Link="FriendlyFireSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/Deathmatch*.cs" Exclude="../../SephiriaOne/Features/Combat/DeathmatchFeature.cs" Link="%(Filename)%(Extension)" />
+    <Compile Include="../../SephiriaOne/Features/Combat/CombatMatch*.cs" Link="%(Filename)%(Extension)" />
+    <Compile Include="../../SephiriaOne/Features/Combat/Tournament*.cs" Link="%(Filename)%(Extension)" />
+    <Compile Include="../../SephiriaOne/Session/SessionTournament.cs" Link="SessionTournament.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/CombatNames.cs" Link="CombatNames.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/FriendlyFireNames.cs" Link="FriendlyFireNames.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionDeathmatch.cs" Link="SessionDeathmatch.cs" />

@@ -21,11 +21,11 @@ namespace SephiriaOne
         private void RefreshDeathmatch(SettingsSnapshot snapshot)
         {
             bool host = snapshot.HostActive && snapshot.SessionIdentity != null;
-            deathmatchStart.interactable = host && DeathmatchRuntime.CanStart;
-            deathmatchStop.interactable = host && DeathmatchRuntime.IsRunning;
+            deathmatchStart.interactable = host && CombatMatchRuntime.CanStart;
+            deathmatchStop.interactable = host && CombatMatchRuntime.IsRunning && !CombatMatchRuntime.IsTournament;
             deathmatchResetKda.interactable = host && SessionSettings.CanResetFriendlyFireScores;
             deathmatchApply.interactable = amount.interactable = host;
-            availability.text = DeathmatchRuntime.Describe();
+            availability.text = CombatMatchRuntime.Describe();
             availability.color = PanelWidgets.Muted;
             if (!DeathmatchFeature.Available || !FriendlyFireFeature.Available || !ReviveAllFeature.Available)
                 availability.text = L.T("Deathmatch compatibility checks failed. Stop remains available; see Player.log.");
