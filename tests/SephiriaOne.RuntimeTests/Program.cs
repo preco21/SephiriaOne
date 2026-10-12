@@ -784,6 +784,7 @@ DeathmatchTests.Run(Start, id => Add(id), Check);
 TournamentControlsTests.Run(Start, id => Add(id), Check);
 TournamentRuntimeTests.Run(Start, id => Add(id), Check);
 KilledByRuntimeTests.Run(Start, id => Add(id), Check);
+RespawnVisualTests.Run(Start, id => Add(id), Check);
 DeathmatchScoreResetTests.Run(Start, id => Add(id), Check);
         JarSpawnRuntimeTests.Run(Start, id => Add(id), Check);
         EventSpawnRuntimeTests.Run(Start, id => Add(id), Check);

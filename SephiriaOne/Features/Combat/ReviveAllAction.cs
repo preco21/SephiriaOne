@@ -36,15 +36,17 @@ namespace SephiriaOne
             }
         }
 
-        internal static bool TryExecute(out string message) => Execute(null, null, out message);
+        internal static bool TryExecute(out string message) => Execute(null, null, out message, out _);
 
         // Timed recovery shares the same native callback containment and exact
         // avatar validation as the manual party action. Never revive a new life
         // or a replacement avatar on behalf of an expired match timer.
-        internal static bool TryRevive(HostPlayer player, Func<bool> scope, out string message) => Execute(player, scope, out message);
+        internal static bool TryRevive(HostPlayer player, Func<bool> scope, out string message, out int restored) =>
+            Execute(player, scope, out message, out restored);
 
-        private static bool Execute(HostPlayer only, Func<bool> scope, out string message)
+        private static bool Execute(HostPlayer only, Func<bool> scope, out string message, out int restored)
         {
+            restored = 0;
             message = L.T("Only the host can revive all players.");
             if (!NetworkServer.active) return false;
             message = L.T("Revive all is already running.");
@@ -75,7 +77,7 @@ namespace SephiriaOne
 
             executing = true;
             callbackErrors = 0;
-            int restored = 0, failed = 0;
+            int failed = 0;
             try
             {
                 for (int i = 0; i < candidates.Count; i++)

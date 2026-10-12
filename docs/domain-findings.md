@@ -16,6 +16,12 @@ A different game build requires renewed contract/asset checks. Start with the
 
 ## State lifetimes and multiplayer
 
+Automatic respawn visuals (`0.50.0`): `Revive` restores the avatar but does not
+spawn the white pillar. `RpcCreateAdditionalLifeFx` is a separate native
+presentation RPC at the avatar's world transform, including a brief observer-wide
+flash/sound. Emit only after actual recovery and current-scope revalidation;
+successful no-op returns are insufficient. See [native evidence](respawn-visuals.md).
+
 Private killed-by chat (`0.49.0`) reuses the native `DungeonManager.RpcChat`
 receiver through Mirror targeted dispatch. A null avatar preserves existing
 overhead countdowns; only the victim sees the matchup from their perspective.

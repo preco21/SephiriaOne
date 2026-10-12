@@ -167,9 +167,23 @@ namespace SephiriaOne
         private static bool Eligible(PlayerAvatar player) => FriendlyFireParticipants.Includes(player, requireReady: false) &&
             (!tournamentMode || TournamentEnrolled(player));
 
-        private static bool Restore(Respawn respawn, long current, out string failure) =>
-            ReviveAllAction.TryRevive(respawn.Subject, () => current == token && CurrentScope &&
-                Connected(respawn.Subject, respawn.Receipt), out failure);
+        private static bool Restore(Respawn respawn, long current, out string failure)
+        {
+            if (!ReviveAllAction.TryRevive(respawn.Subject, () => current == token && CurrentScope &&
+                Connected(respawn.Subject, respawn.Receipt), out failure, out int restored)) return false;
+            // Only the completed countdown uses this path. The native revive
+            // RPC has finished; recheck callbacks before emitting presentation.
+            var player = respawn.Subject.Player;
+            // Eligibility may prune stale selections and stop Tournament.
+            // Validate match identity after all predicates that can change it.
+            if (restored == 1 && Eligible(player) && Connected(respawn.Subject, respawn.Receipt) &&
+                IsRunning && current == token && CurrentScope && !player.IsDead)
+            {
+                try { NativeReviveVisuals.Show(player); }
+                catch (Exception error) { Debug.LogWarning("[SephiriaOne] Respawn FX failed after successful recovery: " + error); }
+            }
+            return true;
+        }
 
         private static void ObserveRoster()
         {
@@ -297,7 +311,7 @@ namespace SephiriaOne
                     var respawn = cleanup[cleanup.Count - 1]; cleanup.RemoveAt(cleanup.Count - 1);
                     if (Connected(respawn.Subject, respawn.Receipt) && respawn.Subject.Player.IsDead)
                     {
-                        if (!ReviveAllAction.TryRevive(respawn.Subject, () => current == token && CurrentScope && Connected(respawn.Subject, respawn.Receipt), out string failure)) Broadcast(null, failure);
+                        if (!ReviveAllAction.TryRevive(respawn.Subject, () => current == token && CurrentScope && Connected(respawn.Subject, respawn.Receipt), out string failure, out _)) Broadcast(null, failure);
                         else Broadcast(respawn.Subject.Player, L.T("Respawned!"));
                     }
                 }

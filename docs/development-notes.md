@@ -14,6 +14,12 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+Version `0.50.0` adds the native white revive pillar after successful three-second
+Deathmatch/Tournament respawns. Actual restoration counts and post-callback scope
+checks prevent no-op, stale, failed or canceled recovery from emitting it. The
+stock RPC includes the native brief flash/sound, supports unmodified guests and
+does not alter manual or immediate match-end cleanup. See [respawn visuals](respawn-visuals.md).
+
 Version `0.49.0` adds private EN/KO killed-by chat and victim-first matchup records
 for casual friendly fire, Deathmatch and Tournament. Directed pair totals reuse
 KDA score identities and reset with scores and session/match boundaries. Native
