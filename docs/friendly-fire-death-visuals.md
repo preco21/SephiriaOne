@@ -4,6 +4,11 @@ Implemented in `0.48.0`, 2026-10-12. Uses the installed game assembly fingerprin
 recorded in [domain findings](domain-findings.md). Asset inspection and native
 contracts are evidence about this build, not proof of live multiplayer rendering.
 
+Follow-up (`0.51.3`, 2026-10-13): host logs confirmed a co-installed HarmonyX
+helper mismatch disabled this adapter before broadcasting. The compatible string
+checks restore validation without changing transport or lifecycle behavior.
+See [failure evidence, regression and live-test limits](harmony-compatibility.md).
+
 ## Behavior
 
 When effective friendly fire is enabled, a participating player entering the dead

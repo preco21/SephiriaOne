@@ -14,6 +14,13 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+Version `0.51.3` fixes death/revive FX and private killed-by messages being disabled
+when another addon has loaded HarmonyX. Four lazy native validators called a
+string helper absent from that library. Direct IL string comparisons preserve
+the contracts; a compiled API audit against the co-installed library prevents
+this mismatch from hiding behind normal build-package tests. See
+[log evidence and verification limits](harmony-compatibility.md).
+
 Version `0.51.2` limits Dark Cloud to one strike attempt per attacker/player pair
 every 0.5 seconds during friendly fire, including Deathmatch and Tournament.
 The strike boundary also suppresses rapid repeat burn callbacks; native enemy

@@ -87,7 +87,7 @@ namespace SephiriaOne
         {
             var sender = send.Where(i => i.opcode != OpCodes.Nop).ToList();
             int dispatch = sender.FindIndex(i => i.operand is MethodInfo m && m.Name == "SendRPCInternal");
-            return sender.Count(i => i.LoadsConstant(RpcName)) == 1 && sender.Count(i => i.LoadsConstant(RpcHash)) == 1 &&
+            return sender.Count(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, RpcName)) == 1 && sender.Count(i => i.LoadsConstant(RpcHash)) == 1 &&
                 dispatch >= 2 && sender[dispatch - 2].LoadsConstant(0) && sender[dispatch - 1].LoadsConstant(1) &&
                 Calls(sender).Select(m => m.Name).SequenceEqual(new[] { "Get", "WriteNetworkBehaviour", "WriteString", "WriteString", "SendRPCInternal", "Return" }) &&
                 Calls(receive).Select(m => m.Name).SequenceEqual(new[] { "get_active", "LogError", "ReadNetworkBehaviour", "ReadString", "ReadString", "UserCode_RpcChat__PlayerAvatar__String__String" }) &&

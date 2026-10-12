@@ -3,6 +3,11 @@
 Implemented in `0.50.0`, 2026-10-12, against the installed assembly fingerprint
 in [domain findings](domain-findings.md).
 
+Follow-up (`0.51.3`, 2026-10-13): a host-log `MissingMethodException` identified
+an unavailable HarmonyX string helper in the lazy validator. Compatible IL
+comparisons remove that blocker without changing the successful-respawn boundary
+or native RPC. See [dependency evidence and regression](harmony-compatibility.md).
+
 ## Behavior and shared boundary
 
 Deathmatch and Tournament play the native white pillar after a successful

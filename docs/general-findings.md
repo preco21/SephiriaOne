@@ -35,6 +35,12 @@ a different Harmony implementation first; installed API compatibility must be
 checked, not inferred from the build package alone. The prior resource-hook
 failure involved a Harmony helper absent from the loaded HarmonyX assembly.
 
+`0.51.3` fixes the same dependency class in lazy death/revive/private-chat
+validators: HarmonyX 2.9 lacks `LoadsConstant(CodeInstruction, string)`. Match
+string IL using `instruction.opcode == OpCodes.Ldstr` and the exact operand.
+Run the [alternate-library API audit](harmony-compatibility.md#regression-procedure)
+when adding Harmony API calls; embedding a newer build package is insufficient.
+
 Evidence: [loader/API notes](development-notes.md#loader-and-api-findings),
 [resource compatibility correction](resource-settings-implementation.md),
 [dependency notices](third-party-notices.md).

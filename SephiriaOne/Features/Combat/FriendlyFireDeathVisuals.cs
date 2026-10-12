@@ -89,7 +89,7 @@ namespace SephiriaOne
             var code = sender.Where(i => i.opcode != OpCodes.Nop).ToList();
             int dispatch = code.FindIndex(i => i.operand is MethodInfo m && m.Name == "SendRPCInternal");
             if (!Calls(code).Select(m => m.Name).SequenceEqual(new[] { "Get", "WriteVarUInt", "WriteBool", "WriteString", "WriteVector3", "WriteFloat", "WriteFloat", "WriteFloat", "SendRPCInternal", "Return" }) ||
-                code.Count(i => i.LoadsConstant(Rpc)) != 1 || code.Count(i => i.LoadsConstant(Hash)) != 1 ||
+                code.Count(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, Rpc)) != 1 || code.Count(i => i.LoadsConstant(Hash)) != 1 ||
                 dispatch < 2 || !code[dispatch - 2].LoadsConstant(0) || !code[dispatch - 1].LoadsConstant(1)) return false;
             if (!Calls(receiver).Select(m => m.Name).SequenceEqual(new[] { "get_active", "LogError", "ReadVarUInt", "ReadBool", "ReadString", "ReadVector3", "ReadFloat", "ReadFloat", "ReadFloat",
                 "UserCode_RpcBulletDestroyed__UInt32__Boolean__String__Vector3__Single__Single__Single" })) return false;

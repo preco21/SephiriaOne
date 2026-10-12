@@ -3,6 +3,11 @@
 Implemented in `0.49.0`, 2026-10-12. Native evidence uses the installed assembly
 fingerprint in [domain findings](domain-findings.md).
 
+Follow-up (`0.51.3`, 2026-10-13): the same HarmonyX helper mismatch that blocked
+death/revive FX also disabled private notices. Exact IL string comparisons fix
+the validator; attribution, matchup totals and private transport are unchanged.
+See [host-log evidence and compatibility audit](harmony-compatibility.md).
+
 ## Player behavior
 
 A confirmed PvP kill sends a private native chat notice to the dead player in

@@ -67,12 +67,12 @@ namespace SephiriaOne
             int dispatch = sender.FindIndex(i => i.operand is MethodInfo m && m.Name == "SendRPCInternal");
             var visual = body.Where(i => i.opcode != OpCodes.Nop).ToList();
             int transform = visual.FindIndex(i => i.operand is MethodInfo m && m.Name == "get_transform");
-            return sender.Count(i => i.LoadsConstant(RpcName)) == 1 && sender.Count(i => i.LoadsConstant(RpcHash)) == 1 &&
+            return sender.Count(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, RpcName)) == 1 && sender.Count(i => i.LoadsConstant(RpcHash)) == 1 &&
                 dispatch >= 2 && sender[dispatch - 2].LoadsConstant(0) && sender[dispatch - 1].LoadsConstant(1) &&
                 Calls(sender).Select(m => m.Name).SequenceEqual(new[] { "Get", "SendRPCInternal", "Return" }) &&
                 Calls(receive).Select(m => m.Name).SequenceEqual(new[] { "get_active", "LogError", "UserCode_RpcCreateAdditionalLifeFx" }) &&
                 !visual.Any(i => i.opcode == OpCodes.Stfld || i.opcode == OpCodes.Stsfld || i.opcode == OpCodes.Calli || i.opcode == OpCodes.Newobj) &&
-                visual.Count(i => i.LoadsConstant("AdditionalLifeReviveFx")) == 1 &&
+                visual.Count(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "AdditionalLifeReviveFx")) == 1 &&
                 visual.Count(i => i.opcode == OpCodes.Ldc_R4 && Equals(i.operand, 0.001f)) == 1 &&
                 transform > 0 && visual[transform - 1].opcode == OpCodes.Ldarg_0 &&
                 Calls(visual).Select(m => m.Name).SequenceEqual(new[] { "get_Pool", "get_transform", "get_position", "get_down",

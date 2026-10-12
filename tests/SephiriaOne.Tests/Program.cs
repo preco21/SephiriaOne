@@ -77,5 +77,9 @@ void SelectLanguage(string language)
 }
 Console.WriteLine($"Passed {LocalizationFeatureTests.Run(SelectLanguage)} localized feature checks.");
 L.Shutdown();
-if (args.Length == 2) GameChoiceCompatibilityTests.Run(args[0], args[1]);
-else if (args.Length != 0) throw new ArgumentException("Optional arguments: <game Managed directory> <built addon DLL>");
+if (args.Length is 2 or 3)
+{
+    GameChoiceCompatibilityTests.Run(args[0], args[1]);
+    if (args.Length == 3) GameHarmonyRuntimeTests.Run(args[0], args[1], args[2]);
+}
+else if (args.Length != 0) throw new ArgumentException("Optional arguments: <game Managed directory> <built addon DLL> [alternate Harmony DLL]");

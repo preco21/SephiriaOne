@@ -1,12 +1,15 @@
 # Development knowledge index
 
-Maintained: 2026-10-13 (Asia/Seoul), addon `0.51.2`.
+Maintained: 2026-10-13 (Asia/Seoul), addon `0.51.3`.
 
 Agents and contributors can refer to `docs/*` for research, implementation
 materials, native game findings and references. Start here before repeating an
 investigation. Repository workflow and deployment rules are in [AGENTS.md](../AGENTS.md).
 
 ## Start here
+
+Compatibility fix: [co-installed Harmony and missing multiplayer FX/notices](harmony-compatibility.md)
+records the host-log failure and compiled API regression check in `0.51.3`.
 
 Combat follow-up: [Dark Cloud player strike limit](friendly-fire-artifacts.md#dark-cloud-player-strike-limit-0512-2026-10-13)
 limits repeated strikes to the same hostile player while preserving native enemy behavior.
