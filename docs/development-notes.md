@@ -14,6 +14,14 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+Version `0.48.0` adds a native red world-space burst on participating player deaths
+while effective friendly fire is active, including Deathmatch and Tournament.
+The shared death boundary validates connection/selection state, and the host uses
+the stock cosmetic RPC without creating projectiles. The exact single-player
+crash is world-space, but its available remote transport has rendering side
+effects; the implementation uses an independent native impact animation. See
+[resource evidence, lifecycle guards and limits](friendly-fire-death-visuals.md).
+
 Version `0.47.1` fixes hostile-player acquisition for homing Bolt spells and
 audited related spell searches, including automatic casting, Fire Circus and
 chain lightning. Artifact and spell consumers share scoped targeting helpers,

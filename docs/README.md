@@ -1,6 +1,6 @@
 # Development knowledge index
 
-Maintained: 2026-10-12 (Asia/Seoul), addon `0.47.1`.
+Maintained: 2026-10-12 (Asia/Seoul), addon `0.48.0`.
 
 Agents and contributors can refer to `docs/*` for research, implementation
 materials, native game findings and references. Start here before repeating an
@@ -40,7 +40,7 @@ distinguishes native chapter/outcome markers from actual run settlement.
 | Rabbit healing | [Potion options](rabbit-potions.md), [shared particles](rabbit-shared-healing-visuals.md), [healing-book feasibility](healing-item-investigation.md), [level-up potions](rabbit-level-up-potions.md) |
 | Costume-owned effects and items | [Rabbit starting artifacts: Iron Wall and Blood of Obrus](rabbit-starting-artifact.md), [Collin grants](collin-starting-artifact.md), [Bat HP steal](wingless-bat.md), [given-item restrictions](item-restrictions.md) |
 | Encounters and spawning | [Merchant variants/current rules](merchant-variants.md), [initial Wandering Merchant design](wandering-merchant.md), [Mystic Jar](mystic-jar.md), [random event rooms](random-events.md) |
-| Combat | [Friendly fire, KDA, companions, reflection and revive-all recovery](friendly-fire.md), [offensive artifact targeting audit](friendly-fire-artifacts.md), [Bolt and shared spell targeting](friendly-fire-spells.md) |
+| Combat | [Friendly fire, KDA, companions, reflection and revive-all recovery](friendly-fire.md), [offensive artifact targeting audit](friendly-fire-artifacts.md), [Bolt and shared spell targeting](friendly-fire-spells.md), [downed-player visual and native FX research](friendly-fire-death-visuals.md) |
 | Combat participants | [Temporary selections, Select All/reset, connection lifetimes and shared deathmatch eligibility](selective-friendly-fire.md) |
 | Deathmatch | [Temporary timed matches, respawns, rankings and toggle synchronization](deathmatch.md) |
 | Tournament | [Shared match runtime, one-on-one elimination, bounded draws, participant lifetimes and controls](tournament.md) |

@@ -173,6 +173,7 @@ Check(FriendlyFireHooks.ValidateCompanionUpdate(updateCode, targetCode), "Native
 targetCode.RemoveAt(targetCode.FindIndex(i => i.operand is MethodInfo m && m.Name == "OnLostTarget"));
 Check(!FriendlyFireHooks.ValidateCompanionUpdate(updateCode, targetCode), "Missing native attack cleanup rejects companion update hook");
 KdaTests.Run(Check);
+DeathVisualTests.Run(Check);
 RecoveryTests.Run(Check);
 KillLogTests.Run(Check);
 EffectTests.Run(Check);

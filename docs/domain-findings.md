@@ -16,6 +16,13 @@ A different game build requires renewed contract/asset checks. Start with the
 
 ## State lifetimes and multiplayer
 
+Downed-player visuals (`0.48.0`): the native red single-player crash is a local
+world-space SpriteFx, not screen-space UI. Stock casting RPCs can select it but
+introduce transparency/material side effects. Use the separate native impact
+broadcast for the friendly-fire indicator, with current participant receipts at
+the shared death boundary. Never replay death/damage just to show an effect.
+See [death visual findings and transport limits](friendly-fire-death-visuals.md).
+
 Spell targeting (`0.47.1`) reuses the artifact hostility adapters but needs exact
 Magic projectile identities. Native homing acquisition is host-controlled;
 ordinary player-input aim is separate. A passing faction predicate is insufficient

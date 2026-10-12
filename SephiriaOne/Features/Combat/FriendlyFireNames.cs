@@ -12,6 +12,8 @@ namespace SephiriaOne
             internal long ScoreEpoch;
             internal long ParticipantEpoch;
             internal bool MatchDeath;
+            internal FriendlyFireParticipants.Receipt VisualReceipt;
+            internal long VisualEpoch;
         }
 
         internal static void BeforeDeath(UnitAvatar __instance, DamageInstance diedFrom, out DeathNotice __state)
@@ -21,6 +23,12 @@ namespace SephiriaOne
             if (__instance is PlayerAvatar dying) __state.MatchDeath = CombatMatchRuntime.EnterDeath(dying);
             try
             {
+                if (__instance is PlayerAvatar visual && SessionSettings.FriendlyFireForHit.Enabled &&
+                    FriendlyFireParticipants.Includes(visual))
+                {
+                    __state.VisualReceipt = FriendlyFireParticipants.Capture(visual);
+                    __state.VisualEpoch = FriendlyFireParticipants.Epoch;
+                }
                 RememberCompanionOwner(__instance);
                 bool attributed = CurrentHitPermitted() && current.Victim == __instance &&
                     ReferenceEquals(current.Damage, diedFrom) && current.Attacker && current.KdaEpoch == FriendlyFireKda.Epoch;
@@ -39,9 +47,21 @@ namespace SephiriaOne
 
         internal static void AfterDeath(UnitAvatar __instance, DeathNotice __state)
         {
-            if (!NetworkServer.active || !__instance.IsDead) return;
+            if (!NetworkServer.active || !__instance || !__instance.IsDead) return;
             try
             {
+                // Deliver before match callbacks can advance the round. The receipt
+                // rejects callbacks that retired/replaced this connection or scope.
+                if (__state.VisualReceipt != null && SessionSettings.FriendlyFireForHit.Enabled &&
+                    FriendlyFireParticipants.IsCurrent(__state.VisualReceipt) &&
+                    __state.VisualEpoch == FriendlyFireParticipants.Epoch &&
+                    __instance is PlayerAvatar visual && FriendlyFireParticipants.Includes(visual))
+                {
+                    // Also isolate loader/JIT failures before the optional
+                    // adapter's own try/catch from match recovery and KDA.
+                    try { FriendlyFireDeathVisuals.Show(visual); }
+                    catch (Exception error) { Warn(error); }
+                }
                 if (__instance is PlayerAvatar dead) CombatMatchRuntime.Died(dead);
                 // A reset/toggle/run transition invalidates every old notice,
                 // including killer totals captured for NPC/companion victims.
@@ -62,6 +82,8 @@ namespace SephiriaOne
 
         internal static Exception FinishDeath(Exception __exception, UnitAvatar __instance, DeathNotice __state)
         {
+            // An exceptional death may never have reached the native RpcDie.
+            if (__exception != null) __state.VisualReceipt = null;
             try { AfterDeath(__instance, __state); }
             finally { if (__instance is PlayerAvatar player) CombatMatchRuntime.LeaveDeath(player, __state.MatchDeath); }
             return __exception;

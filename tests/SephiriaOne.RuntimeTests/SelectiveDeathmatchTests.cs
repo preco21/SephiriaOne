@@ -17,7 +17,10 @@ internal static class SelectiveDeathmatchTests
         bystander.PlayerAvatar.playerNameSource = "Bystander";
         SettingsActions.Execute("/one friendlyfire player 1 on"); SettingsActions.Execute("/one friendlyfire player 2 on");
         At(0); SettingsActions.Execute("/one deathmatch start"); At(3);
+        int shownBeforeDeaths = FriendlyFireDeathVisuals.Shown;
         guest.PlayerAvatar.Die(1, new()); bystander.PlayerAvatar.Die(1, new());
+        check(FriendlyFireDeathVisuals.Shown == shownBeforeDeaths + 1,
+            "Deathmatch shows one FX for the participant and none for the excluded spectator");
         check(CombatMatchRuntime.ProtectDeath(guest.PlayerAvatar) && !CombatMatchRuntime.ProtectDeath(bystander.PlayerAvatar),
             "Deathmatch protects only selected participants' deaths");
         At(6);

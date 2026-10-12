@@ -57,7 +57,10 @@ internal static class TournamentRuntimeTests
         }
         check(!chat.Any(x => x.Player != null && !pair.Contains(x.Player)), "Waiting entrants receive no opponent bubble");
         var firstWinner = pair[0]; var firstLoser = pair[1];
+        int shownBeforeKill = FriendlyFireDeathVisuals.Shown;
         Kill(firstWinner, firstLoser);
+        check(FriendlyFireDeathVisuals.Shown == shownBeforeKill + 1,
+            "Tournament down uses the shared one-shot death visual before advancing the round");
         check(FriendlyFireKda.For(firstWinner).Kills == 1 && FriendlyFireKda.For(firstLoser).Deaths == 1,
             "Native death finalizer credits shared PvP KDA before resolving the round");
         Advance(0.2f); Advance(0.2f);

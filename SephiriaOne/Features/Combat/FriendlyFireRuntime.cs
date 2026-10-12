@@ -21,7 +21,7 @@ namespace SephiriaOne
         }
         [ThreadStatic] private static HitContext current;
         private static bool warned;
-        internal static void Clear() { current = default; debuffScope = default; ClearDebuffOrigins(); FriendlyFireKda.Reset(); warned = false; }
+        internal static void Clear() { current = default; debuffScope = default; ClearDebuffOrigins(); FriendlyFireKda.Reset(); FriendlyFireDeathVisuals.Reset(); warned = false; }
 
         internal static bool BeforeHit(UnitAvatar __instance, DamageInstance damage, ref EApplyDamageResult __result, out HitContext __state)
         {

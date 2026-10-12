@@ -2,6 +2,11 @@
 // state machine and native-shaped death/revival methods execute together.
 namespace SephiriaOne
 {
+    internal static class FriendlyFireDeathVisuals
+    {
+        internal static int Shown;
+        internal static void Show(PlayerAvatar player) { Shown++; }
+    }
     internal static partial class FriendlyFireRuntime
     {
         private struct HitContext
