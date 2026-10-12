@@ -14,6 +14,12 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+Version `0.51.0` adds six companion modifiers to the shared Stats dropdown and
+commands: attack speed, damage, defense, critical chance, critical inheritance
+and revival speed. Native owner reads reuse existing synchronization for stock
+guests; preset v21 stores these new settings. This is the requested companion
+extension beyond C-menu rows. See [companion stats](companion-stat-modifiers.md).
+
 Version `0.50.1` adds Tournament round and draw-rematch context to each pre-fight
 countdown bubble. Round is one plus the lower prior-win count; draws and aborted
 countdowns do not advance it. Korean uses `재대결`. The scheduler supplies this

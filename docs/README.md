@@ -1,6 +1,6 @@
 # Development knowledge index
 
-Maintained: 2026-10-12 (Asia/Seoul), addon `0.50.1`.
+Maintained: 2026-10-12 (Asia/Seoul), addon `0.51.0`.
 
 Agents and contributors can refer to `docs/*` for research, implementation
 materials, native game findings and references. Start here before repeating an
@@ -31,6 +31,7 @@ distinguishes native chapter/outcome markers from actual run settlement.
 | --- | --- |
 | State lifecycle and recovery | [Lifecycle audit](sync-lifecycle-audit.md), [session inheritance](session-inheritance.md), [re-entry review](session-reentry-review.md), [penalty-stat review](penalty-stat-sync-review.md) |
 | Stats and numeric modes | [Stats](stat-command.md), [visible C-menu allowlist](visible-stat-modifiers.md), [relative consistency](relative-stat-consistency.md), [multipliers](multiplier-command.md), [reset](command-reset.md) |
+| Companion modifiers | [Six native owner bonuses, commands, units, inheritance and stock-guest behavior](companion-stat-modifiers.md) |
 | Fountain and choices | [Fountain](fountain-command.md), [second-run carryover](fountain-run-restart.md), [bond-artifact investigation](bond-artifact-fountain-investigation.md), [choices](choice-command.md) |
 | Starting resources and capacity | [Commands](resource-command.md), [native investigation](resource-settings-investigation.md), [implementation/follow-ups](resource-settings-implementation.md), [leaves departure timing](leaves-departure-fix.md) |
 | Persistence and UI | [Presets](session-preset.md), [control panel](control-panel.md), [panel implementation](control-panel-implementation.md), [localization](localization.md) |

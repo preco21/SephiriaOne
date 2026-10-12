@@ -1,5 +1,9 @@
 # C-menu stat modifiers
 
+Since `0.51.0`, the user-requested [six companion bonuses](companion-stat-modifiers.md)
+extend Stats beyond this original C-menu group, for 33 supported stats total.
+The original 27 menu entries and their meanings remain unchanged.
+
 Version `0.36.0` adds **17 modifiers**, bringing `/stats` to 27 supported stats.
 Each new entry is present in the installed game's `C` status panel, including
 conditional Special-tab rows and the crossbow-specific reload row. Hidden

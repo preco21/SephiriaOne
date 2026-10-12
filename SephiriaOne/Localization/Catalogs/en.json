@@ -1,4 +1,11 @@
 {
+  "Companion attack speed": "Companion attack speed",
+  "Companion damage": "Companion damage",
+  "Companion defense": "Companion defense",
+  "Companion critical chance": "Companion critical chance",
+  "Companion critical inheritance": "Companion critical inheritance",
+  "Companion revival speed": "Companion revival speed",
+  "% of owner's critical stats": "% of owner's critical stats",
   "K/D/A reset requires a current combat match.": "K/D/A reset requires a current combat match.",
   "Selection reset. All players are eligible for friendly fire, deathmatch and tournament.": "Selection reset. All players are eligible for friendly fire, deathmatch and tournament.",
   "Tournament K/D/A scores reset.": "Tournament K/D/A scores reset.",

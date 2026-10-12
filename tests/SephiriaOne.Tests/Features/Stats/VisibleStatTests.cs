@@ -46,7 +46,7 @@ internal static class VisibleStatTests
             Check(StatPlanner.TryPlan(new StatCommand(stat, StatOperation.Reset, 0), new[] { applied }, out var reset, out _) && reset[0].Raw == 20 && reset[0].Contribution == 0, "Reset preserves original raw " + name);
         }
         var original = new[] { "luck", "defense", "attackspeed", "critical", "criticaldamage", "evasion", "cooldown", "mpregen", "negotiation", "truedamage" };
-        Check(StatCatalog.All.Select(s => s.Name).ToHashSet().SetEquals(original.Concat(Added.Select(a => a.Name))), "Only audited menu stats are public");
+        Check(StatCatalog.All.Where(s => !s.IsCompanion).Select(s => s.Name).ToHashSet().SetEquals(original.Concat(Added.Select(a => a.Name))), "Only audited menu stats or explicitly requested companion stats are public");
         Check(StatCatalog.All.Select(s => s.Key).Distinct().Count() == StatCatalog.All.Count, "No duplicate ownership keys");
         foreach (string name in new[] { "physicaldamage", "firedamage", "icedamage", "lightningdamage", "hpregen", "magiccritical", "hppotionbonus", "mppotionbonus", "dashcount", "weaponrange", "darkcloud", "flameground", "infinitymp", "CROSSBOWAMMO" })
             Check(StatCommand.Parse("/stats " + name + " 10", out _, out _) == StatParseResult.Invalid, "Unexposed/internal/composite stat rejected " + name);

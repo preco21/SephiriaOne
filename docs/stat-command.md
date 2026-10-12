@@ -1,5 +1,9 @@
 # Character stat commands
 
+Version `0.51.0` adds [six companion modifiers](companion-stat-modifiers.md),
+including `/stats companionattackspeed x2`. They use the same controls and
+synchronization, with owner-provided companion bonuses as the native baseline.
+
 Version `0.36.0` adds 17 verified C-menu modifiers. See the
 [expanded stat list and native visibility audit](visible-stat-modifiers.md) for
 commands, units, synchronization behavior and exclusions. The original ten
@@ -31,8 +35,8 @@ zero where allowed. A delta after a factor starts a fresh native offset.
 `set x3` also works from the panel's Set button. See [multipliers](multiplier-command.md)
 for fractional factors, exact-result checks and saved presets.
 
-Values use the selected character-panel metric, including its normal offset.
-Critical chance and evasion rating support two decimal places; the others use
+Original values use the selected character-panel metric, including its normal offset.
+Critical chance, companion critical chance and evasion rating support two decimal places; the others use
 whole numbers. Evasion rating is not the derived dodge percentage. Bounds below
 are addon command limits, not claims about game balance or universal game caps.
 

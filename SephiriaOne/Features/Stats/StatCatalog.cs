@@ -11,6 +11,7 @@ namespace SephiriaOne
         public string Label { get; }
         public string MenuId { get; }
         public bool RequiresExpandedPreset { get; }
+        public bool IsCompanion { get; }
         public int Scale { get; }
         public int Offset { get; }
         public int Minimum { get; }
@@ -20,10 +21,11 @@ namespace SephiriaOne
 
         public StatDefinition(string name, string key, string unit, int scale = 1,
             int offset = 0, int minimum = 0, int maximum = 10000,
-            string label = "", string menuId = "", bool requiresExpandedPreset = false)
+            string label = "", string menuId = "", bool requiresExpandedPreset = false, bool isCompanion = false)
         {
             Name = name; Label = label.Length == 0 ? name : label;
             MenuId = menuId; RequiresExpandedPreset = requiresExpandedPreset;
+            IsCompanion = isCompanion;
             Key = key;
             Marker = "SEPHIRIAONE_STAT_" + key;
             Unit = unit;
@@ -67,16 +69,31 @@ namespace SephiriaOne
             Expanded("ignoredefense", "IGNOREDEFENSE", "Ignore defense", "IGNORE_DEFENSE", "defense ignored %", maximum: 100),
             Expanded("debuffduration", "DEBUFFDURATION", "Debuff duration", "DEBUFFDURATION", "bonus %"),
             Expanded("debuffdamage", "DEBUFFDAMAGE", "Debuff damage", "DEBUFFDAMAGE", "bonus %"),
-            Expanded("crossbowreload", "CROSSBOWRELOADSPEED", "Crossbow reload speed", "CROSSBOWRELOADSPEED", "total % (100 = normal)", offset: 100, minimum: 1, maximum: 1000)
+            Expanded("crossbowreload", "CROSSBOWRELOADSPEED", "Crossbow reload speed", "CROSSBOWRELOADSPEED", "total % (100 = normal)", offset: 100, minimum: 1, maximum: 1000),
+
+            Companion("companionattackspeed", "FOLLOWERATTACKSPEED", "Companion attack speed", "total % (100 = normal)", offset: 100, minimum: 1, maximum: 1000),
+            Companion("companiondamage", "FOLLOWERDAMAGE", "Companion damage", "total % (100 = normal)", offset: 100),
+            Companion("companiondefense", "FOLLOWERDEFENSE", "Companion defense", "defense points"),
+            Companion("companioncritical", "FOLLOWERCRITICAL", "Companion critical chance", "chance %", scale: 100, maximum: 100),
+            Companion("companioncriticalshare", "FOLLOWERCRITICALCONTRIBUTE", "Companion critical inheritance", "% of owner's critical stats", maximum: 100),
+            Companion("companionrevive", "FOLLOWERREVIVE", "Companion revival speed", "total % (100 = normal)", offset: 100, minimum: 1, maximum: 1000)
         });
 
-        // Explicit menu allowlist: do not enumerate StatusDatabase/ECustomStat.
+        // Explicit menu allowlist plus the requested native companion bonuses:
+        // do not enumerate StatusDatabase/ECustomStat.
         // Several native stats are hidden, and some visible rows use composite
         // fields rather than the custom-stat arithmetic supported here.
         private static StatDefinition Expanded(string name, string key, string label, string menuId, string unit,
             int offset = 0, int minimum = 0, int maximum = 10000) =>
             new StatDefinition(name, key, unit, offset: offset, minimum: minimum, maximum: maximum,
                 label: label, menuId: menuId, requiresExpandedPreset: true);
+
+        // Owner-side native bonuses; not C-menu rows. The native leader reads
+        // them for existing/new companions without per-follower addon state.
+        private static StatDefinition Companion(string name, string key, string label, string unit,
+            int scale = 1, int offset = 0, int minimum = 0, int maximum = 10000) =>
+            new StatDefinition(name, key, unit, scale: scale, offset: offset, minimum: minimum, maximum: maximum,
+                label: label, isCompanion: true);
 
         public static StatDefinition? Find(string name)
         {
@@ -100,6 +117,12 @@ namespace SephiriaOne
                 case "mp-steal": name = "mpsteal"; break;
                 case "penetration": name = "ignoredefense"; break;
                 case "crossbowreloadspeed": name = "crossbowreload"; break;
+                case "companion-attack-speed": case "followerattackspeed": name = "companionattackspeed"; break;
+                case "companion-damage": case "followerdamage": name = "companiondamage"; break;
+                case "companion-defense": case "followerdefense": name = "companiondefense"; break;
+                case "companion-crit": case "followercritical": name = "companioncritical"; break;
+                case "companioncriticalinheritance": case "followercriticalcontribute": name = "companioncriticalshare"; break;
+                case "companionrevivespeed": case "followerrevive": name = "companionrevive"; break;
             }
             foreach (StatDefinition stat in All)
                 if (stat.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) return stat;

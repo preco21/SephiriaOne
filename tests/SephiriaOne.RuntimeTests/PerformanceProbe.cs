@@ -52,8 +52,11 @@ internal static class PerformanceProbe
                     throw new Exception("Non-Status snapshots must avoid at least 25% of full diagnostic allocations.");
                 // Fixed five-player fixture: retain headroom without allowing the
                 // capture path to allocate a second copy of each player dictionary.
-                if (checkBudget && compact > 25 * 1024)
-                    throw new Exception("Five-player non-Status snapshots exceed the 25 KiB allocation budget.");
+                // The all-sections compatibility snapshot includes six more
+                // stat values and active-preset summaries since 0.51.0 (33 stats).
+                // Actual tab-specific and steady-state budgets remain unchanged.
+                if (checkBudget && compact > 28 * 1024)
+                    throw new Exception("Five-player non-Status snapshots exceed the 28 KiB allocation budget.");
                 if (checkBudget && full > 160 * 1024)
                     throw new Exception("Five-player full reports exceed the 160 KiB allocation budget.");
                 foreach (var content in new[] { SnapshotContent.None, SnapshotContent.Stats, SnapshotContent.Choices,

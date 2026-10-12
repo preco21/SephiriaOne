@@ -1,5 +1,11 @@
 # Active settings and saved preset
 
+Version `0.51.0` adds v21 for [companion stat modifiers](companion-stat-modifiers.md),
+for example `stats companionattackspeed multiplier 2` or
+`stats companioncritical set 12.25`. All six use existing set/offset/multiplier
+semantics. Older schemas reject the new names; presets without companion
+adjustments keep the lowest version required by their remaining settings.
+
 Version `0.34.0` adds v15 for [Collin costume starting gifts](collin-starting-artifact.md).
 `collin starting 1` enables the option. Missing rows and older schemas keep it off;
 explicit 0 normalizes away. Invalid/duplicate rows reject the entire preset.

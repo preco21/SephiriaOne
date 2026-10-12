@@ -19,7 +19,7 @@ internal static class GameVisibleStatCompatibilityTests
         var read = PatchProcessor.GetOriginalInstructions(AccessTools.Method(unit, "GetCustomStatUnsafe"));
         foreach (string method in new[] { "ElementalIndexOf", "GetConvertedElementalDamage", "GetRawStatUnsafe" })
             Require(read.Any(i => i.operand is MethodInfo m && m.DeclaringType == unit && m.Name == method), "Native raw/converted routing changed");
-        foreach (var stat in StatCatalog.All)
+        foreach (var stat in StatCatalog.All.Where(s => !s.IsCompanion))
         {
             int comparison = native.FindIndex(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, stat.MenuId));
             if (stat.Name == "debuffdamage" || stat.Name == "debuffduration")

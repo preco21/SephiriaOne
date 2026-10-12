@@ -8,7 +8,7 @@ internal static class DiagnosticSnapshotTests
         check(SettingsActions.Execute("/stats luck +10").Success && SessionSettings.EnsureFresh(), "Prepare diagnostic formatting fixture");
         var before = SessionSettings.ReadSnapshot();
         const string rule = "Player #1 luck / relative-stat: Applied (revision 1).";
-        const string values = "Player #1: luck=15 (base adjustment +10), defense=0, attackspeed=100, critical=0, criticaldamage=50, evasion=0, cooldown=0, mpregen=0, negotiation=0, truedamage=0, toughness=0, dashrecovery=100, expdrop=100, leafdrop=100, thorns=0, normaldamage=100, dashdamage=100, specialdamage=100, weapondamage=100, grimoiredamage=100, alldamage=100, hpsteal=0, mpsteal=0, ignoredefense=0, debuffduration=0, debuffdamage=0, crossbowreload=100. Units: /stats list.";
+        const string values = "Player #1: luck=15 (base adjustment +10), defense=0, attackspeed=100, critical=0, criticaldamage=50, evasion=0, cooldown=0, mpregen=0, negotiation=0, truedamage=0, toughness=0, dashrecovery=100, expdrop=100, leafdrop=100, thorns=0, normaldamage=100, dashdamage=100, specialdamage=100, weapondamage=100, grimoiredamage=100, alldamage=100, hpsteal=0, mpsteal=0, ignoredefense=0, debuffduration=0, debuffdamage=0, crossbowreload=100, companionattackspeed=100, companiondamage=100, companiondefense=0, companioncritical=0, companioncriticalshare=0, companionrevive=100. Units: /stats list.";
         check(before.Lines.Contains(rule) && before.Lines.Contains(values), "Status text preserves rule, stat ordering, units and contribution formatting");
         check(SessionSettings.DescribeDisconnect(1).Contains(rule), "Disconnect diagnostics use the same rule formatting");
         host.PlayerAvatar.customStats["LUCK"] += 7;

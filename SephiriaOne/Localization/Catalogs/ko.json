@@ -1,4 +1,11 @@
 {
+  "Companion attack speed": "동료 공격 속도",
+  "Companion damage": "동료 피해량",
+  "Companion defense": "동료 방어력",
+  "Companion critical chance": "동료 치명타 확률",
+  "Companion critical inheritance": "동료 치명타 능력치 계승",
+  "Companion revival speed": "동료 부활 속도",
+  "% of owner's critical stats": "주인의 치명타 능력치 반영 비율 (%)",
   "K/D/A reset requires a current combat match.": "진행 중인 전투 경기에서만 K/D/A 기록을 초기화할 수 있습니다.",
   "Selection reset. All players are eligible for friendly fire, deathmatch and tournament.": "선택을 초기화했습니다. 모든 플레이어가 팀킬, 데스매치, 토너먼트에 참가할 수 있습니다.",
   "Tournament K/D/A scores reset.": "토너먼트 K/D/A 기록을 초기화했습니다.",

@@ -1,5 +1,8 @@
 # English / Korean translations
 
+Version `0.51.0` adds six Companion / 동료 stat labels and the owner critical
+inheritance unit to the bundled catalogs. Older custom files inherit these keys.
+
 Added in `0.21.0`. SephiriaOne translates its settings panel, command help and
 feedback, current status labels, addon costume-description lines and low-MP
 notifications. Choose Korean (`ko`, the default since `0.27.1`) or English (`en`).

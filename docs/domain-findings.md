@@ -16,6 +16,12 @@ A different game build requires renewed contract/asset checks. Start with the
 
 ## State lifetimes and multiplayer
 
+Companion stat controls (`0.51.0`) modify native owner `FOLLOWER*` bonuses.
+Existing AIs/combat and three companion revival timers read the live leader;
+do not mirror bonuses into each follower's dictionaries or cache a leader across
+ownership changes. The six status definitions are an explicit user-requested
+extension beyond C-menu rows. See [units and native evidence](companion-stat-modifiers.md).
+
 Automatic respawn visuals (`0.50.0`): `Revive` restores the avatar but does not
 spawn the white pillar. `RpcCreateAdditionalLifeFx` is a separate native
 presentation RPC at the avatar's world transform, including a brief observer-wide
