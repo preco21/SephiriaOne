@@ -11,6 +11,7 @@ namespace UnityEngine
         public override int GetHashCode() => base.GetHashCode();
     }
     public static class Debug { public static void LogWarning(object message) {} }
+    public static class Time { public static float time; }
     public struct Vector2
     {
         public float x, y;

@@ -41,11 +41,30 @@ public class Charm_FlameGround_Meteor : Charm_Basic
     [MethodImpl(MethodImplOptions.NoInlining)] public void OnUpdate() =>
         Activated = NetworkAvatar && !NetworkAvatar.IsDead && !CombatManager.Instance.PeaceMode && NetworkAvatar.IsInBattle && Ready;
 }
-public class ComboEffect_DarkCloud : Charm_Basic
+public class ComboEffectBase : Charm_Basic
 {
+    public bool isPlayerCombo = true;
+    public UnitAvatar Networkavatar => NetworkAvatar;
+}
+public class ComboEffect_DarkCloud : ComboEffectBase
+{
+    public event Action<UnitAvatar> OnAttackUnit;
+    public int Strikes, Effects, NativeNpcCalls;
     [MethodImpl(MethodImplOptions.NoInlining)] public void Update() =>
         Activated = NetworkAvatar && !NetworkAvatar.IsDead && !CombatManager.Instance.PeaceMode && NetworkAvatar.IsInBattle && Ready;
-    [MethodImpl(MethodImplOptions.NoInlining)] public void FireLightning() => ((CombatBehaviour)Target).ApplyDamage(Damage);
+    [MethodImpl(MethodImplOptions.NoInlining)] public void FireLightning(UnitAvatar target, int baseDamagePercent = 100)
+    {
+        if (!Networkavatar) return;
+        if (!isPlayerCombo) { NativeNpcCalls++; return; }
+        Strikes++;
+        if (target)
+        {
+            ((CombatBehaviour)target).ApplyDamage(Damage);
+            OnAttackUnit?.Invoke(target);
+        }
+        TargetCreateFx();
+    }
+    private void TargetCreateFx() => Effects++;
     public IEnumerator UseCloudCoroutine()
     {
         yield return null;

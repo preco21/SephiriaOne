@@ -39,6 +39,10 @@ namespace SephiriaOne
 
         internal static void Install(Harmony harmony)
         {
+            var cloud = AccessTools.DeclaredMethod(typeof(ComboEffect_DarkCloud), "FireLightning", new[] { typeof(UnitAvatar), typeof(int) });
+            if (cloud == null || cloud.IsStatic || cloud.ReturnType != typeof(void) ||
+                !ValidateDarkCloudStrike(PatchProcessor.GetOriginalInstructions(cloud)))
+                throw new InvalidOperationException("Native Dark Cloud strike contract changed.");
             var patches = new List<KeyValuePair<MethodInfo, string>>();
             foreach (var m in BattleReaders()) patches.Add(new KeyValuePair<MethodInfo, string>(m, nameof(RewriteBattle)));
             foreach (var m in NearestCallers()) patches.Add(new KeyValuePair<MethodInfo, string>(m, nameof(RewriteNearestCalls)));
@@ -54,6 +58,25 @@ namespace SephiriaOne
                 ((IEnumerable<CodeInstruction>)rewrite.Invoke(null, args)).ToList();
             }
             foreach (var patch in patches) harmony.Patch(patch.Key, transpiler: new HarmonyMethod(typeof(FriendlyFireArtifactHooks), patch.Value));
+            harmony.Patch(cloud, prefix: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.BeforeDarkCloudStrike)));
+        }
+
+        internal static bool ValidateDarkCloudStrike(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = instructions.ToList();
+            var owner = AccessTools.PropertyGetter(typeof(ComboEffectBase), "Networkavatar");
+            var playerCombo = AccessTools.Field(typeof(ComboEffectBase), "isPlayerCombo");
+            var attacked = AccessTools.Field(typeof(ComboEffect_DarkCloud), "OnAttackUnit");
+            var damage = AccessTools.DeclaredMethod(typeof(CombatBehaviour), "ApplyDamage", new[] { typeof(DamageInstance) });
+            var invoke = AccessTools.Method(typeof(Action<UnitAvatar>), "Invoke");
+            var fx = AccessTools.DeclaredMethod(typeof(ComboEffect_DarkCloud), "TargetCreateFx");
+            if (owner == null || playerCombo == null || attacked == null || damage == null || invoke == null || fx == null) return false;
+            int hit = code.FindIndex(i => i.Calls(damage));
+            int callback = code.FindIndex(i => i.Calls(invoke));
+            int effect = code.FindIndex(i => i.Calls(fx));
+            return code.Any(i => i.Calls(owner)) && code.Any(i => i.LoadsField(playerCombo)) && code.Any(i => i.LoadsField(attacked)) &&
+                hit >= 0 && callback > hit && effect > callback && code.Count(i => i.Calls(damage)) == 1 &&
+                code.Count(i => i.Calls(invoke)) == 1 && code.Count(i => i.Calls(fx)) == 1;
         }
 
         internal static IEnumerable<CodeInstruction> RewriteBattle(IEnumerable<CodeInstruction> instructions) =>

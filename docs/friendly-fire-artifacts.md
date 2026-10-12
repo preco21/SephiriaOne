@@ -10,6 +10,69 @@ helpers now live in `FriendlyFireTargeting` / `FriendlyFireTargetingHooks`; the
 artifact registry and bounded proc scopes retain their original behavior. The
 spell exclusions below describe the earlier `0.43.2` audit boundary.
 
+## Dark Cloud player strike limit (0.51.2, 2026-10-13)
+
+During enabled, positive-damage friendly fire, the host permits at most one Dark
+Cloud strike attempt per attacker-player/victim-player pair every **0.5 seconds**
+of scaled game time. It uses the same selection, connection and Tournament-pair
+policy as other friendly-fire effects. Casual friendly fire, Deathmatch and
+Tournament share this limit; clients need no addon or new assets.
+
+The installed game's `UseCloudCoroutine` issues multishots with a 0.133-second
+wait; attack-speed and extra-discharge paths can also increase strike frequency.
+That coroutine and targeted staff discharges (`UseCloudToTarget`) reach
+`FireLightning(UnitAvatar, int)`. Its player-combo branch calls `ApplyDamage`,
+then `OnAttackUnit`, then `TargetCreateFx`. Blazing Stormcloud subscribes to that
+event to apply burn **even when damage was rejected**, so limiting only damage
+would leave rapid burn applications active.
+
+`FriendlyFireDarkCloud` prefixes this common strike boundary. Repeated strikes
+inside the window skip damage, the strike callback and lightning FX together.
+Admitted strikes keep their native damage, existing friendly-fire scaling and
+callbacks. The native caller still handles cloud costs, random target choice,
+`DARKCLOUDFIRED` notifications and its own timer. There is no refund or retargeting.
+Existing damage-over-time ticks from an admitted strike are not separately
+throttled. Native enemy targets, non-player combos, and off/zero settings keep
+their previous paths and central impact guards.
+
+The native coroutine can continue after its owner dies: its loop drops dead
+targets but does not stop for owner death. Queued strikes from a current dead
+owner therefore retain the same cap. The window is reserved before entering
+native callbacks, so recursion and failed strikes cannot immediately retry.
+Separate attackers/targets have independent windows; replacing a cloud component
+does not reset its owner's window.
+
+Storage uses weak attacker/victim connection receipts. Current participant and
+KDA epochs invalidate windows on selection/match changes, score resets and
+session transitions; new connection receipts, changed floor identities and a
+reset game clock also start fresh. Unload clears the table. Before capturing the
+KDA epoch, the hook aligns score enablement with the shared impact path, avoiding
+a first-hit race after preset inheritance. No update loop, extra network packet
+or persistent setting is introduced. Warmed admitted/rejected checks allocate
+zero bytes in the executable fixture; this is not a Unity FPS measurement.
+
+Compatibility validation checks the exact method signature and native owner,
+player-combo, damage/event/FX anchors and ordering. `Networkavatar` and
+`isPlayerCombo` must be resolved from their declaring `ComboEffectBase` type,
+matching the installed IL's member identity. Changed contracts follow existing
+friendly-fire installation rollback instead of leaving partial hooks active.
+
+Executable coverage includes independent pairs, 0.5-second boundaries, burn/FX,
+death during a burst, ordinary enemies, off/zero, client execution, selection,
+Tournament exclusion, reconnect/run/floor/epoch changes, component pooling,
+recursive callbacks, exceptions and warmed allocations. Installed-game checks
+verify both native entry paths and reject missing/reordered anchors. The game
+assembly fingerprint remains the one recorded in [domain findings](domain-findings.md).
+Live balance, Unity pause behavior and stock-guest presentation still require
+in-game testing; 0.5 seconds is an initial balance value, not a measured optimum.
+
+Verification: 1,002 executable combat checks, 1,905 runtime integration checks
+(plus 69 Bat lifecycle checks), 41,176 Tournament scheduler checks, and the full
+portable/installed-game compatibility suite passed. Debug and Release builds
+had zero warnings/errors with deployment disabled. The runtime performance
+fixture retained zero-allocation unchanged synchronization. No deployment or
+live Unity/multiplayer test was performed.
+
 ## Findings and reported cases
 
 Three independent gates excluded players before the central damage hook:

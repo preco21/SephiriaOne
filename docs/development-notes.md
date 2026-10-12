@@ -1,6 +1,6 @@
 # SephiriaOne development notes
 
-Recorded: 2026-09-23; updated: 2026-10-12 (Asia/Seoul).
+Recorded: 2026-09-23; updated: 2026-10-13 (Asia/Seoul).
 
 This document records the project history, current implementation, and modding
 findings collected during the initial investigation. Installed-game observations
@@ -13,6 +13,14 @@ For agent/contributor onboarding, start with the [documentation index](README.md
 the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
+
+Version `0.51.2` limits Dark Cloud to one strike attempt per attacker/player pair
+every 0.5 seconds during friendly fire, including Deathmatch and Tournament.
+The strike boundary also suppresses rapid repeat burn callbacks; native enemy
+behavior, cloud costs and follow-on damage-over-time ticks remain unchanged.
+Weak connection receipts and shared epochs keep cooldowns scoped to current
+participants. Queued bolts retain the cap after owner death. See
+[native evidence and test limits](friendly-fire-artifacts.md#dark-cloud-player-strike-limit-0512-2026-10-13).
 
 Version `0.51.1` removes temporary single-value arrays and unused error formatting
 from successful stat planning. Commands, relative maintenance, reset recovery

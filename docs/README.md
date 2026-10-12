@@ -1,12 +1,15 @@
 # Development knowledge index
 
-Maintained: 2026-10-12 (Asia/Seoul), addon `0.51.1`.
+Maintained: 2026-10-13 (Asia/Seoul), addon `0.51.2`.
 
 Agents and contributors can refer to `docs/*` for research, implementation
 materials, native game findings and references. Start here before repeating an
 investigation. Repository workflow and deployment rules are in [AGENTS.md](../AGENTS.md).
 
 ## Start here
+
+Combat follow-up: [Dark Cloud player strike limit](friendly-fire-artifacts.md#dark-cloud-player-strike-limit-0512-2026-10-13)
+limits repeated strikes to the same hostile player while preserving native enemy behavior.
 
 UI follow-up: [tabbed draggable window and native Settings hotkey](tabbed-settings-ui.md)
 implements the approved option 2; the [panel guide](control-panel.md) covers usage.

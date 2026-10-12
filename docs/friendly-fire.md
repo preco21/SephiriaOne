@@ -1,5 +1,12 @@
 # Friendly fire
 
+Version `0.51.2` limits Dark Cloud to one strike attempt against the same hostile
+player every **0.5 seconds per attacker** while friendly fire is active. This
+also applies in Deathmatch and Tournament. Rapid repeats skip their damage,
+strike-triggered burn and lightning FX; native cloud costs, other player pairs,
+normal enemies and existing burn ticks keep their usual behavior. The limit is
+automatic under the existing toggle. See [implementation and evidence](friendly-fire-artifacts.md#dark-cloud-player-strike-limit-0512-2026-10-13).
+
 Version `0.45.1` makes **Reset K/D/A** available in Combat and Deathmatch during
 ordinary hosted friendly fire, without starting a match. Use
 `/one friendlyfire resetkda`; `/one deathmatch resetkda` also routes to the same

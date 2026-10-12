@@ -301,7 +301,7 @@ internal static class ArtifactTests
         {
             ("Frostium Ring", frostium, frostium.HandleAttackUnit), ("Typhoon Sheetmusic", typhoon, typhoon.HandleAttackUnit),
             ("Reddew", reddew, reddew.SummonDueFromVictim), ("Tuning Forks", forks, forks.CreateAttack),
-            ("Glacier Echo", glacier, glacier.CreateFrostbite), ("Dark Cloud lightning", cloud, cloud.FireLightning)
+            ("Glacier Echo", glacier, glacier.CreateFrostbite), ("Dark Cloud lightning", cloud, () => cloud.FireLightning(cloud.Target))
         };
         foreach (var proc in procs)
         {

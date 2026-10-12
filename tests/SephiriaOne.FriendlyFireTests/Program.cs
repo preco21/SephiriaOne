@@ -179,11 +179,14 @@ RecoveryTests.Run(Check);
 KillLogTests.Run(Check);
 EffectTests.Run(Check);
 ArtifactTests.Run(Check);
+DarkCloudTests.Run(Check);
 SpellTests.Run(Check);
 FractionalDamageTests.Run(Check);
 SelectiveCombatTests.Run(Check);
 TournamentCombatTests.Run(Check);
 FriendlyFireHooks.Uninstall();
+Check(PatchProcessor.GetPatchInfo(AccessTools.DeclaredMethod(typeof(ComboEffect_DarkCloud), "FireLightning"))?.Prefixes.Count is null or 0,
+    "Unload removes Dark Cloud strike limiter");
 var nativeSpell = new Bullet { NetworkOwner = new PlayerAvatar(), Candidate = new PlayerAvatar(), FromType = EDamageFromType.Magic, damageId = "Skill_FireBolt" };
 nativeSpell.Update();
 Check(nativeSpell.HomingTarget == null, "Unload restores native spell homing filters");

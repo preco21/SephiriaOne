@@ -16,6 +16,13 @@ A different game build requires renewed contract/asset checks. Start with the
 
 ## State lifetimes and multiplayer
 
+Dark Cloud (`0.51.2`): `FireLightning` invokes `OnAttackUnit` after `ApplyDamage`
+without checking the damage result; Blazing Stormcloud uses that callback for
+burn. A player-only rate limit must guard the whole strike to suppress repeat
+debuffs too. Native multishot coroutines can continue after owner death, so a dead
+but current owner must retain the same limit. Caller cloud costs and discharge
+notifications occur outside that method. See [strike boundary and lifecycle evidence](friendly-fire-artifacts.md#dark-cloud-player-strike-limit-0512-2026-10-13).
+
 Companion stat controls (`0.51.0`) modify native owner `FOLLOWER*` bonuses.
 Existing AIs/combat and three companion revival timers read the live leader;
 do not mirror bonuses into each follower's dictionaries or cache a leader across

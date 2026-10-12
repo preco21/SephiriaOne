@@ -41,6 +41,30 @@ internal static class GameFriendlyFireArtifactTests
         foreach (var m in readers) Check(m, "RewriteBattle", "ArtifactInBattle", 1);
         foreach (var m in nearest) Check(m, "RewriteNearestCalls", "OffensiveNearestPoint", m.DeclaringType?.Name == "Charm_GuardCounter" ? 1 : 2);
         foreach (var m in procs) Check(m, "RewriteDamageProc", "ApplyArtifactDamage", 1);
+        var cloud = Method("ComboEffect_DarkCloud", "FireLightning");
+        var cloudCode = PatchProcessor.GetOriginalInstructions(cloud).ToList();
+        bool CloudValid(IEnumerable<CodeInstruction> code) => (bool)AccessTools.Method(hooks, "ValidateDarkCloudStrike").Invoke(null, new object[] { code })!;
+        Require(cloud.ReturnType == typeof(void) && !cloud.IsStatic &&
+            cloud.GetParameters().Select(p => p.ParameterType).SequenceEqual(new[] { Native("UnitAvatar"), typeof(int) }) &&
+            CloudValid(cloudCode), "Dark Cloud limiter binds the native player strike, callback and FX contract");
+        foreach (string anchor in new[] { "get_Networkavatar", "ApplyDamage", "Invoke", "TargetCreateFx", "isPlayerCombo", "OnAttackUnit" })
+        {
+            var changed = cloudCode.Where(i => !(i.operand is MemberInfo member && member.Name == anchor)).ToList();
+            Require(!CloudValid(changed), "Dark Cloud limiter rejects missing native anchor: " + anchor);
+        }
+        var callbackMoved = cloudCode.Select(i => new CodeInstruction(i)).ToList();
+        int invokeIndex = callbackMoved.FindIndex(i => i.operand is MethodInfo m && m.Name == "Invoke");
+        var callbackInstruction = callbackMoved[invokeIndex]; callbackMoved.RemoveAt(invokeIndex); callbackMoved.Insert(0, callbackInstruction);
+        Require(!CloudValid(callbackMoved), "Dark Cloud limiter rejects callback-before-damage contract changes");
+        Require(PatchProcessor.GetOriginalInstructions(Method("ComboEffect_DarkCloud", "UseCloudToTarget"))
+            .Any(i => i.Calls(cloud)), "Targeted staff discharges pass through the same strike boundary");
+        var effectHooks = addon.GetType("SephiriaOne.FriendlyFireEffectHooks", true)!;
+        var coroutine = (MethodInfo)AccessTools.Method(effectHooks, "Iterator").Invoke(null,
+            new object[] { Native("ComboEffect_DarkCloud"), "UseCloudCoroutine" })!;
+        Require(PatchProcessor.GetOriginalInstructions(coroutine).Any(i => i.Calls(cloud)),
+            "Automatic and multishot cloud discharges pass through the same strike boundary");
+        Require(PatchProcessor.GetOriginalInstructions(Method("Charm_BlazingStormcloud", "InflictBurn"))
+            .Any(i => Calls(i, "UnitAvatar", "ApplyDebuff")), "Native cloud attack callback can apply burn after damage");
         Check(Method("PlayerInputController", "SearchTargetNearestPoint"), "RewriteNearestMask", "OffensiveNearestMask", 1);
         Check(Method("DaggerGrowthBullet", "HitCheck"), "RewriteDagger", "ItemHitTarget", 1);
         Check(Method("Bullet", "Update"), "RewriteHoming", "HomingTargetAllowed", 1, 2);
