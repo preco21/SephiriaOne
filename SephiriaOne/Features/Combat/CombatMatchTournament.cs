@@ -146,10 +146,12 @@ namespace SephiriaOne
             if (first < 0 || second < 0 || !IsTournament) return;
             long current = token;
             PlayerAvatar a = tournamentPlayers[first].Subject.Player, b = tournamentPlayers[second].Subject.Player;
+            int round = schedule.PendingRound;
             string format = started ? "[Tournament] Match started: Kill \"{0}\"! ({1} secs)" :
-                "[Tournament] \"{0}\" is your opponent! Fight in: {1}...";
-            Broadcast(a, L.F(format, CombatNames.Player(b), seconds));
-            if (current == token && IsTournament) Broadcast(b, L.F(format, CombatNames.Player(a), seconds));
+                schedule.PendingIsRematch ? "[Tournament] Round {2} | Rematch | \"{0}\" is your opponent! Fight in: {1}..." :
+                "[Tournament] Round {2} | \"{0}\" is your opponent! Fight in: {1}...";
+            Broadcast(a, L.F(format, CombatNames.Player(b), seconds, round));
+            if (current == token && IsTournament) Broadcast(b, L.F(format, CombatNames.Player(a), seconds, round));
         }
 
         private static void ClearTournament()

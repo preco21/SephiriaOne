@@ -8,6 +8,9 @@ Existing saved selections are preserved. The game's own language setting is inde
 Tournament commands, round-duration controls and the compact tab label have
 bundled EN/KO translations. Its native chat announcements use the host's selected
 language for unmodified guests, as Deathmatch announcements do.
+Since `0.50.1`, pre-fight bubbles include the bracket progression round and, only
+after a draw against the same opponent, `Rematch` / `재대결`. Both complete
+templates are bundled, so older custom catalog files inherit the new wording.
 
 Version `0.39.0` also localizes the tabbed window controls and the addon hotkey
 block inside native Settings. The surrounding native menu keeps the game's own

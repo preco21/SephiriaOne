@@ -27,6 +27,27 @@ void Resolve(TournamentSchedule schedule, (int First, int Second) pair, int lose
     schedule.Resolve(pair.First, pair.Second, loser);
 TournamentSchedule Schedule(int count, int seed = 0) => new(count, new Random(seed).Next);
 
+Test("Round context counts advancement, including uneven and later brackets", () =>
+{
+    foreach (int count in new[] { 5, 16 })
+    {
+        var schedule = new TournamentSchedule(count, _ => 0);
+        var rounds = new List<int>();
+        Check(schedule.PendingRound == 0 && !schedule.PendingIsRematch, "No reserved pair has no announcement context");
+        while (schedule.TryNext(out int first, out int second))
+        {
+            rounds.Add(schedule.PendingRound);
+            Check(!schedule.PendingIsRematch, "Decisive rounds never label a fresh pair as a rematch");
+            Check(Next(schedule) == (first, second) && schedule.PendingRound == rounds[^1], "Repeated pending reads preserve context");
+            schedule.Resolve(first, second, second);
+            Check(schedule.PendingRound == 0 && !schedule.PendingIsRematch, "Resolved pair context clears");
+        }
+        int[] expected = count == 5 ? new[] { 1, 1, 1, 2 } :
+            new[] { 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 4 };
+        Check(rounds.SequenceEqual(expected), "Round uses the less-advanced fighter, reaching later levels only when both advance");
+    }
+});
+
 Test("Empty and single-entrant schedules finish without calling RNG", () =>
 {
     foreach (int count in new[] { 0, 1 })
@@ -35,6 +56,18 @@ Test("Empty and single-entrant schedules finish without calling RNG", () =>
         Check(!schedule.TryNext(out int first, out int second), "Fewer than two entrants cannot play");
         Check(first == -1 && second == -1, "No pairing must return sentinel indices");
     }
+});
+
+Test("Drawn winner-stage match retains its bracket level on rematch", () =>
+{
+    var schedule = new TournamentSchedule(4, _ => 0);
+    var opening = Next(schedule); Resolve(schedule, opening, opening.Second);
+    opening = Next(schedule); Resolve(schedule, opening, opening.Second);
+    var final = Next(schedule);
+    Check(schedule.PendingRound == 2 && !schedule.PendingIsRematch, "Two prior winners first meet at round two");
+    Resolve(schedule, final);
+    Check(Next(schedule) == final && schedule.PendingRound == 2 && schedule.PendingIsRematch,
+        "Draw does not advance either winner to round three");
 });
 
 Test("A pending pair remains stable until its result arrives", () =>
@@ -68,10 +101,12 @@ Test("Two-player draws retain both entrants but exhaust the unordered pair", () 
 {
     var schedule = Schedule(2);
     var pair = Next(schedule);
+    Check(schedule.PendingRound == 1 && !schedule.PendingIsRematch, "First attempt is round one without a rematch label");
     Resolve(schedule, pair);
     Check(!schedule.IsEliminated(0) && !schedule.IsEliminated(1), "Draws eliminate neither entrant");
     Check(schedule.Wins(0) == 0 && schedule.Wins(1) == 0, "Draws award no wins");
     Check(Next(schedule) == pair, "A two-player draw permits a second attempt");
+    Check(schedule.PendingRound == 1 && schedule.PendingIsRematch, "Draw rematch retains round one despite both having played");
     schedule.Resolve(pair.Second, pair.First, -1);
     Check(!schedule.TryNext(out _, out _), "Two draws exhaust both orders of the same pair");
     Check(schedule.Matches(0) == 2 && schedule.Matches(1) == 2, "Exactly two matches were completed");
@@ -181,6 +216,7 @@ Test("Withdrawal excludes an entrant and safely clears their pending pair", () =
     var schedule = new TournamentSchedule(4, _ => 0);
     var pair = Next(schedule);
     schedule.Withdraw(pair.First);
+    Check(schedule.PendingRound == 0 && !schedule.PendingIsRematch, "Withdrawal clears the canceled pairing's context");
     schedule.Withdraw(pair.First);
     Check(schedule.IsEliminated(pair.First), "Withdrawals permanently leave the bracket");
     Check(schedule.Matches(pair.Second) == 0 && schedule.Wins(pair.Second) == 0,
@@ -206,6 +242,8 @@ Test("Every all-draw bracket finishes at the exact two-attempt bound", () =>
         {
             Check(++rounds <= count * (count - 1), "All draws must terminate within twice the unordered pair count");
             attempts.TryGetValue((first, second), out int previous);
+            Check(schedule.PendingRound == 1, "Any number of draws leaves winless entrants at round one");
+            Check(schedule.PendingIsRematch == (previous > 0), "Only a completed draw against this opponent marks a rematch");
             attempts[(first, second)] = previous + 1;
             Check(previous < 2, "No pair may play a third time");
             schedule.Resolve(first, second, -1);

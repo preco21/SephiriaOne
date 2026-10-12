@@ -30,12 +30,20 @@ temporary and are never saved. Deathmatch and Tournament cannot run together.
   entrants with unresolved rounds, then previous winners. Within a tier, fewer
   completed matches (then fewer wins) take priority. Prefer an untried pair over
   an equally prioritized rematch; randomize remaining ties.
-- Each fighter sees `[Tournament] "opponent" is your opponent! Fight in: 3...`,
+- Each fighter sees `[Tournament] Round 1 | "opponent" is your opponent! Fight in: 3...`,
   then 2 and 1. The start bubble is `[Tournament] Match started: Kill "opponent"!
   (30 secs)`. These use native avatar chat, including stock guests, in the host's
   configured language. Korean equivalents are bundled. The starting bubble shows
   the round duration; it is not a continuously refreshed clock. Status/UI shows
   remaining time.
+- Since `0.50.1`, the countdown round is **1 + the lower prior-win count** of the
+  two fighters. A first-match entrant or winless draw survivor keeps the pairing
+  at round 1; two entrants with one win each meet in round 2; two with two wins
+  each meet in round 3. Unequal progression uses the less-advanced fighter.
+  A previous draw between this same unordered pair inserts `Rematch` after the
+  round: `[Tournament] Round 1 | Rematch | "opponent" is your opponent! Fight in: 3...`.
+  Korean uses `라운드 1 | 재대결`. Draws against other opponents do not mark a new
+  pairing as a rematch. Loading or countdown deaths do not count as matches.
 - Friendly fire is off during preparation/countdown; only the active pair may
   damage one another during a round. The existing scale, native defenses, safe
   areas and item prerequisites still apply. Companion ownership, artifact
@@ -67,6 +75,11 @@ transport, shutdown recovery and rankings. `CombatMatchTournament` adds pair
 transitions as another partial file. `TournamentSchedule` is a pure policy over
 captured entrant indices, with injected randomness and no Unity/network state.
 `DeathmatchFeature` remains the shared native bubble compatibility validator.
+Announcement context is derived in constant time from the scheduler's reserved
+pair, win totals and completed attempts. It adds no mutable match history and
+does not use KDA or total matches played. Manual score resets preserve it; new
+tournaments capture a new schedule. Both fighters use the same context captured
+before the first bubble send.
 
 `FriendlyFireRuntime.CanAffectTeam` applies `AllowsPair` at every audited team
 combat boundary; selection is never rewritten to represent a temporary pair.
@@ -94,6 +107,14 @@ are checked each frame. Pair scheduling is event-only O(n²), with bounded per-r
 storage. Idle and warmed active living-player ticks allocate zero in fixtures.
 
 ## Verification and limits
+
+Announcement update verified on 2026-10-12: 41,176 scheduler checks and 1,815
+runtime integration checks plus 69 Bat checks. Coverage includes rounds 1–4,
+uneven progression, repeated draws, fresh pairings, withdrawal, interrupted
+countdowns, KDA reset, and exact EN/KO countdown messages for both fighters.
+Debug/Release builds passed with zero warnings/errors. The full portable and
+installed-game contract suite also passed, including 3,282 bundled catalog checks.
+Deployment remained disabled; these checks do not prove live bubble layout.
 
 Installed native assembly remains SHA-256
 `C57A0DAEAB8E8D0AF7066A344133EEC4C57D8F303FD9E25DA9410FBFC4CF1510`.

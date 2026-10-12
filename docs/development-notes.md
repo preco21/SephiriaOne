@@ -14,6 +14,11 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+Version `0.50.1` adds Tournament round and draw-rematch context to each pre-fight
+countdown bubble. Round is one plus the lower prior-win count; draws and aborted
+countdowns do not advance it. Korean uses `재대결`. The scheduler supplies this
+context independently of KDA; see [Tournament](tournament.md).
+
 Version `0.50.0` adds the native white revive pillar after successful three-second
 Deathmatch/Tournament respawns. Actual restoration counts and post-callback scope
 checks prevent no-op, stale, failed or canceled recovery from emitting it. The

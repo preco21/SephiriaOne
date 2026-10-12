@@ -49,9 +49,9 @@ internal static class TournamentRuntimeTests
         {
             string opponent = pair.Single(p => p != player).playerNameSource;
             check(chat.Where(x => x.Player == player).Select(x => x.Message).SequenceEqual(new[] {
-                $"[Tournament] \"{opponent}\" is your opponent! Fight in: 3...",
-                $"[Tournament] \"{opponent}\" is your opponent! Fight in: 2...",
-                $"[Tournament] \"{opponent}\" is your opponent! Fight in: 1...",
+                $"[Tournament] Round 1 | \"{opponent}\" is your opponent! Fight in: 3...",
+                $"[Tournament] Round 1 | \"{opponent}\" is your opponent! Fight in: 2...",
+                $"[Tournament] Round 1 | \"{opponent}\" is your opponent! Fight in: 1...",
                 $"[Tournament] Match started: Kill \"{opponent}\"! (30 secs)" }),
                 "Each fighter receives the opponent and countdown via the native avatar bubble");
         }
@@ -81,6 +81,10 @@ internal static class TournamentRuntimeTests
         Advance(0.2f); Advance(0.2f); Advance(3);
         pair = Pair(players);
         check(pair.Contains(firstWinner) && pair.Contains(secondWinner), "Previous winners enter the final stage");
+        foreach (var player in pair)
+            check(chat.Any(x => x.Player == player && x.Message ==
+                $"[Tournament] Round 2 | \"{pair.Single(p => p != player).playerNameSource}\" is your opponent! Fight in: 3..."),
+                "Both prior winners receive round two without a rematch label");
         check(FriendlyFireKda.For(firstWinner).Kills == 1 && FriendlyFireKda.For(secondWinner).Kills == 1,
             "Earlier wins persist through both round transitions");
         Kill(firstWinner, secondWinner); Advance(0.2f); Advance(0.2f);
@@ -96,8 +100,15 @@ internal static class TournamentRuntimeTests
         SettingsActions.Execute("/one tournament duration 60");
         check(CombatMatchRuntime.DescribeTournament().Contains("Round duration: 10s."),
             "Active status displays the captured round duration, not edits for the next tournament");
-        At(13); Advance(0.2f); Advance(3);
+        At(13); Advance(0.2f);
+        check(SettingsActions.Execute("/one tournament resetkda").Success, "Score reset during rematch countdown succeeds");
+        Advance(1); Advance(1); Advance(1);
         check(CombatMatchRuntime.IsTournament, "First draw schedules one rematch without eliminating either player");
+        foreach (var player in players)
+        foreach (int seconds in new[] { 3, 2, 1 })
+            check(DungeonManager.Instance.ChatMessages.Any(x => x.Player == player && x.Message ==
+                $"[Tournament] Round 1 | Rematch | \"{players.Single(p => p != player).playerNameSource}\" is your opponent! Fight in: {seconds}..."),
+                "Draw rematch keeps round one through every countdown tick and KDA reset");
         Advance(10); Advance(0.2f);
         check(!CombatMatchRuntime.IsRunning, "Second draw exhausts the pair; edited duration did not affect current tournament");
         check(DungeonManager.Instance.ChatMessages.Count(x => x.Message.Contains("Match started:")) == 4,
@@ -141,6 +152,9 @@ internal static class TournamentRuntimeTests
         players[1].spawner.connectionToClient.isReady = true; At(5); At(7);
         check(!SessionSettings.FriendlyFireForHit.Enabled, "Re-ready fighters receive the full fresh three-second countdown");
         At(8); check(Pair(players).Length == 2, "Countdown preserves the same reserved pair after floor loading");
+        check(DungeonManager.Instance.ChatMessages.Where(x => x.Message.Contains("Fight in:")).All(x =>
+                x.Message.StartsWith("[Tournament] Round 1 | \"") && !x.Message.Contains("Rematch")),
+            "Interrupted first countdown never invents advancement or a rematch");
         CombatMatchRuntime.Stop(true, false);
 
         players = New(2); players[1].IsDead = true;

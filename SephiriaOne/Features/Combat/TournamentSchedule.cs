@@ -18,6 +18,13 @@ namespace SephiriaOne
         private readonly List<Pair> candidates = new List<Pair>();
         private int pendingFirst = -1, pendingSecond = -1;
 
+        // Advancement requires a win. Draws and restarted countdowns must not
+        // promote a bracket level merely because an entrant has fought before.
+        internal int PendingRound => pendingFirst < 0 ? 0 : 1 + Math.Min(wins[pendingFirst], wins[pendingSecond]);
+        // Both reserved entrants are still eligible, so an earlier completed
+        // attempt between them can only have been unresolved.
+        internal bool PendingIsRematch => pendingFirst >= 0 && attempts[pendingFirst, pendingSecond] > 0;
+
         internal TournamentSchedule(int count, Func<int, int> random)
         {
             if (count < 0) throw new ArgumentOutOfRangeException(nameof(count));

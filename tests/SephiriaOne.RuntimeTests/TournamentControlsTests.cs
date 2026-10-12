@@ -88,11 +88,20 @@ internal static class TournamentControlsTests
                 L.T("Tournament") == "토너먼트" && L.T("Round duration in seconds (10–3600)") == "라운드 시간 (10–3600초)",
                 "Tournament help, duration feedback and panel labels support Korean");
             check(SettingsActions.Execute("/one tournament start").Success &&
-                DungeonManager.Instance.ChatMessages.Any(x => x.Message == "[토너먼트] 상대는 \"Guest\" 님입니다! 경기 시작까지: 3..."),
+                DungeonManager.Instance.ChatMessages.Any(x => x.Message == "[토너먼트] 라운드 1 | 상대는 \"Guest\" 님입니다! 경기 시작까지: 3..."),
                 "Tournament sends localized opponent countdown through native chat");
             UnityEngine.Time.unscaledTime = 3; CombatMatchRuntime.Tick();
             check(DungeonManager.Instance.ChatMessages.Any(x => x.Message == "[토너먼트] 경기 시작: \"Guest\" 님을 처치하세요! (10초)"),
                 "Tournament sends localized round-start text with player and duration placeholders");
+            UnityEngine.Time.unscaledTime = 13; CombatMatchRuntime.Tick();
+            UnityEngine.Time.unscaledTime = 13.25f; CombatMatchRuntime.Tick();
+            UnityEngine.Time.unscaledTime = 14.25f; CombatMatchRuntime.Tick();
+            UnityEngine.Time.unscaledTime = 15.25f; CombatMatchRuntime.Tick();
+            foreach (var player in new[] { host.PlayerAvatar, guest.PlayerAvatar })
+            foreach (int seconds in new[] { 3, 2, 1 })
+                check(DungeonManager.Instance.ChatMessages.Any(x => x.Player == player && x.Message ==
+                    $"[토너먼트] 라운드 1 | 재대결 | 상대는 \"{(player == host.PlayerAvatar ? "Guest" : "Host")}\" 님입니다! 경기 시작까지: {seconds}..."),
+                    "Korean draw rematch includes round and 재대결 for both players throughout the countdown");
             check(SettingsActions.Execute("/one tournament resetkda").Messages.Contains("토너먼트 K/D/A 기록을 초기화했습니다.") &&
                 DungeonManager.Instance.ChatMessages.Any(x => x.Message == "토너먼트 K/D/A 기록을 초기화했습니다."),
                 "Tournament score reset feedback and native guest notice support Korean");
