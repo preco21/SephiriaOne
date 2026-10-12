@@ -178,3 +178,9 @@ precede native disconnect callbacks while old objects are still mapped. Distingu
 permission to begin a new operation from the identity/scope receipt needed to
 finish an admitted native death or revival. See [participant implementation and
 extension rules](selective-friendly-fire.md).
+
+Private native presentation can sometimes reuse a registered broadcast RPC
+through targeted Mirror dispatch. Validate the exact payload, stock receiver,
+host-local delivery and all receiver side effects first. Null avatar chat avoids
+overwriting a countdown bubble. Keep presentation failures separate from score
+accounting and recovery. See [reusable private chat adapter](friendly-fire-killed-by.md).

@@ -16,7 +16,7 @@ namespace SephiriaOne
         internal static bool Includes(PlayerAvatar player) => IsCurrent(Capture(player)) && (selected.Count == 0 || selected.Contains(player));
         internal static void Select(params PlayerAvatar[] players) { selected.Clear(); foreach (var player in players) selected.Add(player); Epoch++; }
         internal static void Depart(PlayerAvatar player) { Capture(player).Current = false; selected.Remove(player); Epoch++; }
-        internal static void Clear() { receipts = new(); selected.Clear(); scope++; Epoch++; }
+        internal static void Clear() { FriendlyFireKda.ClearMatchups(); receipts = new(); selected.Clear(); scope++; Epoch++; }
     }
     internal static class FriendlyFireParticipantHooks { internal static void Install(HarmonyLib.Harmony harmony) { } }
 }

@@ -8,12 +8,13 @@ namespace SephiriaOne
         internal struct DeathNotice
         {
             internal string Killer, Victim;
+            internal string ReliableKiller;
             internal FriendlyFireKda.Death Kda;
             internal long ScoreEpoch;
             internal long ParticipantEpoch;
             internal bool MatchDeath;
-            internal FriendlyFireParticipants.Receipt VisualReceipt;
-            internal long VisualEpoch;
+            internal FriendlyFireParticipants.Receipt PlayerReceipt;
+            internal long PresentationEpoch;
         }
 
         internal static void BeforeDeath(UnitAvatar __instance, DamageInstance diedFrom, out DeathNotice __state)
@@ -26,8 +27,8 @@ namespace SephiriaOne
                 if (__instance is PlayerAvatar visual && SessionSettings.FriendlyFireForHit.Enabled &&
                     FriendlyFireParticipants.Includes(visual))
                 {
-                    __state.VisualReceipt = FriendlyFireParticipants.Capture(visual);
-                    __state.VisualEpoch = FriendlyFireParticipants.Epoch;
+                    __state.PlayerReceipt = FriendlyFireParticipants.Capture(visual);
+                    __state.PresentationEpoch = FriendlyFireParticipants.Epoch;
                 }
                 RememberCompanionOwner(__instance);
                 bool attributed = CurrentHitPermitted() && current.Victim == __instance &&
@@ -40,6 +41,7 @@ namespace SephiriaOne
                 // Death callbacks can clear names/ownership, destroy avatars or
                 // reuse pooled damage. Snapshot only on the death boundary.
                 __state.Killer = NoticeName(current.Attacker); __state.Victim = NoticeName(__instance);
+                __state.ReliableKiller = NativePlayerChat.ReadableName(current.Attacker.Name);
                 if (!(__instance is PlayerAvatar)) __state.Killer = FriendlyFireKda.Label(current.Attacker, __state.Killer);
             }
             catch (Exception error) { Warn(error); }
@@ -52,9 +54,9 @@ namespace SephiriaOne
             {
                 // Deliver before match callbacks can advance the round. The receipt
                 // rejects callbacks that retired/replaced this connection or scope.
-                if (__state.VisualReceipt != null && SessionSettings.FriendlyFireForHit.Enabled &&
-                    FriendlyFireParticipants.IsCurrent(__state.VisualReceipt) &&
-                    __state.VisualEpoch == FriendlyFireParticipants.Epoch &&
+                if (__state.PlayerReceipt != null && SessionSettings.FriendlyFireForHit.Enabled &&
+                    FriendlyFireParticipants.IsCurrent(__state.PlayerReceipt) &&
+                    __state.PresentationEpoch == FriendlyFireParticipants.Epoch &&
                     __instance is PlayerAvatar visual && FriendlyFireParticipants.Includes(visual))
                 {
                     // Also isolate loader/JIT failures before the optional
@@ -69,6 +71,19 @@ namespace SephiriaOne
                     __state.ParticipantEpoch != FriendlyFireParticipants.Epoch)) return;
                 if (__instance is PlayerAvatar victim && FriendlyFireKda.CompleteDeath(victim, __state.Kda))
                 {
+                    if (__state.ReliableKiller != null && FriendlyFireParticipants.IsCurrent(__state.PlayerReceipt) &&
+                        __state.PresentationEpoch == FriendlyFireParticipants.Epoch)
+                    {
+                        // Private chat preserves "Me" as the victim's perspective
+                        // and does not replace the match respawn-countdown bubble.
+                        try
+                        {
+                            NativePlayerChat.Show(victim, L.F("Killed by ‘{0}’ (Matchup: Me {1}–{2} Opponent)",
+                                __state.ReliableKiller, FriendlyFireKda.KillsAgainst(__state.Kda.Victim, __state.Kda.Killer),
+                                FriendlyFireKda.KillsAgainst(__state.Kda.Killer, __state.Kda.Victim)));
+                        }
+                        catch (Exception error) { Warn(error); }
+                    }
                     __state.Killer = __state.Kda.Killer.Label(__state.Killer);
                     __state.Victim = __state.Kda.Victim.Label(__state.Victim);
                 }
@@ -83,7 +98,7 @@ namespace SephiriaOne
         internal static Exception FinishDeath(Exception __exception, UnitAvatar __instance, DeathNotice __state)
         {
             // An exceptional death may never have reached the native RpcDie.
-            if (__exception != null) __state.VisualReceipt = null;
+            if (__exception != null) __state.PlayerReceipt = null;
             try { AfterDeath(__instance, __state); }
             finally { if (__instance is PlayerAvatar player) CombatMatchRuntime.LeaveDeath(player, __state.MatchDeath); }
             return __exception;

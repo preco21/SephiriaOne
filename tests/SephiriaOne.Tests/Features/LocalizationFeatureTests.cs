@@ -11,11 +11,16 @@ internal static class LocalizationFeatureTests
         try
         {
             selectLanguage("en");
+            const string killedBy = "Killed by ‘{0}’ (Matchup: Me {1}–{2} Opponent)";
+            Check(L.F(killedBy, "PlayerX", 3, 4) == "Killed by ‘PlayerX’ (Matchup: Me 3–4 Opponent)",
+                "English killed-by message uses victim-first matchup totals");
             Check(StatCommand.Parse("/stats luck +10", out var englishStat, out _) == StatParseResult.Valid,
                 "English stat command parses");
             string statUnit = StatCatalog.Find("luck")!.Unit;
             string resourceLabel = ResourceCatalog.Get(ResourceKind.Slots).Label;
             selectLanguage("ko");
+            Check(L.F(killedBy, "PlayerX", 3, 4) == "‘PlayerX’에게 처치됨 (전적: 나 3-4 상대)",
+                "Korean killed-by message matches the requested format");
             Check(StatCommand.Parse("/stats invalid 10", out _, out string error) == StatParseResult.Invalid &&
                 error == "알 수 없는 능력치입니다. 지원하는 이름과 단위는 /stats list로 확인하세요.",
                 "Unknown-stat feedback is Korean");

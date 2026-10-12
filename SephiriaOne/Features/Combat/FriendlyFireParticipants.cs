@@ -119,6 +119,7 @@ namespace SephiriaOne
 
         internal static void Clear()
         {
+            FriendlyFireKda.ClearMatchups();
             receipts = new ConditionalWeakTable<PlayerAvatar, Receipt>();
             selected.Clear(); stale.Clear(); dungeon = null; run = null; dungeonId = 0; runGeneration = 0;
             scope++; Changed(false);

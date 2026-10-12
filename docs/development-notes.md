@@ -14,6 +14,12 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+Version `0.49.0` adds private EN/KO killed-by chat and victim-first matchup records
+for casual friendly fire, Deathmatch and Tournament. Directed pair totals reuse
+KDA score identities and reset with scores and session/match boundaries. Native
+targeted chat supports stock clients without replacing respawn bubbles. Missing
+killer names omit the notice. See [accounting, transport evidence and test limits](friendly-fire-killed-by.md).
+
 Version `0.48.0` adds a native red world-space burst on participating player deaths
 while effective friendly fire is active, including Deathmatch and Tournament.
 The shared death boundary validates connection/selection state, and the host uses

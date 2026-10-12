@@ -27,6 +27,9 @@ namespace SephiriaOne
             internal Life Life;
         }
         private static readonly Dictionary<ulong, Score> accounts = new Dictionary<ulong, Score>();
+        // Directed pair totals share KDA identities; never key history by a
+        // nickname, recycled network ID, or strong reference to a Unity object.
+        private static readonly Dictionary<(Score Killer, Score Victim), long> matchups = new Dictionary<(Score, Score), long>();
         private static ConditionalWeakTable<UnityEngine.Object, Score> offline = new ConditionalWeakTable<UnityEngine.Object, Score>();
         private static ConditionalWeakTable<PlayerAvatar, Life> lives = new ConditionalWeakTable<PlayerAvatar, Life>();
         private static bool enabled;
@@ -39,6 +42,7 @@ namespace SephiriaOne
         }
         internal static void Reset()
         {
+            ClearMatchups();
             enabled = false; accounts.Clear(); offline = new ConditionalWeakTable<UnityEngine.Object, Score>();
             ClearLives();
         }
@@ -47,11 +51,15 @@ namespace SephiriaOne
         // Keep Reset above separate: match-end results retain the discarded scores.
         internal static void ResetScores()
         {
+            ClearMatchups();
             ClearLives();
             foreach (Score score in accounts.Values) score.Clear();
             foreach (var entry in offline) entry.Value.Clear();
         }
         internal static void ClearLives() { lives = new ConditionalWeakTable<PlayerAvatar, Life>(); Epoch++; }
+        internal static void ClearMatchups() => matchups.Clear();
+        internal static long KillsAgainst(Score player, Score opponent) =>
+            player != null && opponent != null && matchups.TryGetValue((player, opponent), out long kills) ? kills : 0;
         internal static void ForgetLife(PlayerAvatar player) { if (!ReferenceEquals(player, null)) lives.Remove(player); }
 
         internal static Score For(PlayerAvatar player)
@@ -94,6 +102,7 @@ namespace SephiriaOne
             if (lives.TryGetValue(victim, out Life current) && ReferenceEquals(current, death.Life)) lives.Remove(victim);
             if (!enabled || death.Killer == null || death.Victim == null) return false;
             death.Killer.Kills++; death.Victim.Deaths++;
+            matchups[(death.Killer, death.Victim)] = KillsAgainst(death.Killer, death.Victim) + 1;
             foreach (Score contributor in death.Life.Contributors)
                 if (!ReferenceEquals(contributor, death.Killer) && !ReferenceEquals(contributor, death.Victim)) contributor.Assists++;
             death.Life.Contributors.Clear();

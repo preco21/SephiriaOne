@@ -59,6 +59,9 @@ internal static class TournamentRuntimeTests
         var firstWinner = pair[0]; var firstLoser = pair[1];
         int shownBeforeKill = FriendlyFireDeathVisuals.Shown;
         Kill(firstWinner, firstLoser);
+        check(NativePlayerChat.Messages.Last() == (firstLoser,
+            $"Killed by ‘{firstWinner.playerNameSource}’ (Matchup: Me 0–1 Opponent)"),
+            "Tournament uses the shared private victim notice");
         check(FriendlyFireDeathVisuals.Shown == shownBeforeKill + 1,
             "Tournament down uses the shared one-shot death visual before advancing the round");
         check(FriendlyFireKda.For(firstWinner).Kills == 1 && FriendlyFireKda.For(firstLoser).Deaths == 1,
@@ -66,6 +69,8 @@ internal static class TournamentRuntimeTests
         Advance(0.2f); Advance(0.2f);
         check(!SessionSettings.FriendlyFireForHit.Enabled && FriendlyFireKda.For(firstWinner).Kills == 1,
             "Next countdown suspends damage without resetting tournament scores");
+        check(FriendlyFireKda.KillsAgainst(FriendlyFireKda.For(firstWinner), FriendlyFireKda.For(firstLoser)) == 1,
+            "Tournament round transition preserves matchup history while invalidating pending hits");
         check(SettingsActions.Execute("/one friendlyfire damage 0.1").Success && FriendlyFireKda.For(firstWinner).Kills == 1,
             "Damage scale edits between rounds preserve score objects");
         Advance(3);
@@ -83,6 +88,8 @@ internal static class TournamentRuntimeTests
             "Final ends tournament, disables friendly fire and immediately recovers pending players");
         check(chat.Any(x => x.Message == "1. " + firstWinner.playerNameSource + "(2/0/0)"),
             "Tournament top-five uses accumulated KDA before shutdown resets scores");
+        check(FriendlyFireKda.KillsAgainst(FriendlyFireKda.For(firstWinner), FriendlyFireKda.For(firstLoser)) == 0,
+            "Tournament completion clears matchup records");
 
         players = New(2); SettingsActions.Execute("/one tournament duration 10");
         SettingsActions.Execute("/one tournament start"); At(3);
@@ -120,6 +127,12 @@ internal static class TournamentRuntimeTests
             "Both deaths in one update resolve as an unresolved round");
         Advance(3); Advance(3);
         check(players.All(p => !p.IsDead) && Pair(players).Length == 2, "Double-death recovery starts a fresh rematch countdown");
+        check(FriendlyFireKda.KillsAgainst(FriendlyFireKda.For(players[0]), FriendlyFireKda.For(players[1])) == 1 &&
+            FriendlyFireKda.KillsAgainst(FriendlyFireKda.For(players[1]), FriendlyFireKda.For(players[0])) == 1,
+            "Unresolved double-kill rematch preserves both directed records");
+        check(SettingsActions.Execute("/one tournament resetkda").Success &&
+            FriendlyFireKda.KillsAgainst(FriendlyFireKda.For(players[0]), FriendlyFireKda.For(players[1])) == 0,
+            "Tournament score reset clears matchups during a rematch");
         CombatMatchRuntime.Stop(true, false);
 
         players = New(2); SettingsActions.Execute("/one tournament start"); At(1);

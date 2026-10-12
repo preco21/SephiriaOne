@@ -16,6 +16,13 @@ A different game build requires renewed contract/asset checks. Start with the
 
 ## State lifetimes and multiplayer
 
+Private killed-by chat (`0.49.0`) reuses the native `DungeonManager.RpcChat`
+receiver through Mirror targeted dispatch. A null avatar preserves existing
+overhead countdowns; only the victim sees the matchup from their perspective.
+Pair totals share KDA score identity but reset explicitly on run/scope changes;
+life invalidation alone is also used between Tournament rounds and must preserve
+history. See [private notice and lifecycle evidence](friendly-fire-killed-by.md).
+
 Downed-player visuals (`0.48.0`): the native red single-player crash is a local
 world-space SpriteFx, not screen-space UI. Stock casting RPCs can select it but
 introduce transparency/material side effects. Use the separate native impact
