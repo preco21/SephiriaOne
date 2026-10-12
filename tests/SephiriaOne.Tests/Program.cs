@@ -50,6 +50,7 @@ Console.WriteLine($"Passed {FountainResetTests.Run()} Fountain reset checks.");
 Console.WriteLine($"Passed {VisibleStatTests.Run()} expanded visible stat checks.");
 Console.WriteLine($"Passed {CompanionStatTests.Run()} companion stat checks.");
 Console.WriteLine($"Passed {StatCommandTests.Run()} character stat command checks.");
+Console.WriteLine($"Passed {ScalarStatPlannerTests.Run()} scalar/batch stat planning checks.");
 Console.WriteLine($"Passed {SessionPolicyTests.Run()} session inheritance checks.");
 Console.WriteLine($"Passed {RelativeStatPolicyTests.Run()} relative stat consistency checks.");
 Console.WriteLine($"Passed {PenaltyMultiplierTests.Run()} native penalty multiplier checks.");

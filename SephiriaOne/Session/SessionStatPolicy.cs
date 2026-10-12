@@ -69,7 +69,7 @@ namespace SephiriaOne
                 setting.Value < 0 ? StatOperation.Subtract : StatOperation.Add,
                 setting.Absolute || setting.Multiplier ? setting.Value : Math.Abs(setting.Value));
             var native = new StatSnapshot(value.Stat, (int)baseline, 0, value.Bonus, value.Amplifier);
-            if (!StatPlanner.TryPlan(command, new[] { native }, out StatUpdate[] planned, out error))
+            if (!StatPlanner.TryPlan(command, native, out StatUpdate planned, out error))
             {
                 if (!setting.Multiplier) return false;
                 // A valid factor can be incompatible with one character's native
@@ -80,7 +80,7 @@ namespace SephiriaOne
                 error = "";
                 return true;
             }
-            update = planned[0];
+            update = planned;
             return true;
         }
     }

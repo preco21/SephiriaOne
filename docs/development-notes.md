@@ -14,6 +14,12 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+Version `0.51.1` removes temporary single-value arrays and unused error formatting
+from successful stat planning. Commands, relative maintenance, reset recovery
+and fruit-budget arithmetic share the same scalar planner; batch validation and
+native write guards stay intact. The successful relative-plan fixture drops from
+664 B to zero per call. See [performance evidence](performance-review.md).
+
 Version `0.51.0` adds six companion modifiers to the shared Stats dropdown and
 commands: attack speed, damage, defense, critical chance, critical inheritance
 and revival speed. Native owner reads reuse existing synchronization for stock

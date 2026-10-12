@@ -66,9 +66,9 @@ namespace SephiriaOne
                 var stat = new StatDefinition("fruit", "FRUITCOUNT", "slots", offset: value.DisplayOffset,
                     minimum: definition.Minimum, maximum: definition.Maximum);
                 var command = new StatCommand(stat, reset ? StatOperation.Reset : StatOperation.Set, target);
-                if (!StatPlanner.TryPlan(command, new[] { new StatSnapshot(stat, value.Raw, value.Owned, value.Bonus, value.Amplifier) },
-                    out StatUpdate[] result, out error)) return false;
-                update = new ResourceUpdate(definition, result[0].Raw, result[0].Contribution, target);
+                if (!StatPlanner.TryPlan(command, new StatSnapshot(stat, value.Raw, value.Owned, value.Bonus, value.Amplifier),
+                    out StatUpdate result, out error)) return false;
+                update = new ResourceUpdate(definition, result.Raw, result.Contribution, target);
             }
             else
             {

@@ -1,5 +1,65 @@
 # Synchronization performance review
 
+## Stat recalculation (0.51.1, 2026-10-12)
+
+Reviewed periodic controllers, section-specific UI snapshots, reconciliation,
+combat participation, artifact/spell targeting and temporary match ticks against
+`63e1ab1`. Existing unchanged synchronization is allocation-free in the fixture;
+combat paths reuse lifetime receipts and collections. Repeated fresh identity and
+permission checks are intentional because native callbacks can change session or
+participant state within one damage operation. Those checks remain unchanged.
+
+The measurable opportunity was successful stat planning: it formatted range and
+representability error messages even when validation succeeded. Single-stat
+callers also allocated input/output arrays to use the batch interface. The
+[implementation plan](plans/2026-10-12-stat-planning-performance.md) records scope.
+
+`StatPlanner.TryPlan` now has a scalar overload that owns selection validation,
+native arithmetic and error handling. Batch commands call it and still expose
+no partial output on failure. Session policy, relative-stat reset recovery and
+fruit-budget planning call it directly. Failure messages are formatted only on
+failure, using the current localization. No cache, native baseline retention,
+new hook, polling reduction, or network change is involved.
+
+Release fixture measurements (five players, 33 catalog stats):
+
+| Workload | Before | After |
+| --- | ---: | ---: |
+| Successful relative stat planning | 664 B/plan | 0 B/plan |
+| Unchanged synchronization, no/all settings | 0 B/tick | 0 B/tick |
+| All 33 native bonuses/amplifiers change together | ~1,787,578 B/reconciliation | ~1,676,662 B/reconciliation |
+| Full status capture | ~138,640 B/refresh | ~138,640 B/refresh |
+| Stats tab capture | 9,448 B/refresh | 9,448 B/refresh |
+
+The simultaneous-change stress case saves about 111 KB (6.2%) per reconciliation.
+It deliberately changes every stat for every player; it is not steady-state work
+performed every frame. The remaining write-journal/context allocations retain
+full native-input snapshots and callback/readback checks. They were not weakened
+or pooled across native lifetimes. Normal snapshot refresh behavior is unchanged.
+Observed planning time was 2.25 → 1.53 microseconds per call; runtime/JIT variation
+means this is supporting evidence, not a live-game FPS or latency claim.
+
+Verification adds a zero-allocation successful-policy budget, a native-change
+stress budget, 1,591 scalar/batch checks including penalties, rounding, reset,
+selection mismatch and overflow, plus EN/KO deferred-error checks. Existing
+relative-policy, resource, rollback, re-entry and session-transition regressions
+remain applicable. Commands for the new fixtures:
+
+```powershell
+dotnet run --project tests/SephiriaOne.RuntimeTests -c Release -p:DeployMod=false -- --perf-check
+dotnet run --project tests/SephiriaOne.RuntimeTests -c Release -p:DeployMod=false
+dotnet run --project tests/SephiriaOne.Tests -c Release -p:DeployMod=false
+```
+
+These are .NET fixtures with game API stand-ins, not Unity profiling or a live
+multiplayer soak test. Game deployment remains disabled.
+
+Final verification: Debug and Release builds completed with no warnings/errors;
+the portable and installed-game contract suite passed, as did 1,905 runtime
+integration checks, 69 Bat lifecycle checks, 967 friendly-fire hook checks and
+41,176 Tournament scheduler checks. An independent read-only review found no
+actionable regression and independently reran portable/runtime/performance tests.
+
 ## Participant selection (0.45.0, 2026-10-11)
 
 Shared combat receipts are cached per avatar lifetime. Lifecycle invalidation uses

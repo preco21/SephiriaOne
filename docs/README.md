@@ -1,6 +1,6 @@
 # Development knowledge index
 
-Maintained: 2026-10-12 (Asia/Seoul), addon `0.51.0`.
+Maintained: 2026-10-12 (Asia/Seoul), addon `0.51.1`.
 
 Agents and contributors can refer to `docs/*` for research, implementation
 materials, native game findings and references. Start here before repeating an

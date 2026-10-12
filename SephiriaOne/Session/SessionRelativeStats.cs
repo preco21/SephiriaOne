@@ -70,9 +70,9 @@ namespace SephiriaOne
             bool success = policy.TryPlanRelativeStat(snapshot, out StatUpdate update, out string error);
             if (!success)
             {
-                if (StatPlanner.TryPlan(new StatCommand(stat, StatOperation.Reset, 0), new[] { snapshot },
-                    out StatUpdate[] reset, out _))
-                    update = new StatUpdate(reset[0].Raw, 0, L.TrimSuffix(error, " Nobody was changed."));
+                if (StatPlanner.TryPlan(new StatCommand(stat, StatOperation.Reset, 0), snapshot,
+                    out StatUpdate reset, out _))
+                    update = new StatUpdate(reset.Raw, 0, L.TrimSuffix(error, " Nobody was changed."));
                 else
                     return ReconcileResult.Suspended(error + L.T(" Native baseline could not be restored; current values were left unchanged."));
             }

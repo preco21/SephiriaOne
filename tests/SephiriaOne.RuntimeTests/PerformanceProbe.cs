@@ -5,6 +5,7 @@ internal static class PerformanceProbe
 {
     internal static void Run(Func<PlayerSpawner> start, Func<uint, int, int, int, PlayerSpawner> add, bool checkBudget)
     {
+        MeasureStatPlanning(checkBudget);
         void Command(string text)
         {
             var result = SettingsActions.Execute(text);
@@ -68,9 +69,61 @@ internal static class PerformanceProbe
                     if (checkBudget && selected > budget)
                         throw new Exception($"Five-player {content} snapshot exceeds its {budget} B allocation budget.");
                 }
+                foreach (var stat in StatCatalog.All) Command("/stats " + stat.Name + " x2");
+                MeasureStatChanges(checkBudget);
             }
         }
         SessionSettings.Stop();
+    }
+
+    private static void MeasureStatPlanning(bool checkBudget)
+    {
+        var stat = StatCatalog.Find("luck");
+        var policy = new SessionPolicy();
+        policy.Record(new StatCommand(stat, StatOperation.Multiply, 3));
+        void Plan(int i)
+        {
+            var value = new StatSnapshot(stat, 20, 10, i % 2 + 1, i % 2 * 100);
+            if (!policy.TryPlanRelativeStat(value, out var update, out var error) || update.UsesNativeFallback ||
+                update.Raw != 30 + 2 * value.Bonus || update.Raw - update.Contribution != 10)
+                throw new Exception("Relative planning changed native baseline or target: " + error);
+        }
+        for (int i = 0; i < 2000; i++) Plan(i);
+        const int iterations = 10000;
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        long time = Stopwatch.GetTimestamp();
+        for (int i = 0; i < iterations; i++) Plan(i);
+        double us = Stopwatch.GetElapsedTime(time).TotalMicroseconds / iterations;
+        double allocated = (GC.GetAllocatedBytesForCurrentThread() - before) / (double)iterations;
+        Console.WriteLine($"Successful relative stat planning: {allocated:F0} bytes/plan, {us:F2} us/plan ({iterations} iterations)");
+        if (checkBudget && allocated != 0)
+            throw new Exception("Successful relative stat planning must not allocate temporary arrays or error messages.");
+    }
+
+    private static void MeasureStatChanges(bool checkBudget)
+    {
+        void Change(int i)
+        {
+            foreach (var spawner in PlayerSpawner.MultiplayerList)
+                foreach (var stat in StatCatalog.All)
+                {
+                    spawner.PlayerAvatar.calculatedBonusStats[stat.Key] = i % 2 + 1;
+                    spawner.PlayerAvatar.customStatsAmp[stat.Key] = i % 2 * 100;
+                }
+            if (!SessionSettings.EnsureFresh()) throw new Exception("Changed native stats did not reconcile.");
+        }
+        for (int i = 0; i < 100; i++) Change(i);
+        const int iterations = 1000;
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        long time = Stopwatch.GetTimestamp();
+        for (int i = 0; i < iterations; i++) Change(i);
+        double us = Stopwatch.GetElapsedTime(time).TotalMicroseconds / iterations;
+        double allocated = (GC.GetAllocatedBytesForCurrentThread() - before) / (double)iterations;
+        Console.WriteLine($"Five players / all {StatCatalog.All.Count} stat bonuses and amplifiers changed: {allocated:F0} bytes/reconciliation, {us:F2} us/reconciliation ({iterations} iterations)");
+        // This deliberately heavy workload retains full guarded write journals.
+        // Bound allocation growth without imposing a machine-dependent time limit.
+        if (checkBudget && allocated > 1700 * 1024)
+            throw new Exception("Five-player native stat changes exceed the 1700 KiB reconciliation allocation budget.");
     }
 
     private static double MeasureSnapshot(bool includeDiagnostics, SnapshotContent? content = null)

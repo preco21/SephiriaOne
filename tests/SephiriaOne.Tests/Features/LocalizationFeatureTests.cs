@@ -18,7 +18,16 @@ internal static class LocalizationFeatureTests
                 "English stat command parses");
             string statUnit = StatCatalog.Find("luck")!.Unit;
             string resourceLabel = ResourceCatalog.Get(ResourceKind.Slots).Label;
+            var invalidStat = new StatCommand(englishStat.Stat, StatOperation.Set, 10001);
+            var statValue = new StatSnapshot(englishStat.Stat!, 10, 0, 0, 0);
+            Check(!StatPlanner.TryPlan(invalidStat, statValue, out _, out string englishFailure) &&
+                englishFailure == "Every player's resulting luck must be 0..10000 points. Nobody was changed.",
+                "Deferred stat range error retains English formatting");
             selectLanguage("ko");
+            Check(!StatPlanner.TryPlan(invalidStat, statValue, out _, out string koreanFailure) &&
+                koreanFailure != englishFailure && koreanFailure == L.F(
+                    "Every player's resulting {0} must be {1}..{2} {3}. Nobody was changed.", "luck", 0, 10000, L.T("points")),
+                "Deferred stat range error uses the current language without cached text");
             Check(L.F(killedBy, "PlayerX", 3, 4) == "‘PlayerX’에게 처치됨 (전적: 나 3-4 상대)",
                 "Korean killed-by message matches the requested format");
             Check(StatCommand.Parse("/stats invalid 10", out _, out string error) == StatParseResult.Invalid &&
