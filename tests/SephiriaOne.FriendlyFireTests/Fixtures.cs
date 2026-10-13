@@ -112,7 +112,6 @@ public class UnitAvatar : CombatBehaviour
     public string Name { get; set; } = "Unit";
     public bool IsDead, IsInvulnerable, isForcedChaosDamage;
     public bool IsInBattle { [MethodImpl(MethodImplOptions.NoInlining)] get; set; }
-    public string currentFloorGuid = "floor-1";
     public BoolFlag canBeTarget = new();
     public bool IsGuarding;
     public bool IsParrying;
@@ -129,6 +128,7 @@ public class UnitAvatar : CombatBehaviour
     public float TrueDamage, Defense;
     public int Mp = 100;
     public bool IsMpShield;
+    public bool SuperArmor, ClampHpDamage;
     public Action<DamageInstance> OnCalculateDamage;
     public Action<UnitAvatar, DamageInstance> OnAttackUnitBeforeOperation;
     public Action<UnitAvatar, UnitAvatar, DamageInstance> OnAttackUnitBeforeOperation_AsLeader;
@@ -192,6 +192,8 @@ public class UnitAvatar : CombatBehaviour
             }
             if (shieldDamage > 0 && !damage.isSystemDamage) AddReceivedDamage(shieldDamage);
             if (mpDamage > 0 && !damage.isSystemDamage) AddReceivedDamage(mpDamage);
+            if (SuperArmor) resolved *= 0.65f;
+            if (ClampHpDamage && resolved > Hp) resolved = Hp;
             Hp -= resolved; Hits++;
             if (resolved > 0 && !damage.isSystemDamage) AddReceivedDamage(resolved);
             OnHit?.Invoke(this,damage);
@@ -209,6 +211,7 @@ public class UnitAvatar : CombatBehaviour
 }
 public class PlayerAvatar : UnitAvatar
 {
+    public string currentFloorGuid = "floor-1";
     public string playerNameSource = "";
     public PlayerSpawner spawner;
     public bool safeMode;

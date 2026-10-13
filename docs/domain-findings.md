@@ -20,8 +20,16 @@ PvP balancing (`0.52.0`) uses the existing resolved-damage boundary after native
 defense/critical/true damage and before regular/MP shields. Read victim `MaxHp`
 at each permitted player hit; avoid rewriting native stats to normalize PvP.
 This keeps live costume/menu/buff changes native and eliminates stat restoration
-journals. The optional curve has no sustained-damage budget; Dark Cloud's existing
-pair cooldown is gated by the same preference. See [model and limits](pvp-balancing.md).
+journals. Since `0.53.0`, a shared per-attacker/opponent token budget also limits
+rapid hits. Keep its units relative to maximum HP, not current HP, and reserve
+before callbacks so nested artifact procs share it. Native MP shields truncate
+damage to integer MP: spending fractional tokens without reconciling actual
+damage would make rapid low-value hits unable to drain MP. The three native
+`AddReceivedDamage` calls report regular shield, MP shield and HP separately;
+use their sum to refund unused reservations only after successful native damage
+completion. Generation checks prevent old refunds replenishing reset windows.
+Dark Cloud's existing pair cooldown is gated by the same preference. See
+[model and limits](pvp-balancing.md).
 
 Dark Cloud (`0.51.2`): `FireLightning` invokes `OnAttackUnit` after `ApplyDamage`
 without checking the damage result; Blazing Stormcloud uses that callback for

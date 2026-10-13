@@ -36,13 +36,13 @@ internal static class BalanceTests
             check(FriendlyFireBalance.Soften(invalid, 100) == 0, "Invalid damage never produces invalid damage");
         }
 
-        // No aggregate budget or attacker baseline: each resolved impact stands alone.
+        // The follow-up budget bounds rapid hits after their individual curves.
         target = new PlayerAvatar(); target.ApplyDamage(damage); target.ApplyDamage(damage);
-        check(target.Hp == 75 && target.Hits == 2, "Repeated attacks in the same frame are independently softened, never rate limited");
+        check(target.Hp == 80 && target.Hits == 2, "Repeated attacks retain native impacts but share the balanced burst budget");
         target = new PlayerAvatar { Hp = 30, MaxHp = 200 }; target.ApplyDamage(damage);
         check(Near(target.Hp, 12.5), "Near-death hits use maximum HP, never shrinking current HP");
         target = new PlayerAvatar(); target.ApplyDamage(damage); target.MaxHp = 200; target.ApplyDamage(damage);
-        check(Near(target.Hp, 70), "Costume/stat/native menu maximum-HP changes affect the next hit without a cached baseline");
+        check(Near(target.Hp, 72.5), "Maximum-HP changes use live HP while preserving the remaining fractional budget");
         target = new PlayerAvatar { Shield = 10 }; target.ApplyDamage(damage);
         check(target.Shield == 0 && target.Hp == 97.5f, "Shields absorb softened damage with native HP overflow");
         target = new PlayerAvatar { IsMpShield = true, Mp = 10 }; target.ApplyDamage(damage);

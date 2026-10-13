@@ -25,6 +25,8 @@ namespace SephiriaOne
         }
         private static HitContext current;
         private static void RememberCompanionOwner(UnitAvatar source) { }
+        // Full budget/life behavior executes in FriendlyFireTests with damage hooks.
+        private static void ResetBalanceLife(PlayerAvatar player) { }
         private static bool CurrentHitPermitted() => current.Friendly && FriendlyFireParticipants.Includes(current.Attacker) &&
             current.Victim is PlayerAvatar victim && FriendlyFireParticipants.Includes(victim);
         internal static void Attribute(PlayerAvatar killer, PlayerAvatar victim, DamageInstance damage) =>

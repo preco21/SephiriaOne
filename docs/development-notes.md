@@ -1,6 +1,6 @@
 # SephiriaOne development notes
 
-Recorded: 2026-09-23; updated: 2026-10-13 (Asia/Seoul).
+Recorded: 2026-09-23; updated: 2026-10-14 (Asia/Seoul).
 
 This document records the project history, current implementation, and modding
 findings collected during the initial investigation. Installed-game observations
@@ -13,6 +13,14 @@ For agent/contributor onboarding, start with the [documentation index](README.md
 the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
+
+Version `0.53.0` adds a rapid-hit budget under the existing PvP balancing toggle:
+20% of actual victim maximum HP in stored burst allowance, replenishing at 30%
+per game second. Each attacker/opponent pair shares it across weapons, artifacts,
+debuffs and companions. Native shield/HP accounting refunds unused reservations,
+including fractional damage lost to MP-shield rounding. Connection, session,
+match, floor, toggle and revival boundaries retire stale budgets. No stat writes,
+PvE changes, new preset schema or guest addon requirement. See [model and limits](pvp-balancing.md).
 
 Version `0.52.0` adds off-by-default PvP balancing through the Combat checkbox and
 `/one friendlyfire balance on|off`. A smooth curve compresses large resolved

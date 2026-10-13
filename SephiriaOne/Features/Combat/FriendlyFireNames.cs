@@ -107,7 +107,7 @@ namespace SephiriaOne
         internal static void BeforeRevive(UnitAvatar __instance)
         {
             if (NetworkServer.active && __instance.IsDead && __instance is PlayerAvatar player)
-            { FriendlyFireKda.ForgetLife(player); CombatMatchRuntime.Reviving(player); }
+            { ResetBalanceLife(player); FriendlyFireKda.ForgetLife(player); CombatMatchRuntime.Reviving(player); }
         }
 
         private static string NoticeName(UnitAvatar avatar)

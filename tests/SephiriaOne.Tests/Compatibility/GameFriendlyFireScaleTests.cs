@@ -17,6 +17,12 @@ internal static class GameFriendlyFireScaleTests
         var scale = PatchProcessor.GetOriginalInstructions(AccessTools.Method(runtime, "Scale")).ToList();
         Require(scale.Any(i => Call(i, "FriendlyFireSettings", "get_Balance")) && scale.Any(i => Call(i, "UnitAvatar", "get_MaxHp")) &&
             scale.Count(i => Call(i, "FriendlyFireBalance", "Soften")) == 1, "Player softening reads current balancing and native maximum HP once per resolved hit");
+        Require(scale.Count(i => Call(i, "FriendlyFireRuntime", "LimitBalancedDamage")) == 1,
+            "Rapid-hit budget shares the verified pre-shield balance boundary");
+        var revive = PatchProcessor.GetOriginalInstructions(AccessTools.Method(runtime, "BeforeRevive")).ToList();
+        Require(revive.Any(i => Call(i, "FriendlyFireRuntime", "ResetBalanceLife")), "Native revival retires the player's budget life");
+        var finish = PatchProcessor.GetOriginalInstructions(AccessTools.Method(runtime, "AfterHit")).ToList();
+        Require(finish.Any(i => Call(i, "FriendlyFireRuntime", "FinishBalancedDamage")), "Damage finalizer reconciles reserved allowance after native accounting");
         int wholeNumbers = build.FindIndex(i => Call(i, "Slider", "set_wholeNumbers"));
         Require(wholeNumbers > 0 && build[wholeNumbers - 1].LoadsConstant(0), "slider permits fractional values");
         Require(build.Any(i => Call(i, "PanelWidgets", "Input")), "exact percentage entry exists beside slider");

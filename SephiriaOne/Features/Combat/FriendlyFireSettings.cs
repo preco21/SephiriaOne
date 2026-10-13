@@ -43,7 +43,7 @@ namespace SephiriaOne
         public bool IsReset => Reset || (Balance.HasValue ? !Balance.Value : !Percent.HasValue && !Enabled);
         public bool TouchesMasterToggle => Reset || !Percent.HasValue && !Balance.HasValue;
         public static string Usage => L.T("Friendly fire: /one friendlyfire on|off|status|reset|resetkda; /one friendlyfire damage 0..300 (percent, up to 2 decimals; e.g. 0.1). Default 100. /one save persists settings.") + " " +
-            L.T("PvP balancing: /one friendlyfire balance on|off. Default off; softens large player hits and limits Dark Cloud repeats.");
+            L.T("PvP balancing: /one friendlyfire balance on|off. Default off; softens hits, limits rapid damage (20% HP burst, 30%/s per opponent) and Dark Cloud repeats.");
         internal static bool TryPercent(string text, out decimal percent)
         {
             string number = (text ?? "").Trim();

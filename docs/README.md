@@ -1,6 +1,6 @@
 # Development knowledge index
 
-Maintained: 2026-10-13 (Asia/Seoul), addon `0.52.0`.
+Maintained: 2026-10-14 (Asia/Seoul), addon `0.53.0`.
 
 Agents and contributors can refer to `docs/*` for research, implementation
 materials, native game findings and references. Start here before repeating an
@@ -9,7 +9,8 @@ investigation. Repository workflow and deployment rules are in [AGENTS.md](../AG
 ## Start here
 
 Combat follow-up: [optional PvP balancing](pvp-balancing.md) shares per-hit
-softening and the Dark Cloud limiter across casual friendly fire and both match modes.
+softening, a shared rapid-hit damage budget and the Dark Cloud limiter across
+casual friendly fire and both match modes.
 
 Compatibility fix: [co-installed Harmony and missing multiplayer FX/notices](harmony-compatibility.md)
 records the host-log failure and compiled API regression check in `0.51.3`.

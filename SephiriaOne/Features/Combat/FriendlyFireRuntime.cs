@@ -18,10 +18,13 @@ namespace SephiriaOne
             internal long KdaEpoch;
             internal long ParticipantEpoch;
             internal FriendlyFireParticipants.Receipt AttackerReceipt, VictimReceipt;
+            internal BalanceWindow BudgetWindow;
+            internal long BudgetGeneration;
+            internal double BudgetReserved, BudgetMaxHp, BudgetAccounted;
         }
         [ThreadStatic] private static HitContext current;
         private static bool warned;
-        internal static void Clear() { current = default; debuffScope = default; ClearDebuffOrigins(); ClearDarkCloudWindows(); FriendlyFireKda.Reset(); FriendlyFireDeathVisuals.Reset(); NativePlayerChat.Reset(); warned = false; }
+        internal static void Clear() { current = default; debuffScope = default; ClearDebuffOrigins(); ClearDarkCloudWindows(); ClearBalanceBudgets(); FriendlyFireKda.Reset(); FriendlyFireDeathVisuals.Reset(); NativePlayerChat.Reset(); warned = false; }
 
         internal static bool BeforeHit(UnitAvatar __instance, DamageInstance damage, ref EApplyDamageResult __result, out HitContext __state)
         {
@@ -108,7 +111,11 @@ namespace SephiriaOne
         }
 
         internal static Exception AfterHit(Exception __exception, HitContext __state)
-        { current = __state; return __exception; }
+        {
+            try { if (__exception == null) FinishBalancedDamage(); }
+            finally { current = __state; }
+            return __exception;
+        }
 
         // Admission protects an already-delivered lethal hit through native Die.
         // Permission for further writes/attribution must instead stay current
@@ -133,6 +140,7 @@ namespace SephiriaOne
         {
             if (!NetworkServer.active || !CurrentHitPermitted() || !ReferenceEquals(current.Victim, __instance) ||
                 !(__instance is PlayerAvatar victim) || damage <= 0 || float.IsNaN(damage) || float.IsInfinity(damage)) return;
+            if (current.BudgetWindow != null) current.BudgetAccounted += damage;
             try { FriendlyFireKda.Damage(current.Attacker, victim, current.KdaEpoch); }
             catch (Exception error) { Warn(error); }
         }
@@ -189,7 +197,10 @@ namespace SephiriaOne
             if (float.IsNaN(resolved) || float.IsInfinity(resolved) || resolved <= 0) return 0;
             double scaled = resolved * current.DamageScale;
             if (current.Victim is PlayerAvatar victim && SessionSettings.FriendlyFireForHit.Balance)
-                scaled = FriendlyFireBalance.Soften(scaled, victim.MaxHp);
+            {
+                double maxHp = victim.MaxHp;
+                scaled = LimitBalancedDamage(FriendlyFireBalance.Soften(scaled, maxHp), maxHp);
+            }
             return (float)Math.Min(scaled, 2147483520d);
         }
 

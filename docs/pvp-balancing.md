@@ -3,6 +3,10 @@
 Added in `0.52.0`, 2026-10-13. Host-only installation; the existing native damage
 and FX replication continues to serve stock guests. Default: **off**.
 
+Updated in `0.53.0`, 2026-10-14: balancing also limits rapid damage with a shared
+budget per attacker/opponent. Existing saved balancing settings enable both
+layers; there is no new setting, schema migration or guest installation.
+
 Enable **Combat → PvP balancing** (`PvP 밸런스 보정`) or use:
 
 ```text
@@ -21,8 +25,10 @@ toggle still uses the existing stop/recovery semantics.
 
 ## Model and trade-offs
 
-The user selected **per-hit softening only**, with no sustained-damage budget or
-rolling DPS limit. Native stat rewriting would need to track equipment, costumes,
+The initial `0.52.0` design used per-hit softening only. After observing rapid
+attacks such as Piola Gavel and Pallas' Cards, the user requested the earlier
+damage-budget approach instead of live stat scaling. Native stat rewriting would
+need to track equipment, costumes,
 buffs, passives, preset edits and ownership, and could affect PvE. Roster-relative
 normalization would change combat when players join/leave. A hard damage cap
 would make many large hits identical. The chosen smooth curve uses the actual
@@ -59,12 +65,73 @@ incoming monster damage, self/system damage and non-player ally targets retain
 their previous paths. There is no global faction or targeting change.
 
 Attack rates, number of projectiles, proc conditions and debuff duration/stacking
-are not normalized. Rapid attacks and focus fire can still kill quickly. Strong
+are not normalized. The budget below now limits sustained damage from one attacker;
+focus fire, knockback and crowd control can still be strong. Strong
 healing or defensive builds may remain hard to kill. This reduces extreme hit
 power, not every possible build advantage. Small hits are not buffed, and very
 low host damage percentages can still produce negligible damage; try 100% as a
 starting point when evaluating balancing. The setting never changes that slider
 automatically or introduces a minimum damage floor.
+
+## Rapid-hit budget (`0.53.0`)
+
+Each directed attacker/player-victim pair has a token budget with **20% of actual
+victim maximum HP capacity** and **30% of maximum HP per game second refill**.
+Refill is continuous, pauses with the game clock and stops at capacity. All of an
+attacker's weapons, artifact projectiles/procs, debuffs and companions share the
+same pool against that victim. Changing damage IDs, weapons or projectile objects
+does not grant another pool. Other attackers and other victims remain independent;
+reflection uses the reverse directed pair. Dark Cloud retains its separate limit.
+
+For fixed maximum HP `H`, applied HP plus regular/MP-shield damage from one
+attacker over `T` seconds is bounded by approximately `H * (0.20 + 0.30*T)` from
+a full pool. Thus an initially full-health, unshielded target cannot be killed
+by that attacker in less than about 2.67 seconds through this damage path. This
+is a ceiling, not guaranteed DPS or a minimum-damage boost. Actual hits, defenses,
+healing and shields can make fights longer; multiple attackers remain independent.
+The 30% pace is an initial tuning value, not an in-game configurable setting.
+
+Reserve the already-softened hit before shields/callbacks to prevent recursive
+procs consuming the same tokens twice. On successful completion, the native
+`AddReceivedDamage` reports for shield, MP shield and HP determine the actual
+spending; refund any unused reservation. This matters for native MP shields,
+which truncate fractional damage to integer MP: an unused fraction must remain
+available for later hits instead of being lost every frame. Exceptional native
+hits retain reservations conservatively because some writes may already have
+occurred. A reservation's generation prevents its refund entering a replacement
+pool after nested toggles or other resets.
+
+The budget is therefore **actual HP/shield damage**, not pre-super-armor pressure.
+Super armor still reduces individual hits normally. When incoming attacks fully
+saturate the allowance, their refunded reductions can be spent by following hits,
+so super armor does not lower the final saturated HP-per-second ceiling. Overkill
+clamped by native current HP is refunded too. Native additional-life recovery
+never enters the dead-to-`Revive` lifecycle; it continues the existing budget,
+native invulnerability and gradual refill rather than granting a new burst.
+
+Tokens are HP fractions, not cached HP points. Max-HP changes affect subsequent
+damage/refill without resetting available capacity; current low HP never shrinks
+the budget. No damage debt is delayed and emitted later. Zero-budget hits can
+deal zero damage while native non-damage callbacks still run. This is not a
+universal rate limit on stuns, knockback, debuff application, visuals or direct
+health writes outside the audited damage pipeline.
+
+Native `Charm_PallasCard.OnBeginAttackAnimation` emits three homing bullets per
+proc via `Bullet.Pool.Spawn`; their player impacts share the owner's pool. The
+general damage boundary covers rapid attacks without depending on an item-name
+allowlist. It does not change the native card timer, luck roll or bullet count.
+Piola Gavel's exact asset identity was not needed or separately established here;
+its combat must still be verified in a live match along with other rapid effects.
+
+Receipt-keyed weak tables reuse current connection identities. Combat/participant
+epochs, balance revisions, source/victim floors and dead-to-revived life counters
+invalidate old pools. Master off/on, balance off/on, KDA/selection changes, match
+transitions, run/session replacement and same-object reconnects start fresh.
+Death alone does not refill a surviving queued attack's pool. Immediate successful
+revival starts a fresh life; the 3-second automatic respawn is covered as well.
+Native revival preparation invalidates only that player's lives, and failed
+revival cannot permit attacks while the player remains dead. Runtime unload clears
+all tables. No new per-frame scans, custom guest state or network messages exist.
 
 ## Dark Cloud
 
@@ -84,12 +151,13 @@ rejoins, selections, match rounds, restarts and resets without per-frame work.
 
 The balancing layer writes **no player stats, health limits, native bonuses,
 inventory or pooled DamageInstance values**. Actual `MaxHp` is read on every
-relevant hit; changing a costume, native menu, item or buff needs no resync. Invalid
+relevant hit; changing a costume, native menu, item or buff needs no stat resync. Invalid
 nonpositive/nonfinite maximum HP produces zero balanced damage rather than invalid
 HP/MP writes. The existing native integer-safety ceiling remains in force.
 
 There are no modified stats to restore on off, end, cancellation, interruption,
-reset, disconnect or unload. Match cleanup disables effective friendly fire as
+reset, disconnect or unload. The temporary budgets use the lifetimes described
+above. Match cleanup disables effective friendly fire as
 before; the retained balance preference alone cannot alter damage. `/one
 friendlyfire off` retains the preference; `/one friendlyfire reset` restores it
 to off along with the other combat defaults. New sessions use defaults unless a
@@ -98,17 +166,35 @@ still parse and default balancing to off. Malformed/duplicate rows fail atomical
 
 ## Verification and limits
 
+`0.53.0` rapid-hit verification on 2026-10-14:
+
+- Both non-deploying builds passed without warnings/errors.
+- 1,313 executable combat hook checks passed, including rapid bursts/refill,
+  slow attacks, nested procs/reflection, actual MP/shield/HP accounting, super
+  armor, overkill/additional life, stale nested refunds and connection/life resets.
+- 1,920 runtime/session checks and 69 Bat lifecycle checks passed. The runtime
+  suite tests match/connection lifetimes separately; full damage/budget hooks run
+  in the combat executable rather than its attribution-only death fixture.
+- Portable/native compatibility and catalog suites passed, including the
+  shared pre-shield budget hook, native revival and damage-finalizer wiring,
+  shield/MP/HP native accounting contracts and 28 compiled Harmony API references
+  against co-installed HarmonyX `2.9.0.0`.
+- The warmed full balanced-hit fixture allocated zero bytes per hit. First use
+  allocates weak actor/pair state; no new scene scans or per-frame update pass.
+- Independent review found no blocking correctness issues. Its refund/life test
+  and documentation gaps were addressed, including super-armor saturation.
+
 Executable tests cover scale invariance across maximum HP values, monotonicity,
 finite extremes, weak/strong hits, fractional host percentages, shields, defenses,
 reflection, companion damage, debuff/triggered damage, invalid input, no mutation,
-unrestricted same-frame repeated hits, selection exclusions and live changes.
+bounded same-frame repeated hits, selection exclusions and live changes.
 Runtime tests cover saved presets, restart/rejoin, scope replacement, host-only
 commands, unavailable-hook recovery, both match overlays and retained K/D/A.
 Native compatibility tests retain the pre-shield scale boundary and check native
 maximum-HP reads and shared UI command wiring. Warmed arithmetic and cloud checks
 allocate no per-hit memory in the fixture; no new polling or network path is added.
 
-Verification on 2026-10-13:
+Initial `0.52.0` verification on 2026-10-13:
 
 - Debug and Release builds with `-p:DeployMod=false`: no warnings or errors.
 - Combat executable: 1,185 checks passed, including the new curve and Cloud gates.

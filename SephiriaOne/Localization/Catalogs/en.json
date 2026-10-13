@@ -1,7 +1,7 @@
 {
   "PvP balancing": "PvP balancing",
   "PvP balancing: {0}.": "PvP balancing: {0}.",
-  "PvP balancing: /one friendlyfire balance on|off. Default off; softens large player hits and limits Dark Cloud repeats.": "PvP balancing: /one friendlyfire balance on|off. Default off; softens large player hits and limits Dark Cloud repeats.",
+  "PvP balancing: /one friendlyfire balance on|off. Default off; softens hits, limits rapid damage (20% HP burst, 30%/s per opponent) and Dark Cloud repeats.": "PvP balancing: /one friendlyfire balance on|off. Default off; softens hits, limits rapid damage (20% HP burst, 30%/s per opponent) and Dark Cloud repeats.",
   "Companion attack speed": "Companion attack speed",
   "Companion damage": "Companion damage",
   "Companion defense": "Companion defense",
