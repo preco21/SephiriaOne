@@ -19,9 +19,10 @@ namespace SephiriaOne
             AddCheckbox("Friendly fire", 16, 28, 174, 25, s => s.FriendlyFire.Enabled, s => s.FriendlyFireAvailable, "/one friendlyfire",
                 s => s.CanMutate || CombatMatchRuntime.IsRunning && s.HostActive && s.SessionIdentity != null);
             resetAll = widgets.Button(pageRoot, "Reset", 200, 28, 89, 25, () => Execute("/one friendlyfire reset", true));
-            widgets.Text(pageRoot, "FriendlyPercent", "Allied damage (%)", 16, 62, 180, 25, 11);
-            amount = widgets.Input(pageRoot, 200, 62, 89, EditFriendlyDamage);
-            var track = PanelWidgets.Rect(pageRoot, "AlliedDamageSlider", 24, 90, 255, 24);
+            AddCheckbox("PvP balancing", 16, 58, 273, 25, s => s.FriendlyFire.Balance, s => s.FriendlyFireAvailable, "/one friendlyfire balance");
+            widgets.Text(pageRoot, "FriendlyPercent", "Allied damage (%)", 16, 87, 180, 25, 11);
+            amount = widgets.Input(pageRoot, 200, 87, 89, EditFriendlyDamage);
+            var track = PanelWidgets.Rect(pageRoot, "AlliedDamageSlider", 24, 116, 255, 14);
             track.gameObject.AddComponent<Image>().color = new Color32(48, 66, 88, 255);
             friendlyDamage = track.gameObject.AddComponent<Slider>();
             friendlyDamage.minValue = 0; friendlyDamage.maxValue = 300; friendlyDamage.wholeNumbers = false;
@@ -33,8 +34,8 @@ namespace SephiriaOne
             friendlyDamage.handleRect = handle; friendlyDamage.targetGraphic = handleImage;
             friendlyDamage.direction = Slider.Direction.LeftToRight;
             friendlyDamage.onValueChanged.AddListener(DragFriendlyDamage);
-            changeButtons.Add(widgets.Button(pageRoot, "Apply damage", 16, 126, 135, 25, ApplyFriendlyDamage));
-            reviveAll = widgets.Button(pageRoot, "Revive all players", 162, 126, 127, 25, () => Execute("/one reviveall", true));
+            changeButtons.Add(widgets.Button(pageRoot, "Apply damage", 16, 137, 135, 25, ApplyFriendlyDamage));
+            reviveAll = widgets.Button(pageRoot, "Revive all players", 162, 137, 127, 25, () => Execute("/one reviveall", true));
             BuildParticipantsEditor();
         }
 

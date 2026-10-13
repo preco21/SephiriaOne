@@ -25,6 +25,7 @@ namespace SephiriaOne
         private const string FractionalCombatPresetHeader = "SephiriaOne preset v19";
         private const string TournamentPresetHeader = "SephiriaOne preset v20";
         private const string CompanionStatsPresetHeader = "SephiriaOne preset v21";
+        private const string PvpBalancePresetHeader = "SephiriaOne preset v22";
         private const string EventPresetHeader = "SephiriaOne preset v16";
         private const string CollinPresetHeader = "SephiriaOne preset v15";
         private const string BatPresetHeader = "SephiriaOne preset v14";
@@ -66,6 +67,7 @@ namespace SephiriaOne
             if (JarSpawns.HasChanges) lines.Add("jars " + (JarSpawns.Mode == JarSpawnMode.Chance ? "chance " : "multiplier ") + JarSpawns.Number);
             if (ItemUnlock) lines.Add("items unlock 1");
             if (FriendlyFire.Enabled) lines.Add("friendlyfire enabled 1");
+            if (FriendlyFire.Balance) lines.Add("friendlyfire balance 1");
             if (FriendlyFire.DamagePercent != 100) lines.Add("friendlyfire damage " + FriendlyFire.Number);
             string Describe(Setting setting) => (setting.Multiplier ? "multiplier " : setting.Absolute ? "set " : "offset ") +
                 setting.Value.ToString("0.##", CultureInfo.InvariantCulture);
@@ -104,7 +106,7 @@ namespace SephiriaOne
             { expandedStats |= stat.RequiresExpandedPreset; companionStats |= stat.IsCompanion; }
             bool multiplier = HasFountainMultiplier;
             foreach (Setting setting in stats.Values) multiplier |= setting.Multiplier;
-            return (companionStats ? CompanionStatsPresetHeader : TournamentDuration != TournamentSettings.DefaultDuration ? TournamentPresetHeader : FriendlyFire.HasFractionalPercent ? FractionalCombatPresetHeader : DeathmatchDuration != DeathmatchSettings.DefaultDuration ? DeathmatchPresetHeader : expandedStats ? ExpandedStatsPresetHeader : EventSpawns.HasChanges ? EventPresetHeader : CollinStartingArtifact ? CollinPresetHeader : BatHpSteal ? BatPresetHeader : JarSpawns.HasChanges ? JarPresetHeader : FriendlyFire.HasChanges ? CombatPresetHeader : ItemUnlock ? ItemUnlockPresetHeader : RabbitPotions.LevelUpPotion ? RabbitLevelUpPresetHeader : UsesMerchantGuaranteePreset ? MerchantGuaranteePresetHeader : UsesMerchantTypesPreset ? MerchantTypesPresetHeader : Merchants.HasChanges ? MerchantPresetHeader : RabbitPotions.MpCostPerDrink != RabbitPotionSettings.DefaultMpCostPerDrink ? RabbitCostPresetHeader :
+            return (FriendlyFire.Balance ? PvpBalancePresetHeader : companionStats ? CompanionStatsPresetHeader : TournamentDuration != TournamentSettings.DefaultDuration ? TournamentPresetHeader : FriendlyFire.HasFractionalPercent ? FractionalCombatPresetHeader : DeathmatchDuration != DeathmatchSettings.DefaultDuration ? DeathmatchPresetHeader : expandedStats ? ExpandedStatsPresetHeader : EventSpawns.HasChanges ? EventPresetHeader : CollinStartingArtifact ? CollinPresetHeader : BatHpSteal ? BatPresetHeader : JarSpawns.HasChanges ? JarPresetHeader : FriendlyFire.HasChanges ? CombatPresetHeader : ItemUnlock ? ItemUnlockPresetHeader : RabbitPotions.LevelUpPotion ? RabbitLevelUpPresetHeader : UsesMerchantGuaranteePreset ? MerchantGuaranteePresetHeader : UsesMerchantTypesPreset ? MerchantTypesPresetHeader : Merchants.HasChanges ? MerchantPresetHeader : RabbitPotions.MpCostPerDrink != RabbitPotionSettings.DefaultMpCostPerDrink ? RabbitCostPresetHeader :
                 RabbitPotions.ConsumeMp || RabbitPotions.SuppressSurvival ? RabbitBalancePresetHeader :
                 RabbitPotions.HasChanges ? RabbitPresetHeader : Resources.HasChanges ? ResourcePresetHeader : multiplier ? MultiplierPresetHeader : PresetHeader) + "\n" +
                 (HasChanges ? string.Join("\n", DescribeSettings()) + "\n" : "");
@@ -116,8 +118,9 @@ namespace SephiriaOne
             error = L.T("Invalid saved preset; no saved settings were applied.");
             if (text == null || text.Length > MaximumPresetLength) return false;
             string[] lines = text.Replace("\r\n", "\n").Split('\n');
-            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader && lines[0] != RabbitBalancePresetHeader && lines[0] != RabbitCostPresetHeader && lines[0] != MerchantPresetHeader && lines[0] != MerchantTypesPresetHeader && lines[0] != MerchantGuaranteePresetHeader && lines[0] != RabbitLevelUpPresetHeader && lines[0] != ItemUnlockPresetHeader && lines[0] != CombatPresetHeader && lines[0] != JarPresetHeader && lines[0] != BatPresetHeader && lines[0] != CollinPresetHeader && lines[0] != EventPresetHeader && lines[0] != ExpandedStatsPresetHeader && lines[0] != DeathmatchPresetHeader && lines[0] != FractionalCombatPresetHeader && lines[0] != TournamentPresetHeader && lines[0] != CompanionStatsPresetHeader)) return false;
-            bool allowCompanionStats = lines[0] == CompanionStatsPresetHeader;
+            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader && lines[0] != RabbitBalancePresetHeader && lines[0] != RabbitCostPresetHeader && lines[0] != MerchantPresetHeader && lines[0] != MerchantTypesPresetHeader && lines[0] != MerchantGuaranteePresetHeader && lines[0] != RabbitLevelUpPresetHeader && lines[0] != ItemUnlockPresetHeader && lines[0] != CombatPresetHeader && lines[0] != JarPresetHeader && lines[0] != BatPresetHeader && lines[0] != CollinPresetHeader && lines[0] != EventPresetHeader && lines[0] != ExpandedStatsPresetHeader && lines[0] != DeathmatchPresetHeader && lines[0] != FractionalCombatPresetHeader && lines[0] != TournamentPresetHeader && lines[0] != CompanionStatsPresetHeader && lines[0] != PvpBalancePresetHeader)) return false;
+            bool allowPvpBalance = lines[0] == PvpBalancePresetHeader;
+            bool allowCompanionStats = lines[0] == CompanionStatsPresetHeader || allowPvpBalance;
             bool allowTournament = lines[0] == TournamentPresetHeader || allowCompanionStats;
             bool allowFractionalCombat = lines[0] == FractionalCombatPresetHeader || allowTournament;
             bool allowDeathmatch = lines[0] == DeathmatchPresetHeader || allowFractionalCombat;
@@ -198,6 +201,8 @@ namespace SephiriaOne
                     if (!allowCombat || parts.Length != 3 || !seen.Add("friendlyfire " + parts[1])) return false;
                     if (parts[1] == "enabled" && (parts[2] == "0" || parts[2] == "1"))
                         pending.Record(new FriendlyFireCommand(value == 1));
+                    else if (allowPvpBalance && parts[1] == "balance" && (parts[2] == "0" || parts[2] == "1"))
+                        pending.Record(new FriendlyFireCommand(false, balance: value == 1));
                     else if (parts[1] == "damage" && FriendlyFireSettings.ValidPercent(value) &&
                         (allowFractionalCombat || value == decimal.Truncate(value)) && parts[2] == value.ToString("0.##", CultureInfo.InvariantCulture))
                         pending.Record(new FriendlyFireCommand(false, value));

@@ -187,7 +187,10 @@ namespace SephiriaOne
             if (!CurrentHitPermitted()) return 0;
             // Avoid propagating NaN/infinity/overflow into native HP or SyncVars.
             if (float.IsNaN(resolved) || float.IsInfinity(resolved) || resolved <= 0) return 0;
-            return (float)Math.Min(resolved * current.DamageScale, 2147483520d);
+            double scaled = resolved * current.DamageScale;
+            if (current.Victim is PlayerAvatar victim && SessionSettings.FriendlyFireForHit.Balance)
+                scaled = FriendlyFireBalance.Soften(scaled, victim.MaxHp);
+            return (float)Math.Min(scaled, 2147483520d);
         }
 
         internal static float Sanitize(float resolved) => !current.Friendly ? resolved :

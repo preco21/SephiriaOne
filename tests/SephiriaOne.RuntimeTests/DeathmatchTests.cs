@@ -53,8 +53,14 @@ internal static class DeathmatchTests
         }
         host = start(); guest = add(90); At(0); SettingsActions.Execute("/one friendlyfire on"); SettingsActions.Execute("/one deathmatch start");
         SettingsActions.Execute("/one friendlyfire damage 0.1");
+        check(SettingsActions.Execute("/one friendlyfire balance on").Success && CombatMatchRuntime.IsRunning &&
+            SessionSettings.FriendlyFireForHit.Balance, "Balance edits preserve Deathmatch warmup and its effective settings");
         check(!SessionSettings.FriendlyFireForHit.Enabled, "Damage edits cannot arm the warmup"); At(3);
         check(CombatMatchRuntime.IsRunning && SessionSettings.FriendlyFireForHit.DamagePercent == 0.1m, "Fractional damage edits survive warmup without stopping match");
+        check(SessionSettings.FriendlyFireForHit.Balance && SettingsActions.Execute("/one friendlyfire balance off").Success &&
+            CombatMatchRuntime.IsRunning && !SessionSettings.FriendlyFireForHit.Balance,
+            "Active Deathmatch can disable balancing without changing friendly fire or stopping the match");
+        SettingsActions.Execute("/one friendlyfire balance on");
         check(SettingsActions.Execute("/one friendlyfire damage 0.9").Success && CombatMatchRuntime.IsRunning &&
             SessionSettings.FriendlyFireForHit.DamagePercent == 0.9m, "Active match adopts fractional damage edits immediately");
         var joiner = add(91); joiner.PlayerAvatar.IsDead = true; At(4); At(7);
@@ -65,6 +71,7 @@ internal static class DeathmatchTests
         guest = replacement; guest.PlayerAvatar.IsDead = true; CombatMatchRuntime.Died(guest.PlayerAvatar);
         HorayModAPI.StartSession(); At(12);
         check(!CombatMatchRuntime.IsRunning && !SessionSettings.FriendlyFireForHit.Enabled && guest.PlayerAvatar.ReviveCalls == 0, "New run cancels without reviving old avatars");
+        check(SessionSettings.FriendlyFireForHit.Balance, "Interrupted match retains only balance preference; disabled friendly fire cannot apply it");
 
         host = start(); At(0); SettingsActions.Execute("/one deathmatch duration 45"); SettingsActions.Execute("/one deathmatch start"); At(3);
         check(SettingsActions.Execute("/one save").Success, "Can save settings during match");

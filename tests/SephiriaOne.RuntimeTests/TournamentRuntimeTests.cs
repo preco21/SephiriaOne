@@ -38,11 +38,17 @@ internal static class TournamentRuntimeTests
         var players = New(1);
         check(!SettingsActions.Execute("/one tournament start").Success, "Tournament requires two players");
         players = New(4);
+        check(SettingsActions.Execute("/one friendlyfire balance on").Success, "Tournament can inherit balancing preference");
         check(SettingsActions.Execute("/one tournament start").Success, "Four-player tournament starts");
         check(!SessionSettings.FriendlyFireForHit.Enabled, "Tournament warmup keeps friendly fire disabled");
         At(1); At(2); At(3);
         var chat = DungeonManager.Instance.ChatMessages;
         var pair = Pair(players);
+        check(SessionSettings.FriendlyFireForHit.Balance && SettingsActions.Execute("/one friendlyfire balance off").Success &&
+            CombatMatchRuntime.IsRunning && !SessionSettings.FriendlyFireForHit.Balance,
+            "Tournament balancing switches off immediately without abandoning its pair");
+        check(SettingsActions.Execute("/one friendlyfire balance on").Success && CombatMatchRuntime.AllowsPair(pair[0], pair[1]),
+            "Tournament balancing switches on without altering participation or countdown progression");
         check(SettingsActions.Execute("/one deathmatch status").Messages.Any(x => x.Contains("Deathmatch: off.")),
             "Deathmatch status cannot claim the shared tournament phase");
         foreach (var player in pair)

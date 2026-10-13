@@ -11,6 +11,12 @@ internal static class GameFriendlyFireScaleTests
             method.DeclaringType?.Name == type && method.Name == name;
         void Require(bool condition, string why) { if (!condition) throw new Exception("Fractional combat UI: " + why); }
         var build = Code("BuildCombatEditor");
+        Require(build.Any(i => i.LoadsConstant("PvP balancing")) && build.Any(i => i.LoadsConstant("/one friendlyfire balance")),
+            "Combat exposes a balancing checkbox through the same shared command");
+        var runtime = addon.GetType("SephiriaOne.FriendlyFireRuntime", true)!;
+        var scale = PatchProcessor.GetOriginalInstructions(AccessTools.Method(runtime, "Scale")).ToList();
+        Require(scale.Any(i => Call(i, "FriendlyFireSettings", "get_Balance")) && scale.Any(i => Call(i, "UnitAvatar", "get_MaxHp")) &&
+            scale.Count(i => Call(i, "FriendlyFireBalance", "Soften")) == 1, "Player softening reads current balancing and native maximum HP once per resolved hit");
         int wholeNumbers = build.FindIndex(i => Call(i, "Slider", "set_wholeNumbers"));
         Require(wholeNumbers > 0 && build[wholeNumbers - 1].LoadsConstant(0), "slider permits fractional values");
         Require(build.Any(i => Call(i, "PanelWidgets", "Input")), "exact percentage entry exists beside slider");

@@ -6,8 +6,9 @@ internal static class DarkCloudTests
     internal static void Run(Action<bool, string> check)
     {
         FriendlyFireParticipants.Clear();
-        SessionSettings.FriendlyFireForHit = new(true, 50);
-        var source = new PlayerAvatar(); var target = new PlayerAvatar();
+        SessionSettings.FriendlyFireForHit = new(true, 50, balance: true);
+        // Keep these small hits below the new soft knee, isolating strike timing.
+        var source = new PlayerAvatar(); var target = new PlayerAvatar { MaxHp = 400 };
         var cloud = new ComboEffect_DarkCloud { NetworkAvatar = source,
             Damage = new() { origin = source, id = "Ability_DarkCloud", damage = 20, targetFactionLayers = -1 } };
         cloud.OnAttackUnit += t => t.ApplyDebuff(new(), source);
@@ -25,7 +26,7 @@ internal static class DarkCloudTests
         check(target.Hp == 80 && target.DebuffApplications == 2 && cloud.Effects == 2,
             "Dark Cloud admits the exact half-second boundary with its normal callback");
 
-        var another = new PlayerAvatar(); cloud.FireLightning(another);
+        var another = new PlayerAvatar { MaxHp = 400 }; cloud.FireLightning(another);
         check(another.Hp == 90, "Another hostile player has an independent strike window");
         var secondOwner = new PlayerAvatar();
         var secondCloud = Cloud(secondOwner);
@@ -55,7 +56,7 @@ internal static class DarkCloudTests
             check(cloud.Strikes == before + 2 && target.Hp == hp && target.DebuffApplications == debuffs,
                 "Off/zero leaves native strike scheduling intact while existing friendly-fire guards protect players");
         }
-        SessionSettings.FriendlyFireForHit = new(true, 50);
+        SessionSettings.FriendlyFireForHit = new(true, 50, balance: true);
         int count = cloud.Strikes;
         cloud.FireLightning(target); cloud.FireLightning(target);
         check(cloud.Strikes == count + 1, "Re-enabling friendly fire starts a fresh limited window");
@@ -136,6 +137,17 @@ internal static class DarkCloudTests
         for (int i = 0; i < 1000; i++) { Time.time++; FriendlyFireRuntime.BeforeDarkCloudStrike(pair.Cloud, pair.Target); }
         check(GC.GetAllocatedBytesForCurrentThread() == allocated, "Warmed admitted cloud checks allocate no per-strike memory");
 
+        pair = Fresh(); pair.Cloud.FireLightning(pair.Target);
+        SessionSettings.FriendlyFireForHit = new(true, 50, balance: false);
+        pair.Cloud.FireLightning(pair.Target); pair.Cloud.FireLightning(pair.Target);
+        check(pair.Target.Hp == 70 && pair.Cloud.Strikes == 3, "Balance off removes the Dark Cloud throttle immediately");
+        SessionSettings.FriendlyFireForHit = new(true, 50, balance: true);
+        pair.Cloud.FireLightning(pair.Target); pair.Cloud.FireLightning(pair.Target);
+        check(pair.Target.Hp == 60 && pair.Cloud.Strikes == 4, "Balance on starts a fresh limited cloud window");
+        SessionSettings.FriendlyFireForHit = new(true, 50, balance: false);
+        SessionSettings.FriendlyFireForHit = new(true, 50, balance: true);
+        pair.Cloud.FireLightning(pair.Target);
+        check(pair.Target.Hp == 50 && pair.Cloud.Strikes == 5, "Off/on with no intervening hit cannot retain a stale cloud window");
         CombatMatchRuntime.PairRule = null; FriendlyFireParticipants.Clear(); Time.time = 0;
     }
 
@@ -144,8 +156,8 @@ internal static class DarkCloudTests
     private static (PlayerAvatar Source, PlayerAvatar Target, ComboEffect_DarkCloud Cloud) Fresh()
     {
         FriendlyFireParticipants.Clear(); CombatMatchRuntime.PairRule = null;
-        SessionSettings.FriendlyFireForHit = new(true, 50); Time.time = 10;
-        var source = new PlayerAvatar(); var target = new PlayerAvatar();
+        SessionSettings.FriendlyFireForHit = new(true, 50, balance: true); Time.time = 10;
+        var source = new PlayerAvatar(); var target = new PlayerAvatar { MaxHp = 400 };
         return (source, target, Cloud(source));
     }
 }

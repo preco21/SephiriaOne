@@ -12,6 +12,10 @@ spell exclusions below describe the earlier `0.43.2` audit boundary.
 
 ## Dark Cloud player strike limit (0.51.2, 2026-10-13)
 
+Follow-up (`0.52.0`): this limit now requires [PvP balancing](pvp-balancing.md),
+an off-by-default host toggle. Balance edits invalidate its cooldown revision.
+The behavior below describes the limit while balancing is on.
+
 During enabled, positive-damage friendly fire, the host permits at most one Dark
 Cloud strike attempt per attacker-player/victim-player pair every **0.5 seconds**
 of scaled game time. It uses the same selection, connection and Tournament-pair

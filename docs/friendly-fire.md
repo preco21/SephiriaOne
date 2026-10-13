@@ -1,5 +1,11 @@
 # Friendly fire
 
+Version `0.52.0` makes [PvP balancing](pvp-balancing.md) optional through the
+Combat checkbox and `/one friendlyfire balance on|off` (default off). It softens
+large individual player hits relative to maximum HP and controls the Dark Cloud
+limit below. **The previous always-active Cloud limit is now off unless balancing
+is enabled.** No stats are rewritten and no sustained-damage budget is applied.
+
 Version `0.51.2` limits Dark Cloud to one strike attempt against the same hostile
 player every **0.5 seconds per attacker** while friendly fire is active. This
 also applies in Deathmatch and Tournament. Rapid repeats skip their damage,

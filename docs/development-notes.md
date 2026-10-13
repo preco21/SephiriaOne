@@ -14,6 +14,13 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+Version `0.52.0` adds off-by-default PvP balancing through the Combat checkbox and
+`/one friendlyfire balance on|off`. A smooth curve compresses large resolved
+player hits relative to the victim's actual maximum HP, with no stat writes or
+sustained-damage limit. The existing Dark Cloud limiter now requires this toggle.
+Preset v22 saves the preference; live edits preserve matches and K/D/A. See
+[model, lifecycle and verification limits](pvp-balancing.md).
+
 Version `0.51.3` fixes death/revive FX and private killed-by messages being disabled
 when another addon has loaded HarmonyX. Four lazy native validators called a
 string helper absent from that library. Direct IL string comparisons preserve

@@ -1,4 +1,7 @@
 {
+  "PvP balancing": "PvP 밸런스 보정",
+  "PvP balancing: {0}.": "PvP 밸런스 보정: {0}.",
+  "PvP balancing: /one friendlyfire balance on|off. Default off; softens large player hits and limits Dark Cloud repeats.": "PvP 밸런스 보정: /one friendlyfire balance on|off. 기본 꺼짐. 플레이어가 받는 큰 피해를 완화하고 먹구름 연속 타격을 제한합니다.",
   "Companion attack speed": "동료 공격 속도",
   "Companion damage": "동료 피해량",
   "Companion defense": "동료 방어력",

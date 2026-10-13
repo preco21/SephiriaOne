@@ -9,6 +9,12 @@ internal static class FriendlyFireRuntimeTests
         check(SettingsActions.Execute("/one friendlyfire on").Success, "Host can enable friendly fire");
         var guest = add(14).PlayerAvatar;
         var helper = add(16).PlayerAvatar;
+        long balanceRevision = SessionSettings.CombatBalanceRevision;
+        var nativeStats = host.customStats.ToArray(); float nativeHp = host.hp;
+        check(SettingsActions.Execute("/one friendlyfire balance on").Success && SessionSettings.FriendlyFireForHit.Balance &&
+            SessionSettings.CombatBalanceRevision > balanceRevision, "Balance command updates policy and cloud revision immediately");
+        check(host.hp == nativeHp && host.customStats.OrderBy(p => p.Key).SequenceEqual(nativeStats.OrderBy(p => p.Key)),
+            "Enabling balancing writes no player stats or health");
         void Damage() => FriendlyFireKda.Damage(helper, guest, FriendlyFireKda.Epoch);
         void Kill()
         {
@@ -18,6 +24,12 @@ internal static class FriendlyFireRuntimeTests
         string Score(PlayerAvatar player) => FriendlyFireKda.Label(player, "P");
         Damage(); Kill();
         check(Score(host) == "P(1/0/0)" && Score(helper) == "P(0/0/1)", "Enabled command starts host KDA accounting");
+        balanceRevision = SessionSettings.CombatBalanceRevision;
+        check(SettingsActions.Execute("/one friendlyfire balance off").Success && SettingsActions.Execute("/one friendlyfire balance on").Success &&
+            SessionSettings.CombatBalanceRevision == balanceRevision + 2 && Score(host) == "P(1/0/0)",
+            "Off/on without damage advances the limiter revision while retaining casual KDA");
+        check(SessionSettings.ReadSnapshot().FriendlyFire.Balance && SettingsActions.Execute("/one friendlyfire status").Messages.Any(m => m.Contains("PvP balancing: on.")),
+            "Combat snapshot and status expose the same balance preference");
         SettingsActions.Execute("/one friendlyfire on");
         check(Score(host) == "P(1/0/0)", "No-op on command preserves scores");
         check(SettingsActions.Execute("/one friendlyfire damage 25").Success, "Host can reduce allied damage");
@@ -43,6 +55,7 @@ internal static class FriendlyFireRuntimeTests
         PlayerSpawner.MultiplayerList.Remove(connection); SessionSettings.Synchronize();
         add(15);
         check(SessionSettings.FriendlyFireForHit.DamagePercent == 0.1m, "Replacement connection immediately uses complete fractional combat policy");
+        check(SessionSettings.FriendlyFireForHit.Balance, "Rejoined players immediately receive current balancing policy");
         HorayModAPI.StartSession();
         check(SessionSettings.FriendlyFireForHit.DamagePercent == 0.1m, "Run restart retains fractional combat policy");
         foreach (string bad in new[] { "-1", "301", "NaN", "0.001", "x2" })
@@ -51,6 +64,7 @@ internal static class FriendlyFireRuntimeTests
         SessionSettings.Stop(); SessionSettings.Start(); SessionSettings.Synchronize();
         check(SessionSettings.ReadSnapshot().ActiveSettings.Contains("friendlyfire enabled 1"), "Saved friendly fire restores after controller restart");
         check(SessionSettings.FriendlyFireForHit.DamagePercent == 0.1m, "Saved sub-one scale restores exactly after controller restart");
+        check(SessionSettings.FriendlyFireForHit.Balance, "Saved balancing restores after full controller restart");
         check(Score(host) == "P(0/0/0)", "Saved settings never persist KDA");
         Damage(); Kill();
         check(Score(host) == "P(1/0/0)", "Restored enabled preset activates fresh accounting");
@@ -58,6 +72,8 @@ internal static class FriendlyFireRuntimeTests
         check(!SessionSettings.ReadSnapshot().ActiveSettings.Any(x => x.StartsWith("friendlyfire ")), "Reset clears toggle and scale");
         check(Score(host) == "P(0/0/0)", "Reset command clears KDA");
         FriendlyFireFeature.Available = false;
+        check(!SettingsActions.Execute("/one friendlyfire balance on").Success && SettingsActions.Execute("/one friendlyfire balance off").Success,
+            "Unavailable hooks reject balance enable but preserve off recovery");
         check(!SettingsActions.Execute("/one friendlyfire on").Success && SettingsActions.Execute("/one friendlyfire reset").Success,
             "Unavailable hooks reject enable but preserve reset");
         FriendlyFireFeature.Available = true;
@@ -65,7 +81,9 @@ internal static class FriendlyFireRuntimeTests
         DungeonManager.Instance = new DungeonManager();
         check(!SessionSettings.FriendlyFireForHit.Enabled && SessionSettings.FriendlyFireForHit.DamagePercent == 100,
             "Replacement session resolves native defaults immediately");
+        check(!SessionSettings.FriendlyFireForHit.Balance, "An unsaved new session starts with balancing off");
         NetworkServer.active = false;
         check(!SettingsActions.Execute("/one friendlyfire on").Success, "Guests cannot enable friendly fire");
+        check(!SettingsActions.Execute("/one friendlyfire balance on").Success, "Guests cannot change host balancing policy");
     }
 }

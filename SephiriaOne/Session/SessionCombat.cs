@@ -7,6 +7,15 @@ namespace SephiriaOne
         // Same event-time scope resolution as potions. Never cache per-player
         // policy or rely on the joining connection's prior incarnation.
         internal static FriendlyFireSettings FriendlyFireForHit => EnsureResourceScope() ? CombatMatchRuntime.Effective(policy.FriendlyFire) : default;
+        internal static long CombatBalanceRevision { get; private set; }
+
+        private static void RecordFriendlyFire(FriendlyFireCommand command)
+        {
+            bool previous = policy.FriendlyFire.Balance;
+            policy.Record(command);
+            if (previous != policy.FriendlyFire.Balance || command.Reset) CombatBalanceRevision++;
+            if (command.Reset) FriendlyFireParticipants.ResetSelection();
+        }
 
         internal static bool CanResetFriendlyFireScores => enabled && NetworkServer.active && !CombatMatchRuntime.RecoveryPending &&
             (CombatMatchRuntime.IsRunning ? CombatMatchRuntime.CanResetScores :
@@ -36,9 +45,9 @@ namespace SephiriaOne
         {
             message = L.T("Only the host can change friendly fire.");
             if (!NetworkServer.active) return false;
-            bool interrupted = CombatMatchRuntime.IsRunning && (!command.Percent.HasValue || command.Reset);
+            bool interrupted = CombatMatchRuntime.IsRunning && command.TouchesMasterToggle;
             var previousDungeon = DungeonManager.Instance; var previousRun = SaveManager.CurrentRun; long previousGeneration = ResourceGeneration;
-            if (!command.Percent.HasValue || command.Reset) CombatMatchRuntime.Stop(true, true);
+            if (command.TouchesMasterToggle) CombatMatchRuntime.Stop(true, true);
             if (!command.IsReset && !FriendlyFireFeature.Available)
             { message = L.T("Friendly-fire compatibility checks failed. Off/reset remain available; see Player.log."); return false; }
             if (interrupted)
@@ -48,19 +57,20 @@ namespace SephiriaOne
                 message = L.T("Session changed. Review the values and enter the action again.");
                 if (!EnsureResourceScope() || !ReferenceEquals(previousDungeon, DungeonManager.Instance) ||
                     !ReferenceEquals(previousRun, SaveManager.CurrentRun) || previousGeneration != ResourceGeneration) return false;
-                policy.Record(command); if (command.Reset) FriendlyFireParticipants.ResetSelection();
+                RecordFriendlyFire(command);
                 FriendlyFireKda.SetEnabled(policy.FriendlyFire.Enabled);
                 DeathmatchChanged(); message = DescribeFriendlyFire(policy.FriendlyFire); return true;
             }
             if (!PrepareCommand("combat", command.IsReset, out HostCommandContext context, out message)) return false;
             if (!Commit("combat", context.CreateBatch(), () =>
-                { policy.Record(command); if (command.Reset) FriendlyFireParticipants.ResetSelection();
+                { RecordFriendlyFire(command);
                     FriendlyFireKda.SetEnabled(CombatMatchRuntime.ScoresEnabled(CombatMatchRuntime.Effective(policy.FriendlyFire).Enabled)); }, out message)) return false;
             message = DescribeFriendlyFire(CombatMatchRuntime.Effective(policy.FriendlyFire));
             return true;
         }
 
         internal static string DescribeFriendlyFire(FriendlyFireSettings settings) =>
-            L.F("Friendly fire: {0}; allied damage: {1}%.", L.T(settings.Enabled ? "on" : "off"), settings.Number);
+            L.F("Friendly fire: {0}; allied damage: {1}%.", L.T(settings.Enabled ? "on" : "off"), settings.Number) + " " +
+            L.F("PvP balancing: {0}.", L.T(settings.Balance ? "on" : "off"));
     }
 }

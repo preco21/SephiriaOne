@@ -16,7 +16,7 @@ namespace SephiriaOne
         private sealed class DarkCloudWindow
         {
             internal bool Started;
-            internal long CombatEpoch, ParticipantEpoch;
+            internal long CombatEpoch, ParticipantEpoch, BalanceRevision;
             internal string SourceFloor, TargetFloor;
             internal float LastStrike;
         }
@@ -41,7 +41,7 @@ namespace SephiriaOne
             // Native multishot coroutines can outlive their owner; queued strikes
             // keep the same limit after death as long as that connection is current.
             var settings = SessionSettings.FriendlyFireForHit;
-            if (!settings.Enabled || !settings.HasDamage || !CanAffectTeam(source, victim)) return true;
+            if (!settings.Enabled || !settings.Balance || !settings.HasDamage || !CanAffectTeam(source, victim)) return true;
 
             var attacker = FriendlyFireParticipants.Capture(source);
             var defender = FriendlyFireParticipants.Capture(victim);
@@ -54,13 +54,15 @@ namespace SephiriaOne
             long combatEpoch = FriendlyFireKda.Epoch;
             var window = darkCloudWindows.GetValue(attacker, createCloudTargets).Windows.GetValue(defender, createCloudWindow);
             float now = Time.time;
-            if (window.Started && window.CombatEpoch == combatEpoch && window.ParticipantEpoch == participantEpoch &&
+            long balanceRevision = SessionSettings.CombatBalanceRevision;
+            if (window.Started && window.CombatEpoch == combatEpoch && window.ParticipantEpoch == participantEpoch && window.BalanceRevision == balanceRevision &&
                 window.SourceFloor == source.currentFloorGuid && window.TargetFloor == victim.currentFloorGuid &&
                 now >= window.LastStrike && now - window.LastStrike < DarkCloudPlayerInterval) return false;
 
             // Reserve before native callbacks: recursive strikes and another
             // cloud object owned by this player share the same pair's window.
             window.Started = true; window.CombatEpoch = combatEpoch; window.ParticipantEpoch = participantEpoch;
+            window.BalanceRevision = balanceRevision;
             window.SourceFloor = source.currentFloorGuid; window.TargetFloor = victim.currentFloorGuid; window.LastStrike = now;
             return true;
         }

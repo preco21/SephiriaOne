@@ -56,8 +56,9 @@ namespace SephiriaOne
     internal static class SessionSettings
     {
         private static FriendlyFireSettings settings;
+        internal static long CombatBalanceRevision;
         internal static FriendlyFireSettings FriendlyFireForHit
-        { get => settings; set { settings = value; FriendlyFireKda.SetEnabled(value.Enabled); } }
+        { get => settings; set { if (settings.Balance != value.Balance) CombatBalanceRevision++; settings = value; FriendlyFireKda.SetEnabled(value.Enabled); } }
     }
 }
 public enum EApplyDamageResult { Success, Fail_Absolute, Fail_Block }
@@ -123,6 +124,7 @@ public class UnitAvatar : CombatBehaviour
     public UnitAvatar NetworkLeader { [MethodImpl(MethodImplOptions.NoInlining)] get; set; }
     public Mirror.SyncList<UnitAvatar> followers = new();
     public float Hp = 100;
+    public float MaxHp { get; set; } = 100;
     public float Shield { [MethodImpl(MethodImplOptions.NoInlining)] get; set; }
     public float TrueDamage, Defense;
     public int Mp = 100;

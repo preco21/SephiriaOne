@@ -7,6 +7,37 @@ internal static class FriendlyFirePolicyTests
         int checks = 0;
         void Check(bool value, string why) { if (!value) throw new Exception(why); checks++; }
         var policy = new SessionPolicy();
+        Check(FriendlyFireCommand.Parse("/one friendlyfire balance on", out var balanceCommand) == FriendlyFireParseResult.Valid,
+            "Host can enable optional PvP balancing through the shared command");
+        Check(!policy.FriendlyFire.Balance && !balanceCommand.IsReset && !balanceCommand.TouchesMasterToggle,
+            "Balancing defaults off; enabling it is not a master toggle or recovery action");
+        policy.Record(balanceCommand);
+        Check(policy.FriendlyFire.Balance && !policy.FriendlyFire.Enabled && policy.FriendlyFire.DamagePercent == 100,
+            "Balance preference does not enable combat or change its damage scale");
+        policy.Record(new FriendlyFireCommand(true)); policy.Record(new FriendlyFireCommand(false, 0.1m));
+        Check(policy.FriendlyFire.Balance && policy.FriendlyFire.WithEnabled(false).Balance,
+            "Master/damage edits and match overlays preserve balancing");
+        string balancedPreset = policy.ToPresetText();
+        Check(balancedPreset.StartsWith("SephiriaOne preset v22\n") &&
+            SessionPolicy.TryReadPreset(balancedPreset, out var balanced, out _) && balanced.FriendlyFire.Balance &&
+            balanced.FriendlyFire.Enabled && balanced.FriendlyFire.DamagePercent == 0.1m, "Balancing and fractional damage round-trip with preset v22");
+        Check(FriendlyFireCommand.Parse("/ONE FRIENDLYFIRE BALANCE OFF", out var unbalance) == FriendlyFireParseResult.Valid &&
+            unbalance.IsReset && !unbalance.TouchesMasterToggle, "Balance off is available as recovery without stopping the match");
+        policy.Record(unbalance);
+        Check(!policy.FriendlyFire.Balance && policy.FriendlyFire.Enabled && policy.FriendlyFire.DamagePercent == 0.1m,
+            "Balance off preserves master switch and damage scale");
+        foreach (string invalidBalance in new[] { "", "yes", "1", "on extra", "x2" })
+            Check(FriendlyFireCommand.Parse("/one friendlyfire balance " + invalidBalance, out _) == FriendlyFireParseResult.Invalid,
+                "Invalid balancing command: " + invalidBalance);
+        foreach (string row in new[] { "balance 2", "balance on", "balance 1.0", "balance 1\nfriendlyfire balance 0" })
+            Check(!SessionPolicy.TryReadPreset("SephiriaOne preset v22\nfriendlyfire " + row + "\n", out var badBalance, out _) && !badBalance.HasChanges,
+                "Malformed balancing preset is atomic: " + row);
+        Check(!SessionPolicy.TryReadPreset("SephiriaOne preset v21\nfriendlyfire balance 1\n", out _, out _),
+            "Earlier schemas reject unsupported balancing rows");
+        Check(SessionPolicy.TryReadPreset("SephiriaOne preset v21\nfriendlyfire enabled 1\n", out var prior, out _) && !prior.FriendlyFire.Balance,
+            "Existing preset keeps balancing off");
+        policy.Record(balanceCommand); policy.Record(new FriendlyFireCommand(false, reset: true));
+        Check(!policy.FriendlyFire.Balance && !policy.HasChanges, "Full combat reset also clears balancing");
         Check(!policy.FriendlyFire.Enabled && policy.FriendlyFire.DamagePercent == 100 && !policy.HasChanges, "Combat defaults off and 100%");
         Check(default(FriendlyFireSettings).Equals(new FriendlyFireSettings(false, 100m)), "Explicit defaults equal the zero-initialized setting");
         foreach (decimal invalid in new[] { -0.01m, 300.01m, 0.001m, decimal.MaxValue, decimal.MinValue })

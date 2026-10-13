@@ -180,6 +180,7 @@ KillLogTests.Run(Check);
 EffectTests.Run(Check);
 ArtifactTests.Run(Check);
 DarkCloudTests.Run(Check);
+BalanceTests.Run(Check);
 SpellTests.Run(Check);
 FractionalDamageTests.Run(Check);
 SelectiveCombatTests.Run(Check);
