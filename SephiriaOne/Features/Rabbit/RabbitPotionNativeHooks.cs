@@ -95,6 +95,7 @@ namespace SephiriaOne
             drinks?.Clear();
             completions?.Clear();
             ResetHealVisuals();
+            ResetHealPresentation();
         }
 
         private static bool ValidateDrinkShape(MethodInfo drink)
@@ -299,7 +300,9 @@ namespace SephiriaOne
                         HostStateAdapter.IsReady(spawner) && ReferenceEquals(spawner.PlayerAvatar, recipient) &&
                         ReferenceEquals(recipient.spawner, spawner) && recipient.netId == recipientId &&
                         !recipient.IsDead && recipient.currentFloorGuid == floor && floor == context.Floor)
-                        ShowSharedHealVisual(recipient);
+                    {
+                        if (!TryShowSharedHealPresentation(context.Effect, recipient)) ShowSharedHealVisual(recipient);
+                    }
                 }
                 catch { /* A stale recipient or failed heal cannot cancel the native drink. */ }
             }

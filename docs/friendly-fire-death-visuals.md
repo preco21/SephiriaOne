@@ -1,5 +1,10 @@
 # Friendly-fire downed-player effect
 
+Follow-up `0.54.1`: the red FX now has a separate sound-only native impact cue
+for remote observers, including the host. The victim keeps native local death
+audio, avoiding an extra cue on that client. See [audio delivery and evidence](remote-event-audio.md).
+The visual asset/transport below remains unchanged.
+
 Implemented in `0.48.0`, 2026-10-12. Uses the installed game assembly fingerprint
 recorded in [domain findings](domain-findings.md). Asset inspection and native
 contracts are evidence about this build, not proof of live multiplayer rendering.

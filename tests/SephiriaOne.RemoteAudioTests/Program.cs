@@ -1,0 +1,79 @@
+using Mirror;
+using SephiriaOne;
+
+int checks = 0;
+void Check(bool condition, string message) { if (!condition) throw new Exception(message); checks++; }
+PlayerAvatar Add(int id, bool local = false)
+{
+    NetworkConnectionToClient c = local ? new LocalConnectionToClient() : new NetworkConnectionToClient();
+    c.connectionId = id;
+    var p = new PlayerAvatar { netId = (uint)id, connectionToClient = c };
+    p.spawner = new PlayerSpawner { PlayerAvatar = p, connectionToClient = c, netIdentity = p.netIdentity };
+    p.netIdentity.Owner = p.spawner; c.identity = p.netIdentity;
+    NetworkServer.connections.Add(id, c); DungeonManager.Instance.netIdentity.observers[id] = c;
+    return p;
+}
+void Reset()
+{
+    NetworkServer.connections.Clear(); NetworkServer.active = true;
+    DungeonManager.Instance = new(); Bullet.Pool = new();
+    FriendlyFireDeathAudio.Reset(); FriendlyFireDeathVisuals.Compatible = true;
+    // Real native IL is validated by GameRemoteAudioTests. Here inject only the
+    // validated sender to execute production audience/payload/failure handling.
+    HarmonyLib.AccessTools.Field(typeof(FriendlyFireDeathAudio), "initialized").SetValue(null, true);
+    HarmonyLib.AccessTools.Field(typeof(FriendlyFireDeathAudio), "targetSend").SetValue(null,
+        HarmonyLib.AccessTools.Method(typeof(NetworkBehaviour), "SendTargetRPCInternal"));
+}
+foreach (bool localVictim in new[] { false, true })
+{
+    Reset(); var victim = Add(1, localVictim); var host = Add(2, !localVictim); var other = Add(3);
+    foreach (var e in NetworkServer.connections) victim.netIdentity.observers[e.Key] = e.Value;
+    FriendlyFireDeathAudio.Show(victim);
+    Check(victim.connectionToClient.Sent.Count == 0, "Victim retains native death sound without a second cue");
+    foreach (var listener in new[] { host, other })
+    {
+        Check(listener.connectionToClient.Sent.Count == 1, "Host/remote observer receives one targeted cue");
+        Check(listener.connectionToClient.Sent[0].SequenceEqual(new object[] { 1u, false, "FlameBall", victim.transform.position, 0f, 0f, 1f }), "Exact native sound-only payload at victim position");
+    }
+    Check(NetworkWriterPool.Outstanding == 0, "All writers returned");
+}
+foreach (string condition in new[] { "unready", "replaced", "dungeon hidden", "victim hidden", "other floor", "wrong owner", "no identity", "duplicate" })
+{
+    Reset(); var victim = Add(1); var listener = Add(2, true); var c = listener.connectionToClient;
+    victim.netIdentity.observers[2] = c;
+    switch (condition)
+    {
+        case "unready": c.isReady = false; break;
+        case "replaced": NetworkServer.connections[2] = new() { connectionId = 2 }; break;
+        case "dungeon hidden": DungeonManager.Instance.netIdentity.observers.Clear(); break;
+        case "victim hidden": victim.netIdentity.observers.Clear(); break;
+        case "other floor": listener.currentFloorGuid = "dungeon"; break;
+        case "wrong owner": listener.spawner.connectionToClient = new(); break;
+        case "no identity": c.identity = null; break;
+        case "duplicate": victim.netIdentity.observers[99] = c; break;
+    }
+    FriendlyFireDeathAudio.Show(victim);
+    Check(c.Sent.Count == (condition == "duplicate" ? 1 : 0), "Audience validity: " + condition);
+}
+Reset();
+var dead = Add(1); var failing = Add(2); var later = Add(3, true);
+foreach (var e in NetworkServer.connections) dead.netIdentity.observers[e.Key] = e.Value;
+failing.connectionToClient.Fail = true;
+FriendlyFireDeathAudio.Show(dead);
+Check(failing.connectionToClient.Sent.Count == 1 && later.connectionToClient.Sent.Count == 1 && NetworkWriterPool.Outstanding == 0, "Ambiguous send is not retried and cannot skip later host recipient");
+foreach (string mutation in new[] { "subclass", "visual", "alternates", "fragments", "null sound", "guid" })
+{
+    var m = new BulletDestroyModule();
+    switch (mutation)
+    {
+        case "subclass": m = new DerivedDestroyModule(); break;
+        case "visual": m.destroyFxPrefab = new(); break;
+        case "alternates": m.destroyFxPrefabList.Add(new()); break;
+        case "fragments": m.breakFxFragments.Add(new()); break;
+        case "null sound": m.destroySound.IsNull = true; break;
+        case "guid": m.destroySound.Guid.Data1++; break;
+    }
+    Check(!FriendlyFireDeathAudio.SoundOnly(m), "Reject changed audio asset: " + mutation);
+}
+Check(FriendlyFireDeathAudio.SoundOnly(new()), "Stock sound-only asset accepted");
+Console.WriteLine($"Passed {checks} native death-audio delivery and asset guard checks.");

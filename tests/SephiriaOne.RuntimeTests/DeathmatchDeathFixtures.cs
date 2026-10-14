@@ -2,6 +2,11 @@
 // state machine and native-shaped death/revival methods execute together.
 namespace SephiriaOne
 {
+    internal static class FriendlyFireDeathAudio
+    {
+        internal static void Reset() { }
+        internal static void Show(PlayerAvatar player) { }
+    }
     internal static class NativePlayerChat
     {
         internal static readonly List<(PlayerAvatar Player, string Message)> Messages = new();

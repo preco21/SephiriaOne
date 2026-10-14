@@ -14,6 +14,11 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+- `0.54.1`: [healing and kill audio](remote-event-audio.md) uses stock client
+  presentation messages for host/guest listeners, with duplicate suppression and
+  isolated compatibility failure handling. The native local death sound remains
+  on the victim; other observers receive the approved impact fallback.
+
 - `0.54.0`: independent lobby HP/MP recovery toggle, shared friendly-fire
   participation and match semantics, isolated native recovery hooks, v23 presets,
   EN/KO controls and regression checks. See [implementation/evidence](lobby-recovery.md).

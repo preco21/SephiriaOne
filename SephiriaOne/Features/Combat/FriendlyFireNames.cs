@@ -63,6 +63,8 @@ namespace SephiriaOne
                     // adapter's own try/catch from match recovery and KDA.
                     try { FriendlyFireDeathVisuals.Show(visual); }
                     catch (Exception error) { Warn(error); }
+                    try { FriendlyFireDeathAudio.Show(visual); }
+                    catch (Exception error) { Warn(error); }
                 }
                 if (__instance is PlayerAvatar dead) CombatMatchRuntime.Died(dead);
                 // A reset/toggle/run transition invalidates every old notice,

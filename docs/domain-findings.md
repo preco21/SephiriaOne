@@ -322,3 +322,11 @@ or the entire Update. Identify the actual player floor using generated
 `FloorData.stageName == Race.lobbyStage.name`; safe-mode and run flags include
 other situations. See [lobby recovery control](lobby-recovery.md) for contracts,
 participant/match integration and verification limits.
+
+Visual RPCs are not necessarily audiovisual: `RpcBloodFestivalHealFx` and the
+red `PlayerDefaultBigBullet` destroy presentation are silent. The existing potion
+drink-visual RPC broadcasts actual audio as well as green particles without
+raising potion gameplay events. Player death audio is locally owned, so exclude
+the victim when adding a stock-client cue for observers. Targeted native messages
+also reach the host's local connection; extra direct host playback duplicates
+them. See [event-audio evidence and send-failure handling](remote-event-audio.md).

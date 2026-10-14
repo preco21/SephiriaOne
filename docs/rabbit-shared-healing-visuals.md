@@ -1,5 +1,10 @@
 # Shared-healing particle investigation
 
+Follow-up `0.54.1`: successful shared heals now use the current potion's native
+sound-and-particle RPC, preserving one native send for the drinker. The silent
+avatar RPC remains a compatibility fallback. See [current audio implementation](remote-event-audio.md).
+The historical investigation below describes the original particle-only path.
+
 Investigated 2026-09-28 against the installed Sephiria 1.0.33 assembly, SHA-256
 `C57A0DAEAB8E8D0AF7066A344133EEC4C57D8F303FD9E25DA9410FBFC4CF1510`.
 Implemented in `0.22.0` using the existing shared-healing toggle. The investigation

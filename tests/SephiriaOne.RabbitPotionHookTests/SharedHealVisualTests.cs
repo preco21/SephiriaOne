@@ -8,6 +8,28 @@ internal static class SharedHealVisualTests
         Func<(PlayerAvatar player, ItemController controller, WieldingPotion potion, NewItemOwnInstance item)> setup,
         Action install)
     {
+        void EnableAudio(Action<PotionEffect, UnityEngine.Vector3> send)
+        {
+            AccessTools.Field(typeof(RabbitPotionNativeHooks), "healPresentationChecked").SetValue(null, true);
+            AccessTools.Field(typeof(RabbitPotionNativeHooks), "sendHealPresentation").SetValue(null, send);
+        }
+        check("shared healing sends one native audiovisual event without duplicate particles", () =>
+        {
+            var source = setup();
+            var recipient = new PlayerAvatar(); _ = new PlayerSpawner(recipient);
+            SessionSettings.RabbitPotionsForUse = new(true, true);
+            install();
+            int sent = 0;
+            var checkedField = AccessTools.Field(typeof(RabbitPotionNativeHooks), "healPresentationChecked");
+            assert(checkedField != null, "Shared healing needs a native sound-and-particle adapter");
+            checkedField.SetValue(null, true);
+            AccessTools.Field(typeof(RabbitPotionNativeHooks), "sendHealPresentation").SetValue(null,
+                (Action<PotionEffect, UnityEngine.Vector3>)((effect, pos) =>
+                { assert(ReferenceEquals(effect, source.potion.effect) && pos.Equals(recipient.transform.position), "Use live potion and recipient position"); sent++; }));
+            source.controller.RunDrink();
+            assert(sent == 1 && recipient.Heals.Count == 1 && recipient.HealVisuals == 0 && source.player.HealVisuals == 0,
+                "One presentation per shared heal; do not replay source audio or also send silent particles");
+        });
         check("shared HP gain broadcasts one native FX without recipient potion events", () =>
         {
             var source = setup();
@@ -20,6 +42,20 @@ internal static class SharedHealVisualTests
             assert(source.player.HealVisuals == 0 && recipient.DrinkEvents == 0 && survival.StatGains == 0 &&
                 source.item.Quantity == 3 && source.player.mp == 20 && NetworkWriterPool.Outstanding == 0,
                 "FX must preserve source potion protections, recipient talents and native payload ownership");
+        });
+        check("ambiguous audiovisual failure never repeats audio, healing or particles", () =>
+        {
+            var source = setup();
+            var first = new PlayerAvatar(); _ = new PlayerSpawner(first);
+            var later = new PlayerAvatar(); _ = new PlayerSpawner(later);
+            SessionSettings.RabbitPotionsForUse = new(true, true);
+            install(); int sent = 0;
+            AccessTools.Field(typeof(RabbitPotionNativeHooks), "healPresentationChecked").SetValue(null, true);
+            AccessTools.Field(typeof(RabbitPotionNativeHooks), "sendHealPresentation").SetValue(null,
+                (Action<PotionEffect, UnityEngine.Vector3>)((_, _) => { sent++; throw new Exception("May already be queued"); }));
+            source.controller.RunDrink();
+            assert(sent == 1 && first.Heals.Count == 1 && first.HealVisuals == 0 && later.Heals.Count == 1 && later.HealVisuals == 1,
+                "No fallback after an attempted send; later recipients can still receive silent particles");
         });
         foreach (string kind in new[] { "full", "zero", "dead", "range", "floor", "off", "mp", "nan", "infinity" })
             check("no shared FX for " + kind, () =>
@@ -38,8 +74,8 @@ internal static class SharedHealVisualTests
                     case "nan": recipient.Hp = float.NaN; break;
                     case "infinity": recipient.MaxHp = float.PositiveInfinity; break;
                 }
-                install(); source.controller.RunDrink();
-                assert(recipient.HealVisuals == 0 && source.player.HealVisuals == 0, "Non-healed recipient received FX");
+                install(); int audio = 0; EnableAudio((_, _) => audio++); source.controller.RunDrink();
+                assert(audio == 0 && recipient.HealVisuals == 0 && source.player.HealVisuals == 0, "Non-healed recipient received FX/audio");
             });
         foreach (string change in new[] { "recipient death", "source death", "recipient floor", "source floor", "run", "dungeon",
             "removed connection", "replaced connection", "replaced identity", "replaced owner", "not ready", "avatar",
@@ -74,9 +110,9 @@ internal static class SharedHealVisualTests
                         case "destroyed": recipient.Destroyed = true; break;
                     }
                 };
-                install(); source.controller.RunDrink();
-                assert(recipient.Heals.Count == 1 && recipient.Hp == 40 && recipient.HealVisuals == 0,
-                    "FX crossed the old recipient/source lifetime or replayed healing");
+                install(); int audio = 0; EnableAudio((_, _) => audio++); source.controller.RunDrink();
+                assert(audio == 0 && recipient.Heals.Count == 1 && recipient.Hp == 40 && recipient.HealVisuals == 0,
+                    "FX/audio crossed the old recipient/source lifetime or replayed healing");
             });
         check("failed visual disables only particles and never retries healing", () =>
         {
