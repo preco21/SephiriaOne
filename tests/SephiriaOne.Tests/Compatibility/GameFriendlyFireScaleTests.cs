@@ -19,6 +19,7 @@ internal static class GameFriendlyFireScaleTests
             scale.Count(i => Call(i, "FriendlyFireBalance", "Soften")) == 1, "Player softening reads current balancing and native maximum HP once per resolved hit");
         Require(scale.Count(i => Call(i, "FriendlyFireRuntime", "LimitBalancedDamage")) == 1,
             "Rapid-hit budget shares the verified pre-shield balance boundary");
+        Require(scale.Any(i => Call(i, "FriendlyFireSettings", "get_RefillScale")), "Damage pipeline reads the configured refill");
         var revive = PatchProcessor.GetOriginalInstructions(AccessTools.Method(runtime, "BeforeRevive")).ToList();
         Require(revive.Any(i => Call(i, "FriendlyFireRuntime", "ResetBalanceLife")), "Native revival retires the player's budget life");
         var finish = PatchProcessor.GetOriginalInstructions(AccessTools.Method(runtime, "AfterHit")).ToList();
@@ -37,7 +38,20 @@ internal static class GameFriendlyFireScaleTests
         var refresh = Code("RefreshCombat");
         Require(refresh.Any(i => Call(i, "FriendlyFireSettings", "get_Number")) &&
             refresh.Any(i => i.operand is FieldInfo field && field.Name == "friendlyDraft"), "refresh preserves edits and shows canonical saved precision");
-        Require(Code("ClearInput").Any(i => i.operand is FieldInfo field && field.Name == "friendlyDraft"), "existing scope reset clears combat draft");
+        Require(Code("ClearInput").Any(i => Call(i, "SettingsPanel", "ClearFriendlyDamage")), "existing scope reset clears combat draft");
+        var refill = Code("ApplyFriendlyRefill");
+        Require(apply.Any(i => Call(i, "SettingsPanel", "ClearFriendlyDamage")) && refill.Any(i => Call(i, "SettingsPanel", "ClearFriendlyRefill")),
+            "Each successful Apply clears only its own draft, preserving the other pending field");
+        Require(build.Count(i => Call(i, "PanelWidgets", "Input")) == 2 && build.Any(i => i.LoadsConstant("PvP refill (%/s)")), "Independent refill input exists");
+        Require(refill.Any(i => i.LoadsConstant("/one friendlyfire refill ")) && refill.Any(i => Call(i, "TMP_InputField", "get_text")) &&
+            refill.Any(i => Call(i, "SettingsPanel", "Execute")), "Refill Apply uses exact text through the shared command");
+        Require(!Code("EditFriendlyRefill").Any(i => Call(i, "SettingsPanel", "Execute")) &&
+            refresh.Any(i => i.operand is FieldInfo field && field.Name == "friendlyRefillDraft") &&
+            refresh.Any(i => Call(i, "FriendlyFireSettings", "get_RefillNumber")), "Refill typing stays local and refresh preserves the draft");
+        Require(Code("ClearInput").Any(i => Call(i, "SettingsPanel", "ClearFriendlyRefill")), "Scope resets clear refill drafts too");
+        Require(!Code("ClearFriendlyDamage").Any(i => i.operand is FieldInfo field && field.Name == "friendlyRefillDraft") &&
+            !Code("ClearFriendlyRefill").Any(i => i.operand is FieldInfo field && field.Name == "friendlyDraft"), "Per-field resets do not touch the sibling draft");
+        Require(Code("Execute").Any(i => Call(i, "Action", "Invoke")), "Successful execution invokes its field-specific cleanup");
         Console.WriteLine("Verified fractional combat slider/input, shared parser/Apply and no-notify draft wiring (not live Unity input).");
     }
 }

@@ -74,6 +74,7 @@ namespace SephiriaOne
         internal static string DescribeFriendlyFire(FriendlyFireSettings settings) =>
             L.F("Friendly fire: {0}; allied damage: {1}%.", L.T(settings.Enabled ? "on" : "off"), settings.Number) + " " +
             L.F("PvP balancing: {0}.", L.T(settings.Balance ? "on" : "off")) + " " +
+            L.F("PvP refill: {0}% max HP/s.", settings.RefillNumber) + " " +
             L.F("Block lobby HP/MP recovery: {0}.", L.T(settings.BlockLobbyRegen ? "on" : "off")) +
             (settings.BlockLobbyRegen && !LobbyRegenFeature.Available ? " " + L.T("Lobby recovery hooks unavailable; off/reset remain available. See Player.log.") : "");
     }

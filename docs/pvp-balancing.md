@@ -22,14 +22,30 @@ damage budget still determine whether a hit deals damage. Burn's cadence remains
 native-speed-dependent with the existing 0.75 elapsed multiplier; it is not a
 fixed 0.25-second timer. The shared 40% HP/s refill is unchanged by this tuning.
 
+Updated in `0.55.0`, 2026-10-15: refill is now configurable, default **100% of
+victim maximum HP per second**. The Combat panel's **PvP refill (%/s)** input
+(`PvP 회복률 (%/초)`) and **Apply refill** button use the same command as chat.
+The panel retains its dimensions; K/D/A reset and Revive All remain at the top.
+
 Enable **Combat → PvP balancing** (`PvP 밸런스 보정`) or use:
 
 ```text
 /one friendlyfire balance on
 /one friendlyfire balance off
+/one friendlyfire refill 100
+/one friendlyfire refill 125.5
+/one friendlyfire refill reset
 /one friendlyfire status
 /one save
 ```
+
+Refill accepts **1..300**, up to two decimal places, with an optional `%` suffix.
+It is the damage allowance replenished per second, not HP regeneration or the
+ordinary damage percentage. It applies only while PvP balancing is enabled.
+`refill reset` restores 100 without changing other preferences or interrupting
+an active match. Full `/one friendlyfire reset` restores all combat defaults.
+Use `/one save` to persist the choice. Nondefault refill requires preset v24;
+older presets inherit 100, and default refill adds no row or schema requirement.
 
 The preference is independent of the friendly-fire master switch. It affects
 current permitted player pairs in casual friendly fire, Deathmatch and Tournament
@@ -89,10 +105,10 @@ low host damage percentages can still produce negligible damage; try 100% as a
 starting point when evaluating balancing. The setting never changes that slider
 automatically or introduces a minimum damage floor.
 
-## Rapid-hit budget (`0.53.0`, tuned in `0.54.2`)
+## Rapid-hit budget (`0.53.0`, configurable in `0.55.0`)
 
 Each directed attacker/player-victim pair has a token budget with **20% of actual
-victim maximum HP capacity** and **40% of maximum HP per game second refill**.
+victim maximum HP capacity** and **100% of maximum HP per game second refill by default**.
 Refill is continuous, pauses with the game clock and stops at capacity. All of an
 attacker's weapons, artifact projectiles/procs, debuffs and companions share the
 same pool against that victim. Changing damage IDs, weapons or projectile objects
@@ -100,15 +116,24 @@ does not grant another pool. Other attackers and other victims remain independen
 reflection uses the reverse directed pair. Dark Cloud retains its separate limit.
 
 For fixed maximum HP `H`, applied HP plus regular/MP-shield damage from one
-attacker over `T` seconds is bounded by approximately `H * (0.20 + 0.40*T)` from
+attacker over `T` seconds is bounded by approximately `H * (0.20 + R*T)` from
 a full pool. Thus an initially full-health, unshielded target cannot be killed
-by that attacker in less than about 2 seconds through this damage path. This
+by that attacker in less than about **0.8 seconds at the default** through this
+damage path (`R = refill percent / 100`; minimum time is `0.80 / R`). This
 is a ceiling, not guaranteed DPS or a minimum-damage boost. Actual hits, defenses,
 healing and shields can make fights longer; multiple attackers remain independent.
-The 40% pace is a tuning value, not an in-game configurable setting. It gives
+The default permits subsecond kills when enough damaging hits land. It gives
 rapid direct/magic hits more room without changing native impact detection or
 invulnerability. It also applies to the same shared artifact/companion/DoT pool;
 there are no separate additive allowances that multi-effect builds can combine.
+
+Changing refill preserves current tokens, combat scores, match state, pulse clocks
+and the combat balance revision; it never grants another initial burst. On the
+first hit observing a rate edit, use the lower of the prior and current refill
+rates for elapsed time since the previous hit, then retain the new rate. This
+conservatively avoids retroactive faster credit and makes reductions immediate.
+Rate changes are O(1), with one extra double per existing pair budget, no new
+polling/scene scans and no new network messages. Native stats and PvE are untouched.
 
 Reserve the already-softened hit before shields/callbacks to prevent recursive
 procs consuming the same tokens twice. On successful completion, the native
@@ -261,6 +286,22 @@ preset was explicitly saved. Enabled balancing uses preset v22; earlier versions
 still parse and default balancing to off. Malformed/duplicate rows fail atomically.
 
 ## Verification and limits
+
+`0.55.0` configurable refill verification on 2026-10-15:
+
+- Release build with `-p:DeployMod=false`: zero warnings/errors.
+- 1,427 friendly-fire executable hook checks, including configurable refill,
+  subsecond full-health kills, same-frame edits, conservative rate transitions,
+  MP-shield accounting and zero allocations per warmed balanced hit.
+- 1,998 runtime/session checks plus 69 Bat checks; refill survives saved-policy
+  restoration, run restart/rejoin and both match overlays without resetting KDA
+  or interrupting an active match. Guest mutations are rejected.
+- All portable and installed-game contracts passed, including 129 dedicated
+  refill checks, 3,375 bundled catalog checks and compiled UI wiring checks.
+- Code review found sibling numeric drafts were discarded on either Apply.
+  A regression check failed before the fix; successful Apply now clears only
+  its own field. Failed commands retain drafts; scope changes still clear both.
+- No game launch, deployment or live multiplayer/visual validation performed.
 
 `0.54.4` pulse tuning verification on 2026-10-15:
 

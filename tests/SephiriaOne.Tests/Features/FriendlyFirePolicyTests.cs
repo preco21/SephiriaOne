@@ -7,6 +7,8 @@ internal static class FriendlyFirePolicyTests
         int checks = 0;
         void Check(bool value, string why) { if (!value) throw new Exception(why); checks++; }
         var policy = new SessionPolicy();
+        Check(FriendlyFireCommand.Parse("/one friendlyfire refill 100", out _) == FriendlyFireParseResult.Valid,
+            "Host can configure PvP refill through the shared command");
         Check(FriendlyFireCommand.Parse("/one friendlyfire balance on", out var balanceCommand) == FriendlyFireParseResult.Valid,
             "Host can enable optional PvP balancing through the shared command");
         Check(!policy.FriendlyFire.Balance && !balanceCommand.IsReset && !balanceCommand.TouchesMasterToggle,

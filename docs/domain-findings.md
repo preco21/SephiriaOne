@@ -44,7 +44,10 @@ expiry on another timer. `0.54.2` wraps only the former elapsed input with a
 Frostbite, Poison and Wound periodic timers, preserving native speed bonuses,
 blue-burn damage, stacks and expiry. It consults shared live hostility;
 no prefab, stat, timer interval or cached override needs restoring. Native tick
-damage still goes through the same resolved-damage budget (now 40% max HP/s).
+damage still goes through the same resolved-damage budget (configurable since
+`0.55.0`, default 100% max HP/s). Rate changes preserve tokens and pulse clocks;
+the interval spanning an edit uses the lower of the old/new rate to avoid
+retroactive higher-rate credit. The following interval uses the new rate.
 Electric/Plasma shock and Freeze have application/refresh/expiry damage rather
 than periodic ticks; separate 0.25s clocks (tuned in `0.54.4`) in that existing pair window limit
 only their damage. Freeze discards ApplyDamage's result before calling native

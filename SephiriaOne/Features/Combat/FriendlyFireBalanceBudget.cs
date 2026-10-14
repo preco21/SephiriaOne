@@ -41,7 +41,7 @@ namespace SephiriaOne
             if (receipt != null && balanceActors.TryGetValue(receipt, out BalanceActor actor)) actor.Life++;
         }
 
-        private static double LimitBalancedDamage(double damage, double maxHp)
+        private static double LimitBalancedDamage(double damage, double maxHp, double refillPerSecond)
         {
             var attacker = current.AttackerReceipt;
             var victim = current.VictimReceipt;
@@ -67,7 +67,7 @@ namespace SephiriaOne
             float now = Time.time;
             int pulse = DebuffPulseKind(current.Damage);
             if (pulse == 1 && !window.Shock.Ready(now) || pulse == 2 && !window.Freeze.Ready(now)) return 0;
-            double allowed = window.Budget.Take(damage, maxHp, now);
+            double allowed = window.Budget.Take(damage, maxHp, now, refillPerSecond);
             if (allowed > 0)
             {
                 // Reserve before native callbacks; zero-charge or exhausted

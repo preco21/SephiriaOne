@@ -7,18 +7,20 @@ namespace SephiriaOne
     internal struct FriendlyFireDamageBudget
     {
         internal const double Capacity = 0.20d;
-        internal const double RefillPerSecond = 0.40d;
         private bool started;
-        private double remaining, lastTime;
+        private double remaining, lastTime, lastRefill;
 
-        internal double Take(double damage, double maxHp, double now)
+        internal double Take(double damage, double maxHp, double now, double refillPerSecond = 1d)
         {
-            if (!Finite(damage) || damage <= 0 || !Finite(maxHp) || maxHp <= 0 || !Finite(now)) return 0;
+            if (!Finite(damage) || damage <= 0 || !Finite(maxHp) || maxHp <= 0 || !Finite(now) ||
+                !Finite(refillPerSecond) || refillPerSecond <= 0) return 0;
             if (!started || now < lastTime)
             { remaining = Capacity; started = true; }
             else
-                remaining = Math.Min(Capacity, remaining + (now - lastTime) * RefillPerSecond);
-            lastTime = now;
+                // Rate edits preserve tokens. Never credit elapsed time retroactively
+                // at a higher rate; a decrease takes effect on the next hit as well.
+                remaining = Math.Min(Capacity, remaining + (now - lastTime) * Math.Min(lastRefill, refillPerSecond));
+            lastTime = now; lastRefill = refillPerSecond;
             double allowed = Math.Min(damage, remaining * maxHp);
             remaining = Math.Max(0, remaining - allowed / maxHp);
             return allowed;

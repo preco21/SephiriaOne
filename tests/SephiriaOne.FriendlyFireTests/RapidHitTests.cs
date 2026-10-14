@@ -16,11 +16,11 @@ internal static class RapidHitTests
         check(target.Hp == 80, "Rapid same-pair impacts share one 20%-max-HP burst instead of each receiving a full allowance");
         check(target.Hits == 20 && callbacks == 20 && hit.damage == 20,
             "Budget preserves native attack callbacks and pooled source damage");
-        target = new PlayerAvatar { IsMpShield = true, Mp = 100 };
+        target = new PlayerAvatar { IsMpShield = true, Mp = 200 };
         hit.damage = float.MaxValue;
         target.ApplyDamage(hit);
         for (int i = 1; i <= 100; i++) { Time.time = 10 + i / 100f; target.ApplyDamage(hit); }
-        check(target.Mp >= 39 && target.Mp <= 41 && target.Hp == 100,
+        check(target.Mp >= 79 && target.Mp <= 81 && target.Hp == 100,
             "Rapid refill is not lost to native integer MP shield rounding; actual shield damage spends the budget");
         Arithmetic(check);
 
@@ -38,12 +38,12 @@ internal static class RapidHitTests
             Fresh(); hit.fromType = kind;
             hit.damageType = kind == EDamageFromType.Magic ? EDamageType.Projectile : EDamageType.Slice;
             Strike(); Time.time += 0.1f; Strike();
-            check(Near(target.Hp, 76), "Direct and magic impacts use the increased shared refill: " + kind);
+            check(Near(target.Hp, 70), "Direct and magic impacts use the increased shared refill: " + kind);
         }
         Fresh(); Strike(); Time.time += 0.1f; Strike();
-        check(Near(target.Hp, 76), "Continuous refill admits 4% max HP after 0.1 game seconds");
+        check(Near(target.Hp, 70), "Continuous refill admits 10% max HP after 0.1 game seconds");
         Time.time += 1; Strike();
-        check(Near(target.Hp, 56), "Idle refill stops at burst capacity, never saves an unlimited future burst");
+        check(Near(target.Hp, 50), "Idle refill stops at burst capacity, never saves an unlimited future burst");
 
         Fresh(); Strike();
         hit.origin = new UnitAvatar { NetworkLeader = source }; Strike();
@@ -101,6 +101,8 @@ internal static class RapidHitTests
         check(target.Hp == 60, "Off/on without intervening impacts starts a fresh budget");
         Fresh(); Strike(); SessionSettings.FriendlyFireForHit = new(true, 50, balance: true); Strike();
         check(target.Hp == 80, "Editing damage percentage does not refill a depleted budget");
+        SessionSettings.FriendlyFireForHit = new(true, 50, balance: true, refillPercent: 200); Strike();
+        check(target.Hp == 80, "Editing refill percentage does not grant a new burst");
         FriendlyFireKda.ResetScores(); Strike();
         check(target.Hp == 60, "KDA reset clears previous combat allowance state");
         FriendlyFireParticipants.Select(source, target); Strike();
@@ -123,7 +125,7 @@ internal static class RapidHitTests
         Fresh(); Strike(); target.MaxHp = 200; Strike();
         check(target.Hp == 80, "Changing maximum HP never manufactures an immediate new allowance");
         Time.time += 0.1f; Strike();
-        check(Near(target.Hp, 72), "Future refill scales from the victim's current maximum HP");
+        check(Near(target.Hp, 60), "Future refill scales from the victim's current maximum HP");
 
         Fresh(); Strike(); source.IsDead = true; Strike();
         check(target.Hp == 80, "Queued projectiles from a dead owner retain the existing budget");
@@ -138,6 +140,13 @@ internal static class RapidHitTests
         target.ApplyDamage(new() { origin = enemy, damage = 10, targetFactionLayers = -1 });
         Strike();
         check(enemy.Hp == 800 && target.Hp == 70, "Exhausted PvP allowance neither limits nor is refilled by outgoing/incoming PvE");
+
+        Fresh(); Strike();
+        for (int i = 1; i <= 18; i++) { Time.time = 10 + i * 0.05f; Strike(); }
+        check(target.IsDead, "Default 100% refill allows a full-health unshielded opponent to die in under one second");
+        Fresh(); SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, refillPercent: 40); Strike();
+        Time.time += 0.1f; Strike();
+        check(Near(target.Hp, 76), "Configured 40% refill reaches the actual damage pipeline");
 
         Fresh(); hit.damage = 20;
         for (int i = 0; i < 100; i++) { Time.time++; Strike(); target.Hp = 100; }
@@ -157,13 +166,13 @@ internal static class RapidHitTests
             for (int i = 0; i < 100; i++) sum += budget.Take(hp, hp, 10);
             check(Near(sum, 0.2 * hp), "Same-time storm respects maximum-HP-relative burst at " + hp);
             for (int i = 1; i <= 100; i++) sum += budget.Take(hp, hp, 10 + i / 100d);
-            check(Near(sum, 0.6 * hp), "One second of continuous attacks admits burst plus refill at " + hp);
+            check(Near(sum, 1.2 * hp), "One second of continuous attacks admits burst plus refill at " + hp);
             check(Near(budget.Take(hp, hp, 100), 0.2 * hp), "Long inactivity cannot accumulate extra capacity");
             budget = default;
             for (int i = 0; i < 10; i++)
                 check(Near(budget.Take(hp * 0.1, hp, i), hp * 0.1), "Ordinary spaced hits remain unchanged");
             budget = default;
-            check(Near(budget.Take(hp, hp, 0.999), hp * 0.2) && budget.Take(hp, hp, 1.001) < hp * 0.001,
+            check(Near(budget.Take(hp, hp, 0.999), hp * 0.2) && budget.Take(hp, hp, 1.001) < hp * 0.003,
                 "No fixed-second boundary permits a double burst");
         }
         var invalidBudget = new FriendlyFireDamageBudget();
@@ -178,5 +187,21 @@ internal static class RapidHitTests
         var huge = new FriendlyFireDamageBudget();
         double enormous = huge.Take(double.MaxValue, double.MaxValue, 0);
         check(double.IsFinite(enormous) && enormous <= double.MaxValue * 0.2, "Finite extreme arithmetic remains bounded");
+        foreach (double rate in new[] { 0.01, 0.4, 1, 1.255, 3 })
+        {
+            var budget = new FriendlyFireDamageBudget();
+            double sum = budget.Take(100, 100, 0, rate);
+            for (int i = 1; i <= 100; i++) sum += budget.Take(100, 100, i / 100d, rate);
+            check(Near(sum, 20 + 100 * rate), "Continuous allowance follows configured refill " + rate);
+        }
+        var edited = new FriendlyFireDamageBudget();
+        edited.Take(100, 100, 0, 0.4);
+        check(Near(edited.Take(100, 100, 0.1, 1), 4), "Rate increase cannot retroactively credit earlier elapsed time");
+        check(Near(edited.Take(100, 100, 0.2, 1), 10), "Next interval uses the increased rate");
+        check(Near(edited.Take(100, 100, 0.3, 0.4), 4), "Rate decrease applies to the current interval without a free burst");
+        check(edited.Take(100, 100, 0.3, 3) == 0, "Same-time rate edits retain exhausted tokens");
+        foreach (double bad in new[] { 0, -1, double.NaN, double.PositiveInfinity })
+            check(edited.Take(100, 100, 0.4, bad) == 0, "Invalid refill never creates damage or poisons the ledger");
+        check(Near(edited.Take(100, 100, 0.4, 1), 10), "Valid refill still works after invalid attempts");
     }
 }

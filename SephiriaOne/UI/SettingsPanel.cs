@@ -192,7 +192,7 @@ namespace SephiriaOne
             statPicker = null; amount = null; resetOne = resetAll = save = forget = null;
             collinReset = null;
             updateInstall = updateCheck = null; updateAutomatic = null;
-            friendlyDamage = null; friendlyDraft = false;
+            friendlyDamage = null; friendlyDraft = false; friendlyRefill = null; friendlyRefillDraft = false;
             participantRows.Clear(); participantContent = null; participantSummary = null;
             if (pageRoot) { widgets.Forget(pageRoot); pageRoot.gameObject.SetActive(false); Destroy(pageRoot.gameObject); }
             pageRoot = PanelWidgets.Rect(window, "Page", 4, 152, 600, 162);
@@ -308,7 +308,7 @@ namespace SephiriaOne
         private string Prefix() => page == 0 ? "/stats " + StatCatalog.All[statIndex].Name : page == 1 ? "/fountain" :
             page == 3 ? "/resources " + ResourceCatalog.All[resourceIndex].Name : "/choices " + Choices[choiceIndex];
 
-        private bool Execute(string command, bool requiresScope, object expectedPlayer = null)
+        private bool Execute(string command, bool requiresScope, object expectedPlayer = null, Action clearInputOnSuccess = null)
         {
             var current = ReadCurrentSnapshot();
             if (requiresScope && !draft.IsCurrent(current.SessionIdentity, current.Epoch, current.RunGeneration))
@@ -317,7 +317,12 @@ namespace SephiriaOne
             }
             // Button state is advisory; the shared services revalidate authority and inputs.
             SettingsActionResult result = SettingsActions.Execute(command, expectedPlayer);
-            if (result.Success) { draft.Clear(); ClearInput(); }
+            if (result.Success)
+            {
+                draft.Clear();
+                if (clearInputOnSuccess != null) clearInputOnSuccess();
+                else ClearInput();
+            }
             Refresh(ReadCurrentSnapshot());
             feedback.text = string.Join("\n", result.Messages);
             feedback.color = result.Success ? new Color32(153, 226, 183, 255) : new Color32(255, 200, 122, 255);
@@ -342,7 +347,10 @@ namespace SephiriaOne
         }
 
         private void RefreshSaved() { Refresh(ReadCurrentSnapshot(true)); feedback.text = L.T("Refreshed."); }
-        private void ClearInput() { friendlyDraft = false; if (amount) amount.SetTextWithoutNotify(""); }
+        private void ClearInput()
+        {
+            ClearFriendlyDamage(); ClearFriendlyRefill();
+        }
 
         private static string PresetValues(SettingsSnapshot snapshot)
         {

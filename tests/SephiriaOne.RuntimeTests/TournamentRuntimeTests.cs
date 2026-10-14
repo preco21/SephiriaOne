@@ -47,6 +47,9 @@ internal static class TournamentRuntimeTests
         At(1); At(2); At(3);
         var chat = DungeonManager.Instance.ChatMessages;
         var pair = Pair(players);
+        check(SettingsActions.Execute("/one friendlyfire refill 125.5").Success && CombatMatchRuntime.IsRunning &&
+            CombatMatchRuntime.AllowsPair(pair[0], pair[1]) && SessionSettings.FriendlyFireForHit.RefillPercent == 125.5m,
+            "Refill edit preserves the active tournament pair and overlay");
         check(players.All(p => LobbyRegenRuntime.Suppress(p) == pair.Contains(p)), "Only the current tournament pair loses automatic lobby recovery");
         check(SettingsActions.Execute("/one friendlyfire block-lobby-regen off").Success && CombatMatchRuntime.IsRunning &&
             players.All(p => !LobbyRegenRuntime.Suppress(p)), "Recovery option edit restores recovery without stopping tournament");

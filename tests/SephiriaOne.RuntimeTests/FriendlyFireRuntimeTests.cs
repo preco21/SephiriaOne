@@ -25,6 +25,11 @@ internal static class FriendlyFireRuntimeTests
         Damage(); Kill();
         check(Score(host) == "P(1/0/0)" && Score(helper) == "P(0/0/1)", "Enabled command starts host KDA accounting");
         balanceRevision = SessionSettings.CombatBalanceRevision;
+        check(SettingsActions.Execute("/one friendlyfire refill 125.5").Success &&
+            SessionSettings.FriendlyFireForHit.RefillPercent == 125.5m && SessionSettings.CombatBalanceRevision == balanceRevision && Score(host) == "P(1/0/0)",
+            "Refill edits reach hits immediately without resetting KDA or budget revision");
+        check(SessionSettings.ReadSnapshot().FriendlyFire.RefillPercent == 125.5m &&
+            SettingsActions.Execute("/one friendlyfire status").Messages.Any(m => m.Contains("125.5% max HP/s")), "Snapshot and status expose current refill");
         check(SettingsActions.Execute("/one friendlyfire block-lobby-regen on").Success &&
             SettingsActions.Execute("/one friendlyfire block-lobby-regen off").Success &&
             SessionSettings.CombatBalanceRevision == balanceRevision && Score(host) == "P(1/0/0)",
@@ -41,6 +46,7 @@ internal static class FriendlyFireRuntimeTests
         check(SessionSettings.FriendlyFireForHit.Enabled && SessionSettings.FriendlyFireForHit.DamagePercent == 25, "Hit observes commands without waiting for another frame");
         HorayModAPI.StartSession();
         check(SessionSettings.FriendlyFireForHit.Enabled, "Run restart retains current combat policy");
+        check(SessionSettings.FriendlyFireForHit.RefillPercent == 125.5m, "Run restart retains configured refill");
         check(Score(host) == "P(1/0/0)", "Run restart preserves totals");
         Damage(); HorayModAPI.StartSession(); Kill();
         check(Score(host) == "P(2/0/0)" && Score(helper) == "P(0/0/1)", "Run restart clears previous pending assists");
@@ -59,6 +65,7 @@ internal static class FriendlyFireRuntimeTests
         PlayerSpawner.MultiplayerList.Remove(connection); SessionSettings.Synchronize();
         add(15);
         check(SessionSettings.FriendlyFireForHit.DamagePercent == 0.1m, "Replacement connection immediately uses complete fractional combat policy");
+        check(SessionSettings.FriendlyFireForHit.RefillPercent == 125.5m, "Replacement connection uses current refill policy");
         check(SessionSettings.FriendlyFireForHit.Balance, "Rejoined players immediately receive current balancing policy");
         HorayModAPI.StartSession();
         check(SessionSettings.FriendlyFireForHit.DamagePercent == 0.1m, "Run restart retains fractional combat policy");
@@ -69,12 +76,14 @@ internal static class FriendlyFireRuntimeTests
         check(SessionSettings.ReadSnapshot().ActiveSettings.Contains("friendlyfire enabled 1"), "Saved friendly fire restores after controller restart");
         check(SessionSettings.FriendlyFireForHit.DamagePercent == 0.1m, "Saved sub-one scale restores exactly after controller restart");
         check(SessionSettings.FriendlyFireForHit.Balance, "Saved balancing restores after full controller restart");
+        check(SessionSettings.FriendlyFireForHit.RefillPercent == 125.5m, "Saved refill restores after full controller restart");
         check(Score(host) == "P(0/0/0)", "Saved settings never persist KDA");
         Damage(); Kill();
         check(Score(host) == "P(1/0/0)", "Restored enabled preset activates fresh accounting");
         check(SettingsActions.Execute("/one friendlyfire reset").Success, "Friendly fire reset succeeds");
         check(!SessionSettings.ReadSnapshot().ActiveSettings.Any(x => x.StartsWith("friendlyfire ")), "Reset clears toggle and scale");
         check(Score(host) == "P(0/0/0)", "Reset command clears KDA");
+        check(SessionSettings.FriendlyFireForHit.RefillPercent == 100, "Full reset restores default refill");
         FriendlyFireFeature.Available = false;
         check(!SettingsActions.Execute("/one friendlyfire balance on").Success && SettingsActions.Execute("/one friendlyfire balance off").Success,
             "Unavailable hooks reject balance enable but preserve off recovery");
@@ -89,5 +98,6 @@ internal static class FriendlyFireRuntimeTests
         NetworkServer.active = false;
         check(!SettingsActions.Execute("/one friendlyfire on").Success, "Guests cannot enable friendly fire");
         check(!SettingsActions.Execute("/one friendlyfire balance on").Success, "Guests cannot change host balancing policy");
+        check(!SettingsActions.Execute("/one friendlyfire refill 200").Success, "Guests cannot change host refill policy");
     }
 }

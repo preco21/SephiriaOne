@@ -58,10 +58,14 @@ internal static class DeathmatchTests
         }
         host = start(); guest = add(90); At(0); SettingsActions.Execute("/one friendlyfire on"); SettingsActions.Execute("/one deathmatch start");
         SettingsActions.Execute("/one friendlyfire damage 0.1");
+        check(SettingsActions.Execute("/one friendlyfire refill 125.5").Success && CombatMatchRuntime.IsRunning &&
+            SessionSettings.FriendlyFireForHit.RefillPercent == 125.5m, "Refill edit preserves deathmatch warmup and overlay");
         check(SettingsActions.Execute("/one friendlyfire balance on").Success && CombatMatchRuntime.IsRunning &&
             SessionSettings.FriendlyFireForHit.Balance, "Balance edits preserve Deathmatch warmup and its effective settings");
         check(!SessionSettings.FriendlyFireForHit.Enabled, "Damage edits cannot arm the warmup"); At(3);
         check(CombatMatchRuntime.IsRunning && SessionSettings.FriendlyFireForHit.DamagePercent == 0.1m, "Fractional damage edits survive warmup without stopping match");
+        check(SettingsActions.Execute("/one friendlyfire refill 80.5").Success && CombatMatchRuntime.IsRunning &&
+            SessionSettings.FriendlyFireForHit.RefillPercent == 80.5m, "Active deathmatch reads refill without interrupting the round");
         check(SessionSettings.FriendlyFireForHit.Balance && SettingsActions.Execute("/one friendlyfire balance off").Success &&
             CombatMatchRuntime.IsRunning && !SessionSettings.FriendlyFireForHit.Balance,
             "Active Deathmatch can disable balancing without changing friendly fire or stopping the match");
@@ -77,6 +81,7 @@ internal static class DeathmatchTests
         HorayModAPI.StartSession(); At(12);
         check(!CombatMatchRuntime.IsRunning && !SessionSettings.FriendlyFireForHit.Enabled && guest.PlayerAvatar.ReviveCalls == 0, "New run cancels without reviving old avatars");
         check(SessionSettings.FriendlyFireForHit.Balance, "Interrupted match retains only balance preference; disabled friendly fire cannot apply it");
+        check(SessionSettings.FriendlyFireForHit.RefillPercent == 80.5m, "Interrupted match retains refill preference without enabling combat");
 
         host = start(); At(0); SettingsActions.Execute("/one deathmatch duration 45"); SettingsActions.Execute("/one deathmatch start"); At(3);
         check(SettingsActions.Execute("/one save").Success, "Can save settings during match");

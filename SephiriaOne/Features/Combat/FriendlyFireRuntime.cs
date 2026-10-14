@@ -196,10 +196,14 @@ namespace SephiriaOne
             // Avoid propagating NaN/infinity/overflow into native HP or SyncVars.
             if (float.IsNaN(resolved) || float.IsInfinity(resolved) || resolved <= 0) return 0;
             double scaled = resolved * current.DamageScale;
-            if (current.Victim is PlayerAvatar victim && SessionSettings.FriendlyFireForHit.Balance)
+            if (current.Victim is PlayerAvatar victim)
             {
-                double maxHp = victim.MaxHp;
-                scaled = LimitBalancedDamage(FriendlyFireBalance.Soften(scaled, maxHp), maxHp);
+                var settings = SessionSettings.FriendlyFireForHit;
+                if (settings.Balance)
+                {
+                    double maxHp = victim.MaxHp;
+                    scaled = LimitBalancedDamage(FriendlyFireBalance.Soften(scaled, maxHp), maxHp, settings.RefillScale);
+                }
             }
             return (float)Math.Min(scaled, 2147483520d);
         }

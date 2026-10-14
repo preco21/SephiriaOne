@@ -26,6 +26,7 @@ namespace SephiriaOne
         private const string TournamentPresetHeader = "SephiriaOne preset v20";
         private const string CompanionStatsPresetHeader = "SephiriaOne preset v21";
         private const string LobbyRegenPresetHeader = "SephiriaOne preset v23";
+        private const string PvpRefillPresetHeader = "SephiriaOne preset v24";
         private const string PvpBalancePresetHeader = "SephiriaOne preset v22";
         private const string EventPresetHeader = "SephiriaOne preset v16";
         private const string CollinPresetHeader = "SephiriaOne preset v15";
@@ -71,6 +72,7 @@ namespace SephiriaOne
             if (FriendlyFire.BlockLobbyRegen) lines.Add("friendlyfire block-lobby-regen 1");
             if (FriendlyFire.Balance) lines.Add("friendlyfire balance 1");
             if (FriendlyFire.DamagePercent != 100) lines.Add("friendlyfire damage " + FriendlyFire.Number);
+            if (FriendlyFire.RefillPercent != FriendlyFireSettings.DefaultRefillPercent) lines.Add("friendlyfire refill " + FriendlyFire.RefillNumber);
             string Describe(Setting setting) => (setting.Multiplier ? "multiplier " : setting.Absolute ? "set " : "offset ") +
                 setting.Value.ToString("0.##", CultureInfo.InvariantCulture);
             if (fountain.HasValue) lines.Add("fountain " + Describe(fountain.Value));
@@ -108,7 +110,7 @@ namespace SephiriaOne
             { expandedStats |= stat.RequiresExpandedPreset; companionStats |= stat.IsCompanion; }
             bool multiplier = HasFountainMultiplier;
             foreach (Setting setting in stats.Values) multiplier |= setting.Multiplier;
-            return (FriendlyFire.BlockLobbyRegen ? LobbyRegenPresetHeader : FriendlyFire.Balance ? PvpBalancePresetHeader : companionStats ? CompanionStatsPresetHeader : TournamentDuration != TournamentSettings.DefaultDuration ? TournamentPresetHeader : FriendlyFire.HasFractionalPercent ? FractionalCombatPresetHeader : DeathmatchDuration != DeathmatchSettings.DefaultDuration ? DeathmatchPresetHeader : expandedStats ? ExpandedStatsPresetHeader : EventSpawns.HasChanges ? EventPresetHeader : CollinStartingArtifact ? CollinPresetHeader : BatHpSteal ? BatPresetHeader : JarSpawns.HasChanges ? JarPresetHeader : FriendlyFire.HasChanges ? CombatPresetHeader : ItemUnlock ? ItemUnlockPresetHeader : RabbitPotions.LevelUpPotion ? RabbitLevelUpPresetHeader : UsesMerchantGuaranteePreset ? MerchantGuaranteePresetHeader : UsesMerchantTypesPreset ? MerchantTypesPresetHeader : Merchants.HasChanges ? MerchantPresetHeader : RabbitPotions.MpCostPerDrink != RabbitPotionSettings.DefaultMpCostPerDrink ? RabbitCostPresetHeader :
+            return (FriendlyFire.RefillPercent != FriendlyFireSettings.DefaultRefillPercent ? PvpRefillPresetHeader : FriendlyFire.BlockLobbyRegen ? LobbyRegenPresetHeader : FriendlyFire.Balance ? PvpBalancePresetHeader : companionStats ? CompanionStatsPresetHeader : TournamentDuration != TournamentSettings.DefaultDuration ? TournamentPresetHeader : FriendlyFire.HasFractionalPercent ? FractionalCombatPresetHeader : DeathmatchDuration != DeathmatchSettings.DefaultDuration ? DeathmatchPresetHeader : expandedStats ? ExpandedStatsPresetHeader : EventSpawns.HasChanges ? EventPresetHeader : CollinStartingArtifact ? CollinPresetHeader : BatHpSteal ? BatPresetHeader : JarSpawns.HasChanges ? JarPresetHeader : FriendlyFire.HasChanges ? CombatPresetHeader : ItemUnlock ? ItemUnlockPresetHeader : RabbitPotions.LevelUpPotion ? RabbitLevelUpPresetHeader : UsesMerchantGuaranteePreset ? MerchantGuaranteePresetHeader : UsesMerchantTypesPreset ? MerchantTypesPresetHeader : Merchants.HasChanges ? MerchantPresetHeader : RabbitPotions.MpCostPerDrink != RabbitPotionSettings.DefaultMpCostPerDrink ? RabbitCostPresetHeader :
                 RabbitPotions.ConsumeMp || RabbitPotions.SuppressSurvival ? RabbitBalancePresetHeader :
                 RabbitPotions.HasChanges ? RabbitPresetHeader : Resources.HasChanges ? ResourcePresetHeader : multiplier ? MultiplierPresetHeader : PresetHeader) + "\n" +
                 (HasChanges ? string.Join("\n", DescribeSettings()) + "\n" : "");
@@ -120,8 +122,9 @@ namespace SephiriaOne
             error = L.T("Invalid saved preset; no saved settings were applied.");
             if (text == null || text.Length > MaximumPresetLength) return false;
             string[] lines = text.Replace("\r\n", "\n").Split('\n');
-            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader && lines[0] != RabbitBalancePresetHeader && lines[0] != RabbitCostPresetHeader && lines[0] != MerchantPresetHeader && lines[0] != MerchantTypesPresetHeader && lines[0] != MerchantGuaranteePresetHeader && lines[0] != RabbitLevelUpPresetHeader && lines[0] != ItemUnlockPresetHeader && lines[0] != CombatPresetHeader && lines[0] != JarPresetHeader && lines[0] != BatPresetHeader && lines[0] != CollinPresetHeader && lines[0] != EventPresetHeader && lines[0] != ExpandedStatsPresetHeader && lines[0] != DeathmatchPresetHeader && lines[0] != FractionalCombatPresetHeader && lines[0] != TournamentPresetHeader && lines[0] != CompanionStatsPresetHeader && lines[0] != PvpBalancePresetHeader && lines[0] != LobbyRegenPresetHeader)) return false;
-            bool allowLobbyRegen = lines[0] == LobbyRegenPresetHeader;
+            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader && lines[0] != RabbitBalancePresetHeader && lines[0] != RabbitCostPresetHeader && lines[0] != MerchantPresetHeader && lines[0] != MerchantTypesPresetHeader && lines[0] != MerchantGuaranteePresetHeader && lines[0] != RabbitLevelUpPresetHeader && lines[0] != ItemUnlockPresetHeader && lines[0] != CombatPresetHeader && lines[0] != JarPresetHeader && lines[0] != BatPresetHeader && lines[0] != CollinPresetHeader && lines[0] != EventPresetHeader && lines[0] != ExpandedStatsPresetHeader && lines[0] != DeathmatchPresetHeader && lines[0] != FractionalCombatPresetHeader && lines[0] != TournamentPresetHeader && lines[0] != CompanionStatsPresetHeader && lines[0] != PvpBalancePresetHeader && lines[0] != LobbyRegenPresetHeader && lines[0] != PvpRefillPresetHeader)) return false;
+            bool allowPvpRefill = lines[0] == PvpRefillPresetHeader;
+            bool allowLobbyRegen = lines[0] == LobbyRegenPresetHeader || allowPvpRefill;
             bool allowPvpBalance = lines[0] == PvpBalancePresetHeader || allowLobbyRegen;
             bool allowCompanionStats = lines[0] == CompanionStatsPresetHeader || allowPvpBalance;
             bool allowTournament = lines[0] == TournamentPresetHeader || allowCompanionStats;
@@ -208,6 +211,9 @@ namespace SephiriaOne
                         pending.Record(new FriendlyFireCommand(false, blockLobbyRegen: value == 1));
                     else if (allowPvpBalance && parts[1] == "balance" && (parts[2] == "0" || parts[2] == "1"))
                         pending.Record(new FriendlyFireCommand(false, balance: value == 1));
+                    else if (allowPvpRefill && parts[1] == "refill" && FriendlyFireSettings.ValidRefillPercent(value) &&
+                        parts[2] == value.ToString("0.##", CultureInfo.InvariantCulture))
+                        pending.Record(new FriendlyFireCommand(false, refillPercent: value));
                     else if (parts[1] == "damage" && FriendlyFireSettings.ValidPercent(value) &&
                         (allowFractionalCombat || value == decimal.Truncate(value)) && parts[2] == value.ToString("0.##", CultureInfo.InvariantCulture))
                         pending.Record(new FriendlyFireCommand(false, value));
