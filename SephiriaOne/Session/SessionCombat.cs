@@ -50,6 +50,8 @@ namespace SephiriaOne
             if (command.TouchesMasterToggle) CombatMatchRuntime.Stop(true, true);
             if (!command.IsReset && !FriendlyFireFeature.Available)
             { message = L.T("Friendly-fire compatibility checks failed. Off/reset remain available; see Player.log."); return false; }
+            if (command.BlockLobbyRegen == true && !LobbyRegenFeature.Available)
+            { message = L.T("Lobby recovery hooks unavailable; off/reset remain available. See Player.log."); return false; }
             if (interrupted)
             {
                 // Stopping a match and selecting its toggle are policy-only.
@@ -71,6 +73,8 @@ namespace SephiriaOne
 
         internal static string DescribeFriendlyFire(FriendlyFireSettings settings) =>
             L.F("Friendly fire: {0}; allied damage: {1}%.", L.T(settings.Enabled ? "on" : "off"), settings.Number) + " " +
-            L.F("PvP balancing: {0}.", L.T(settings.Balance ? "on" : "off"));
+            L.F("PvP balancing: {0}.", L.T(settings.Balance ? "on" : "off")) + " " +
+            L.F("Block lobby HP/MP recovery: {0}.", L.T(settings.BlockLobbyRegen ? "on" : "off")) +
+            (settings.BlockLobbyRegen && !LobbyRegenFeature.Available ? " " + L.T("Lobby recovery hooks unavailable; off/reset remain available. See Player.log.") : "");
     }
 }

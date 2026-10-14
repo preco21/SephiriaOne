@@ -7,6 +7,7 @@ internal static class GameFriendlyFireCompatibilityTests
     internal static void Run(Assembly game, Assembly addon)
     {
         GameFriendlyFireParticipantTests.Run(game, addon);
+        GameLobbyRegenTests.Run(game, addon);
         Type Type(string name) => game.GetType(name, true)!;
         List<CodeInstruction> Code(string type, string method) => PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(Type(type), method)).ToList();
         bool Calls(IEnumerable<CodeInstruction> code, string owner, string method) => code.Any(i => i.operand is MethodInfo m && m.DeclaringType?.Name == owner && m.Name == method);

@@ -40,10 +40,17 @@ internal static class TournamentRuntimeTests
         players = New(4);
         check(SettingsActions.Execute("/one friendlyfire balance on").Success, "Tournament can inherit balancing preference");
         check(SettingsActions.Execute("/one tournament start").Success, "Four-player tournament starts");
+        check(SettingsActions.Execute("/one friendlyfire block-lobby-regen on").Success && CombatMatchRuntime.IsRunning,
+            "Recovery option edit preserves tournament warmup");
+        check(players.All(p => !LobbyRegenRuntime.Suppress(p)), "Tournament warmup preserves lobby recovery");
         check(!SessionSettings.FriendlyFireForHit.Enabled, "Tournament warmup keeps friendly fire disabled");
         At(1); At(2); At(3);
         var chat = DungeonManager.Instance.ChatMessages;
         var pair = Pair(players);
+        check(players.All(p => LobbyRegenRuntime.Suppress(p) == pair.Contains(p)), "Only the current tournament pair loses automatic lobby recovery");
+        check(SettingsActions.Execute("/one friendlyfire block-lobby-regen off").Success && CombatMatchRuntime.IsRunning &&
+            players.All(p => !LobbyRegenRuntime.Suppress(p)), "Recovery option edit restores recovery without stopping tournament");
+        check(SettingsActions.Execute("/one friendlyfire block-lobby-regen on").Success, "Reenable tournament recovery option");
         check(SessionSettings.FriendlyFireForHit.Balance && SettingsActions.Execute("/one friendlyfire balance off").Success &&
             CombatMatchRuntime.IsRunning && !SessionSettings.FriendlyFireForHit.Balance,
             "Tournament balancing switches off immediately without abandoning its pair");

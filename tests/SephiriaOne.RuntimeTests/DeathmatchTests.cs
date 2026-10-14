@@ -15,10 +15,14 @@ internal static class DeathmatchTests
         var host = start(); var guest = add(90);
         check(SettingsActions.Execute("/one deathmatch duration 10").Success, "Set match duration in seconds");
         check(SettingsActions.Execute("/one deathmatch start").Success, "Host can start a temporary deathmatch through the shared command");
+        check(SettingsActions.Execute("/one friendlyfire block-lobby-regen on").Success && CombatMatchRuntime.IsRunning,
+            "Recovery edit preserves Deathmatch countdown");
+        check(!LobbyRegenRuntime.Suppress(host.PlayerAvatar), "Deathmatch countdown keeps native lobby recovery");
         check(!SettingsActions.Execute("/one deathmatch start").Success, "Cannot restart an ongoing countdown");
         check(!SessionSettings.FriendlyFireForHit.Enabled && !SessionSettings.ReadSnapshot().FriendlyFire.Enabled, "Warmup and UI both keep friendly fire off");
         void At(float time) { UnityEngine.Time.unscaledTime = time; CombatMatchRuntime.Tick(); }
         At(1); At(2); At(3);
+        check(LobbyRegenRuntime.Suppress(host.PlayerAvatar) && LobbyRegenRuntime.Suppress(guest.PlayerAvatar), "Active Deathmatch blocks both participants' lobby recovery");
         check(SessionSettings.FriendlyFireForHit.Enabled && SessionSettings.ReadSnapshot().FriendlyFire.Enabled, "Match enables friendly fire and toggle together");
         var chat = DungeonManager.Instance.ChatMessages;
         check(chat.Take(4).Select(x => x.Message).SequenceEqual(new[] { "3...", "2...", "1...", "Deathmatch start!" }), "Opening countdown sends each second and start message");
@@ -38,6 +42,7 @@ internal static class DeathmatchTests
         At(12); guest.PlayerAvatar.IsDead = true; CombatMatchRuntime.Died(guest.PlayerAvatar);
         At(13);
         check(!CombatMatchRuntime.IsRunning && !SessionSettings.FriendlyFireForHit.Enabled && !guest.PlayerAvatar.IsDead, "Expiry uses original duration, turns off friendly fire, revives pending players");
+        check(!LobbyRegenRuntime.Suppress(host.PlayerAvatar) && !LobbyRegenRuntime.Suppress(guest.PlayerAvatar), "Match expiry restores native lobby recovery");
         check(chat.Any(x => x.Message.Contains("(1/0/0)")) && chat.Any(x => x.Message.Contains("(0/1/0)")), "Final standings survive toggle score reset");
         check(FriendlyFireKda.Label(host.PlayerAvatar, "Host") == "Host(0/0/0)", "Normal friendly-fire KDA resets after match ends");
 

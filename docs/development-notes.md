@@ -14,6 +14,10 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+- `0.54.0`: independent lobby HP/MP recovery toggle, shared friendly-fire
+  participation and match semantics, isolated native recovery hooks, v23 presets,
+  EN/KO controls and regression checks. See [implementation/evidence](lobby-recovery.md).
+
 Version `0.53.0` adds a rapid-hit budget under the existing PvP balancing toggle:
 20% of actual victim maximum HP in stored burst allowance, replenishing at 30%
 per game second. Each attacker/opponent pair shares it across weapons, artifacts,

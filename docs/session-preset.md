@@ -1,5 +1,10 @@
 # Active settings and saved preset
 
+Version `0.54.0` adds v23 for [lobby recovery control](lobby-recovery.md).
+`friendlyfire block-lobby-regen 1` persists the independent combat preference.
+Missing rows and older presets leave it off; off/reset retain the lowest schema
+required by the remaining settings. Runtime participants and matches are not saved.
+
 Version `0.51.0` adds v21 for [companion stat modifiers](companion-stat-modifiers.md),
 for example `stats companionattackspeed multiplier 2` or
 `stats companioncritical set 12.25`. All six use existing set/offset/multiplier

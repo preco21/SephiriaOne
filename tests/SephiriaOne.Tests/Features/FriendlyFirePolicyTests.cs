@@ -100,6 +100,27 @@ internal static class FriendlyFirePolicyTests
         Check(!policy.HasChanges && policy.FriendlyFire.DamagePercent == 100, "Combat reset restores defaults and old minimal schema");
         policy.Record(new FriendlyFireCommand(true)); policy.Clear();
         Check(!policy.FriendlyFire.Enabled, "Shared scope clear removes combat policy");
+        Check(FriendlyFireCommand.Parse("/one friendlyfire lobby-regen off", out _) == FriendlyFireParseResult.Invalid,
+            "Recovery command uses explicit block-lobby-regen wording");
+        Check(FriendlyFireCommand.Parse("/one friendlyfire block-lobby-regen on", out var block) == FriendlyFireParseResult.Valid,
+            "Lobby recovery suppression has its own command");
+        Check(!block.TouchesMasterToggle && !block.IsReset, "Blocking recovery is not a master toggle or recovery action");
+        policy.Record(block);
+        Check(policy.ToPresetText().StartsWith("SephiriaOne preset v23\n") && policy.ToPresetText().Contains("friendlyfire block-lobby-regen 1"),
+            "Recovery suppression is persisted in v23");
+        Check(SessionPolicy.TryReadPreset(policy.ToPresetText(), out var recovery, out _) && recovery.ToPresetText() == policy.ToPresetText(), "Recovery preset round trip");
+        foreach (string edit in new[] { "on", "off", "damage 0.1", "balance on", "balance off" })
+        { FriendlyFireCommand.Parse("/one friendlyfire " + edit, out var c); policy.Record(c); }
+        Check(policy.ToPresetText().Contains("friendlyfire block-lobby-regen 1"), "Other controls retain recovery preference");
+        Check(FriendlyFireCommand.Parse("/one friendlyfire block-lobby-regen off", out var unblock) == FriendlyFireParseResult.Valid &&
+            unblock.IsReset && !unblock.TouchesMasterToggle, "Restoring native recovery remains independently available");
+        foreach (string row in new[] { "2", "-1", "0.5", "1\nfriendlyfire block-lobby-regen 0" })
+            Check(!SessionPolicy.TryReadPreset("SephiriaOne preset v23\nfriendlyfire block-lobby-regen " + row + "\n", out _, out _), "Reject invalid recovery row: " + row);
+        Check(!SessionPolicy.TryReadPreset("SephiriaOne preset v22\nfriendlyfire block-lobby-regen 1\n", out _, out _), "Old preset schema rejects recovery row");
+        policy.Record(unblock);
+        Check(!policy.ToPresetText().Contains("block-lobby-regen"), "Off restores native recovery");
+        policy.Record(block); policy.Record(new FriendlyFireCommand(false, reset: true));
+        Check(!policy.HasChanges, "Full reset clears recovery preference");
         return checks;
     }
 }

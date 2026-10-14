@@ -10,25 +10,27 @@ namespace SephiriaOne
         private readonly int damageOffset;
         public bool Enabled { get; }
         public bool Balance { get; }
+        public bool BlockLobbyRegen { get; }
         public decimal DamagePercent => (damageOffset + 10000) / 100m;
         public double DamageScale => (damageOffset + 10000) / 10000d;
         public bool HasDamage => damageOffset > -10000;
         public bool HasFractionalPercent => damageOffset % 100 != 0;
         public string Number => DamagePercent.ToString("0.##", CultureInfo.InvariantCulture);
-        public bool HasChanges => Enabled || Balance || damageOffset != 0;
-        public FriendlyFireSettings(bool enabled, decimal damagePercent, bool balance = false)
+        public bool HasChanges => Enabled || Balance || BlockLobbyRegen || damageOffset != 0;
+        public FriendlyFireSettings(bool enabled, decimal damagePercent, bool balance = false, bool blockLobbyRegen = false)
         {
             if (!ValidPercent(damagePercent)) throw new ArgumentOutOfRangeException(nameof(damagePercent));
-            Enabled = enabled; Balance = balance; damageOffset = (int)(damagePercent * 100) - 10000;
+            Enabled = enabled; Balance = balance; BlockLobbyRegen = blockLobbyRegen; damageOffset = (int)(damagePercent * 100) - 10000;
         }
         public static bool ValidPercent(decimal percent) => percent >= 0 && percent <= 300 && percent * 100 == decimal.Truncate(percent * 100);
         private FriendlyFireSettings(FriendlyFireSettings source, bool enabled)
-        { Enabled = enabled; Balance = source.Balance; damageOffset = source.damageOffset; }
+        { Enabled = enabled; Balance = source.Balance; BlockLobbyRegen = source.BlockLobbyRegen; damageOffset = source.damageOffset; }
         // Deathmatch reads this at hit time; keep toggle overlays in integer space.
         public FriendlyFireSettings WithEnabled(bool enabled) => new FriendlyFireSettings(this, enabled);
         public FriendlyFireSettings Apply(FriendlyFireCommand command) => command.Reset ? default :
-            command.Balance.HasValue ? new FriendlyFireSettings(Enabled, DamagePercent, command.Balance.Value) :
-            command.Percent.HasValue ? new FriendlyFireSettings(Enabled, command.Percent.Value, Balance) : WithEnabled(command.Enabled);
+            command.BlockLobbyRegen.HasValue ? new FriendlyFireSettings(Enabled, DamagePercent, Balance, command.BlockLobbyRegen.Value) :
+            command.Balance.HasValue ? new FriendlyFireSettings(Enabled, DamagePercent, command.Balance.Value, BlockLobbyRegen) :
+            command.Percent.HasValue ? new FriendlyFireSettings(Enabled, command.Percent.Value, Balance, BlockLobbyRegen) : WithEnabled(command.Enabled);
     }
 
     internal enum FriendlyFireParseResult { NotCommand, Help, Status, ResetScores, Invalid, Valid }
@@ -38,12 +40,14 @@ namespace SephiriaOne
         public bool Enabled { get; }
         public decimal? Percent { get; }
         public bool? Balance { get; }
-        public FriendlyFireCommand(bool enabled, decimal? percent = null, bool reset = false, bool? balance = null)
-        { Enabled = enabled; Percent = percent; Reset = reset; Balance = balance; }
-        public bool IsReset => Reset || (Balance.HasValue ? !Balance.Value : !Percent.HasValue && !Enabled);
-        public bool TouchesMasterToggle => Reset || !Percent.HasValue && !Balance.HasValue;
+        public bool? BlockLobbyRegen { get; }
+        public FriendlyFireCommand(bool enabled, decimal? percent = null, bool reset = false, bool? balance = null, bool? blockLobbyRegen = null)
+        { Enabled = enabled; Percent = percent; Reset = reset; Balance = balance; BlockLobbyRegen = blockLobbyRegen; }
+        public bool IsReset => Reset || (BlockLobbyRegen.HasValue ? !BlockLobbyRegen.Value : Balance.HasValue ? !Balance.Value : !Percent.HasValue && !Enabled);
+        public bool TouchesMasterToggle => Reset || !Percent.HasValue && !Balance.HasValue && !BlockLobbyRegen.HasValue;
         public static string Usage => L.T("Friendly fire: /one friendlyfire on|off|status|reset|resetkda; /one friendlyfire damage 0..300 (percent, up to 2 decimals; e.g. 0.1). Default 100. /one save persists settings.") + " " +
-            L.T("PvP balancing: /one friendlyfire balance on|off. Default off; softens hits, limits rapid damage (20% HP burst, 30%/s per opponent) and Dark Cloud repeats.");
+            L.T("PvP balancing: /one friendlyfire balance on|off. Default off; softens hits, limits rapid damage (20% HP burst, 30%/s per opponent) and Dark Cloud repeats.") + " " +
+            L.T("Lobby recovery: /one friendlyfire block-lobby-regen on|off. Default off; blocks automatic HP/MP recovery for active lobby participants. Potions and skill healing remain available.");
         internal static bool TryPercent(string text, out decimal percent)
         {
             string number = (text ?? "").Trim();
@@ -72,6 +76,8 @@ namespace SephiriaOne
             { command = new FriendlyFireCommand(false, percent); return FriendlyFireParseResult.Valid; }
             if (parts.Length == 4 && op == "balance" && (parts[3].Equals("on", StringComparison.OrdinalIgnoreCase) || parts[3].Equals("off", StringComparison.OrdinalIgnoreCase)))
             { command = new FriendlyFireCommand(false, balance: parts[3].Equals("on", StringComparison.OrdinalIgnoreCase)); return FriendlyFireParseResult.Valid; }
+            if (parts.Length == 4 && op == "block-lobby-regen" && (parts[3].Equals("on", StringComparison.OrdinalIgnoreCase) || parts[3].Equals("off", StringComparison.OrdinalIgnoreCase)))
+            { command = new FriendlyFireCommand(false, blockLobbyRegen: parts[3].Equals("on", StringComparison.OrdinalIgnoreCase)); return FriendlyFireParseResult.Valid; }
             return FriendlyFireParseResult.Invalid;
         }
     }

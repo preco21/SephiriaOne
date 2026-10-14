@@ -118,7 +118,7 @@ internal static class ResourceRuntimeTests
         ResourceRuntime.ApplyEarly(late.PlayerAvatar, ResourceKind.Talents, 12);
         check(late.PlayerAvatar.maxPassivePoint == 14 && !HostStateAdapter.IsReady(late),
             "Validated early budget does not require or establish normal ready-player enrollment");
-        late.connectionToClient.isReady = true; late.PlayerAvatar.Race = new UnityEngine.Object(); late.PlayerAvatar.Inventory.canBroadcast = 1;
+        late.connectionToClient.isReady = true; late.PlayerAvatar.Race = new RaceEntity(); late.PlayerAvatar.Inventory.canBroadcast = 1;
         SessionSettings.Synchronize();
         check(late.PlayerAvatar.maxPassivePoint == 14, "Ordinary inheritance after early application does not duplicate resource contribution");
 

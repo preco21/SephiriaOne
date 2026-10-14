@@ -16,13 +16,15 @@ namespace SephiriaOne
             widgets.Text(pageRoot, "FriendlyTitle", "Friendly fire", 16, 0, 136, 24, 14);
             combatResetKda = widgets.Button(pageRoot, "Reset K/D/A", 162, 0, 127, 24,
                 () => Execute("/one friendlyfire resetkda", true));
-            AddCheckbox("Friendly fire", 16, 28, 174, 25, s => s.FriendlyFire.Enabled, s => s.FriendlyFireAvailable, "/one friendlyfire",
+            AddCheckbox("Friendly fire", 16, 25, 174, 21, s => s.FriendlyFire.Enabled, s => s.FriendlyFireAvailable, "/one friendlyfire",
                 s => s.CanMutate || CombatMatchRuntime.IsRunning && s.HostActive && s.SessionIdentity != null);
-            resetAll = widgets.Button(pageRoot, "Reset", 200, 28, 89, 25, () => Execute("/one friendlyfire reset", true));
-            AddCheckbox("PvP balancing", 16, 58, 273, 25, s => s.FriendlyFire.Balance, s => s.FriendlyFireAvailable, "/one friendlyfire balance");
-            widgets.Text(pageRoot, "FriendlyPercent", "Allied damage (%)", 16, 87, 180, 25, 11);
-            amount = widgets.Input(pageRoot, 200, 87, 89, EditFriendlyDamage);
-            var track = PanelWidgets.Rect(pageRoot, "AlliedDamageSlider", 24, 116, 255, 14);
+            resetAll = widgets.Button(pageRoot, "Reset", 200, 25, 89, 21, () => Execute("/one friendlyfire reset", true));
+            AddCheckbox("PvP balancing", 16, 48, 273, 21, s => s.FriendlyFire.Balance, s => s.FriendlyFireAvailable, "/one friendlyfire balance");
+            AddCheckbox("Block lobby HP/MP recovery", 16, 71, 273, 21, s => s.FriendlyFire.BlockLobbyRegen,
+                s => s.FriendlyFireAvailable && LobbyRegenFeature.Available, "/one friendlyfire block-lobby-regen");
+            widgets.Text(pageRoot, "FriendlyPercent", "Allied damage (%)", 16, 94, 180, 22, 11);
+            amount = widgets.Input(pageRoot, 200, 94, 89, EditFriendlyDamage);
+            var track = PanelWidgets.Rect(pageRoot, "AlliedDamageSlider", 24, 120, 255, 14);
             track.gameObject.AddComponent<Image>().color = new Color32(48, 66, 88, 255);
             friendlyDamage = track.gameObject.AddComponent<Slider>();
             friendlyDamage.minValue = 0; friendlyDamage.maxValue = 300; friendlyDamage.wholeNumbers = false;

@@ -67,7 +67,7 @@ public sealed partial class PlayerAvatar : UnitAvatar
     public readonly List<string> NameRequests = new();
     public void SetPlayerName(string value) => NameRequests.Add(value);
     public bool isServer = true;
-    public UnityEngine.Object Race = new();
+    public RaceEntity Race = new();
     public string playerNameSource = "Player";
     public string currentFloorGuid = "town";
     public GridInventory Inventory = new();
@@ -162,7 +162,7 @@ public sealed class SaveData
 }
 public static class SaveManager { public static SaveData CurrentRun = new(), Current = new(); }
 
-public sealed class DungeonManager : UnityEngine.Object
+public sealed partial class DungeonManager : UnityEngine.Object
 {
     public readonly List<(PlayerAvatar Player, string Message)> ChatMessages = new();
     public void Chat(PlayerAvatar player, string name, string message) => ChatMessages.Add((player, message));

@@ -6,4 +6,5 @@ namespace SephiriaOne
     {
         internal static bool Available = true;
     }
+    internal static class LobbyRegenFeature { internal static bool Available = true; }
 }

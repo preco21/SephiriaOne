@@ -6,6 +6,8 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../SephiriaOne/Features/Combat/LobbyRegen/LobbyRegenRuntime.cs" Link="LobbyRegenRuntime.cs" />
+    <Compile Include="../../SephiriaOne/Features/Combat/LobbyRegen/LobbyRegenHooks.cs" Link="LobbyRegenHooks.cs" />
     <Compile Include="../../SephiriaOne/Updates/*.cs" Exclude="../../SephiriaOne/Updates/UpdateController.cs" Link="Source/Updates/%(Filename)%(Extension)" />
     <Compile Include="../../SephiriaOne/Features/Collin/CollinCommand.cs" Link="CollinCommand.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionCollin.cs" Link="SessionCollin.cs" />

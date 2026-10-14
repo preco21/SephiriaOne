@@ -25,6 +25,10 @@ internal static class FriendlyFireRuntimeTests
         Damage(); Kill();
         check(Score(host) == "P(1/0/0)" && Score(helper) == "P(0/0/1)", "Enabled command starts host KDA accounting");
         balanceRevision = SessionSettings.CombatBalanceRevision;
+        check(SettingsActions.Execute("/one friendlyfire block-lobby-regen on").Success &&
+            SettingsActions.Execute("/one friendlyfire block-lobby-regen off").Success &&
+            SessionSettings.CombatBalanceRevision == balanceRevision && Score(host) == "P(1/0/0)",
+            "Recovery edits preserve KDA and balancing budgets");
         check(SettingsActions.Execute("/one friendlyfire balance off").Success && SettingsActions.Execute("/one friendlyfire balance on").Success &&
             SessionSettings.CombatBalanceRevision == balanceRevision + 2 && Score(host) == "P(1/0/0)",
             "Off/on without damage advances the limiter revision while retaining casual KDA");

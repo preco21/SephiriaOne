@@ -1,12 +1,16 @@
 # Development knowledge index
 
-Maintained: 2026-10-14 (Asia/Seoul), addon `0.53.0`.
+Maintained: 2026-10-14 (Asia/Seoul), addon `0.54.0`.
 
 Agents and contributors can refer to `docs/*` for research, implementation
 materials, native game findings and references. Start here before repeating an
 investigation. Repository workflow and deployment rules are in [AGENTS.md](../AGENTS.md).
 
 ## Start here
+
+Combat follow-up: [lobby HP/MP recovery control](lobby-recovery.md) adds an
+independent toggle using shared participants and match state, preserving normal
+dungeon recovery, potions and revival.
 
 Combat follow-up: [optional PvP balancing](pvp-balancing.md) shares per-hit
 softening, a shared rapid-hit damage budget and the Dark Cloud limiter across

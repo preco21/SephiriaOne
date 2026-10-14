@@ -1,4 +1,8 @@
 {
+  "Block lobby HP/MP recovery": "Block lobby HP/MP recovery",
+  "Block lobby HP/MP recovery: {0}.": "Block lobby HP/MP recovery: {0}.",
+  "Lobby recovery hooks unavailable; off/reset remain available. See Player.log.": "Lobby recovery hooks unavailable; off/reset remain available. See Player.log.",
+  "Lobby recovery: /one friendlyfire block-lobby-regen on|off. Default off; blocks automatic HP/MP recovery for active lobby participants. Potions and skill healing remain available.": "Lobby recovery: /one friendlyfire block-lobby-regen on|off. Default off; blocks automatic HP/MP recovery for active lobby participants. Potions and skill healing remain available.",
   "PvP balancing": "PvP balancing",
   "PvP balancing: {0}.": "PvP balancing: {0}.",
   "PvP balancing: /one friendlyfire balance on|off. Default off; softens hits, limits rapid damage (20% HP burst, 30%/s per opponent) and Dark Cloud repeats.": "PvP balancing: /one friendlyfire balance on|off. Default off; softens hits, limits rapid damage (20% HP burst, 30%/s per opponent) and Dark Cloud repeats.",

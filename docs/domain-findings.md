@@ -314,3 +314,11 @@ tail: native `IsDead=false` precedes callbacks and `RpcRevive`. Validate the cap
 connection/run until completion, while checking current selection only before
 admitting a new respawn. Floor-load readiness delays execution without replacing
 its original countdown. Excluded environmental deaths keep native game-over rules.
+
+Waiting-room recovery has distinct native sources: `PlayerAvatar.Update` provides
+the heal-place HP tick; `UnitAvatar.Update` drives passive HP/MP and peace-time MP
+recovery. Scope any suppression to these exact calls, not all `Heal` operations
+or the entire Update. Identify the actual player floor using generated
+`FloorData.stageName == Race.lobbyStage.name`; safe-mode and run flags include
+other situations. See [lobby recovery control](lobby-recovery.md) for contracts,
+participant/match integration and verification limits.

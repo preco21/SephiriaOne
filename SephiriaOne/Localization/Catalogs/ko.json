@@ -1,4 +1,8 @@
 {
+  "Block lobby HP/MP recovery": "대기실 HP/MP 자동 회복 차단",
+  "Block lobby HP/MP recovery: {0}.": "대기실 HP/MP 자동 회복 차단: {0}.",
+  "Lobby recovery hooks unavailable; off/reset remain available. See Player.log.": "대기실 회복 제어를 사용할 수 없습니다. 끄기/초기화는 가능합니다. Player.log를 확인하세요.",
+  "Lobby recovery: /one friendlyfire block-lobby-regen on|off. Default off; blocks automatic HP/MP recovery for active lobby participants. Potions and skill healing remain available.": "대기실 회복: /one friendlyfire block-lobby-regen on|off. 기본 꺼짐. 대기실에서 전투 중인 참가자의 HP/MP 자동 회복을 차단합니다. 물약과 스킬 회복은 유지됩니다.",
   "PvP balancing": "PvP 밸런스 보정",
   "PvP balancing: {0}.": "PvP 밸런스 보정: {0}.",
   "PvP balancing: /one friendlyfire balance on|off. Default off; softens hits, limits rapid damage (20% HP burst, 30%/s per opponent) and Dark Cloud repeats.": "PvP 밸런스 보정: /one friendlyfire balance on|off. 기본 꺼짐. 큰 피해를 완화하고 상대별 연속 피해(최대 HP의 20%까지, 초당 30% 회복) 및 먹구름 연속 타격을 제한합니다.",

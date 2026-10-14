@@ -57,6 +57,17 @@ namespace SephiriaOne
                  ReferenceEquals(attacker, b.Subject.Player) && ReferenceEquals(victim, a.Subject.Player));
         }
 
+        // Solo recovery checks use the same live pair and connection receipts as
+        // hostile targeting. Spectators retain native recovery between matches.
+        internal static bool AllowsParticipant(PlayerAvatar player)
+        {
+            if (!tournamentMode || !IsRunning) return true;
+            if (first < 0 || second < 0) return false;
+            var a = tournamentPlayers[first].Subject.Player;
+            var b = tournamentPlayers[second].Subject.Player;
+            return AllowsPair(player, ReferenceEquals(player, a) ? b : a);
+        }
+
         // Pruning a selected connection is a selection change too, even if no UI
         // command was executed. Shared stop contains native recovery reentrancy.
         internal static void SelectionChanged()

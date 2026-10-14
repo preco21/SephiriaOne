@@ -1,5 +1,10 @@
 # Friendly fire
 
+Version `0.54.0` adds **Block lobby HP/MP recovery** and
+`/one friendlyfire block-lobby-regen on|off`, default off. It suppresses automatic
+recovery only for active combat participants in the waiting room, including
+Deathmatch and Tournament's fighting pair. See [scope and native evidence](lobby-recovery.md).
+
 Version `0.53.0` extends the optional [PvP balancing](pvp-balancing.md) setting from
 `0.52.0` with a shared rapid-hit budget (20% maximum-HP burst, 30%/second refill
 per attacker/opponent). Enable it through the

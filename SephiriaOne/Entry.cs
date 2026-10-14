@@ -25,6 +25,7 @@ namespace SephiriaOne
             MerchantFeature.Initialize();
             ItemRestrictionFeature.Initialize();
             FriendlyFireFeature.Initialize();
+            LobbyRegenFeature.Initialize();
             ReviveAllFeature.Initialize();
             DeathmatchFeature.Initialize();
             JarSpawnFeature.Initialize();
@@ -66,6 +67,7 @@ namespace SephiriaOne
             EventSpawnFeature.Shutdown();
             JarSpawnFeature.Shutdown();
             FriendlyFireFeature.Shutdown();
+            LobbyRegenFeature.Shutdown();
             ReviveAllFeature.Shutdown();
             ItemRestrictionFeature.Shutdown();
             MerchantFeature.Shutdown();
