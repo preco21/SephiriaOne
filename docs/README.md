@@ -1,6 +1,6 @@
 # Development knowledge index
 
-Maintained: 2026-10-15 (Asia/Seoul), addon `0.54.2`.
+Maintained: 2026-10-15 (Asia/Seoul), addon `0.54.3`.
 
 Agents and contributors can refer to `docs/*` for research, implementation
 materials, native game findings and references. Start here before repeating an
@@ -10,6 +10,9 @@ investigation. Repository workflow and deployment rules are in [AGENTS.md](../AG
 
 Audio follow-up: [healing and kill sounds for host and stock guests](remote-event-audio.md)
 reuses native cosmetic messages with single-event delivery and no extra local playback.
+`0.54.3` removes unrelated kill-audio admission gates and adds bounded dispatch
+diagnostics. Offline FMOD rendering confirms the impact event contains sound;
+the reported live silence still requires host/guest reproduction.
 
 Combat follow-up: [lobby HP/MP recovery control](lobby-recovery.md) adds an
 independent toggle using shared participants and match state, preserving normal

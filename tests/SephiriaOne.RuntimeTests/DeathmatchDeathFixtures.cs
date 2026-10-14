@@ -4,8 +4,9 @@ namespace SephiriaOne
 {
     internal static class FriendlyFireDeathAudio
     {
-        internal static void Reset() { }
-        internal static void Show(PlayerAvatar player) { }
+        internal static int Shown;
+        internal static void Reset() { Shown = 0; }
+        internal static void Show(PlayerAvatar player) { Shown++; }
     }
     internal static class NativePlayerChat
     {

@@ -71,12 +71,17 @@ internal static class TournamentRuntimeTests
         check(!chat.Any(x => x.Player != null && !pair.Contains(x.Player)), "Waiting entrants receive no opponent bubble");
         var firstWinner = pair[0]; var firstLoser = pair[1];
         int shownBeforeKill = FriendlyFireDeathVisuals.Shown;
+        int audioBeforeKill = FriendlyFireDeathAudio.Shown;
         Kill(firstWinner, firstLoser);
         check(NativePlayerChat.Messages.Last() == (firstLoser,
             $"Killed by ‘{firstWinner.playerNameSource}’ (Matchup: Me 0–1 Opponent)"),
             "Tournament uses the shared private victim notice");
         check(FriendlyFireDeathVisuals.Shown == shownBeforeKill + 1,
             "Tournament down uses the shared one-shot death visual before advancing the round");
+        check(FriendlyFireDeathAudio.Shown == audioBeforeKill + 1,
+            "Tournament down emits the shared audio before round progression can disable friendly fire");
+        firstLoser.Die(0, new());
+        check(FriendlyFireDeathAudio.Shown == audioBeforeKill + 1, "Tournament repeated death cannot replay the cue");
         check(FriendlyFireKda.For(firstWinner).Kills == 1 && FriendlyFireKda.For(firstLoser).Deaths == 1,
             "Native death finalizer credits shared PvP KDA before resolving the round");
         Advance(0.2f); Advance(0.2f);

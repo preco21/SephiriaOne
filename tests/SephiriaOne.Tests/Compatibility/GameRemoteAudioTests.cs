@@ -35,10 +35,36 @@ internal static class GameRemoteAudioTests
         Check(PatchProcessor.GetOriginalInstructions(game.GetType("PotionEffect", true)!.TypeInitializer!).Any(i =>
             i.opcode == OpCodes.Ldstr && Equals(i.operand, "System.Void PotionEffect::RpcCreateDrinkVisual(UnityEngine.Vector3)")), "Stock guests register the native potion message");
         var death = addon.GetType("SephiriaOne.FriendlyFireDeathAudio", true)!;
+        Check((bool)AccessTools.Method(death, "ValidateSoundPlayback").Invoke(null, null)!, "Native impact calls positional audio before testing any FX");
+        var impact = Code("BulletDestroyModule", "CreateDestroyVisualOnClient");
+        foreach (string mutation in new[] { "call", "position", "gate" })
+        {
+            var changed = impact.Select(i => new CodeInstruction(i)).ToList();
+            if (mutation == "call") changed.RemoveAll(i => i.operand is MethodInfo m && m.Name == "PlayOneShot");
+            if (mutation == "position") changed[6] = new(OpCodes.Ldarg_0);
+            if (mutation == "gate") changed[3] = new(OpCodes.Brfalse_S, changed[3].operand);
+            Check(!(bool)AccessTools.Method(death, "ValidateSoundCode").Invoke(null, new object[] { changed })!, "Reject changed impact playback: " + mutation);
+        }
+        var fmod = AppDomain.CurrentDomain.GetAssemblies().Single(a => a.GetName().Name == "FMODUnity");
+        var manager = fmod.GetType("FMODUnity.RuntimeManager", true)!;
+        var eventReference = fmod.GetType("FMODUnity.EventReference", true)!;
+        var vector = game.GetType("BulletDestroyModule", true)!.GetMethod("CreateDestroyVisualOnClient")!.GetParameters()[2].ParameterType;
+        var play = AccessTools.Method(manager, "PlayOneShot", new[] { eventReference, vector });
+        var calls = PatchProcessor.GetOriginalInstructions(play).Select(i => i.operand).OfType<MethodInfo>().ToList();
+        var guidPlay = calls.Single(m => m.DeclaringType == manager && m.Name == "PlayOneShot");
+        Check(PatchProcessor.GetOriginalInstructions(guidPlay).Select(i => i.operand).OfType<MethodInfo>().Select(m => m.Name)
+            .SequenceEqual(new[] { "CreateInstance", "To3DAttributes", "set3DAttributes", "start", "release" }),
+            "Stock positional one-shot reaches exactly one FMOD start and release, not a silent FX endpoint");
+        var rpcRegistration = PatchProcessor.GetOriginalInstructions(game.GetType("DungeonManager", true)!.TypeInitializer!).ToList();
+        int registered = rpcRegistration.FindIndex(i => i.opcode == OpCodes.Ldstr && Equals(i.operand,
+            "System.Void DungeonManager::RpcBulletDestroyed(System.UInt32,System.Boolean,System.String,UnityEngine.Vector3,System.Single,System.Single,System.Single)"));
+        Check(registered >= 0 && rpcRegistration.Skip(registered).Take(4).Any(i => i.operand is MethodInfo m &&
+            m.Name == "InvokeUserCode_RpcBulletDestroyed__UInt32__Boolean__String__Vector3__Single__Single__Single"),
+            "Stock guests register the exact impact reader used by targeted delivery");
         Check((bool)AccessTools.Method(death, "ValidateLocalDeathSound").Invoke(null, null)!, "Native victim-only death audio gate");
         var localDeath = Code("PlayerSpawner", "HandleDieClientside");
         localDeath.RemoveAll(i => i.operand is MethodInfo m && m.Name == "get_isLocalPlayer");
         Check(!(bool)AccessTools.Method(death, "ValidateLocalDeathCode").Invoke(null, new object[] { localDeath })!, "Changed local audio scope must fail closed");
-        Console.WriteLine("Verified stock potion audio/FX payload and receiver, single native source send, local-only death sound and changed-contract rejection (not live audio).");
+        Console.WriteLine("Verified stock potion/impact audio receivers, impact FMOD start/release and world position, single native source send, local-only death sound and changed-contract rejection (not live audio).");
     }
 }

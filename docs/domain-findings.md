@@ -16,6 +16,15 @@ A different game build requires renewed contract/asset checks. Start with the
 
 ## State lifetimes and multiplayer
 
+Cosmetic RPC readiness is distinct from gameplay-state readiness. A positional
+impact message on `DungeonManager` needs that anchor and a current ready
+same-floor recipient; it does not consume the victim's observer membership or
+the recipient's inventory/race/stat readiness. The kill-audio follow-up in
+`0.54.3` removes those extra gates and adds bounded dispatch traces. Validate
+resource registration and the native call all the way to FMOD `start`, not just
+the outgoing payload. Even nonzero offline mixer output cannot prove live guest
+audibility. See [remote audio evidence and outstanding reproduction](remote-event-audio.md#kill-audio-follow-up-0543-2026-10-15).
+
 PvP balancing (`0.52.0`) uses the existing resolved-damage boundary after native
 defense/critical/true damage and before regular/MP shields. Read victim `MaxHp`
 at each permitted player hit; avoid rewriting native stats to normalize PvP.

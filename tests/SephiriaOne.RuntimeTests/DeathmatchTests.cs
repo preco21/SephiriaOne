@@ -117,7 +117,11 @@ internal static class DeathmatchTests
         check(!host.PlayerAvatar.IsDead && guest.PlayerAvatar.IsDead, "Initially dead host respawns when warmup ends, while later warmup death keeps its deadline");
         At(4); check(!guest.PlayerAvatar.IsDead, "Death during opening countdown also gets exactly three seconds");
         host = start(); guest = add(90); At(0); SettingsActions.Execute("/one deathmatch start"); At(3);
-        guest.PlayerAvatar.Die(1, new()); At(4); guest.PlayerAvatar.Revive(100); At(5); guest.PlayerAvatar.Die(1, new()); At(6);
+        int audioBeforeDeath = FriendlyFireDeathAudio.Shown;
+        guest.PlayerAvatar.Die(1, new()); guest.PlayerAvatar.Die(1, new());
+        check(FriendlyFireDeathAudio.Shown == audioBeforeDeath + 1, "Active Deathmatch emits one audio event for a confirmed down, not repeated Die calls");
+        At(4); guest.PlayerAvatar.Revive(100); At(5); guest.PlayerAvatar.Die(1, new()); At(6);
+        check(FriendlyFireDeathAudio.Shown == audioBeforeDeath + 2, "A new Deathmatch life can emit its own death audio");
         check(guest.PlayerAvatar.IsDead, "Native manual revival cancels old countdown; new death gets a fresh three seconds"); At(8);
         check(!guest.PlayerAvatar.IsDead && guest.PlayerAvatar.ReviveCalls == 2, "New life timer revives exactly once");
         CombatMatchRuntime.Stop(true, false);
