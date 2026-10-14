@@ -46,7 +46,7 @@ namespace SephiriaOne
         public bool IsReset => Reset || (BlockLobbyRegen.HasValue ? !BlockLobbyRegen.Value : Balance.HasValue ? !Balance.Value : !Percent.HasValue && !Enabled);
         public bool TouchesMasterToggle => Reset || !Percent.HasValue && !Balance.HasValue && !BlockLobbyRegen.HasValue;
         public static string Usage => L.T("Friendly fire: /one friendlyfire on|off|status|reset|resetkda; /one friendlyfire damage 0..300 (percent, up to 2 decimals; e.g. 0.1). Default 100. /one save persists settings.") + " " +
-            L.T("PvP balancing: /one friendlyfire balance on|off. Default off; softens hits, limits rapid damage (20% HP burst, 30%/s per opponent) and Dark Cloud repeats.") + " " +
+            L.T("PvP balancing: /one friendlyfire balance on|off. Default off; softens hits, limits rapid damage (20% HP burst, 40%/s per opponent) and Dark Cloud repeats; slows debuff ticks by 25% and limits Shock/Freeze damage to once per 0.5s. Freeze stun is preserved.") + " " +
             L.T("Lobby recovery: /one friendlyfire block-lobby-regen on|off. Default off; blocks automatic HP/MP recovery for active lobby participants. Potions and skill healing remain available.");
         internal static bool TryPercent(string text, out decimal percent)
         {

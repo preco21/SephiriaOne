@@ -181,12 +181,17 @@ EffectTests.Run(Check);
 ArtifactTests.Run(Check);
 DarkCloudTests.Run(Check);
 RapidHitTests.Run(Check);
+BurnCadenceTests.Run(Check);
+ElementalCadenceTests.Run(Check);
+DebuffPulseTests.Run(Check);
 BalanceTests.Run(Check);
 SpellTests.Run(Check);
 FractionalDamageTests.Run(Check);
 SelectiveCombatTests.Run(Check);
 TournamentCombatTests.Run(Check);
 FriendlyFireHooks.Uninstall();
+foreach (var method in FriendlyFireDebuffBalanceHooks.Updates())
+    Check(PatchProcessor.GetPatchInfo(method)?.Transpilers.Count is null or 0, "Unload removes debuff cadence adjustment: " + method.DeclaringType.Name);
 Check(PatchProcessor.GetPatchInfo(AccessTools.DeclaredMethod(typeof(ComboEffect_DarkCloud), "FireLightning"))?.Prefixes.Count is null or 0,
     "Unload removes Dark Cloud strike limiter");
 var nativeSpell = new Bullet { NetworkOwner = new PlayerAvatar(), Candidate = new PlayerAvatar(), FromType = EDamageFromType.Magic, damageId = "Skill_FireBolt" };

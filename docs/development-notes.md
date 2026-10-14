@@ -1,6 +1,6 @@
 # SephiriaOne development notes
 
-Recorded: 2026-09-23; updated: 2026-10-14 (Asia/Seoul).
+Recorded: 2026-09-23; updated: 2026-10-15 (Asia/Seoul).
 
 This document records the project history, current implementation, and modding
 findings collected during the initial investigation. Installed-game observations
@@ -13,6 +13,12 @@ For agent/contributor onboarding, start with the [documentation index](README.md
 the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
+
+- `0.54.2`: [PvP cadence tuning](pvp-balancing.md) raises shared damage refill
+  from 30% to 40% max HP/s with the existing 20% burst, and slows eligible PvP
+  periodic debuff clocks by 25%, with separate 0.5s Shock/Freeze damage limits.
+  Freeze still stuns. No changes to PvE, durations/stacks, live stats or guest
+  requirements; existing balancing toggle controls these changes.
 
 - `0.54.1`: [healing and kill audio](remote-event-audio.md) uses stock client
   presentation messages for host/guest listeners, with duplicate suppression and

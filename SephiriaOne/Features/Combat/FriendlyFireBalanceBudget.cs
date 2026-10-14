@@ -18,6 +18,7 @@ namespace SephiriaOne
             internal long CombatEpoch, ParticipantEpoch, Revision, SourceLife, TargetLife, Generation;
             internal string SourceFloor, TargetFloor;
             internal FriendlyFireDamageBudget Budget;
+            internal DebuffPulse Shock, Freeze;
         }
 
         private static ConditionalWeakTable<FriendlyFireParticipants.Receipt, BalanceActor> balanceActors =
@@ -56,15 +57,24 @@ namespace SephiriaOne
                 window.SourceFloor != sourceFloor || window.TargetFloor != targetFloor)
             {
                 window.Started = true; window.Budget = default; window.Generation++;
+                window.Shock = window.Freeze = default;
                 window.CombatEpoch = epoch; window.ParticipantEpoch = participants; window.Revision = revision;
                 window.SourceLife = source.Life; window.TargetLife = target.Life;
                 window.SourceFloor = sourceFloor; window.TargetFloor = targetFloor;
             }
             // Reserve before later native callbacks; nested procs and companions
             // consume the owner's same directed budget, regardless of damage ID.
-            double allowed = window.Budget.Take(damage, maxHp, Time.time);
+            float now = Time.time;
+            int pulse = DebuffPulseKind(current.Damage);
+            if (pulse == 1 && !window.Shock.Ready(now) || pulse == 2 && !window.Freeze.Ready(now)) return 0;
+            double allowed = window.Budget.Take(damage, maxHp, now);
             if (allowed > 0)
             {
+                // Reserve before native callbacks; zero-charge or exhausted
+                // hits must not consume the next available pulse. The existing
+                // receipt/life/epoch/floor reset owns both clocks and tokens.
+                if (pulse == 1) window.Shock.Reserve(now);
+                else if (pulse == 2) window.Freeze.Reserve(now);
                 current.BudgetWindow = window; current.BudgetGeneration = window.Generation;
                 current.BudgetReserved = allowed; current.BudgetMaxHp = maxHp;
             }

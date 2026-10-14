@@ -20,7 +20,7 @@ internal static class RapidHitTests
         hit.damage = float.MaxValue;
         target.ApplyDamage(hit);
         for (int i = 1; i <= 100; i++) { Time.time = 10 + i / 100f; target.ApplyDamage(hit); }
-        check(target.Mp >= 49 && target.Mp <= 51 && target.Hp == 100,
+        check(target.Mp >= 39 && target.Mp <= 41 && target.Hp == 100,
             "Rapid refill is not lost to native integer MP shield rounding; actual shield damage spends the budget");
         Arithmetic(check);
 
@@ -33,10 +33,17 @@ internal static class RapidHitTests
         }
         bool Near(double a, double b) => Math.Abs(a - b) < 0.001;
         void Strike() => target.ApplyDamage(hit);
+        foreach (var kind in new[] { EDamageFromType.BasicAttack, EDamageFromType.DirectAttack, EDamageFromType.Magic })
+        {
+            Fresh(); hit.fromType = kind;
+            hit.damageType = kind == EDamageFromType.Magic ? EDamageType.Projectile : EDamageType.Slice;
+            Strike(); Time.time += 0.1f; Strike();
+            check(Near(target.Hp, 76), "Direct and magic impacts use the increased shared refill: " + kind);
+        }
         Fresh(); Strike(); Time.time += 0.1f; Strike();
-        check(Near(target.Hp, 77), "Continuous refill admits 3% max HP after 0.1 game seconds");
+        check(Near(target.Hp, 76), "Continuous refill admits 4% max HP after 0.1 game seconds");
         Time.time += 1; Strike();
-        check(Near(target.Hp, 57), "Idle refill stops at burst capacity, never saves an unlimited future burst");
+        check(Near(target.Hp, 56), "Idle refill stops at burst capacity, never saves an unlimited future burst");
 
         Fresh(); Strike();
         hit.origin = new UnitAvatar { NetworkLeader = source }; Strike();
@@ -116,7 +123,7 @@ internal static class RapidHitTests
         Fresh(); Strike(); target.MaxHp = 200; Strike();
         check(target.Hp == 80, "Changing maximum HP never manufactures an immediate new allowance");
         Time.time += 0.1f; Strike();
-        check(Near(target.Hp, 74), "Future refill scales from the victim's current maximum HP");
+        check(Near(target.Hp, 72), "Future refill scales from the victim's current maximum HP");
 
         Fresh(); Strike(); source.IsDead = true; Strike();
         check(target.Hp == 80, "Queued projectiles from a dead owner retain the existing budget");
@@ -150,7 +157,7 @@ internal static class RapidHitTests
             for (int i = 0; i < 100; i++) sum += budget.Take(hp, hp, 10);
             check(Near(sum, 0.2 * hp), "Same-time storm respects maximum-HP-relative burst at " + hp);
             for (int i = 1; i <= 100; i++) sum += budget.Take(hp, hp, 10 + i / 100d);
-            check(Near(sum, 0.5 * hp), "One second of continuous attacks admits burst plus refill at " + hp);
+            check(Near(sum, 0.6 * hp), "One second of continuous attacks admits burst plus refill at " + hp);
             check(Near(budget.Take(hp, hp, 100), 0.2 * hp), "Long inactivity cannot accumulate extra capacity");
             budget = default;
             for (int i = 0; i < 10; i++)

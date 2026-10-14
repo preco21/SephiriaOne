@@ -46,6 +46,7 @@ namespace SephiriaOne
                 throw new InvalidOperationException("Native friendly-fire item/debuff entry points changed.");
             foreach (var selector in selectors) RewriteSelector(PatchProcessor.GetOriginalInstructions(selector)).ToList();
             RewriteChakram(PatchProcessor.GetOriginalInstructions(chakram)).ToList();
+            FriendlyFireDebuffBalanceHooks.Install(harmony);
             foreach (var selector in selectors)
                 harmony.Patch(selector, transpiler: new HarmonyMethod(typeof(FriendlyFireEffectHooks), nameof(RewriteSelector)));
             harmony.Patch(chakram, transpiler: new HarmonyMethod(typeof(FriendlyFireEffectHooks), nameof(RewriteChakram)));

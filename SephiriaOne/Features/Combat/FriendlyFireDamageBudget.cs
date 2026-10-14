@@ -7,7 +7,7 @@ namespace SephiriaOne
     internal struct FriendlyFireDamageBudget
     {
         internal const double Capacity = 0.20d;
-        internal const double RefillPerSecond = 0.30d;
+        internal const double RefillPerSecond = 0.40d;
         private bool started;
         private double remaining, lastTime;
 

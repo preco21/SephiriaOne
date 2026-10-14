@@ -28,6 +28,18 @@ damage would make rapid low-value hits unable to drain MP. The three native
 `AddReceivedDamage` calls report regular shield, MP shield and HP separately;
 use their sum to refund unused reservations only after successful native damage
 completion. Generation checks prevent old refunds replenishing reset windows.
+`CharacterDebuff_Burn.OnUpdate_Server` advances its separate `tickTimer` using
+`Time.deltaTime * (1 + BURNSPEED/100)`. The base `CharacterDebuff.Update` owns
+expiry on another timer. `0.54.2` wraps only the former elapsed input with a
+0.75 multiplier for current PvP player victims, also covering Plasma's burn,
+Frostbite, Poison and Wound periodic timers, preserving native speed bonuses,
+blue-burn damage, stacks and expiry. It consults shared live hostility;
+no prefab, stat, timer interval or cached override needs restoring. Native tick
+damage still goes through the same resolved-damage budget (now 40% max HP/s).
+Electric/Plasma shock and Freeze have application/refresh/expiry damage rather
+than periodic ticks; separate 0.5s clocks in that existing pair window limit
+only their damage. Freeze discards ApplyDamage's result before calling native
+StartStun(BuffDuration), so zeroing a repeated damage pulse preserves the stun.
 Dark Cloud's existing pair cooldown is gated by the same preference. See
 [model and limits](pvp-balancing.md).
 

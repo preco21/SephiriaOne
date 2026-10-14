@@ -7,6 +7,12 @@ Updated in `0.53.0`, 2026-10-14: balancing also limits rapid damage with a share
 budget per attacker/opponent. Existing saved balancing settings enable both
 layers; there is no new setting, schema migration or guest installation.
 
+Updated in `0.54.2`, 2026-10-15: shared refill increases from 30% to **40%**
+max HP/s, and eligible periodic PvP debuff ticks run at **75% of native frequency**.
+Shock/Freeze damage pulses are limited to **once per 0.5 seconds each** per
+attacker/victim pair; Freeze still stuns normally. The 20% burst capacity,
+per-hit curve, Dark Cloud gate and lifecycle resets remain.
+
 Enable **Combat → PvP balancing** (`PvP 밸런스 보정`) or use:
 
 ```text
@@ -65,7 +71,8 @@ incoming monster damage, self/system damage and non-player ally targets retain
 their previous paths. There is no global faction or targeting change.
 
 Attack rates, number of projectiles, proc conditions and debuff duration/stacking
-are not normalized. The budget below now limits sustained damage from one attacker;
+are not normalized. Debuff damage cadence is the targeted exception described below.
+The budget below limits sustained damage from one attacker;
 focus fire, knockback and crowd control can still be strong. Strong
 healing or defensive builds may remain hard to kill. This reduces extreme hit
 power, not every possible build advantage. Small hits are not buffed, and very
@@ -73,10 +80,10 @@ low host damage percentages can still produce negligible damage; try 100% as a
 starting point when evaluating balancing. The setting never changes that slider
 automatically or introduces a minimum damage floor.
 
-## Rapid-hit budget (`0.53.0`)
+## Rapid-hit budget (`0.53.0`, tuned in `0.54.2`)
 
 Each directed attacker/player-victim pair has a token budget with **20% of actual
-victim maximum HP capacity** and **30% of maximum HP per game second refill**.
+victim maximum HP capacity** and **40% of maximum HP per game second refill**.
 Refill is continuous, pauses with the game clock and stops at capacity. All of an
 attacker's weapons, artifact projectiles/procs, debuffs and companions share the
 same pool against that victim. Changing damage IDs, weapons or projectile objects
@@ -84,12 +91,15 @@ does not grant another pool. Other attackers and other victims remain independen
 reflection uses the reverse directed pair. Dark Cloud retains its separate limit.
 
 For fixed maximum HP `H`, applied HP plus regular/MP-shield damage from one
-attacker over `T` seconds is bounded by approximately `H * (0.20 + 0.30*T)` from
+attacker over `T` seconds is bounded by approximately `H * (0.20 + 0.40*T)` from
 a full pool. Thus an initially full-health, unshielded target cannot be killed
-by that attacker in less than about 2.67 seconds through this damage path. This
+by that attacker in less than about 2 seconds through this damage path. This
 is a ceiling, not guaranteed DPS or a minimum-damage boost. Actual hits, defenses,
 healing and shields can make fights longer; multiple attackers remain independent.
-The 30% pace is an initial tuning value, not an in-game configurable setting.
+The 40% pace is a tuning value, not an in-game configurable setting. It gives
+rapid direct/magic hits more room without changing native impact detection or
+invulnerability. It also applies to the same shared artifact/companion/DoT pool;
+there are no separate additive allowances that multi-effect builds can combine.
 
 Reserve the already-softened hit before shields/callbacks to prevent recursive
 procs consuming the same tokens twice. On successful completion, the native
@@ -147,6 +157,83 @@ timers remain native. Turning balancing off/on with no intervening strikes chang
 connection receipts, participant/KDA epochs and floor checks handle disconnects,
 rejoins, selections, match rounds, restarts and resets without per-frame work.
 
+## Debuff cadence (`0.54.2`)
+
+`CharacterDebuff_Burn.OnUpdate_Server` normally advances `tickTimer` by
+`Time.deltaTime * (1 + BURNSPEED/100)`. Only for current permitted player victims
+under effective FF plus balancing, `FriendlyFireDebuffBalanceHooks` wraps that
+exact elapsed input with `FriendlyFireRuntime.DebuffTickDelta`, multiplying it by
+0.75. A native 0.5-second tick becomes about 0.667 seconds; native burn-speed
+bonuses remain proportional. Frame granularity and the game's reset-on-tick
+timer can make observed intervals slightly longer.
+
+The same registry also covers Plasma's burn timer, Frostbite, Poison and Wound:
+
+| Effect | Audited native periodic timer | Adjustment |
+| --- | --- | --- |
+| Burn / Plasma burn | `tickTimer`, default 0.5s, native BURNSPEED | about 0.667s before speed bonuses |
+| Frostbite | `frostDamageTimer`, default 1s | about 1.333s |
+| Poison | `poisonTickTimer`, default 1s | about 1.333s; system poison exempt |
+| Wound | `tickTimer`, default 1s | about 1.333s |
+
+Intervals shown are constructor defaults; the multiplier applies to current
+native timer input, preserving serialized settings. Plasma's separate shock
+charge accumulator is not slowed. This does not edit timer intervals, prefab assets, duration, stacking, refresh,
+blue-burn damage, on-death explosions, or the separate base debuff expiry timer.
+Self/system effects and status-only effects retain native behavior. Player-owned
+companion debuffs use the same ownership/participation rules. Each emitted tick
+still uses shared damage softening, budget, shields, KDA and death handling.
+
+The helper reads current policy each time, using the existing native update:
+no extra scene scan, polling loop, network message, dictionary or restoration
+journal. Disabling balancing immediately restores native elapsed input for
+existing debuffs; it preserves partial progress rather than granting a new tick.
+FF off, unselected players and Tournament bystanders retain native timer
+progress while existing damage admission prevents allied harm. Existing debuff
+receipt validation destroys stale connection effects before they can tick.
+PvE damage and cadence are unchanged, as is stock client presentation.
+
+The per-type installed-IL guards reject changed tick fields, multiple timer calls,
+changed speed arithmetic or branches into the wrapped input. All other native
+instructions are retained. Unload removes the hook with the existing FF patches.
+
+This slows frequency, not per-tick strength. High speed/damage builds may
+still saturate the new shared ceiling; the adjustment does not promise lower
+total DPS for every build. Compare direct, Bolt, mixed-burn and dedicated-burn
+builds in actual play before further tuning.
+
+### Shock and Freeze pulses
+
+Electric and Plasma shock damage runs through native `Attack` on refresh, expiry
+and luck procs. Freeze damage runs on application and failed maximum-stack adds;
+it has no periodic damage clock. Their exact native elemental damage IDs
+(`Debuff_Electric`, `Debuff_Freeze`, from-type None) therefore use independent
+0.5s pulse clocks within the existing attacker/victim `BalanceWindow`. Plasma
+and companion shock share their owner's shock clock. Direct lightning/Bolt hits
+are not debuff pulses and do not share that clock.
+
+The first nonzero pulse with available budget reserves its clock before native
+callbacks. Attempts within the interval resolve to zero damage; they consume no
+tokens and are not queued or accumulated for a later burst. Native FX and other
+callbacks still run. Zero charge and exhausted-budget hits do not reserve a new
+interval. Shield/HP refunds return unused damage tokens, not time; an admitted
+pulse that later loses fractional damage to native MP rounding still counts as
+a pulse. This deliberately limits damage cadence rather than status application.
+
+Both clocks share the budget's receipt, combat/participant epoch, balance revision,
+floor and life invalidation. Off/on, reconnect, run/session replacement, KDA reset,
+match changes and successful revival cannot reuse stale clocks. No second player
+registry, polling loop or guest state is added. Different attackers/victims and
+Shock versus Freeze remain independent, subject to the same overall damage budget.
+
+**Freeze still immobilizes players.** Native `CharacterDebuff_Freeze.ApplyDamage`
+discards the damage result and then calls `StartStun(BuffDuration)`; only resolved
+damage is limited. Native stun duration, immunity and Frostbite-to-Freeze stacking
+are untouched, even if another Freeze damage pulse is currently suppressed. This
+does not introduce crowd-control immunity or prevent repeated native stun refresh.
+Expiry-only Chim damage, system death effects and status-only debuffs are outside
+this cadence policy and retain their existing behavior.
+
 ## State, persistence and restoration
 
 The balancing layer writes **no player stats, health limits, native bonuses,
@@ -165,6 +252,23 @@ preset was explicitly saved. Enabled balancing uses preset v22; earlier versions
 still parse and default balancing to off. Malformed/duplicate rows fail atomically.
 
 ## Verification and limits
+
+`0.54.2` cadence verification on 2026-10-15:
+
+- Debug and Release non-deploying builds: zero warnings/errors.
+- 1,408 combat hook checks: direct/magic refill, shields/refunds, existing
+  connection/life resets, burn timing, speed bonuses, mid-effect toggles, native
+  PvE cadence, selection/Tournament exclusions, companion ownership, stale
+  reconnects, pause, unload, all five periodic timers, Shock/Freeze pulse resets,
+  preserved stun, and zero warmed allocation in timer and pulse helpers.
+- 1,983 runtime/session checks and 69 Bat lifecycle checks passed.
+- Portable/native checks passed, including 3,357 catalog checks, exact burn
+  tick rewrites and mutation rejection, preserved expiry/stun, and 30 Harmony API
+  references checked against co-installed HarmonyX 2.9.0.0.
+- The new burn and refill tests were observed failing before production changes.
+  Expanded periodic and Shock/Freeze tests also failed before their additions.
+  Independent review found no actionable correctness issues.
+  No deployment or game launch; live host/guest balance remains unverified.
 
 `0.53.0` rapid-hit verification on 2026-10-14:
 

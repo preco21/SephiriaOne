@@ -11,7 +11,7 @@ namespace UnityEngine
         public override int GetHashCode() => base.GetHashCode();
     }
     public static class Debug { public static void LogWarning(object message) {} }
-    public static class Time { public static float time; }
+    public static class Time { public static float time; public static float deltaTime { get; set; } }
     public struct Vector2
     {
         public float x, y;
@@ -123,6 +123,8 @@ public class UnitAvatar : CombatBehaviour
     public UnitAvatar NetworkLeader { [MethodImpl(MethodImplOptions.NoInlining)] get; set; }
     public Mirror.SyncList<UnitAvatar> followers = new();
     public float Hp = 100;
+    public float StunRemaining;
+    public bool StartStun(float seconds) { StunRemaining = seconds; return true; }
     public float MaxHp { get; set; } = 100;
     public float Shield { [MethodImpl(MethodImplOptions.NoInlining)] get; set; }
     public float TrueDamage, Defense;

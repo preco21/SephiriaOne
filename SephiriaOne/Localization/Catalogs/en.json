@@ -5,7 +5,7 @@
   "Lobby recovery: /one friendlyfire block-lobby-regen on|off. Default off; blocks automatic HP/MP recovery for active lobby participants. Potions and skill healing remain available.": "Lobby recovery: /one friendlyfire block-lobby-regen on|off. Default off; blocks automatic HP/MP recovery for active lobby participants. Potions and skill healing remain available.",
   "PvP balancing": "PvP balancing",
   "PvP balancing: {0}.": "PvP balancing: {0}.",
-  "PvP balancing: /one friendlyfire balance on|off. Default off; softens hits, limits rapid damage (20% HP burst, 30%/s per opponent) and Dark Cloud repeats.": "PvP balancing: /one friendlyfire balance on|off. Default off; softens hits, limits rapid damage (20% HP burst, 30%/s per opponent) and Dark Cloud repeats.",
+  "PvP balancing: /one friendlyfire balance on|off. Default off; softens hits, limits rapid damage (20% HP burst, 40%/s per opponent) and Dark Cloud repeats; slows debuff ticks by 25% and limits Shock/Freeze damage to once per 0.5s. Freeze stun is preserved.": "PvP balancing: /one friendlyfire balance on|off. Default off; softens hits, limits rapid damage (20% HP burst, 40%/s per opponent) and Dark Cloud repeats; slows debuff ticks by 25% and limits Shock/Freeze damage to once per 0.5s. Freeze stun is preserved.",
   "Companion attack speed": "Companion attack speed",
   "Companion damage": "Companion damage",
   "Companion defense": "Companion defense",

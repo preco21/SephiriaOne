@@ -54,6 +54,7 @@ internal static class GameFriendlyFireEffectTests
         Require(PatchProcessor.GetOriginalInstructions(AccessTools.Constructor(Type("Charm_BurnExplosion"))).Any(i =>
             i.opcode == OpCodes.Ldstr && Equals(i.operand, "Charm_BurnExplosion")), "audited explosion identifier");
         Require(Code("PlayerAvatar", "get_Name").Any(i => i.operand is FieldInfo f && f.Name == "playerNameSource"), "PvP name source is the runtime player name");
+        GameFriendlyFireDebuffTests.Run(game, addon);
         GameFriendlyFireArtifactTests.Run(game, addon);
         Console.WriteLine("Verified audited burn/debuff target filters, stock debuff replication, nested electric damage, burn explosion identity and native player names (not live multiplayer).");
     }
