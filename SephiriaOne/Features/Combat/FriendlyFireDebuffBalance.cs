@@ -16,7 +16,7 @@ namespace SephiriaOne
             private bool started;
             private float last;
             internal bool Ready(float now) => !float.IsNaN(now) && !float.IsInfinity(now) &&
-                (!started || now < last || now - last >= 0.5f);
+                (!started || now < last || now - last >= 0.25f);
             internal void Reserve(float now) { started = true; last = now; }
         }
 

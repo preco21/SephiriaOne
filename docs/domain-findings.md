@@ -46,7 +46,7 @@ blue-burn damage, stacks and expiry. It consults shared live hostility;
 no prefab, stat, timer interval or cached override needs restoring. Native tick
 damage still goes through the same resolved-damage budget (now 40% max HP/s).
 Electric/Plasma shock and Freeze have application/refresh/expiry damage rather
-than periodic ticks; separate 0.5s clocks in that existing pair window limit
+than periodic ticks; separate 0.25s clocks (tuned in `0.54.4`) in that existing pair window limit
 only their damage. Freeze discards ApplyDamage's result before calling native
 StartStun(BuffDuration), so zeroing a repeated damage pulse preserves the stun.
 Dark Cloud's existing pair cooldown is gated by the same preference. See

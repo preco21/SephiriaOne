@@ -1,6 +1,6 @@
 # Development knowledge index
 
-Maintained: 2026-10-15 (Asia/Seoul), addon `0.54.3`.
+Maintained: 2026-10-15 (Asia/Seoul), addon `0.54.4`.
 
 Agents and contributors can refer to `docs/*` for research, implementation
 materials, native game findings and references. Start here before repeating an
@@ -22,6 +22,7 @@ Combat follow-up: [optional PvP balancing](pvp-balancing.md) shares per-hit
 softening, a shared rapid-hit damage budget and the Dark Cloud limiter across
 casual friendly fire and both match modes. `0.54.2` increases damage headroom
 and slows debuff damage under the same toggle while retaining Freeze's stun.
+`0.54.4` shortens Shock/Freeze's separate damage intervals to 0.25 seconds.
 
 Compatibility fix: [co-installed Harmony and missing multiplayer FX/notices](harmony-compatibility.md)
 records the host-log failure and compiled API regression check in `0.51.3`.

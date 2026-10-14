@@ -13,6 +13,15 @@ Shock/Freeze damage pulses are limited to **once per 0.5 seconds each** per
 attacker/victim pair; Freeze still stuns normally. The 20% burst capacity,
 per-hit curve, Dark Cloud gate and lifecycle resets remain.
 
+Updated in `0.54.4`, 2026-10-15: Shock and Freeze each allow a damage pulse
+every **0.25 seconds** per attacker/victim pair, replacing the 0.5-second limit.
+This reuses the same clocks and lifecycle handling in casual friendly fire,
+Deathmatch and Tournament. Freeze's native stun is preserved. This is a damage
+admission limit, not an automatic tick generator: native procs and the shared
+damage budget still determine whether a hit deals damage. Burn's cadence remains
+native-speed-dependent with the existing 0.75 elapsed multiplier; it is not a
+fixed 0.25-second timer. The shared 40% HP/s refill is unchanged by this tuning.
+
 Enable **Combat → PvP balancing** (`PvP 밸런스 보정`) or use:
 
 ```text
@@ -208,7 +217,7 @@ Electric and Plasma shock damage runs through native `Attack` on refresh, expiry
 and luck procs. Freeze damage runs on application and failed maximum-stack adds;
 it has no periodic damage clock. Their exact native elemental damage IDs
 (`Debuff_Electric`, `Debuff_Freeze`, from-type None) therefore use independent
-0.5s pulse clocks within the existing attacker/victim `BalanceWindow`. Plasma
+0.25s pulse clocks within the existing attacker/victim `BalanceWindow`. Plasma
 and companion shock share their owner's shock clock. Direct lightning/Bolt hits
 are not debuff pulses and do not share that clock.
 
@@ -252,6 +261,18 @@ preset was explicitly saved. Enabled balancing uses preset v22; earlier versions
 still parse and default balancing to off. Malformed/duplicate rows fail atomically.
 
 ## Verification and limits
+
+`0.54.4` pulse tuning verification on 2026-10-15:
+
+- The revised quarter-second test failed at the interval boundary before the
+  timing change, then passed. Both Shock and Freeze reject attempts at 0.249s,
+  admit at 0.25s and reject a second pulse on that same frame.
+- 1,410 executable combat checks passed, including MP-shield rounding, native
+  Freeze stun, PvE/balance-off exclusions, lifetime resets and warmed allocation.
+- Release non-deploying build passed without warnings/errors. Portable/native
+  contract and localization checks passed, including 3,357 catalog checks.
+- English and Korean help describe the new interval. No game launch/deployment;
+  live multiplayer pacing remains unverified.
 
 `0.54.2` cadence verification on 2026-10-15:
 

@@ -25,9 +25,10 @@ internal static class DebuffPulseTests
         void Hit(string id, float amount = 2) => victim.ApplyDamage(EffectTests.Tick(source, id, amount));
         foreach (string id in new[] { "Debuff_Electric", "Debuff_Freeze" })
         {
-            Fresh(); Hit(id); Time.time += 0.25f; Hit(id);
-            check(victim.Hp == 98, id + " cannot damage the same player twice within 0.5 seconds");
-            Time.time += 0.25f; Hit(id); check(victim.Hp == 96, id + " permits the exact interval boundary");
+            Fresh(); Hit(id); Time.time = 100.249f; Hit(id);
+            check(victim.Hp == 98, id + " cannot damage the same player twice within 0.25 seconds");
+            Time.time = 100.25f; Hit(id); check(victim.Hp == 96, id + " permits the exact quarter-second interval boundary");
+            Hit(id); check(victim.Hp == 96, id + " does not allow another pulse on the same frame at the boundary");
             victim.ApplyDamage(new() { origin = source, damage = 2, fromType = EDamageFromType.Magic });
             check(victim.Hp == 94, "Direct Bolt/magic damage does not share the debuff pulse cooldown");
             SessionSettings.FriendlyFireForHit = new(true, 100, balance: false); Hit(id); Hit(id);
@@ -61,7 +62,7 @@ internal static class DebuffPulseTests
         Fresh(); victim.IsMpShield = true; SessionSettings.FriendlyFireForHit = new(true, 25, balance: true);
         Hit("Debuff_Electric", 2); Hit("Debuff_Electric", 8);
         check(victim.Mp == 100, "A pulse rounded away by native MP shields still consumes its cadence interval");
-        Time.time += 0.5f; Hit("Debuff_Electric", 8);
+        Time.time += 0.25f; Hit("Debuff_Electric", 8);
         check(victim.Mp == 98, "MP rounding refunds damage tokens without stranding the next timed pulse");
         Fresh(); Hit("Debuff_Electric");
         var freeze = new CharacterDebuff_Freeze(); freeze.InitializeAndSpawn(source, victim); freeze.ApplyDamage();
