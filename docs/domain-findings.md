@@ -45,7 +45,7 @@ Frostbite, Poison and Wound periodic timers, preserving native speed bonuses,
 blue-burn damage, stacks and expiry. It consults shared live hostility;
 no prefab, stat, timer interval or cached override needs restoring. Native tick
 damage still goes through the same resolved-damage budget (configurable since
-`0.55.0`, default 100% max HP/s). Rate changes preserve tokens and pulse clocks;
+`0.55.0`, default 70% max HP/s since `0.55.1`). Rate changes preserve tokens and pulse clocks;
 the interval spanning an edit uses the lower of the old/new rate to avoid
 retroactive higher-rate credit. The following interval uses the new rate.
 Electric/Plasma shock and Freeze have application/refresh/expiry damage rather

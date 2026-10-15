@@ -7,9 +7,9 @@ internal static class FriendlyFireRefillTests
         int checks = 0;
         void Check(bool value, string why) { if (!value) throw new Exception(why); checks++; }
         var policy = new SessionPolicy();
-        Check(policy.FriendlyFire.RefillPercent == 100 && policy.FriendlyFire.RefillScale == 1 && !policy.HasChanges,
-            "Zero-initialized refill is 100% HP/s without a policy override");
-        foreach (string value in new[] { "1", "40", "99.99", "100", "100.01", "300" })
+        Check(policy.FriendlyFire.RefillPercent == 70 && policy.FriendlyFire.RefillScale == 0.7 && !policy.HasChanges,
+            "Zero-initialized refill is 70% HP/s without a policy override");
+        foreach (string value in new[] { "1", "40", "70", "99.99", "100", "100.01", "300" })
             foreach (string suffix in new[] { "", "%" })
             {
                 Check(FriendlyFireCommand.Parse("/one friendlyfire refill " + value + suffix, out var command) == FriendlyFireParseResult.Valid &&
@@ -18,7 +18,7 @@ internal static class FriendlyFireRefillTests
                 Check(policy.FriendlyFire.RefillNumber == value && !policy.FriendlyFire.Enabled && !policy.FriendlyFire.Balance,
                     "Refill edit preserves disabled combat and balancing");
                 Check(SessionPolicy.TryReadPreset(policy.ToPresetText(), out var saved, out _) && saved.FriendlyFire.Equals(policy.FriendlyFire), "Exact refill round trip");
-                Check(value == "100" || policy.ToPresetText().StartsWith("SephiriaOne preset v24\n"), "Nondefault refill requires v24");
+                Check(value == "70" || policy.ToPresetText().StartsWith("SephiriaOne preset v24\n"), "Nondefault refill requires v24");
             }
         foreach (string bad in new[] { "", "0", "0.99", "300.01", "100.001", "100.000", "+100", "-1", "1e2", "100,5", "NaN", "Infinity", "x2", "100 extra" })
             Check(FriendlyFireCommand.Parse("/one friendlyfire refill " + bad, out _) == FriendlyFireParseResult.Invalid, "Reject invalid refill: " + bad);
@@ -34,7 +34,7 @@ internal static class FriendlyFireRefillTests
         for (int version = 1; version <= 23; version++)
         {
             Check(!SessionPolicy.TryReadPreset($"SephiriaOne preset v{version}\nfriendlyfire refill 40\n", out _, out _), "Older schema rejects refill: " + version);
-            Check(SessionPolicy.TryReadPreset($"SephiriaOne preset v{version}\n", out var old, out _) && old.FriendlyFire.RefillPercent == 100,
+            Check(SessionPolicy.TryReadPreset($"SephiriaOne preset v{version}\n", out var old, out _) && old.FriendlyFire.RefillPercent == 70,
                 "Older preset inherits new default: " + version);
         }
         policy.Record(new FriendlyFireCommand(false, refillPercent: 125.5m));
@@ -47,11 +47,11 @@ internal static class FriendlyFireRefillTests
         Check(SessionPolicy.TryReadPreset(policy.ToPresetText(), out var combined, out _) && combined.ToPresetText() == policy.ToPresetText(), "v24 retains prior fields");
         Check(FriendlyFireCommand.Parse("/ONE FRIENDLYFIRE REFILL RESET", out var reset) == FriendlyFireParseResult.Valid && !reset.TouchesMasterToggle, "Refill-only reset keeps master");
         policy.Record(reset);
-        Check(policy.FriendlyFire.RefillPercent == 100 && policy.FriendlyFire.Enabled && policy.FriendlyFire.Balance &&
+        Check(policy.FriendlyFire.RefillPercent == 70 && policy.FriendlyFire.Enabled && policy.FriendlyFire.Balance &&
             policy.FriendlyFire.BlockLobbyRegen && policy.FriendlyFire.DamagePercent == 0.1m, "Refill reset preserves all other preferences");
         policy.Record(new FriendlyFireCommand(false, refillPercent: 40));
         policy.Record(new FriendlyFireCommand(false, reset: true));
-        Check(!policy.HasChanges && policy.FriendlyFire.RefillPercent == 100, "Full reset restores refill default");
+        Check(!policy.HasChanges && policy.FriendlyFire.RefillPercent == 70, "Full reset restores refill default");
         return checks;
     }
 }

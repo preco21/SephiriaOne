@@ -6,7 +6,7 @@
   "PvP balancing": "PvP balancing",
   "PvP balancing: {0}.": "PvP balancing: {0}.",
   "PvP balancing: /one friendlyfire balance on|off. Default off; softens hits, limits rapid damage (20% HP burst, configurable refill per opponent) and Dark Cloud repeats; slows debuff ticks by 25% and limits Shock/Freeze damage to once per 0.25s. Freeze stun is preserved.": "PvP balancing: /one friendlyfire balance on|off. Default off; softens hits, limits rapid damage (20% HP burst, configurable refill per opponent) and Dark Cloud repeats; slows debuff ticks by 25% and limits Shock/Freeze damage to once per 0.25s. Freeze stun is preserved.",
-  "PvP refill: /one friendlyfire refill 1..300|reset (percent of max HP per second, up to 2 decimals). Default 100; applies only with PvP balancing on.": "PvP refill: /one friendlyfire refill 1..300|reset (percent of max HP per second, up to 2 decimals). Default 100; applies only with PvP balancing on.",
+  "PvP refill: /one friendlyfire refill 1..300|reset (percent of max HP per second, up to 2 decimals). Default 70; applies only with PvP balancing on.": "PvP refill: /one friendlyfire refill 1..300|reset (percent of max HP per second, up to 2 decimals). Default 70; applies only with PvP balancing on.",
   "PvP refill: {0}% max HP/s.": "PvP refill: {0}% max HP/s.",
   "PvP refill (%/s)": "PvP refill (%/s)",
   "Apply refill": "Apply refill",

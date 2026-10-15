@@ -83,7 +83,7 @@ internal static class FriendlyFireRuntimeTests
         check(SettingsActions.Execute("/one friendlyfire reset").Success, "Friendly fire reset succeeds");
         check(!SessionSettings.ReadSnapshot().ActiveSettings.Any(x => x.StartsWith("friendlyfire ")), "Reset clears toggle and scale");
         check(Score(host) == "P(0/0/0)", "Reset command clears KDA");
-        check(SessionSettings.FriendlyFireForHit.RefillPercent == 100, "Full reset restores default refill");
+        check(SessionSettings.FriendlyFireForHit.RefillPercent == 70, "Full reset restores default refill");
         FriendlyFireFeature.Available = false;
         check(!SettingsActions.Execute("/one friendlyfire balance on").Success && SettingsActions.Execute("/one friendlyfire balance off").Success,
             "Unavailable hooks reject balance enable but preserve off recovery");

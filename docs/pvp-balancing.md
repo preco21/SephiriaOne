@@ -27,12 +27,17 @@ victim maximum HP per second**. The Combat panel's **PvP refill (%/s)** input
 (`PvP 회복률 (%/초)`) and **Apply refill** button use the same command as chat.
 The panel retains its dimensions; K/D/A reset and Revive All remain at the top.
 
+Updated in `0.55.1`, 2026-10-15: default refill is **70% of victim maximum HP
+per second**. Explicit saved refill values remain unchanged. Presets without a
+refill row, including older saves of the former default, inherit 70. Both refill
+reset and full combat reset restore 70. The 20% burst and all other limits remain.
+
 Enable **Combat → PvP balancing** (`PvP 밸런스 보정`) or use:
 
 ```text
 /one friendlyfire balance on
 /one friendlyfire balance off
-/one friendlyfire refill 100
+/one friendlyfire refill 70
 /one friendlyfire refill 125.5
 /one friendlyfire refill reset
 /one friendlyfire status
@@ -42,10 +47,10 @@ Enable **Combat → PvP balancing** (`PvP 밸런스 보정`) or use:
 Refill accepts **1..300**, up to two decimal places, with an optional `%` suffix.
 It is the damage allowance replenished per second, not HP regeneration or the
 ordinary damage percentage. It applies only while PvP balancing is enabled.
-`refill reset` restores 100 without changing other preferences or interrupting
+`refill reset` restores 70 without changing other preferences or interrupting
 an active match. Full `/one friendlyfire reset` restores all combat defaults.
 Use `/one save` to persist the choice. Nondefault refill requires preset v24;
-older presets inherit 100, and default refill adds no row or schema requirement.
+older presets inherit 70, and default refill adds no row or schema requirement.
 
 The preference is independent of the friendly-fire master switch. It affects
 current permitted player pairs in casual friendly fire, Deathmatch and Tournament
@@ -108,7 +113,7 @@ automatically or introduces a minimum damage floor.
 ## Rapid-hit budget (`0.53.0`, configurable in `0.55.0`)
 
 Each directed attacker/player-victim pair has a token budget with **20% of actual
-victim maximum HP capacity** and **100% of maximum HP per game second refill by default**.
+victim maximum HP capacity** and **70% of maximum HP per game second refill by default**.
 Refill is continuous, pauses with the game clock and stops at capacity. All of an
 attacker's weapons, artifact projectiles/procs, debuffs and companions share the
 same pool against that victim. Changing damage IDs, weapons or projectile objects
@@ -118,11 +123,11 @@ reflection uses the reverse directed pair. Dark Cloud retains its separate limit
 For fixed maximum HP `H`, applied HP plus regular/MP-shield damage from one
 attacker over `T` seconds is bounded by approximately `H * (0.20 + R*T)` from
 a full pool. Thus an initially full-health, unshielded target cannot be killed
-by that attacker in less than about **0.8 seconds at the default** through this
+by that attacker in less than about **1.14 seconds at the default** through this
 damage path (`R = refill percent / 100`; minimum time is `0.80 / R`). This
 is a ceiling, not guaranteed DPS or a minimum-damage boost. Actual hits, defenses,
 healing and shields can make fights longer; multiple attackers remain independent.
-The default permits subsecond kills when enough damaging hits land. It gives
+Setting refill to 100 permits subsecond kills when enough damaging hits land. The budget gives
 rapid direct/magic hits more room without changing native impact detection or
 invulnerability. It also applies to the same shared artifact/companion/DoT pool;
 there are no separate additive allowances that multi-effect builds can combine.
@@ -286,6 +291,13 @@ preset was explicitly saved. Enabled balancing uses preset v22; earlier versions
 still parse and default balancing to off. Malformed/duplicate rows fail atomically.
 
 ## Verification and limits
+
+`0.55.1` default tuning verification on 2026-10-15: Release build had zero
+warnings/errors; 1,429 combat checks, 1,998 runtime checks plus 69 Bat checks,
+137 refill checks, 3,375 catalog checks and all installed-game contracts passed.
+Tests cover zero-initialized defaults, reset, old presets, explicit saved rates,
+70% combat timing and continued support for configurable 100% subsecond kills.
+No deployment or live gameplay validation performed.
 
 `0.55.0` configurable refill verification on 2026-10-15:
 

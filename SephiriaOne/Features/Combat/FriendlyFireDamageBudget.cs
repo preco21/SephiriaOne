@@ -10,7 +10,7 @@ namespace SephiriaOne
         private bool started;
         private double remaining, lastTime, lastRefill;
 
-        internal double Take(double damage, double maxHp, double now, double refillPerSecond = 1d)
+        internal double Take(double damage, double maxHp, double now, double refillPerSecond = FriendlyFireSettings.DefaultRefillScale)
         {
             if (!Finite(damage) || damage <= 0 || !Finite(maxHp) || maxHp <= 0 || !Finite(now) ||
                 !Finite(refillPerSecond) || refillPerSecond <= 0) return 0;
