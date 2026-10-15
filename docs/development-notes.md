@@ -14,6 +14,12 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+- `0.57.2`: [PvP Harvest reduction](pvp-balancing.md#harvest-recovery-0572-2026-10-16)
+  scales only native HP/MP Harvest recovery amounts to 20% under the existing
+  balancing toggle and shared player-hit scope. All combat modes share current
+  policy and participant checks; no stat writes or restoration state. Native
+  fractional MP, healing penalties/caps, potions and PvE remain unchanged.
+
 - `0.57.1`: [companion penalty exemption](friendly-fire.md#companion-penalty-exemption-0571-2026-10-16)
   uses the existing admitted-hit context to skip companion crime and global
   faction-hostility consequences. Native cleanup, ordinary NPC penalties and

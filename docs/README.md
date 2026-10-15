@@ -1,12 +1,16 @@
 # Development knowledge index
 
-Maintained: 2026-10-16 (Asia/Seoul), addon `0.57.1`.
+Maintained: 2026-10-16 (Asia/Seoul), addon `0.57.2`.
 
 Agents and contributors can refer to `docs/*` for research, implementation
 materials, native game findings and references. Start here before repeating an
 investigation. Repository workflow and deployment rules are in [AGENTS.md](../AGENTS.md).
 
 ## Start here
+
+Combat balancing: [HP/MP Harvest](pvp-balancing.md#harvest-recovery-0572-2026-10-16)
+recovers 20% of native amounts on balanced PvP hits across all modes. Native
+stats, PvE, potions and fractional MP accumulation remain unchanged.
 
 Combat fix: [companion penalties](friendly-fire.md#companion-penalty-exemption-0571-2026-10-16)
 exempts admitted friendly-fire companion hits/deaths from party crime, saved
@@ -35,7 +39,7 @@ dungeon recovery, potions and revival.
 
 Combat follow-up: [optional PvP balancing](pvp-balancing.md) shares per-hit
 softening, a shared rapid-hit damage budget and the Dark Cloud limiter across
-casual friendly fire and both match modes. `0.54.2` increases damage headroom
+casual friendly fire and all match modes. `0.54.2` increases damage headroom
 and slows debuff damage under the same toggle while retaining Freeze's stun.
 `0.54.4` shortens Shock/Freeze's separate damage intervals to 0.25 seconds.
 `0.55.0` makes the shared refill configurable through the Combat panel, commands

@@ -285,6 +285,62 @@ does not introduce crowd-control immunity or prevent repeated native stun refres
 Expiry-only Chim damage, system death effects and status-only debuffs are outside
 this cadence policy and retain their existing behavior.
 
+## Harvest recovery (`0.57.2`, 2026-10-16)
+
+While effective friendly fire **and** PvP balancing are enabled, HP Harvest and
+MP Harvest from permitted player-victim hits recover **20% of their native
+amounts**. This uses the shared hit scope in casual friendly fire, Deathmatch,
+Tournament and Play Tag, including reflected damage, debuffs, artifact procs and
+player-owned companions attacking players. The actual native attacker receives
+the recovery; a companion's recovery is not reassigned to its owner.
+
+For example, if the already-resolved HP damage would normally yield 12.5 HP or
+MP through Harvest, the recovery input becomes 2.5. Native healing penalties,
+resource caps and MP recovery modifiers still apply. This scales the recovery
+amount rather than rounding the integer Harvest stat: small MP gains accumulate
+through the game's existing fractional `mpStack`. The native `C`-menu stats and
+configured stat modifiers remain unchanged.
+
+`FriendlyFireHarvestHooks` composes two amount helpers into the existing guarded
+`UnitAvatar.ApplyDamage` transpiler. Native Harvest occurs after shields, actual
+HP/overkill clamping and attack callbacks, before death. HP combines
+`ECustomStat.HPSteal` and per-hit `DamageInstance.hpSteal`; MP uses
+`ECustomStat.MPSteal`. Each rate divides by 1000, and both undo positive
+`RECEIVEDDAMAGEINCREASE` before recovery. The native HP training-dummy exclusion
+remains. Full installed-source search found no other stat-based Harvest grant
+site; other occurrences define, write or display these stats.
+
+Only the exact `Heal(float)` and `HealMpFloat(float)` inputs at those sites are
+adjusted. Potions, shared Rabbit healing, regeneration, unrelated on-hit recovery,
+self/system damage, PvE and non-player victims retain their existing paths.
+Nested enemy hits cannot inherit a surrounding PvP hit's reduction. Guarded,
+fully shielded and rejected hits retain their native no-Harvest behavior. The
+shared participant/receipt/pair guards prevent excluded or stale players from
+granting Harvest through a rejected attack.
+
+Each recovery reads current effective policy. Disabling balancing or ending the
+PvP session restores native effectiveness immediately, including a setting change
+inside a native callback between the HP and MP grants. There are no temporary
+stat writes, timers, caches, per-player overrides or preset fields to restore.
+Existing hit finalizers handle nesting and exceptions; unload removes the entire
+shared patch. Ordinary native HP/MP SyncVars deliver host calculations to stock
+guests without new messages or guest addon state.
+
+Verification uses the installed assembly SHA-256
+`C57A0DAEAB8E8D0AF7066A344133EEC4C57D8F303FD9E25DA9410FBFC4CF1510`.
+The initial combat regression failed with full Harvest and passed after the
+change. Executable fixtures cover fractions, per-hit HP rates, native resource
+modifiers, shields, lethal hits, reflection, debuffs, companions, artifact procs,
+nested PvE, toggles inside callbacks, participant/pair changes, reconnects,
+exceptions and unload. The warmed path allocated **0 bytes / 1,000 hits**.
+Installed-IL checks verify only two amount helpers are added, native instructions
+and labels are preserved, altered boundaries reject installation, and native
+HP/MP replication remains in use. Release build (zero warnings/errors), 3,589
+combat checks, 2,233 shared runtime checks plus 69 Bat lifecycle checks, the full
+portable/installed-game suite and all 32 compiled Harmony API references against
+co-installed Harmony 2.9 passed. Independent review found no actionable issues.
+Live host/guest gameplay remains untested; nothing was deployed.
+
 ## State, persistence and restoration
 
 The balancing layer writes **no player stats, health limits, native bonuses,

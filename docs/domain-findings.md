@@ -359,6 +359,15 @@ connection/run until completion, while checking current selection only before
 admitting a new respawn. Floor-load readiness delays execution without replacing
 its original countdown. Excluded environmental deaths keep native game-over rules.
 
+HP/MP Harvest is awarded inside `UnitAvatar.ApplyDamage`, after shields, actual
+HP damage and attack callbacks but before death. `HPSteal` plus per-hit
+`DamageInstance.hpSteal` feed `Heal(float)`; `MPSteal` feeds `HealMpFloat(float)`.
+Both use rates divided by 1000 and undo positive `RECEIVEDDAMAGEINCREASE`.
+Reduce exact recovery inputs rather than integer stats or all healing calls:
+`HealMpFloat` retains fractions in `mpStack`, while unrelated potion/regen and
+nested PvE recovery must remain native. The host's native HP/MP SyncVars serve
+unmodified guests. See [20% balanced PvP Harvest](pvp-balancing.md#harvest-recovery-0572-2026-10-16).
+
 Waiting-room recovery has distinct native sources: `PlayerAvatar.Update` provides
 the heal-place HP tick; `UnitAvatar.Update` drives passive HP/MP and peace-time MP
 recovery. Scope any suppression to these exact calls, not all `Heal` operations

@@ -98,6 +98,7 @@ public class DamageInstance
     public bool isSystemDamage;
     public EDamageFailType failed;
     public float damage = 10;
+    public float hpSteal;
     public string id = "";
     public EDamageFromType fromType;
     public EDamageType damageType;
@@ -210,6 +211,30 @@ public partial class UnitAvatar : CombatBehaviour
             Hp -= resolved; Hits++;
             if (resolved > 0 && !damage.isSystemDamage) AddReceivedDamage(resolved);
             OnHit?.Invoke(this,damage);
+            // Representative native Harvest block: actual HP damage, optional
+            // per-hit HP rate, then native recovery (before death callbacks).
+            if (resolved > 0 && attacker)
+            {
+                if (monsterType != EMonsterType.Dummy)
+                {
+                    float hpHarvest = 0;
+                    int hpRate = attacker.GetCustomStat(ECustomStat.HPSteal);
+                    if (hpRate > 0) hpHarvest += resolved * (hpRate / 1000f);
+                    if (damage.hpSteal > 0) hpHarvest += resolved * (damage.hpSteal / 1000f);
+                    if (hpHarvest > 0)
+                    {
+                        if (HarvestReceivedIncrease > 0) hpHarvest /= 1 + HarvestReceivedIncrease / 100f;
+                        attacker.Heal(hpHarvest);
+                    }
+                }
+                int mpRate = attacker.GetCustomStat(ECustomStat.MPSteal);
+                if (mpRate > 0)
+                {
+                    float mpHarvest = resolved * (mpRate / 1000f);
+                    if (HarvestReceivedIncrease > 0) mpHarvest /= 1 + HarvestReceivedIncrease / 100f;
+                    attacker.HealMpFloat(mpHarvest);
+                }
+            }
             if (Hp <= 0) { if (ExtraLife) { Hp = 60; ExtraLife = false; } else Die(5, damage); }
         }
         return result;

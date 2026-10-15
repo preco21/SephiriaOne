@@ -189,11 +189,18 @@ BurnCadenceTests.Run(Check);
 ElementalCadenceTests.Run(Check);
 DebuffPulseTests.Run(Check);
 BalanceTests.Run(Check);
+HarvestTests.Run(Check);
 SpellTests.Run(Check);
 FractionalDamageTests.Run(Check);
 SelectiveCombatTests.Run(Check);
 TournamentCombatTests.Run(Check);
 FriendlyFireHooks.Uninstall();
+SessionSettings.FriendlyFireForHit = new(true, 100, balance: true);
+var nativeHarvester = new PlayerAvatar { Hp = 10, Mp = 0, HpHarvest = 1000, MpHarvest = 1000 };
+new PlayerAvatar { faction = "enemy" }.ApplyDamage(new() { origin = nativeHarvester, damage = 20 });
+Check(nativeHarvester.Hp == 30 && nativeHarvester.Mp == 20 &&
+    PatchProcessor.GetPatchInfo(AccessTools.Method(typeof(UnitAvatar), "ApplyDamage"))?.Transpilers.Count is null or 0,
+    "Unload restores native Harvest and removes its shared combat transpiler");
 Check(PatchProcessor.GetPatchInfo(AccessTools.Method(typeof(DungeonManager), "NPCDeadCheckServerside"))?.Prefixes.Count is null or 0 &&
     PatchProcessor.GetPatchInfo(AccessTools.Method(typeof(UnitAI_NewBasic), "OnDamaged"))?.Transpilers.Count is null or 0,
     "Unload removes companion crime and shared-hostility exemptions together");
