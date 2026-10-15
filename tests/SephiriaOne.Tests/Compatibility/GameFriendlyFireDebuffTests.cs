@@ -83,6 +83,7 @@ internal static class GameFriendlyFireDebuffTests
             Panel("ApplyPvpDot").Any(i => Call(i, "SettingsPanel", "Execute")), "DoT Apply uses the shared host command");
         Require(Panel("ClearInput").Any(i => Call(i, "SettingsPanel", "ClearPvpDots")) &&
             Panel("RefreshCombat").Any(i => Call(i, "SettingsPanel", "RefreshPvpDots")), "DoT drafts follow normal refresh and scope cleanup");
+        GamePvpBurnDurationTests.Run(game, addon);
         Console.WriteLine("Verified four independent PvP DoT timers, unchanged Wound/shock/Freeze paths, native progress/expiry and shared UI commands (not live gameplay).");
     }
 }

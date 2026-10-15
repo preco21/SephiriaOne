@@ -7,13 +7,20 @@ public class CharacterDebuff : UnityEngine.Object
     public UnitAvatar NetworkAttacker, NetworkTarget;
     public bool IsEndBuff;
     public Action OnTick, OnExpire;
+    public float NativeDuration = float.PositiveInfinity, NativeElapsed;
+    public bool renewDurationOnStacked = true;
     [MethodImpl(MethodImplOptions.NoInlining)] public void InitializeAndSpawn(UnitAvatar attacker, UnitAvatar target, float amplified = 1)
-    { NetworkAttacker = attacker; NetworkTarget = target; }
+    { NetworkAttacker = attacker; NetworkTarget = target; NativeElapsed = 0; IsEndBuff = false; }
     [MethodImpl(MethodImplOptions.NoInlining)] public void Update()
-    { OnTick?.Invoke(); }
+    {
+        OnTick?.Invoke();
+        NativeElapsed += UnityEngine.Time.deltaTime;
+        if (!IsEndBuff && NativeElapsed >= NativeDuration) Destroy();
+    }
     [MethodImpl(MethodImplOptions.NoInlining)] public void Destroy()
     { IsEndBuff = true; OnExpire?.Invoke(); }
-    [MethodImpl(MethodImplOptions.NoInlining)] public virtual void AddStack() { OnTick?.Invoke(); }
+    [MethodImpl(MethodImplOptions.NoInlining)] public virtual void AddStack() { if (renewDurationOnStacked) RefreshDurationTimer(0, 0); OnTick?.Invoke(); }
+    [MethodImpl(MethodImplOptions.NoInlining)] public virtual void RefreshDurationTimer(float defaultDuration, float bonusPercent) { NativeElapsed = 0; }
 }
 public class Charm_Basic
 {

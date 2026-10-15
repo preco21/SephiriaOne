@@ -185,6 +185,7 @@ ArtifactTests.Run(Check);
 DarkCloudTests.Run(Check);
 RapidHitTests.Run(Check);
 ChaserBalanceTests.Run(Check);
+BurnDurationTests.Run(Check);
 BurnCadenceTests.Run(Check);
 ElementalCadenceTests.Run(Check);
 DebuffPulseTests.Run(Check);
@@ -215,6 +216,8 @@ var nativeBurn = new CharacterDebuff_Burn { Speed = 2 };
 nativeBurn.InitializeAndSpawn(new PlayerAvatar(), new PlayerAvatar()); nativeBurn.OnTick = nativeBurn.OnUpdate_Server;
 nativeBurn.Step(0.25f);
 Check(nativeBurn.Ticks == 1, "Unload restores native BURNSPEED cadence despite retained balancing preferences");
+nativeBurn.Step(3);
+Check(!nativeBurn.IsEndBuff, "Unload restores native Burn lifetime despite retained balancing preferences");
 Check(PatchProcessor.GetPatchInfo(AccessTools.DeclaredMethod(typeof(ComboEffect_DarkCloud), "FireLightning"))?.Prefixes.Count is null or 0,
     "Unload removes Dark Cloud strike limiter");
 var nativeSpell = new Bullet { NetworkOwner = new PlayerAvatar(), Candidate = new PlayerAvatar(), FromType = EDamageFromType.Magic, damageId = "Skill_FireBolt" };

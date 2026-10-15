@@ -2,6 +2,9 @@
 
 Added in `0.59.0`, 2026-10-16. Burn, Plasma Burn, Frostbite and Poison each have
 their own **0.75-second** default interval while PvP balancing is enabled.
+Since `0.59.2`, normal/blue Burn also has a separate
+[two-second lifetime cap](pvp-balancing.md#burn-duration-cap-0592-2026-10-16).
+That cap does not change the tick interval or Plasma Burn's lifetime.
 Configure them under **Combat → DoT intervals** (`전투 → 지속 피해 간격`), or:
 
 ```text

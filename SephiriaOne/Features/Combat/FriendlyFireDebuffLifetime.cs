@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using Mirror;
+using UnityEngine;
 
 namespace SephiriaOne
 {
@@ -11,6 +12,8 @@ namespace SephiriaOne
             internal UnitAvatar Source, Target;
             internal PlayerAvatar Owner, TargetOwner;
             internal FriendlyFireParticipants.Receipt OwnerReceipt, TargetReceipt;
+            internal float BurnAppliedAt;
+            internal bool BurnEnded;
             internal bool Valid => Source && Target && Owner &&
                 FriendlyFireParticipants.IsCurrent(OwnerReceipt) &&
                 (TargetReceipt == null || FriendlyFireParticipants.IsCurrent(TargetReceipt)) &&
@@ -69,7 +72,8 @@ namespace SephiriaOne
             if (!NetworkServer.active || !IsPlayerTeamPair(attacker, target)) return;
             var owner = TeamOwner(attacker); var targetOwner = TeamOwner(target);
             __state = new DebuffOrigin { Source = attacker, Target = target, Owner = owner, TargetOwner = targetOwner,
-                OwnerReceipt = FriendlyFireParticipants.Capture(owner), TargetReceipt = FriendlyFireParticipants.Capture(targetOwner) };
+                OwnerReceipt = FriendlyFireParticipants.Capture(owner), TargetReceipt = FriendlyFireParticipants.Capture(targetOwner),
+                BurnAppliedAt = Time.time };
         }
 
         internal static void AfterDebuffSpawn(CharacterDebuff __instance, DebuffOrigin __state)
@@ -91,7 +95,7 @@ namespace SephiriaOne
             BeforeDebuffOperation(__instance, out __state);
             if (activeDebuff == null) return true;
             if (activeDebuff.Valid && ReferenceEquals(__instance.NetworkAttacker, activeDebuff.Source) &&
-                ReferenceEquals(__instance.NetworkTarget, activeDebuff.Target)) return true;
+                ReferenceEquals(__instance.NetworkTarget, activeDebuff.Target)) return UpdateWithinBurnLifetime(__instance, activeDebuff);
             // The old caster/owner cannot authorize a lingering effect after
             // disconnect or owner transfer. Native destruction removes status
             // and replicated FX. Its electric expiry hit stays in this scope.

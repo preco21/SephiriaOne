@@ -1,6 +1,10 @@
 # Development knowledge index
 
-Maintained: 2026-10-16 (Asia/Seoul), addon `0.59.1`.
+Maintained: 2026-10-16 (Asia/Seoul), addon `0.59.2`.
+
+Combat balancing: [Burn's two-second lifetime cap](pvp-balancing.md#burn-duration-cap-0592-2026-10-16)
+uses the existing debuff lifecycle to cap each application and refresh, prevent
+late despawn ticks, and keep PvE native.
 
 Combat fix: [Plitvice and secondary sword hostility](friendly-fire-artifacts.md#plitvice-and-secondary-swords-0591-2026-10-16)
 repairs the spawned sword's collision veto and Flame Sword auto-search using the

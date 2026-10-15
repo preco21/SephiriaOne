@@ -16,6 +16,17 @@ A different game build requires renewed contract/asset checks. Start with the
 
 ## State lifetimes and multiplayer
 
+Native `CharacterDebuff.Update` runs the server tick before its expiry check,
+even while an ended effect waits 0.5 seconds for network destruction. A PvP
+duration cap must therefore guard before the native update and suppress late
+ticks after termination; merely changing a timer length can still allow a final
+overdue hit. Burn inherits the base `RefreshDurationTimer`, also called by
+renewing `AddStack` at maximum stacks. Track that refresh on the existing origin
+receipt to cap each application at two seconds without changing native timers;
+non-renewing stacks keep the previous deadline. Native `Destroy` retains removal
+callbacks and guest despawn. See
+[Burn duration evidence and scope](pvp-balancing.md#burn-duration-cap-0592-2026-10-16).
+
 Artifact audits must follow the instantiated secondary component, not only the
 `Charm_*` trigger or `Bullet` prefab. Plitvice (1248, `Item_FrostMP_Name`) uses
 `Charm_IceSword` → RPC-created `IceSword`; the latter had an inline player-mask

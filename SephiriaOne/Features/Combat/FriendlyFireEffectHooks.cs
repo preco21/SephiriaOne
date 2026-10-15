@@ -43,7 +43,9 @@ namespace SephiriaOne
             var selectors = Selectors().ToArray();
             var chakram = AccessTools.DeclaredMethod(typeof(Charm_FireChakram), "OnUpdate");
             var debuff = AccessTools.DeclaredMethod(typeof(UnitAvatar), "ApplyDebuff", new[] { typeof(CharacterDebuff), typeof(UnitAvatar) });
-            if (debuff == null || debuff.ReturnType != typeof(void) || selectors.Any(m => m == null) || chakram == null)
+            var refresh = AccessTools.DeclaredMethod(typeof(CharacterDebuff), "RefreshDurationTimer", new[] { typeof(float), typeof(float) });
+            if (debuff == null || debuff.ReturnType != typeof(void) || selectors.Any(m => m == null) || chakram == null ||
+                refresh == null || refresh.ReturnType != typeof(void))
                 throw new InvalidOperationException("Native friendly-fire item/debuff entry points changed.");
             foreach (var selector in selectors) RewriteSelector(PatchProcessor.GetOriginalInstructions(selector)).ToList();
             RewriteChakram(PatchProcessor.GetOriginalInstructions(chakram)).ToList();
@@ -56,6 +58,7 @@ namespace SephiriaOne
             var spawn = AccessTools.DeclaredMethod(typeof(CharacterDebuff), "InitializeAndSpawn");
             harmony.Patch(spawn, prefix: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.BeforeDebuffSpawn)),
                 postfix: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.AfterDebuffSpawn)));
+            harmony.Patch(refresh, postfix: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.AfterBurnRefresh)));
             foreach (string method in new[] { "Update", "Destroy", "AddStack" })
                 harmony.Patch(AccessTools.DeclaredMethod(typeof(CharacterDebuff), method, Type.EmptyTypes),
                     prefix: new HarmonyMethod(typeof(FriendlyFireRuntime), method == "Update" ? nameof(FriendlyFireRuntime.BeforeDebuffUpdate) : nameof(FriendlyFireRuntime.BeforeDebuffOperation)),

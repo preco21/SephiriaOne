@@ -14,6 +14,13 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+- `0.59.2`: [balanced PvP Burn lifetime](pvp-balancing.md#burn-duration-cap-0592-2026-10-16)
+  is capped at two seconds from the latest application, including blue Burn.
+  New applications may refresh that window; duration bonuses cannot extend it.
+  Shared origin receipts prevent delayed-despawn ticks without editing native
+  timers. PvE and Plasma Burn retain native
+  lifetime; all friendly-fire modes use the existing live policy and cleanup.
+
 - `0.59.1`: [Plitvice and secondary sword hostility](friendly-fire-artifacts.md#plitvice-and-secondary-swords-0591-2026-10-16)
   repairs the spawned sword's pre-damage faction veto and Flame Sword combo
   auto-search. Both use the existing host/participant/match policy and native

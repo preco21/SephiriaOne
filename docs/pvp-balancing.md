@@ -7,6 +7,9 @@ Updated in `0.59.0`: [independent DoT intervals](pvp-dot-intervals.md) replace t
 earlier cadence rule for Burn, Plasma Burn, Frostbite and Poison. Each defaults
 to 0.75 seconds and has separate live controls, commands and saved settings.
 
+Updated in `0.59.2`: [Burn's two-second lifetime cap](#burn-duration-cap-0592-2026-10-16)
+caps each balanced PvP Burn application or refresh, regardless of duration bonuses.
+
 Updated in `0.53.0`, 2026-10-14: balancing also limits rapid damage with a shared
 budget per attacker/opponent. Existing saved balancing settings enable both
 layers; there is no new setting, schema migration or guest installation.
@@ -72,6 +75,84 @@ only while effective friendly fire is active. Empty selection means everyone;
 nonempty selection and Tournament's current pair keep their existing rules.
 Changing balancing does not stop a match or clear K/D/A. Touching the master
 toggle still uses the existing stop/recovery semantics.
+
+## Burn duration cap (`0.59.2`, 2026-10-16)
+
+While balancing and positive-damage friendly fire are enabled, normal and blue
+**Burn expire within two seconds of their latest application or native refresh**,
+at the first server update at/after the deadline. General debuff-duration bonuses
+and `BURNDURATION` cannot increase this window. A new application to an active
+Burn may refresh it for up to two more seconds, including at maximum stacks.
+Non-renewing stacks keep their native behavior and do not reset the deadline.
+Repeated successful applications can therefore sustain Burn; after the last
+application, its remaining lifetime is at most two seconds. Native durations
+shorter than two seconds remain shorter. The independent Burn tick interval and
+shared damage budget are unchanged. Without refreshes, a Burn configured with a
+tick interval of two seconds or longer can expire before its first periodic tick.
+
+The cap uses the current permitted player pair in casual friendly fire,
+Deathmatch, Tournament and Play Tag. Player-owned companion Burn uses the same
+owner receipts. PvE in either direction, self effects, non-player victims,
+unselected players and disallowed Tournament pairs retain native expiry.
+Shared damage rules still block nonparticipating targets. **Plasma Burn is a
+different native type and is not included in this Burn-only change.**
+
+Turning balancing on applies the cap to already-existing tracked Burn using its
+latest application/refresh age, including refreshes made while balancing was
+disabled. An effect unrefreshed for two seconds ends before another tick.
+Turning balancing/FF off removes the cap from effects that have not ended.
+An effect already retired by the cap/guard cannot resume damage during native
+delayed despawn.
+No new command, toggle, preset field or translation is needed: this is part of
+the existing PvP balancing option.
+
+### Native behavior and implementation
+
+`CharacterDebuff.InitializeAndSpawn` calculates its timer length from base plus
+additional duration and the caster's percentage bonuses. Burn's override adds
+both general `DebuffDuration` and `BURNDURATION`. `AddStack` calls
+`RefreshDurationTimer`, whose base implementation resets elapsed time to zero.
+Burn inherits this method. The refresh happens before the maximum-stack check,
+so applications at maximum stacks can still renew the duration.
+
+`FriendlyFireBurnDuration` reuses `FriendlyFireDebuffLifetime`'s existing weak
+origin record, with the latest application time and an ended flag. A postfix on
+the native refresh updates that timestamp only for valid, live Burn receipts.
+It does not reset periodic tick progress. The validated pre-update path
+checks the two-second deadline before native damage and calls native `Destroy`
+once. Native cleanup removes status, calls removal callbacks and schedules the
+normal stock-client despawn. No prefab, native timer configuration, stat or
+HUD-duration field is changed; remaining native timing needs no restoration.
+
+Native `CharacterDebuff.Update` invokes `OnUpdate_Server` **before** its own
+expiry check, including during the 0.5-second delayed despawn. The ended flag
+blocks subsequent updates even if balancing changes after the cap fires, avoiding
+extra ticks during that delay. New initialization replaces the record; refreshes
+only update its timestamp and cannot revive a retired effect. Connection
+retirement/owner transfer are handled first by existing
+origin validation, so a reconnect cannot inherit the previous effect.
+
+Unity's scaled `Time.time` measures time since application/refresh; pausing does not advance it.
+The existing weak table is cleared on unload, and native despawn owns effect
+cleanup. No extra dictionary, polling loop, per-frame allocation, packet or guest
+addon is introduced. A skipped/slow frame expires before the next damage tick
+rather than producing overdue ticks. The current game assembly fingerprint is
+unchanged from [domain findings](domain-findings.md).
+
+### Verification
+
+Executable coverage reproduces the former long-duration Burn, then checks the
+exact two-second boundary, large bonuses, direct refresh, stacks, short native
+expiry, delayed-despawn damage, new applications/reinitialization, live toggles,
+PvE/owner/selection/match exclusions, companion death, reconnection, pause,
+exceptions and unload. Warmed duration checks allocate zero bytes in fixtures.
+Installed contracts verify the native duration/refresh ordering, blue-vs-Plasma
+identity, native cleanup/network despawn and shared pre-update integration.
+Release build passed with zero warnings/errors; 3,936 combat checks, 2,254 runtime
+checks plus 69 Bat lifecycle checks, installed-game contracts and the 33-reference
+Harmony 2.9 API audit passed. Independent review found no actionable issues.
+Actual Unity/stock-guest timing and visuals still need live testing; nothing
+was deployed or launched.
 
 ## Guard MP cost (`0.58.0`, 2026-10-16)
 
