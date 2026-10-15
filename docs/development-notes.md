@@ -14,6 +14,14 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+- `0.56.0`: [Play Tag](play-tag.md) reuses shared match selection, K/D/A,
+  countdowns and recovery. Carrier kills transfer a shrinking bomb, one-second
+  respawns arm received fuses, and the third receipt at the three-second minimum
+  explodes immediately. One explosion ends the match. The tab and `/one tag`
+  commands persist only the next-match fuse. Exact Leaf Explosion presentation
+  uses an isolated native network instance; live stock-guest playback remains
+  an in-game verification step.
+
 - `0.55.3`: [resource and combat-name optimization](performance-review.md)
   defers unused range-error formatting and avoids buffers for plain participant
   names. Existing arithmetic, filtering, combat timing and native lifetimes stay

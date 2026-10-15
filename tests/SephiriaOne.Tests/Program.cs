@@ -60,6 +60,7 @@ Console.WriteLine($"Passed {RabbitPotionSettingsTests.Run()} rabbit potion setti
 Console.WriteLine($"Passed {MerchantSettingsTests.Run()} merchant settings checks.");
 Console.WriteLine($"Passed {StartingResourceTests.Run()} starting resource checks.");
 Console.WriteLine($"Passed {PresetTests.Run()} preset parser/storage checks.");
+Console.WriteLine($"Passed {PlayTagPolicyTests.Run()} Play Tag policy/preset checks.");
 Console.WriteLine($"Passed {ItemRestrictionTests.Run()} item restriction checks.");
 Console.WriteLine($"Passed {FriendlyFirePolicyTests.Run()} friendly-fire policy/preset checks.");
 Console.WriteLine($"Passed {FriendlyFireRefillTests.Run()} configurable PvP refill checks.");

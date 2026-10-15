@@ -1,12 +1,16 @@
 # Development knowledge index
 
-Maintained: 2026-10-15 (Asia/Seoul), addon `0.55.3`.
+Maintained: 2026-10-15 (Asia/Seoul), addon `0.56.0`.
 
 Agents and contributors can refer to `docs/*` for research, implementation
 materials, native game findings and references. Start here before repeating an
 investigation. Repository workflow and deployment rules are in [AGENTS.md](../AGENTS.md).
 
 ## Start here
+
+Combat follow-up: [Play Tag](play-tag.md) adds a bomb carrier, shrinking fuse,
+one-second respawns and finite minimum-fuse holdings to the shared match runtime.
+It includes native Leaf Explosion transport and a separate settings tab.
 
 Performance follow-up: [resource planning and combat names](performance-review.md#resource-targets-and-combat-names-0553-2026-10-15)
 removes unused successful-plan error formatting and plain-name buffers without
@@ -76,7 +80,7 @@ distinguishes native chapter/outcome markers from actual run settlement.
 | Deathmatch | [Temporary timed matches, respawns, rankings and toggle synchronization](deathmatch.md) |
 | Automatic respawn FX | [Shared Deathmatch/Tournament success boundary and native white pillar](respawn-visuals.md) |
 | Tournament | [Shared match runtime, one-on-one elimination, bounded draws, participant lifetimes and controls](tournament.md) |
-| Play Tag investigation | [Requested bomb mode, pending rules, shared lifecycle and native death/explosion research](play-tag.md); not implemented yet |
+| Play Tag | [Bomb rules, commands/UI, finite turns, shared lifecycle and native death/explosion evidence](play-tag.md) |
 | Reliability and performance | [Disconnect investigation](disconnect-investigation.md), [penalty warnings/transport evidence](penalty-stat-sync-review.md), [performance reviews](performance-review.md) |
 | Releases and dependencies | [GitHub updater](github-updates.md), [updater investigation](github-release-updates-investigation.md), [third-party notices](third-party-notices.md) |
 

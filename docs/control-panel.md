@@ -1,5 +1,10 @@
 # Host settings panel
 
+Version `0.56.0` adds **Play Tag / 술래잡기** with a next-match initial fuse
+(3–3600 seconds, default 30), Apply/Reset, Start/Stop, shared K/D/A reset and the
+same participant editor. The 16 tabs still fit the existing two rows; no new
+window or per-frame UI controller is added. See [Play Tag](play-tag.md).
+
 Tournament adds a separate **Tournament** tab with a round duration input
 (10–3600 seconds, default 30), **Apply**, **Start match**, **Stop match**, and
 **Reset K/D/A**. It shares Combat and Deathmatch's participant controls. Each
@@ -89,6 +94,7 @@ unapplied drafts without sending any gameplay command.
 | Combat | Friendly fire On/Off, a 0–300% damage slider/input with Apply damage, Reset (off/100%), Reset K/D/A, Revive all players, shared participant checkboxes and Select All/Reset selection. |
 | Deathmatch | Set duration (10–3600 seconds, default 300), Start/Stop, Reset K/D/A, remaining time and the shared participant selection controls. |
 | Tournament | Set each round's duration (10–3600 seconds, default 30), Start/Stop, Reset K/D/A, current round status and the same participant selection controls. Selections are captured on start; changing selection ends the current match. |
+| Play Tag | Set/reset the next match's initial fuse (3–3600 seconds, default 30), Start/Stop, Reset K/D/A and shared participant controls. Transfers shrink the fuse; one explosion ends the match. |
 | Spawns | Choose Mystic Jars or random events. Apply a chance or native-rate multiplier using the selected feature's existing limits; Reset restores native. Existing generated results are preserved. |
 | Costumes | Independent Bat HP-steal reduction and Collin starting-artifact toggles, resets and compatibility readouts. |
 | Rabbit | Independent On/Off controls for Wing-Eared Rabbit infinite HP potions, nearby potion healing, MP cost, Survival rank-5 suppression and random non-HP/MP potions on level-up. Sample is excluded from all HP-potion options and keeps native behavior. Enter 0..10000 MP and press Set & on to choose a fee; Off remembers it. Reset restores 10 MP and disables all five options. Shows active state and separate drink/level-up compatibility. |

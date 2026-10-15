@@ -52,7 +52,7 @@ namespace SephiriaOne
             scopeLabel = widgets.Text(title, "Scope", "Host · All players", 220, 8, 464, 26, 11);
             scopeLabel.color = PanelWidgets.Muted;
             availability = widgets.Text(window, "Availability", "", 16, 44, 728, 28, 12);
-            string[] pages = { "Stats", "Fountain", "Choices", "Resources", "Presets", "Status", "Rabbit", "Merchant", "Items", "Combat", "Spawns", "Costumes", "Updates", "Deathmatch", "Tournament" };
+            string[] pages = { "Stats", "Fountain", "Choices", "Resources", "Presets", "Status", "Rabbit", "Merchant", "Items", "Combat", "Spawns", "Costumes", "Updates", "Deathmatch", "Tournament", "Play Tag" };
             for (int i = 0; i < pages.Length; i++)
             {
                 int target = i;
@@ -89,6 +89,7 @@ namespace SephiriaOne
             9 => SnapshotContent.Participants,
             13 => SnapshotContent.Participants,
             14 => SnapshotContent.Participants,
+            15 => SnapshotContent.Participants,
             _ when target >= 6 && target <= 14 => SnapshotContent.None,
             _ => SnapshotContent.All // Status, and safe defaults for future tabs.
         };
@@ -129,6 +130,7 @@ namespace SephiriaOne
             if (page == 12) { RefreshUpdates(); return; }
             if (page == 13) { RefreshDeathmatch(snapshot); return; }
             if (page == 14) { RefreshTournament(snapshot); return; }
+            if (page == 15) { RefreshPlayTag(snapshot); return; }
             bool choicesReady = page == 11 ? snapshot.BatAvailable && snapshot.CollinAvailable : page == 10 ? (eventSpawnsSelected ? snapshot.EventSpawnsAvailable : snapshot.JarSpawnsAvailable) : page == 9 ? snapshot.FriendlyFireAvailable : page == 8 ? snapshot.ItemRestrictionsAvailable : page == 7 ? snapshot.MerchantsAvailable : page == 6 ? snapshot.RabbitPotionsAvailable : page == 2 ? snapshot.ChoicesAvailable : page != 3 || ResourceFeature.IsAvailable(ResourceCatalog.All[resourceIndex].Kind);
             bool levelUpReady = page != 6 || snapshot.RabbitLevelUpPotionsAvailable;
             availability.text = !snapshot.CanMutate ? snapshot.AvailabilityReason : !choicesReady ?
@@ -207,6 +209,7 @@ namespace SephiriaOne
             else if (page == 12) BuildUpdatesEditor();
             else if (page == 13) BuildDeathmatchEditor();
             else if (page == 14) BuildTournamentEditor();
+            else if (page == 15) BuildPlayTagEditor();
             else
             {
                 if (page == 4)

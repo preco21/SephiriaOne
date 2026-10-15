@@ -27,10 +27,10 @@ internal static class GameDeathmatchTests
         Require(Code(addon, "SephiriaOne.SettingsPanel", "BuildDeathmatchEditor").Any(i =>
             i.opcode == System.Reflection.Emit.OpCodes.Stfld && i.operand is FieldInfo f && f.Name == "deathmatchStart"),
             "dedicated tab retains its start control independently of its localized caption");
-        foreach (string refresh in new[] { "RefreshDeathmatch", "RefreshCombat", "RefreshTournament" })
+        foreach (string refresh in new[] { "RefreshDeathmatch", "RefreshCombat", "RefreshTournament", "RefreshPlayTag" })
             Require(Calls(Code(addon, "SephiriaOne.SettingsPanel", refresh), "get_CanResetFriendlyFireScores"),
                 "both score reset buttons share the casual/match service gate: " + refresh);
-        foreach (string source in new[] { "SephiriaOne.SettingsActions", "SephiriaOne.DeathmatchCommand", "SephiriaOne.TournamentCommand" })
+        foreach (string source in new[] { "SephiriaOne.SettingsActions", "SephiriaOne.DeathmatchCommand", "SephiriaOne.TournamentCommand", "SephiriaOne.PlayTagCommand" })
             Require(Calls(Code(addon, source, "Execute"), "TryResetFriendlyFireScores"), "both command aliases share the score-reset action");
         Require(Calls(Code(addon, "SephiriaOne.SessionSettings", "TryResetFriendlyFireScores"), "ResetScores") &&
             !Calls(Code(addon, "SephiriaOne.SessionSettings", "TryResetFriendlyFireScores"), "Stop"), "score-only action cannot stop an active match");
@@ -40,9 +40,14 @@ internal static class GameDeathmatchTests
         Require(Calls(Code(addon, "SephiriaOne.FriendlyFireParticipants", "Prune"), "SelectionChanged"),
             "selected connection retirement also cancels tournament state");
         foreach (string command in new[] { "/one deathmatch start", "/one deathmatch stop", "/one deathmatch resetkda", "/one friendlyfire resetkda", "/one deathmatch duration ",
-            "/one tournament start", "/one tournament stop", "/one tournament resetkda", "/one tournament duration " })
+            "/one tournament start", "/one tournament stop", "/one tournament resetkda", "/one tournament duration ",
+            "/one tag start", "/one tag stop", "/one tag resetkda", "/one tag duration ", "/one tag duration reset" })
             Require(panel.GetMethods(BindingFlags.Instance | BindingFlags.NonPublic).Any(m => m.GetMethodBody() != null &&
                 PatchProcessor.GetOriginalInstructions(m).Any(i => Equals(i.operand, command))), "UI reuses shared command: " + command);
+        Require(Calls(Code(addon, "SephiriaOne.SettingsPanel", "RefreshPlayTag"), "get_CanStartPlayTag") &&
+            Calls(Code(addon, "SephiriaOne.SettingsPanel", "RefreshPlayTag"), "get_IsPlayTag"), "Tag controls address only Tag match state");
+        Require(Calls(Code(addon, "SephiriaOne.SettingsPanel", "RefreshDeathmatch"), "get_IsDeathmatch"),
+            "Deathmatch stop control addresses only Deathmatch state");
         Console.WriteLine("Verified native host chat/bubble replacement on dead avatars, shared match death/revival hooks, controller and UI command paths (not live multiplayer).");
     }
 }

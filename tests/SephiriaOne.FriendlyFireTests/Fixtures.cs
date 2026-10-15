@@ -51,6 +51,13 @@ namespace SephiriaOne
         internal static void Reviving(PlayerAvatar player) => LastRevived = player;
         internal static bool EnterDeath(PlayerAvatar player) => false;
         internal static void LeaveDeath(PlayerAvatar player, bool entered) { }
+        internal static long MatchToken => 0;
+        internal static bool IsPlayTagExplosion(PlayerAvatar player) => false;
+        internal static Action<FriendlyFireParticipants.Receipt, FriendlyFireParticipants.Receipt, long> KillCompleted;
+        internal static void ConfirmedKill(FriendlyFireParticipants.Receipt killer, FriendlyFireParticipants.Receipt victim, long token) =>
+            KillCompleted?.Invoke(killer, victim, token);
+        internal static void Revived(FriendlyFireParticipants.Receipt receipt, long match) { }
+        internal static void ReviveFailed(FriendlyFireParticipants.Receipt receipt, long match) { }
     }
     internal static class ReviveAllFeature { internal static bool Available = true; }
     internal static class SessionSettings

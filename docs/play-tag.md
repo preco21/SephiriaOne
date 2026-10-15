@@ -1,12 +1,33 @@
-# Play Tag investigation (2026-10-15)
+# Play Tag (0.56.0, 2026-10-15)
 
-Status: research and design preparation against addon `0.55.2`. Play Tag is not
-implemented yet. Three gameplay choices have been submitted to the user; do not
-treat the recommendations below as confirmed rules.
+Host-controlled bomb tag shares the friendly-fire match infrastructure. Research
+began against addon `0.55.2`; implementation follows the behavior-preserving
+`0.55.3` optimization pass. The game was not launched or deployed during this
+work; native-code/asset evidence and automated checks do not prove live guest
+rendering or audio playback.
 
-## Requested behavior
+## Controls
 
-Add a temporary mode alongside Deathmatch and Tournament. A randomly chosen
+Use the **Play Tag / 술래잡기** tab, or these host commands:
+
+| Command | Action |
+| --- | --- |
+| `/one tag start` | Capture current participants and begin the three-second countdown |
+| `/one tag stop` | Stop and recover pending dead participants |
+| `/one tag duration 30` | Set the next match's initial fuse, 3..3600 whole seconds |
+| `/one tag duration reset` | Restore the 30-second default for the next match |
+| `/one tag resetkda` | Reset shared scores and matchup records without replenishing bomb chances |
+| `/one tag status` | Show mode/fuse state |
+| `/one save` | Save the configured fuse in preset v25; never save a live match |
+
+The participant editor is shared with friendly fire, Deathmatch and Tournament.
+An empty explicit selection includes everyone. Changing that selection or
+touching the master friendly-fire toggle stops the current match. Deathmatch
+and Tournament controls retain their own mode-specific start/stop behavior.
+
+## Rules
+
+A temporary mode alongside Deathmatch and Tournament. A randomly chosen
 carrier must kill another participant to pass a bomb to that victim. All
 participants retain ordinary friendly-fire combat, including attacks against the
 carrier, and recover one second after death. Each successful pass changes the
@@ -19,27 +40,26 @@ Explosion presentation for host and stock guests. A carrier who has never
 received a pass needs a separate announcement without inventing a prior owner.
 Normal kills still use existing K/D/A and private matchup notices.
 
-Pending decisions:
+Confirmed decisions:
 
-| Decision | Submitted recommendation | Alternative |
-| --- | --- | --- |
-| Explosion outcome | End Play Tag after one explosion | Eliminate the loser and continue until one winner |
-| Minimum-fuse allowance | Two timed holdings at three seconds, immediate explosion on third receipt | First minimum holding plus two further holdings, explosion on fourth receipt |
-| Dead recipient's fuse | Begin after the victim's one-second respawn | Begin immediately when the kill transfers the bomb |
+| Decision | Confirmed behavior |
+| --- | --- |
+| Explosion outcome | End Play Tag after one explosion; recover pending players through shared cleanup |
+| Minimum-fuse allowance | Two timed holdings at three seconds, immediate explosion on third receipt |
+| Dead recipient's fuse | Begin after the victim's one-second respawn |
 
-## Shared implementation direction
+## Shared implementation
 
-Extend `Features/Combat/CombatMatchRuntime` instead of introducing an independent
-match controller. Replace its binary tournament flag with an explicit mode
-identity so Deathmatch's status, expiry, buttons and stop command cannot
-accidentally operate on Tag. Retain one shared authority/run scope, callback
+`Features/Combat/CombatMatchRuntime` owns the match. An explicit mode
+identity keeps Deathmatch's status, expiry, buttons and stop command from
+operating on Tag. The modes retain one shared authority/run scope, callback
 depth, participant receipts, respawn queue, K/D/A and recovery owner.
 
-Keep the bomb policy separate from Unity: current carrier index, previous
+`PlayTag/PlayTagBomb` separates the bomb policy from Unity: current carrier index, previous
 passer, integer fuse, deadline/arming state, per-entrant minimum-fuse holdings,
 and a consumed explosion marker. Model transfer and expiry as explicit
-transitions; consume an outcome before invoking native callbacks. Use injected
-time/random selection for deterministic tests. K/D/A reset must not replenish
+transitions; consume an outcome before invoking native callbacks. Explicit time
+and initial carrier inputs support deterministic tests. K/D/A reset cannot replenish
 the bomb's finite allowances.
 
 Freeze connection-lifetime enrollment at start, as Tournament does, rather than
@@ -52,8 +72,13 @@ Use the same command dispatcher and a new tab with Start, Stop, fuse duration,
 K/D/A reset and the shared participant editor. Only configuration is persisted;
 carrier, deadlines, allowances and presentation are temporary. Configuration
 changes apply to the next match, avoiding a hidden extension of the active fuse.
-An initial 30-second fuse, configurable from 3 to 3600 whole seconds, is the
-proposed default rather than an existing shipped setting.
+The default initial fuse is 30 seconds, configurable from 3 to 3600 whole seconds.
+The first carrier is selected uniformly from living, ready captured entrants.
+Successful kill completion must precede expiry; a death callback that finishes
+at the deadline cannot rescue an expired bomb. Killing an already-armed carrier
+does not reset or pause their timer. Only receipt of a transferred bomb waits
+for actual successful revival. At the minimum, an initial three-second fuse
+counts as that carrier's first timed holding.
 
 ## Native death and attribution evidence
 
@@ -94,6 +119,12 @@ Do not infer a transfer from polling `Died`, which also observes environmental
 deaths, or from text in the kill log. Repeated, exceptional, stale or extra-life
 deaths must not transfer the bomb. Existing K/D/A's handling of a confirmed death
 followed by a native exception should remain unchanged.
+
+Revival notices capture a dead-at-entry player receipt and match token. Only
+successful completion of that admitted native call may arm the transferred
+fuse. Nested no-op revivals cannot arm it early; exceptional completion stops
+only the matching current Tag state. This avoids both an indefinitely unarmed
+bomb and a fuse started before the native revival RPC completes.
 
 Do not invalidate all combat receipts on a pass while participant hostility is
 unchanged: that clears life contributions and can invalidate an outer hit when
@@ -140,9 +171,8 @@ and releases the main animation's sound events. The explosion is a 3D one-shot;
 the leaf layers are 2D one-shots. Native animation repeats those leaf sounds
 intentionally; an adapter should not add its own duplicate local playback.
 
-No audited generic native RPC directly selects this main animation. A short-lived
-stock `MoneyWhirlwind` network instance is a candidate for further work, not yet
-a proven cosmetic solution. Its root has a non-trigger CircleCollider2D, Bullet,
+No audited generic native RPC directly selects this main animation. The adapter
+uses a short-lived stock `MoneyWhirlwind` network instance. Its root has a non-trigger CircleCollider2D, Bullet,
 blink movement, immediate-destroy module, animation transition controller,
 network transform, rendering metadata and top-down renderer. Its children hold
 the two sprite animators/renderers and a sorting group. No UnitAvatar, hitbox or
@@ -155,30 +185,69 @@ collision and frame 16 invokes destruction; the movement base also has a
 three-second lifetime. The destroy module has no extra explosion-damage override.
 Native bullet breakers and melee collision can still observe a Bullet collider.
 
-A zero-damage projectile alone therefore does not prove cosmetic-only behavior.
-Before exposing an instance, isolate server collision, owner/faction, callbacks,
-damage and hit response; audit guest-side collider interaction, stock spawn
-registration and deterministic cleanup on animation end, stop, scene change,
-failure and unload. A host-only collider change is not automatically replicated.
-Do not modify the reusable prefab. Exact main FX/sound transport remains an
-implementation prerequisite requiring those checks and a live stock-guest test.
+`PlayTagExplosion` directly instantiates the native prefab, then disables its
+server Bullet/collider and clears owner, factions, damage and callbacks before
+`NetworkServer.Spawn`. It bypasses `OnSpawn`/`Initialize`, preserving the two
+native animators and their embedded sound events. It never modifies the reusable
+prefab or adds a second local sound call. The native animation destroys the
+instance at frame 16 (about 0.8 seconds); an unscaled three-second fallback covers
+interrupted animation. Natural match completion preserves that brief cosmetic
+lifetime. Explicit interruption, new matches, run/floor changes and unload clear
+the owned instance. Only that presentation can outlive the match; no bomb,
+respawn, score or hostility state does.
+
+Guest collider flags are not replicated. Safety therefore depends on audited
+stock behavior: guest `Bullet.Update` does no collision/damage query, Blink's
+client movement is empty, melee and bullet-breaker queries are server-only, and
+player movement filters Tile/Cliff/Pit layers rather than the Default-layer
+cosmetic. Neither the explosion nor the inspected player hierarchy has a Unity
+Rigidbody2D. Other inspected triggers require the interaction-checker layer or
+an exact observer object. Both stock NetworkManager prefabs register this asset;
+host startup registers their native spawn list with `NetworkClient`.
+
+The adapter pins the installed game fingerprint above and Mirror SHA-256
+`C391C91BA860C537692C185B1075F4219EC83FA71A11990A2B51C13876AB7440`.
+It also validates stock registration, absence of custom spawn handlers, exact
+component hierarchy, layers, colliders, animation frames/events and sound GUIDs.
+Validation uses serialized references or `GetComponent` on prefabs, never an
+Awake-only `NetworkBehaviour.netIdentity` cache. A changed contract suppresses
+the optional presentation and logs a warning; it does not spawn an unaudited
+attack object or block match recovery. A future game build requires a re-audit.
+Raw serialized checks passed for the installed asset; live host/guest animation,
+audio timing and Unity object behavior still require an in-game test.
 
 The [user-supplied Namu reference](https://en.namu.wiki/w/%EC%84%B8%ED%94%BC%EB%A6%AC%EC%95%84/%EB%AC%B4%EA%B8%B0%20%EA%B0%95%ED%99%94#%EC%A7%93%EA%B6%82%EC%9D%80%20%EC%9E%A5%EB%82%9C)
 could not be fetched during this investigation. The resource identification above
 comes from installed definitions/code/assets, not an independently retrieved page.
 Decompiled exports and asset inspection files remain outside the repository.
 
-## Verification needed for implementation
+## Verification
 
-Cover fuse rounding/minimum and finite allowance exhaustion; successful and
-invalid transfers; expiry coinciding with respawn; carrier death by a non-carrier;
-native resurrection; reset/stop/selection/disconnect inside callbacks; old-run
-and old-connection rejection; and cleanup with every participant dead. Exercise
-direct, companion, reflection and debuff kill attribution through the shared
-boundary. Retain existing three-second modes and zero-work idle behavior.
+The pure bomb runner passes **20,680** checks, including rounding, invalid inputs,
+exact expiry, delayed arming and randomized finite minimum-fuse play. The shared
+Tournament scheduler retains **41,176** passing checks. Runtime fixtures cover
+the shared controllers, duration capture, commands/localization, one-second
+respawns, all-dead recovery, nested callbacks, stale connections/runs, score
+reset, selection/master edits and presentation cleanup. Real Harmony hook
+fixtures cover direct, companion, reflected, Burn and Shock kill attribution.
+The final shared runtime run passed **2,154** integration checks plus **69** Bat
+lifecycle checks; the combat hook runner passed **3,479** checks. Independent
+review reproduced the nested no-op revival fault before the receipt/token fix
+and verified that the corrected regression passes.
 
-Before changes, the runtime fixture suite passes **1,998** integration checks plus
-**69** Bat lifecycle checks; the Tournament scheduler passes **41,176** checks.
-These baseline checks ran with `-p:DeployMod=false`. They do not verify Tag.
+Installed-code compatibility checks validate native death/revival, stock chat,
+network spawn/collision boundaries and exact animation/audio contracts. Mutation
+checks reject changed assemblies and altered animation/sound events. Full preset
+and catalog checks include EN/KO, v25 round trips and older schema rejection.
+Production Release builds and these runners use `-p:DeployMod=false`.
+
+The existing allocation probe remains at **0 bytes per unchanged synchronization
+tick**, **0 bytes per successful resource plan**, and **2,264 bytes per five-player
+participant snapshot**. Tag's unchanged active ticks are also checked for zero
+allocation in fixtures. No coroutine, extra per-player controller or broadcast
+per frame was added; carrier bubbles update only when the shown second changes.
+
 No game was launched or deployment performed. Exact host/stock-guest blast and
-audio playback will still require a live test after implementation.
+audio playback remain unverified in a live session. An external native revival
+that fails after partially mutating its player stops Tag safely; the addon cannot
+claim to repair an interrupted native revival RPC.

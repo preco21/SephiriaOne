@@ -15,13 +15,27 @@ namespace SephiriaOne
             internal bool MatchDeath;
             internal FriendlyFireParticipants.Receipt PlayerReceipt;
             internal long PresentationEpoch;
+            internal FriendlyFireParticipants.Receipt KillerReceipt, VictimReceipt;
+            internal long MatchToken;
+            internal bool Exceptional, SuppressPresentation;
+        }
+
+        internal struct ReviveNotice
+        {
+            internal FriendlyFireParticipants.Receipt PlayerReceipt;
+            internal long MatchToken;
         }
 
         internal static void BeforeDeath(UnitAvatar __instance, DamageInstance diedFrom, out DeathNotice __state)
         {
             __state = default;
             if (!NetworkServer.active || __instance.IsDead) return;
-            if (__instance is PlayerAvatar dying) __state.MatchDeath = CombatMatchRuntime.EnterDeath(dying);
+            if (__instance is PlayerAvatar dying)
+            {
+                __state.MatchDeath = CombatMatchRuntime.EnterDeath(dying);
+                __state.SuppressPresentation = CombatMatchRuntime.IsPlayTagExplosion(dying);
+                __state.MatchToken = CombatMatchRuntime.MatchToken;
+            }
             try
             {
                 if (__instance is PlayerAvatar visual && SessionSettings.FriendlyFireForHit.Enabled &&
@@ -31,13 +45,18 @@ namespace SephiriaOne
                     __state.PresentationEpoch = FriendlyFireParticipants.Epoch;
                 }
                 RememberCompanionOwner(__instance);
-                bool attributed = CurrentHitPermitted() && current.Victim == __instance &&
+                bool attributed = !__state.SuppressPresentation && CurrentHitPermitted() && current.Victim == __instance &&
                     ReferenceEquals(current.Damage, diedFrom) && current.Attacker && current.KdaEpoch == FriendlyFireKda.Epoch;
                 if (__instance is PlayerAvatar victim)
                     __state.Kda = FriendlyFireKda.BeforeDeath(victim, attributed ? current.Attacker : null, current.KdaEpoch);
                 if (!attributed) return;
                 __state.ScoreEpoch = current.KdaEpoch;
                 __state.ParticipantEpoch = FriendlyFireParticipants.Epoch;
+                if (__instance is PlayerAvatar target)
+                {
+                    __state.KillerReceipt = FriendlyFireParticipants.Capture(current.Attacker);
+                    __state.VictimReceipt = FriendlyFireParticipants.Capture(target);
+                }
                 // Death callbacks can clear names/ownership, destroy avatars or
                 // reuse pooled damage. Snapshot only on the death boundary.
                 __state.Killer = NoticeName(current.Attacker); __state.Victim = NoticeName(__instance);
@@ -54,7 +73,7 @@ namespace SephiriaOne
             {
                 // Deliver before match callbacks can advance the round. The receipt
                 // rejects callbacks that retired/replaced this connection or scope.
-                if (__state.PlayerReceipt != null && SessionSettings.FriendlyFireForHit.Enabled &&
+                if (!__state.SuppressPresentation && __state.PlayerReceipt != null && SessionSettings.FriendlyFireForHit.Enabled &&
                     FriendlyFireParticipants.IsCurrent(__state.PlayerReceipt) &&
                     __state.PresentationEpoch == FriendlyFireParticipants.Epoch &&
                     __instance is PlayerAvatar visual && FriendlyFireParticipants.Includes(visual))
@@ -73,6 +92,8 @@ namespace SephiriaOne
                     __state.ParticipantEpoch != FriendlyFireParticipants.Epoch)) return;
                 if (__instance is PlayerAvatar victim && FriendlyFireKda.CompleteDeath(victim, __state.Kda))
                 {
+                    if (!__state.Exceptional)
+                        CombatMatchRuntime.ConfirmedKill(__state.KillerReceipt, __state.VictimReceipt, __state.MatchToken);
                     if (__state.ReliableKiller != null && FriendlyFireParticipants.IsCurrent(__state.PlayerReceipt) &&
                         __state.PresentationEpoch == FriendlyFireParticipants.Epoch)
                     {
@@ -100,16 +121,39 @@ namespace SephiriaOne
         internal static Exception FinishDeath(Exception __exception, UnitAvatar __instance, DeathNotice __state)
         {
             // An exceptional death may never have reached the native RpcDie.
-            if (__exception != null) __state.PlayerReceipt = null;
+            if (__exception != null) { __state.PlayerReceipt = null; __state.Exceptional = true; }
             try { AfterDeath(__instance, __state); }
             finally { if (__instance is PlayerAvatar player) CombatMatchRuntime.LeaveDeath(player, __state.MatchDeath); }
             return __exception;
         }
 
-        internal static void BeforeRevive(UnitAvatar __instance)
+        internal static void BeforeRevive(UnitAvatar __instance, out ReviveNotice __state)
         {
+            __state = default;
             if (NetworkServer.active && __instance.IsDead && __instance is PlayerAvatar player)
-            { ResetBalanceLife(player); FriendlyFireKda.ForgetLife(player); CombatMatchRuntime.Reviving(player); }
+            {
+                // Native Revive clears IsDead before callbacks. A nested call
+                // on that now-living player is a no-op and must not borrow the
+                // outer call's eventual RPC completion or its match identity.
+                __state.PlayerReceipt = FriendlyFireParticipants.Capture(player);
+                __state.MatchToken = CombatMatchRuntime.MatchToken;
+                ResetBalanceLife(player); FriendlyFireKda.ForgetLife(player); CombatMatchRuntime.Reviving(player);
+            }
+        }
+
+        internal static void AfterRevive(UnitAvatar __instance, ReviveNotice __state)
+        {
+            if (NetworkServer.active && __instance is PlayerAvatar player && !player.IsDead &&
+                ReferenceEquals(__state.PlayerReceipt?.Player, player))
+                CombatMatchRuntime.Revived(__state.PlayerReceipt, __state.MatchToken);
+        }
+
+        internal static Exception FinishRevive(Exception __exception, UnitAvatar __instance, ReviveNotice __state)
+        {
+            if (__exception != null && NetworkServer.active && __instance is PlayerAvatar player &&
+                ReferenceEquals(__state.PlayerReceipt?.Player, player))
+                CombatMatchRuntime.ReviveFailed(__state.PlayerReceipt, __state.MatchToken);
+            return __exception;
         }
 
         private static string NoticeName(UnitAvatar avatar)

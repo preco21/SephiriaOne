@@ -1,5 +1,10 @@
 # Active settings and saved preset
 
+Version `0.56.0` adds v25 for [Play Tag](play-tag.md): `tag duration N` stores a
+nondefault initial fuse (3..3600 whole seconds). Older presets default to 30;
+resetting it removes the row and returns to the lowest required schema. Carrier,
+deadline, finite holding counts, scores, selection and FX are never persisted.
+
 Version `0.54.0` adds v23 for [lobby recovery control](lobby-recovery.md).
 `friendlyfire block-lobby-regen 1` persists the independent combat preference.
 Missing rows and older presets leave it off; off/reset retain the lowest schema

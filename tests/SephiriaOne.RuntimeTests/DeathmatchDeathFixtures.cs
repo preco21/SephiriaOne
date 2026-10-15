@@ -2,6 +2,14 @@
 // state machine and native-shaped death/revival methods execute together.
 namespace SephiriaOne
 {
+    internal static class PlayTagExplosion
+    {
+        internal static readonly List<PlayerAvatar> Shown = new();
+        internal static bool Owned;
+        internal static void Show(PlayerAvatar player) { Shown.Add(player); Owned = true; }
+        internal static void Tick() { }
+        internal static void Reset() { Owned = false; }
+    }
     internal static class FriendlyFireDeathAudio
     {
         internal static int Shown;

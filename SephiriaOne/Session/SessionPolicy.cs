@@ -73,6 +73,12 @@ namespace SephiriaOne
         public FriendlyFireSettings FriendlyFire { get; private set; }
         public int DeathmatchDuration { get; private set; } = DeathmatchSettings.DefaultDuration;
         public int TournamentDuration { get; private set; } = TournamentSettings.DefaultDuration;
+        public int PlayTagDuration { get; private set; } = PlayTagSettings.DefaultDuration;
+        public void RecordPlayTagDuration(int seconds)
+        {
+            if (!PlayTagSettings.ValidDuration(seconds)) throw new ArgumentOutOfRangeException(nameof(seconds));
+            PlayTagDuration = seconds;
+        }
         public void RecordTournamentDuration(int seconds)
         {
             if (!TournamentSettings.ValidDuration(seconds)) throw new ArgumentOutOfRangeException(nameof(seconds));
@@ -99,7 +105,7 @@ namespace SephiriaOne
         public void RecordBat(bool reduce) => BatHpSteal = reduce;
         public bool CollinStartingArtifact { get; private set; }
         public void RecordCollin(bool grant) => CollinStartingArtifact = grant;
-        public bool HasChanges => fountain.HasValue || choices.Count != 0 || stats.Count != 0 || Resources.HasChanges || RabbitPotions.HasChanges || Merchants.HasChanges || ItemUnlock || FriendlyFire.HasChanges || JarSpawns.HasChanges || EventSpawns.HasChanges || BatHpSteal || CollinStartingArtifact || DeathmatchDuration != DeathmatchSettings.DefaultDuration || TournamentDuration != TournamentSettings.DefaultDuration;
+        public bool HasChanges => fountain.HasValue || choices.Count != 0 || stats.Count != 0 || Resources.HasChanges || RabbitPotions.HasChanges || Merchants.HasChanges || ItemUnlock || FriendlyFire.HasChanges || JarSpawns.HasChanges || EventSpawns.HasChanges || BatHpSteal || CollinStartingArtifact || DeathmatchDuration != DeathmatchSettings.DefaultDuration || TournamentDuration != TournamentSettings.DefaultDuration || PlayTagDuration != PlayTagSettings.DefaultDuration;
         public bool HasFountainSetting => fountain.HasValue;
         public bool HasFountainMultiplier => fountain.HasValue && fountain.Value.Multiplier;
 
@@ -144,6 +150,7 @@ namespace SephiriaOne
             FriendlyFire = default;
             DeathmatchDuration = DeathmatchSettings.DefaultDuration;
             TournamentDuration = TournamentSettings.DefaultDuration;
+            PlayTagDuration = PlayTagSettings.DefaultDuration;
             JarSpawns = default;
             EventSpawns = default;
             BatHpSteal = false;

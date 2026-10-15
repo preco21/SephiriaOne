@@ -5,16 +5,16 @@ namespace SephiriaOne
 {
     internal static partial class CombatMatchRuntime
     {
-        private static bool tournamentMode, firstDied, secondDied;
+        private static bool firstDied, secondDied;
         private static readonly List<RosterEntry> tournamentPlayers = new List<RosterEntry>();
         private static readonly Dictionary<PlayerAvatar, RosterEntry> tournamentRoster =
             new Dictionary<PlayerAvatar, RosterEntry>(ReferenceComparer<PlayerAvatar>.Instance);
         private static readonly Random tournamentRandom = new Random();
         private static TournamentSchedule schedule;
         private static int first = -1, second = -1;
-        internal static bool IsTournament => tournamentMode && IsRunning;
+        internal static bool IsTournament => mode == MatchMode.Tournament && IsRunning;
         internal static bool CanStartTournament => CanStart && EligibleTournamentCount() >= 2;
-        internal static bool StartTournament(out string message) => Start(true, out message);
+        internal static bool StartTournament(out string message) => Start(MatchMode.Tournament, out message);
 
         private static int EligibleTournamentCount()
         {
@@ -48,7 +48,8 @@ namespace SephiriaOne
         // Do not edit the host's selection just to restrict the current round.
         internal static bool AllowsPair(PlayerAvatar attacker, PlayerAvatar victim)
         {
-            if (!tournamentMode || !IsRunning) return true;
+            if (IsPlayTag) return PlayTagAllowsPair(attacker, victim);
+            if (!IsTournament) return true;
             if (phase != Phase.Active || !CurrentScope || Now >= endsAt || first < 0 || second < 0 ||
                 !attacker || !victim || ReferenceEquals(attacker, victim)) return false;
             var a = tournamentPlayers[first]; var b = tournamentPlayers[second];
@@ -61,7 +62,8 @@ namespace SephiriaOne
         // hostile targeting. Spectators retain native recovery between matches.
         internal static bool AllowsParticipant(PlayerAvatar player)
         {
-            if (!tournamentMode || !IsRunning) return true;
+            if (IsPlayTag) return phase == Phase.Active && CurrentScope && PlayTagEnrolled(player);
+            if (!IsTournament) return true;
             if (first < 0 || second < 0) return false;
             var a = tournamentPlayers[first].Subject.Player;
             var b = tournamentPlayers[second].Subject.Player;
@@ -72,7 +74,7 @@ namespace SephiriaOne
         // command was executed. Shared stop contains native recovery reentrancy.
         internal static void SelectionChanged()
         {
-            if (IsTournament) Stop(true, true);
+            if (IsTournament || IsPlayTag) Stop(true, true);
         }
 
         private static void TournamentDeath(PlayerAvatar player)
@@ -167,7 +169,7 @@ namespace SephiriaOne
 
         private static void ClearTournament()
         {
-            tournamentMode = false; schedule = null; tournamentPlayers.Clear(); tournamentRoster.Clear();
+            schedule = null; tournamentPlayers.Clear(); tournamentRoster.Clear();
             first = second = -1; firstDied = secondDied = false;
         }
 
