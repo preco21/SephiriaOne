@@ -1,5 +1,10 @@
 # Friendly fire
 
+Version `0.57.1` exempts [admitted companion damage/deaths](#companion-penalty-exemption-0571-2026-10-16)
+from native crime, negotiation/reputation loss and shared faction hostility.
+This follows the existing friendly-fire rules in casual play and all match modes;
+no extra toggle or guest installation is required. Normal NPC penalties remain.
+
 Version `0.54.0` adds **Block lobby HP/MP recovery** and
 `/one friendlyfire block-lobby-regen on|off`, default off. It suppresses automatic
 recovery only for active combat participants in the waiting room, including
@@ -123,8 +128,9 @@ preset. All older preset versions remain readable with their original rules.
   damage keep native behavior. Safe-area peace mode, invulnerability, dodge and
   guard checks still apply. Guarding with sword and shield can still spend MP;
   unguarded hits now proceed to HP damage. Only the matching player's native
-  team-protection callback is skipped. Other damage vetoes, NPC safe mode, crime
-  and retaliation rules are not disabled.
+  team-protection callback is skipped. Other damage vetoes and ordinary NPC safe
+  mode, crime and retaliation remain native. Since `0.57.1`, admitted player-led
+  companion hits/deaths skip their shared hostility and crime consequences below.
 - Allied damage scales after defense/critical/true-damage calculation, before
   normal and MP shields. Native super armor, extra lives and death follow.
   At 0%, the allied hit is rejected before shields, protection points or on-hit
@@ -166,6 +172,60 @@ preset. All older preset versions remain readable with their original rules.
   name falls back to its live player slot (or network ID when no valid slot is
   available). Unnamed companions identify their owner; other unnamed allies use
   an explicit NPC fallback. Both EN/KO catalogs contain these labels.
+
+## Companion penalty exemption (0.57.1, 2026-10-16)
+
+Player-led companions killed by an admitted friendly-fire hit no longer apply
+the native party crime debuff, saved crime count or merchant reputation/hostility
+changes. Both the attacker's own companion and another participating player's
+companion qualify. The same resolved-hit context covers direct, artifact,
+debuff and reflected damage in casual friendly fire, Deathmatch, Tournament and
+Play Tag. Existing participant and active-pair rules still decide which hits are
+allowed. Off/zero, excluded participants, normal enemies, system damage and
+unattributed deaths retain their existing behavior.
+
+The installed game calls `DungeonManager.NPCDeadCheckServerside` from
+`UnitAI_NewBasic.OnDie`. It applies `crimeDebuff` to every player and increments
+`SaveManager.CurrentRun["CrimeCount"]`. Merchant factions also set both
+Merchant/Player relations to -100, broadcast `RpcMerchantsHostileChange`, and
+write `dungeonEnvironment["RedMerchant"]`. New/reinitialized players reapply the
+crime buff from `CrimeCount`, so merely removing the visible buff would not fix
+re-entry or saved penalties. Full managed-source search found this to be the
+only crime-count writer; normal summon death removes ownership/subscriptions,
+without another punishment path.
+
+The new `Features/Combat/Companions` hooks suppress only that crime check for the
+exact admitted companion and damage instance. They use the hit's captured owner
+receipt, because `Charm_SummonUnit.HandleUnitDie` and other callbacks can clear
+`NetworkLeader` before another death subscriber runs. An already-delivered kill
+remains exempt if a callback changes the toggle/selection, retires the owner, or
+reuses `damage.origin`. The existing nested hit finalizer restores context even
+after exceptions. No exemption is stored on the NPC, faction, network ID or
+pooled damage object after the operation.
+
+`UnitAI_NewBasic.OnDamaged` also changes temporary global faction relations and
+may broadcast wanderer hostility before the lethal death callback. A targeted
+transpiler wraps only `SetTempEnemyRelation` and `NotifyWanderersHostile` for the
+same admitted companion hit. Native personal targeting, branches, death cleanup,
+StopBattle, summon removal, kill callbacks and guest death replication continue.
+Ordinary merchants/wanderers retain every penalty, and the existing addon-spawned
+merchant exemption remains independent. Pre-existing buffs and crime history are
+never cleared or repaired by this change.
+
+Installed native assembly SHA-256 remains
+`C57A0DAEAB8E8D0AF7066A344133EEC4C57D8F303FD9E25DA9410FBFC4CF1510`.
+Runtime guards validate the audited penalty/cleanup sites; changed contracts
+disable friendly fire through its existing compatibility handling. The hooks
+share its Harmony owner and are removed together on unload. There is no polling,
+new collection, saved state or custom network message. Executable hook tests
+cover party penalties, hostility, native cleanup, callback changes, reflection,
+Burn, nested deaths, reused damage, exceptions and preserved old crime. The warmed
+companion damage path allocates no extra per-hit memory. Native IL tests verify
+the two-call rewrite and rejection of changed contracts. Verification passed:
+3,542 executable combat checks, 2,233 shared runtime checks plus 69 Bat lifecycle
+checks, 610 merchant checks, portable/localization and installed-game contracts,
+and the co-installed Harmony API audit. Release built with zero warnings/errors.
+Live host/guest gameplay remains untested; builds use `-p:DeployMod=false`.
 
 ## Revive-all recovery
 

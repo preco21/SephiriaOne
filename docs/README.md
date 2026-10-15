@@ -1,12 +1,16 @@
 # Development knowledge index
 
-Maintained: 2026-10-16 (Asia/Seoul), addon `0.57.0`.
+Maintained: 2026-10-16 (Asia/Seoul), addon `0.57.1`.
 
 Agents and contributors can refer to `docs/*` for research, implementation
 materials, native game findings and references. Start here before repeating an
 investigation. Repository workflow and deployment rules are in [AGENTS.md](../AGENTS.md).
 
 ## Start here
+
+Combat fix: [companion penalties](friendly-fire.md#companion-penalty-exemption-0571-2026-10-16)
+exempts admitted friendly-fire companion hits/deaths from party crime, saved
+crime counts and global hostility, preserving normal NPC penalties and cleanup.
 
 Combat follow-up: [Play Tag](play-tag.md) adds a bomb carrier, shrinking fuse,
 one-second respawns and finite minimum-fuse holdings to the shared match runtime.

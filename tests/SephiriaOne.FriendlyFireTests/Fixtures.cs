@@ -102,7 +102,7 @@ public class DamageInstance
     public EDamageFromType fromType;
     public EDamageType damageType;
 }
-public class RuntimeFactionManager : UnityEngine.Object
+public partial class RuntimeFactionManager : UnityEngine.Object
 {
     public static RuntimeFactionManager Instance { get; } = new();
     public ERelationBehaviour GetRelationBehaviour(string a, string b, EPersonality personality) =>
@@ -116,7 +116,7 @@ public class CombatManager : UnityEngine.Object
     public bool PeaceMode;
     [MethodImpl(MethodImplOptions.NoInlining)] public static bool ContainsAttackableFaction(long layers, string faction) => faction == "enemy" || layers == -1;
 }
-public class UnitAvatar : CombatBehaviour
+public partial class UnitAvatar : CombatBehaviour
 {
     public uint netId;
     public string faction = "players";
@@ -267,7 +267,7 @@ public partial class DungeonManager : UnityEngine.Object
 
 // Compact native relation and decision fixture; native IL checks verify the
 // installed game's search/update consumers and guard placement separately.
-public class UnitAI_NewBasic
+public partial class UnitAI_NewBasic : UnityEngine.Object
 {
     public UnitAvatar Avatar { get; set; }
     public UnitAvatar CurrentTarget { get; set; }

@@ -16,6 +16,15 @@ A different game build requires renewed contract/asset checks. Start with the
 
 ## State lifetimes and multiplayer
 
+Native companion punishment uses the same `NPCDeadCheckServerside` callback as
+ordinary social NPCs. Its crime debuff affects the whole party, while saved
+`CrimeCount` causes the buff to be reapplied during player initialization.
+`UnitAI_NewBasic.OnDamaged` can also alter global faction relations before death.
+Exempt an admitted friendly-fire companion at these exact boundaries; removing
+the visible buff afterward misses persistent consequences. Capture ownership
+before `Charm_SummonUnit.HandleUnitDie` clears it, and retain native cleanup.
+See [audited symbols, scope and tests](friendly-fire.md#companion-penalty-exemption-0571-2026-10-16).
+
 Role-dependent PvP modifiers (`0.57.0`) should query the shared match's current
 receipt and role at the resolved-hit boundary. An avatar or netId alone cannot
 prove that a reconnect still owns a bomb. Require the same run, phase, connection,

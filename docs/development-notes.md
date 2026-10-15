@@ -14,6 +14,13 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+- `0.57.1`: [companion penalty exemption](friendly-fire.md#companion-penalty-exemption-0571-2026-10-16)
+  uses the existing admitted-hit context to skip companion crime and global
+  faction-hostility consequences. Native cleanup, ordinary NPC penalties and
+  pre-existing crime remain unchanged. No polling, persistence, new toggle or
+  guest addon requirement; native contract and executable regressions cover
+  teardown, nested callbacks, reflection and ongoing debuffs.
+
 - `0.57.0`: [Play Tag chaser advantages](play-tag.md#chaser-advantages-0570-2026-10-16)
   add independent enabled-by-default x2 refill and 75% incoming damage controls,
   commands and v26 presets. Current role is resolved at impact; no native stats

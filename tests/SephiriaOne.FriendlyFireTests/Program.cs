@@ -163,6 +163,7 @@ changedProtection = protection.Select(i => new CodeInstruction(i)).ToList();
 changedProtection.Add(CodeInstruction.Call(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.Clear)));
 Check(!FriendlyFireHooks.ValidatePlayerProtection(changedProtection), "Additional callback work is not silently skipped");
 CompanionTests.Run(Check);
+CompanionPenaltyTests.Run(Check);
 ReflectionTests.Run(Check);
 var relationCode = PatchProcessor.GetOriginalInstructions(AccessTools.Method(typeof(UnitAI_NewBasic), "GetRelation")).ToList();
 Check(FriendlyFireHooks.ValidateCompanionRelation(relationCode), "Companion relation fixture matches native contract");
@@ -193,6 +194,9 @@ FractionalDamageTests.Run(Check);
 SelectiveCombatTests.Run(Check);
 TournamentCombatTests.Run(Check);
 FriendlyFireHooks.Uninstall();
+Check(PatchProcessor.GetPatchInfo(AccessTools.Method(typeof(DungeonManager), "NPCDeadCheckServerside"))?.Prefixes.Count is null or 0 &&
+    PatchProcessor.GetPatchInfo(AccessTools.Method(typeof(UnitAI_NewBasic), "OnDamaged"))?.Transpilers.Count is null or 0,
+    "Unload removes companion crime and shared-hostility exemptions together");
 foreach (var method in FriendlyFireDebuffBalanceHooks.Updates())
     Check(PatchProcessor.GetPatchInfo(method)?.Transpilers.Count is null or 0, "Unload removes debuff cadence adjustment: " + method.DeclaringType.Name);
 Check(PatchProcessor.GetPatchInfo(AccessTools.DeclaredMethod(typeof(ComboEffect_DarkCloud), "FireLightning"))?.Prefixes.Count is null or 0,
