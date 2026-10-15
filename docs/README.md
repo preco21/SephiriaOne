@@ -1,6 +1,6 @@
 # Development knowledge index
 
-Maintained: 2026-10-15 (Asia/Seoul), addon `0.55.1`.
+Maintained: 2026-10-15 (Asia/Seoul), addon `0.55.2`.
 
 Agents and contributors can refer to `docs/*` for research, implementation
 materials, native game findings and references. Start here before repeating an
@@ -25,6 +25,7 @@ and slows debuff damage under the same toggle while retaining Freeze's stun.
 `0.54.4` shortens Shock/Freeze's separate damage intervals to 0.25 seconds.
 `0.55.0` makes the shared refill configurable through the Combat panel, commands
 and presets. `0.55.1` tunes the default to **70% of victim max HP/sec**.
+`0.55.2` shortens Dark Cloud's separate PvP strike cooldown to **0.25 seconds**.
 
 Compatibility fix: [co-installed Harmony and missing multiplayer FX/notices](harmony-compatibility.md)
 records the host-log failure and compiled API regression check in `0.51.3`.

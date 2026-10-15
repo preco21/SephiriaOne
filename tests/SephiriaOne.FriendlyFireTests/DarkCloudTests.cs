@@ -20,11 +20,11 @@ internal static class DarkCloudTests
         cloud.FireLightning(target);
         check(target.Hp == 90 && target.DebuffApplications == 1 && cloud.Effects == 1,
             "Dark Cloud rapid same-player repeat is suppressed before damage, debuff callback and FX");
-        Time.time = 10.499f; cloud.FireLightning(target);
-        check(target.Hp == 90, "Dark Cloud remains limited just before the half-second boundary");
-        Time.time = 10.5f; cloud.FireLightning(target);
+        Time.time = 10.249f; cloud.FireLightning(target);
+        check(target.Hp == 90, "Dark Cloud remains limited just before the quarter-second boundary");
+        Time.time = 10.25f; cloud.FireLightning(target);
         check(target.Hp == 80 && target.DebuffApplications == 2 && cloud.Effects == 2,
-            "Dark Cloud admits the exact half-second boundary with its normal callback");
+            "Dark Cloud admits the exact quarter-second boundary with its normal callback");
 
         var another = new PlayerAvatar { MaxHp = 400 }; cloud.FireLightning(another);
         check(another.Hp == 90, "Another hostile player has an independent strike window");
@@ -108,7 +108,7 @@ internal static class DarkCloudTests
         pair.Cloud.FireLightning(pair.Target);
         check(pair.Target.Hp == 90 && pair.Target.DebuffApplications == 1 && pair.Cloud.Effects == 1,
             "Owner death does not bypass the cap on queued Dark Cloud strikes or burn callbacks");
-        Time.time = 10.5f; pair.Cloud.FireLightning(pair.Target);
+        Time.time = 10.25f; pair.Cloud.FireLightning(pair.Target);
         check(pair.Target.Hp == 80 && pair.Target.DebuffApplications == 2,
             "Already-queued strikes from a dead owner retain native behavior at the next interval");
 
@@ -123,7 +123,7 @@ internal static class DarkCloudTests
         pair.Target.OnHit = null;
         pair.Cloud.FireLightning(pair.Target);
         check(pair.Cloud.Strikes == 1, "Failed native strike cannot immediately retry around the rate limit");
-        Time.time += 0.5f; pair.Cloud.FireLightning(pair.Target);
+        Time.time += 0.25f; pair.Cloud.FireLightning(pair.Target);
         check(pair.Cloud.Strikes == 2, "Native exceptions do not poison the next strike window");
 
         pair = Fresh();

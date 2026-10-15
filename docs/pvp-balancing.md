@@ -184,8 +184,10 @@ all tables. No new per-frame scans, custom guest state or network messages exist
 
 ## Dark Cloud
 
-The existing 0.5-second attacker/player-pair strike limit is now part of this
-toggle. **When balancing is off, that limit is off too**, even if friendly fire
+The attacker/player-pair strike limit is **0.25 seconds** since `0.55.2`
+(2026-10-15), reduced from 0.5 seconds. It remains separate from the shared
+70% HP/s default budget and is part of the balancing toggle.
+**When balancing is off, that limit is off too**, even if friendly fire
 is on. All other Dark Cloud behavior remains as recorded in the
 [artifact guide](friendly-fire-artifacts.md#dark-cloud-player-strike-limit-0512-2026-10-13).
 
@@ -291,6 +293,13 @@ preset was explicitly saved. Enabled balancing uses preset v22; earlier versions
 still parse and default balancing to off. Malformed/duplicate rows fail atomically.
 
 ## Verification and limits
+
+`0.55.2` Dark Cloud tuning verification on 2026-10-15: the quarter-second
+boundary test failed before the change and passed afterward. All 1,429 combat
+checks and installed-game contracts passed; Release build had zero warnings or
+errors. Tests retain PvE/balance-off behavior, independent pairs, queued strikes
+after death, reconnect/reset handling and zero allocations per warmed strike.
+No deployment or live gameplay validation performed.
 
 `0.55.1` default tuning verification on 2026-10-15: Release build had zero
 warnings/errors; 1,429 combat checks, 1,998 runtime checks plus 69 Bat checks,

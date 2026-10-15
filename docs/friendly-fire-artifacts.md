@@ -16,8 +16,12 @@ Follow-up (`0.52.0`): this limit now requires [PvP balancing](pvp-balancing.md),
 an off-by-default host toggle. Balance edits invalidate its cooldown revision.
 The behavior below describes the limit while balancing is on.
 
+Follow-up (`0.55.2`, 2026-10-15): the strike cooldown is reduced from 0.5 to
+0.25 seconds. Shared pair ownership, balance gating and lifecycle resets are
+unchanged; the separate damage-budget refill still defaults to 70% HP/s.
+
 During enabled, positive-damage friendly fire, the host permits at most one Dark
-Cloud strike attempt per attacker-player/victim-player pair every **0.5 seconds**
+Cloud strike attempt per attacker-player/victim-player pair every **0.25 seconds**
 of scaled game time. It uses the same selection, connection and Tournament-pair
 policy as other friendly-fire effects. Casual friendly fire, Deathmatch and
 Tournament share this limit; clients need no addon or new assets.
@@ -61,14 +65,14 @@ player-combo, damage/event/FX anchors and ordering. `Networkavatar` and
 matching the installed IL's member identity. Changed contracts follow existing
 friendly-fire installation rollback instead of leaving partial hooks active.
 
-Executable coverage includes independent pairs, 0.5-second boundaries, burn/FX,
+Executable coverage includes independent pairs, 0.25-second boundaries, burn/FX,
 death during a burst, ordinary enemies, off/zero, client execution, selection,
 Tournament exclusion, reconnect/run/floor/epoch changes, component pooling,
 recursive callbacks, exceptions and warmed allocations. Installed-game checks
 verify both native entry paths and reject missing/reordered anchors. The game
 assembly fingerprint remains the one recorded in [domain findings](domain-findings.md).
 Live balance, Unity pause behavior and stock-guest presentation still require
-in-game testing; 0.5 seconds is an initial balance value, not a measured optimum.
+in-game testing; 0.25 seconds is a tuning value, not a measured optimum.
 
 Verification: 1,002 executable combat checks, 1,905 runtime integration checks
 (plus 69 Bat lifecycle checks), 41,176 Tournament scheduler checks, and the full

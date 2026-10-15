@@ -55,7 +55,8 @@ StartStun(BuffDuration), so zeroing a repeated damage pulse preserves the stun.
 Dark Cloud's existing pair cooldown is gated by the same preference. See
 [model and limits](pvp-balancing.md).
 
-Dark Cloud (`0.51.2`): `FireLightning` invokes `OnAttackUnit` after `ApplyDamage`
+Dark Cloud (`0.51.2`, cooldown tuned to 0.25 seconds in `0.55.2`):
+`FireLightning` invokes `OnAttackUnit` after `ApplyDamage`
 without checking the damage result; Blazing Stormcloud uses that callback for
 burn. A player-only rate limit must guard the whole strike to suppress repeat
 debuffs too. Native multishot coroutines can continue after owner death, so a dead
