@@ -16,6 +16,16 @@ A different game build requires renewed contract/asset checks. Start with the
 
 ## State lifetimes and multiplayer
 
+Role-dependent PvP modifiers (`0.57.0`) should query the shared match's current
+receipt and role at the resolved-hit boundary. An avatar or netId alone cannot
+prove that a reconnect still owns a bomb. Require the same run, phase, connection,
+living avatar and armed/unexpired fuse. If incoming damage reduction follows a
+token reservation, refund in the reservation's original units: divide actual
+native consumption by the hit's captured reduction factor. Otherwise rapid hits
+can refund away the intended reduction. Track role revisions to detect an
+A-to-B-to-A transfer between attacks without resetting accumulated credit.
+See [Play Tag chaser accounting and tests](play-tag.md#chaser-advantages-0570-2026-10-16).
+
 Cosmetic RPC readiness is distinct from gameplay-state readiness. A positional
 impact message on `DungeonManager` needs that anchor and a current ready
 same-floor recipient; it does not consume the victim's observer membership or

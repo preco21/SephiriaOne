@@ -20,7 +20,7 @@ namespace SephiriaOne
             internal FriendlyFireParticipants.Receipt AttackerReceipt, VictimReceipt;
             internal BalanceWindow BudgetWindow;
             internal long BudgetGeneration;
-            internal double BudgetReserved, BudgetMaxHp, BudgetAccounted;
+            internal double BudgetReserved, BudgetMaxHp, BudgetAccounted, BudgetIncomingScale;
         }
         [ThreadStatic] private static HitContext current;
         private static bool warned;
@@ -199,11 +199,19 @@ namespace SephiriaOne
             if (current.Victim is PlayerAvatar victim)
             {
                 var settings = SessionSettings.FriendlyFireForHit;
+                var chaser = SessionSettings.PlayTagChaser;
+                double incoming = chaser.IncomingEnabled && CombatMatchRuntime.IsActiveChaser(victim) ? chaser.IncomingScale : 1;
+                if (incoming <= 0) return 0;
                 if (settings.Balance)
                 {
                     double maxHp = victim.MaxHp;
-                    scaled = LimitBalancedDamage(FriendlyFireBalance.Soften(scaled, maxHp), maxHp, settings.RefillScale);
+                    double refill = settings.RefillScale;
+                    if (chaser.RefillEnabled && CombatMatchRuntime.IsActiveChaser(current.Attacker)) refill *= chaser.RefillScale;
+                    scaled = LimitBalancedDamage(FriendlyFireBalance.Soften(scaled, maxHp), maxHp, refill, settings.RefillScale, incoming);
                 }
+                // Reduce the damage native code can actually accept, including
+                // extreme unbalanced hits that would otherwise reach this cap.
+                return (float)(Math.Min(scaled, 2147483520d) * incoming);
             }
             return (float)Math.Min(scaled, 2147483520d);
         }

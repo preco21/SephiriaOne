@@ -48,6 +48,21 @@ internal static class GamePlayTagTests
         Require(Calls(Code(addon, "SephiriaOne.FriendlyFireRuntime", "AfterRevive"), "CombatMatchRuntime", "Revived") &&
             Calls(Code(addon, "SephiriaOne.CombatMatchRuntime", "Revived"), "PlayTagBomb", "ArmAfterRespawn"),
             "the transferred fuse arms from actual native revival completion");
-        Console.WriteLine("Verified Play Tag native death, replication, attributed completion and successful-revival integration contracts (not live multiplayer).");
+        // Modifiers must use the same resolved player-hit hook as direct,
+        // companion, reflected and debuff damage, without native stat mutations.
+        var scale = Code(addon, "SephiriaOne.FriendlyFireRuntime", "Scale");
+        Require(Calls(scale, "SessionSettings", "get_PlayTagChaser") &&
+            scale.Count(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "CombatMatchRuntime" && m.Name == "IsActiveChaser") == 2 &&
+            Calls(scale, "PlayTagChaserSettings", "get_RefillScale") && Calls(scale, "PlayTagChaserSettings", "get_IncomingScale"),
+            "resolved PvP damage reads both current roles and configured multipliers");
+        Require(!scale.Any(i => i.opcode == OpCodes.Stfld || i.opcode == OpCodes.Stsfld),
+            "chaser composition does not mutate native stats or retain applied bonuses");
+        var budget = Code(addon, "SephiriaOne.FriendlyFireRuntime", "LimitBalancedDamage");
+        Require(Calls(budget, "CombatMatchRuntime", "get_ChaserRevision") &&
+            budget.Any(i => i.opcode == OpCodes.Stfld && i.operand is FieldInfo f && f.Name == "BudgetIncomingScale") &&
+            Code(addon, "SephiriaOne.FriendlyFireRuntime", "FinishBalancedDamage").Any(i =>
+                i.opcode == OpCodes.Ldfld && i.operand is FieldInfo f && f.Name == "BudgetIncomingScale"),
+            "shared reservation tracks role changes and captures incoming scale for refunds");
+        Console.WriteLine("Verified Play Tag native death, replication, revival and shared chaser damage/budget integration contracts (not live multiplayer).");
     }
 }

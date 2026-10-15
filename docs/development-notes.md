@@ -1,6 +1,6 @@
 # SephiriaOne development notes
 
-Recorded: 2026-09-23; updated: 2026-10-15 (Asia/Seoul).
+Recorded: 2026-09-23; updated: 2026-10-16 (Asia/Seoul).
 
 This document records the project history, current implementation, and modding
 findings collected during the initial investigation. Installed-game observations
@@ -13,6 +13,16 @@ For agent/contributor onboarding, start with the [documentation index](README.md
 the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
+
+- `0.57.0`: [Play Tag chaser advantages](play-tag.md#chaser-advantages-0570-2026-10-16)
+  add independent enabled-by-default x2 refill and 75% incoming damage controls,
+  commands and v26 presets. Current role is resolved at impact; no native stats
+  are written. Transfer/expiry/reconnection remove stale bonuses immediately.
+  Captured incoming factors preserve damage reductions through rapid-hit refunds;
+  conservative transition accounting prevents bonus credit from stale roles.
+  Release build, installed-code/co-installed Harmony contracts, 3,514 combat and
+  2,233 runtime checks plus 69 Bat lifecycle checks passed without deployment.
+  Live host/guest gameplay and rendered UI remain unverified.
 
 - `0.56.0`: [Play Tag](play-tag.md) reuses shared match selection, K/D/A,
   countdowns and recovery. Carrier kills transfer a shrinking bomb, one-second

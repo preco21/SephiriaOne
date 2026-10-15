@@ -5,6 +5,7 @@ internal static class GamePanelCompatibilityTests
 {
     internal static void Run(Assembly game, Assembly addon)
     {
+        GamePlayTagControlsTests.Run(addon);
         GameHotkeyCompatibilityTests.Run(game, addon);
         var ui = game.GetType("UIBase", true)!;
         var root = game.GetType("UIRoot", true)!;

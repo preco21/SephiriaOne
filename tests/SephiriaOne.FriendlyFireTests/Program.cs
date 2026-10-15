@@ -183,6 +183,7 @@ EffectTests.Run(Check);
 ArtifactTests.Run(Check);
 DarkCloudTests.Run(Check);
 RapidHitTests.Run(Check);
+ChaserBalanceTests.Run(Check);
 BurnCadenceTests.Run(Check);
 ElementalCadenceTests.Run(Check);
 DebuffPulseTests.Run(Check);

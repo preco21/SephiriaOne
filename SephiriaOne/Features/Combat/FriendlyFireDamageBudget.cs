@@ -10,16 +10,17 @@ namespace SephiriaOne
         private bool started;
         private double remaining, lastTime, lastRefill;
 
-        internal double Take(double damage, double maxHp, double now, double refillPerSecond = FriendlyFireSettings.DefaultRefillScale)
+        internal double Take(double damage, double maxHp, double now, double refillPerSecond = FriendlyFireSettings.DefaultRefillScale,
+            double elapsedRateCeiling = double.PositiveInfinity)
         {
             if (!Finite(damage) || damage <= 0 || !Finite(maxHp) || maxHp <= 0 || !Finite(now) ||
-                !Finite(refillPerSecond) || refillPerSecond <= 0) return 0;
+                !Finite(refillPerSecond) || refillPerSecond <= 0 || double.IsNaN(elapsedRateCeiling) || elapsedRateCeiling <= 0) return 0;
             if (!started || now < lastTime)
             { remaining = Capacity; started = true; }
             else
                 // Rate edits preserve tokens. Never credit elapsed time retroactively
                 // at a higher rate; a decrease takes effect on the next hit as well.
-                remaining = Math.Min(Capacity, remaining + (now - lastTime) * Math.Min(lastRefill, refillPerSecond));
+                remaining = Math.Min(Capacity, remaining + (now - lastTime) * Math.Min(elapsedRateCeiling, Math.Min(lastRefill, refillPerSecond)));
             lastTime = now; lastRefill = refillPerSecond;
             double allowed = Math.Min(damage, remaining * maxHp);
             remaining = Math.Max(0, remaining - allowed / maxHp);

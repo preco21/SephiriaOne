@@ -32,6 +32,16 @@ per second**. Explicit saved refill values remain unchanged. Presets without a
 refill row, including older saves of the former default, inherit 70. Both refill
 reset and full combat reset restore 70. The 20% burst and all other limits remain.
 
+Updated in `0.57.0`, 2026-10-16: [Play Tag chaser advantages](play-tag.md#chaser-advantages-0570-2026-10-16)
+compose at the same resolved player-hit boundary. The active chaser can multiply
+the global refill (default x2, enabled); it requires this balancing toggle.
+A separate enabled-by-default 75% incoming multiplier works with or without
+balancing. These options never write native stats, change PvE or enlarge burst
+capacity. Incoming reduction is accounted for before unused budget is refunded,
+so rapid attacks cannot bypass it. Role/configuration changes retain credit and
+conservatively limit elapsed refill until the next stable interval. Outside an
+active living/armed Tag carrier, both modifiers are inactive.
+
 Enable **Combat → PvP balancing** (`PvP 밸런스 보정`) or use:
 
 ```text
@@ -53,7 +63,7 @@ Use `/one save` to persist the choice. Nondefault refill requires preset v24;
 older presets inherit 70, and default refill adds no row or schema requirement.
 
 The preference is independent of the friendly-fire master switch. It affects
-current permitted player pairs in casual friendly fire, Deathmatch and Tournament
+current permitted player pairs in casual friendly fire, Deathmatch, Tournament and Play Tag
 only while effective friendly fire is active. Empty selection means everyone;
 nonempty selection and Tournament's current pair keep their existing rules.
 Changing balancing does not stop a match or clear K/D/A. Touching the master

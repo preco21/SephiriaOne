@@ -5,6 +5,18 @@ namespace SephiriaOne
     internal static partial class SessionSettings
     {
         internal static int PlayTagDuration => policy.PlayTagDuration;
+        internal static PlayTagChaserSettings PlayTagChaser => policy.PlayTagChaser;
+        internal static bool TrySetPlayTagChaser(PlayTagChaserSettings settings, out string message)
+        {
+            message = PlayTagCommand.Usage;
+            if (!NetworkServer.active || !EnsureResourceScope()) return false;
+            if (!policy.PlayTagChaser.Equals(settings))
+            {
+                policy.RecordPlayTagChaser(settings); intentRevision++;
+                CombatMatchRuntime.ChaserSettingsChanged(); NotifySettingsChanged();
+            }
+            message = PlayTagCommand.DescribeChaser(); return true;
+        }
         internal static bool TrySetPlayTagDuration(int seconds, out string message)
         {
             message = PlayTagCommand.Usage;

@@ -195,6 +195,8 @@ namespace SephiriaOne
             collinReset = null;
             updateInstall = updateCheck = null; updateAutomatic = null;
             friendlyDamage = null; friendlyDraft = false; friendlyRefill = null; friendlyRefillDraft = false;
+            playTagRefill = playTagIncoming = null;
+            playTagDurationDraft = playTagRefillDraft = playTagIncomingDraft = false;
             participantRows.Clear(); participantContent = null; participantSummary = null;
             if (pageRoot) { widgets.Forget(pageRoot); pageRoot.gameObject.SetActive(false); Destroy(pageRoot.gameObject); }
             pageRoot = PanelWidgets.Rect(window, "Page", 4, 152, 600, 162);
@@ -353,6 +355,7 @@ namespace SephiriaOne
         private void ClearInput()
         {
             ClearFriendlyDamage(); ClearFriendlyRefill();
+            ClearPlayTagDuration(); ClearPlayTagRefill(); ClearPlayTagIncoming();
         }
 
         private static string PresetValues(SettingsSnapshot snapshot)

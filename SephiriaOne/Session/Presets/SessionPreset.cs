@@ -27,6 +27,7 @@ namespace SephiriaOne
         private const string CompanionStatsPresetHeader = "SephiriaOne preset v21";
         private const string LobbyRegenPresetHeader = "SephiriaOne preset v23";
         private const string PlayTagPresetHeader = "SephiriaOne preset v25";
+        private const string PlayTagChaserPresetHeader = "SephiriaOne preset v26";
         private const string PvpRefillPresetHeader = "SephiriaOne preset v24";
         private const string PvpBalancePresetHeader = "SephiriaOne preset v22";
         private const string EventPresetHeader = "SephiriaOne preset v16";
@@ -65,6 +66,10 @@ namespace SephiriaOne
             if (DeathmatchDuration != DeathmatchSettings.DefaultDuration) lines.Add("deathmatch duration " + DeathmatchDuration.ToString(CultureInfo.InvariantCulture));
             if (TournamentDuration != TournamentSettings.DefaultDuration) lines.Add("tournament duration " + TournamentDuration.ToString(CultureInfo.InvariantCulture));
             if (PlayTagDuration != PlayTagSettings.DefaultDuration) lines.Add("tag duration " + PlayTagDuration.ToString(CultureInfo.InvariantCulture));
+            if (!PlayTagChaser.RefillEnabled) lines.Add("tag chaser-refill-enabled 0");
+            if (PlayTagChaser.RefillMultiplier != PlayTagChaserSettings.DefaultRefillMultiplier) lines.Add("tag chaser-refill " + PlayTagChaser.RefillNumber);
+            if (!PlayTagChaser.IncomingEnabled) lines.Add("tag chaser-damage-enabled 0");
+            if (PlayTagChaser.IncomingPercent != PlayTagChaserSettings.DefaultIncomingPercent) lines.Add("tag chaser-damage " + PlayTagChaser.IncomingNumber);
             if (EventSpawns.HasChanges) lines.Add("events multiplier " + EventSpawns.Number);
             if (CollinStartingArtifact) lines.Add("collin starting 1");
             if (BatHpSteal) lines.Add("bat hp-steal 1");
@@ -112,7 +117,7 @@ namespace SephiriaOne
             { expandedStats |= stat.RequiresExpandedPreset; companionStats |= stat.IsCompanion; }
             bool multiplier = HasFountainMultiplier;
             foreach (Setting setting in stats.Values) multiplier |= setting.Multiplier;
-            return (PlayTagDuration != PlayTagSettings.DefaultDuration ? PlayTagPresetHeader : FriendlyFire.RefillPercent != FriendlyFireSettings.DefaultRefillPercent ? PvpRefillPresetHeader : FriendlyFire.BlockLobbyRegen ? LobbyRegenPresetHeader : FriendlyFire.Balance ? PvpBalancePresetHeader : companionStats ? CompanionStatsPresetHeader : TournamentDuration != TournamentSettings.DefaultDuration ? TournamentPresetHeader : FriendlyFire.HasFractionalPercent ? FractionalCombatPresetHeader : DeathmatchDuration != DeathmatchSettings.DefaultDuration ? DeathmatchPresetHeader : expandedStats ? ExpandedStatsPresetHeader : EventSpawns.HasChanges ? EventPresetHeader : CollinStartingArtifact ? CollinPresetHeader : BatHpSteal ? BatPresetHeader : JarSpawns.HasChanges ? JarPresetHeader : FriendlyFire.HasChanges ? CombatPresetHeader : ItemUnlock ? ItemUnlockPresetHeader : RabbitPotions.LevelUpPotion ? RabbitLevelUpPresetHeader : UsesMerchantGuaranteePreset ? MerchantGuaranteePresetHeader : UsesMerchantTypesPreset ? MerchantTypesPresetHeader : Merchants.HasChanges ? MerchantPresetHeader : RabbitPotions.MpCostPerDrink != RabbitPotionSettings.DefaultMpCostPerDrink ? RabbitCostPresetHeader :
+            return (PlayTagChaser.HasChanges ? PlayTagChaserPresetHeader : PlayTagDuration != PlayTagSettings.DefaultDuration ? PlayTagPresetHeader : FriendlyFire.RefillPercent != FriendlyFireSettings.DefaultRefillPercent ? PvpRefillPresetHeader : FriendlyFire.BlockLobbyRegen ? LobbyRegenPresetHeader : FriendlyFire.Balance ? PvpBalancePresetHeader : companionStats ? CompanionStatsPresetHeader : TournamentDuration != TournamentSettings.DefaultDuration ? TournamentPresetHeader : FriendlyFire.HasFractionalPercent ? FractionalCombatPresetHeader : DeathmatchDuration != DeathmatchSettings.DefaultDuration ? DeathmatchPresetHeader : expandedStats ? ExpandedStatsPresetHeader : EventSpawns.HasChanges ? EventPresetHeader : CollinStartingArtifact ? CollinPresetHeader : BatHpSteal ? BatPresetHeader : JarSpawns.HasChanges ? JarPresetHeader : FriendlyFire.HasChanges ? CombatPresetHeader : ItemUnlock ? ItemUnlockPresetHeader : RabbitPotions.LevelUpPotion ? RabbitLevelUpPresetHeader : UsesMerchantGuaranteePreset ? MerchantGuaranteePresetHeader : UsesMerchantTypesPreset ? MerchantTypesPresetHeader : Merchants.HasChanges ? MerchantPresetHeader : RabbitPotions.MpCostPerDrink != RabbitPotionSettings.DefaultMpCostPerDrink ? RabbitCostPresetHeader :
                 RabbitPotions.ConsumeMp || RabbitPotions.SuppressSurvival ? RabbitBalancePresetHeader :
                 RabbitPotions.HasChanges ? RabbitPresetHeader : Resources.HasChanges ? ResourcePresetHeader : multiplier ? MultiplierPresetHeader : PresetHeader) + "\n" +
                 (HasChanges ? string.Join("\n", DescribeSettings()) + "\n" : "");
@@ -124,8 +129,9 @@ namespace SephiriaOne
             error = L.T("Invalid saved preset; no saved settings were applied.");
             if (text == null || text.Length > MaximumPresetLength) return false;
             string[] lines = text.Replace("\r\n", "\n").Split('\n');
-            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader && lines[0] != RabbitBalancePresetHeader && lines[0] != RabbitCostPresetHeader && lines[0] != MerchantPresetHeader && lines[0] != MerchantTypesPresetHeader && lines[0] != MerchantGuaranteePresetHeader && lines[0] != RabbitLevelUpPresetHeader && lines[0] != ItemUnlockPresetHeader && lines[0] != CombatPresetHeader && lines[0] != JarPresetHeader && lines[0] != BatPresetHeader && lines[0] != CollinPresetHeader && lines[0] != EventPresetHeader && lines[0] != ExpandedStatsPresetHeader && lines[0] != DeathmatchPresetHeader && lines[0] != FractionalCombatPresetHeader && lines[0] != TournamentPresetHeader && lines[0] != CompanionStatsPresetHeader && lines[0] != PvpBalancePresetHeader && lines[0] != LobbyRegenPresetHeader && lines[0] != PvpRefillPresetHeader && lines[0] != PlayTagPresetHeader)) return false;
-            bool allowPlayTag = lines[0] == PlayTagPresetHeader;
+            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader && lines[0] != RabbitBalancePresetHeader && lines[0] != RabbitCostPresetHeader && lines[0] != MerchantPresetHeader && lines[0] != MerchantTypesPresetHeader && lines[0] != MerchantGuaranteePresetHeader && lines[0] != RabbitLevelUpPresetHeader && lines[0] != ItemUnlockPresetHeader && lines[0] != CombatPresetHeader && lines[0] != JarPresetHeader && lines[0] != BatPresetHeader && lines[0] != CollinPresetHeader && lines[0] != EventPresetHeader && lines[0] != ExpandedStatsPresetHeader && lines[0] != DeathmatchPresetHeader && lines[0] != FractionalCombatPresetHeader && lines[0] != TournamentPresetHeader && lines[0] != CompanionStatsPresetHeader && lines[0] != PvpBalancePresetHeader && lines[0] != LobbyRegenPresetHeader && lines[0] != PvpRefillPresetHeader && lines[0] != PlayTagPresetHeader && lines[0] != PlayTagChaserPresetHeader)) return false;
+            bool allowPlayTagChaser = lines[0] == PlayTagChaserPresetHeader;
+            bool allowPlayTag = lines[0] == PlayTagPresetHeader || allowPlayTagChaser;
             bool allowPvpRefill = lines[0] == PvpRefillPresetHeader || allowPlayTag;
             bool allowLobbyRegen = lines[0] == LobbyRegenPresetHeader || allowPvpRefill;
             bool allowPvpBalance = lines[0] == PvpBalancePresetHeader || allowLobbyRegen;
@@ -182,10 +188,20 @@ namespace SephiriaOne
                 }
                 if (parts[0] == "tag")
                 {
-                    if (!allowPlayTag || parts.Length != 3 || parts[1] != "duration" || !seen.Add("tag") ||
-                        value != decimal.Truncate(value) || !PlayTagSettings.ValidDuration((int)value) ||
-                        parts[2] != value.ToString("0", CultureInfo.InvariantCulture)) return false;
-                    pending.RecordPlayTagDuration((int)value);
+                    if (!allowPlayTag || parts.Length != 3 || !seen.Add("tag " + parts[1])) return false;
+                    if (parts[1] == "duration" && value == decimal.Truncate(value) && PlayTagSettings.ValidDuration((int)value) &&
+                        parts[2] == value.ToString("0", CultureInfo.InvariantCulture)) pending.RecordPlayTagDuration((int)value);
+                    else if (allowPlayTagChaser && parts[1] == "chaser-refill-enabled" && (parts[2] == "0" || parts[2] == "1"))
+                        pending.RecordPlayTagChaser(pending.PlayTagChaser.WithRefill(enabled: value == 1));
+                    else if (allowPlayTagChaser && parts[1] == "chaser-damage-enabled" && (parts[2] == "0" || parts[2] == "1"))
+                        pending.RecordPlayTagChaser(pending.PlayTagChaser.WithIncoming(enabled: value == 1));
+                    else if (allowPlayTagChaser && parts[1] == "chaser-refill" && PlayTagChaserSettings.ValidRefillMultiplier(value) &&
+                        parts[2] == value.ToString("0.##", CultureInfo.InvariantCulture))
+                        pending.RecordPlayTagChaser(pending.PlayTagChaser.WithRefill(multiplier: value));
+                    else if (allowPlayTagChaser && parts[1] == "chaser-damage" && PlayTagChaserSettings.ValidIncomingPercent(value) &&
+                        parts[2] == value.ToString("0.##", CultureInfo.InvariantCulture))
+                        pending.RecordPlayTagChaser(pending.PlayTagChaser.WithIncoming(percent: value));
+                    else return false;
                     continue;
                 }
                 if (parts[0] == "collin")

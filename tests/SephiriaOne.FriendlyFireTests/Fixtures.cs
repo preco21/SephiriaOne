@@ -39,6 +39,9 @@ namespace SephiriaOne
 {
     internal static class CombatMatchRuntime
     {
+        internal static PlayerAvatar Chaser;
+        internal static long ChaserRevision;
+        internal static bool IsActiveChaser(PlayerAvatar player) => player && !player.IsDead && ReferenceEquals(player, Chaser);
         internal static Func<PlayerAvatar, PlayerAvatar, bool> PairRule;
         internal static bool KeepScores;
         internal static bool AllowsPair(PlayerAvatar a, PlayerAvatar b) => PairRule?.Invoke(a, b) ?? true;
@@ -62,6 +65,7 @@ namespace SephiriaOne
     internal static class ReviveAllFeature { internal static bool Available = true; }
     internal static class SessionSettings
     {
+        internal static PlayTagChaserSettings PlayTagChaser;
         private static FriendlyFireSettings settings;
         internal static long CombatBalanceRevision;
         internal static FriendlyFireSettings FriendlyFireForHit

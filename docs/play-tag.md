@@ -1,4 +1,4 @@
-# Play Tag (0.56.0, 2026-10-15)
+# Play Tag (0.57.0, 2026-10-16)
 
 Host-controlled bomb tag shares the friendly-fire match infrastructure. Research
 began against addon `0.55.2`; implementation follows the behavior-preserving
@@ -17,8 +17,14 @@ Use the **Play Tag / 술래잡기** tab, or these host commands:
 | `/one tag duration 30` | Set the next match's initial fuse, 3..3600 whole seconds |
 | `/one tag duration reset` | Restore the 30-second default for the next match |
 | `/one tag resetkda` | Reset shared scores and matchup records without replenishing bomb chances |
-| `/one tag status` | Show mode/fuse state |
-| `/one save` | Save the configured fuse in preset v25; never save a live match |
+| `/one tag chaser-refill on` / `off` | Toggle the carrier's refill multiplier, initially on |
+| `/one tag chaser-refill x2` | Set refill multiplier, 0.1..10, at most two decimals |
+| `/one tag chaser-refill reset` | Restore enabled, x2 |
+| `/one tag chaser-damage on` / `off` | Toggle incoming PvP damage reduction, initially on |
+| `/one tag chaser-damage 75%` | Set incoming damage percentage, 0..100, at most two decimals |
+| `/one tag chaser-damage reset` | Restore enabled, 75% |
+| `/one tag status` | Show mode/fuse and chaser settings |
+| `/one save` | Save configuration; nondefault chaser settings use preset v26, never a live match |
 
 The participant editor is shared with friendly fire, Deathmatch and Tournament.
 An empty explicit selection includes everyone. Changing that selection or
@@ -48,6 +54,63 @@ Confirmed decisions:
 | Minimum-fuse allowance | Two timed holdings at three seconds, immediate explosion on third receipt |
 | Dead recipient's fuse | Begin after the victim's one-second respawn |
 
+## Chaser advantages (0.57.0, 2026-10-16)
+
+The Play Tag panel has independent **Refill (x)** / **충전 (배율)** and
+**Incoming (%)** / **받는 피해 (%)** toggles and numeric Apply controls.
+Both toggles start on, with x2 refill and 75% incoming damage. Turning an option
+off preserves its configured number; its `reset` command restores enabled and
+the default number. Values may be changed during a match without restarting its
+fuse, resetting K/D/A or granting another burst of damage allowance.
+
+Refill multiplies the global **damage allowance replenishment**, not HP recovery.
+Global 10 becomes 20 with x2; the current global default of 70 becomes 140% of
+victim maximum HP per game second. This option requires **PvP balancing** to be
+enabled. Initial burst capacity, per-hit softening and artifact/debuff intervals
+remain unchanged. Incoming 75% means 25% less otherwise-resolved player damage;
+it also works when PvP balancing is off. Zero means no incoming player damage,
+but does not disable native debuff/effect application.
+
+`PlayTagChaserSettings` belongs to shared session policy. The common
+`FriendlyFireRuntime.Scale` boundary reads `CombatMatchRuntime.IsActiveChaser`
+at impact, using the actual current receipt, run, phase, living avatar and armed
+fuse. Direct attacks, companions, reflection and debuffs retain the existing
+attacker-owner rules. No native stats or guest addon state are written. Incoming
+damage is reduced after global scaling, optional softening/budget reservation
+and the native-safe numeric cap, before shield/HP consumption. PvE and other
+match modes remain unchanged.
+
+Transfer immediately removes the old carrier's advantages. The dead recipient
+gains them only after successful revival arms the bomb. Dead, expired, stale or
+disconnected holders cannot retain them, including before the next match tick.
+Stop, reset, cancellation and new sessions use the existing shared cleanup.
+Nothing needs to restore native stats because no applied stat bonus is stored.
+
+Budget reservations remain in pre-reduction units. Each hit captures its incoming
+factor; actual shield/MP/HP consumption is divided by that factor before refunding
+unused allowance. This refunds genuine native rounding, veto, armor and overkill
+losses without allowing rapid hits to refund away the intended reduction. A zero
+incoming factor reserves neither damage tokens nor a Shock/Freeze damage pulse.
+
+A monotonic chaser revision records role and setting changes. When a pair next
+attacks after a change, elapsed refill is credited at no more than the base rate
+(and the previous/current rates). Subsequent stable intervals use the current
+multiplier. This deliberately conservative first interval avoids granting boosted
+credit across an unseen A-to-B-to-A transfer. Existing token credit is retained;
+configuration edits do not clear other combat clocks or create free bursts.
+
+Verification: 3,514 executable combat-hook checks and 2,233 shared runtime checks
+plus 69 Bat lifecycle checks pass, including extreme capped hits, saturated
+rapid attacks, native shields, nested edits, directional reflection, companions,
+transfers, expiry, stale receipts and run replacement. Portable coverage includes
+253 Tag policy/preset checks and 3,505 catalog checks. Installed-code contracts
+verify shared modifier/budget wiring and compact UI command dispatch. The warmed
+real role query allocates 0 bytes across 10,000 calls; the warmed combat fixture
+also allocates no per-hit state. The existing performance budgets pass: unchanged
+five-player synchronization remains at 0 bytes/tick and participant snapshots at
+2,264 bytes/refresh. These checks do not replace live Unity UI or
+host/guest gameplay testing.
+
 ## Shared implementation
 
 `Features/Combat/CombatMatchRuntime` owns the match. An explicit mode
@@ -70,7 +133,7 @@ deadline to a replacement connection. Preserve native-stat/PvP balance settings.
 
 Use the same command dispatcher and a new tab with Start, Stop, fuse duration,
 K/D/A reset and the shared participant editor. Only configuration is persisted;
-carrier, deadlines, allowances and presentation are temporary. Configuration
+carrier, deadlines, allowances and presentation are temporary. Initial-fuse configuration
 changes apply to the next match, avoiding a hidden extension of the active fuse.
 The default initial fuse is 30 seconds, configurable from 3 to 3600 whole seconds.
 The first carrier is selected uniformly from living, ready captured entrants.
@@ -221,7 +284,7 @@ could not be fetched during this investigation. The resource identification abov
 comes from installed definitions/code/assets, not an independently retrieved page.
 Decompiled exports and asset inspection files remain outside the repository.
 
-## Verification
+## Base mode verification (0.56.0)
 
 The pure bomb runner passes **20,680** checks, including rounding, invalid inputs,
 exact expiry, delayed arming and randomized finite minimum-fuse play. The shared

@@ -735,5 +735,10 @@
   "Play Tag: {0}'s bomb exploded before any pass.": "술래잡기: {0} 님이 폭탄을 넘기기 전에 폭발했습니다.",
   "'{0}' was blown up by '{1}'s bomb.": "'{0}'가 '{1}'의 폭탄에 의해 폭사했습니다.",
   "Play Tag: {0}. Initial fuse: {1}s. Remaining: {2}s.": "술래잡기: {0}. 처음 폭탄 시간: {1}초. 남은 시간: {2}초.",
-  "Deathmatch is not running. Use the active match's resetkda command.": "데스매치가 진행 중이 아닙니다. 진행 중인 경기의 resetkda 명령을 사용하세요."
+  "Deathmatch is not running. Use the active match's resetkda command.": "데스매치가 진행 중이 아닙니다. 진행 중인 경기의 resetkda 명령을 사용하세요.",
+  "Chaser: /one tag chaser-refill on|off|xN|N|reset (0.1..10, default x2); /one tag chaser-damage on|off|N%|N|reset (0..100, default 75%). Both default on; up to 2 decimals. Changes apply live; refill requires PvP balancing. /one save stores these settings.": "술래: /one tag chaser-refill on|off|xN|N|reset (0.1..10배, 기본 2배); /one tag chaser-damage on|off|N%|N|reset (0..100%, 기본 75%). 둘 다 기본 켜짐이며 소수 둘째 자리까지 입력할 수 있습니다. 즉시 적용되며 충전 배율은 PvP 밸런싱이 켜져 있어야 적용됩니다. /one save로 저장합니다.",
+  "Chaser refill: {0} (x{1}, PvP balancing only); incoming damage: {2} ({3}%).": "술래 충전: {0} ({1}배, PvP 밸런싱 사용 시); 받는 피해: {2} ({3}%).",
+  "Fuse (s)": "폭탄 (초)",
+  "Refill (x)": "충전 (배율)",
+  "Incoming (%)": "받는 피해 (%)"
 }

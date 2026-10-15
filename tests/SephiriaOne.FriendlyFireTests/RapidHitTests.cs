@@ -208,5 +208,12 @@ internal static class RapidHitTests
         foreach (double bad in new[] { 0, -1, double.NaN, double.PositiveInfinity })
             check(edited.Take(100, 100, 0.4, bad) == 0, "Invalid refill never creates damage or poisons the ledger");
         check(Near(edited.Take(100, 100, 0.4, 1), 10), "Valid refill still works after invalid attempts");
+        var roleChange = new FriendlyFireDamageBudget();
+        roleChange.Take(100, 100, 0, 0.2);
+        check(Near(roleChange.Take(100, 100, 0.1, 0.2, 0.1), 1), "A hidden role transition caps elapsed credit at base rate without another burst");
+        check(Near(roleChange.Take(100, 100, 0.2, 0.2), 2), "Subsequent unchanged interval retains the effective chaser refill");
+        foreach (double bad in new[] { 0, -1, double.NaN, double.NegativeInfinity })
+            check(roleChange.Take(100, 100, 0.3, 0.2, bad) == 0, "Invalid elapsed-rate ceiling cannot mutate the ledger");
+        check(Near(roleChange.Take(100, 100, 0.3, 0.2), 2), "Invalid ceiling does not consume elapsed refill");
     }
 }

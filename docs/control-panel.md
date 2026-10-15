@@ -1,5 +1,13 @@
 # Host settings panel
 
+Version `0.57.0` adds independent **Refill (x)** / **충전 (배율)** and
+**Incoming (%)** / **받는 피해 (%)** controls to Play Tag. Both start enabled
+at x2 and 75%. Each has its own numeric draft and Apply button; changing one
+does not discard another unfinished edit. These changes apply live without
+resetting the match. Refill requires PvP balancing; incoming reduction does not.
+The five-row editor retains duration, Start/Stop, K/D/A reset and the shared
+participant list within the existing window size. See [chaser rules](play-tag.md#chaser-advantages-0570-2026-10-16).
+
 Version `0.56.0` adds **Play Tag / 술래잡기** with a next-match initial fuse
 (3–3600 seconds, default 30), Apply/Reset, Start/Stop, shared K/D/A reset and the
 same participant editor. The 16 tabs still fit the existing two rows; no new

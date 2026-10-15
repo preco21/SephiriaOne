@@ -735,5 +735,10 @@
   "Play Tag: {0}'s bomb exploded before any pass.": "Play Tag: {0}'s bomb exploded before any pass.",
   "'{0}' was blown up by '{1}'s bomb.": "'{0}' was blown up by '{1}'s bomb.",
   "Play Tag: {0}. Initial fuse: {1}s. Remaining: {2}s.": "Play Tag: {0}. Initial fuse: {1}s. Remaining: {2}s.",
-  "Deathmatch is not running. Use the active match's resetkda command.": "Deathmatch is not running. Use the active match's resetkda command."
+  "Deathmatch is not running. Use the active match's resetkda command.": "Deathmatch is not running. Use the active match's resetkda command.",
+  "Chaser: /one tag chaser-refill on|off|xN|N|reset (0.1..10, default x2); /one tag chaser-damage on|off|N%|N|reset (0..100, default 75%). Both default on; up to 2 decimals. Changes apply live; refill requires PvP balancing. /one save stores these settings.": "Chaser: /one tag chaser-refill on|off|xN|N|reset (0.1..10, default x2); /one tag chaser-damage on|off|N%|N|reset (0..100, default 75%). Both default on; up to 2 decimals. Changes apply live; refill requires PvP balancing. /one save stores these settings.",
+  "Chaser refill: {0} (x{1}, PvP balancing only); incoming damage: {2} ({3}%).": "Chaser refill: {0} (x{1}, PvP balancing only); incoming damage: {2} ({3}%).",
+  "Fuse (s)": "Fuse (s)",
+  "Refill (x)": "Refill (x)",
+  "Incoming (%)": "Incoming (%)"
 }

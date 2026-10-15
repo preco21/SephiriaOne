@@ -15,7 +15,7 @@ namespace SephiriaOne
         internal sealed class BalanceWindow
         {
             internal bool Started;
-            internal long CombatEpoch, ParticipantEpoch, Revision, SourceLife, TargetLife, Generation;
+            internal long CombatEpoch, ParticipantEpoch, Revision, SourceLife, TargetLife, Generation, ChaserRevision;
             internal string SourceFloor, TargetFloor;
             internal FriendlyFireDamageBudget Budget;
             internal DebuffPulse Shock, Freeze;
@@ -41,7 +41,7 @@ namespace SephiriaOne
             if (receipt != null && balanceActors.TryGetValue(receipt, out BalanceActor actor)) actor.Life++;
         }
 
-        private static double LimitBalancedDamage(double damage, double maxHp, double refillPerSecond)
+        private static double LimitBalancedDamage(double damage, double maxHp, double refillPerSecond, double baseRefill, double incomingScale)
         {
             var attacker = current.AttackerReceipt;
             var victim = current.VictimReceipt;
@@ -67,7 +67,12 @@ namespace SephiriaOne
             float now = Time.time;
             int pulse = DebuffPulseKind(current.Damage);
             if (pulse == 1 && !window.Shock.Ready(now) || pulse == 2 && !window.Freeze.Ready(now)) return 0;
-            double allowed = window.Budget.Take(damage, maxHp, now, refillPerSecond);
+            long chaserRevision = CombatMatchRuntime.ChaserRevision;
+            // A carrier can change away and back between two hits. Preserve tokens,
+            // but do not award boosted credit across an unobserved role/config edit.
+            double elapsedCeiling = window.ChaserRevision == chaserRevision ? double.PositiveInfinity : baseRefill;
+            double allowed = window.Budget.Take(damage, maxHp, now, refillPerSecond, elapsedCeiling);
+            window.ChaserRevision = chaserRevision;
             if (allowed > 0)
             {
                 // Reserve before native callbacks; zero-charge or exhausted
@@ -77,6 +82,7 @@ namespace SephiriaOne
                 else if (pulse == 2) window.Freeze.Reserve(now);
                 current.BudgetWindow = window; current.BudgetGeneration = window.Generation;
                 current.BudgetReserved = allowed; current.BudgetMaxHp = maxHp;
+                current.BudgetIncomingScale = incomingScale;
             }
             return allowed;
         }
@@ -84,9 +90,13 @@ namespace SephiriaOne
         private static void FinishBalancedDamage()
         {
             var window = current.BudgetWindow;
-            double unused = current.BudgetReserved - current.BudgetAccounted;
+            if (window == null) return;
+            // Tokens use pre-chaser-reduction damage units. Refund only genuine
+            // native losses (MP rounding, veto, armor, overkill), not the intended
+            // chaser reduction; otherwise a rapid barrage would refund it away.
+            double unused = current.BudgetReserved - current.BudgetAccounted / current.BudgetIncomingScale;
             // The usual fully delivered hit needs no additional lifecycle query.
-            if (window == null || unused <= 0 || current.BudgetGeneration != window.Generation || !CurrentHitPermitted()) return;
+            if (unused <= 0 || current.BudgetGeneration != window.Generation || !CurrentHitPermitted()) return;
             // Native shields and HP report their own applied amounts. Preserve
             // fractional credit lost to MP integer rounding or a later veto.
             // Never refund an exceptional hit: it may already have written HP.

@@ -1,6 +1,6 @@
 # Development knowledge index
 
-Maintained: 2026-10-15 (Asia/Seoul), addon `0.56.0`.
+Maintained: 2026-10-16 (Asia/Seoul), addon `0.57.0`.
 
 Agents and contributors can refer to `docs/*` for research, implementation
 materials, native game findings and references. Start here before repeating an
@@ -11,6 +11,9 @@ investigation. Repository workflow and deployment rules are in [AGENTS.md](../AG
 Combat follow-up: [Play Tag](play-tag.md) adds a bomb carrier, shrinking fuse,
 one-second respawns and finite minimum-fuse holdings to the shared match runtime.
 It includes native Leaf Explosion transport and a separate settings tab.
+`0.57.0` adds separate, initially enabled chaser bonuses: x2 global PvP refill
+and 75% incoming player damage, using the shared combat boundary and v26 presets.
+See [configuration, lifecycle and budget accounting](play-tag.md#chaser-advantages-0570-2026-10-16).
 
 Performance follow-up: [resource planning and combat names](performance-review.md#resource-targets-and-combat-names-0553-2026-10-15)
 removes unused successful-plan error formatting and plain-name buffers without

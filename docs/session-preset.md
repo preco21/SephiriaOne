@@ -1,5 +1,16 @@
 # Active settings and saved preset
 
+Version `0.57.0` adds v26 for [Play Tag chaser settings](play-tag.md).
+Optional canonical rows are `tag chaser-refill-enabled 0`, `tag chaser-refill N`,
+`tag chaser-damage-enabled 0` and `tag chaser-damage N`. Missing rows and older
+presets inherit both toggles on, x2 refill and 75% incoming damage. Values accept
+up to two decimal places within 0.1..10 and 0..100 respectively; invalid,
+duplicate or unsupported rows reject the entire preset. Export omits defaults
+and uses the lowest required schema. `/one save` persists the settings; live
+roles, damage-budget credit and match state are never saved. Early commands bind
+the session and load saved intent before composing a single-option edit, so an
+untouched option is not accidentally overwritten by defaults.
+
 Version `0.56.0` adds v25 for [Play Tag](play-tag.md): `tag duration N` stores a
 nondefault initial fuse (3..3600 whole seconds). Older presets default to 30;
 resetting it removes the row and returns to the lowest required schema. Carrier,

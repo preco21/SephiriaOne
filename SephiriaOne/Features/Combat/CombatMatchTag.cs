@@ -14,9 +14,17 @@ namespace SephiriaOne
         private static string tagPreviousName;
         private static bool tagNaturalStop;
         private static int tagShown = -1;
+        internal static long ChaserRevision { get; private set; }
+        internal static void ChaserSettingsChanged() => ChaserRevision++;
         internal static bool IsPlayTag => mode == MatchMode.PlayTag && IsRunning;
         internal static bool CanStartPlayTag => CanStart && EligibleTournamentCount() >= 2;
         internal static bool StartPlayTag(out string message) => Start(MatchMode.PlayTag, out message);
+
+        // Read the role at impact, never apply mutable bonuses to native stats.
+        // Pending revival and stale connections cannot inherit the old carrier.
+        internal static bool IsActiveChaser(PlayerAvatar player) => IsPlayTag && phase == Phase.Active && CurrentScope &&
+            !stopping && tagBomb != null && !tagBomb.Resolved && !tagBomb.AwaitingRespawn && !tagBomb.IsDue(Now) &&
+            player && !player.IsDead && ReferenceEquals(tagPlayers[tagBomb.Carrier].Subject.Player, player) && PlayTagEnrolled(player);
 
         private static bool CapturePlayTag(out string message)
         {
@@ -53,6 +61,7 @@ namespace SephiriaOne
             }
             if (chosen < 0) { Stop(true, true); return; }
             tagBomb = new PlayTagBomb(tagPlayers.Count, chosen, duration, now);
+            ChaserRevision++;
             Broadcast(null, L.T("Play Tag start!"));
             ShowPlayTagCarrier(now);
         }
@@ -80,6 +89,7 @@ namespace SephiriaOne
                 !tagRoster.TryGetValue(killer.Player, out int from) || !tagRoster.TryGetValue(victim.Player, out int to) ||
                 !ReferenceEquals(tagPlayers[from].Receipt, killer) || !ReferenceEquals(tagPlayers[to].Receipt, victim) ||
                 !tagBomb.TryPass(from, to, Now)) return;
+            ChaserRevision++;
             tagShown = -1;
             tagPreviousName = CombatNames.Player(killer.Player);
             Broadcast(killer.Player, L.T("Bomb passed!"));
@@ -162,6 +172,7 @@ namespace SephiriaOne
             foreach (var entry in tagPlayers)
                 if (Connected(entry.Subject, entry.Receipt)) Broadcast(entry.Subject.Player, "");
             tagBomb = null; tagPlayers.Clear(); tagRoster.Clear(); tagShown = -1; tagPreviousName = null;
+            ChaserRevision++;
             if (!preserveExplosion) PlayTagExplosion.Reset();
         }
 
