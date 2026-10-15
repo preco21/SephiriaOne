@@ -12,12 +12,30 @@ namespace SephiriaOne
         }
         internal static string Safe(string name)
         {
+            if (string.IsNullOrEmpty(name)) return "?";
+            // Most participant-list refreshes receive plain native names. Return
+            // their existing string instead of allocating a formatting buffer.
+            int length = name.Length < 32 ? name.Length : 32;
+            int index = 0;
+            for (; index < length; index++)
+                if (name[index] == '<' || name[index] == '>' || char.IsControl(name[index])) break;
+            if (index == length)
+            {
+                string result = (name.Length == length ? name : name.Substring(0, length)).Trim();
+                return result.Length == 0 ? "?" : result;
+            }
+
             var text = new StringBuilder(32); bool tag = false;
-            foreach (char c in name ?? "")
+            foreach (char c in name)
             {
                 if (c == '<') { tag = true; continue; }
                 if (c == '>') { tag = false; continue; }
-                if (!tag && !char.IsControl(c) && text.Length < 32) text.Append(c);
+                if (!tag && !char.IsControl(c))
+                {
+                    text.Append(c);
+                    // Later characters cannot affect the already-full result.
+                    if (text.Length == 32) break;
+                }
             }
             string plain = text.ToString().Trim(); return plain.Length == 0 ? "?" : plain;
         }

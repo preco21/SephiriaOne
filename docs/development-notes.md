@@ -14,6 +14,11 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+- `0.55.3`: [resource and combat-name optimization](performance-review.md)
+  defers unused range-error formatting and avoids buffers for plain participant
+  names. Existing arithmetic, filtering, combat timing and native lifetimes stay
+  intact. Play Tag remains research-only in this version.
+
 - `0.54.2`: [PvP cadence tuning](pvp-balancing.md) raises shared damage refill
   from 30% to 40% max HP/s with the existing 20% burst, and slows eligible PvP
   periodic debuff clocks by 25%, with separate 0.5s Shock/Freeze damage limits.

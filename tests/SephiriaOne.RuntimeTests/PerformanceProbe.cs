@@ -6,6 +6,7 @@ internal static class PerformanceProbe
     internal static void Run(Func<PlayerSpawner> start, Func<uint, int, int, int, PlayerSpawner> add, bool checkBudget)
     {
         MeasureStatPlanning(checkBudget);
+        MeasureResourceTarget(checkBudget);
         void Command(string text)
         {
             var result = SettingsActions.Execute(text);
@@ -61,7 +62,7 @@ internal static class PerformanceProbe
                 if (checkBudget && full > 160 * 1024)
                     throw new Exception("Five-player full reports exceed the 160 KiB allocation budget.");
                 foreach (var content in new[] { SnapshotContent.None, SnapshotContent.Stats, SnapshotContent.Choices,
-                    SnapshotContent.Resources, SnapshotContent.Presets })
+                    SnapshotContent.Resources, SnapshotContent.Presets, SnapshotContent.Participants })
                 {
                     double selected = MeasureSnapshot(false, content);
                     int budget = content == SnapshotContent.Resources ? 16 * 1024 :
@@ -98,6 +99,27 @@ internal static class PerformanceProbe
         Console.WriteLine($"Successful relative stat planning: {allocated:F0} bytes/plan, {us:F2} us/plan ({iterations} iterations)");
         if (checkBudget && allocated != 0)
             throw new Exception("Successful relative stat planning must not allocate temporary arrays or error messages.");
+    }
+
+    private static void MeasureResourceTarget(bool checkBudget)
+    {
+        var settings = new[] { new ResourceSetting(ResourceMode.Set, 30), new ResourceSetting(ResourceMode.Offset, 10),
+            new ResourceSetting(ResourceMode.Multiplier, 1.5m) };
+        void Plan(int i)
+        {
+            if (!settings[i % settings.Length].TryTarget(20, 0, 100, out int target, out string error) || target != 30 || error != "")
+                throw new Exception("Resource target planning changed its result: " + error);
+        }
+        for (int i = 0; i < 2000; i++) Plan(i);
+        const int iterations = 10000;
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        long time = Stopwatch.GetTimestamp();
+        for (int i = 0; i < iterations; i++) Plan(i);
+        double us = Stopwatch.GetElapsedTime(time).TotalMicroseconds / iterations;
+        double allocated = (GC.GetAllocatedBytesForCurrentThread() - before) / (double)iterations;
+        Console.WriteLine($"Successful resource target planning: {allocated:F0} bytes/plan, {us:F2} us/plan ({iterations} iterations)");
+        if (checkBudget && allocated != 0)
+            throw new Exception("Successful resource target planning must not format unused errors.");
     }
 
     private static void MeasureStatChanges(bool checkBudget)

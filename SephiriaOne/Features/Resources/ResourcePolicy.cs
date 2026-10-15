@@ -19,8 +19,11 @@ namespace SephiriaOne
             decimal value;
             try { value = Mode == ResourceMode.Set ? Amount : Mode == ResourceMode.Offset ? baseline + Amount : baseline * Amount; }
             catch (OverflowException) { return false; }
-            error = L.F("Every resulting resource value must be an exact whole number {0}..{1}. Nobody was changed.", minimum, maximum);
-            if (value < minimum || value > maximum || value != decimal.Truncate(value)) return false;
+            if (value < minimum || value > maximum || value != decimal.Truncate(value))
+            {
+                error = L.F("Every resulting resource value must be an exact whole number {0}..{1}. Nobody was changed.", minimum, maximum);
+                return false;
+            }
             target = (int)value; error = ""; return true;
         }
         public string Describe() => Mode.ToString().ToLowerInvariant() + " " + Amount.ToString("0.##", CultureInfo.InvariantCulture);

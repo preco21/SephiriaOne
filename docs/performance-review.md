@@ -1,5 +1,56 @@
 # Synchronization performance review
 
+## Resource targets and combat names (0.55.3, 2026-10-15)
+
+Reviewed current synchronization, match ticks, combat targeting/balancing/debuff
+hooks and open-panel snapshots against `7433e14`. Existing steady-state paths
+already reuse collections and receipts. Live authority, ownership, readiness,
+selection and callback checks remain necessary and were retained. Optional FX
+reflection and observer snapshots happen at events; changing their transport or
+reentrancy behavior was not justified by this review.
+
+Two bounded optimizations preserve existing behavior without introducing caches:
+
+- `ResourceSetting.TryTarget` formats its numeric range error only on failure.
+  Successful Set/Offset/Multiplier calculations no longer allocate a params array,
+  boxed bounds and a discarded error string. Outputs, overflow handling, bounds,
+  fractional-value rejection and current EN/KO errors are unchanged.
+- `CombatNames.Safe` returns an already-plain, bounded name directly. Whitespace
+  trimming and longer-name truncation still occur in the original order. Names
+  containing markup or controls retain the existing filter; it stops scanning
+  once 32 accepted UTF-16 units fill the output. This preserves existing malformed
+  tag and surrogate-boundary behavior rather than defining new display rules.
+
+Release .NET 10 fixture measurements:
+
+| Workload | Before | After |
+| --- | ---: | ---: |
+| Successful resource target calculation | 288 B/call | 0 B/call |
+| Already-plain name sample, including EN/KO/empty/32-unit names | 173 B/call average | 0 B/call |
+| Five-player participant snapshot | 3,144 B/refresh | 2,264 B/refresh |
+| Five-player full Status snapshot | ~139,344 B/refresh | ~138,464 B/refresh |
+| Unchanged synchronization, all three workloads | 0 B/tick | 0 B/tick |
+
+The participant snapshot saves 880 bytes per refresh (28%), or about 3.5 KB/s at
+the existing four refreshes per second while Combat/Deathmatch/Tournament is
+open with these plain names. Formatted names still allocate a filtered result;
+this is not a claim of zero allocation for all name inputs. Resource planning
+improves commands, relevant UI reads and changed-input reconciliation; unchanged
+synchronization already skipped that work. No polling or gameplay cadence changed.
+
+New allocation checks failed against the original implementations before passing
+with these changes. Regression coverage includes explicit name boundaries and
+2,000 deterministic randomized comparisons against the previous filter, resource
+targets/failure categories, and switching EN/KO before reporting the same error.
+The performance probe now also measures the Participants snapshot section.
+
+The portable suite, 3,448 executable combat checks, 1,998 runtime checks plus
+69 Bat lifecycle checks, allocation budgets and installed-game contracts passed.
+The Release build completed with zero warnings/errors; independent read-only
+review found no actionable regression. These are fixture
+measurements, not live Unity/Mono FPS or network-latency results. Builds and tests
+use `-p:DeployMod=false`; no deployment or game launch is part of this review.
+
 ## Stat recalculation (0.51.1, 2026-10-12)
 
 Reviewed periodic controllers, section-specific UI snapshots, reconciliation,

@@ -73,6 +73,26 @@ internal static class ResourcePolicyTests
         Check(!new ResourceSetting(ResourceMode.Multiplier, 1.5m).TryTarget(3, 0, 100, out _, out _), "Fractional integer target rejected");
         Check(!new ResourceSetting(ResourceMode.Offset, -11).TryTarget(10, 0, 100, out _, out _), "Underflow rejected without clamping");
         Check(!new ResourceSetting(ResourceMode.Multiplier, 10000).TryTarget(int.MaxValue, 0, int.MaxValue, out _, out _), "Overflow rejected");
+        const string baselineFailure = "Resource baseline or setting is invalid.";
+        const string rangeFailure = "Every resulting resource value must be an exact whole number {0}..{1}. Nobody was changed.";
+        foreach (var (mode, amount, baseline, success, target, error) in new[]
+        {
+            (ResourceMode.Set, 10m, 5, true, 10, ""),
+            (ResourceMode.Offset, -2m, 5, true, 3, ""),
+            (ResourceMode.Multiplier, 2m, 5, true, 10, ""),
+            (ResourceMode.Multiplier, 0m, 5, true, 0, ""),
+            (ResourceMode.Set, 1m, -1, false, -1, baselineFailure),
+            (ResourceMode.Multiplier, -1m, 5, false, 5, baselineFailure),
+            (ResourceMode.Offset, decimal.MaxValue, 5, false, 5, baselineFailure),
+            (ResourceMode.Offset, -6m, 5, false, 5, rangeFailure),
+            (ResourceMode.Set, 11m, 5, false, 5, rangeFailure),
+            (ResourceMode.Multiplier, 1.5m, 5, false, 5, rangeFailure)
+        })
+        {
+            bool ok = new ResourceSetting(mode, amount).TryTarget(baseline, 0, 10, out int actual, out string failure);
+            Check(ok == success && actual == target && failure == (error == rangeFailure ? L.F(error, 0, 10) : L.T(error)),
+                "Resource target preserves output and failure category: " + mode + " " + amount);
+        }
         var preset = new SessionPolicy();
         preset.Record(new StatCommand(StatCatalog.Find("luck"), StatOperation.Multiply, 3));
         preset.Resources.Record(Parse("dice +5"));

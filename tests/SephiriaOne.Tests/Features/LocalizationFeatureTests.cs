@@ -23,7 +23,15 @@ internal static class LocalizationFeatureTests
             Check(!StatPlanner.TryPlan(invalidStat, statValue, out _, out string englishFailure) &&
                 englishFailure == "Every player's resulting luck must be 0..10000 points. Nobody was changed.",
                 "Deferred stat range error retains English formatting");
+            var invalidResource = new ResourceSetting(ResourceMode.Set, 5);
+            Check(!invalidResource.TryTarget(6, 6, 96, out _, out string englishResourceFailure) &&
+                englishResourceFailure == "Every resulting resource value must be an exact whole number 6..96. Nobody was changed.",
+                "Deferred resource range error retains English formatting");
             selectLanguage("ko");
+            Check(!invalidResource.TryTarget(6, 6, 96, out _, out string koreanResourceFailure) &&
+                koreanResourceFailure != englishResourceFailure && koreanResourceFailure == L.F(
+                    "Every resulting resource value must be an exact whole number {0}..{1}. Nobody was changed.", 6, 96),
+                "Deferred resource range error uses current Korean localization");
             Check(!StatPlanner.TryPlan(invalidStat, statValue, out _, out string koreanFailure) &&
                 koreanFailure != englishFailure && koreanFailure == L.F(
                     "Every player's resulting {0} must be {1}..{2} {3}. Nobody was changed.", "luck", 0, 10000, L.T("points")),

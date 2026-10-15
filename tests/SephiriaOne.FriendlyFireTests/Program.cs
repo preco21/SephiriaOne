@@ -59,6 +59,7 @@ victim.followers.Add(attacker);
 victim.ApplyDamage(Hit());
 Check(victim.Hp == before - 20, "Native follower-list protection is bypassed only for allied hits");
 Check(FriendlyFireRuntime.SafeName("<color=red>Alice</color>\n") == "Alice", "Chat strips markup and line breaks");
+CombatNameTests.Run(Check);
 SessionSettings.FriendlyFireForHit = new(true,300);
 var result = EApplyDamageResult.Success;
 FriendlyFireRuntime.BeforeHit(victim, Hit(), ref result, out var saved);

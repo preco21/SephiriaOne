@@ -1,12 +1,16 @@
 # Development knowledge index
 
-Maintained: 2026-10-15 (Asia/Seoul), addon `0.55.2`.
+Maintained: 2026-10-15 (Asia/Seoul), addon `0.55.3`.
 
 Agents and contributors can refer to `docs/*` for research, implementation
 materials, native game findings and references. Start here before repeating an
 investigation. Repository workflow and deployment rules are in [AGENTS.md](../AGENTS.md).
 
 ## Start here
+
+Performance follow-up: [resource planning and combat names](performance-review.md#resource-targets-and-combat-names-0553-2026-10-15)
+removes unused successful-plan error formatting and plain-name buffers without
+changing resource arithmetic, displayed names or combat/session checks.
 
 Audio follow-up: [healing and kill sounds for host and stock guests](remote-event-audio.md)
 reuses native cosmetic messages with single-event delivery and no extra local playback.
