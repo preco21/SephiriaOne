@@ -56,6 +56,11 @@ internal static class TournamentRuntimeTests
             CombatMatchRuntime.AllowsPair(pair[0], pair[1]) && SessionSettings.FriendlyFireForHit.RefillPercent == 125.5m,
             "Refill edit preserves the active tournament pair and overlay");
         check(players.All(p => LobbyRegenRuntime.Suppress(p) == pair.Contains(p)), "Only the current tournament pair loses automatic lobby recovery");
+        long dotEpoch = FriendlyFireKda.Epoch, dotMatch = CombatMatchRuntime.MatchToken;
+        check(SettingsActions.Execute("/one friendlyfire dot frostbite 1.5").Success && CombatMatchRuntime.IsRunning &&
+            SessionSettings.FriendlyFireForHit.DotIntervals.Seconds(PvpDotEffect.Frostbite) == 1.5m &&
+            CombatMatchRuntime.AllowsPair(pair[0], pair[1]) && FriendlyFireKda.Epoch == dotEpoch && CombatMatchRuntime.MatchToken == dotMatch,
+            "DoT edit preserves tournament pair, scores and match identity");
         check(SettingsActions.Execute("/one friendlyfire block-lobby-regen off").Success && CombatMatchRuntime.IsRunning &&
             players.All(p => !LobbyRegenRuntime.Suppress(p)), "Recovery option edit restores recovery without stopping tournament");
         check(SettingsActions.Execute("/one friendlyfire block-lobby-regen on").Success, "Reenable tournament recovery option");

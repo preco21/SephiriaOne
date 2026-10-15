@@ -58,10 +58,15 @@ use their sum to refund unused reservations only after successful native damage
 completion. Generation checks prevent old refunds replenishing reset windows.
 `CharacterDebuff_Burn.OnUpdate_Server` advances its separate `tickTimer` using
 `Time.deltaTime * (1 + BURNSPEED/100)`. The base `CharacterDebuff.Update` owns
-expiry on another timer. `0.54.2` wraps only the former elapsed input with a
-0.75 multiplier for current PvP player victims, also covering Plasma's burn,
-Frostbite, Poison and Wound periodic timers, preserving native speed bonuses,
-blue-burn damage, stacks and expiry. It consults shared live hostility;
+expiry on another timer. Since `0.59.0`, Burn, Plasma Burn, Frostbite and Poison
+use independent configured intervals, each defaulting to 0.75s for current PvP
+player victims. Wrap the exact periodic `Timer.Update` call and advance by raw
+delta times native timer length divided by configured seconds: preserve native
+elapsed storage, reset-on-tick and activeOnce without writing timer length.
+BURNSPEED is intentionally bypassed only under that PvP policy. Wound keeps the
+earlier `0.54.2` 0.75 elapsed multiplier. Blue-burn damage, stacks, expiry and
+Plasma's separate shock accumulator remain native. See [DoT intervals](pvp-dot-intervals.md).
+It consults shared live hostility;
 no prefab, stat, timer interval or cached override needs restoring. Native tick
 damage still goes through the same resolved-damage budget (configurable since
 `0.55.0`, default 70% max HP/s since `0.55.1`). Rate changes preserve tokens and pulse clocks;

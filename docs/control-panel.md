@@ -1,5 +1,15 @@
 # Host settings panel
 
+Version `0.59.0` adds **DoT intervals / 지속 피해 간격** beside the Combat and
+PvP balancing subsections. Four independent fields for Burn, Plasma Burn,
+Frostbite and Poison fit in a 2x2 layout within the existing panel area. Each
+accepts 0.05..10 seconds (two decimals), defaults to 0.75, and has its own Apply
+button/draft. It uses `/one friendlyfire dot <effect> N`; these intervals apply
+only with PvP balancing enabled. Refresh updates changed values without replacing
+unfinished edits; page/language/session changes discard stale drafts. Shared
+master/reset, K/D/A, Revive All and participant controls remain accessible.
+See [interval semantics](pvp-dot-intervals.md).
+
 Version `0.58.0` groups Combat settings into **Combat** and **PvP balancing**
 subsections within the existing tab. The latter contains balancing, refill and
 **Guard MP (%) / 방어 MP (%)** (default 10% of maximum MP before native reductions).

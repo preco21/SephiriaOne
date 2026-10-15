@@ -14,6 +14,13 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+- `0.59.0`: [independent PvP DoT intervals](pvp-dot-intervals.md) add four
+  configurable seconds values, each defaulting to 0.75, for Burn, Plasma Burn,
+  Frostbite and Poison. Shared live command/settings and v28 presets serve all
+  combat modes. Compact DoT controls retain independent drafts and participant/
+  KDA actions. The adapter reuses native timers without modifying intervals,
+  expiry or actor stats; native PvE and separate pulse limits remain.
+
 - `0.58.0`: [PvP guard MP scaling](pvp-balancing.md#guard-mp-cost-0580-2026-10-16)
   defaults to 10% current maximum MP before native reductions and cost callbacks.
   The live `guard-mp` command, compact Combat/PvP balancing subsections, EN/KO

@@ -12,7 +12,7 @@ namespace SephiriaOne
         private bool friendlyDraft;
         private TMP_InputField friendlyRefill;
         private bool friendlyRefillDraft;
-        private bool combatBalanceSelected;
+        private int combatSettingsSection;
         private Button reviveAll, combatResetKda;
 
         private void BuildCombatEditor()
@@ -23,16 +23,18 @@ namespace SephiriaOne
             AddCheckbox("Friendly fire", 16, 25, 174, 21, s => s.FriendlyFire.Enabled, s => s.FriendlyFireAvailable, "/one friendlyfire",
                 s => s.CanMutate || CombatMatchRuntime.IsRunning && s.HostActive && s.SessionIdentity != null);
             resetAll = widgets.Button(pageRoot, "Reset", 200, 25, 89, 21, () => Execute("/one friendlyfire reset", true));
-            var combatTab = widgets.Button(pageRoot, "Combat", 16, 52, 132, 22, () => SelectCombatSettings(false));
-            var balanceTab = widgets.Button(pageRoot, "PvP balancing", 156, 52, 133, 22, () => SelectCombatSettings(true));
-            var selectedTab = combatBalanceSelected ? balanceTab : combatTab;
+            var combatTab = widgets.Button(pageRoot, "Combat", 16, 52, 60, 22, () => SelectCombatSettings(0));
+            var balanceTab = widgets.Button(pageRoot, "PvP balancing", 84, 52, 109, 22, () => SelectCombatSettings(1));
+            var dotTab = widgets.Button(pageRoot, "DoT intervals", 201, 52, 88, 22, () => SelectCombatSettings(2));
+            var selectedTab = combatSettingsSection == 2 ? dotTab : combatSettingsSection == 1 ? balanceTab : combatTab;
             var colors = selectedTab.colors; colors.normalColor = PanelWidgets.Accent; colors.selectedColor = colors.normalColor; selectedTab.colors = colors;
-            if (combatBalanceSelected) BuildPvpBalanceEditor();
+            if (combatSettingsSection == 2) BuildPvpDotEditor();
+            else if (combatSettingsSection == 1) BuildPvpBalanceEditor();
             else BuildFriendlyDamageEditor();
             BuildParticipantsEditor();
         }
 
-        private void SelectCombatSettings(bool balancing) { combatBalanceSelected = balancing; SelectPage(9); }
+        private void SelectCombatSettings(int section) { combatSettingsSection = section; SelectPage(9); }
 
         private void BuildFriendlyDamageEditor()
         {
@@ -61,6 +63,7 @@ namespace SephiriaOne
             if (reviveAll) reviveAll.interactable = ReviveAllAction.CanExecute;
             if (combatResetKda) combatResetKda.interactable = snapshot.HostActive && snapshot.SessionIdentity != null && SessionSettings.CanResetFriendlyFireScores;
             RefreshPvpBalance(snapshot);
+            RefreshPvpDots(snapshot);
             if (!friendlyDamage) return;
             amount.interactable = friendlyDamage.interactable = snapshot.CanMutate && snapshot.FriendlyFireAvailable;
             if (!friendlyDraft)

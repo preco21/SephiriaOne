@@ -1,4 +1,12 @@
 {
+  "PvP balancing: /one friendlyfire balance on|off. Default off; softens hits, limits rapid damage and Dark Cloud repeats, and uses configurable DoT intervals. Shock/Freeze damage is limited to once per 0.25s; Freeze stun is preserved.": "PvP balancing: /one friendlyfire balance on|off. Default off; softens hits, limits rapid damage and Dark Cloud repeats, and uses configurable DoT intervals. Shock/Freeze damage is limited to once per 0.25s; Freeze stun is preserved.",
+  "PvP DoT: /one friendlyfire dot burn|plasma-burn|frostbite|poison 0.05..10|reset (seconds, up to 2 decimals). Each defaults to 0.75s, independent of burn speed. Only with PvP balancing on.": "PvP DoT: /one friendlyfire dot burn|plasma-burn|frostbite|poison 0.05..10|reset (seconds, up to 2 decimals). Each defaults to 0.75s, independent of burn speed. Only with PvP balancing on.",
+  "PvP DoT intervals (s): Burn {0}; Plasma Burn {1}; Frostbite {2}; Poison {3}.": "PvP DoT intervals (s): Burn {0}; Plasma Burn {1}; Frostbite {2}; Poison {3}.",
+  "DoT intervals": "DoT intervals",
+  "Burn (s)": "Burn (s)",
+  "Plasma Burn (s)": "Plasma Burn (s)",
+  "Frostbite (s)": "Frostbite (s)",
+  "Poison (s)": "Poison (s)",
   "PvP guard: /one friendlyfire guard-mp 0..100|reset (percent of max MP, up to 2 decimals). Default 10; native guard reductions apply. Positive costs round up. Only with PvP balancing on.": "PvP guard: /one friendlyfire guard-mp 0..100|reset (percent of max MP, up to 2 decimals). Default 10; native guard reductions apply. Positive costs round up. Only with PvP balancing on.",
   "PvP guard: {0}% max MP before native reductions.": "PvP guard: {0}% max MP before native reductions.",
   "Guard MP (%)": "Guard MP (%)",

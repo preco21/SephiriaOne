@@ -3,6 +3,10 @@
 Added in `0.52.0`, 2026-10-13. Host-only installation; the existing native damage
 and FX replication continues to serve stock guests. Default: **off**.
 
+Updated in `0.59.0`: [independent DoT intervals](pvp-dot-intervals.md) replace the
+earlier cadence rule for Burn, Plasma Burn, Frostbite and Poison. Each defaults
+to 0.75 seconds and has separate live controls, commands and saved settings.
+
 Updated in `0.53.0`, 2026-10-14: balancing also limits rapid damage with a shared
 budget per attacker/opponent. Existing saved balancing settings enable both
 layers; there is no new setting, schema migration or guest installation.
@@ -287,6 +291,10 @@ connection receipts, participant/KDA epochs and floor checks handle disconnects,
 rejoins, selections, match rounds, restarts and resets without per-frame work.
 
 ## Debuff cadence (`0.54.2`)
+
+Historical behavior below is superseded for Burn, Plasma Burn, Frostbite and
+Poison by [independent intervals](pvp-dot-intervals.md) in `0.59.0`. Wound keeps
+this earlier rule.
 
 `CharacterDebuff_Burn.OnUpdate_Server` normally advances `tickTimer` by
 `Time.deltaTime * (1 + BURNSPEED/100)`. Only for current permitted player victims

@@ -53,18 +53,19 @@ internal static class BurnCadenceTests
         }
         var burn = Burn(); burn.Step(0.5f);
         check(burn.Ticks == 0, "Balanced PvP burn no longer ticks after the native half second");
-        burn.Step(0.167f);
-        check(burn.Ticks == 1 && Math.Abs(burn.DurationElapsed - 0.667f) < 0.0001f && burn.tickTimer.time == 0.5f,
-            "PvP burn ticks at about 0.667 seconds without modifying duration or the native timer interval");
+        burn.Step(0.17f); check(burn.Ticks == 0, "Default PvP burn waits past the former 0.667-second interval");
+        burn.Step(0.08f);
+        check(burn.Ticks == 1 && Math.Abs(burn.DurationElapsed - 0.75f) < 0.0001f && burn.tickTimer.time == 0.5f,
+            "PvP burn ticks at 0.75 seconds without modifying duration or the native timer interval");
         burn = Burn(); burn.Speed = 2; burn.Step(0.25f);
-        check(burn.Ticks == 0, "Burn-speed bonuses still receive the same 25% cadence reduction");
-        burn.Step(0.084f); check(burn.Ticks == 1, "Native burn-speed bonuses retain their relative strength");
+        check(burn.Ticks == 0, "Burn-speed bonuses cannot bypass the configured PvP interval");
+        burn.Step(0.5f); check(burn.Ticks == 1, "Fast burn follows the same configured seconds");
         burn = Burn(); burn.Step(0.25f);
         SessionSettings.FriendlyFireForHit = new(true, 100, balance: false);
-        burn.Step(0.313f); check(burn.Ticks == 1, "Balance off immediately restores native timer advance without resetting elapsed time");
+        burn.Step(0.334f); check(burn.Ticks == 1, "Balance off immediately restores native timer advance without resetting elapsed time");
         SessionSettings.FriendlyFireForHit = new(true, 100, balance: true);
         burn.Step(0.5f); check(burn.Ticks == 1, "Reenabling balancing affects an existing burn without rewriting its state");
-        burn.Step(0.167f); check(burn.Ticks == 2, "Existing burn continues naturally after balancing is restored");
+        burn.Step(0.25f); check(burn.Ticks == 2, "Existing burn continues naturally after balancing is restored");
 
         foreach (var pair in new[] {
             (new PlayerAvatar() as UnitAvatar, new UnitAvatar { faction = "enemy" }),

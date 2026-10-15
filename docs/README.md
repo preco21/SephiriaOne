@@ -1,12 +1,17 @@
 # Development knowledge index
 
-Maintained: 2026-10-16 (Asia/Seoul), addon `0.58.0`.
+Maintained: 2026-10-16 (Asia/Seoul), addon `0.59.0`.
 
 Agents and contributors can refer to `docs/*` for research, implementation
 materials, native game findings and references. Start here before repeating an
 investigation. Repository workflow and deployment rules are in [AGENTS.md](../AGENTS.md).
 
 ## Start here
+
+Combat balancing: [independent DoT intervals](pvp-dot-intervals.md) give Burn,
+Plasma Burn, Frostbite and Poison separate 0.75-second defaults, live controls/
+commands and v28 saved settings. Native PvE, Wound and separate Shock/Freeze/
+Dark Cloud limits are preserved.
 
 Combat balancing: [guard MP scaling](pvp-balancing.md#guard-mp-cost-0580-2026-10-16)
 defaults to 10% maximum MP before native Guard Efficiency/perfect reductions.

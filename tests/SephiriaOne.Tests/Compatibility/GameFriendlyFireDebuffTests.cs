@@ -20,11 +20,14 @@ internal static class GameFriendlyFireDebuffTests
             List<CodeInstruction> Map(List<CodeInstruction> code) =>
                 ((IEnumerable<CodeInstruction>)rewrite.Invoke(null, new object[] { code, update })!).ToList();
             var mapped = Map(original);
-            int helper = mapped.FindIndex(i => Call(i, "FriendlyFireRuntime", "DebuffTickDelta"));
-            Require(mapped.Count == original.Count + 2 && helper >= 2 && mapped[helper - 1].opcode == OpCodes.Ldarg_0 &&
-                (mapped[helper - 2].opcode == OpCodes.Mul || Call(mapped[helper - 2], "Time", "get_deltaTime")) &&
-                Call(mapped[helper + 1], "Timer", "Update"), update + " wraps only the periodic timer delta");
-            mapped.RemoveRange(helper - 1, 2);
+            int helper = mapped.FindIndex(i => Call(i, "FriendlyFireRuntime", "UpdateDebuffTick"));
+            int expectedKind = update.DeclaringType!.Name switch { "CharacterDebuff_Burn" => 0, "CharacterDebuff_Plasma" => 1,
+                "CharacterDebuff_Frostbite" => 2, "CharacterDebuff_Poison" => 3, _ => -1 };
+            Require(mapped.Count == original.Count + 2 && helper >= 3 && mapped[helper - 2].opcode == OpCodes.Ldarg_0 &&
+                mapped[helper - 1].LoadsConstant(expectedKind) &&
+                (mapped[helper - 3].opcode == OpCodes.Mul || Call(mapped[helper - 3], "Time", "get_deltaTime")), update + " wraps only the periodic timer with the correct effect kind");
+            mapped[helper] = new CodeInstruction(original[helper - 2]);
+            mapped.RemoveRange(helper - 2, 2);
             Require(mapped.Zip(original).All(p => p.First.opcode == p.Second.opcode && Equals(p.First.operand, p.Second.operand) &&
                 p.First.labels.SequenceEqual(p.Second.labels) && p.First.blocks.SequenceEqual(p.Second.blocks)),
                 update + " preserves all native damage, stacking, charge, HUD, speed and control flow");
@@ -67,6 +70,19 @@ internal static class GameFriendlyFireDebuffTests
         }
         var frostStack = PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(game.GetType("CharacterDebuff_Frostbite", true)!, "AddStack"));
         Require(frostStack.Any(i => Call(i, "UnitAvatar", "ApplyDebuff")), "native Frostbite-to-Freeze application remains separate from ticks");
-        Console.WriteLine("Verified five PvP debuff timers, shock identifiers, preserved Freeze stun/expiry and changed-contract rejection (not live gameplay).");
+        var timer = game.GetType("Timer", true)!;
+        Require(timer.GetField("time")?.FieldType == typeof(float), "native public timer length can be read without mutation");
+        var adapter = PatchProcessor.GetOriginalInstructions(AccessTools.Method(addon.GetType("SephiriaOne.FriendlyFireRuntime", true)!, "UpdateDebuffTick")).ToList();
+        Require(adapter.Any(i => Call(i, "Time", "get_deltaTime")) && adapter.Any(i => Call(i, "PvpDotSettings", "Interval")) &&
+            !adapter.Any(i => i.opcode == OpCodes.Stfld && i.operand is FieldInfo f && f.DeclaringType == timer), "adapter uses real seconds and never writes timer configuration/progress directly");
+        var panel = addon.GetType("SephiriaOne.SettingsPanel", true)!;
+        List<CodeInstruction> Panel(string name) => PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(panel, name)).ToList();
+        Require(Panel("BuildCombatEditor").Any(i => Call(i, "SettingsPanel", "BuildPvpDotEditor")) &&
+            Panel("BuildCombatEditor").Any(i => Call(i, "SettingsPanel", "BuildParticipantsEditor")), "DoT controls coexist with shared participant controls");
+        Require(Panel("ApplyPvpDot").Any(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "/one friendlyfire dot ")) &&
+            Panel("ApplyPvpDot").Any(i => Call(i, "SettingsPanel", "Execute")), "DoT Apply uses the shared host command");
+        Require(Panel("ClearInput").Any(i => Call(i, "SettingsPanel", "ClearPvpDots")) &&
+            Panel("RefreshCombat").Any(i => Call(i, "SettingsPanel", "RefreshPvpDots")), "DoT drafts follow normal refresh and scope cleanup");
+        Console.WriteLine("Verified four independent PvP DoT timers, unchanged Wound/shock/Freeze paths, native progress/expiry and shared UI commands (not live gameplay).");
     }
 }

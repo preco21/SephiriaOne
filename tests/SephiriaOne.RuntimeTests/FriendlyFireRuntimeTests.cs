@@ -30,6 +30,14 @@ internal static class FriendlyFireRuntimeTests
             "Refill edits reach hits immediately without resetting KDA or budget revision");
         check(SessionSettings.ReadSnapshot().FriendlyFire.RefillPercent == 125.5m &&
             SettingsActions.Execute("/one friendlyfire status").Messages.Any(m => m.Contains("125.5% max HP/s")), "Snapshot and status expose current refill");
+        foreach (var effect in Enum.GetValues<PvpDotEffect>())
+            check(SettingsActions.Execute("/one friendlyfire dot " + PvpDotSettings.Key(effect) + " " + ((int)effect + 1)).Success,
+                "Host can edit each DoT interval live: " + effect);
+        var dotSettings = SessionSettings.FriendlyFireForHit.DotIntervals;
+        check(SessionSettings.CombatBalanceRevision == balanceRevision && Score(host) == "P(1/0/0)" &&
+            SessionSettings.ReadSnapshot().FriendlyFire.DotIntervals.Equals(dotSettings), "DoT edits preserve KDA/budgets and update snapshot immediately");
+        check(SettingsActions.Execute("/one friendlyfire status").Messages.Any(m => m.Contains("Burn 1; Plasma Burn 2; Frostbite 3; Poison 4")), "Status reports each independent interval");
+        check(!SettingsActions.Execute("/one friendlyfire dot poison 0").Success && SessionSettings.FriendlyFireForHit.DotIntervals.Equals(dotSettings), "Rejected interval cannot partially change policy");
         check(SettingsActions.Execute("/one friendlyfire block-lobby-regen on").Success &&
             SettingsActions.Execute("/one friendlyfire block-lobby-regen off").Success &&
             SessionSettings.CombatBalanceRevision == balanceRevision && Score(host) == "P(1/0/0)",
@@ -47,6 +55,7 @@ internal static class FriendlyFireRuntimeTests
         HorayModAPI.StartSession();
         check(SessionSettings.FriendlyFireForHit.Enabled, "Run restart retains current combat policy");
         check(SessionSettings.FriendlyFireForHit.RefillPercent == 125.5m, "Run restart retains configured refill");
+        check(SessionSettings.FriendlyFireForHit.DotIntervals.Equals(dotSettings), "Run restart retains all four current DoT intervals");
         check(Score(host) == "P(1/0/0)", "Run restart preserves totals");
         Damage(); HorayModAPI.StartSession(); Kill();
         check(Score(host) == "P(2/0/0)" && Score(helper) == "P(0/0/1)", "Run restart clears previous pending assists");
@@ -67,6 +76,7 @@ internal static class FriendlyFireRuntimeTests
         check(SessionSettings.FriendlyFireForHit.DamagePercent == 0.1m, "Replacement connection immediately uses complete fractional combat policy");
         check(SessionSettings.FriendlyFireForHit.RefillPercent == 125.5m, "Replacement connection uses current refill policy");
         check(SessionSettings.FriendlyFireForHit.Balance, "Rejoined players immediately receive current balancing policy");
+        check(SessionSettings.FriendlyFireForHit.DotIntervals.Equals(dotSettings), "Replacement connection gets all current DoT intervals, not stale per-player values");
         HorayModAPI.StartSession();
         check(SessionSettings.FriendlyFireForHit.DamagePercent == 0.1m, "Run restart retains fractional combat policy");
         foreach (string bad in new[] { "-1", "301", "NaN", "0.001", "x2" })
@@ -77,6 +87,7 @@ internal static class FriendlyFireRuntimeTests
         check(SessionSettings.FriendlyFireForHit.DamagePercent == 0.1m, "Saved sub-one scale restores exactly after controller restart");
         check(SessionSettings.FriendlyFireForHit.Balance, "Saved balancing restores after full controller restart");
         check(SessionSettings.FriendlyFireForHit.RefillPercent == 125.5m, "Saved refill restores after full controller restart");
+        check(SessionSettings.FriendlyFireForHit.DotIntervals.Equals(dotSettings), "Saved intervals restore after full controller restart");
         check(Score(host) == "P(0/0/0)", "Saved settings never persist KDA");
         Damage(); Kill();
         check(Score(host) == "P(1/0/0)", "Restored enabled preset activates fresh accounting");
@@ -84,6 +95,7 @@ internal static class FriendlyFireRuntimeTests
         check(!SessionSettings.ReadSnapshot().ActiveSettings.Any(x => x.StartsWith("friendlyfire ")), "Reset clears toggle and scale");
         check(Score(host) == "P(0/0/0)", "Reset command clears KDA");
         check(SessionSettings.FriendlyFireForHit.RefillPercent == 70, "Full reset restores default refill");
+        check(!SessionSettings.FriendlyFireForHit.DotIntervals.HasChanges, "Full reset restores four 0.75-second intervals");
         FriendlyFireFeature.Available = false;
         check(!SettingsActions.Execute("/one friendlyfire balance on").Success && SettingsActions.Execute("/one friendlyfire balance off").Success,
             "Unavailable hooks reject balance enable but preserve off recovery");
@@ -99,5 +111,6 @@ internal static class FriendlyFireRuntimeTests
         check(!SettingsActions.Execute("/one friendlyfire on").Success, "Guests cannot enable friendly fire");
         check(!SettingsActions.Execute("/one friendlyfire balance on").Success, "Guests cannot change host balancing policy");
         check(!SettingsActions.Execute("/one friendlyfire refill 200").Success, "Guests cannot change host refill policy");
+        check(!SettingsActions.Execute("/one friendlyfire dot burn 2").Success, "Guests cannot change host interval policy");
     }
 }

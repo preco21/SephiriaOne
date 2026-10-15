@@ -13,7 +13,7 @@ public abstract class PeriodicDebuffFixture : CharacterDebuff
 }
 public sealed class CharacterDebuff_Frostbite : PeriodicDebuffFixture
 {
-    private Timer frostDamageTimer = new(1);
+    public Timer frostDamageTimer = new(1);
     [MethodImpl(MethodImplOptions.NoInlining)] public override void OnUpdate_Server()
     { if (NetworkAttacker && frostDamageTimer.Update(Time.deltaTime)) Tick("Debuff_Frostbite"); }
 }
@@ -58,12 +58,13 @@ internal static class ElementalCadenceTests
                 effect.OnTick = effect.OnUpdate_Server; return effect;
             }
             var effect = New(); float interval = effect is CharacterDebuff_Plasma ? 0.5f : 1;
-            effect.Step(interval);
-            check(effect.Ticks == 0, effect.GetType().Name + " shares the slower PvP damage timer");
-            effect.Step(interval / 3 + 0.001f);
-            check(effect.Ticks == 1, effect.GetType().Name + " still ticks at 75% native frequency");
+            float balancedInterval = effect is CharacterDebuff_Wound ? 4f / 3 : 0.75f;
+            effect.Step(balancedInterval - 0.01f);
+            check(effect.Ticks == 0, effect.GetType().Name + " waits for its balanced periodic interval");
+            effect.Step(0.011f);
+            check(effect.Ticks == 1, effect.GetType().Name + " ticks at its configured seconds; Wound keeps prior cadence");
             if (effect is CharacterDebuff_Plasma plasma)
-                check(Math.Abs(plasma.addDamageTimer.Elapsed - (interval * 4 / 3 + 0.001f)) < 0.0001f,
+                check(Math.Abs(plasma.addDamageTimer.Elapsed - (balancedInterval + 0.001f)) < 0.0001f,
                     "Plasma's separate shock charge accumulator is not slowed as a periodic timer");
             effect = New(new UnitAvatar { faction = "enemy" }); effect.Step(interval);
             check(effect.Ticks == 1, effect.GetType().Name + " preserves PvE cadence");
@@ -74,6 +75,50 @@ internal static class ElementalCadenceTests
         var system = new CharacterDebuff_Poison { isSystemDamage = true };
         system.InitializeAndSpawn(new PlayerAvatar(), new PlayerAvatar()); system.OnTick = system.OnUpdate_Server;
         system.Step(1); check(system.Ticks == 1, "System poison keeps its native timer");
+        var settings = default(PvpDotSettings);
+        foreach (var kind in Enum.GetValues<PvpDotEffect>()) settings = settings.Apply(new(kind, (int)kind + 1));
+        foreach (var kind in Enum.GetValues<PvpDotEffect>())
+        {
+            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, dotIntervals: settings);
+            CharacterDebuff effect = kind switch
+            {
+                PvpDotEffect.Burn => new CharacterDebuff_Burn { Speed = 100 },
+                PvpDotEffect.PlasmaBurn => new CharacterDebuff_Plasma { Speed = 100 },
+                PvpDotEffect.Frostbite => new CharacterDebuff_Frostbite(),
+                _ => new CharacterDebuff_Poison()
+            };
+            effect.InitializeAndSpawn(new PlayerAvatar(), new PlayerAvatar());
+            if (effect is CharacterDebuff_Burn burn) effect.OnTick = burn.OnUpdate_Server;
+            else effect.OnTick = ((PeriodicDebuffFixture)effect).OnUpdate_Server;
+            Timer timer = effect switch
+            {
+                CharacterDebuff_Burn b => b.tickTimer, CharacterDebuff_Plasma p => p.tickTimer,
+                CharacterDebuff_Frostbite f => f.frostDamageTimer, CharacterDebuff_Poison p => p.poisonTickTimer,
+                _ => throw new Exception()
+            };
+            void Step(float delta)
+            {
+                if (effect is CharacterDebuff_Burn b) b.Step(delta);
+                else ((PeriodicDebuffFixture)effect).Step(delta);
+            }
+            int Ticks() => effect is CharacterDebuff_Burn b ? b.Ticks : ((PeriodicDebuffFixture)effect).Ticks;
+            // Prove interval independence and support for a serialized native
+            // timer length different from the constructor default.
+            timer.time = 2.5f;
+            float seconds = settings.Interval(kind);
+            Step(seconds - 0.01f); check(Ticks() == 0, kind + " uses its own interval, regardless of native length/speed");
+            Step(0.011f); check(Ticks() == 1 && timer.time == 2.5f, kind + " ticks without mutating native timer length");
+            Step(seconds / 2);
+            SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, dot: new(kind, 0.5m)));
+            Step(0.24f); check(Ticks() == 1, kind + " live edit preserves fractional progress");
+            Step(0.011f); check(Ticks() == 2, kind + " live edit applies without restarting the effect");
+            Step(0); check(Ticks() == 2, kind + " paused time adds no tick");
+            for (int n = 0; n < 100; n++) Step(0);
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int n = 0; n < 1000; n++) Step(0);
+            long bytes = GC.GetAllocatedBytesForCurrentThread() - before;
+            check(bytes == 0, kind + " adds no warmed per-tick allocation");
+        }
         SessionSettings.FriendlyFireForHit = default;
     }
 }

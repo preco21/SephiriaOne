@@ -29,6 +29,7 @@ namespace SephiriaOne
         private const string PlayTagPresetHeader = "SephiriaOne preset v25";
         private const string PlayTagChaserPresetHeader = "SephiriaOne preset v26";
         private const string PvpGuardPresetHeader = "SephiriaOne preset v27";
+        private const string PvpDotPresetHeader = "SephiriaOne preset v28";
         private const string PvpRefillPresetHeader = "SephiriaOne preset v24";
         private const string PvpBalancePresetHeader = "SephiriaOne preset v22";
         private const string EventPresetHeader = "SephiriaOne preset v16";
@@ -82,6 +83,12 @@ namespace SephiriaOne
             if (FriendlyFire.DamagePercent != 100) lines.Add("friendlyfire damage " + FriendlyFire.Number);
             if (FriendlyFire.RefillPercent != FriendlyFireSettings.DefaultRefillPercent) lines.Add("friendlyfire refill " + FriendlyFire.RefillNumber);
             if (FriendlyFire.GuardMpPercent != FriendlyFireSettings.DefaultGuardMpPercent) lines.Add("friendlyfire guard-mp " + FriendlyFire.GuardMpNumber);
+            for (int i = 0; i < PvpDotSettings.Count; i++)
+            {
+                var effect = (PvpDotEffect)i;
+                if (FriendlyFire.DotIntervals.Seconds(effect) != PvpDotSettings.DefaultSeconds)
+                    lines.Add("friendlyfire dot-" + PvpDotSettings.Key(effect) + " " + FriendlyFire.DotIntervals.Number(effect));
+            }
             string Describe(Setting setting) => (setting.Multiplier ? "multiplier " : setting.Absolute ? "set " : "offset ") +
                 setting.Value.ToString("0.##", CultureInfo.InvariantCulture);
             if (fountain.HasValue) lines.Add("fountain " + Describe(fountain.Value));
@@ -119,7 +126,7 @@ namespace SephiriaOne
             { expandedStats |= stat.RequiresExpandedPreset; companionStats |= stat.IsCompanion; }
             bool multiplier = HasFountainMultiplier;
             foreach (Setting setting in stats.Values) multiplier |= setting.Multiplier;
-            return (FriendlyFire.GuardMpPercent != FriendlyFireSettings.DefaultGuardMpPercent ? PvpGuardPresetHeader : PlayTagChaser.HasChanges ? PlayTagChaserPresetHeader : PlayTagDuration != PlayTagSettings.DefaultDuration ? PlayTagPresetHeader : FriendlyFire.RefillPercent != FriendlyFireSettings.DefaultRefillPercent ? PvpRefillPresetHeader : FriendlyFire.BlockLobbyRegen ? LobbyRegenPresetHeader : FriendlyFire.Balance ? PvpBalancePresetHeader : companionStats ? CompanionStatsPresetHeader : TournamentDuration != TournamentSettings.DefaultDuration ? TournamentPresetHeader : FriendlyFire.HasFractionalPercent ? FractionalCombatPresetHeader : DeathmatchDuration != DeathmatchSettings.DefaultDuration ? DeathmatchPresetHeader : expandedStats ? ExpandedStatsPresetHeader : EventSpawns.HasChanges ? EventPresetHeader : CollinStartingArtifact ? CollinPresetHeader : BatHpSteal ? BatPresetHeader : JarSpawns.HasChanges ? JarPresetHeader : FriendlyFire.HasChanges ? CombatPresetHeader : ItemUnlock ? ItemUnlockPresetHeader : RabbitPotions.LevelUpPotion ? RabbitLevelUpPresetHeader : UsesMerchantGuaranteePreset ? MerchantGuaranteePresetHeader : UsesMerchantTypesPreset ? MerchantTypesPresetHeader : Merchants.HasChanges ? MerchantPresetHeader : RabbitPotions.MpCostPerDrink != RabbitPotionSettings.DefaultMpCostPerDrink ? RabbitCostPresetHeader :
+            return (FriendlyFire.DotIntervals.HasChanges ? PvpDotPresetHeader : FriendlyFire.GuardMpPercent != FriendlyFireSettings.DefaultGuardMpPercent ? PvpGuardPresetHeader : PlayTagChaser.HasChanges ? PlayTagChaserPresetHeader : PlayTagDuration != PlayTagSettings.DefaultDuration ? PlayTagPresetHeader : FriendlyFire.RefillPercent != FriendlyFireSettings.DefaultRefillPercent ? PvpRefillPresetHeader : FriendlyFire.BlockLobbyRegen ? LobbyRegenPresetHeader : FriendlyFire.Balance ? PvpBalancePresetHeader : companionStats ? CompanionStatsPresetHeader : TournamentDuration != TournamentSettings.DefaultDuration ? TournamentPresetHeader : FriendlyFire.HasFractionalPercent ? FractionalCombatPresetHeader : DeathmatchDuration != DeathmatchSettings.DefaultDuration ? DeathmatchPresetHeader : expandedStats ? ExpandedStatsPresetHeader : EventSpawns.HasChanges ? EventPresetHeader : CollinStartingArtifact ? CollinPresetHeader : BatHpSteal ? BatPresetHeader : JarSpawns.HasChanges ? JarPresetHeader : FriendlyFire.HasChanges ? CombatPresetHeader : ItemUnlock ? ItemUnlockPresetHeader : RabbitPotions.LevelUpPotion ? RabbitLevelUpPresetHeader : UsesMerchantGuaranteePreset ? MerchantGuaranteePresetHeader : UsesMerchantTypesPreset ? MerchantTypesPresetHeader : Merchants.HasChanges ? MerchantPresetHeader : RabbitPotions.MpCostPerDrink != RabbitPotionSettings.DefaultMpCostPerDrink ? RabbitCostPresetHeader :
                 RabbitPotions.ConsumeMp || RabbitPotions.SuppressSurvival ? RabbitBalancePresetHeader :
                 RabbitPotions.HasChanges ? RabbitPresetHeader : Resources.HasChanges ? ResourcePresetHeader : multiplier ? MultiplierPresetHeader : PresetHeader) + "\n" +
                 (HasChanges ? string.Join("\n", DescribeSettings()) + "\n" : "");
@@ -131,8 +138,9 @@ namespace SephiriaOne
             error = L.T("Invalid saved preset; no saved settings were applied.");
             if (text == null || text.Length > MaximumPresetLength) return false;
             string[] lines = text.Replace("\r\n", "\n").Split('\n');
-            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader && lines[0] != RabbitBalancePresetHeader && lines[0] != RabbitCostPresetHeader && lines[0] != MerchantPresetHeader && lines[0] != MerchantTypesPresetHeader && lines[0] != MerchantGuaranteePresetHeader && lines[0] != RabbitLevelUpPresetHeader && lines[0] != ItemUnlockPresetHeader && lines[0] != CombatPresetHeader && lines[0] != JarPresetHeader && lines[0] != BatPresetHeader && lines[0] != CollinPresetHeader && lines[0] != EventPresetHeader && lines[0] != ExpandedStatsPresetHeader && lines[0] != DeathmatchPresetHeader && lines[0] != FractionalCombatPresetHeader && lines[0] != TournamentPresetHeader && lines[0] != CompanionStatsPresetHeader && lines[0] != PvpBalancePresetHeader && lines[0] != LobbyRegenPresetHeader && lines[0] != PvpRefillPresetHeader && lines[0] != PlayTagPresetHeader && lines[0] != PlayTagChaserPresetHeader && lines[0] != PvpGuardPresetHeader)) return false;
-            bool allowPvpGuard = lines[0] == PvpGuardPresetHeader;
+            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader && lines[0] != RabbitBalancePresetHeader && lines[0] != RabbitCostPresetHeader && lines[0] != MerchantPresetHeader && lines[0] != MerchantTypesPresetHeader && lines[0] != MerchantGuaranteePresetHeader && lines[0] != RabbitLevelUpPresetHeader && lines[0] != ItemUnlockPresetHeader && lines[0] != CombatPresetHeader && lines[0] != JarPresetHeader && lines[0] != BatPresetHeader && lines[0] != CollinPresetHeader && lines[0] != EventPresetHeader && lines[0] != ExpandedStatsPresetHeader && lines[0] != DeathmatchPresetHeader && lines[0] != FractionalCombatPresetHeader && lines[0] != TournamentPresetHeader && lines[0] != CompanionStatsPresetHeader && lines[0] != PvpBalancePresetHeader && lines[0] != LobbyRegenPresetHeader && lines[0] != PvpRefillPresetHeader && lines[0] != PlayTagPresetHeader && lines[0] != PlayTagChaserPresetHeader && lines[0] != PvpGuardPresetHeader && lines[0] != PvpDotPresetHeader)) return false;
+            bool allowPvpDot = lines[0] == PvpDotPresetHeader;
+            bool allowPvpGuard = lines[0] == PvpGuardPresetHeader || allowPvpDot;
             bool allowPlayTagChaser = lines[0] == PlayTagChaserPresetHeader || allowPvpGuard;
             bool allowPlayTag = lines[0] == PlayTagPresetHeader || allowPlayTagChaser;
             bool allowPvpRefill = lines[0] == PvpRefillPresetHeader || allowPlayTag;
@@ -247,6 +255,10 @@ namespace SephiriaOne
                     else if (allowPvpGuard && parts[1] == "guard-mp" && FriendlyFireSettings.ValidGuardMpPercent(value) &&
                         parts[2] == value.ToString("0.##", CultureInfo.InvariantCulture))
                         pending.Record(new FriendlyFireCommand(false, guardMpPercent: value));
+                    else if (allowPvpDot && parts[1].StartsWith("dot-", StringComparison.Ordinal) &&
+                        PvpDotSettings.TryEffect(parts[1].Substring(4), out var effect) && parts[1] == "dot-" + PvpDotSettings.Key(effect) &&
+                        PvpDotSettings.ValidSeconds(value) && parts[2] == value.ToString("0.##", CultureInfo.InvariantCulture))
+                        pending.Record(new FriendlyFireCommand(false, dot: new PvpDotChange(effect, value)));
                     else if (parts[1] == "damage" && FriendlyFireSettings.ValidPercent(value) &&
                         (allowFractionalCombat || value == decimal.Truncate(value)) && parts[2] == value.ToString("0.##", CultureInfo.InvariantCulture))
                         pending.Record(new FriendlyFireCommand(false, value));

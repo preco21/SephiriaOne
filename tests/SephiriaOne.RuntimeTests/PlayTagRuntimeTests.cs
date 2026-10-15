@@ -54,6 +54,10 @@ internal static class PlayTagRuntimeTests
             CombatMatchRuntime.IsRunning && ReferenceEquals(guardBomb, Bomb()) && CombatMatchRuntime.MatchToken == guardToken &&
             FriendlyFireKda.Epoch == guardEpoch, "Live guard edit preserves Tag bomb, scores, respawns and match identity");
         var carrier = DungeonManager.Instance.ChatMessages.Last(x => x.Player != null && x.Message.Contains("Pass the bomb")).Player;
+        check(SettingsActions.Execute("/one friendlyfire dot plasma-burn 1.75").Success &&
+            SessionSettings.FriendlyFireForHit.DotIntervals.Seconds(PvpDotEffect.PlasmaBurn) == 1.75m &&
+            CombatMatchRuntime.IsRunning && ReferenceEquals(guardBomb, Bomb()) && CombatMatchRuntime.MatchToken == guardToken &&
+            FriendlyFireKda.Epoch == guardEpoch, "DoT edit preserves Tag bomb/fuse, score epoch and match identity");
         var recipient = players.First(p => p != carrier);
         long epoch = FriendlyFireKda.Epoch;
         Kill(carrier, recipient);
