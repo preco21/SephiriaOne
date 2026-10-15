@@ -72,6 +72,7 @@ distinguishes native chapter/outcome markers from actual run settlement.
 | Deathmatch | [Temporary timed matches, respawns, rankings and toggle synchronization](deathmatch.md) |
 | Automatic respawn FX | [Shared Deathmatch/Tournament success boundary and native white pillar](respawn-visuals.md) |
 | Tournament | [Shared match runtime, one-on-one elimination, bounded draws, participant lifetimes and controls](tournament.md) |
+| Play Tag investigation | [Requested bomb mode, pending rules, shared lifecycle and native death/explosion research](play-tag.md); not implemented yet |
 | Reliability and performance | [Disconnect investigation](disconnect-investigation.md), [penalty warnings/transport evidence](penalty-stat-sync-review.md), [performance reviews](performance-review.md) |
 | Releases and dependencies | [GitHub updater](github-updates.md), [updater investigation](github-release-updates-investigation.md), [third-party notices](third-party-notices.md) |
 
