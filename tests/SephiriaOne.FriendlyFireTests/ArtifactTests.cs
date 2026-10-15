@@ -10,6 +10,7 @@ internal static class ArtifactTests
 
     internal static void Run(Action<bool, string> check)
     {
+        SwordArtifactTests.Run(check);
         Selectors(check);
         CombatGates(check);
         Homing(check);

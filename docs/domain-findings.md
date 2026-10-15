@@ -16,6 +16,15 @@ A different game build requires renewed contract/asset checks. Start with the
 
 ## State lifetimes and multiplayer
 
+Artifact audits must follow the instantiated secondary component, not only the
+`Charm_*` trigger or `Bullet` prefab. Plitvice (1248, `Item_FrostMP_Name`) uses
+`Charm_IceSword` → RPC-created `IceSword`; the latter had an inline player-mask
+veto before central damage. Flame Sword combo auto-search had a separate veto.
+Both now adapt to shared hostility without cached participation or new packets.
+`EMBER` and `FLAMESWORD` are different categories; asset IDs and serialized
+component references disambiguate displayed names. See the
+[secondary sword audit](friendly-fire-artifacts.md#plitvice-and-secondary-swords-0591-2026-10-16).
+
 Native companion punishment uses the same `NPCDeadCheckServerside` callback as
 ordinary social NPCs. Its crime debuff affects the whole party, while saved
 `CrimeCount` causes the buff to be reapplied during player initialization.

@@ -1,6 +1,6 @@
 # Offensive artifact hostility audit
 
-Updated: 2026-10-11, addon `0.43.2`. This extends [friendly fire](friendly-fire.md)
+Updated: 2026-10-16, addon `0.59.1`. This extends [friendly fire](friendly-fire.md)
 using its existing host toggle and damage percentage; no additional setting,
 preset field, asset or guest addon is introduced.
 
@@ -9,6 +9,93 @@ extends the audited homing and offensive-search scope. Common nearest/homing
 helpers now live in `FriendlyFireTargeting` / `FriendlyFireTargetingHooks`; the
 artifact registry and bounded proc scopes retain their original behavior. The
 spell exclusions below describe the earlier `0.43.2` audit boundary.
+
+## Plitvice and secondary swords (0.59.1, 2026-10-16)
+
+The reported “Drops of Water in Plitvice Lakes” is item **1248**, installed EN
+name **Droplet of Plitvice**, KO **플리트비체의 물방울**, localization key
+`Item_FrostMP_Name`. Its `resources.assets` ItemEntity references GameObject
+68023 in `sharedassets0.assets`, with `Charm_IceSword` component 210149 and
+`iceSwordPrefab` pointing to `IceSword` component 198238. The disabled 1261
+variant shares its name; it is not the playable item used to establish this path.
+
+`Charm_IceSword.OnFireFrostRelicGlobal` pays native MP and sends
+`RpcCreateSwords`; each client's receiver creates the visual sword, with only
+the host copy receiving `isServerObject = true`. `IceSword.Update` handles both
+orbiting contact and the final outward flight. It resolves costume hitboxes via
+`Hitbox.GetCombatBehaviour(0)`, but rejected player targets in an inline reverse
+faction-mask check **before** calling the existing damage handler. That explains
+why the visible spawned sword could fail despite ordinary friendly fire working.
+
+`FriendlyFireArtifactHooks.RewriteIceSword` validates that exact owner/mask
+instruction sequence and substitutes the shared `ItemTarget` policy. Native
+non-unit collisions, radius, hit list, 0.1-second check timer, 0.5-second per-target
+interval, MP-based damage calculation, Ice/Fire conversion, `FROSTRELIC` flag,
+successful-hit FX/audio RPC and lifecycle stay native. A character without the
+native bonus-MP damage input can still produce zero sword damage; this change
+does not manufacture a new minimum damage or waive artifact prerequisites.
+
+The related `ComboEffect_FlameSword.SearchTarget` had a second unhandled reverse
+faction filter. It now belongs to the existing offensive selector registry (16
+entries). Its auto-search coroutine retains the native 5-unit search, random
+selection, targetability/height/death checks, sword stock and delays. Committed
+swings still keep their native positions; central impact handling rechecks live
+permission, so disabling friendly fire or changing participants blocks damage
+even from already launched attacks.
+
+Both changes share host authority, positive damage, current participant receipts,
+owner immunity, Tournament opponents and the common damage/balancing/KDA path.
+They apply to casual friendly fire, Deathmatch, Tournament and Play Tag without
+new settings, cached targets, per-frame scans, packets, guest scripts or assets.
+There is no new per-hit allocation. Unknown IL shapes use existing installation
+rollback; no global faction, battle-state or creature-enumeration patch was added.
+
+### Related artifact audit
+
+`EMBER` (displayed **Ember**) and `FLAMESWORD` are distinct categories. This
+follow-up inspected both and the related `FROST` artifacts using installed
+ItemEntity-to-prefab references, serialized settings and native source. The old
+Charm/Bullet-only reference walk below did not cover `IceSword` or the Flame
+Sword combo; its breadth must not be treated as proof of every secondary effect.
+
+| Items / path | Finding |
+| --- | --- |
+| Plitvice, including Eternal Eclipse's Fire conversion | Fixed the shared `IceSword.Update` collision veto. Both elements use the same native damage path. |
+| Flame Sword category: Eternal Furnace, Meteorite Earrings/Pauldrons, Midday Whetstone, Sun of the Archives, Meteorite Mirror and the stat-only Solis/Anvil/Sunset items | Fixed combo auto-search. Ordinary and lucky strikes create native `MeleeCollision` after a delay. `FlameSwordReturn.Update` and `SpecialProjectile_FlameSword` already enter shared damage through direct or child melee hits, with no extra player-selection veto. |
+| Ember: Red Snake Eyes, Phoenix Wing | Existing meteor/feather selectors, meteor combat gate and feather homing ID already cover hostile players; native projectile impacts and feather burn use shared damage/debuff handling. |
+| Ember: Ohia Lehua | Its serialized class is `Charm_FrostiumRing`, damage ID `Charm_FireDamageGround`; already covered by the bounded synchronous proc adapter. |
+| Ember: Flame Herb Root, Ruby Brooch, Red Planet Observation Log | Root's FURY-triggered child bullet reaches ordinary bullet collision; Brooch's cloud callback uses shared debuff handling. Planet sets `PLANETIGNITEDAMAGE`, consumed by `GreenBat` with existing battle/selector/homing coverage, including ignite-tail bullets. Native trigger requirements remain. |
+| Ember stat/debuff items: Dragoncense, Oak Tree Coal, Ball of Red Yarn, Flaming Eye Patch, Magma Bead, Flame Bug, Scale of Conflict, Icebound Tejas, Plasma Helmet, Blacksmith's Tongs | Serialized stats or native on-hit modifiers/debuffs, not independent target searches. Existing damage/debuff policy and configurable DoT timing apply. |
+| Ember magic books: Fire Bolt, Fire Arrow, Fire Circus, Meteor Shower | Existing spell audit covers their native auto-search/homing paths; Fire Arrow is not granted new homing. Tero's Spirit Powder uses existing companion owner/target rules. |
+| Combustible Oil / flame-ground consumers | Hidden item inspected separately. Native flame-ground collection and server damage already call central `ApplyDamage`; no extra faction veto was found. |
+| Related Frost: Scabbard of Exorcism, Voluspa, Blizzard Hammer, Frozen Bow, Guillotine of Bitter Cold | Existing selector/nearest adapters and native bullet/melee/`IceGuillotine.OnGuillotineHit` paths cover them. Manual scythe aim remains manual. Tiny Magic Conch, Frozen Heart, Ice Star and Ice Wings alter stats/charging/visuals rather than adding another enemy filter. |
+
+No additional filter change was needed in those inspected paths. Native
+`SwordSphere` has a similar mask, but belongs to monster AI, not these artifact
+prefabs; it remains untouched. Arbitrary future/modded secondary effects are
+not covered by inference. The assembly fingerprint below was rechecked unchanged.
+
+### Verification and remaining live checks
+
+The executable regression first reproduced the blocked Plitvice hit, then passed
+with the narrow adapter. Tests cover successful-hit FX, single damage scaling,
+repeat-hit cadence, off/zero, guest authority, selection/match restrictions,
+retired/rejoined connections, self/monster targets and native target prerequisites.
+Installed-game contracts verify the actual sword creation/server flag, collision,
+outward-flight branch, faction equivalence, MP cost, RPCs and downstream Flame
+Sword/Guillotine hits, rejecting removed owner/mask anchors and duplicate filters.
+
+Final checks: Release build passed with zero warnings/errors; 3,900 executable
+combat checks, 2,254 runtime/session checks plus 69 Bat lifecycle checks, and the
+full catalog/installed-game contract suite passed with deployment disabled.
+The compiled addon also passed the co-installed Harmony 2.9 API compatibility
+check. Independent read-only review reported no actionable findings.
+
+Live Unity/Mirror testing remains necessary: host and unmodified guest should
+each equip Plitvice with enough native bonus MP, activate a Frost relic, and test
+orbit/outward hits, Fire conversion, Flame Sword search/returns and mid-flight
+toggle/selection changes. Verify remote HP, hit FX/audio and unchanged monster
+damage. Nothing was deployed or launched for this change.
 
 ## Dark Cloud player strike limit (0.51.2, 2026-10-13)
 

@@ -12,7 +12,9 @@ internal static class GameFriendlyFireEffectTests
         void Require(bool condition, string why) { if (!condition) throw new Exception("Friendly-fire effect contract: " + why); }
         var hooks = addon.GetType("SephiriaOne.FriendlyFireEffectHooks", true)!;
         var selectors = ((IEnumerable<MethodInfo>)AccessTools.Method(hooks, "Selectors").Invoke(null, null)!).ToArray();
-        Require(selectors.Length == 15 && selectors.All(m => m != null), "all audited native item selectors resolve");
+        Require(selectors.Length == 16 && selectors.All(m => m != null), "all audited native item selectors resolve");
+        Require(selectors.Contains(AccessTools.DeclaredMethod(Type("ComboEffect_FlameSword"), "SearchTarget")),
+            "Flame Sword secondary auto-search participates in the shared hostile-target policy");
         foreach (var selector in selectors)
         {
             var code = PatchProcessor.GetOriginalInstructions(selector).ToList();

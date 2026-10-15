@@ -24,7 +24,7 @@ internal static class GameFriendlyFireArtifactTests
             Require(mapped.Count == original.Count + added && mapped.Count(i => Calls(i, "FriendlyFireRuntime", helper)) == helperCount,
                 method + " preserves native body and expected helper count");
             // Removing an audited call/field must not silently broaden another site.
-            int anchor = rewrite == "RewriteHoming" || rewrite == "RewriteDagger" || rewrite == "RewriteNearestMask"
+            int anchor = rewrite == "RewriteHoming" || rewrite == "RewriteDagger" || rewrite == "RewriteNearestMask" || rewrite == "RewriteIceSword"
                 ? original.FindIndex(i => Calls(i, "UnitAvatar", "GetHostileFactionLayers"))
                 : original.FindIndex(i => rewrite == "RewriteBattle" ? Calls(i, "UnitAvatar", "get_IsInBattle") :
                     rewrite == "RewriteNearestCalls" ? Calls(i, "PlayerInputController", "SearchTargetNearestPoint") :
@@ -67,6 +67,7 @@ internal static class GameFriendlyFireArtifactTests
             .Any(i => Calls(i, "UnitAvatar", "ApplyDebuff")), "Native cloud attack callback can apply burn after damage");
         Check(Method("PlayerInputController", "SearchTargetNearestPoint"), "RewriteNearestMask", "OffensiveNearestMask", 1);
         Check(Method("DaggerGrowthBullet", "HitCheck"), "RewriteDagger", "ItemHitTarget", 1);
+        Check(Method("IceSword", "Update"), "RewriteIceSword", "ItemTarget", 1, 1);
         Check(Method("Bullet", "Update"), "RewriteHoming", "HomingTargetAllowed", 1, 2);
         Check(Method("Charm_AttackChim", "HandleAddedDebuffOnTarget"), "RewriteDebuffProc", "ApplyArtifactDebuff", 1);
 
@@ -81,6 +82,7 @@ internal static class GameFriendlyFireArtifactTests
             homing.Any(i => Calls(i, "Bullet", "set_HomingTarget")), "native homing clear/reacquisition stays in the same update");
         var battle = PatchProcessor.GetOriginalInstructions(Method("PlayerBattleChecker", "Update"));
         Require(battle.Any(i => i.operand is MethodInfo m && m.Name == "OverlapCircle"), "native combat checker remains separately owned");
-        Console.WriteLine("Verified 15 artifact selectors, six offense-only combat gates, scoped native aim, artifact homing/loss, bounded proc callsites and owned-frostbite/RPC contracts (not live multiplayer).");
+        GameFriendlyFireSwordTests.Run(game, addon);
+        Console.WriteLine("Verified 16 artifact selectors, Plitvice collision mask, six offense-only combat gates, scoped native aim, artifact homing/loss, bounded proc callsites and owned-frostbite/RPC contracts (not live multiplayer).");
     }
 }

@@ -14,6 +14,12 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+- `0.59.1`: [Plitvice and secondary sword hostility](friendly-fire-artifacts.md#plitvice-and-secondary-swords-0591-2026-10-16)
+  repairs the spawned sword's pre-damage faction veto and Flame Sword combo
+  auto-search. Both use the existing host/participant/match policy and native
+  damage/RPC paths. Expanded Ember/Frost/Flame Sword asset audit records covered
+  child effects and the limits of the earlier Charm/Bullet reference walk.
+
 - `0.59.0`: [independent PvP DoT intervals](pvp-dot-intervals.md) add four
   configurable seconds values, each defaulting to 0.75, for Burn, Plasma Burn,
   Frostbite and Poison. Shared live command/settings and v28 presets serve all

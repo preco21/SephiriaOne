@@ -28,6 +28,7 @@ namespace SephiriaOne
             yield return AccessTools.DeclaredMethod(typeof(Charm_IceSpear), "SearchTarget");
             yield return AccessTools.DeclaredMethod(typeof(Charm_IceSpear), "SearchTargetByWeaponDirection");
             yield return AccessTools.DeclaredMethod(typeof(GreenBat), "SearchTarget");
+            yield return AccessTools.DeclaredMethod(typeof(ComboEffect_FlameSword), "SearchTarget");
         }
 
         internal static MethodInfo Iterator(Type type, string method)

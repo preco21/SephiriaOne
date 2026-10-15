@@ -1,6 +1,10 @@
 # Development knowledge index
 
-Maintained: 2026-10-16 (Asia/Seoul), addon `0.59.0`.
+Maintained: 2026-10-16 (Asia/Seoul), addon `0.59.1`.
+
+Combat fix: [Plitvice and secondary sword hostility](friendly-fire-artifacts.md#plitvice-and-secondary-swords-0591-2026-10-16)
+repairs the spawned sword's collision veto and Flame Sword auto-search using the
+shared participant policy, with an expanded Ember/Frost/secondary-effect audit.
 
 Agents and contributors can refer to `docs/*` for research, implementation
 materials, native game findings and references. Start here before repeating an
