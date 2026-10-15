@@ -1,12 +1,17 @@
 # Development knowledge index
 
-Maintained: 2026-10-16 (Asia/Seoul), addon `0.57.2`.
+Maintained: 2026-10-16 (Asia/Seoul), addon `0.58.0`.
 
 Agents and contributors can refer to `docs/*` for research, implementation
 materials, native game findings and references. Start here before repeating an
 investigation. Repository workflow and deployment rules are in [AGENTS.md](../AGENTS.md).
 
 ## Start here
+
+Combat balancing: [guard MP scaling](pvp-balancing.md#guard-mp-cost-0580-2026-10-16)
+defaults to 10% maximum MP before native Guard Efficiency/perfect reductions.
+Live command and dedicated balancing controls share settings across all modes;
+native PvE, parries and MP shields are unchanged. Nondefault saves use v27.
 
 Combat balancing: [HP/MP Harvest](pvp-balancing.md#harvest-recovery-0572-2026-10-16)
 recovers 20% of native amounts on balanced PvP hits across all modes. Native

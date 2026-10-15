@@ -62,7 +62,13 @@ internal static class DeathmatchTests
             SessionSettings.FriendlyFireForHit.RefillPercent == 125.5m, "Refill edit preserves deathmatch warmup and overlay");
         check(SettingsActions.Execute("/one friendlyfire balance on").Success && CombatMatchRuntime.IsRunning &&
             SessionSettings.FriendlyFireForHit.Balance, "Balance edits preserve Deathmatch warmup and its effective settings");
+        check(SettingsActions.Execute("/one friendlyfire guard-mp 12.5").Success && CombatMatchRuntime.IsRunning &&
+            SessionSettings.FriendlyFireForHit.GuardMpPercent == 12.5m, "Guard edit preserves Deathmatch warmup and overlay");
         check(!SessionSettings.FriendlyFireForHit.Enabled, "Damage edits cannot arm the warmup"); At(3);
+        long guardEpoch = FriendlyFireKda.Epoch, balanceRevision = SessionSettings.CombatBalanceRevision;
+        check(SettingsActions.Execute("/one friendlyfire guard-mp 20").Success && CombatMatchRuntime.IsRunning &&
+            SessionSettings.FriendlyFireForHit.GuardMpPercent == 20 && FriendlyFireKda.Epoch == guardEpoch &&
+            SessionSettings.CombatBalanceRevision == balanceRevision, "Live guard edit preserves scores, balanced budgets and active Deathmatch");
         check(CombatMatchRuntime.IsRunning && SessionSettings.FriendlyFireForHit.DamagePercent == 0.1m, "Fractional damage edits survive warmup without stopping match");
         check(SettingsActions.Execute("/one friendlyfire refill 80.5").Success && CombatMatchRuntime.IsRunning &&
             SessionSettings.FriendlyFireForHit.RefillPercent == 80.5m, "Active deathmatch reads refill without interrupting the round");

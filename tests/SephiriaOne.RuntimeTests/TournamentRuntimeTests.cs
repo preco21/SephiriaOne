@@ -47,6 +47,11 @@ internal static class TournamentRuntimeTests
         At(1); At(2); At(3);
         var chat = DungeonManager.Instance.ChatMessages;
         var pair = Pair(players);
+        long guardEpoch = FriendlyFireKda.Epoch, guardToken = CombatMatchRuntime.MatchToken;
+        check(SettingsActions.Execute("/one friendlyfire guard-mp 12.5").Success && CombatMatchRuntime.IsRunning &&
+            CombatMatchRuntime.AllowsPair(pair[0], pair[1]) && SessionSettings.FriendlyFireForHit.GuardMpPercent == 12.5m &&
+            guardEpoch == FriendlyFireKda.Epoch && guardToken == CombatMatchRuntime.MatchToken,
+            "Guard cost edit preserves active Tournament pair, scores and match identity");
         check(SettingsActions.Execute("/one friendlyfire refill 125.5").Success && CombatMatchRuntime.IsRunning &&
             CombatMatchRuntime.AllowsPair(pair[0], pair[1]) && SessionSettings.FriendlyFireForHit.RefillPercent == 125.5m,
             "Refill edit preserves the active tournament pair and overlay");

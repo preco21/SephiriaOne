@@ -14,6 +14,13 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+- `0.58.0`: [PvP guard MP scaling](pvp-balancing.md#guard-mp-cost-0580-2026-10-16)
+  defaults to 10% current maximum MP before native reductions and cost callbacks.
+  The live `guard-mp` command, compact Combat/PvP balancing subsections, EN/KO
+  controls and v27 presets share the existing authority and match infrastructure.
+  Only the final guard cost conversion changes; native MP replication, guard
+  break, PvE, parries and MP shields remain intact. No native stat or restore state.
+
 - `0.57.2`: [PvP Harvest reduction](pvp-balancing.md#harvest-recovery-0572-2026-10-16)
   scales only native HP/MP Harvest recovery amounts to 20% under the existing
   balancing toggle and shared player-hit scope. All combat modes share current

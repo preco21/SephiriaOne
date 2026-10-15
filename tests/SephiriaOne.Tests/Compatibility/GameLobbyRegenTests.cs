@@ -33,7 +33,7 @@ internal static class GameLobbyRegenTests
             }
         }
         var panel = addon.GetType("SephiriaOne.SettingsPanel", true)!;
-        Check(PatchProcessor.GetOriginalInstructions(AccessTools.Method(panel, "BuildCombatEditor")).Any(i =>
+        Check(PatchProcessor.GetOriginalInstructions(AccessTools.Method(panel, "BuildFriendlyDamageEditor")).Any(i =>
             i.opcode == OpCodes.Ldstr && Equals(i.operand, "/one friendlyfire block-lobby-regen")), "UI uses the shared command");
         Console.WriteLine("Verified installed waiting-room/passive HP/MP recovery sites, targeted rewrites, fail-closed mutations and shared UI command.");
     }

@@ -64,6 +64,7 @@ Console.WriteLine($"Passed {PlayTagPolicyTests.Run()} Play Tag policy/preset che
 Console.WriteLine($"Passed {ItemRestrictionTests.Run()} item restriction checks.");
 Console.WriteLine($"Passed {FriendlyFirePolicyTests.Run()} friendly-fire policy/preset checks.");
 Console.WriteLine($"Passed {FriendlyFireRefillTests.Run()} configurable PvP refill checks.");
+Console.WriteLine($"Passed {FriendlyFireGuardSettingsTests.Run()} PvP guard setting checks.");
 Console.WriteLine($"Passed {EventSpawnPolicyTests.Run()} event spawn policy/preset checks.");
 Console.WriteLine($"Passed {JarSpawnPolicyTests.Run()} Mystic Jar policy/preset checks.");
 Console.WriteLine($"Passed {BatPolicyTests.Run()} Bat policy/preset checks.");

@@ -182,8 +182,17 @@ public partial class UnitAvatar : CombatBehaviour
             if (IsParrying) { OnParry?.Invoke(damage); return EApplyDamageResult.Fail_Block; }
             if (IsGuarding)
             {
+                float guardCost = 10f;
+                guardCost -= guardCost * GetCustomStat(ECustomStat.GuardResist) / 100f;
+                if (guardCost < 0) guardCost = 0;
+                if (PerfectGuard) guardCost *= 0.5f;
                 GuardHits++; damage.failed = EDamageFailType.Block;
-                OnGuardSucceeded?.Invoke(damage); Mp -= 10;
+                OnGuardSucceeded?.Invoke(damage);
+                if (OnCalculateDurabilityDamage != null)
+                    foreach (CalculateDurabilityDamage callback in OnCalculateDurabilityDamage.GetInvocationList())
+                        guardCost = callback(guardCost);
+                UseMp((int)guardCost);
+                if (!InfiniteMp && Mp <= 0) { GuardBroken = true; IsGuarding = false; }
                 return EApplyDamageResult.Fail_Block;
             }
             OnCalculateDamage?.Invoke(damage);

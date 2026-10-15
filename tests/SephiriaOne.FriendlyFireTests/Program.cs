@@ -190,6 +190,7 @@ ElementalCadenceTests.Run(Check);
 DebuffPulseTests.Run(Check);
 BalanceTests.Run(Check);
 HarvestTests.Run(Check);
+GuardTests.Run(Check);
 SpellTests.Run(Check);
 FractionalDamageTests.Run(Check);
 SelectiveCombatTests.Run(Check);
@@ -201,6 +202,10 @@ new PlayerAvatar { faction = "enemy" }.ApplyDamage(new() { origin = nativeHarves
 Check(nativeHarvester.Hp == 30 && nativeHarvester.Mp == 20 &&
     PatchProcessor.GetPatchInfo(AccessTools.Method(typeof(UnitAvatar), "ApplyDamage"))?.Transpilers.Count is null or 0,
     "Unload restores native Harvest and removes its shared combat transpiler");
+var nativeGuard = new PlayerAvatar { faction = "enemy", IsGuarding = true, MaxMp = 1000, Mp = 1000 };
+nativeGuard.ApplyDamage(new() { origin = nativeHarvester, damage = 20 });
+Check(nativeGuard.LastMpCost == 10 && nativeGuard.Mp == 990,
+    "Unload restores native guard spending despite retained balancing preferences");
 Check(PatchProcessor.GetPatchInfo(AccessTools.Method(typeof(DungeonManager), "NPCDeadCheckServerside"))?.Prefixes.Count is null or 0 &&
     PatchProcessor.GetPatchInfo(AccessTools.Method(typeof(UnitAI_NewBasic), "OnDamaged"))?.Transpilers.Count is null or 0,
     "Unload removes companion crime and shared-hostility exemptions together");

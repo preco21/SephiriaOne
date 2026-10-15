@@ -10,8 +10,10 @@ internal static class GameFriendlyFireScaleTests
         bool Call(CodeInstruction instruction, string type, string name) => instruction.operand is MethodInfo method &&
             method.DeclaringType?.Name == type && method.Name == name;
         void Require(bool condition, string why) { if (!condition) throw new Exception("Fractional combat UI: " + why); }
-        var build = Code("BuildCombatEditor");
-        Require(build.Any(i => i.LoadsConstant("PvP balancing")) && build.Any(i => i.LoadsConstant("/one friendlyfire balance")),
+        var build = Code("BuildFriendlyDamageEditor");
+        var balance = Code("BuildPvpBalanceEditor");
+        Require(Code("BuildCombatEditor").Any(i => Call(i, "SettingsPanel", "BuildPvpBalanceEditor")) &&
+            balance.Any(i => i.LoadsConstant("PvP balancing")) && balance.Any(i => i.LoadsConstant("/one friendlyfire balance")),
             "Combat exposes a balancing checkbox through the same shared command");
         var runtime = addon.GetType("SephiriaOne.FriendlyFireRuntime", true)!;
         var scale = PatchProcessor.GetOriginalInstructions(AccessTools.Method(runtime, "Scale")).ToList();
@@ -42,12 +44,12 @@ internal static class GameFriendlyFireScaleTests
         var refill = Code("ApplyFriendlyRefill");
         Require(apply.Any(i => Call(i, "SettingsPanel", "ClearFriendlyDamage")) && refill.Any(i => Call(i, "SettingsPanel", "ClearFriendlyRefill")),
             "Each successful Apply clears only its own draft, preserving the other pending field");
-        Require(build.Count(i => Call(i, "PanelWidgets", "Input")) == 2 && build.Any(i => i.LoadsConstant("PvP refill (%/s)")), "Independent refill input exists");
+        Require(balance.Count(i => Call(i, "PanelWidgets", "Input")) == 2 && balance.Any(i => i.LoadsConstant("PvP refill (%/s)")), "Independent refill and guard inputs exist in balancing section");
         Require(refill.Any(i => i.LoadsConstant("/one friendlyfire refill ")) && refill.Any(i => Call(i, "TMP_InputField", "get_text")) &&
             refill.Any(i => Call(i, "SettingsPanel", "Execute")), "Refill Apply uses exact text through the shared command");
         Require(!Code("EditFriendlyRefill").Any(i => Call(i, "SettingsPanel", "Execute")) &&
-            refresh.Any(i => i.operand is FieldInfo field && field.Name == "friendlyRefillDraft") &&
-            refresh.Any(i => Call(i, "FriendlyFireSettings", "get_RefillNumber")), "Refill typing stays local and refresh preserves the draft");
+            Code("RefreshPvpBalance").Any(i => i.operand is FieldInfo field && field.Name == "friendlyRefillDraft") &&
+            Code("RefreshPvpBalance").Any(i => Call(i, "FriendlyFireSettings", "get_RefillNumber")), "Refill typing stays local and refresh preserves the draft");
         Require(Code("ClearInput").Any(i => Call(i, "SettingsPanel", "ClearFriendlyRefill")), "Scope resets clear refill drafts too");
         Require(!Code("ClearFriendlyDamage").Any(i => i.operand is FieldInfo field && field.Name == "friendlyRefillDraft") &&
             !Code("ClearFriendlyRefill").Any(i => i.operand is FieldInfo field && field.Name == "friendlyDraft"), "Per-field resets do not touch the sibling draft");

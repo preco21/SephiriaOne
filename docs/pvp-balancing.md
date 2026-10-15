@@ -69,6 +69,84 @@ nonempty selection and Tournament's current pair keep their existing rules.
 Changing balancing does not stop a match or clear K/D/A. Touching the master
 toggle still uses the existing stop/recovery semantics.
 
+## Guard MP cost (`0.58.0`, 2026-10-16)
+
+While balancing is enabled, blocking an admitted PvP hit costs **10% of the
+defender's current maximum MP**, before native reductions. Guard Efficiency,
+perfect guard's half-cost and native item/cost callbacks still apply. At 1,000
+maximum MP, an ordinary block costs 100 MP, a perfect guard 50 MP; 40% Guard
+Efficiency lowers those to 60 and 30 MP. This is charged on a successful block,
+not simply on pressing or holding right-click.
+
+Use **Combat → PvP balancing → Guard MP (%)** (`방어 MP (%)`) or:
+
+```text
+/one friendlyfire guard-mp 10
+/one friendlyfire guard-mp 7.5
+/one friendlyfire guard-mp reset
+/one save
+```
+
+Range: 0..100%, up to two decimals, optional `%` suffix. Zero explicitly waives
+the balanced guard cost. Positive fractional MP costs round up; a genuinely
+zero native cost remains zero. Reset restores 10% without touching other
+preferences, scores, participants or the current match. Full friendly-fire reset
+also restores 10%. Saving a nondefault value uses preset v27; all older supported
+presets inherit 10%. Default values add no extra preset row/version requirement.
+
+The Combat panel has compact **Combat** and **PvP balancing** subsections. The
+balancing toggle, refill and guard editors are together; K/D/A reset, Revive All,
+the master toggle and participant selection remain accessible in both sections.
+Each numeric editor preserves its own draft until Apply or a page/scope change.
+
+Implementation uses the existing authoritative `ApplyDamage` hit scope. Only the
+final float-to-int conversion before the guard branch's `UseMp` is replaced:
+`ceil(nativeModifiedCost / 10 * MaxMp * configuredPercent / 100)`. It reads both
+current policy and maximum MP after native callbacks. No stats are rewritten,
+no guard cost is cached, and no restore pass, polling or network message is added.
+Native `UseMp` retains MP callbacks, SyncVar replication for unmodified guests,
+infinite-MP handling and the subsequent guard break. Separate parry and MP-shield
+paths remain native. There is no scaled spending for PvE, self/system damage,
+non-player victims, excluded participants or Tournament bystanders. Owned
+companion attacks against permitted players use the same guard rule.
+
+Disabling balancing, ending effective friendly fire or unloading the addon
+immediately restores the native cost. Deathmatch, Tournament and Play Tag all
+read the same setting live; guard edits do not stop/reset matches or refill damage
+budgets. Play Tag's chaser damage/refill bonuses do not change guard spending.
+
+Numerics: native float subtraction can yield `0.10000038` for 99% Guard
+Efficiency. Exact float representations of the native 0.05 cost grid, or exact
+results of its normal/perfect-guard formula, are normalized to integer twentieths
+before scaling. This avoids an extra MP at exact boundaries without a broad
+epsilon that absorbs nearby custom callback values. Identical float values from
+custom callbacks are inherently indistinguishable; other fractional values and
+positive near-zero values are retained. Invalid balanced amounts become zero and
+overflowing positive costs saturate at int max. Outside balanced PvP the original
+native conversion is preserved.
+
+Installed-game contracts validate the 10f base, GuardResist read, perfect-guard
+0.5f, durability callbacks, exact guard spend and native MP/break tail against
+assembly SHA-256 `C57A0DAEAB8E8D0AF7066A344133EEC4C57D8F303FD9E25DA9410FBFC4CF1510`.
+Changed contracts reject installation rather than patching a later MP-shield
+spend. Executable regressions cover all 0..100 Guard Efficiency levels, perfect
+guards, live settings/MP changes, nested hits, callback exceptions, scope loss,
+rejoins, all match modes, numerical extremes and unload. The warmed guard path
+allocates zero bytes across 1,000 blocks in the fixture.
+
+Live host/stock-guest validation remains required: compare ordinary/perfect
+guards and Guard Efficiency at different MP pools, empty the MP bar to trigger
+guard break, edit the setting mid-match and disable balancing during PvE/PvP.
+Confirm visible MP and guard break on guests, and the compact EN/KO layout.
+Nothing was deployed and the game was not launched for this change.
+
+Verification for `0.58.0`: non-deploying Release build succeeded with zero
+warnings/errors; 3,851 combat checks, 2,238 runtime checks and 69 Bat lifecycle
+checks passed. Portable/settings/native contracts passed, including 148 guard
+settings checks, 3,519 catalog checks and 32 compiled Harmony references against
+co-installed HarmonyX 2.9. Independent review caught the float ceiling issue;
+regressions now cover native cancellation and distinct nearby callback amounts.
+
 ## Model and trade-offs
 
 The initial `0.52.0` design used per-hit softening only. After observing rapid

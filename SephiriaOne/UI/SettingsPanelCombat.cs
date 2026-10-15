@@ -12,6 +12,7 @@ namespace SephiriaOne
         private bool friendlyDraft;
         private TMP_InputField friendlyRefill;
         private bool friendlyRefillDraft;
+        private bool combatBalanceSelected;
         private Button reviveAll, combatResetKda;
 
         private void BuildCombatEditor()
@@ -22,13 +23,25 @@ namespace SephiriaOne
             AddCheckbox("Friendly fire", 16, 25, 174, 21, s => s.FriendlyFire.Enabled, s => s.FriendlyFireAvailable, "/one friendlyfire",
                 s => s.CanMutate || CombatMatchRuntime.IsRunning && s.HostActive && s.SessionIdentity != null);
             resetAll = widgets.Button(pageRoot, "Reset", 200, 25, 89, 21, () => Execute("/one friendlyfire reset", true));
-            AddCheckbox("PvP balancing", 16, 48, 273, 21, s => s.FriendlyFire.Balance, s => s.FriendlyFireAvailable, "/one friendlyfire balance");
-            AddCheckbox("Block lobby HP/MP recovery", 16, 71, 273, 21, s => s.FriendlyFire.BlockLobbyRegen,
+            var combatTab = widgets.Button(pageRoot, "Combat", 16, 52, 132, 22, () => SelectCombatSettings(false));
+            var balanceTab = widgets.Button(pageRoot, "PvP balancing", 156, 52, 133, 22, () => SelectCombatSettings(true));
+            var selectedTab = combatBalanceSelected ? balanceTab : combatTab;
+            var colors = selectedTab.colors; colors.normalColor = PanelWidgets.Accent; colors.selectedColor = colors.normalColor; selectedTab.colors = colors;
+            if (combatBalanceSelected) BuildPvpBalanceEditor();
+            else BuildFriendlyDamageEditor();
+            BuildParticipantsEditor();
+        }
+
+        private void SelectCombatSettings(bool balancing) { combatBalanceSelected = balancing; SelectPage(9); }
+
+        private void BuildFriendlyDamageEditor()
+        {
+            AddCheckbox("Block lobby HP/MP recovery", 16, 80, 273, 21, s => s.FriendlyFire.BlockLobbyRegen,
                 s => s.FriendlyFireAvailable && LobbyRegenFeature.Available, "/one friendlyfire block-lobby-regen");
-            widgets.Text(pageRoot, "FriendlyPercent", "Allied damage (%)", 16, 94, 116, 22, 11);
-            amount = widgets.Input(pageRoot, 136, 94, 62, EditFriendlyDamage);
-            changeButtons.Add(widgets.Button(pageRoot, "Apply damage", 204, 94, 85, 22, ApplyFriendlyDamage));
-            var track = PanelWidgets.Rect(pageRoot, "AlliedDamageSlider", 24, 120, 255, 14);
+            widgets.Text(pageRoot, "FriendlyPercent", "Allied damage (%)", 16, 106, 116, 25, 11);
+            amount = widgets.Input(pageRoot, 136, 106, 62, EditFriendlyDamage);
+            changeButtons.Add(widgets.Button(pageRoot, "Apply damage", 204, 106, 85, 25, ApplyFriendlyDamage));
+            var track = PanelWidgets.Rect(pageRoot, "AlliedDamageSlider", 24, 140, 255, 14);
             track.gameObject.AddComponent<Image>().color = new Color32(48, 66, 88, 255);
             friendlyDamage = track.gameObject.AddComponent<Slider>();
             friendlyDamage.minValue = 0; friendlyDamage.maxValue = 300; friendlyDamage.wholeNumbers = false;
@@ -40,20 +53,16 @@ namespace SephiriaOne
             friendlyDamage.handleRect = handle; friendlyDamage.targetGraphic = handleImage;
             friendlyDamage.direction = Slider.Direction.LeftToRight;
             friendlyDamage.onValueChanged.AddListener(DragFriendlyDamage);
-            widgets.Text(pageRoot, "FriendlyRefill", "PvP refill (%/s)", 16, 137, 116, 25, 11);
-            friendlyRefill = widgets.Input(pageRoot, 136, 137, 62, EditFriendlyRefill);
-            changeButtons.Add(widgets.Button(pageRoot, "Apply refill", 204, 137, 85, 25, ApplyFriendlyRefill));
-            BuildParticipantsEditor();
         }
 
         private void RefreshCombat(SettingsSnapshot snapshot)
         {
-            if (!friendlyDamage) return;
+            if (page != 9) return;
             if (reviveAll) reviveAll.interactable = ReviveAllAction.CanExecute;
             if (combatResetKda) combatResetKda.interactable = snapshot.HostActive && snapshot.SessionIdentity != null && SessionSettings.CanResetFriendlyFireScores;
+            RefreshPvpBalance(snapshot);
+            if (!friendlyDamage) return;
             amount.interactable = friendlyDamage.interactable = snapshot.CanMutate && snapshot.FriendlyFireAvailable;
-            friendlyRefill.interactable = amount.interactable;
-            if (!friendlyRefillDraft) friendlyRefill.SetTextWithoutNotify(snapshot.FriendlyFire.RefillNumber);
             if (!friendlyDraft)
             {
                 friendlyDamage.SetValueWithoutNotify((float)snapshot.FriendlyFire.DamagePercent);

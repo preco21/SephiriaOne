@@ -49,6 +49,10 @@ internal static class PlayTagRuntimeTests
         At(3);
         check(players.All(a => players.All(b => a == b || CombatMatchRuntime.AllowsPair(a, b))),
             "Every enrolled pair can fight in active Tag");
+        var guardBomb = Bomb(); long guardToken = CombatMatchRuntime.MatchToken, guardEpoch = FriendlyFireKda.Epoch;
+        check(SettingsActions.Execute("/one friendlyfire guard-mp 15").Success && SessionSettings.FriendlyFireForHit.GuardMpPercent == 15 &&
+            CombatMatchRuntime.IsRunning && ReferenceEquals(guardBomb, Bomb()) && CombatMatchRuntime.MatchToken == guardToken &&
+            FriendlyFireKda.Epoch == guardEpoch, "Live guard edit preserves Tag bomb, scores, respawns and match identity");
         var carrier = DungeonManager.Instance.ChatMessages.Last(x => x.Player != null && x.Message.Contains("Pass the bomb")).Player;
         var recipient = players.First(p => p != carrier);
         long epoch = FriendlyFireKda.Epoch;
@@ -61,6 +65,8 @@ internal static class PlayTagRuntimeTests
         At(27.9f); check(CombatMatchRuntime.IsRunning, "Recipient fuse begins after revival");
         At(28); check(!CombatMatchRuntime.IsRunning && players.All(p => !p.IsDead),
             "One explosion ends Tag and recovers every enrolled participant");
+        check(!SessionSettings.FriendlyFireForHit.Enabled && SessionSettings.FriendlyFireForHit.GuardMpPercent == 15,
+            "Ended Tag retains only guard preference, not active PvP scaling");
         check(PlayTagExplosion.Shown.SequenceEqual(new[] { recipient }), "Explosion presentation is emitted exactly once");
         At(29); check(PlayTagExplosion.Shown.Count == 1, "Later ticks cannot replay the consumed explosion");
         check(PlayTagExplosion.Owned, "Natural match end preserves the animation until its own completion");

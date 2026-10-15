@@ -368,6 +368,17 @@ Reduce exact recovery inputs rather than integer stats or all healing calls:
 nested PvE recovery must remain native. The host's native HP/MP SyncVars serve
 unmodified guests. See [20% balanced PvP Harvest](pvp-balancing.md#harvest-recovery-0572-2026-10-16).
 
+Guard cost has another distinct boundary in `UnitAvatar.ApplyDamage`: native
+base 10f is reduced by `GuardResist`, halved by perfect guard, then processed by
+`OnCalculateDurabilityDamage` after `OnGuardSucceeded`. Replacing only its final
+integer conversion before `UseMp` preserves native guard break, infinite MP,
+callbacks and MP replication; wrapping every `UseMp` would incorrectly affect MP
+shields. Read current policy/maximum MP at that final boundary because callbacks
+may change them. Float cancellation at 99% efficiency can turn an intended 1 MP
+into 2 when ceiling a scaled amount; normalize exact native float formula results
+before scaling, retaining unrelated callback values and positive tiny charges.
+See [guard scaling and contracts](pvp-balancing.md#guard-mp-cost-0580-2026-10-16).
+
 Waiting-room recovery has distinct native sources: `PlayerAvatar.Update` provides
 the heal-place HP tick; `UnitAvatar.Update` drives passive HP/MP and peace-time MP
 recovery. Scope any suppression to these exact calls, not all `Heal` operations

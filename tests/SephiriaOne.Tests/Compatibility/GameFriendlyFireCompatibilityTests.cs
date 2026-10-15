@@ -9,6 +9,7 @@ internal static class GameFriendlyFireCompatibilityTests
         GameFriendlyFireParticipantTests.Run(game, addon);
         GameCompanionPenaltyTests.Run(game, addon);
         GameHarvestTests.Run(game, addon);
+        GameGuardTests.Run(game, addon);
         GameLobbyRegenTests.Run(game, addon);
         Type Type(string name) => game.GetType(name, true)!;
         List<CodeInstruction> Code(string type, string method) => PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(Type(type), method)).ToList();
@@ -56,8 +57,8 @@ internal static class GameFriendlyFireCompatibilityTests
         Require(search.Any(i => i.operand is FieldInfo f && f.Name == "IsDead") && Calls(search, "UnitAvatar", "get_IsInvulnerable") &&
             search.Any(i => i.operand is FieldInfo f && f.Name == "sightRadius"), "native target validity and sight range stay in force");
         var rewritten = ((IEnumerable<CodeInstruction>)AccessTools.Method(transpiler,"Rewrite").Invoke(null,new object[] { apply, generator })!).ToList();
-        Require(rewritten.Count(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "FriendlyFireRuntime") == 8,
-            "three faction/leader helpers, one permission check, one scale, one numeric check and two Harvest amounts");
+        Require(rewritten.Count(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "FriendlyFireRuntime") == 9,
+            "three faction/leader helpers, one permission check, one scale, one numeric check, two Harvest amounts and one guard cost");
         int recheck = rewritten.FindIndex(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "FriendlyFireRuntime" && m.Name == "ContinueHit");
         int leaderCallback = rewritten.FindIndex(i => i.operand is FieldInfo f && f.Name == "OnAttackUnitBeforeOperation_AsLeader");
         int rewrittenGuard = rewritten.FindIndex(i => i.operand is FieldInfo f && f.Name == "isGuardEnabled");

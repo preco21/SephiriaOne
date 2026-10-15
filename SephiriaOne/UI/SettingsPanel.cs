@@ -195,6 +195,7 @@ namespace SephiriaOne
             collinReset = null;
             updateInstall = updateCheck = null; updateAutomatic = null;
             friendlyDamage = null; friendlyDraft = false; friendlyRefill = null; friendlyRefillDraft = false;
+            friendlyGuardMp = null; friendlyGuardMpDraft = false;
             playTagRefill = playTagIncoming = null;
             playTagDurationDraft = playTagRefillDraft = playTagIncomingDraft = false;
             participantRows.Clear(); participantContent = null; participantSummary = null;
@@ -354,7 +355,7 @@ namespace SephiriaOne
         private void RefreshSaved() { Refresh(ReadCurrentSnapshot(true)); feedback.text = L.T("Refreshed."); }
         private void ClearInput()
         {
-            ClearFriendlyDamage(); ClearFriendlyRefill();
+            ClearFriendlyDamage(); ClearFriendlyRefill(); ClearFriendlyGuardMp();
             ClearPlayTagDuration(); ClearPlayTagRefill(); ClearPlayTagIncoming();
         }
 

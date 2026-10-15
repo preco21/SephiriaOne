@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-public enum ECustomStat { HPSteal, MPSteal }
+public enum ECustomStat { HPSteal, MPSteal, GuardResist }
 
 public partial class UnitAvatar
 {
@@ -8,7 +8,7 @@ public partial class UnitAvatar
     public float MpStack;
     public Action OnHeal;
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public int GetCustomStat(ECustomStat stat) => stat == ECustomStat.HPSteal ? HpHarvest : MpHarvest;
+    public int GetCustomStat(ECustomStat stat) => stat == ECustomStat.HPSteal ? HpHarvest : stat == ECustomStat.MPSteal ? MpHarvest : GuardResistance;
     [MethodImpl(MethodImplOptions.NoInlining)]
     public void Heal(float amount)
     {

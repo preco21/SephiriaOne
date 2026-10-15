@@ -1,5 +1,15 @@
 # Host settings panel
 
+Version `0.58.0` groups Combat settings into **Combat** and **PvP balancing**
+subsections within the existing tab. The latter contains balancing, refill and
+**Guard MP (%) / 방어 MP (%)** (default 10% of maximum MP before native reductions).
+The guard input uses `/one friendlyfire guard-mp N` and applies live without
+stopping a match or clearing scores. K/D/A reset, Revive All, master/reset and
+participant controls stay accessible in both sections. Input drafts remain
+independent; the existing page/session/language lifecycle clears stale drafts.
+No window resize, new polling or extra global tab is needed.
+See [guard behavior and live checks](pvp-balancing.md#guard-mp-cost-0580-2026-10-16).
+
 Version `0.57.0` adds independent **Refill (x)** / **충전 (배율)** and
 **Incoming (%)** / **받는 피해 (%)** controls to Play Tag. Both start enabled
 at x2 and 75%. Each has its own numeric draft and Apply button; changing one
