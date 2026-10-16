@@ -93,12 +93,25 @@ namespace SephiriaOne
                 string detail = state.Detail == "Not observed yet." ? L.T("Not observed yet.") :
                     state.Detail == "Required state or authority is not ready." ? L.T("Required state or authority is not ready.") : state.Detail;
                 text.Clear();
-                text.Append(subject).Append(" / ").Append(state.Id).Append(": ").Append(L.T(state.State.ToString()))
+                text.Append(subject).Append(" / ").Append(state.Id).Append(": ").Append(L.T(ReconcileStateKey(state.State)))
                     .Append(L.T(" (revision ")).Append(state.Revision).Append(')');
                 if (string.IsNullOrEmpty(detail)) text.Append('.');
                 else text.Append(": ").Append(detail);
                 lines.Add(text.ToString());
             }
         }
+
+        // A status refresh formats every rule for every player. Avoid boxing an
+        // enum for each label, but translate at read time so language edits apply.
+        private static string ReconcileStateKey(ReconcileState state) => state switch
+        {
+            ReconcileState.WaitingForReadiness => nameof(ReconcileState.WaitingForReadiness),
+            ReconcileState.Applied => nameof(ReconcileState.Applied),
+            ReconcileState.NativeFallback => nameof(ReconcileState.NativeFallback),
+            ReconcileState.Suspended => nameof(ReconcileState.Suspended),
+            ReconcileState.Rejected => nameof(ReconcileState.Rejected),
+            ReconcileState.Faulted => nameof(ReconcileState.Faulted),
+            _ => state.ToString()
+        };
     }
 }

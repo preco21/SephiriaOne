@@ -1,6 +1,11 @@
 # Development knowledge index
 
-Maintained: 2026-10-16 (Asia/Seoul), addon `0.60.1`.
+Maintained: 2026-10-16 (Asia/Seoul), addon `0.60.2`.
+
+Performance follow-up: [diagnostic state labels](performance-review.md#diagnostic-state-labels-0602-2026-10-16)
+avoid repeated enum boxing in full Status/disconnect reports while preserving
+live localization and output. The five-player full Status fixture allocates
+about 3.2% less; unchanged synchronization remains allocation-free in fixtures.
 
 Combat balancing: [optional hit-frequency scaling](pvp-hit-frequency.md) adds a
 default-off checkbox/command that reduces rapid hits above roughly four per

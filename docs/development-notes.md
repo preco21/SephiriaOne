@@ -14,6 +14,11 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+- `0.60.2`: [diagnostic label optimization](performance-review.md#diagnostic-state-labels-0602-2026-10-16)
+  removes per-rule enum boxing from Status/disconnect formatting. Same text and
+  live EN/KO localization; about 4.4 KiB less allocation per five-player full
+  Status refresh. No gameplay, synchronization or polling changes.
+
 - `0.60.1`: [Burn-family duration cap](pvp-balancing.md#burn-duration-cap-0592-2026-10-16)
   now also covers Plasma Burn and blue/evolved variants of both native families.
   Shares the existing two-second application/refresh clock and connection

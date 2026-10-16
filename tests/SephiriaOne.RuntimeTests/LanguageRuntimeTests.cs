@@ -47,6 +47,7 @@ internal static class LanguageRuntimeTests
             foreach (string language in new[] { "ko", "en" })
             {
                 check(L.TrySetLanguage(language, out _), "Select diagnostic language " + language);
+                DiagnosticFormattingTests.Run(check);
                 var report = SessionSettings.ReadSnapshot();
                 check(report.Lines.Any(line => line.Contains("cooldown=-50" + L.T(" (native fallback)"))) &&
                     report.Lines.Any(line => line.Contains("cooldown / relative-stat: " + L.T("NativeFallback") + L.T(" (revision ") + "1)")),

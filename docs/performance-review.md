@@ -1,5 +1,48 @@
 # Synchronization performance review
 
+## Diagnostic state labels (0.60.2, 2026-10-16)
+
+Reviewed the current synchronization/participant lifetimes, combat budget and
+debuff updates, match ticks and panel refresh paths against `feee0e2`. The
+five-player steady-state synchronization fixtures already allocate zero with no
+settings, all settings, and populated inventory/passive collections. Keep their
+live ownership, readiness and reconnect checks; no new gameplay cache or reduced
+polling cadence was justified by this review. UI draft handling and native
+callbacks also remain unchanged.
+
+The shared Status/disconnect formatter boxed `ReconcileState` for each
+`Enum.ToString()` label. A small private switch now returns the same stable
+`nameof` keys for the six known states. `L.T` still runs at read time, preserving
+live language/catalog changes. Unknown values retain the original `ToString`
+fallback. No translated text, status outcomes or native values are cached.
+
+Release .NET 10 fixtures, five players with all 33 stat adjustments active:
+
+| Workload | Before | After |
+| --- | ---: | ---: |
+| Full Status snapshot | 139,608 B/refresh | approximately 135,140 B/refresh |
+| Base / Participants snapshots | 1,792 / 2,288 B/refresh | unchanged |
+| Unchanged synchronization (all three workloads) | 0 B/tick | 0 B/tick |
+| Successful stat/resource target planning | 0 B/plan | 0 B/plan |
+
+This removes roughly 4.4 KiB (3.2%) per full Status refresh, about 17.5 KiB/s at
+the existing four refreshes per second while that page is open. Disconnect
+reports use the same formatter but run only at events. Combat damage, debuff
+timing, networking, selection and run-transition behavior are untouched. These
+are managed allocation measurements, not a claim of improved live Unity FPS.
+
+The tightened 134 KiB full-report budget failed against the old formatter and
+passes after the change. Tests exercise every current state in both English and
+Korean through the real shared formatter, including readiness labels, empty and
+historical details, unchanged revisions and no observation/write side effects.
+Unknown enum values retain fallback text; known keys allocate zero in the warmed
+fixture. Release build has zero warnings/errors. Passed 2,314 runtime checks plus
+69 Bat lifecycle checks, 4,054 combat checks, allocation budgets, portable tests,
+installed-game contracts and the 33-reference Harmony API audit. No deployment,
+game launch, live Mono profiling or guest rendering test was performed.
+Independent review found no actionable issues and reproduced the runtime and
+performance-budget results.
+
 ## Resource targets and combat names (0.55.3, 2026-10-15)
 
 Reviewed current synchronization, match ticks, combat targeting/balancing/debuff

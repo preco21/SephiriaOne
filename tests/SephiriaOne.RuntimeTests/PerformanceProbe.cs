@@ -59,8 +59,8 @@ internal static class PerformanceProbe
                 // Actual tab-specific and steady-state budgets remain unchanged.
                 if (checkBudget && compact > 28 * 1024)
                     throw new Exception("Five-player non-Status snapshots exceed the 28 KiB allocation budget.");
-                if (checkBudget && full > 160 * 1024)
-                    throw new Exception("Five-player full reports exceed the 160 KiB allocation budget.");
+                if (checkBudget && full > 134 * 1024)
+                    throw new Exception("Five-player full reports exceed the 134 KiB allocation budget; avoid boxing every reconciliation state label.");
                 foreach (var content in new[] { SnapshotContent.None, SnapshotContent.Stats, SnapshotContent.Choices,
                     SnapshotContent.Resources, SnapshotContent.Presets, SnapshotContent.Participants })
                 {
