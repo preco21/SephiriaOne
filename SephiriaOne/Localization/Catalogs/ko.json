@@ -1,4 +1,7 @@
 {
+  "Hit-frequency scaling": "연타 피해 보정",
+  "Hit-frequency scaling: {0} (requires PvP balancing).": "연타 피해 보정: {0} (PvP 밸런스 보정 필요).",
+  "Hit-frequency scaling: /one friendlyfire hit-frequency on|off|reset. Default off; reduces damage above roughly 4 hits/s per opponent before the damage budget. Requires PvP balancing.": "연타 피해 보정: /one friendlyfire hit-frequency on|off|reset. 기본 꺼짐. 상대별로 초당 약 4회를 넘는 연타의 타격당 피해를 줄인 뒤 피해 허용량 제한을 적용합니다. PvP 밸런스 보정이 필요합니다.",
   "PvP balancing: /one friendlyfire balance on|off. Default off; softens hits, limits rapid damage and Dark Cloud repeats, and uses configurable DoT intervals. Shock/Freeze damage is limited to once per 0.25s; Freeze stun is preserved.": "PvP 밸런스 보정: /one friendlyfire balance on|off. 기본 꺼짐. 큰 피해, 연속 피해와 먹구름의 반복 공격을 제한하고 설정한 지속 피해 간격을 적용합니다. 감전/빙결 피해는 0.25초마다 한 번으로 제한되며, 빙결 기절은 유지됩니다.",
   "PvP DoT: /one friendlyfire dot burn|plasma-burn|frostbite|poison 0.05..10|reset (seconds, up to 2 decimals). Each defaults to 0.75s, independent of burn speed. Only with PvP balancing on.": "PvP 지속 피해: /one friendlyfire dot burn|plasma-burn|frostbite|poison 0.05..10|reset (초, 소수점 둘째 자리까지). 각각 기본 0.75초이며 화상 속도의 영향을 받지 않습니다. PvP 밸런스 보정이 켜져 있을 때만 적용됩니다.",
   "PvP DoT intervals (s): Burn {0}; Plasma Burn {1}; Frostbite {2}; Poison {3}.": "PvP 지속 피해 간격(초): 화상 {0}; 플라즈마 화상 {1}; 동상 {2}; 중독 {3}.",

@@ -48,6 +48,10 @@ internal static class TournamentRuntimeTests
         var chat = DungeonManager.Instance.ChatMessages;
         var pair = Pair(players);
         long guardEpoch = FriendlyFireKda.Epoch, guardToken = CombatMatchRuntime.MatchToken;
+        check(SettingsActions.Execute("/one friendlyfire hit-frequency on").Success && CombatMatchRuntime.IsRunning &&
+            CombatMatchRuntime.AllowsPair(pair[0], pair[1]) && SessionSettings.FriendlyFireForHit.HitFrequency &&
+            guardEpoch == FriendlyFireKda.Epoch && guardToken == CombatMatchRuntime.MatchToken,
+            "Live hit-frequency toggle preserves Tournament pair and scores");
         check(SettingsActions.Execute("/one friendlyfire guard-mp 12.5").Success && CombatMatchRuntime.IsRunning &&
             CombatMatchRuntime.AllowsPair(pair[0], pair[1]) && SessionSettings.FriendlyFireForHit.GuardMpPercent == 12.5m &&
             guardEpoch == FriendlyFireKda.Epoch && guardToken == CombatMatchRuntime.MatchToken,

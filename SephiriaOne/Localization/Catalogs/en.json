@@ -1,4 +1,7 @@
 {
+  "Hit-frequency scaling": "Hit-frequency scaling",
+  "Hit-frequency scaling: {0} (requires PvP balancing).": "Hit-frequency scaling: {0} (requires PvP balancing).",
+  "Hit-frequency scaling: /one friendlyfire hit-frequency on|off|reset. Default off; reduces damage above roughly 4 hits/s per opponent before the damage budget. Requires PvP balancing.": "Hit-frequency scaling: /one friendlyfire hit-frequency on|off|reset. Default off; reduces damage above roughly 4 hits/s per opponent before the damage budget. Requires PvP balancing.",
   "PvP balancing: /one friendlyfire balance on|off. Default off; softens hits, limits rapid damage and Dark Cloud repeats, and uses configurable DoT intervals. Shock/Freeze damage is limited to once per 0.25s; Freeze stun is preserved.": "PvP balancing: /one friendlyfire balance on|off. Default off; softens hits, limits rapid damage and Dark Cloud repeats, and uses configurable DoT intervals. Shock/Freeze damage is limited to once per 0.25s; Freeze stun is preserved.",
   "PvP DoT: /one friendlyfire dot burn|plasma-burn|frostbite|poison 0.05..10|reset (seconds, up to 2 decimals). Each defaults to 0.75s, independent of burn speed. Only with PvP balancing on.": "PvP DoT: /one friendlyfire dot burn|plasma-burn|frostbite|poison 0.05..10|reset (seconds, up to 2 decimals). Each defaults to 0.75s, independent of burn speed. Only with PvP balancing on.",
   "PvP DoT intervals (s): Burn {0}; Plasma Burn {1}; Frostbite {2}; Poison {3}.": "PvP DoT intervals (s): Burn {0}; Plasma Burn {1}; Frostbite {2}; Poison {3}.",

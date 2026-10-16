@@ -66,6 +66,7 @@ Console.WriteLine($"Passed {FriendlyFirePolicyTests.Run()} friendly-fire policy/
 Console.WriteLine($"Passed {FriendlyFireRefillTests.Run()} configurable PvP refill checks.");
 Console.WriteLine($"Passed {FriendlyFireGuardSettingsTests.Run()} PvP guard setting checks.");
 Console.WriteLine($"Passed {PvpDotSettingsTests.Run()} PvP DoT interval checks.");
+Console.WriteLine($"Passed {HitFrequencySettingsTests.Run()} PvP hit-frequency setting checks.");
 Console.WriteLine($"Passed {EventSpawnPolicyTests.Run()} event spawn policy/preset checks.");
 Console.WriteLine($"Passed {JarSpawnPolicyTests.Run()} Mystic Jar policy/preset checks.");
 Console.WriteLine($"Passed {BatPolicyTests.Run()} Bat policy/preset checks.");

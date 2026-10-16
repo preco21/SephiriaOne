@@ -207,7 +207,7 @@ namespace SephiriaOne
                     double maxHp = victim.MaxHp;
                     double refill = settings.RefillScale;
                     if (chaser.RefillEnabled && CombatMatchRuntime.IsActiveChaser(current.Attacker)) refill *= chaser.RefillScale;
-                    scaled = LimitBalancedDamage(FriendlyFireBalance.Soften(scaled, maxHp), maxHp, refill, settings.RefillScale, incoming);
+                    scaled = LimitBalancedDamage(FriendlyFireBalance.Soften(scaled, maxHp), maxHp, refill, settings.RefillScale, incoming, settings.HitFrequency);
                 }
                 // Reduce the damage native code can actually accept, including
                 // extreme unbalanced hits that would otherwise reach this cap.

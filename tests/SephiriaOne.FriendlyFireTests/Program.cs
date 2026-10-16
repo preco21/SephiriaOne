@@ -184,6 +184,7 @@ EffectTests.Run(Check);
 ArtifactTests.Run(Check);
 DarkCloudTests.Run(Check);
 RapidHitTests.Run(Check);
+HitFrequencyTests.Run(Check);
 ChaserBalanceTests.Run(Check);
 BurnDurationTests.Run(Check);
 BurnCadenceTests.Run(Check);

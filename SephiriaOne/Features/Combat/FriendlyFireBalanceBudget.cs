@@ -18,6 +18,8 @@ namespace SephiriaOne
             internal long CombatEpoch, ParticipantEpoch, Revision, SourceLife, TargetLife, Generation, ChaserRevision;
             internal string SourceFloor, TargetFloor;
             internal FriendlyFireDamageBudget Budget;
+            internal FriendlyFireHitFrequency Frequency;
+            internal long FrequencyRevision;
             internal DebuffPulse Shock, Freeze;
         }
 
@@ -41,7 +43,7 @@ namespace SephiriaOne
             if (receipt != null && balanceActors.TryGetValue(receipt, out BalanceActor actor)) actor.Life++;
         }
 
-        private static double LimitBalancedDamage(double damage, double maxHp, double refillPerSecond, double baseRefill, double incomingScale)
+        private static double LimitBalancedDamage(double damage, double maxHp, double refillPerSecond, double baseRefill, double incomingScale, bool hitFrequency)
         {
             var attacker = current.AttackerReceipt;
             var victim = current.VictimReceipt;
@@ -58,6 +60,7 @@ namespace SephiriaOne
             {
                 window.Started = true; window.Budget = default; window.Generation++;
                 window.Shock = window.Freeze = default;
+                window.Frequency = default;
                 window.CombatEpoch = epoch; window.ParticipantEpoch = participants; window.Revision = revision;
                 window.SourceLife = source.Life; window.TargetLife = target.Life;
                 window.SourceFloor = sourceFloor; window.TargetFloor = targetFloor;
@@ -67,6 +70,15 @@ namespace SephiriaOne
             float now = Time.time;
             int pulse = DebuffPulseKind(current.Damage);
             if (pulse == 1 && !window.Shock.Ready(now) || pulse == 2 && !window.Freeze.Ready(now)) return 0;
+            if (hitFrequency && damage > 0)
+            {
+                long frequencyRevision = SessionSettings.CombatFrequencyRevision;
+                if (window.FrequencyRevision != frequencyRevision)
+                { window.Frequency = default; window.FrequencyRevision = frequencyRevision; }
+                // Count before callbacks and before budget admission, so nested
+                // attacks and exhausted-budget barrages share the same history.
+                damage *= window.Frequency.Next(now);
+            }
             long chaserRevision = CombatMatchRuntime.ChaserRevision;
             // A carrier can change away and back between two hits. Preserve tokens,
             // but do not award boosted credit across an unobserved role/config edit.

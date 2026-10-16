@@ -18,6 +18,7 @@ namespace SephiriaOne
         public const double DefaultRefillScale = DefaultRefillHundredths / 10000d;
         public bool Enabled { get; }
         public bool Balance { get; }
+        public bool HitFrequency { get; }
         public bool BlockLobbyRegen { get; }
         public PvpDotSettings DotIntervals { get; }
         public decimal DamagePercent => (damageOffset + 10000) / 100m;
@@ -31,9 +32,10 @@ namespace SephiriaOne
         public decimal GuardMpPercent => (guardMpOffset + DefaultGuardMpHundredths) / 100m;
         internal int GuardMpHundredths => guardMpOffset + DefaultGuardMpHundredths;
         public string GuardMpNumber => GuardMpPercent.ToString("0.##", CultureInfo.InvariantCulture);
-        public bool HasChanges => Enabled || Balance || BlockLobbyRegen || damageOffset != 0 || refillOffset != 0 || guardMpOffset != 0 || DotIntervals.HasChanges;
+        public bool HasChanges => Enabled || Balance || HitFrequency || BlockLobbyRegen || damageOffset != 0 || refillOffset != 0 || guardMpOffset != 0 || DotIntervals.HasChanges;
         public FriendlyFireSettings(bool enabled, decimal damagePercent, bool balance = false, bool blockLobbyRegen = false,
-            decimal refillPercent = DefaultRefillPercent, decimal guardMpPercent = DefaultGuardMpPercent, PvpDotSettings dotIntervals = default)
+            decimal refillPercent = DefaultRefillPercent, decimal guardMpPercent = DefaultGuardMpPercent, PvpDotSettings dotIntervals = default,
+            bool hitFrequency = false)
         {
             if (!ValidPercent(damagePercent)) throw new ArgumentOutOfRangeException(nameof(damagePercent));
             if (!ValidRefillPercent(refillPercent)) throw new ArgumentOutOfRangeException(nameof(refillPercent));
@@ -42,21 +44,20 @@ namespace SephiriaOne
             refillOffset = (int)(refillPercent * 100) - DefaultRefillHundredths;
             guardMpOffset = (int)(guardMpPercent * 100) - DefaultGuardMpHundredths;
             DotIntervals = dotIntervals;
+            HitFrequency = hitFrequency;
         }
         public static bool ValidPercent(decimal percent) => percent >= 0 && percent <= 300 && percent * 100 == decimal.Truncate(percent * 100);
         public static bool ValidRefillPercent(decimal percent) => percent >= 1 && ValidPercent(percent);
         public static bool ValidGuardMpPercent(decimal percent) => percent <= 100 && ValidPercent(percent);
         private FriendlyFireSettings(FriendlyFireSettings source, bool enabled)
-        { Enabled = enabled; Balance = source.Balance; BlockLobbyRegen = source.BlockLobbyRegen; damageOffset = source.damageOffset; refillOffset = source.refillOffset; guardMpOffset = source.guardMpOffset; DotIntervals = source.DotIntervals; }
+        { Enabled = enabled; Balance = source.Balance; HitFrequency = source.HitFrequency; BlockLobbyRegen = source.BlockLobbyRegen; damageOffset = source.damageOffset; refillOffset = source.refillOffset; guardMpOffset = source.guardMpOffset; DotIntervals = source.DotIntervals; }
         // Deathmatch reads this at hit time; keep toggle overlays in integer space.
         public FriendlyFireSettings WithEnabled(bool enabled) => new FriendlyFireSettings(this, enabled);
         public FriendlyFireSettings Apply(FriendlyFireCommand command) => command.Reset ? default :
-            command.Dot.HasValue ? new FriendlyFireSettings(Enabled, DamagePercent, Balance, BlockLobbyRegen, RefillPercent, GuardMpPercent, DotIntervals.Apply(command.Dot.Value)) :
-            command.GuardMpPercent.HasValue ? new FriendlyFireSettings(Enabled, DamagePercent, Balance, BlockLobbyRegen, RefillPercent, command.GuardMpPercent.Value, DotIntervals) :
-            command.RefillPercent.HasValue ? new FriendlyFireSettings(Enabled, DamagePercent, Balance, BlockLobbyRegen, command.RefillPercent.Value, GuardMpPercent, DotIntervals) :
-            command.BlockLobbyRegen.HasValue ? new FriendlyFireSettings(Enabled, DamagePercent, Balance, command.BlockLobbyRegen.Value, RefillPercent, GuardMpPercent, DotIntervals) :
-            command.Balance.HasValue ? new FriendlyFireSettings(Enabled, DamagePercent, command.Balance.Value, BlockLobbyRegen, RefillPercent, GuardMpPercent, DotIntervals) :
-            command.Percent.HasValue ? new FriendlyFireSettings(Enabled, command.Percent.Value, Balance, BlockLobbyRegen, RefillPercent, GuardMpPercent, DotIntervals) : WithEnabled(command.Enabled);
+            new FriendlyFireSettings(command.TouchesMasterToggle ? command.Enabled : Enabled, command.Percent ?? DamagePercent,
+                command.Balance ?? Balance, command.BlockLobbyRegen ?? BlockLobbyRegen, command.RefillPercent ?? RefillPercent,
+                command.GuardMpPercent ?? GuardMpPercent, command.Dot.HasValue ? DotIntervals.Apply(command.Dot.Value) : DotIntervals,
+                command.HitFrequency ?? HitFrequency);
     }
 
     internal enum FriendlyFireParseResult { NotCommand, Help, Status, ResetScores, Invalid, Valid }
@@ -69,14 +70,16 @@ namespace SephiriaOne
         public decimal? GuardMpPercent { get; }
         public PvpDotChange? Dot { get; }
         public bool? Balance { get; }
+        public bool? HitFrequency { get; }
         public bool? BlockLobbyRegen { get; }
         public FriendlyFireCommand(bool enabled, decimal? percent = null, bool reset = false, bool? balance = null, bool? blockLobbyRegen = null,
-            decimal? refillPercent = null, decimal? guardMpPercent = null, PvpDotChange? dot = null)
-        { Enabled = enabled; Percent = percent; Reset = reset; Balance = balance; BlockLobbyRegen = blockLobbyRegen; RefillPercent = refillPercent; GuardMpPercent = guardMpPercent; Dot = dot; }
-        public bool IsReset => Reset || !Dot.HasValue && !GuardMpPercent.HasValue && !RefillPercent.HasValue && (BlockLobbyRegen.HasValue ? !BlockLobbyRegen.Value : Balance.HasValue ? !Balance.Value : !Percent.HasValue && !Enabled);
-        public bool TouchesMasterToggle => Reset || !Percent.HasValue && !Balance.HasValue && !BlockLobbyRegen.HasValue && !RefillPercent.HasValue && !GuardMpPercent.HasValue && !Dot.HasValue;
+            decimal? refillPercent = null, decimal? guardMpPercent = null, PvpDotChange? dot = null, bool? hitFrequency = null)
+        { Enabled = enabled; Percent = percent; Reset = reset; Balance = balance; HitFrequency = hitFrequency; BlockLobbyRegen = blockLobbyRegen; RefillPercent = refillPercent; GuardMpPercent = guardMpPercent; Dot = dot; }
+        public bool IsReset => Reset || !Dot.HasValue && !GuardMpPercent.HasValue && !RefillPercent.HasValue && (HitFrequency.HasValue ? !HitFrequency.Value : BlockLobbyRegen.HasValue ? !BlockLobbyRegen.Value : Balance.HasValue ? !Balance.Value : !Percent.HasValue && !Enabled);
+        public bool TouchesMasterToggle => Reset || !Percent.HasValue && !Balance.HasValue && !HitFrequency.HasValue && !BlockLobbyRegen.HasValue && !RefillPercent.HasValue && !GuardMpPercent.HasValue && !Dot.HasValue;
         public static string Usage => L.T("Friendly fire: /one friendlyfire on|off|status|reset|resetkda; /one friendlyfire damage 0..300 (percent, up to 2 decimals; e.g. 0.1). Default 100. /one save persists settings.") + " " +
             L.T("PvP balancing: /one friendlyfire balance on|off. Default off; softens hits, limits rapid damage and Dark Cloud repeats, and uses configurable DoT intervals. Shock/Freeze damage is limited to once per 0.25s; Freeze stun is preserved.") + " " +
+            L.T("Hit-frequency scaling: /one friendlyfire hit-frequency on|off|reset. Default off; reduces damage above roughly 4 hits/s per opponent before the damage budget. Requires PvP balancing.") + " " +
             L.T("PvP DoT: /one friendlyfire dot burn|plasma-burn|frostbite|poison 0.05..10|reset (seconds, up to 2 decimals). Each defaults to 0.75s, independent of burn speed. Only with PvP balancing on.") + " " +
             L.T("PvP refill: /one friendlyfire refill 1..300|reset (percent of max HP per second, up to 2 decimals). Default 70; applies only with PvP balancing on.") + " " +
             L.T("PvP guard: /one friendlyfire guard-mp 0..100|reset (percent of max MP, up to 2 decimals). Default 10; native guard reductions apply. Positive costs round up. Only with PvP balancing on.") + " " +
@@ -129,6 +132,9 @@ namespace SephiriaOne
             }
             if (parts.Length == 4 && op == "balance" && (parts[3].Equals("on", StringComparison.OrdinalIgnoreCase) || parts[3].Equals("off", StringComparison.OrdinalIgnoreCase)))
             { command = new FriendlyFireCommand(false, balance: parts[3].Equals("on", StringComparison.OrdinalIgnoreCase)); return FriendlyFireParseResult.Valid; }
+            if (parts.Length == 4 && op == "hit-frequency" && (parts[3].Equals("on", StringComparison.OrdinalIgnoreCase) ||
+                parts[3].Equals("off", StringComparison.OrdinalIgnoreCase) || parts[3].Equals("reset", StringComparison.OrdinalIgnoreCase)))
+            { command = new FriendlyFireCommand(false, hitFrequency: parts[3].Equals("on", StringComparison.OrdinalIgnoreCase)); return FriendlyFireParseResult.Valid; }
             if (parts.Length == 4 && op == "block-lobby-regen" && (parts[3].Equals("on", StringComparison.OrdinalIgnoreCase) || parts[3].Equals("off", StringComparison.OrdinalIgnoreCase)))
             { command = new FriendlyFireCommand(false, blockLobbyRegen: parts[3].Equals("on", StringComparison.OrdinalIgnoreCase)); return FriendlyFireParseResult.Valid; }
             return FriendlyFireParseResult.Invalid;

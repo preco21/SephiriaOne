@@ -3,6 +3,11 @@
 Added in `0.52.0`, 2026-10-13. Host-only installation; the existing native damage
 and FX replication continues to serve stock guests. Default: **off**.
 
+Updated in `0.60.0`: [optional hit-frequency scaling](pvp-hit-frequency.md) adds
+a separate default-off checkbox/command. Above roughly four hits per second per
+opponent, it progressively reduces per-hit damage before the existing budget.
+Both mechanisms share pair lifetimes; frequency toggles do not refill tokens.
+
 Updated in `0.59.0`: [independent DoT intervals](pvp-dot-intervals.md) replace the
 earlier cadence rule for Burn, Plasma Burn, Frostbite and Poison. Each defaults
 to 0.75 seconds and has separate live controls, commands and saved settings.

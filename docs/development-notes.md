@@ -14,6 +14,12 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+- `0.60.0`: [optional PvP hit-frequency scaling](pvp-hit-frequency.md) uses a
+  four-hit/second threshold, square-root diminishing damage and the existing
+  per-opponent budget/lifetimes. Default-off checkbox and command, Korean/English
+  messages and preset v29 support; live toggle edits preserve all matches and
+  budget credit. No native stat changes, guest installation or deployment.
+
 - `0.59.2`: [balanced PvP Burn lifetime](pvp-balancing.md#burn-duration-cap-0592-2026-10-16)
   is capped at two seconds from the latest application, including blue Burn.
   New applications may refresh that window; duration bonuses cannot extend it.

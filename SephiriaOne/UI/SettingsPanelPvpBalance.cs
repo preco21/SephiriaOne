@@ -9,8 +9,10 @@ namespace SephiriaOne
 
         private void BuildPvpBalanceEditor()
         {
-            AddCheckbox("PvP balancing", 16, 80, 273, 21, s => s.FriendlyFire.Balance,
+            AddCheckbox("PvP balancing", 16, 80, 130, 21, s => s.FriendlyFire.Balance,
                 s => s.FriendlyFireAvailable, "/one friendlyfire balance");
+            AddCheckbox("Hit-frequency scaling", 152, 80, 137, 21, s => s.FriendlyFire.HitFrequency,
+                s => s.FriendlyFireAvailable, "/one friendlyfire hit-frequency");
             widgets.Text(pageRoot, "FriendlyRefill", "PvP refill (%/s)", 16, 106, 116, 25, 11);
             friendlyRefill = widgets.Input(pageRoot, 136, 106, 62, EditFriendlyRefill);
             changeButtons.Add(widgets.Button(pageRoot, "Apply", 204, 106, 85, 25, ApplyFriendlyRefill));

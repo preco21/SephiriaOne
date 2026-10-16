@@ -16,6 +16,13 @@ A different game build requires renewed contract/asset checks. Start with the
 
 ## State lifetimes and multiplayer
 
+Optional PvP limiters can share the existing directed receipt-pair balance window
+without sharing their setting-revision reset. Hit-frequency scaling uses a
+separate revision: resetting its rate estimate must not mint damage-budget
+credit or reset the other effect clocks. Count admitted positive resolved hits
+before budget consumption and native callbacks to cover nested procs and
+companions consistently. See [frequency model and lifecycle](pvp-hit-frequency.md).
+
 Native `CharacterDebuff.Update` runs the server tick before its expiry check,
 even while an ended effect waits 0.5 seconds for network destruction. A PvP
 duration cap must therefore guard before the native update and suppress late

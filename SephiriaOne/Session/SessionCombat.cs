@@ -8,12 +8,15 @@ namespace SephiriaOne
         // policy or rely on the joining connection's prior incarnation.
         internal static FriendlyFireSettings FriendlyFireForHit => EnsureResourceScope() ? CombatMatchRuntime.Effective(policy.FriendlyFire) : default;
         internal static long CombatBalanceRevision { get; private set; }
+        internal static long CombatFrequencyRevision { get; private set; }
 
         private static void RecordFriendlyFire(FriendlyFireCommand command)
         {
             bool previous = policy.FriendlyFire.Balance;
+            bool previousFrequency = policy.FriendlyFire.HitFrequency;
             policy.Record(command);
             if (previous != policy.FriendlyFire.Balance || command.Reset) CombatBalanceRevision++;
+            if (previousFrequency != policy.FriendlyFire.HitFrequency || command.Reset) CombatFrequencyRevision++;
             if (command.Reset) FriendlyFireParticipants.ResetSelection();
         }
 
@@ -74,6 +77,7 @@ namespace SephiriaOne
         internal static string DescribeFriendlyFire(FriendlyFireSettings settings) =>
             L.F("Friendly fire: {0}; allied damage: {1}%.", L.T(settings.Enabled ? "on" : "off"), settings.Number) + " " +
             L.F("PvP balancing: {0}.", L.T(settings.Balance ? "on" : "off")) + " " +
+            L.F("Hit-frequency scaling: {0} (requires PvP balancing).", L.T(settings.HitFrequency ? "on" : "off")) + " " +
             L.F("PvP refill: {0}% max HP/s.", settings.RefillNumber) + " " +
             L.F("PvP guard: {0}% max MP before native reductions.", settings.GuardMpNumber) + " " +
             L.F("PvP DoT intervals (s): Burn {0}; Plasma Burn {1}; Frostbite {2}; Poison {3}.",
