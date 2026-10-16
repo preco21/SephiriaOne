@@ -14,6 +14,8 @@ late despawn ticks, and keep PvE native.
 Combat fix: [Plitvice and secondary sword hostility](friendly-fire-artifacts.md#plitvice-and-secondary-swords-0591-2026-10-16)
 repairs the spawned sword's collision veto and Flame Sword auto-search using the
 shared participant policy, with an expanded Ember/Frost/secondary-effect audit.
+The [local-installation recheck](friendly-fire-artifacts.md#recheck-against-the-local-installation-2026-10-16)
+found the game still installed/loaded `0.57.0`, which predates those fixes.
 
 Agents and contributors can refer to `docs/*` for research, implementation
 materials, native game findings and references. Start here before repeating an

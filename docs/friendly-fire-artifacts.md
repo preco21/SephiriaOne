@@ -10,6 +10,39 @@ helpers now live in `FriendlyFireTargeting` / `FriendlyFireTargetingHooks`; the
 artifact registry and bounded proc scopes retain their original behavior. The
 spell exclusions below describe the earlier `0.43.2` audit boundary.
 
+## Recheck against the local installation (2026-10-16)
+
+The repeated Plitvice report was investigated against repository `0.60.0`.
+The local `AddOns/SephiriaOne/metadata.json` still reports `0.57.0`, the installed
+DLL assembly version is `0.57.0.0`, and the latest local `Player.log` records
+`[SephiriaOne] Loaded v0.57.0`. That installation predates the Plitvice and Flame
+Sword fixes in `0.59.1` (`b1d6670`). Repository changes and non-deploying builds do
+not update the game's installed addon. Use `0.59.1` or newer and fully restart
+the game to activate those hooks; the current build is `0.60.0`. This recheck did
+not deploy or launch the game.
+
+The installed game assembly fingerprint still matches the audited build.
+Rechecked `IceSword.Update`, its parent creation/server flag/MP damage path,
+`ComboEffect_FlameSword.SearchTarget`, auto-sword stock restoration, falling and
+return swords, secondary melee creation, and related Flame/Ember consumers.
+The narrow collision/selection adapters remain installed in the current source;
+no further player-filter defect was identified in these inspected paths. Native
+bonus-MP damage, collision overlap, trigger requirements and hit cooldowns remain
+intentional prerequisites, as described below.
+
+An additional similarly named mask in `FanaticFlame.Update` belongs to
+`Unit_Tentacle`'s `FanaticFlameCreator` path in the inspected source. It applies a
+native ownerless damage buff and was not found on an audited artifact path;
+broadly rewriting it would affect monster behavior and lose player attribution.
+It remains unchanged, like the previously excluded monster `SwordSphere`.
+
+Fresh verification passed: 3,995 executable combat checks, including Plitvice
+damage/FX/cadence/participant/authority and Flame Sword selection cases; the full
+installed-game contract suite, including secondary swords; and the 33-reference
+Harmony 2.9 API compatibility audit. This adds deployment evidence and a source
+recheck, not a claim of live Unity/stock-guest reproduction. No gameplay code
+change was needed beyond the existing `0.59.1` fixes.
+
 ## Plitvice and secondary swords (0.59.1, 2026-10-16)
 
 The reported “Drops of Water in Plitvice Lakes” is item **1248**, installed EN
