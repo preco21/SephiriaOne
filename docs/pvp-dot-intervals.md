@@ -70,6 +70,21 @@ feature, restoring native cadence.
 
 ## Verification
 
+Rechecked against `0.60.1` on 2026-10-16: all four independent UI inputs,
+commands, 0.75-second defaults, Korean labels and saved-setting paths are already
+present. No additional gameplay change was needed. Fresh runs passed 4,054 combat
+checks, 2,266 runtime checks plus 69 Bat lifecycle checks, 343 interval policy/
+preset checks, 3,571 catalog checks, installed-game contracts and the 33-reference
+Harmony API audit. Existing explicit saved intervals remain unchanged; use each
+effect's `reset` command to restore its default.
+
+The local installed metadata and latest `Player.log` still report `0.57.0`, which
+predates these controls (`0.59.0`). The updated addon must be installed and the
+game fully restarted to expose them there. This recheck did not deploy or launch
+the game, and does not verify rendered UI or live guest timing.
+
+Original `0.59.0` verification:
+
 Release build: zero warnings/errors with deployment disabled. Passed 3,877 combat
 checks, 2,254 runtime checks plus 69 Bat lifecycle checks, 343 interval policy/
 preset checks, 3,557 catalog checks, installed-game contracts and 32 compiled
