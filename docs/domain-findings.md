@@ -16,6 +16,13 @@ A different game build requires renewed contract/asset checks. Start with the
 
 ## State lifetimes and multiplayer
 
+Projectile audits must inspect native runtime homing activation as well as prefab
+flags, and traverse fire-data subclasses rather than just their base type.
+Mini Ballista enables homing conditionally; crossbow mines instead cache a faction
+mask at spawn and need a live pair-policy check at proximity detection. Use exact
+damage/prefab identities, including dash versus special attacks, and reuse stock
+movement replication. See the [weapon/artifact audit](friendly-fire-projectile-audit.md).
+
 Optional PvP limiters can share the existing directed receipt-pair balance window
 without sharing their setting-revision reset. Hit-frequency scaling uses a
 separate revision: resetting its rate estimate must not mint damage-budget

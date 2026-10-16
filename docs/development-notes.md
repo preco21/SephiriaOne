@@ -14,6 +14,11 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+- `0.60.5`: [projectile hostility audit](friendly-fire-projectile-audit.md) adds
+  fourteen verified weapon/summon homing identities, three offensive weapon
+  selectors and two live mine-proximity adapters. Preserves native homing gates,
+  enemy targeting and guest transport; no new settings or deployment.
+
 - `0.60.4`: [PvP Evasion cap](pvp-balancing.md#evasion-cap-0604-2026-10-17)
   limits stat-derived dodge chance to 50% before anti-Evasion, using the existing
   balancing toggle and player-hit scope. Guaranteed item dodges, native Evasion

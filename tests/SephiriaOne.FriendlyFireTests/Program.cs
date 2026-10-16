@@ -196,6 +196,7 @@ HarvestTests.Run(Check);
 GuardTests.Run(Check);
 EvasionTests.Run(Check);
 SpellTests.Run(Check);
+WeaponTargetingTests.Run(Check);
 FractionalDamageTests.Run(Check);
 SelectiveCombatTests.Run(Check);
 TournamentCombatTests.Run(Check);

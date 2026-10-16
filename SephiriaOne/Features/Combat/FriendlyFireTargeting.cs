@@ -52,22 +52,18 @@ namespace SephiriaOne
             }
         }
 
-        // Weapon damage IDs are shared by unrelated attacks. Liberation's four
-        // audited prefabs disambiguate its DirectAttack/Weapon_SpecialAttack
-        // identity without inspecting the owner's currently equipped weapon.
-        private static bool IsLiberationHoming(Bullet bullet)
-        {
-            if (bullet.FromType != EDamageFromType.DirectAttack || bullet.damageId != "Weapon_SpecialAttack") return false;
-            switch (bullet.spawnedPrefabName)
-            {
-                case "FuryMPBullet_Physical": case "FuryMPBullet_Fire":
-                case "FuryMPBullet_Ice": case "FuryMPBullet_Lightning": return true;
-                default: return false;
-            }
-        }
-
         private static bool UsesFriendlyHoming(Bullet bullet) =>
-            IsArtifactHoming(bullet) || IsSpellHoming(bullet) || IsLiberationHoming(bullet);
+            IsArtifactHoming(bullet) || IsSpellHoming(bullet) || FriendlyFireProjectileIdentity.HasWeaponHoming(bullet);
+
+        // Native mines cache a faction mask at spawn. Keep it for native targets,
+        // but consult live PvP policy for players and their companions.
+        internal static bool WeaponMineTarget(long nativeMask, UnitAvatar target, BulletMoveModule module)
+        {
+            var bullet = module.Bullet;
+            if (NetworkServer.active && FriendlyFireProjectileIdentity.IsCrossbowMine(bullet) && IsPlayerTeamPair(bullet.NetworkOwner, target))
+                return CanAffectTeam(bullet.NetworkOwner, target);
+            return CombatManager.ContainsAttackableFaction(nativeMask, target.faction);
+        }
 
         internal static bool HomingTargetAllowed(UnitAvatar source, EDamageFromType type, UnitAvatar target, Bullet bullet) =>
             UsesFriendlyHoming(bullet) ? ItemHitTarget(source, type, target) :

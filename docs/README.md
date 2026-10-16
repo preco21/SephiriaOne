@@ -1,6 +1,11 @@
 # Development knowledge index
 
-Maintained: 2026-10-17 (Asia/Seoul), addon `0.60.4`.
+Maintained: 2026-10-17 (Asia/Seoul), addon `0.60.5`.
+
+Combat fix: [remaining projectile hostility paths](friendly-fire-projectile-audit.md)
+extend existing homing to verified crossbow, wand, Dark Veil, Formless Dance,
+Adamah and enhanced Mini Ballista projectiles. Scoped weapon searches and live
+mine proximity checks share existing participant/mode policy and native transport.
 
 Combat balancing: [Evasion's 50% cap](pvp-balancing.md#evasion-cap-0604-2026-10-17)
 limits stat-derived dodge chance before attacker anti-Evasion during eligible

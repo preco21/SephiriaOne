@@ -22,10 +22,27 @@ internal static class SpellTests
             (EDamageFromType.DirectAttack, "Weapon_SpecialAttack", "FuryMPBullet_Physical"),
             (EDamageFromType.DirectAttack, "Weapon_SpecialAttack", "FuryMPBullet_Fire"),
             (EDamageFromType.DirectAttack, "Weapon_SpecialAttack", "FuryMPBullet_Ice"),
-            (EDamageFromType.DirectAttack, "Weapon_SpecialAttack", "FuryMPBullet_Lightning")
+            (EDamageFromType.DirectAttack, "Weapon_SpecialAttack", "FuryMPBullet_Lightning"),
+            (EDamageFromType.DirectAttack, "Weapon_SpecialAttack", "CrossbowArrow_Special_BigHoming"),
+            (EDamageFromType.DirectAttack, "Weapon_SpecialAttack", "CrossbowMine_Drone"),
+            (EDamageFromType.DirectAttack, "Weapon_SpecialAttack", "CrossbowMine_DroneEnhanced"),
+            (EDamageFromType.DirectAttack, "Weapon_SpecialAttack", "MagicalMissile_SweepBullet"),
+            (EDamageFromType.DirectAttack, "Weapon_SpecialAttack", "MagicalMissile_SweepBullet_Fire"),
+            (EDamageFromType.DirectAttack, "Weapon_SpecialAttack", "MagicalMissile_SweepBullet_Ice"),
+            (EDamageFromType.DirectAttack, "Weapon_SpecialAttack", "MagicalMissile_SweepBullet_Lightning"),
+            (EDamageFromType.DirectAttack, "Weapon_SpecialAttack", "MagicalMissile_SweepBullet_Melee"),
+            (EDamageFromType.DirectAttack, "Weapon_SpecialAttack", "MagicalMissile_SweepBullet_Chaos"),
+            (EDamageFromType.DirectAttack, "Weapon_BasicAttack", "ThrowingSpear_Homing"),
+            (EDamageFromType.DirectAttack, "Weapon_BasicAttack", "ShurikenWeapon_Comp_Last"),
+            (EDamageFromType.DirectAttack, "Weapon_DashAttack", "ShurikenWeapon_Comp"),
+            (EDamageFromType.DirectAttack, "BasicAttack", "MiniBallistaArrow"),
+            (EDamageFromType.Magic, "KatanaMagicBlade", "MagicBlade")
         })
         {
             string id = identity.Prefab ?? identity.Id;
+            // Each projectile exercises damage admission too; do not let earlier
+            // cases exhaust the target's health and invalidate later searches.
+            player = new PlayerAvatar { transform = { position = new(2, 0) } };
             var bullet = new Bullet { FromType = identity.Type, damageId = identity.Id,
                 spawnedPrefabName = identity.Prefab, NetworkOwner = caster,
                 Candidates = new() { caster, player, enemy }, HomingTargetPos = new(2, 0) };
@@ -72,6 +89,9 @@ internal static class SpellTests
             check(bullet.HomingTarget == null, id + " does not modify guest-side targeting");
             Mirror.NetworkServer.active = true;
             bullet.Candidates.Remove(caster);
+            bullet.NetworkOwner = new UnitAvatar { NetworkLeader = caster }; bullet.Update();
+            check(bullet.HomingTarget == player, id + " supports an eligible player's companion as the projectile owner");
+            bullet.SetHomingTarget(null);
             bullet.NetworkOwner = new UnitAvatar { NetworkLeader = player }; bullet.Update();
             check(bullet.HomingTarget == null, id + " never homes onto the companion caster's owner");
             bullet.NetworkOwner = caster; bullet.FromType = EDamageFromType.None; bullet.Update();

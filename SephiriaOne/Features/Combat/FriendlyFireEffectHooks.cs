@@ -66,6 +66,7 @@ namespace SephiriaOne
             FriendlyFireArtifactHooks.Install(harmony);
             FriendlyFireTargetingHooks.Install(harmony);
             FriendlyFireSpellHooks.Install(harmony);
+            FriendlyFireWeaponHooks.Install(harmony);
         }
 
         internal static IEnumerable<CodeInstruction> RewriteSelector(IEnumerable<CodeInstruction> instructions) =>
