@@ -187,6 +187,7 @@ RapidHitTests.Run(Check);
 HitFrequencyTests.Run(Check);
 ChaserBalanceTests.Run(Check);
 BurnDurationTests.Run(Check);
+PlasmaDurationTests.Run(Check);
 BurnCadenceTests.Run(Check);
 ElementalCadenceTests.Run(Check);
 DebuffPulseTests.Run(Check);

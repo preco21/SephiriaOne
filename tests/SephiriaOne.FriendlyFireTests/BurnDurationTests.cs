@@ -113,7 +113,7 @@ internal static class BurnDurationTests
         check(!burn.IsEndBuff, "Guests do not apply host-only Burn destruction"); Mirror.NetworkServer.active = true;
         Fresh(); var plasma = new CharacterDebuff_Plasma { NativeDuration = 30 };
         plasma.InitializeAndSpawn(new PlayerAvatar(), new PlayerAvatar()); plasma.OnTick = plasma.OnUpdate_Server; plasma.Step(3);
-        check(!plasma.IsEndBuff && plasma.Ticks == 1, "Plasma Burn remains a separate effect without the normal Burn cap");
+        check(plasma.IsEndBuff && plasma.Ticks == 0, "Plasma Burn expires before an overdue tick despite native duration extensions");
         Fresh(); burn = Burn(); burn.Step(0);
         for (int i = 0; i < 100; i++) burn.Update();
         long allocated = GC.GetAllocatedBytesForCurrentThread();

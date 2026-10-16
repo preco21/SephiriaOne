@@ -14,13 +14,25 @@ internal static class GamePvpBurnDurationTests
         bool Calls(IEnumerable<CodeInstruction> code, string type, string name) => code.Any(i => Call(i, type, name));
         void Require(bool value, string why) { if (!value) throw new Exception("PvP Burn lifetime: " + why); }
 
-        var debuff = Native("CharacterDebuff"); var burn = Native("CharacterDebuff_Burn");
-        Require(Native("CharacterDebuff_Plasma").BaseType == debuff && burn.BaseType == debuff,
-            "Plasma is a separate debuff; blue Burn uses the same Burn type");
-        Require(Calls(Code(burn, "AddStack"), "CharacterDebuff_Burn", "set_NetworkisBlueBurn"), "blue appearance remains a native Burn stack property");
-        var bonus = Code(burn, "GetBonusPercent");
-        Require(bonus.Any(i => i.LoadsConstant("BURNDURATION")) && Calls(bonus, "UnitAvatar", "GetCustomStat"),
-            "native Burn combines general and Burn-specific duration bonuses");
+        var debuff = Native("CharacterDebuff"); var burn = Native("CharacterDebuff_Burn"); var plasma = Native("CharacterDebuff_Plasma");
+        Require(plasma.BaseType == debuff && burn.BaseType == debuff, "Plasma and Burn are distinct sibling debuffs");
+        foreach (var family in new[] { burn, plasma })
+        {
+            var add = Code(family, "AddStack");
+            Require(add.Any(i => i.LoadsConstant("BLUEBURNCHANGE")) && Calls(add, family.Name, "set_NetworkisBlueBurn"),
+                family.Name + " implements Blue Flame as a native stack property");
+            var tickDamage = Code(family, "CalculateTickDamage");
+            Require(tickDamage.Any(i => i.LoadsConstant("BLUEBURNCHANGE")) && tickDamage.Any(i => i.LoadsConstant("BURNEVO")),
+                family.Name + " keeps blue/evolved behavior on the same debuff type");
+            var bonus = Code(family, "GetBonusPercent");
+            Require(bonus.Any(i => i.LoadsConstant("BURNDURATION")) && Calls(bonus, "UnitAvatar", "GetCustomStat"),
+                family.Name + " combines general and Burn-specific duration bonuses");
+        }
+        Require(Calls(Code(plasma, "RefreshDurationTimer"), "CharacterDebuff_Plasma", "Attack") &&
+            Calls(Code(plasma, "RefreshDurationTimer"), "CharacterDebuff", "RefreshDurationTimer") &&
+            Calls(Code(plasma, "DestroyInner"), "CharacterDebuff_Plasma", "Attack") &&
+            Calls(Code(plasma, "Attack"), "CombatBehaviour", "ApplyDamage"),
+            "Plasma retains native refresh/expiry attacks through shared damage and reaches the base refresh hook");
         var spawn = Code(debuff, "InitializeAndSpawn");
         Require(Calls(spawn, "CharacterDebuff", "GetAdditionalDuration") && Calls(spawn, "CharacterDebuff", "GetBonusPercent") &&
             spawn.Any(i => i.opcode == OpCodes.Stfld && i.operand is FieldInfo f && f.DeclaringType?.Name == "Timer" && f.Name == "time") &&
@@ -52,11 +64,15 @@ internal static class GamePvpBurnDurationTests
         Require(Calls(capture, "Time", "get_time") && capture.Any(i => i.StoresField(appliedAt)),
             "application time belongs to the same current-connection receipt as the debuff");
         var refresh = Code(runtime, "AfterBurnRefresh");
-        Require(refresh.Any(i => i.opcode == OpCodes.Isinst && Equals(i.operand, burn)) &&
+        var familyCheck = Code(runtime, "IsBurnFamily");
+        Require(familyCheck.Any(i => i.opcode == OpCodes.Isinst && Equals(i.operand, burn)) &&
+            familyCheck.Any(i => i.opcode == OpCodes.Isinst && Equals(i.operand, plasma)),
+            "shared family classification includes Burn, Plasma and their subtypes without matching unrelated elements");
+        Require(Calls(refresh, "FriendlyFireRuntime", "IsBurnFamily") &&
             Calls(refresh, "DebuffOrigin", "get_Valid") && Calls(refresh, "CharacterDebuff", "get_IsEndBuff") &&
             refresh.Any(i => i.LoadsField(AccessTools.Field(origin, "BurnEnded"))) &&
             Calls(refresh, "Time", "get_time") && refresh.Any(i => i.StoresField(appliedAt)),
-            "only valid, live Burn receipts track native refreshes");
+            "only valid, live Burn-family receipts track native refreshes");
         var install = Code(effectHooks, "Install");
         Require(install.Any(i => i.LoadsConstant("RefreshDurationTimer")) && install.Any(i => i.LoadsConstant("AfterBurnRefresh")),
             "shared effect installation registers the Burn refresh hook");
@@ -64,14 +80,14 @@ internal static class GamePvpBurnDurationTests
         Require(before.FindIndex(i => Call(i, "DebuffOrigin", "get_Valid")) <
             before.FindIndex(i => Call(i, "FriendlyFireRuntime", "UpdateWithinBurnLifetime")), "connection validation precedes the duration cap");
         var cap = Code(runtime, "UpdateWithinBurnLifetime");
-        Require(cap.Any(i => i.opcode == OpCodes.Isinst && Equals(i.operand, burn)) && cap.Any(i => i.LoadsConstant(2f)) &&
+        Require(Calls(cap, "FriendlyFireRuntime", "IsBurnFamily") && cap.Any(i => i.LoadsConstant(2f)) &&
             Calls(cap, "FriendlyFireRuntime", "CanAffectTeam") && Calls(cap, "CharacterDebuff", "Destroy") &&
             cap.Any(i => i.StoresField(AccessTools.Field(origin, "BurnEnded"))) &&
             !cap.Any(i => i.opcode == OpCodes.Stfld && i.operand is FieldInfo f && f.DeclaringType?.Name == "Timer"),
-            "Burn-only cap uses shared policy, native destruction and no timer/stat mutation");
+            "Burn-family cap uses shared policy, native destruction and no timer/stat mutation");
         Require(cap.FindIndex(i => i.StoresField(AccessTools.Field(origin, "BurnEnded"))) <
             cap.FindIndex(i => Call(i, "CharacterDebuff", "Destroy")), "retire before native callbacks to prevent duplicate expiry");
         Require(Calls(Code(runtime, "Clear"), "FriendlyFireRuntime", "ClearDebuffOrigins"), "unload clears the shared lifetime storage");
-        Console.WriteLine("Verified Burn duration/refresh/late-tick contracts, shared origin validation, two-second cap and native guest despawn (not live multiplayer).");
+        Console.WriteLine("Verified Burn/Plasma/Blue Flame duration and refresh contracts, native Plasma expiry attack, shared two-second cap and guest despawn (not live multiplayer).");
     }
 }

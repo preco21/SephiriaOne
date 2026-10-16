@@ -30,10 +30,17 @@ public sealed class CharacterDebuff_Wound : PeriodicDebuffFixture
     [MethodImpl(MethodImplOptions.NoInlining)] public override void OnUpdate_Server()
     { if (tickTimer.Update(Time.deltaTime)) Tick("Debuff_Wound"); }
 }
-public sealed class CharacterDebuff_Plasma : PeriodicDebuffFixture
+public class CharacterDebuff_Plasma : PeriodicDebuffFixture
 {
     public Timer tickTimer = new(0.5f), addDamageTimer = new(1);
     public float Speed = 1;
+    public Action OnRefreshAttack;
+    [MethodImpl(MethodImplOptions.NoInlining)] public override void RefreshDurationTimer(float defaultDuration, float bonusPercent)
+    {
+        OnRefreshAttack?.Invoke();
+        base.RefreshDurationTimer(defaultDuration, bonusPercent);
+        addDamageTimer.Elapsed = 0;
+    }
     [MethodImpl(MethodImplOptions.NoInlining)] public override void OnUpdate_Server()
     {
         addDamageTimer.AddTimerNoLimit(Time.deltaTime);
@@ -107,7 +114,11 @@ internal static class ElementalCadenceTests
             timer.time = 2.5f;
             float seconds = settings.Interval(kind);
             Step(seconds - 0.01f); check(Ticks() == 0, kind + " uses its own interval, regardless of native length/speed");
-            Step(0.011f); check(Ticks() == 1 && timer.time == 2.5f, kind + " ticks without mutating native timer length");
+            // A refreshed Plasma can reach a two-second tick interval without
+            // expiring first. Lifetime/late-tick behavior is tested separately.
+            if (effect is CharacterDebuff_Plasma) effect.RefreshDurationTimer(999, 999);
+            Step(0.011f);
+            check(Ticks() == 1 && timer.time == 2.5f, kind + " ticks without mutating native timer length");
             Step(seconds / 2);
             SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, dot: new(kind, 0.5m)));
             Step(0.24f); check(Ticks() == 1, kind + " live edit preserves fractional progress");

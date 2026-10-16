@@ -14,6 +14,12 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+- `0.60.1`: [Burn-family duration cap](pvp-balancing.md#burn-duration-cap-0592-2026-10-16)
+  now also covers Plasma Burn and blue/evolved variants of both native families.
+  Shares the existing two-second application/refresh clock and connection
+  receipts; keeps native Plasma refresh/expiry attacks and PvE lifetimes.
+  No new settings, guest installation or deployment.
+
 - `0.60.0`: [optional PvP hit-frequency scaling](pvp-hit-frequency.md) uses a
   four-hit/second threshold, square-root diminishing damage and the existing
   per-opponent budget/lifetimes. Default-off checkbox and command, Korean/English
@@ -24,8 +30,9 @@ the later feature documents; dated historical entries remain as evidence.
   is capped at two seconds from the latest application, including blue Burn.
   New applications may refresh that window; duration bonuses cannot extend it.
   Shared origin receipts prevent delayed-despawn ticks without editing native
-  timers. PvE and Plasma Burn retain native
-  lifetime; all friendly-fire modes use the existing live policy and cleanup.
+  timers. PvE retains native lifetime; Plasma was originally excluded and is
+  included since `0.60.1`. All friendly-fire modes use the existing live policy
+  and cleanup.
 
 - `0.59.1`: [Plitvice and secondary sword hostility](friendly-fire-artifacts.md#plitvice-and-secondary-swords-0591-2026-10-16)
   repairs the spawned sword's pre-damage faction veto and Flame Sword combo

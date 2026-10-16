@@ -14,6 +14,7 @@ to 0.75 seconds and has separate live controls, commands and saved settings.
 
 Updated in `0.59.2`: [Burn's two-second lifetime cap](#burn-duration-cap-0592-2026-10-16)
 caps each balanced PvP Burn application or refresh, regardless of duration bonuses.
+Expanded in `0.60.1` to Plasma Burn, including blue/evolved forms of both families.
 
 Updated in `0.53.0`, 2026-10-14: balancing also limits rapid damage with a shared
 budget per attacker/opponent. Existing saved balancing settings enable both
@@ -83,24 +84,30 @@ toggle still uses the existing stop/recovery semantics.
 
 ## Burn duration cap (`0.59.2`, 2026-10-16)
 
-While balancing and positive-damage friendly fire are enabled, normal and blue
-**Burn expire within two seconds of their latest application or native refresh**,
-at the first server update at/after the deadline. General debuff-duration bonuses
+Scope expanded in `0.60.1` (2026-10-16): the original cap covered only
+`CharacterDebuff_Burn`. Plasma is a sibling class and previously escaped it.
+
+While balancing and positive-damage friendly fire are enabled, **Burn and Plasma
+Burn, including Blue Flame variants, expire within two seconds of their latest
+application or native refresh**, at the first server update at/after the deadline.
+General debuff-duration bonuses
 and `BURNDURATION` cannot increase this window. A new application to an active
 Burn may refresh it for up to two more seconds, including at maximum stacks.
 Non-renewing stacks keep their native behavior and do not reset the deadline.
 Repeated successful applications can therefore sustain Burn; after the last
 application, its remaining lifetime is at most two seconds. Native durations
-shorter than two seconds remain shorter. The independent Burn tick interval and
-shared damage budget are unchanged. Without refreshes, a Burn configured with a
-tick interval of two seconds or longer can expire before its first periodic tick.
+shorter than two seconds remain shorter. The independent Burn/Plasma tick
+intervals and shared damage budget are unchanged. Without refreshes, either
+effect configured with a tick interval of two seconds or longer can expire before
+its first periodic tick. Plasma still runs its native charged shock on expiry;
+that hit uses the existing PvP damage rules, pulse gate and budget.
 
 The cap uses the current permitted player pair in casual friendly fire,
 Deathmatch, Tournament and Play Tag. Player-owned companion Burn uses the same
 owner receipts. PvE in either direction, self effects, non-player victims,
 unselected players and disallowed Tournament pairs retain native expiry.
-Shared damage rules still block nonparticipating targets. **Plasma Burn is a
-different native type and is not included in this Burn-only change.**
+Shared damage rules still block nonparticipating targets. Unrelated debuffs such
+as Poison, Frostbite and Shock retain their native lifetimes.
 
 Turning balancing on applies the cap to already-existing tracked Burn using its
 latest application/refresh age, including refreshes made while balancing was
@@ -117,16 +124,31 @@ the existing PvP balancing option.
 additional duration and the caster's percentage bonuses. Burn's override adds
 both general `DebuffDuration` and `BURNDURATION`. `AddStack` calls
 `RefreshDurationTimer`, whose base implementation resets elapsed time to zero.
-Burn inherits this method. The refresh happens before the maximum-stack check,
-so applications at maximum stacks can still renew the duration.
+Burn inherits this method. Plasma's override performs its native shock attack,
+then calls the base refresh and resets its separate shock accumulator. The same
+base postfix therefore sees both families without overriding either refresh.
+The refresh happens before the maximum-stack check, so applications at maximum
+stacks can still renew the duration.
+
+`IsBurnFamily` explicitly recognizes `CharacterDebuff_Burn` and
+`CharacterDebuff_Plasma`, including subclasses. In the inspected assembly,
+`BLUEBURNCHANGE`/`NetworkisBlueBurn` and `BURNEVO` select Blue Flame and evolved
+behavior within these types. Plasma's native `CompareID` also matches `BURN` and
+`ELECTRIC`, but a generic elemental/string-ID match would incorrectly include
+unrelated Shock effects. There are no additional native subclasses of these two
+types. `CharacterDebuff_FanaticFlame` is instead a `CharacterBuff` used by the
+Tentacle monster, with ownerless damage; it is not a player-attributed Burn
+variant and remains outside PvP balancing. Future unrelated effect classes need
+their native lifecycle audited before adding them to this family.
 
 `FriendlyFireBurnDuration` reuses `FriendlyFireDebuffLifetime`'s existing weak
 origin record, with the latest application time and an ended flag. A postfix on
-the native refresh updates that timestamp only for valid, live Burn receipts.
+the native refresh updates that timestamp only for valid, live Burn-family receipts.
 It does not reset periodic tick progress. The validated pre-update path
 checks the two-second deadline before native damage and calls native `Destroy`
-once. Native cleanup removes status, calls removal callbacks and schedules the
-normal stock-client despawn. No prefab, native timer configuration, stat or
+once. Native cleanup retains Plasma's `DestroyInner` shock, removes status,
+calls removal callbacks and schedules the normal stock-client despawn.
+No prefab, native timer configuration, stat or
 HUD-duration field is changed; remaining native timing needs no restoration.
 
 Native `CharacterDebuff.Update` invokes `OnUpdate_Server` **before** its own
@@ -146,14 +168,17 @@ unchanged from [domain findings](domain-findings.md).
 
 ### Verification
 
-Executable coverage reproduces the former long-duration Burn, then checks the
+Executable coverage reproduces the former long-duration Burn and Plasma, then checks the
 exact two-second boundary, large bonuses, direct refresh, stacks, short native
 expiry, delayed-despawn damage, new applications/reinitialization, live toggles,
 PvE/owner/selection/match exclusions, companion death, reconnection, pause,
 exceptions and unload. Warmed duration checks allocate zero bytes in fixtures.
-Installed contracts verify the native duration/refresh ordering, blue-vs-Plasma
-identity, native cleanup/network despawn and shared pre-update integration.
-Release build passed with zero warnings/errors; 3,936 combat checks, 2,254 runtime
+Plasma coverage also exercises its override-to-base refresh, one expiry attack,
+stale-owner expiry rejection, derived classes and unrelated elemental exclusions.
+Installed contracts verify both native blue/evolved identities, Plasma's
+refresh/expiry damage dispatch, native duration/refresh ordering,
+cleanup/network despawn and shared pre-update integration.
+`0.60.1` Release build passed with zero warnings/errors; 4,054 combat checks, 2,266 runtime
 checks plus 69 Bat lifecycle checks, installed-game contracts and the 33-reference
 Harmony 2.9 API audit passed. Independent review found no actionable issues.
 Actual Unity/stock-guest timing and visuals still need live testing; nothing

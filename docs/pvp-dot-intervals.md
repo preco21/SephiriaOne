@@ -4,7 +4,9 @@ Added in `0.59.0`, 2026-10-16. Burn, Plasma Burn, Frostbite and Poison each have
 their own **0.75-second** default interval while PvP balancing is enabled.
 Since `0.59.2`, normal/blue Burn also has a separate
 [two-second lifetime cap](pvp-balancing.md#burn-duration-cap-0592-2026-10-16).
-That cap does not change the tick interval or Plasma Burn's lifetime.
+Since `0.60.1`, that cap includes Plasma Burn and its blue/evolved variants.
+It does not change the tick intervals; without a refresh, a Burn-family effect
+can expire before a tick interval of two seconds or longer completes.
 Configure them under **Combat → DoT intervals** (`전투 → 지속 피해 간격`), or:
 
 ```text
@@ -39,9 +41,11 @@ The former implementation was a **0.75 elapsed-time multiplier**, not a fixed
 0.667s before speed bonuses, while Frostbite/Poison yielded about 1.333s. The new
 defaults replace those four timings. Wound retains its old multiplier. The
 separate 0.25s Shock/Freeze damage gates and Dark Cloud strike gate are unchanged.
-Plasma's shock accumulator, refresh/expiry attacks and damage budget also remain
-unchanged. This does not enable Frostbite damage on a build without the native
-`FROSTBITEDAMAGE` condition, nor change stacks, movement slow, Freeze stun or expiry.
+The interval adapter leaves Plasma's shock accumulator, refresh/expiry attacks
+and damage budget unchanged. The separate lifetime cap can end Plasma earlier,
+retaining its native expiry shock. This does not enable Frostbite damage on a
+build without the native `FROSTBITEDAMAGE` condition, nor change stacks, movement
+slow or Freeze stun.
 See [the other balancing layers](pvp-balancing.md).
 
 `FriendlyFireDebuffBalanceHooks` wraps only each audited periodic `Timer.Update`

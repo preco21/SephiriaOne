@@ -27,11 +27,15 @@ Native `CharacterDebuff.Update` runs the server tick before its expiry check,
 even while an ended effect waits 0.5 seconds for network destruction. A PvP
 duration cap must therefore guard before the native update and suppress late
 ticks after termination; merely changing a timer length can still allow a final
-overdue hit. Burn inherits the base `RefreshDurationTimer`, also called by
-renewing `AddStack` at maximum stacks. Track that refresh on the existing origin
+overdue hit. Burn inherits the base `RefreshDurationTimer`; Plasma overrides it
+but calls base after its native charged attack. Both use general and Burn-specific
+duration bonuses, and both implement Blue Flame/evolution within the same native
+classes. Recognize both sibling families (`0.60.1`) rather than only Burn or
+all fire-element damage. Renewing `AddStack` refreshes even at maximum stacks.
+Track that refresh on the existing origin
 receipt to cap each application at two seconds without changing native timers;
 non-renewing stacks keep the previous deadline. Native `Destroy` retains removal
-callbacks and guest despawn. See
+callbacks (including Plasma's expiry shock) and guest despawn. See
 [Burn duration evidence and scope](pvp-balancing.md#burn-duration-cap-0592-2026-10-16).
 
 Artifact audits must follow the instantiated secondary component, not only the

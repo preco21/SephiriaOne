@@ -1,6 +1,6 @@
 # Development knowledge index
 
-Maintained: 2026-10-16 (Asia/Seoul), addon `0.60.0`.
+Maintained: 2026-10-16 (Asia/Seoul), addon `0.60.1`.
 
 Combat balancing: [optional hit-frequency scaling](pvp-hit-frequency.md) adds a
 default-off checkbox/command that reduces rapid hits above roughly four per
@@ -8,8 +8,9 @@ second per opponent before the existing damage budget. Shares its lifetimes,
 with an independent toggle revision that cannot refill the budget.
 
 Combat balancing: [Burn's two-second lifetime cap](pvp-balancing.md#burn-duration-cap-0592-2026-10-16)
-uses the existing debuff lifecycle to cap each application and refresh, prevent
-late despawn ticks, and keep PvE native.
+now includes Plasma Burn and both families' Blue Flame/evolved variants. It uses
+the existing lifecycle to cap each application and refresh, prevent late despawn
+ticks, preserve Plasma's native expiry shock, and keep PvE native.
 
 Combat fix: [Plitvice and secondary sword hostility](friendly-fire-artifacts.md#plitvice-and-secondary-swords-0591-2026-10-16)
 repairs the spawned sword's collision veto and Flame Sword auto-search using the
