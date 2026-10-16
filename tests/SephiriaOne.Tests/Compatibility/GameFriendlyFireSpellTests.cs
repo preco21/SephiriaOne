@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Reflection.Emit;
 using HarmonyLib;
 
 internal static class GameFriendlyFireSpellTests
@@ -68,6 +69,37 @@ internal static class GameFriendlyFireSpellTests
         var init = Code("Bullet", "Initialize");
         Require(init.Any(i => Field(i, "damageId")) && init.Any(i => Calls(i, "Bullet", "set_FromType")),
             "pooled projectile damage identity is initialized anew");
+
+        // Liberation shares its damage ID with all weapon special attacks;
+        // the host-assigned prefab name is the additional identity boundary.
+        var furyInit = Code("SpecialProjectile_FuryMP", "Initialize");
+        foreach (var (field, argument) in new[] { ("fromType", OpCodes.Ldarg_2), ("damageId", OpCodes.Ldarg_3) })
+        {
+            int store = furyInit.FindIndex(i => i.opcode == OpCodes.Stfld && Field(i, field));
+            Require(store > 0 && furyInit[store - 1].opcode == argument, "Liberation retains incoming " + field);
+        }
+        var special = Code("WeaponSimple", "CreateSpecialAttackProjectile");
+        Require(special.Any(i => i.LoadsConstant("Weapon_SpecialAttack")) &&
+            special.Any(i => i.LoadsConstant(Convert.ToInt32(Enum.Parse(Native("EDamageFromType"), "DirectAttack")))) &&
+            special.Count(i => Calls(i, "NewWeaponFireData", "CreateAttack")) == 1, "native special-attack damage identity");
+        var fury = Code("SpecialProjectile_FuryMP", "OnUpdateServer");
+        Require(Code("SpecialProjectile_FuryMP", "Update").Any(i => Calls(i, "NetworkBehaviour", "get_isServer")) &&
+            new[] { "fromType", "damageId", "bulletPrefab_Physical", "bulletPrefab_Fire", "bulletPrefab_Ice", "bulletPrefab_Lightning" }
+                .All(name => fury.Any(i => Field(i, name))) &&
+            fury.Count(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "ProjectileSpawner`1" && m.Name == "Spawn") == 1,
+            "Liberation host emitter passes its damage identity through the shared bullet spawner");
+        var spawner = Native("ProjectileSpawner`1").MakeGenericType(Native("Bullet"));
+        var spawn = PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(spawner, "Spawn")).ToList();
+        int prefabStore = spawn.FindIndex(i => i.opcode == OpCodes.Stfld && Field(i, "spawnedPrefabName"));
+        int initialize = spawn.FindIndex(i => Calls(i, "ProjectileBase", "Initialize"));
+        Require(prefabStore > 1 && spawn[prefabStore - 2].opcode == OpCodes.Ldarg_1 &&
+            Calls(spawn[prefabStore - 1], "Object", "get_name") &&
+            initialize >= 0 && initialize < prefabStore,
+            "spawner assigns the exact prefab key name to the initialized projectile on every spawn");
+        var uniform = Code("BulletMoveModule_UniformVector2", "OnMove");
+        Require(uniform.Any(i => Calls(i, "Bullet", "get_HomingTargetPos")) &&
+            uniform.Any(i => Calls(i, "BulletMoveModule_UniformVector2", "set_NetworkmoveAngle")),
+            "Liberation movement consumes the shared homing target and synchronizes direction");
         var auto = Code("AutoMagicCaster", "Update");
         Require(auto.Any(i => Calls(i, "NetworkServer", "get_active")) && auto.Any(i => Field(i, "aimedEnemy")) &&
             AccessTools.Field(Native("AutoMagicCaster"), "owner").FieldType == Native("UnitAvatar") &&
@@ -76,6 +108,6 @@ internal static class GameFriendlyFireSpellTests
         var chain = Code("DungeonManager", "SearchTargetForChainLightning");
         Require(chain.Any(i => i.LoadsConstant(6f)) && chain.Any(i => Field(i, "canBeTarget")) &&
             chain.Any(i => i.operand is MethodInfo m && m.Name == "Contains"), "chain lightning preserves range, targetability and already-hit list");
-        Console.WriteLine("Verified spell homing gates, host acquisition/movement, pooled identity reset, five offensive selectors and changed-IL rejection (not live multiplayer).");
+        Console.WriteLine("Verified spell/Liberation homing gates, native weapon/prefab identity, host acquisition/movement, pooled identity reset, five offensive selectors and changed-IL rejection (not live multiplayer).");
     }
 }

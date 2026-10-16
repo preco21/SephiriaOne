@@ -1,6 +1,11 @@
 # Development knowledge index
 
-Maintained: 2026-10-16 (Asia/Seoul), addon `0.60.2`.
+Maintained: 2026-10-17 (Asia/Seoul), addon `0.60.3`.
+
+Combat fix: [Liberation projectile homing](friendly-fire-liberation.md) adds its
+four elemental bullets to shared hostile-player acquisition and target loss,
+using exact prefab and damage identities. Native enemy targeting and stock
+guest movement replication remain unchanged.
 
 Performance follow-up: [diagnostic state labels](performance-review.md#diagnostic-state-labels-0602-2026-10-16)
 avoid repeated enum boxing in full Status/disconnect reports while preserving

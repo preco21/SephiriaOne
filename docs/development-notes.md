@@ -1,6 +1,6 @@
 # SephiriaOne development notes
 
-Recorded: 2026-09-23; updated: 2026-10-16 (Asia/Seoul).
+Recorded: 2026-09-23; updated: 2026-10-17 (Asia/Seoul).
 
 This document records the project history, current implementation, and modding
 findings collected during the initial investigation. Installed-game observations
@@ -13,6 +13,12 @@ For agent/contributor onboarding, start with the [documentation index](README.md
 the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
+
+- `0.60.3`: [Liberation projectile homing](friendly-fire-liberation.md) admits
+  eligible hostile players for the four native FuryMP bullets, through the
+  existing homing and participant/match policy. Exact spawn-prefab plus weapon
+  damage identity keeps unrelated special attacks native. No new settings,
+  polling, guest state or deployment.
 
 - `0.60.2`: [diagnostic label optimization](performance-review.md#diagnostic-state-labels-0602-2026-10-16)
   removes per-rule enum boxing from Status/disconnect formatting. Same text and

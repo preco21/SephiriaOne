@@ -10,6 +10,10 @@ helpers now live in `FriendlyFireTargeting` / `FriendlyFireTargetingHooks`; the
 artifact registry and bounded proc scopes retain their original behavior. The
 spell exclusions below describe the earlier `0.43.2` audit boundary.
 
+Follow-up (`0.60.3`, 2026-10-17): [Liberation](friendly-fire-liberation.md) extends
+the same homing adapter to four audited weapon-special bullet prefabs. General
+weapon homing remains outside the original artifact audit below.
+
 ## Recheck against the local installation (2026-10-16)
 
 The repeated Plitvice report was investigated against repository `0.60.0`.

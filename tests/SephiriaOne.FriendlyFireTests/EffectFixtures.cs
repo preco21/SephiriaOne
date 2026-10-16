@@ -150,6 +150,7 @@ public class DaggerGrowthBullet : CombatBehaviour
 }
 public class Bullet : CombatBehaviour
 {
+    public string spawnedPrefabName = "___";
     public UnitAvatar NetworkOwner;
     public EDamageFromType FromType;
     public string damageId;

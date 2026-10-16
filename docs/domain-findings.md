@@ -150,6 +150,14 @@ ordinary player-input aim is separate. A passing faction predicate is insufficie
 when a physics query first fails to resolve the player's costume hitbox to its
 avatar. See [Bolt/shared spell targeting](friendly-fire-spells.md).
 
+Weapon projectile damage IDs can be generic: Liberation carries `DirectAttack`
+and `Weapon_SpecialAttack`, shared with unrelated special attacks. Its four
+exact `FuryMPBullet_*` prefab keys distinguish it. The native spawner assigns
+`ProjectileBase.spawnedPrefabName = key.name` on every spawn; use that managed
+field alongside damage identity, rather than Unity clone names or the owner's
+currently equipped weapon. This reuses shared homing without caching stale
+eligibility. See [Liberation resource and native contracts](friendly-fire-liberation.md).
+
 Tournament (`0.47.0`) shares `CombatMatchRuntime` with Deathmatch but captures a
 finite roster of connection receipts for its bracket. Do not key bracket progress
 by account or net ID: reconnects are new lifetimes. Pair changes invalidate combat

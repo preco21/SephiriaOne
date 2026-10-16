@@ -52,12 +52,29 @@ namespace SephiriaOne
             }
         }
 
+        // Weapon damage IDs are shared by unrelated attacks. Liberation's four
+        // audited prefabs disambiguate its DirectAttack/Weapon_SpecialAttack
+        // identity without inspecting the owner's currently equipped weapon.
+        private static bool IsLiberationHoming(Bullet bullet)
+        {
+            if (bullet.FromType != EDamageFromType.DirectAttack || bullet.damageId != "Weapon_SpecialAttack") return false;
+            switch (bullet.spawnedPrefabName)
+            {
+                case "FuryMPBullet_Physical": case "FuryMPBullet_Fire":
+                case "FuryMPBullet_Ice": case "FuryMPBullet_Lightning": return true;
+                default: return false;
+            }
+        }
+
+        private static bool UsesFriendlyHoming(Bullet bullet) =>
+            IsArtifactHoming(bullet) || IsSpellHoming(bullet) || IsLiberationHoming(bullet);
+
         internal static bool HomingTargetAllowed(UnitAvatar source, EDamageFromType type, UnitAvatar target, Bullet bullet) =>
-            (IsArtifactHoming(bullet) || IsSpellHoming(bullet)) ? ItemHitTarget(source, type, target) :
+            UsesFriendlyHoming(bullet) ? ItemHitTarget(source, type, target) :
             CombatManager.ContainsAttackableFaction(source.GetHostileFactionLayers(type), target.faction);
 
         internal static bool HomingTargetLost(UnitAvatar target, Bullet bullet) => target.IsDead ||
-            (IsArtifactHoming(bullet) || IsSpellHoming(bullet)) && FriendlyTargetLost(bullet.NetworkOwner, target);
+            UsesFriendlyHoming(bullet) && FriendlyTargetLost(bullet.NetworkOwner, target);
 
         private static bool FriendlyTargetLost(UnitAvatar source, UnitAvatar target) =>
             NetworkServer.active && IsPlayerTeamPair(source, target) && !CanAffectTeam(source, target);

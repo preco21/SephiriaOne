@@ -10,9 +10,24 @@ internal static class SpellTests
         var caster = new PlayerAvatar();
         var player = new PlayerAvatar { transform = { position = new(2, 0) } };
         var enemy = new UnitAvatar { faction = "enemy", transform = { position = new(1, 0) } };
-        foreach (string id in new[] { "Skill_FireBolt", "Skill_AirBolt", "Skill_EarthBolt", "Skill_LightningBolt", "Skill_IceBolt", "Skill_FrostDagger", "Skill_ArrowRain" })
+        foreach (var identity in new (EDamageFromType Type, string Id, string Prefab)[]
         {
-            var bullet = new Bullet { FromType = EDamageFromType.Magic, damageId = id, NetworkOwner = caster,
+            (EDamageFromType.Magic, "Skill_FireBolt", null),
+            (EDamageFromType.Magic, "Skill_AirBolt", null),
+            (EDamageFromType.Magic, "Skill_EarthBolt", null),
+            (EDamageFromType.Magic, "Skill_LightningBolt", null),
+            (EDamageFromType.Magic, "Skill_IceBolt", null),
+            (EDamageFromType.Magic, "Skill_FrostDagger", null),
+            (EDamageFromType.Magic, "Skill_ArrowRain", null),
+            (EDamageFromType.DirectAttack, "Weapon_SpecialAttack", "FuryMPBullet_Physical"),
+            (EDamageFromType.DirectAttack, "Weapon_SpecialAttack", "FuryMPBullet_Fire"),
+            (EDamageFromType.DirectAttack, "Weapon_SpecialAttack", "FuryMPBullet_Ice"),
+            (EDamageFromType.DirectAttack, "Weapon_SpecialAttack", "FuryMPBullet_Lightning")
+        })
+        {
+            string id = identity.Prefab ?? identity.Id;
+            var bullet = new Bullet { FromType = identity.Type, damageId = identity.Id,
+                spawnedPrefabName = identity.Prefab, NetworkOwner = caster,
                 Candidates = new() { caster, player, enemy }, HomingTargetPos = new(2, 0) };
             bullet.Update();
             check(bullet.HomingTarget == player, id + " homes toward the hostile player closest to the aimed point");
@@ -60,9 +75,26 @@ internal static class SpellTests
             bullet.NetworkOwner = new UnitAvatar { NetworkLeader = player }; bullet.Update();
             check(bullet.HomingTarget == null, id + " never homes onto the companion caster's owner");
             bullet.NetworkOwner = caster; bullet.FromType = EDamageFromType.None; bullet.Update();
-            check(bullet.HomingTarget == null, id + " rejects a non-magic pooled identity");
-            bullet.FromType = EDamageFromType.Magic; bullet.damageId = "UnrelatedMagic"; bullet.Update();
+            check(bullet.HomingTarget == null, id + " rejects a mismatched pooled damage type");
+            bullet.FromType = identity.Type; bullet.damageId = "UnrelatedAttack"; bullet.Update();
             check(bullet.HomingTarget == null, id + " does not extend unaudited homing identities");
+            if (identity.Prefab != null)
+            {
+                bullet.damageId = identity.Id;
+                foreach (string other in new[] { null, "___", "OtherSpecialBullet", "FuryMPBullet_Fire_Unknown" })
+                {
+                    bullet.spawnedPrefabName = other; bullet.Update();
+                    check(bullet.HomingTarget == null, id + " does not grant another special attack hostile homing: " + other);
+                }
+                bullet.spawnedPrefabName = identity.Prefab; bullet.Update();
+                check(bullet.HomingTarget == player, id + " reads the current spawn identity without a stale eligibility cache");
+                var damage = new DamageInstance { origin = caster, damage = 20, id = identity.Id,
+                    fromType = identity.Type, damageType = EDamageType.Projectile,
+                    targetFactionLayers = caster.GetHostileFactionLayers(EDamageFromType.None) };
+                double hp = player.Hp;
+                bullet.HomingTarget.ApplyDamage(damage);
+                check(player.Hp == hp - 10 && damage.damage == 20, id + " uses existing friendly damage scaling exactly once");
+            }
         }
         FriendlyFireParticipants.Clear();
         Selectors(check);
@@ -74,16 +106,18 @@ internal static class SpellTests
         SessionSettings.FriendlyFireForHit = new(true, 50);
         var source = new PlayerAvatar(); var target = new PlayerAvatar();
         var bullet = new Bullet { FromType = EDamageFromType.Magic, damageId = "Skill_FireBolt", NetworkOwner = source, Candidate = target };
+        var liberation = new Bullet { FromType = EDamageFromType.DirectAttack, damageId = "Weapon_SpecialAttack",
+            spawnedPrefabName = "FuryMPBullet_Physical", NetworkOwner = source, Candidate = target };
         var auto = new AutoMagicCaster { owner = source, Candidate = target, aimedEnemy = target };
         void Cycle()
         {
-            target.IsDead = false; bullet.Update(); auto.SearchTarget(); auto.Update();
-            target.IsDead = true; bullet.Update();
+            target.IsDead = false; bullet.Update(); liberation.Update(); auto.SearchTarget(); auto.Update();
+            target.IsDead = true; bullet.Update(); liberation.Update();
         }
         for (int i = 0; i < 100; i++) Cycle();
         long before = GC.GetAllocatedBytesForCurrentThread();
         for (int i = 0; i < 1000; i++) Cycle();
-        check(GC.GetAllocatedBytesForCurrentThread() == before, "Warmed spell acquisition, loss and automatic caster checks allocate zero bytes");
+        check(GC.GetAllocatedBytesForCurrentThread() == before, "Warmed spell/Liberation acquisition, loss and automatic caster checks allocate zero bytes");
         FriendlyFireParticipants.Clear();
     }
 
