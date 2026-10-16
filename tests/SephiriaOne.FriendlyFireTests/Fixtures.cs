@@ -76,7 +76,7 @@ namespace SephiriaOne
 public enum EApplyDamageResult { Success, Fail_Absolute, Fail_Block }
 public enum EDamageFailType { None, Deny, Block }
 public enum EDamageFromType { None, BasicAttack, Magic, DirectAttack }
-public enum EDamageType { Slice, Projectile, ElementalEffectDamage }
+public enum EDamageType { Slice, Projectile, ElementalEffectDamage, Fall }
 public enum EMonsterType { Normal, Dummy }
 public enum EPersonality { Aggressive }
 public enum ERelationBehaviour { Neutral, Friendly, Hostile }
@@ -100,6 +100,9 @@ public class DamageInstance
     public EDamageFailType failed;
     public float damage = 10;
     public float hpSteal;
+    public float absoluteEvasionPercent;
+    public bool UsedAbsoluteEvasion;
+    public void AddFlag(string flag) { if (flag == "USE_ABSOLUTEEVASION_STAT") UsedAbsoluteEvasion = true; }
     public string id = "";
     public EDamageFromType fromType;
     public EDamageType damageType;
@@ -161,7 +164,13 @@ public partial class UnitAvatar : CombatBehaviour
         debuffPrefab.InitializeAndSpawn(caster, this);
         debuffPrefab.OnApply?.Invoke(caster, this);
     }
-    [MethodImpl(MethodImplOptions.NoInlining)] private float GetCustomStatUnsafe(string key) => key == "MPSHIELD" && IsMpShield ? 1 : 0;
+    [MethodImpl(MethodImplOptions.NoInlining)] private int GetCustomStatUnsafe(string key) => key switch
+    {
+        "MPSHIELD" => IsMpShield ? 1 : 0,
+        "IGNOREEVASION" => IgnoreEvasion,
+        "ABSOLUTEEVASION" => AbsoluteEvasion,
+        _ => 0
+    };
     [MethodImpl(MethodImplOptions.NoInlining)] public override EApplyDamageResult ApplyDamage(DamageInstance damage)
     {
         if (!Mirror.NetworkServer.active || IsDead || IsInvulnerable) return EApplyDamageResult.Fail_Absolute;
@@ -199,6 +208,31 @@ public partial class UnitAvatar : CombatBehaviour
             OnCalculateDamage?.Invoke(damage);
             if (damage.failed != EDamageFailType.None && damage.damageType != EDamageType.ElementalEffectDamage)
                 return damage.failed == EDamageFailType.Deny ? EApplyDamageResult.Fail_Absolute : EApplyDamageResult.Fail_Block;
+            // Native stat formula, attacker reduction and separate guaranteed
+            // dodge paths. Deterministic RNG exercises the real transpiler.
+            if (damage.damageType != EDamageType.ElementalEffectDamage && damage.damageType != EDamageType.Fall)
+            {
+                float evasion = GetCustomStat(ECustomStat.Evasion);
+                if (evasion > 10000f) evasion = 10000f;
+                float chance = 100f * UnityEngine.Mathf.Log(evasion / 6200f + 1f) * 0.8f;
+                if (chance < 0f) chance = 0f;
+                if (attacker)
+                {
+                    int ignore = attacker.GetCustomStatUnsafe("IGNOREEVASION");
+                    if (ignore > 0) chance -= chance * ((float)ignore / 100f);
+                }
+                bool evaded = chance >= UnityEngine.Random.Range(0f, 100f);
+                if (!evaded && damage.absoluteEvasionPercent > 0f && damage.absoluteEvasionPercent >= UnityEngine.Random.Range(0f, 100f))
+                    evaded = true;
+                bool usedAbsolute = false;
+                if (!evaded && GetCustomStatUnsafe("ABSOLUTEEVASION") > 0) { evaded = true; usedAbsolute = true; }
+                if (evaded && !EvasionDisabled && !(IsMpShield && Mp > 0 && Shield <= 0))
+                {
+                    if (usedAbsolute) damage.AddFlag("USE_ABSOLUTEEVASION_STAT");
+                    OnEvade?.Invoke(damage);
+                    return EApplyDamageResult.Fail_Block;
+                }
+            }
             float resolved = damage.damage - Defense + TrueDamage;
             float shieldDamage = 0, mpDamage = 0;
             if (resolved > 0)

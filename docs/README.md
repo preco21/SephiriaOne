@@ -1,6 +1,11 @@
 # Development knowledge index
 
-Maintained: 2026-10-17 (Asia/Seoul), addon `0.60.3`.
+Maintained: 2026-10-17 (Asia/Seoul), addon `0.60.4`.
+
+Combat balancing: [Evasion's 50% cap](pvp-balancing.md#evasion-cap-0604-2026-10-17)
+limits stat-derived dodge chance before attacker anti-Evasion during eligible
+PvP hits. Low chances, guaranteed item dodges, native stats/UI and PvE remain
+unchanged. It uses the existing balancing toggle and shared match policy.
 
 Combat fix: [Liberation projectile homing](friendly-fire-liberation.md) adds its
 four elemental bullets to shared hostile-player acquisition and target loss,

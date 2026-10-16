@@ -1,4 +1,5 @@
 {
+  "PvP Evasion: stat-based dodge chance is capped at 50% before anti-Evasion; guaranteed item dodges are unchanged.": "PvP Evasion: stat-based dodge chance is capped at 50% before anti-Evasion; guaranteed item dodges are unchanged.",
   "Hit-frequency scaling": "Hit-frequency scaling",
   "Hit-frequency scaling: {0} (requires PvP balancing).": "Hit-frequency scaling: {0} (requires PvP balancing).",
   "Hit-frequency scaling: /one friendlyfire hit-frequency on|off|reset. Default off; reduces damage above roughly 4 hits/s per opponent before the damage budget. Requires PvP balancing.": "Hit-frequency scaling: /one friendlyfire hit-frequency on|off|reset. Default off; reduces damage above roughly 4 hits/s per opponent before the damage budget. Requires PvP balancing.",

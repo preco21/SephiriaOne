@@ -3,6 +3,10 @@
 Added in `0.52.0`, 2026-10-13. Host-only installation; the existing native damage
 and FX replication continues to serve stock guests. Default: **off**.
 
+Updated in `0.60.4`: [stat-based Evasion](#evasion-cap-0604-2026-10-17) is capped
+at 50% before attacker anti-Evasion reductions. Lower chances and guaranteed
+item dodges remain native; no extra setting or stat override is introduced.
+
 Updated in `0.60.0`: [optional hit-frequency scaling](pvp-hit-frequency.md) adds
 a separate default-off checkbox/command. Above roughly four hits per second per
 opponent, it progressively reduces per-hit damage before the existing budget.
@@ -81,6 +85,73 @@ only while effective friendly fire is active. Empty selection means everyone;
 nonempty selection and Tournament's current pair keep their existing rules.
 Changing balancing does not stop a match or clear K/D/A. Touching the master
 toggle still uses the existing stop/recovery semantics.
+
+## Evasion cap (`0.60.4`, 2026-10-17)
+
+User-approved limit: while balancing is enabled for an eligible PvP hit, cap
+the victim's **stat-derived dodge chance at 50%**. A native 20% chance remains
+20%; a native chance of about 77% becomes 50%. Attacker anti-Evasion then reduces
+that capped chance normally: 50% anti-Evasion reduces 50% to 25%. This is a cap
+on the calculated probability, not a cap of 50 Evasion stat points.
+
+The existing **PvP balancing** checkbox or `/one friendlyfire balance on|off`
+controls this in casual friendly fire, Deathmatch, Tournament and Play Tag.
+Selection, current match pair/countdown rules, live connection receipts and
+player-owned companion attackers use the existing combat policy. Enemy attacks
+against players, attacks against enemies/NPCs/companions, self/system damage and
+guest-side authority stay native. Disabling balancing or ending the PvP session
+removes the adjustment immediately; no stats need restoring. Native costume,
+equipment and buff changes are read again on the next hit.
+
+Native `UnitAvatar.ApplyDamage` computes:
+
+```text
+chance = 100 * Log(min(Evasion, 10000) / 6200 + 1) * 0.8
+```
+
+`FriendlyFireEvasionHooks` inserts one scalar adapter immediately after this
+formula, before the native lower clamp, `IGNOREEVASION` and dodge roll. The
+installed formula already limits stat-based chance to roughly 77%, but that
+still avoids over three of every four eligible attacks at maximum investment.
+The new limit retains up to a one-in-two chance and preserves the native RNG
+calls and branch logic. A failed stat roll can reach the existing conditional
+item-dodge roll more often; the number of draws in such a hit can therefore differ.
+
+The separate `DamageInstance.absoluteEvasionPercent` and `ABSOLUTEEVASION`
+branches remain native. In the inspected source, `Charm_ShadowEye` grants a
+one-hit guaranteed dodge; `Charm_BrokenSapphire` consumes its barrier through
+`USE_ABSOLUTEEVASION_STAT` and `OnEvade`. Their charges, callbacks and guaranteed
+success are preserved, so the cap is not a blanket limit on all ways to avoid
+damage. Native guard/parry/dash protection, Evasion-disable and MP-shield checks
+also remain. Elemental-effect damage and falls still bypass Evasion normally.
+
+The **C menu continues showing native Evasion and native dodge probability**.
+The calculation adjustment never edits stats or damage objects, so saved
+presets, PvE, native stat UI and reconnects cannot inherit a temporary override.
+English/Korean command help describes the cap. No new preset schema, packet,
+guest script, asset, timer, scene scan or per-player cache is needed.
+
+The adapter composes with the existing damage transpiler and compatibility
+guard. Missing/duplicated/changed formula anchors reject installation rather
+than rewriting an unrelated stat/RNG path. Installed contracts verify every
+original instruction, branch/exception entry, item-dodge path and RNG call is
+preserved, plus the combined combat hook. The barrier-callback contract scopes
+its lookup after the consumption flag, distinct from the earlier dash callback.
+
+Verification: Release build with zero warnings/errors; 4,207 executable combat
+checks; portable/installed-game contracts and 33-reference Harmony 2.9 API audit
+passed. Regression first reproduced a max-stat player evading a 60% roll before
+the fix. Coverage includes the 50% boundary, lower/extreme stats, anti-Evasion
+ordering, item consumption, native exclusions, toggle/selection/connection
+changes, nested PvE and exception cleanup. Warmed balanced Evasion records zero
+allocated bytes over 1,000 fixture hits; this is not a Unity FPS measurement.
+
+Installed game assembly SHA-256:
+`C57A0DAEAB8E8D0AF7066A344133EEC4C57D8F303FD9E25DA9410FBFC4CF1510`.
+Live testing remains: compare high/low Evasion with an unmodified guest attacking
+and defending, toggle balancing during all shared match modes, test a guaranteed
+dodge item and attacker anti-Evasion, and compare with monsters in the same run.
+No build was deployed and the game was not launched.
 
 ## Burn duration cap (`0.59.2`, 2026-10-16)
 

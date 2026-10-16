@@ -412,6 +412,16 @@ Reduce exact recovery inputs rather than integer stats or all healing calls:
 nested PvE recovery must remain native. The host's native HP/MP SyncVars serve
 unmodified guests. See [20% balanced PvP Harvest](pvp-balancing.md#harvest-recovery-0572-2026-10-16).
 
+Evasion has separate stat and guaranteed-item paths in `UnitAvatar.ApplyDamage`.
+The stat path uses a logarithmic chance after a 10000-point input clamp, then
+applies attacker `IGNOREEVASION`. Per-hit `absoluteEvasionPercent` and barrier
+`ABSOLUTEEVASION` follow if the first roll fails. Preserve the latter's
+`USE_ABSOLUTEEVASION_STAT` flag and `OnEvade` callback to consume the barrier.
+Dash protection invokes `OnEvade` earlier too; a first-match callback lookup is
+not sufficient to identify the stat/barrier boundary. For PvP-only adjustments,
+transform the chance in the current hit rather than patching generic stat reads
+or random-number generation. See [50% Evasion cap and native contracts](pvp-balancing.md#evasion-cap-0604-2026-10-17).
+
 Guard cost has another distinct boundary in `UnitAvatar.ApplyDamage`: native
 base 10f is reduced by `GuardResist`, halved by perfect guard, then processed by
 `OnCalculateDurabilityDamage` after `OnGuardSucceeded`. Replacing only its final

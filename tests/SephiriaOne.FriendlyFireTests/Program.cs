@@ -194,6 +194,7 @@ DebuffPulseTests.Run(Check);
 BalanceTests.Run(Check);
 HarvestTests.Run(Check);
 GuardTests.Run(Check);
+EvasionTests.Run(Check);
 SpellTests.Run(Check);
 FractionalDamageTests.Run(Check);
 SelectiveCombatTests.Run(Check);

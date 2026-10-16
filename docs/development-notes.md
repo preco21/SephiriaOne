@@ -14,6 +14,12 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+- `0.60.4`: [PvP Evasion cap](pvp-balancing.md#evasion-cap-0604-2026-10-17)
+  limits stat-derived dodge chance to 50% before anti-Evasion, using the existing
+  balancing toggle and player-hit scope. Guaranteed item dodges, native Evasion
+  values/UI, PvE, RNG calls and dodge callbacks remain native. Includes EN/KO
+  help, executable/native contracts and no deployment.
+
 - `0.60.3`: [Liberation projectile homing](friendly-fire-liberation.md) admits
   eligible hostile players for the four native FuryMP bullets, through the
   existing homing and participant/match policy. Exact spawn-prefab plus weapon
