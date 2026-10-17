@@ -340,6 +340,7 @@ internal static class PlayTagRuntimeTests
         check(GC.GetAllocatedBytesForCurrentThread() == allocated,
             "Unchanged active Tag ticks allocate no per-frame state or repeated bubbles");
         CombatMatchRuntime.Stop(true, false);
+        PlayTagRoundsTests.Run(start, add, check);
         harmony.UnpatchAll("PlayTag.integration.tests"); ReviveAllHooks.Uninstall(); start();
     }
 }

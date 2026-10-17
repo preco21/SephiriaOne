@@ -1,6 +1,6 @@
 # SephiriaOne development notes
 
-Recorded: 2026-09-23; updated: 2026-10-17 (Asia/Seoul).
+Recorded: 2026-09-23; updated: 2026-10-18 (Asia/Seoul).
 
 This document records the project history, current implementation, and modding
 findings collected during the initial investigation. Installed-game observations
@@ -13,6 +13,11 @@ For agent/contributor onboarding, start with the [documentation index](README.md
 the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
+
+- `0.61.0`: [Play Tag rounds](play-tag.md#configurable-rounds-0610-2026-10-18)
+  makes match length configurable through UI/command and v30 presets. Shared
+  recovery/countdown transitions retain K/D/A across rounds and invalidate old
+  combat callbacks; default one-round behavior is preserved. Includes EN/KO.
 
 - `0.60.5`: [projectile hostility audit](friendly-fire-projectile-audit.md) adds
   fourteen verified weapon/summon homing identities, three offensive weapon

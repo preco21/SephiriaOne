@@ -6,6 +6,7 @@ namespace SephiriaOne
     internal static class PlayTagCommand
     {
         internal static string Usage => L.T("Play Tag: /one tag start|stop|resetkda|status|help; /one tag duration 3..3600|reset (initial fuse seconds, default 30). Duration changes apply to the next match; /one save stores the duration.") + " " +
+            L.T("Rounds: /one tag rounds 1..100|reset (default 1). Changes apply to the next match; /one save stores the round count.") + " " +
             L.T("Chaser: /one tag chaser-refill on|off|xN|N|reset (0.1..10, default x2); /one tag chaser-damage on|off|N%|N|reset (0..100, default 75%). Both default on; up to 2 decimals. Changes apply live; refill requires PvP balancing. /one save stores these settings.");
         internal static string DescribeChaser()
         {
@@ -33,6 +34,13 @@ namespace SephiriaOne
             {
                 if (!CombatMatchRuntime.IsPlayTag) { message = L.T("No Play Tag match is running."); return true; }
                 CombatMatchRuntime.Stop(true, true); success = true; message = L.T("Play Tag stopped.");
+            }
+            else if (parts.Length == 4 && op == "rounds")
+            {
+                if (parts[3].Equals("reset", StringComparison.OrdinalIgnoreCase))
+                    success = SessionSettings.TrySetPlayTagRounds(PlayTagSettings.DefaultRounds, out message);
+                else if (int.TryParse(parts[3], NumberStyles.None, CultureInfo.InvariantCulture, out int rounds) &&
+                    PlayTagSettings.ValidRounds(rounds)) success = SessionSettings.TrySetPlayTagRounds(rounds, out message);
             }
             else if (parts.Length == 4 && op == "duration")
             {

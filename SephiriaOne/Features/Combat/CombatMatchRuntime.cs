@@ -101,7 +101,8 @@ namespace SephiriaOne
             pending.Clear(); roster.Clear(); participants.Clear(); FriendlyFireKda.SetEnabled(false);
             if (tournament) { FriendlyFireKda.Reset(); FriendlyFireKda.SetEnabled(true); phase = Phase.BetweenRounds; }
             SessionSettings.DeathmatchChanged();
-            if (!tournament) Broadcast(null, L.T("3..."));
+            if (tag) ShowPlayTagCountdown(3);
+            else if (!tournament) Broadcast(null, L.T("3..."));
             ObserveRoster();
             if (tournament) AdvanceTournament(Now);
             message = tag ? L.F("Play Tag starts in 3 seconds with {0} players; initial fuse: {1}s.", tagPlayers.Count, duration) :
@@ -131,10 +132,18 @@ namespace SephiriaOne
                 {
                     int seconds = (int)Math.Ceiling(startsAt - now);
                     if (seconds > 0)
-                    { if (seconds != openingShown) { openingShown = seconds; Broadcast(null, L.F("{0}...", seconds)); } }
+                    {
+                        if (seconds != openingShown)
+                        {
+                            openingShown = seconds;
+                            if (IsPlayTag) ShowPlayTagCountdown(seconds); else Broadcast(null, L.F("{0}...", seconds));
+                        }
+                    }
                     else
                     {
-                        phase = Phase.Active; FriendlyFireKda.Reset(); FriendlyFireKda.SetEnabled(true); participants.Clear();
+                        phase = Phase.Active;
+                        if (!IsPlayTag || tagRound == 1)
+                        { FriendlyFireKda.Reset(); FriendlyFireKda.SetEnabled(true); participants.Clear(); }
                         SessionSettings.DeathmatchChanged();
                         if (IsPlayTag) BeginPlayTag(now); else Broadcast(null, L.T("Deathmatch start!"));
                     }

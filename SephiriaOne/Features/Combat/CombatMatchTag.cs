@@ -38,7 +38,8 @@ namespace SephiriaOne
                 tagPlayers.Add(new RosterEntry { Subject = new HostPlayer(spawner), Receipt = FriendlyFireParticipants.Capture(player) });
             }
             message = L.T("Play Tag requires at least two eligible players.");
-            if (tagPlayers.Count >= 2) return true;
+            if (tagPlayers.Count >= 2)
+            { tagRound = 1; tagRoundLimit = SessionSettings.PlayTagRounds; return true; }
             ClearPlayTag(false); return false;
         }
 
@@ -62,7 +63,7 @@ namespace SephiriaOne
             if (chosen < 0) { Stop(true, true); return; }
             tagBomb = new PlayTagBomb(tagPlayers.Count, chosen, duration, now);
             ChaserRevision++;
-            Broadcast(null, L.T("Play Tag start!"));
+            Broadcast(null, tagRoundLimit == 1 ? L.T("Play Tag start!") : L.F("[Play Tag] Round {0}/{1} start!", tagRound, tagRoundLimit));
             ShowPlayTagCarrier(now);
         }
 
@@ -70,11 +71,17 @@ namespace SephiriaOne
         {
             if (!IsPlayTag || !CurrentScope || deathDepth != 0 || ReviveAllAction.IsExecuting) return;
             int connected = 0;
+            bool ready = true;
             for (int i = 0; i < tagPlayers.Count; i++)
-                if (Connected(tagPlayers[i].Subject, tagPlayers[i].Receipt)) connected++;
+            {
+                var entry = tagPlayers[i];
+                if (!Connected(entry.Subject, entry.Receipt)) continue;
+                connected++;
+                if (tagBomb == null && tagRound > 1 && (!entry.Subject.IsReady || entry.Subject.Player.IsDead)) ready = false;
+            }
             if (connected < 2 || tagBomb != null && !PlayTagEnrolled(tagPlayers[tagBomb.Carrier].Subject.Player))
             { Stop(true, true); return; }
-            if (tagBomb == null) return;
+            if (tagBomb == null) { AdvancePlayTagRound(now, ready); return; }
             if (tagBomb.IsDue(now)) { ExplodePlayTag(now); return; }
             ShowPlayTagCarrier(now);
         }
@@ -100,7 +107,7 @@ namespace SephiriaOne
 
         internal static void Revived(FriendlyFireParticipants.Receipt receipt, long match)
         {
-            if (!CurrentTagRevival(receipt, match, out int index) || receipt.Player.IsDead ||
+            if (tagBomb == null || !CurrentTagRevival(receipt, match, out int index) || receipt.Player.IsDead ||
                 !tagBomb.ArmAfterRespawn(index, Now)) return;
             tagShown = -1;
         }
@@ -110,13 +117,14 @@ namespace SephiriaOne
             // Native Revive clears IsDead before callbacks and its RPC. An
             // exceptional manual revive cannot arm the fuse or be retried as a
             // completed recovery; end ownership instead of leaving it unarmed.
-            if (CurrentTagRevival(receipt, match, out int index) && tagBomb.AwaitingRespawn && tagBomb.Carrier == index) Stop(true, true);
+            if (CurrentTagRevival(receipt, match, out int index) &&
+                (tagRound > 1 && phase != Phase.Active || tagBomb != null && tagBomb.AwaitingRespawn && tagBomb.Carrier == index)) Stop(true, true);
         }
 
         private static bool CurrentTagRevival(FriendlyFireParticipants.Receipt receipt, long match, out int index)
         {
             index = -1;
-            return IsPlayTag && CurrentScope && token == match && tagBomb != null &&
+            return IsPlayTag && CurrentScope && token == match &&
                 FriendlyFireParticipants.IsCurrent(receipt) && tagRoster.TryGetValue(receipt.Player, out index) &&
                 ReferenceEquals(tagPlayers[index].Receipt, receipt) && Connected(tagPlayers[index].Subject, receipt);
         }
@@ -146,21 +154,26 @@ namespace SephiriaOne
             catch (Exception error) { UnityEngine.Debug.LogWarning("[SephiriaOne] Play Tag explosion presentation failed: " + error); }
             var previous = tagExplosionVictim;
             tagExplosionVictim = victim;
+            bool failed = false;
             try
             {
                 // Keep match enrollment active for the existing Die hook's
                 // all-dead protection; never repeat an already completed death.
                 if (victim && !victim.IsDead && IsPlayTag && current == token && CurrentScope) victim.Die(5, null);
             }
-            catch (Exception error) { UnityEngine.Debug.LogWarning("[SephiriaOne] Play Tag bomb death failed: " + error); }
+            catch (Exception error) { failed = true; UnityEngine.Debug.LogWarning("[SephiriaOne] Play Tag bomb death failed: " + error); }
             finally
             {
                 tagExplosionVictim = previous;
                 if (IsPlayTag && current == token)
                 {
-                    tagNaturalStop = true;
-                    try { Stop(true, true); }
-                    finally { tagNaturalStop = false; }
+                    if (!failed && CurrentScope && tagRound < tagRoundLimit) CompletePlayTagRound();
+                    else
+                    {
+                        tagNaturalStop = true;
+                        try { Stop(true, true); }
+                        finally { tagNaturalStop = false; }
+                    }
                 }
             }
         }
@@ -172,13 +185,14 @@ namespace SephiriaOne
             foreach (var entry in tagPlayers)
                 if (Connected(entry.Subject, entry.Receipt)) Broadcast(entry.Subject.Player, "");
             tagBomb = null; tagPlayers.Clear(); tagRoster.Clear(); tagShown = -1; tagPreviousName = null;
+            tagRound = tagRoundLimit = 0;
             ChaserRevision++;
             if (!preserveExplosion) PlayTagExplosion.Reset();
         }
 
         internal static string DescribePlayTag() => L.F("Play Tag: {0}. Initial fuse: {1}s. Remaining: {2}s.",
-            L.T(!IsPlayTag ? "off" : phase == Phase.Countdown ? "countdown" : tagBomb != null && tagBomb.AwaitingRespawn ? "waiting" : "active"),
+            L.T(!IsPlayTag ? "off" : phase == Phase.Countdown ? "countdown" : phase == Phase.BetweenRounds || tagBomb != null && tagBomb.AwaitingRespawn ? "waiting" : "active"),
             IsPlayTag ? duration : SessionSettings.PlayTagDuration,
-            !IsPlayTag ? 0 : phase == Phase.Countdown ? Math.Max(0, (int)Math.Ceiling(startsAt - Now)) : tagBomb?.Remaining(Now) ?? 0);
+            !IsPlayTag ? 0 : phase == Phase.Countdown ? Math.Max(0, (int)Math.Ceiling(startsAt - Now)) : tagBomb?.Remaining(Now) ?? 0) + " " + DescribePlayTagRound();
     }
 }

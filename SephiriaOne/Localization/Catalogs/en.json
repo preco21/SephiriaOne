@@ -755,5 +755,11 @@
   "Chaser refill: {0} (x{1}, PvP balancing only); incoming damage: {2} ({3}%).": "Chaser refill: {0} (x{1}, PvP balancing only); incoming damage: {2} ({3}%).",
   "Fuse (s)": "Fuse (s)",
   "Refill (x)": "Refill (x)",
-  "Incoming (%)": "Incoming (%)"
+  "Incoming (%)": "Incoming (%)",
+  "Rounds": "Rounds",
+  "Rounds: /one tag rounds 1..100|reset (default 1). Changes apply to the next match; /one save stores the round count.": "Rounds: /one tag rounds 1..100|reset (default 1). Changes apply to the next match; /one save stores the round count.",
+  "Play Tag round count set to {0} for the next match.": "Play Tag round count set to {0} for the next match.",
+  "[Play Tag] Round {0}/{1}. Fight in: {2}...": "[Play Tag] Round {0}/{1}. Fight in: {2}...",
+  "[Play Tag] Round {0}/{1} start!": "[Play Tag] Round {0}/{1} start!",
+  "Round: {0}/{1}.": "Round: {0}/{1}."
 }

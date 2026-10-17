@@ -755,5 +755,11 @@
   "Chaser refill: {0} (x{1}, PvP balancing only); incoming damage: {2} ({3}%).": "술래 충전: {0} ({1}배, PvP 밸런싱 사용 시); 받는 피해: {2} ({3}%).",
   "Fuse (s)": "폭탄 (초)",
   "Refill (x)": "충전 (배율)",
-  "Incoming (%)": "받는 피해 (%)"
+  "Incoming (%)": "받는 피해 (%)",
+  "Rounds": "라운드 수",
+  "Rounds: /one tag rounds 1..100|reset (default 1). Changes apply to the next match; /one save stores the round count.": "라운드 수: /one tag rounds 1..100|reset (기본 1). 변경은 다음 경기에 적용되며, /one save로 저장합니다.",
+  "Play Tag round count set to {0} for the next match.": "다음 술래잡기의 라운드 수를 {0}회로 설정했습니다.",
+  "[Play Tag] Round {0}/{1}. Fight in: {2}...": "[술래잡기] {0}/{1}라운드. 시작까지: {2}...",
+  "[Play Tag] Round {0}/{1} start!": "[술래잡기] {0}/{1}라운드 시작!",
+  "Round: {0}/{1}.": "라운드: {0}/{1}."
 }

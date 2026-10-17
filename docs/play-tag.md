@@ -1,4 +1,4 @@
-# Play Tag (0.57.0, 2026-10-16)
+# Play Tag (0.61.0, 2026-10-18)
 
 Host-controlled bomb tag shares the friendly-fire match infrastructure. Research
 began against addon `0.55.2`; implementation follows the behavior-preserving
@@ -16,6 +16,8 @@ Use the **Play Tag / 술래잡기** tab, or these host commands:
 | `/one tag stop` | Stop and recover pending dead participants |
 | `/one tag duration 30` | Set the next match's initial fuse, 3..3600 whole seconds |
 | `/one tag duration reset` | Restore the 30-second default for the next match |
+| `/one tag rounds 3` | Set 1..100 rounds for the next match; default 1 |
+| `/one tag rounds reset` | Restore the single-round default |
 | `/one tag resetkda` | Reset shared scores and matchup records without replenishing bomb chances |
 | `/one tag chaser-refill on` / `off` | Toggle the carrier's refill multiplier, initially on |
 | `/one tag chaser-refill x2` | Set refill multiplier, 0.1..10, at most two decimals |
@@ -23,8 +25,8 @@ Use the **Play Tag / 술래잡기** tab, or these host commands:
 | `/one tag chaser-damage on` / `off` | Toggle incoming PvP damage reduction, initially on |
 | `/one tag chaser-damage 75%` | Set incoming damage percentage, 0..100, at most two decimals |
 | `/one tag chaser-damage reset` | Restore enabled, 75% |
-| `/one tag status` | Show mode/fuse and chaser settings |
-| `/one save` | Save configuration; nondefault chaser settings use preset v26, never a live match |
+| `/one tag status` | Show mode, round progress, fuse and chaser settings |
+| `/one save` | Save configuration; nondefault round counts use preset v30, never a live match |
 
 The participant editor is shared with friendly fire, Deathmatch and Tournament.
 An empty explicit selection includes everyone. Changing that selection or
@@ -50,9 +52,57 @@ Confirmed decisions:
 
 | Decision | Confirmed behavior |
 | --- | --- |
-| Explosion outcome | End Play Tag after one explosion; recover pending players through shared cleanup |
+| Explosion outcome | End one round; after the configured number of rounds, end Play Tag and recover pending players through shared cleanup |
 | Minimum-fuse allowance | Two timed holdings at three seconds, immediate explosion on third receipt |
 | Dead recipient's fuse | Begin after the victim's one-second respawn |
+
+## Configurable rounds (0.61.0, 2026-10-18)
+
+The **Rounds / 라운드 수** field and `/one tag rounds N|reset` use the same
+validated host command. Accept 1–100 whole rounds, default 1. Round count and
+initial fuse are captured when the match starts; editing either during a match
+changes only the next match. The existing chaser modifiers still apply live.
+
+Each explosion completes exactly one round. If rounds remain, disable combat
+and chaser bonuses, retain the captured participants and accumulated K/D/A,
+and recover pending dead participants using the existing one-second respawn
+queue. Once all connected entrants are alive and ready, begin a fresh three-second
+countdown, choose a random living carrier, and create a new bomb with the full
+initial fuse and fresh minimum-fuse holding allowances. A repeat initial carrier
+is possible; selection is random, not round-robin. No one is eliminated between
+rounds, and living survivors' normal HP, MP, items and other stats are retained.
+
+Countdown/start messages identify the current round in EN/KO for multi-round
+matches. Status reports current/total rounds; when idle it shows zero/configured
+rounds. Only the final explosion publishes the top-five accumulated K/D/A results.
+Default single-round timing, announcements and final recovery are preserved.
+
+Implementation uses `CombatMatchTagRounds` and the existing `BetweenRounds`
+phase, roster, connection receipts and pending recovery queue. A round boundary
+advances the combat token and participant combat epoch, clearing in-flight hit/
+assist bookkeeping without resetting score identities or matchup totals. Late
+death/revive notices cannot pass or arm the next round's bomb. The shared
+countdown resets Tag scores only for its first round; Deathmatch and Tournament
+keep their own scoring rules. Native explosion FX can finish naturally during
+recovery; explicit interruption uses the existing cancellation cleanup.
+
+Loading or a death during later-round warmup waits for recovery, then restarts
+the countdown without advancing the round again. Native death/revival failures
+stop the match safely. Selection/master changes, stop, authority loss, run/session
+replacement and stale connections use existing cleanup. Rejoining players do
+not inherit captured participation through a recycled network ID.
+
+`SessionPolicy` persists only the configured count as `tag rounds N` in v30.
+Older presets default to one round; explicit default values use the oldest
+compatible format. No active round index, carrier, timer, K/D/A or holding count
+is saved. The compact panel retains its existing bounds and clears the new input
+draft on tab/scope/close resets. No new guest messages or assets are needed.
+
+Validation includes executable round progression, one-round regression, K/D/A
+carryover, live setting capture, old-token rejection, delayed/failed/manual revival,
+warmup loading, interruptions, reconnects, strict preset compatibility, localized
+commands and compiled UI wiring. Live host/guest gameplay and visual panel checks
+remain pending; no deployment was performed.
 
 ## Chaser advantages (0.57.0, 2026-10-16)
 

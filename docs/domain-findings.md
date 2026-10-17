@@ -16,6 +16,13 @@ A different game build requires renewed contract/asset checks. Start with the
 
 ## State lifetimes and multiplayer
 
+Multi-round modes should distinguish score lifetime from combat callback lifetime.
+Play Tag retains its frozen roster and score objects but advances the combat token
+and participant combat epoch at round boundaries. The existing pending revival
+queue survives those boundaries; ready/alive checks reserve the next round until
+recovery finishes. Do not reuse the initial countdown's unconditional K/D/A reset
+for later rounds. See [Play Tag rounds](play-tag.md#configurable-rounds-0610-2026-10-18).
+
 Projectile audits must inspect native runtime homing activation as well as prefab
 flags, and traverse fire-data subclasses rather than just their base type.
 Mini Ballista enables homing conditionally; crossbow mines instead cache a faction

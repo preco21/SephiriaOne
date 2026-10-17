@@ -1,6 +1,11 @@
 # Development knowledge index
 
-Maintained: 2026-10-17 (Asia/Seoul), addon `0.60.5`.
+Maintained: 2026-10-18 (Asia/Seoul), addon `0.61.0`.
+
+Play Tag: [configurable rounds](play-tag.md#configurable-rounds-0610-2026-10-18)
+adds a compact panel field and `/one tag rounds N|reset` (1–100, default 1).
+Each explosion ends a round; recovery and a new countdown retain participants
+and K/D/A, while bomb state resets. Settings apply to the next match and save in v30.
 
 Combat fix: [remaining projectile hostility paths](friendly-fire-projectile-audit.md)
 extend existing homing to verified crossbow, wand, Dark Veil, Formless Dance,

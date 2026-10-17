@@ -7,6 +7,21 @@ internal static class PlayTagControlsTests
     {
         var host = start(); var guest = add(90);
         UnityEngine.Time.unscaledTime = 0;
+        check(SettingsActions.Execute("/one tag rounds 3").Success,
+            "Play Tag round count uses the shared host dispatcher");
+        check(SettingsActions.Execute("/one tag rounds reset").Success,
+            "Play Tag round count can reset to the single-round default");
+        foreach (string value in new[] { "0", "-1", "101", "1.5", "x2", "2%", "2147483648", "2 extra" })
+            check(!SettingsActions.Execute("/one tag rounds " + value).Success && SessionSettings.PlayTagRounds == 1,
+                "Invalid rounds command cannot alter policy: " + value);
+        check(SettingsActions.Execute("/ONE TAG ROUNDS 100").Success && SessionSettings.PlayTagRounds == 100,
+            "Rounds accept upper limit and case-insensitive command");
+        Mirror.NetworkServer.active = false;
+        check(!SettingsActions.Execute("/one tag rounds 2").Success && SessionSettings.PlayTagRounds == 100,
+            "Guests cannot change round count");
+        Mirror.NetworkServer.active = true;
+        check(SettingsActions.Execute("/one tag rounds reset").Success && SessionSettings.PlayTagRounds == 1,
+            "Rounds reset restores default without touching the other settings");
         check(SettingsActions.Execute("/one tag chaser-refill x3.25").Success &&
             SettingsActions.Execute("/one tag chaser-damage 45.5%").Success,
             "Play Tag chaser settings use the shared host dispatcher");
@@ -117,6 +132,11 @@ internal static class PlayTagControlsTests
             L.Initialize(languageFolder, _ => { });
             check(L.TrySetLanguage("ko", out _), "Select Korean for Play Tag controls");
             host = start(); guest = add(90);
+            check(SettingsActions.Execute("/one tag rounds 2").Messages.Contains("다음 술래잡기의 라운드 수를 2회로 설정했습니다.") &&
+                L.T("Rounds") == "라운드 수" && L.F("[Play Tag] Round {0}/{1} start!", 1, 2) == "[술래잡기] 1/2라운드 시작!" &&
+                L.F("[Play Tag] Round {0}/{1}. Fight in: {2}...", 2, 3, 1) == "[술래잡기] 2/3라운드. 시작까지: 1...",
+                "Round setting, label and announcements support Korean");
+            SettingsActions.Execute("/one tag rounds reset");
             check(SettingsActions.Execute("/one tag duration 10").Messages.Contains("다음 술래잡기의 폭탄 시간을 10초로 설정했습니다.") &&
                 SettingsActions.Execute("/one tag help").Messages.Any(x => x.Contains("술래잡기") && x.Contains("/one tag")) &&
                 L.T("Play Tag") == "술래잡기" && L.T("Initial fuse in seconds (3–3600)") == "처음 폭탄 시간 (3–3600초)",
@@ -158,5 +178,10 @@ internal static class PlayTagControlsTests
         SessionSettings.Stop(); SessionSettings.Start();
         check(SettingsActions.Execute("/one tag status").Messages.Any(x => x.Contains("x4") && x.Contains("50%")),
             "First status command reads the saved chaser settings before synchronization");
+        check(SettingsActions.Execute("/one tag rounds 4").Success && SettingsActions.Execute("/one save").Success,
+            "Save round count through standard preset command");
+        SessionSettings.Stop(); SessionSettings.Start();
+        check(SettingsActions.Execute("/one tag status").Messages.Any(x => x.Contains("0/4")) && SessionSettings.PlayTagChaser.RefillMultiplier == 4,
+            "First status reloads round count and preserves other preset settings");
     }
 }

@@ -197,8 +197,8 @@ namespace SephiriaOne
             friendlyDamage = null; friendlyDraft = false; friendlyRefill = null; friendlyRefillDraft = false;
             friendlyGuardMp = null; friendlyGuardMpDraft = false;
             pvpDotEditors.Clear();
-            playTagRefill = playTagIncoming = null;
-            playTagDurationDraft = playTagRefillDraft = playTagIncomingDraft = false;
+            playTagRounds = playTagRefill = playTagIncoming = null;
+            playTagDurationDraft = playTagRoundsDraft = playTagRefillDraft = playTagIncomingDraft = false;
             participantRows.Clear(); participantContent = null; participantSummary = null;
             if (pageRoot) { widgets.Forget(pageRoot); pageRoot.gameObject.SetActive(false); Destroy(pageRoot.gameObject); }
             pageRoot = PanelWidgets.Rect(window, "Page", 4, 152, 600, 162);
@@ -358,7 +358,7 @@ namespace SephiriaOne
         {
             ClearPvpDots();
             ClearFriendlyDamage(); ClearFriendlyRefill(); ClearFriendlyGuardMp();
-            ClearPlayTagDuration(); ClearPlayTagRefill(); ClearPlayTagIncoming();
+            ClearPlayTagDuration(); ClearPlayTagRounds(); ClearPlayTagRefill(); ClearPlayTagIncoming();
         }
 
         private static string PresetValues(SettingsSnapshot snapshot)

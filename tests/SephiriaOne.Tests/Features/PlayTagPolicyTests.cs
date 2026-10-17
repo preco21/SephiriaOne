@@ -7,6 +7,36 @@ internal static class PlayTagPolicyTests
         int checks = 0;
         void Check(bool condition, string message)
         { if (!condition) throw new Exception(message); checks++; }
+        const string roundsPreset = "SephiriaOne preset v30\ntag rounds 3\n";
+        Check(SessionPolicy.TryReadPreset(roundsPreset, out var roundsPolicy, out _) && roundsPolicy.ToPresetText() == roundsPreset,
+            "Play Tag rounds round-trip in v30 without storing active round state");
+        Check(roundsPolicy.PlayTagRounds == 3 && roundsPolicy.HasChanges, "Nondefault rounds participate in dirty policy");
+        for (int version = 1; version <= 29; version++)
+        {
+            Check(SessionPolicy.TryReadPreset("SephiriaOne preset v" + version + "\n", out var oldRounds, out _) && oldRounds.PlayTagRounds == 1,
+                "Old preset defaults to one round: v" + version);
+            Check(!SessionPolicy.TryReadPreset("SephiriaOne preset v" + version + "\ntag rounds 2\n", out _, out _),
+                "Old format cannot silently accept rounds: v" + version);
+        }
+        foreach (int rounds in new[] { 1, 2, 100 })
+            Check(SessionPolicy.TryReadPreset("SephiriaOne preset v30\ntag rounds " + rounds + "\n", out var parsed, out _) && parsed.PlayTagRounds == rounds,
+                "Accept valid round count " + rounds);
+        foreach (string body in new[] { "rounds 0", "rounds -1", "rounds 101", "rounds 1.5", "rounds 2.0", "rounds +2", "rounds 02",
+            "rounds 999999999999999999999999999", "rounds 2\ntag rounds 3", "round 1", "rounds reset", "rounds x2" })
+            Check(!SessionPolicy.TryReadPreset("SephiriaOne preset v30\ntag " + body + "\n", out _, out _), "Reject invalid round row " + body);
+        Check(SessionPolicy.TryReadPreset("SephiriaOne preset v30\ntag rounds 1\n", out var oneRound, out _) && !oneRound.HasChanges &&
+            oneRound.ToPresetText() == "SephiriaOne preset v1\n", "Explicit one-round default uses the oldest compatible format");
+        const string mixedRounds = "SephiriaOne preset v30\ntag duration 45\ntag rounds 3\ntag chaser-refill 4\nfriendlyfire hit-frequency 1\n";
+        Check(SessionPolicy.TryReadPreset(mixedRounds, out var combinedRounds, out _) && combinedRounds.ToPresetText() == mixedRounds,
+            "v30 retains previous timing, chaser and balance fields");
+        foreach (int invalid in new[] { 0, -1, 101, int.MaxValue })
+        {
+            bool rejected = false;
+            try { roundsPolicy.RecordPlayTagRounds(invalid); } catch (ArgumentOutOfRangeException) { rejected = true; }
+            Check(rejected && roundsPolicy.PlayTagRounds == 3, "Policy cannot store invalid round count " + invalid);
+        }
+        roundsPolicy.Clear();
+        Check(roundsPolicy.PlayTagRounds == 1 && !roundsPolicy.HasChanges, "Policy clear resets round count");
         const string chaserPreset = "SephiriaOne preset v26\ntag chaser-refill-enabled 0\ntag chaser-refill 3.25\ntag chaser-damage-enabled 0\ntag chaser-damage 45.5\n";
         Check(SessionPolicy.TryReadPreset(chaserPreset, out var chaserPolicy, out _) &&
             chaserPolicy.ToPresetText() == chaserPreset, "Chaser toggles and numbers round-trip in preset v26");

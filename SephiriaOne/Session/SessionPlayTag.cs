@@ -5,6 +5,17 @@ namespace SephiriaOne
     internal static partial class SessionSettings
     {
         internal static int PlayTagDuration => policy.PlayTagDuration;
+        internal static int PlayTagRounds => policy.PlayTagRounds;
+        internal static bool TrySetPlayTagRounds(int rounds, out string message)
+        {
+            message = PlayTagCommand.Usage;
+            if (!NetworkServer.active || !PlayTagSettings.ValidRounds(rounds) || !EnsureResourceScope()) return false;
+            if (policy.PlayTagRounds != rounds)
+            {
+                policy.RecordPlayTagRounds(rounds); intentRevision++; NotifySettingsChanged();
+            }
+            message = L.F("Play Tag round count set to {0} for the next match.", rounds); return true;
+        }
         internal static PlayTagChaserSettings PlayTagChaser => policy.PlayTagChaser;
         internal static bool TrySetPlayTagChaser(PlayTagChaserSettings settings, out string message)
         {
