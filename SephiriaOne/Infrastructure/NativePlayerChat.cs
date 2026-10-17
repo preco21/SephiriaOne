@@ -28,20 +28,20 @@ namespace SephiriaOne
             return string.IsNullOrWhiteSpace(plain) || plain == "?" ? null : plain;
         }
 
-        internal static void Show(PlayerAvatar player, string message)
+        internal static bool Show(PlayerAvatar player, string message)
         {
             try
             {
                 var dungeon = DungeonManager.Instance;
                 if (!NetworkServer.active || !dungeon || !dungeon.isServer || dungeon.netId == 0 ||
                     !player || !player.isServer || !player.spawner ||
-                    !ReferenceEquals(player.spawner.PlayerAvatar, player) || string.IsNullOrWhiteSpace(message)) return;
+                    !ReferenceEquals(player.spawner.PlayerAvatar, player) || string.IsNullOrWhiteSpace(message)) return false;
                 var connection = player.spawner.connectionToClient;
                 if (connection == null || !connection.isReady || player.netId == 0 ||
                     !ReferenceEquals(player.connectionToClient, connection) ||
                     !ReferenceEquals(connection.identity, player.netIdentity) ||
                     !NetworkServer.connections.TryGetValue(connection.connectionId, out var live) ||
-                    !ReferenceEquals(live, connection)) return;
+                    !ReferenceEquals(live, connection)) return false;
                 if (!checkedTransport)
                 {
                     checkedTransport = true;
@@ -50,7 +50,7 @@ namespace SephiriaOne
                         new[] { typeof(NetworkConnection), typeof(string), typeof(int), typeof(NetworkWriter), typeof(int) });
                     if (targetSend == null) throw new InvalidOperationException("Native targeted RPC sender unavailable.");
                 }
-                if (targetSend == null) return;
+                if (targetSend == null) return false;
                 var writer = NetworkWriterPool.Get();
                 try
                 {
@@ -61,14 +61,16 @@ namespace SephiriaOne
                     writer.WriteString("SephiriaOne");
                     writer.WriteString(message);
                     targetSend.Invoke(dungeon, new object[] { connection, RpcName, RpcHash, writer, 0 });
+                    return true;
                 }
                 finally { NetworkWriterPool.Return(writer); }
             }
             catch (Exception error)
             {
-                if (warned) return;
+                if (warned) return false;
                 warned = true;
-                Debug.LogWarning("[SephiriaOne] Private chat notice unavailable; combat accounting remains active: " + error);
+                Debug.LogWarning("[SephiriaOne] Private chat notice unavailable; gameplay remains active: " + error);
+                return false;
             }
         }
 

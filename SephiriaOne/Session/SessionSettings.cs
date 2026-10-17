@@ -91,7 +91,8 @@ namespace SephiriaOne
             policy.Clear();
             relativeStats.Clear(); relative.Clear();
             ResourceRuntime.Clear();
-            fountainPlayers.Clear(); subjects.Clear(); players.Clear(); session.Clear();
+            fountainPlayers.Clear(); subjects.Clear(); players.Clear(); session.Clear(); costumeNotices.Clear();
+            costumeNoticeWarned = false;
             restoreFountainLimit = false; runGeneration = 0; intentRevision = 0;
             failedBatch = null; failedFeature = null; failedReason = null; recovered = null; criticalFresh = true;
             boundaries.Clear();
@@ -227,6 +228,7 @@ namespace SephiriaOne
                     if (failedBatch != null) break;
                     if (subject.IsReady) playersFresh &= MaintainRelativeStats(player);
                     if (failedBatch != null) break;
+                    TryRefreshCostumeNotice(subject);
                 }
                 var departed = departedPlayers;
                 foreach (var subject in subjects.Values) if (!active.Contains(subject.Player)) departed.Add(subject);
@@ -257,6 +259,7 @@ namespace SephiriaOne
 
         private static void Forget(HostPlayer subject)
         {
+            costumeNotices.Remove(subject);
             FriendlyFireKda.ForgetLife(subject.Player);
             players.Forget(subject);
             ForgetRelativeStats(subject.Player);

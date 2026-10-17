@@ -40,6 +40,16 @@ namespace SephiriaOne
 
     internal static class StatPlanner
     {
+        internal static bool TryDisplay(StatSnapshot value, out decimal display)
+        {
+            display = 0;
+            long factor = 100L + value.Amplifier;
+            if (value.Stat == null || factor <= 0 || !FitsInt(factor) ||
+                !TryEffective(value.Raw, value.Bonus, factor, out int effective)) return false;
+            display = value.Stat.Display(effective);
+            return true;
+        }
+
         public static bool TryPlan(StatCommand command, IReadOnlyList<StatSnapshot> values,
             out StatUpdate[] updates, out string error)
         {

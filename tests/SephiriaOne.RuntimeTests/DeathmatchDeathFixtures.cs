@@ -20,7 +20,9 @@ namespace SephiriaOne
     {
         internal static readonly List<(PlayerAvatar Player, string Message)> Messages = new();
         internal static string ReadableName(string name) => CombatNames.Safe(name) is var plain && plain != "?" ? plain : null;
-        internal static void Show(PlayerAvatar player, string message) => Messages.Add((player, message));
+        internal static bool Available = true;
+        internal static bool Show(PlayerAvatar player, string message)
+        { if (!Available) return false; Messages.Add((player, message)); return true; }
     }
     internal static class FriendlyFireDeathVisuals
     {

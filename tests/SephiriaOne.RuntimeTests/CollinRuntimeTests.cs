@@ -1,7 +1,12 @@
 using SephiriaOne;
 using Mirror;
 
-namespace SephiriaOne { internal static class CollinFeature { internal static bool Available = true; } }
+namespace SephiriaOne { internal static class CollinFeature
+{
+    internal static bool Available = true;
+    internal static readonly HashSet<PlayerAvatar> Gifts = new();
+    internal static bool HasStartingGift(PlayerAvatar player) => Gifts.Contains(player);
+} }
 
 internal static class CollinRuntimeTests
 {

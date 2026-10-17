@@ -761,5 +761,20 @@
   "Play Tag round count set to {0} for the next match.": "다음 술래잡기의 라운드 수를 {0}회로 설정했습니다.",
   "[Play Tag] Round {0}/{1}. Fight in: {2}...": "[술래잡기] {0}/{1}라운드. 시작까지: {2}...",
   "[Play Tag] Round {0}/{1} start!": "[술래잡기] {0}/{1}라운드 시작!",
-  "Round: {0}/{1}.": "라운드: {0}/{1}."
+  "Round: {0}/{1}.": "라운드: {0}/{1}.",
+  "Wing-Eared Rabbit · Healer": "날개귀 토끼 · 치유 담당",
+  "Unlimited HP potions (requires one)": "HP 물약 무제한 (1개 보유 필요)",
+  "HP potion: {0} MP": "HP 물약당 MP {0} 소모",
+  "Shared heal: {0} tiles": "치유 공유: {0}칸",
+  "Sample excluded": "맛보기 샘플 제외",
+  "Level-up: random non-HP/MP potion": "레벨업: 무작위 물약 (HP/MP 계열 제외)",
+  "Mole": "두더지",
+  "Farmer Squirrel": "농부 다람쥐",
+  "Turtle": "거북이",
+  "{0} · Companions": "{0} · 동료 특화",
+  "Starting artifact: Collin": "시작 유물: 콜린",
+  "{0} ×{1}": "{0} ×{1}",
+  "{0}: {1} {2}": "{0}: {1} {2}",
+  "{0}: {1}{2} {3}": "{0}: {1}{2} {3}",
+  "- <indent=10>Nearby allies within {0} tiles receive the same healing from HP potions, except Potion of Regeneration (Sample).</indent>": "- <indent=10>재생의 포션 (맛보기 샘플)을 제외한 HP 물약의 회복 효과를 {0}칸 이내의 아군에게도 공유합니다.</indent>"
 }

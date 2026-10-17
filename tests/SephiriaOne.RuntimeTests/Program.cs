@@ -795,6 +795,7 @@ DeathmatchScoreResetTests.Run(Start, id => Add(id), Check);
         BatRuntimeTests.Run(Start, id => Add(id), Check);
         CollinRuntimeTests.Run(Start, Check);
         VisibleStatRuntimeTests.Run(Start, id => Add(id), Check);
+CostumeRoleTests.Run(Start, id => Add(id), Check);
 
 if (Directory.Exists(testDataRoot)) Directory.Delete(testDataRoot, true);
 Console.WriteLine($"Passed {checks} runtime command/session integration checks using game API fixtures.");

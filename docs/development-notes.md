@@ -14,6 +14,12 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+- `0.62.0`: [Costume role notices](costume-role-notices.md) add current-state,
+  recipient-only EN/KO summaries for Rabbit, Mole, Farmer Squirrel and Turtle.
+  Shared session/connection lifetimes prevent stale re-entry messages; actual
+  applied companion bonuses and compatible Rabbit options drive the text.
+  Native chat limits and failed dispatch retry are covered; no deployment.
+
 - `0.61.0`: [Play Tag rounds](play-tag.md#configurable-rounds-0610-2026-10-18)
   makes match length configurable through UI/command and v30 presets. Shared
   recovery/countdown transitions retain K/D/A across rounds and invalidate old

@@ -9,6 +9,10 @@ namespace SephiriaOne
         public bool LevelUpPotion { get; }
         public const int DefaultMpCostPerDrink = 10;
         public const int MaximumMpCostPerDrink = 10000;
+        // Native map tiles span two world units. Presentation and gameplay share
+        // this radius; there is currently no independent radius setting.
+        internal const int ShareRadiusTiles = 5;
+        internal const float ShareRadiusSquared = ShareRadiusTiles * ShareRadiusTiles * 4f;
         // An all-zero struct still represents the native/default policy with a 10 MP fee.
         private readonly int mpCostOffset;
         public int MpCostPerDrink => DefaultMpCostPerDrink + mpCostOffset;

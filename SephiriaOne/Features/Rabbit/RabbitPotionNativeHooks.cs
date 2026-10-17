@@ -12,7 +12,6 @@ namespace SephiriaOne
     internal static partial class RabbitPotionNativeHooks
     {
         private const string Owner = "preco21.SephiriaOne.RabbitPotions";
-        private const float ShareRadiusSquared = 100f;
         private static Harmony harmony;
         [ThreadStatic] private static Stack<DrinkContext> drinks;
         public static bool Available { get; private set; }
@@ -280,7 +279,7 @@ namespace SephiriaOne
                     if (!recipient || !seen.Add(recipient) || recipient.IsDead ||
                         recipient.currentFloorGuid != context.Player.currentFloorGuid) continue;
                     Vector3 delta = recipient.transform.position - context.Player.transform.position;
-                    if (!(delta.sqrMagnitude < ShareRadiusSquared) || !Current(context) ||
+                    if (!(delta.sqrMagnitude < RabbitPotionSettings.ShareRadiusSquared) || !Current(context) ||
                         !SessionSettings.RabbitPotionsForUse.Share) continue;
                     float before = recipient.hp;
                     uint recipientId = recipient.netId;

@@ -18,11 +18,13 @@ try
     var player = Player();
     player.UpdateCostumeData("Mole", true);
     Check(player.Owned.Count == 0, "Default off preserves native costume items");
+    Check(!CollinRuntime.HasStartingGift(player), "Role view does not invent an ungranted gift");
     SessionSettings.CollinForUse = true;
     foreach (string costume in new[] { "Mole", "Squirrel", "Turtle" })
     {
         player.UpdateCostumeData(costume, true);
         Check(player.Owned.Count == 1 && player.Inventory.Held.Count == 1, costume + " grants one owned Collin");
+        Check(CollinRuntime.HasStartingGift(player), "Role view recognizes owned native registration");
         int id = player.Owned.Single();
         CollinRuntime.AfterCostume(player, costume);
         Check(player.Owned.Single() == id && player.Inventory.Held.Count == 1, "Repeated boundary does not duplicate");
@@ -30,6 +32,7 @@ try
     var purchased = new ItemMetadata(99999, 1197, 1); player.Inventory.Held.Add(purchased.instanceID, purchased);
     player.UpdateCostumeData("HolyRabbit", true);
     Check(player.Inventory.Held.Keys.SequenceEqual(new[] { 99999 }) && player.Owned.Count == 0, "Switch removes grant and preserves purchased Collin");
+    Check(!CollinRuntime.HasStartingGift(player), "Role view does not confuse purchased and costume Collin");
     player.UpdateCostumeData("Mole", true);
     SessionSettings.CollinForUse = false;
     Check(player.Inventory.Held.Count == 2, "Changing policy does not rewrite current run inventory");

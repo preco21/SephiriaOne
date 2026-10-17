@@ -41,6 +41,14 @@ namespace SephiriaOne
         }
 
         private static List<int> Owned(PlayerAvatar player) => (List<int>)OwnedField.GetValue(player);
+        internal static bool HasStartingGift(PlayerAvatar player)
+        {
+            if (!player || !player.Inventory || !ItemAvailable) return false;
+            var owned = Owned(player);
+            foreach (ItemMetadata item in player.Inventory.startingItems)
+                if (item.entityID == ItemId && owned.Contains(item.instanceID) && IsGift(player, item.instanceID)) return true;
+            return false;
+        }
         private static Receipt GetReceipt(PlayerAvatar player)
         {
             if (receipts.TryGetValue(player, out Receipt value) && !ReferenceEquals(value.Dungeon, DungeonManager.Instance))

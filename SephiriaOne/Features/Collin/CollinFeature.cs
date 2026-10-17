@@ -8,6 +8,7 @@ namespace SephiriaOne
     {
         private static bool loaded;
         internal static bool Available => loaded && CollinRuntime.ItemAvailable;
+        internal static bool HasStartingGift(PlayerAvatar player) => CollinRuntime.HasStartingGift(player);
         internal static void Initialize()
         {
             if (loaded) return;

@@ -27,6 +27,26 @@ internal static class GameNativePlayerChatTests
         Require(Equals(normalize.Invoke(null, new object[] { sample }), sample), "stock guest preserves the exact English message");
         sample = "‘PlayerX’에게 처치됨 (전적: 나 3-4 상대)";
         Require(Equals(normalize.Invoke(null, new object[] { sample }), sample), "stock guest preserves the exact Korean message");
+        Type role = addon.GetType("SephiriaOne.CostumeRoleText", true)!;
+        Type potionSettings = addon.GetType("SephiriaOne.RabbitPotionSettings", true)!;
+        object options = Activator.CreateInstance(potionSettings, new object[] { true, true, true, false, 37, true })!;
+        var clauses = (List<string>)AccessTools.DeclaredMethod(role, "Rabbit").Invoke(null, new[] { options, true, true })!;
+        var pack = AccessTools.DeclaredMethod(role, "Pack");
+        var roleLines = (List<string>)pack.Invoke(null, new object[] { clauses })!;
+        Require(string.Join(" ", roleLines).Contains("37 MP") && string.Join(" ", roleLines).Contains("5 tiles"),
+            "role notice uses active fee and actual shared-heal radius");
+        var companionLines = (List<string>)pack.Invoke(null, new object[] { new List<string>
+        {
+            "Farmer Squirrel · Companions", "Companion attack speed ×3", "Companion damage ×2",
+            "Companion defense: +7 points", "Companion critical chance: 12.25 %",
+            "Companion critical inheritance: 50 %", "Companion revival speed ×2", "Starting artifact: Collin",
+            "날개귀 토끼 · 치유 담당", "HP 물약당 MP 37 소모", "치유 공유: 5칸", "두더지 · 동료 특화", "동료 공격 속도 ×3"
+        } })!;
+        roleLines.AddRange(companionLines);
+        Require(string.Join(" ", companionLines).Contains("×3"), "native sanitizer preserves multiplier notation");
+        foreach (string line in roleLines)
+            Require(line.Length <= 120 && Equals(normalize.Invoke(null, new object[] { line }), line),
+                "stock guests preserve whole role-summary line: " + line);
         foreach (string mutation in new[] { "name", "hash", "channel", "owner", "payload", "reader", "gameplay", "write" })
         {
             var send = Code(sender); var read = Code(receiver); var receive = Code(body);
@@ -47,6 +67,7 @@ internal static class GameNativePlayerChatTests
         }
         Require(Code(dungeon.TypeInitializer!).Any(i => Equals(i.operand, receiver)), "stock clients register the chat receiver");
         var show = Code(AccessTools.DeclaredMethod(adapter, "Show"));
+        Require(AccessTools.DeclaredMethod(adapter, "Show").ReturnType == typeof(bool), "dispatch result supports readiness retries");
         int avatarWrite = show.FindIndex(i => i.operand is MethodInfo m && m.Name == "WriteNetworkBehaviour");
         Require(avatarWrite > 0 && show[avatarWrite - 1].opcode == OpCodes.Ldnull,
             "null avatar prevents any replacement of the respawn bubble");

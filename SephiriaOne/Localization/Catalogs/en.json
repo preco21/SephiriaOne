@@ -761,5 +761,20 @@
   "Play Tag round count set to {0} for the next match.": "Play Tag round count set to {0} for the next match.",
   "[Play Tag] Round {0}/{1}. Fight in: {2}...": "[Play Tag] Round {0}/{1}. Fight in: {2}...",
   "[Play Tag] Round {0}/{1} start!": "[Play Tag] Round {0}/{1} start!",
-  "Round: {0}/{1}.": "Round: {0}/{1}."
+  "Round: {0}/{1}.": "Round: {0}/{1}.",
+  "Wing-Eared Rabbit · Healer": "Wing-Eared Rabbit · Healer",
+  "Unlimited HP potions (requires one)": "Unlimited HP potions (requires one)",
+  "HP potion: {0} MP": "HP potion: {0} MP",
+  "Shared heal: {0} tiles": "Shared heal: {0} tiles",
+  "Sample excluded": "Sample excluded",
+  "Level-up: random non-HP/MP potion": "Level-up: random non-HP/MP potion",
+  "Mole": "Mole",
+  "Farmer Squirrel": "Farmer Squirrel",
+  "Turtle": "Turtle",
+  "{0} · Companions": "{0} · Companions",
+  "Starting artifact: Collin": "Starting artifact: Collin",
+  "{0} ×{1}": "{0} ×{1}",
+  "{0}: {1} {2}": "{0}: {1} {2}",
+  "{0}: {1}{2} {3}": "{0}: {1}{2} {3}",
+  "- <indent=10>Nearby allies within {0} tiles receive the same healing from HP potions, except Potion of Regeneration (Sample).</indent>": "- <indent=10>Nearby allies within {0} tiles receive the same healing from HP potions, except Potion of Regeneration (Sample).</indent>"
 }

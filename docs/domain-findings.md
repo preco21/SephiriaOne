@@ -16,6 +16,13 @@ A different game build requires renewed contract/asset checks. Start with the
 
 ## State lifetimes and multiplayer
 
+Private stock chat normalizes to 120 characters. Pack localized clauses before
+dispatch to avoid silently losing later settings. Read-only role notices can
+share session subjects and connection receipts while observing actual applied
+stat contributions after maintenance; retained intent alone must not advertise
+a suspended multiplier or a future costume grant. Native targeted chat uses a
+null avatar so combat bubbles survive. See [costume role notices](costume-role-notices.md).
+
 Multi-round modes should distinguish score lifetime from combat callback lifetime.
 Play Tag retains its frozen roster and score objects but advances the combat token
 and participant combat epoch at round boundaries. The existing pending revival

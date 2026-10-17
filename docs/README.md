@@ -1,6 +1,11 @@
 # Development knowledge index
 
-Maintained: 2026-10-18 (Asia/Seoul), addon `0.61.0`.
+Maintained: 2026-10-18 (Asia/Seoul), addon `0.62.0`.
+
+Costumes: [current role summaries](costume-role-notices.md) privately describe
+Rabbit healing and companion bonuses on equip/re-entry, using only enabled,
+applied settings. Native chat supports stock guests; EN/KO text refreshes without
+replaying gameplay or replacing combat bubbles.
 
 Play Tag: [configurable rounds](play-tag.md#configurable-rounds-0610-2026-10-18)
 adds a compact panel field and `/one tag rounds N|reset` (1–100, default 1).
