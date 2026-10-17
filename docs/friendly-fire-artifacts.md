@@ -144,8 +144,18 @@ Follow-up (`0.55.2`, 2026-10-15): the strike cooldown is reduced from 0.5 to
 0.25 seconds. Shared pair ownership, balance gating and lifecycle resets are
 unchanged; the separate damage-budget refill still defaults to 70% HP/s.
 
+Follow-up (`0.62.1`, 2026-10-18): the requested cooldown is now **0.5 seconds**.
+This changes only the existing balanced PvP strike gate. Regression tests reject
+0.25s and 0.499s attempts, admit exactly 0.5s, and reject another same-frame
+attempt; damage, strike-triggered Burn and FX are suppressed together. Blocked
+attempts do not extend the cooldown. The queued-owner-death and exception-retry
+checks use the new interval. Other debuff intervals and budget settings are unchanged.
+The new 0.25s rejection test failed with the old constant, then all 4,860 combat
+fixture checks passed with the new value. Release build passed with zero warnings
+or errors and deployment disabled; live gameplay was not tested.
+
 During enabled, positive-damage friendly fire, the host permits at most one Dark
-Cloud strike attempt per attacker-player/victim-player pair every **0.25 seconds**
+Cloud strike attempt per attacker-player/victim-player pair every **0.5 seconds**
 of scaled game time. It uses the same selection, connection and Tournament-pair
 policy as other friendly-fire effects. Casual friendly fire, Deathmatch and
 Tournament share this limit; clients need no addon or new assets.
@@ -189,14 +199,14 @@ player-combo, damage/event/FX anchors and ordering. `Networkavatar` and
 matching the installed IL's member identity. Changed contracts follow existing
 friendly-fire installation rollback instead of leaving partial hooks active.
 
-Executable coverage includes independent pairs, 0.25-second boundaries, burn/FX,
+Executable coverage includes independent pairs, 0.5-second boundaries, burn/FX,
 death during a burst, ordinary enemies, off/zero, client execution, selection,
 Tournament exclusion, reconnect/run/floor/epoch changes, component pooling,
 recursive callbacks, exceptions and warmed allocations. Installed-game checks
 verify both native entry paths and reject missing/reordered anchors. The game
 assembly fingerprint remains the one recorded in [domain findings](domain-findings.md).
 Live balance, Unity pause behavior and stock-guest presentation still require
-in-game testing; 0.25 seconds is a tuning value, not a measured optimum.
+in-game testing; 0.5 seconds is a tuning value, not a measured optimum.
 
 Verification: 1,002 executable combat checks, 1,905 runtime integration checks
 (plus 69 Bat lifecycle checks), 41,176 Tournament scheduler checks, and the full

@@ -6,7 +6,7 @@ namespace SephiriaOne
 {
     internal static partial class FriendlyFireRuntime
     {
-        internal const float DarkCloudPlayerInterval = 0.25f;
+        internal const float DarkCloudPlayerInterval = 0.5f;
 
         private sealed class DarkCloudTargets
         {

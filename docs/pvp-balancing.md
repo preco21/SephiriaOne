@@ -458,8 +458,9 @@ all tables. No new per-frame scans, custom guest state or network messages exist
 
 ## Dark Cloud
 
-The attacker/player-pair strike limit is **0.25 seconds** since `0.55.2`
-(2026-10-15), reduced from 0.5 seconds. It remains separate from the shared
+The attacker/player-pair strike limit is **0.5 seconds** since `0.62.1`
+(2026-10-18), increased from the 0.25-second setting in `0.55.2`. It remains
+separate from the shared
 70% HP/s default budget and is part of the balancing toggle.
 **When balancing is off, that limit is off too**, even if friendly fire
 is on. All other Dark Cloud behavior remains as recorded in the

@@ -14,6 +14,11 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+- `0.62.1`: Dark Cloud's balanced PvP strike interval increases from 0.25 to
+  0.5 seconds per attacker/opponent. Boundary regressions cover rejected strikes,
+  burn/FX suppression and admitted queued strikes; the existing budget, other
+  debuff intervals, toggle scope and native PvE behavior remain unchanged.
+
 - `0.62.0`: [Costume role notices](costume-role-notices.md) add current-state,
   recipient-only EN/KO summaries for Rabbit, Mole, Farmer Squirrel and Turtle.
   Shared session/connection lifetimes prevent stale re-entry messages; actual

@@ -1,6 +1,10 @@
 # Development knowledge index
 
-Maintained: 2026-10-18 (Asia/Seoul), addon `0.62.0`.
+Maintained: 2026-10-18 (Asia/Seoul), addon `0.62.1`.
+
+PvP tuning: [Dark Cloud](pvp-balancing.md#dark-cloud) now admits one strike per
+attacker/opponent every 0.5 seconds while balancing is enabled. Other effect
+intervals, the shared damage budget and native enemy behavior are unchanged.
 
 Costumes: [current role summaries](costume-role-notices.md) privately describe
 Rabbit healing and companion bonuses on equip/re-entry, using only enabled,
