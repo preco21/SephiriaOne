@@ -1,4 +1,4 @@
-# Zombie Survival (0.64.0, 2026-10-18)
+# Zombie Survival (0.64.1, 2026-10-18)
 
 Host-controlled team mode built on `CombatMatchRuntime`, alongside Deathmatch,
 Tournament and Play Tag. Uses native damage, death, revival, chat/bubbles and
@@ -20,8 +20,8 @@ independent Zombie refill/incoming-damage controls. Equivalent host commands:
 | `/one zombie duration 120` | Next match's duration; 3..3600 whole seconds, default 120 |
 | `/one zombie duration reset` | Restore 120 seconds |
 | `/one zombie any-death on` / `off` / `reset` | Convert on any completed Human death; default/reset off |
-| `/one zombie refill on` / `off` / `x2` / `reset` | Zombie refill multiplier, initially on, default x2, range 0.1..10 |
-| `/one zombie damage on` / `off` / `75%` / `reset` | Zombie incoming PvP damage, initially on, default 75%, range 0..100 |
+| `/one zombie refill on` / `off` / `x3` / `reset` | Zombie refill multiplier, initially on, default x3, range 0.1..10 |
+| `/one zombie damage on` / `off` / `50%` / `reset` | Zombie incoming PvP damage, initially on, default 50%, range 0..100 |
 | `/one zombie resetkda` | Reset shared K/D/A and matchup records; keep teams and timer |
 | `/one save` | Persist settings only; nondefault Zombie settings use preset v31 |
 
@@ -30,6 +30,15 @@ the global PvP damage-budget refill and requires PvP balancing. Incoming damage
 follows Play Tag semantics: it applies to admitted opposing-player hits even
 when global balancing is off. It never affects PvE damage. Neither modifier
 changes native character stats. Edits do not reset or replenish spent budgets.
+
+## Default tuning (0.64.1)
+
+Zombie defaults and reset values are now x3 refill / 50% incoming damage, both
+still enabled. These are mode-specific defaults; Play Tag remains x2 / 75%.
+Fresh sessions and preset rows with omitted values use the new defaults. Explicit
+saved custom values remain intact, including an explicitly saved x2 or 75%.
+Use `/one zombie refill reset` and `/one zombie damage reset` to adopt the new
+values over an existing override, then `/one save` if desired.
 
 ## Match rules
 
@@ -91,7 +100,7 @@ Roster scans are bounded by session size, respawn observation reuses the existin
 
 ## Verification and live checks
 
-Release build: zero warnings/errors. Runtime suite: 2,688 integration checks plus
+Release build: zero warnings/errors. Runtime suite: 2,691 integration checks plus
 69 Bat lifecycle checks. Friendly-fire executable hooks: 4,871 checks. Full
 portable/catalog/installed-game compatibility runner passes, including strict
 presets, EN/KO parity, native death/revive/transport contracts, team policy, UI

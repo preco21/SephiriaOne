@@ -8,8 +8,9 @@ namespace SephiriaOne
     {
         public int ZombieDuration { get; private set; } = ZombieSurvivalSettings.DefaultDuration;
         public bool ZombieAnyDeath { get; private set; }
-        public CombatRoleSettings ZombieModifiers { get; private set; }
-        private bool HasZombieChanges => ZombieDuration != ZombieSurvivalSettings.DefaultDuration || ZombieAnyDeath || ZombieModifiers.HasChanges;
+        public CombatRoleSettings ZombieModifiers { get; private set; } = ZombieSurvivalSettings.DefaultModifiers;
+        private bool HasZombieChanges => ZombieDuration != ZombieSurvivalSettings.DefaultDuration || ZombieAnyDeath ||
+            !ZombieModifiers.Equals(ZombieSurvivalSettings.DefaultModifiers);
         public void RecordZombieDuration(int seconds)
         {
             if (!ZombieSurvivalSettings.ValidDuration(seconds)) throw new ArgumentOutOfRangeException(nameof(seconds));
@@ -18,15 +19,15 @@ namespace SephiriaOne
         public void RecordZombieAnyDeath(bool value) => ZombieAnyDeath = value;
         public void RecordZombieModifiers(CombatRoleSettings settings) => ZombieModifiers = settings;
         private void ClearZombieSettings()
-        { ZombieDuration = ZombieSurvivalSettings.DefaultDuration; ZombieAnyDeath = false; ZombieModifiers = default; }
+        { ZombieDuration = ZombieSurvivalSettings.DefaultDuration; ZombieAnyDeath = false; ZombieModifiers = ZombieSurvivalSettings.DefaultModifiers; }
         private void DescribeZombieSettings(List<string> lines)
         {
             if (ZombieDuration != ZombieSurvivalSettings.DefaultDuration) lines.Add("zombie duration " + ZombieDuration.ToString(CultureInfo.InvariantCulture));
             if (ZombieAnyDeath) lines.Add("zombie any-death 1");
             if (!ZombieModifiers.RefillEnabled) lines.Add("zombie refill-enabled 0");
-            if (ZombieModifiers.RefillMultiplier != CombatRoleSettings.DefaultRefillMultiplier) lines.Add("zombie refill " + ZombieModifiers.RefillNumber);
+            if (ZombieModifiers.RefillMultiplier != ZombieSurvivalSettings.DefaultRefillMultiplier) lines.Add("zombie refill " + ZombieModifiers.RefillNumber);
             if (!ZombieModifiers.IncomingEnabled) lines.Add("zombie damage-enabled 0");
-            if (ZombieModifiers.IncomingPercent != CombatRoleSettings.DefaultIncomingPercent) lines.Add("zombie damage " + ZombieModifiers.IncomingNumber);
+            if (ZombieModifiers.IncomingPercent != ZombieSurvivalSettings.DefaultIncomingPercent) lines.Add("zombie damage " + ZombieModifiers.IncomingNumber);
         }
         private bool ReadZombieSetting(string key, string text, decimal value)
         {

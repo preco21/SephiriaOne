@@ -1,6 +1,6 @@
 # Development knowledge index
 
-Maintained: 2026-10-18 (Asia/Seoul), addon `0.64.0`.
+Maintained: 2026-10-18 (Asia/Seoul), addon `0.64.1`.
 
 Team mode: [Zombie Survival](zombie-survival.md) reuses shared participants,
 countdown, one-second recovery, hostility, K/D/A and role modifiers. Zombie kills

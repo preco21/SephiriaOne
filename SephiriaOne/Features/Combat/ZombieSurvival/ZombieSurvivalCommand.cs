@@ -6,7 +6,7 @@ namespace SephiriaOne
     internal static class ZombieSurvivalCommand
     {
         internal static string Usage => L.T("Zombie Survival: /one zombie start|stop|resetkda|status|help; duration 3..3600|reset (default 120s); any-death on|off|reset (default off). Duration applies to the next match; other settings apply live. /one save stores settings.") + " " +
-            L.T("Zombie bonuses: /one zombie refill on|off|xN|N|reset (0.1..10, default x2); damage on|off|N%|N|reset (0..100, default 75%). Both default on; up to 2 decimals. Refill requires PvP balancing.");
+            L.T("Zombie bonuses: /one zombie refill on|off|xN|N|reset (0.1..10, default x3); damage on|off|N%|N|reset (0..100, default 50%). Both default on; up to 2 decimals. Refill requires PvP balancing.");
         internal static string DescribeModifiers()
         {
             var settings = SessionSettings.ZombieModifiers;
@@ -56,7 +56,7 @@ namespace SephiriaOne
                 if (value == "on" || value == "off")
                     settings = refill ? settings.WithRefill(enabled: value == "on") : settings.WithIncoming(enabled: value == "on");
                 else if (value == "reset")
-                    settings = refill ? settings.WithRefill(true, CombatRoleSettings.DefaultRefillMultiplier) : settings.WithIncoming(true, CombatRoleSettings.DefaultIncomingPercent);
+                    settings = refill ? settings.WithRefill(true, ZombieSurvivalSettings.DefaultRefillMultiplier) : settings.WithIncoming(true, ZombieSurvivalSettings.DefaultIncomingPercent);
                 else if (CombatRoleSettings.TryNumber(value, refill, out decimal number))
                     settings = refill ? settings.WithRefill(multiplier: number) : settings.WithIncoming(percent: number);
                 else return true;

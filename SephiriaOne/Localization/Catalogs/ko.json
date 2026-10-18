@@ -801,7 +801,7 @@
   "Zombie Survival duration set to {0} seconds for the next match.": "다음 좀비 생존 경기의 제한 시간을 {0}초로 설정했습니다.",
   "Convert on any Human death: {0}.": "인간의 모든 사망 시 감염: {0}.",
   "Zombie Survival: /one zombie start|stop|resetkda|status|help; duration 3..3600|reset (default 120s); any-death on|off|reset (default off). Duration applies to the next match; other settings apply live. /one save stores settings.": "좀비 생존: /one zombie start|stop|resetkda|status|help; duration 3..3600|reset (기본 120초); any-death on|off|reset (기본 off). 시간은 다음 경기에, 나머지는 즉시 적용됩니다. /one save로 설정을 저장합니다.",
-  "Zombie bonuses: /one zombie refill on|off|xN|N|reset (0.1..10, default x2); damage on|off|N%|N|reset (0..100, default 75%). Both default on; up to 2 decimals. Refill requires PvP balancing.": "좀비 보너스: /one zombie refill on|off|xN|N|reset (0.1..10, 기본 x2); damage on|off|N%|N|reset (0..100, 기본 75%). 둘 다 기본 on, 소수 둘째 자리까지. 충전 배율은 PvP 밸런싱이 필요합니다.",
+  "Zombie bonuses: /one zombie refill on|off|xN|N|reset (0.1..10, default x3); damage on|off|N%|N|reset (0..100, default 50%). Both default on; up to 2 decimals. Refill requires PvP balancing.": "좀비 보너스: /one zombie refill on|off|xN|N|reset (0.1..10, 기본 x3); damage on|off|N%|N|reset (0..100, 기본 50%). 둘 다 기본 on, 소수 둘째 자리까지. 충전 배율은 PvP 밸런싱이 필요합니다.",
   "Zombie refill: {0} (x{1}, PvP balancing only); incoming damage: {2} ({3}%).": "좀비 충전: {0} (x{1}, PvP 밸런싱 전용); 받는 피해: {2} ({3}%).",
   "Only the host can control Zombie Survival.": "호스트만 좀비 생존을 제어할 수 있습니다.",
   "No Zombie Survival match is running.": "진행 중인 좀비 생존 경기가 없습니다.",

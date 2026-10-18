@@ -45,7 +45,7 @@ internal static class ZombieSurvivalRuntimeTests
             !CombatMatchRuntime.AllowsPair(humans[0], humans[1]) && !CombatMatchRuntime.AllowsPair(zombie, zombie), "Only opposite teams are hostile");
         var late = add(20).PlayerAvatar;
         check(!CombatMatchRuntime.AllowsPair(zombie, late) && !CombatMatchRuntime.AllowsParticipant(late), "Late joiner is a spectator");
-        check(CombatMatchRuntime.RefillRoleScale(zombie) == 2 && CombatMatchRuntime.IncomingRoleScale(zombie) == .75 &&
+        check(CombatMatchRuntime.RefillRoleScale(zombie) == 3 && CombatMatchRuntime.IncomingRoleScale(zombie) == .5 &&
             CombatMatchRuntime.RefillRoleScale(humans[0]) == 1, "Zombie modifiers are independent active-role values");
         Kill(zombie, humans[0]);
         check(humans[0].IsDead && !CombatMatchRuntime.IsActiveZombie(humans[0]) &&
@@ -55,7 +55,7 @@ internal static class ZombieSurvivalRuntimeTests
         At(4);
         check(!humans[0].IsDead && CombatMatchRuntime.IsActiveZombie(humans[0]) &&
             CombatMatchRuntime.AllowsPair(humans[0], humans[1]) && !CombatMatchRuntime.AllowsPair(humans[0], zombie), "Successful revive applies Zombie role to every pair query");
-        check(CombatMatchRuntime.IncomingRoleScale(humans[0]) == .75, "Converted Zombie immediately inherits balancing");
+        check(CombatMatchRuntime.IncomingRoleScale(humans[0]) == .5, "Converted Zombie immediately inherits balancing");
         Kill(humans[1], humans[0]); At(5);
         check(CombatMatchRuntime.IsActiveZombie(humans[0]), "Killed Zombie respawns on its existing team");
         humans[1].Die(0, null); At(6);
