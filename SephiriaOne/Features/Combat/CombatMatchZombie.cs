@@ -43,6 +43,12 @@ namespace SephiriaOne
         internal static bool IsActiveZombie(PlayerAvatar player) => CurrentZombieCombat && player && !player.IsDead &&
             TryZombieIndex(player, out int index) && zombieRound.IsZombie(index) && !zombieRound.IsPending(index);
 
+        // Presentation remains attached during death/pending conversion; combat
+        // bonuses and hostility still require successful revival above.
+        internal static bool IsZombieVisualCurrent(PlayerAvatar player, FriendlyFireParticipants.Receipt receipt, long match) =>
+            !stopping && phase == Phase.Active && CurrentZombieReceipt(receipt, match, out int index) &&
+            ReferenceEquals(receipt.Player, player) && zombieRound != null && zombieRound.IsZombie(index) && zombiePlayers[index].Subject.IsReady;
+
         private static bool ZombieAllowsPair(PlayerAvatar attacker, PlayerAvatar victim) => CurrentZombieCombat &&
             TryZombieIndex(attacker, out int first) && TryZombieIndex(victim, out int second) && zombieRound.AllowsPair(first, second);
 
@@ -61,6 +67,8 @@ namespace SephiriaOne
             endsAt = now + duration; RoleRevision++;
             for (int i = 0; i < zombiePlayers.Count; i++) zombieScores[i] = FriendlyFireKda.For(zombiePlayers[i].Subject.Player);
             long current = token;
+            ZombieRoleVisuals.Update(zombiePlayers[chosen].Subject.Player);
+            if (!IsZombieSurvival || current != token) return;
             Broadcast(null, L.F("[Zombie Survival] {0} is the first Zombie! Survive for {1}s.", zombieNames[chosen], duration));
             for (int i = 0; i < zombiePlayers.Count && IsZombieSurvival && current == token; i++)
                 Broadcast(zombiePlayers[i].Subject.Player, L.T(i == chosen ?
@@ -100,6 +108,10 @@ namespace SephiriaOne
                 Stop(true, true); return;
             }
             int remaining = (int)Math.Ceiling(endsAt - now);
+            long current = token;
+            for (int i = 0; i < zombiePlayers.Count && IsZombieSurvival && current == token; i++)
+                if (zombieRound.IsZombie(i)) ZombieRoleVisuals.Update(zombiePlayers[i].Subject.Player);
+            if (!IsZombieSurvival || current != token) return;
             if (remaining != zombieTimeShown && (remaining <= 10 || remaining % 30 == 0))
             {
                 zombieTimeShown = remaining;
@@ -134,6 +146,9 @@ namespace SephiriaOne
             if (!zombieRound.Infect(index)) return;
             FriendlyFireKda.ForgetContributions(zombiePlayers[index].Subject.Player);
             RoleRevision++;
+            long current = token;
+            ZombieRoleVisuals.Update(zombiePlayers[index].Subject.Player);
+            if (!IsZombieSurvival || current != token) return;
             Broadcast(zombiePlayers[index].Subject.Player, L.T("[Zombie Survival] Infected! You join the Zombies after respawning."));
         }
 
@@ -161,6 +176,7 @@ namespace SephiriaOne
 
         private static void ClearZombie()
         {
+            ZombieRoleVisuals.Clear();
             zombieRound = null; zombieScores = null; zombieNames = null; zombieOutcome = null; zombieTimeShown = -1;
             zombiePlayers.Clear(); zombieRoster.Clear(); RoleRevision++;
         }

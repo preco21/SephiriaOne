@@ -1,6 +1,11 @@
 # Development knowledge index
 
-Maintained: 2026-10-18 (Asia/Seoul), addon `0.64.1`.
+Maintained: 2026-10-18 (Asia/Seoul), addon `0.65.0`.
+
+Zombie presentation: [persistent role particles](zombie-role-visual.md) reuse the
+native Poison loop as a separately owned cosmetic carrier. Current Zombies keep
+it through respawn; shared match cleanup removes it. No gameplay debuff is applied.
+Native stock-client transport is checked; live multiplayer rendering remains unverified.
 
 Team mode: [Zombie Survival](zombie-survival.md) reuses shared participants,
 countdown, one-second recovery, hostility, K/D/A and role modifiers. Zombie kills

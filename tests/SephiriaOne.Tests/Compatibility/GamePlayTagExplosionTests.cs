@@ -16,7 +16,7 @@ internal static class GamePlayTagExplosionTests
         var server = mirror.GetType("Mirror.NetworkServer", true)!;
         var client = mirror.GetType("Mirror.NetworkClient", true)!;
         Require((bool)AccessTools.DeclaredMethod(adapter, "ValidateNativeCode").Invoke(null, null)!, "audited game and Mirror fingerprints");
-        var hash = AccessTools.DeclaredMethod(adapter, "MatchesAssembly");
+        var hash = AccessTools.DeclaredMethod(addon.GetType("SephiriaOne.NativeAssemblyContract", true), "Matches");
         Require(!(bool)hash.Invoke(null, new object[] { game, new string('0', 64) })!, "changed assembly fails closed");
 
         var update = Code(bullet, "Update");

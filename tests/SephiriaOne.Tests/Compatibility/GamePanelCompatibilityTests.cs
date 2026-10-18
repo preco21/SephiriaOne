@@ -7,6 +7,7 @@ internal static class GamePanelCompatibilityTests
     {
         GamePlayTagControlsTests.Run(addon);
         GameZombieTests.Run(addon);
+        GameZombieVisualTests.Run(game, addon);
         GameHotkeyCompatibilityTests.Run(game, addon);
         var ui = game.GetType("UIBase", true)!;
         var root = game.GetType("UIRoot", true)!;

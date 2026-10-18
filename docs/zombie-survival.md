@@ -1,4 +1,8 @@
-# Zombie Survival (0.64.1, 2026-10-18)
+# Zombie Survival (0.65.0, 2026-10-18)
+
+Current Zombies have a [persistent native particle indicator](zombie-role-visual.md),
+including while awaiting revival. It is cosmetic, uses stock guest transport,
+and clears with the shared match lifecycle. Live guest rendering remains to be checked.
 
 Host-controlled team mode built on `CombatMatchRuntime`, alongside Deathmatch,
 Tournament and Play Tag. Uses native damage, death, revival, chat/bubbles and

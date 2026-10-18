@@ -11,6 +11,7 @@ internal static class ZombieSurvivalRuntimeTests
         add(2);
         check(SettingsActions.Execute("/one zombie start").Success, "Zombie Survival starts with two current participants");
         check(!SessionSettings.FriendlyFireForHit.Enabled, "Zombie countdown blocks PvP combat");
+        check(ZombieRoleVisuals.Visible.Count == 0, "Countdown has no Zombie role indicators");
         CombatMatchRuntime.Stop(true, false);
 
         var harmony = new Harmony("Zombie.integration.tests");
@@ -41,6 +42,7 @@ internal static class ZombieSurvivalRuntimeTests
         var all = New(); Begin();
         var zombie = all.Single(CombatMatchRuntime.IsActiveZombie);
         var humans = all.Where(p => p != zombie).ToArray();
+        check(ZombieRoleVisuals.Visible.SetEquals(new[] { zombie }), "Only the initial Zombie owns a sustained role visual");
         check(CombatMatchRuntime.AllowsPair(zombie, humans[0]) && CombatMatchRuntime.AllowsPair(humans[0], zombie) &&
             !CombatMatchRuntime.AllowsPair(humans[0], humans[1]) && !CombatMatchRuntime.AllowsPair(zombie, zombie), "Only opposite teams are hostile");
         var late = add(20).PlayerAvatar;
@@ -48,6 +50,7 @@ internal static class ZombieSurvivalRuntimeTests
         check(CombatMatchRuntime.RefillRoleScale(zombie) == 3 && CombatMatchRuntime.IncomingRoleScale(zombie) == .5 &&
             CombatMatchRuntime.RefillRoleScale(humans[0]) == 1, "Zombie modifiers are independent active-role values");
         Kill(zombie, humans[0]);
+        check(ZombieRoleVisuals.Visible.Contains(humans[0]), "Infection indicator starts during pending conversion and follows the corpse");
         check(humans[0].IsDead && !CombatMatchRuntime.IsActiveZombie(humans[0]) &&
             !CombatMatchRuntime.AllowsPair(humans[0], humans[1]), "Infected Human is not combat active before revival");
         check(FriendlyFireKda.For(zombie).Kills == 1 && FriendlyFireKda.For(humans[0]).Deaths == 1, "Conversion retains shared kill/death credit");
@@ -75,6 +78,7 @@ internal static class ZombieSurvivalRuntimeTests
         check(!CombatMatchRuntime.IsRunning && !humans[2].IsDead && !SessionSettings.FriendlyFireForHit.Enabled &&
             Messages("Zombies win!") && all.All(p => Messages(p.Name + " - Zombie (")), "Last infection ends match, restores pending players and reports every final team");
         check(all.All(p => CombatMatchRuntime.IncomingRoleScale(p) == 1 && CombatMatchRuntime.RefillRoleScale(p) == 1), "End removes every role bonus immediately");
+        check(ZombieRoleVisuals.Visible.Count == 0, "Natural conclusion removes every Zombie visual");
 
         all = New(2); Begin(); zombie = all.Single(CombatMatchRuntime.IsActiveZombie); var reflectedHuman = all.Single(p => p != zombie);
         // Native OnHit reflection can finish the Human death before the outer
@@ -112,6 +116,13 @@ internal static class ZombieSurvivalRuntimeTests
         PlayerSpawner.MultiplayerList.Remove(human.spawner); var replacement = add(human.netId).PlayerAvatar;
         CombatMatchRuntime.Revived(old, oldToken); At(4);
         check(!CombatMatchRuntime.IsRunning && !CombatMatchRuntime.IsActiveZombie(replacement) && !Messages("Zombies win!"), "Reconnect cancels without inheriting team or declaring victory");
+        check(ZombieRoleVisuals.Visible.Count == 0, "Reconnected participant never inherits a stale visual");
+
+        all = New(); Begin(); zombie = all.Single(CombatMatchRuntime.IsActiveZombie);
+        zombie.spawner.connectionToClient.isReady = false; At(4);
+        check(CombatMatchRuntime.IsRunning && !ZombieRoleVisuals.Visible.Contains(zombie), "Loading removes a temporarily unavailable target's indicator");
+        zombie.spawner.connectionToClient.isReady = true; At(5);
+        check(ZombieRoleVisuals.Visible.SetEquals(new[] { zombie }), "Readiness restores only the current Zombie indicator");
 
         foreach (string interrupt in new[] { "selection", "toggle", "stop", "run", "authority" })
         {
@@ -124,6 +135,7 @@ internal static class ZombieSurvivalRuntimeTests
             else Mirror.NetworkServer.active = false;
             At(4);
             check(!CombatMatchRuntime.IsRunning && CombatMatchRuntime.IncomingRoleScale(zombie) == 1, "Zombie cleanup on " + interrupt);
+            check(ZombieRoleVisuals.Visible.Count == 0, "Zombie visual cleanup on " + interrupt);
             if (interrupt is "selection" or "toggle" or "stop") check(!human.IsDead, "Stop recovers pending Human on " + interrupt);
         }
         all = New(); Begin(); zombie = all.Single(CombatMatchRuntime.IsActiveZombie); human = all.First(p => p != zombie);

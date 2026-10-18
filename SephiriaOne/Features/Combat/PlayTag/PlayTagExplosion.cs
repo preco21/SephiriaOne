@@ -1,9 +1,7 @@
 using System;
 using System.Collections;
-using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Security.Cryptography;
 using Mirror;
 using UnityEngine;
 
@@ -131,16 +129,7 @@ namespace SephiriaOne
         }
 
         internal static bool ValidateNativeCode() => AttackCallback != null &&
-            MatchesAssembly(typeof(Bullet).Assembly, GameHash) && MatchesAssembly(typeof(NetworkClient).Assembly, MirrorHash);
-
-        internal static bool MatchesAssembly(Assembly assembly, string expected)
-        {
-            // A whole-assembly contract is intentional here: stock-client safety
-            // depends on movement, melee, trigger, network and animation consumers.
-            using (var stream = File.OpenRead(assembly.Location))
-            using (var sha = SHA256.Create())
-                return BitConverter.ToString(sha.ComputeHash(stream)).Replace("-", "") == expected;
-        }
+            NativeAssemblyContract.Matches(typeof(Bullet).Assembly, GameHash) && NativeAssemblyContract.Matches(typeof(NetworkClient).Assembly, MirrorHash);
 
         private static bool ValidatePrefab(Bullet prefab)
         {
