@@ -99,8 +99,12 @@ Zombie rows. Strict parsing rejects duplicate/invalid rows before atomic apply.
 
 Unchanged match observation allocates no per-frame state in the runtime fixture.
 Roster scans are bounded by session size, respawn observation reuses the existing
-0.1-second cadence, and timer messages occur every 30 seconds and in the final
-10 seconds. No new coroutine, network snapshot stream or client polling loop.
+0.1-second cadence. Round-status messages use five-second remaining-time milestones
+above five seconds, then update each second for the final five seconds. Repeated
+ticks do not duplicate a notice; expiry sends the result instead of a zero-second
+countdown. The three-second opening and one-second respawn countdowns already use
+the final-five-second cadence. No new coroutine, network snapshot stream or client
+polling loop.
 
 ## Verification and live checks
 

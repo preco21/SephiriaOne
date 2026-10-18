@@ -112,7 +112,7 @@ namespace SephiriaOne
             for (int i = 0; i < zombiePlayers.Count && IsZombieSurvival && current == token; i++)
                 if (zombieRound.IsZombie(i)) ZombieRoleVisuals.Update(zombiePlayers[i].Subject.Player);
             if (!IsZombieSurvival || current != token) return;
-            if (remaining != zombieTimeShown && (remaining <= 10 || remaining % 30 == 0))
+            if (remaining != zombieTimeShown && (remaining <= 5 || remaining % 5 == 0))
             {
                 zombieTimeShown = remaining;
                 Broadcast(null, L.F("[Zombie Survival] {0}s left. Humans: {1}; Zombies: {2}.", remaining, zombieRound.Humans, zombiePlayers.Count - zombieRound.Humans));
