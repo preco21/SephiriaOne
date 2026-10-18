@@ -67,6 +67,7 @@ if (args.Length == 1 && (args[0] == "--perf" || args[0] == "--perf-check"))
 if (args.Length == 1 && args[0] == "--participants")
 {
     FriendlyFireParticipantTests.Run(Start, id => Add(id), Check);
+    LargePartyCombatTests.Run(Start, id => Add(id), Check);
     Console.WriteLine($"Passed {checks} participant lifecycle checks.");
     return;
 }
@@ -781,6 +782,7 @@ FriendlyFireScoreResetTests.Run(Start, id => Add(id), Check);
 FriendlyFireSelectionTests.Run(Start, id => Add(id), Check);
 FriendlyFireParticipantTests.Run(Start, id => Add(id), Check);
 ReviveAllTests.Run(Start, id => Add(id), Check);
+LargePartyCombatTests.Run(Start, id => Add(id), Check);
 DeathmatchTests.Run(Start, id => Add(id), Check);
 TournamentControlsTests.Run(Start, id => Add(id), Check);
 TournamentRuntimeTests.Run(Start, id => Add(id), Check);

@@ -1,6 +1,12 @@
 # Development knowledge index
 
-Maintained: 2026-10-18 (Asia/Seoul), addon `0.65.0`.
+Maintained: 2026-10-18 (Asia/Seoul), addon `0.65.1`.
+
+Lifecycle fix: [repeated addon loading and lobby combat](addon-reload-and-lobby-combat.md)
+traces duplicate hook failures to native loader rescans without unloading. Shared
+entry ownership prevents stacked hooks/controllers and preserves correct cleanup.
+Nine-player fixtures cover all combat modes and independent damage budgets;
+intentional throttling and the native fractional MP-shield limitation are documented.
 
 Zombie presentation: [persistent role particles](zombie-role-visual.md) reuse the
 native Poison loop as a separately owned cosmetic carrier. Current Zombies keep
