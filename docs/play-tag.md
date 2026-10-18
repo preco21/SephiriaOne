@@ -121,7 +121,10 @@ remain unchanged. Incoming 75% means 25% less otherwise-resolved player damage;
 it also works when PvP balancing is off. Zero means no incoming player damage,
 but does not disable native debuff/effect application.
 
-`PlayTagChaserSettings` belongs to shared session policy. The common
+`CombatRoleSettings` (formerly `PlayTagChaserSettings`, generalized in 0.64.0)
+belongs to shared session policy. Tag and Zombie Survival keep independent
+configuration while sharing parsing, impact-time role selection and budget
+revision handling; Tag commands and defaults are unchanged. The common
 `FriendlyFireRuntime.Scale` boundary reads `CombatMatchRuntime.IsActiveChaser`
 at impact, using the actual current receipt, run, phase, living avatar and armed
 fuse. Direct attacks, companions, reflection and debuffs retain the existing

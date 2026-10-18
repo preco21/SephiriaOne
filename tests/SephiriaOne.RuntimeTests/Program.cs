@@ -785,6 +785,8 @@ DeathmatchTests.Run(Start, id => Add(id), Check);
 TournamentControlsTests.Run(Start, id => Add(id), Check);
 TournamentRuntimeTests.Run(Start, id => Add(id), Check);
 PlayTagControlsTests.Run(Start, id => Add(id), Check);
+ZombieSurvivalRuntimeTests.Run(Start, id => Add(id), Check);
+ZombieSurvivalControlsTests.Run(Start, Check);
 PlayTagRuntimeTests.Run(Start, id => Add(id), Check);
 PlayTagChaserRuntimeTests.Run(Start, id => Add(id), Check);
 KilledByRuntimeTests.Run(Start, id => Add(id), Check);

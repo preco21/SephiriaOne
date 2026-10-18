@@ -40,14 +40,14 @@ internal static class PlayTagPolicyTests
         const string chaserPreset = "SephiriaOne preset v26\ntag chaser-refill-enabled 0\ntag chaser-refill 3.25\ntag chaser-damage-enabled 0\ntag chaser-damage 45.5\n";
         Check(SessionPolicy.TryReadPreset(chaserPreset, out var chaserPolicy, out _) &&
             chaserPolicy.ToPresetText() == chaserPreset, "Chaser toggles and numbers round-trip in preset v26");
-        var defaultsChaser = default(PlayTagChaserSettings);
+        var defaultsChaser = default(CombatRoleSettings);
         Check(defaultsChaser.RefillEnabled && defaultsChaser.RefillMultiplier == 2 && defaultsChaser.RefillScale == 2 &&
             defaultsChaser.IncomingEnabled && defaultsChaser.IncomingPercent == 75 && defaultsChaser.IncomingScale == 0.75 &&
             !defaultsChaser.HasChanges && defaultsChaser.RefillNumber == "2" && defaultsChaser.IncomingNumber == "75",
             "Default-safe chaser values enable x2 refill and 75% incoming damage");
         var changedChaser = defaultsChaser.WithRefill(false, 3.25m).WithIncoming(false, 45.5m);
-        Check(changedChaser.Equals(new PlayTagChaserSettings(false, 3.25m, false, 45.5m)) &&
-            changedChaser.GetHashCode() == new PlayTagChaserSettings(false, 3.25m, false, 45.5m).GetHashCode() &&
+        Check(changedChaser.Equals(new CombatRoleSettings(false, 3.25m, false, 45.5m)) &&
+            changedChaser.GetHashCode() == new CombatRoleSettings(false, 3.25m, false, 45.5m).GetHashCode() &&
             changedChaser.RefillScale == 3.25 && changedChaser.IncomingScale == 0.455 && changedChaser.HasChanges,
             "Disabled chaser options retain exact configured values and equality");
         Check(changedChaser.WithRefill(true).WithIncoming(true).RefillMultiplier == 3.25m &&
@@ -56,19 +56,19 @@ internal static class PlayTagPolicyTests
         Check(changedChaser.WithRefill(true, 2).WithIncoming(true, 75).Equals(defaultsChaser),
             "Restoring both defaults removes chaser changes");
         foreach (decimal value in new[] { 0.1m, 0.11m, 2m, 9.99m, 10m })
-            Check(PlayTagChaserSettings.ValidRefillMultiplier(value), "Accept chaser refill " + value);
+            Check(CombatRoleSettings.ValidRefillMultiplier(value), "Accept chaser refill " + value);
         foreach (decimal value in new[] { -1m, 0m, 0.09m, 10.01m, 1.001m, decimal.MaxValue })
         {
-            Check(!PlayTagChaserSettings.ValidRefillMultiplier(value), "Reject chaser refill " + value);
+            Check(!CombatRoleSettings.ValidRefillMultiplier(value), "Reject chaser refill " + value);
             bool rejected = false;
             try { _ = defaultsChaser.WithRefill(multiplier: value); } catch (ArgumentOutOfRangeException) { rejected = true; }
             Check(rejected, "Invalid refill cannot enter policy " + value);
         }
         foreach (decimal value in new[] { 0m, 0.01m, 75m, 99.99m, 100m })
-            Check(PlayTagChaserSettings.ValidIncomingPercent(value), "Accept chaser incoming percent " + value);
+            Check(CombatRoleSettings.ValidIncomingPercent(value), "Accept chaser incoming percent " + value);
         foreach (decimal value in new[] { -0.01m, 100.01m, 1.001m, decimal.MaxValue })
         {
-            Check(!PlayTagChaserSettings.ValidIncomingPercent(value), "Reject chaser incoming percent " + value);
+            Check(!CombatRoleSettings.ValidIncomingPercent(value), "Reject chaser incoming percent " + value);
             bool rejected = false;
             try { _ = defaultsChaser.WithIncoming(percent: value); } catch (ArgumentOutOfRangeException) { rejected = true; }
             Check(rejected, "Invalid incoming percent cannot enter policy " + value);

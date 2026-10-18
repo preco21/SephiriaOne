@@ -27,7 +27,7 @@ internal static class GamePlayTagControlsTests
                 "Scope and close reset clears " + name + " draft");
         }
         var refreshTag = Code(addon, "SephiriaOne.SettingsPanel", "RefreshPlayTag");
-        Require(Calls(refreshTag, "PlayTagChaserSettings", "get_RefillNumber") && Calls(refreshTag, "PlayTagChaserSettings", "get_IncomingNumber") &&
+        Require(Calls(refreshTag, "CombatRoleSettings", "get_RefillNumber") && Calls(refreshTag, "CombatRoleSettings", "get_IncomingNumber") &&
             Calls(refreshTag, "TMP_InputField", "SetTextWithoutNotify"), "Tag refresh uses canonical policy values without recursive events");
 
     }

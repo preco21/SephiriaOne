@@ -16,6 +16,18 @@ A different game build requires renewed contract/asset checks. Start with the
 
 ## State lifetimes and multiplayer
 
+Team-changing modes can reuse the existing match pair policy without changing
+native factions or character stats. Infection has separate committed/pending and
+combat-active states: an infected player leaves their old team's targeting policy
+immediately but gains the new role's combat bonuses only after successful native
+revival. Remove their former assist contributions against new teammates without
+resetting shared scores or other pending death notices. A last infection commits
+the outcome before the deadline, but conclude/recover on the next tick: native
+reflection may finish an inner death before the enclosing lethal attack calls
+its own victim's `Die`. All affected avatars must still belong to recovery.
+`CombatRoleSettings`/`CombatMatchRoles` now share Tag and Zombie impact-time
+modifiers and conservative budget revisions. See [Zombie Survival](zombie-survival.md).
+
 Cutscene progression authority does not imply presentation-clock authority.
 `NetworkCutScenePlayer` broadcasts graph/node identity and termination, while
 guests run local coroutines; an earlier end stops their presentation rather than

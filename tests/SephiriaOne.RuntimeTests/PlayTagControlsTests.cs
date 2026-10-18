@@ -27,12 +27,12 @@ internal static class PlayTagControlsTests
             "Play Tag chaser settings use the shared host dispatcher");
         check(SessionSettings.PlayTagChaser.RefillMultiplier == 3.25m && SessionSettings.PlayTagChaser.IncomingPercent == 45.5m,
             "Chaser commands retain exact configured decimals");
-        long chaserRevision = CombatMatchRuntime.ChaserRevision;
-        check(SettingsActions.Execute("/ONE TAG CHASER-REFILL X3.25").Success && CombatMatchRuntime.ChaserRevision == chaserRevision,
+        long chaserRevision = CombatMatchRuntime.RoleRevision;
+        check(SettingsActions.Execute("/ONE TAG CHASER-REFILL X3.25").Success && CombatMatchRuntime.RoleRevision == chaserRevision,
             "Case-insensitive equivalent chaser settings do not advance runtime revision");
         check(SettingsActions.Execute("/one tag chaser-refill off").Success && !SessionSettings.PlayTagChaser.RefillEnabled &&
             SessionSettings.PlayTagChaser.RefillMultiplier == 3.25m && SessionSettings.PlayTagChaser.IncomingEnabled &&
-            CombatMatchRuntime.ChaserRevision != chaserRevision, "Refill toggle is independent and retains its configured value");
+            CombatMatchRuntime.RoleRevision != chaserRevision, "Refill toggle is independent and retains its configured value");
         check(SettingsActions.Execute("/one tag chaser-damage off").Success && !SessionSettings.PlayTagChaser.IncomingEnabled &&
             SessionSettings.PlayTagChaser.IncomingPercent == 45.5m, "Incoming toggle retains its configured value");
         check(SettingsActions.Execute("/one tag status").Messages.Any(x => x.Contains("x3.25") && x.Contains("45.5%")),
@@ -45,13 +45,13 @@ internal static class PlayTagControlsTests
         check(SettingsActions.Execute("/one tag chaser-refill reset").Success && SessionSettings.PlayTagChaser.RefillEnabled &&
             SessionSettings.PlayTagChaser.RefillMultiplier == 2 && !SessionSettings.PlayTagChaser.IncomingEnabled &&
             SessionSettings.PlayTagChaser.IncomingPercent == 45.5m, "Refill reset restores only refill enabled/default state");
-        check(SettingsActions.Execute("/one tag chaser-damage reset").Success && SessionSettings.PlayTagChaser.Equals(default(PlayTagChaserSettings)),
+        check(SettingsActions.Execute("/one tag chaser-damage reset").Success && SessionSettings.PlayTagChaser.Equals(default(CombatRoleSettings)),
             "Incoming reset restores enabled/default state");
         foreach (string command in new[] { "chaser-refill 0", "chaser-refill 10.01", "chaser-refill 1.001", "chaser-refill 2.000",
             "chaser-refill +2", "chaser-refill -1", "chaser-refill NaN", "chaser-refill 2%", "chaser-refill x", "chaser-refill 1e1",
             "chaser-damage -1", "chaser-damage 100.01", "chaser-damage 75.001", "chaser-damage 75.000", "chaser-damage x2",
             "chaser-damage +75", "chaser-damage 75%%", "chaser-refill", "chaser-damage", "chaser-refill on extra", "chaser-damage reset extra" })
-            check(!SettingsActions.Execute("/one tag " + command).Success && SessionSettings.PlayTagChaser.Equals(default(PlayTagChaserSettings)),
+            check(!SettingsActions.Execute("/one tag " + command).Success && SessionSettings.PlayTagChaser.Equals(default(CombatRoleSettings)),
                 "Invalid chaser command cannot mutate configuration: " + command);
         foreach (string command in new[] { "chaser-refill 0.1", "chaser-refill x10", "chaser-damage 0%", "chaser-damage 100", "chaser-refill off",
             "chaser-refill on", "chaser-damage off", "chaser-damage on", "chaser-refill reset", "chaser-damage reset" })
@@ -173,7 +173,7 @@ internal static class PlayTagControlsTests
         File.WriteAllText(Path.Combine(presetFolder, "session-preset.txt"),
             "SephiriaOne preset v26\ntag chaser-refill 4\ntag chaser-damage-enabled 0\ntag chaser-damage 50\n");
         check(SettingsActions.Execute("/one tag chaser-refill off").Success &&
-            SessionSettings.PlayTagChaser.Equals(new PlayTagChaserSettings(false, 4, false, 50)),
+            SessionSettings.PlayTagChaser.Equals(new CombatRoleSettings(false, 4, false, 50)),
             "First command before synchronization preserves loaded preset numbers and sibling option");
         SessionSettings.Stop(); SessionSettings.Start();
         check(SettingsActions.Execute("/one tag status").Messages.Any(x => x.Contains("x4") && x.Contains("50%")),

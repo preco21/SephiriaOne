@@ -13,7 +13,7 @@ namespace SephiriaOne
             token++; tagRound++;
             phase = Phase.BetweenRounds;
             tagBomb = null; tagShown = -1; tagPreviousName = null;
-            ChaserRevision++;
+            RoleRevision++;
             FriendlyFireParticipants.InvalidateCombat();
             SessionSettings.DeathmatchChanged();
         }

@@ -18,6 +18,7 @@ namespace SephiriaOne
             internal FriendlyFireParticipants.Receipt KillerReceipt, VictimReceipt;
             internal long MatchToken;
             internal bool Exceptional, SuppressPresentation;
+            internal bool ConvertAnyDeath;
         }
 
         internal struct ReviveNotice
@@ -35,6 +36,7 @@ namespace SephiriaOne
                 __state.MatchDeath = CombatMatchRuntime.EnterDeath(dying);
                 __state.SuppressPresentation = CombatMatchRuntime.IsPlayTagExplosion(dying);
                 __state.MatchToken = CombatMatchRuntime.MatchToken;
+                __state.ConvertAnyDeath = __state.MatchDeath && CombatMatchRuntime.IsZombieSurvival && SessionSettings.ZombieAnyDeath;
             }
             try
             {
@@ -122,7 +124,12 @@ namespace SephiriaOne
         {
             // An exceptional death may never have reached the native RpcDie.
             if (__exception != null) { __state.PlayerReceipt = null; __state.Exceptional = true; }
-            try { AfterDeath(__instance, __state); }
+            try
+            {
+                AfterDeath(__instance, __state);
+                if (__state.MatchDeath && __instance is PlayerAvatar dead)
+                    CombatMatchRuntime.CompletedMatchDeath(dead, __state.MatchToken, __exception == null, __state.ConvertAnyDeath);
+            }
             finally { if (__instance is PlayerAvatar player) CombatMatchRuntime.LeaveDeath(player, __state.MatchDeath); }
             return __exception;
         }

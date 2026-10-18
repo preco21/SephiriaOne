@@ -1,6 +1,12 @@
 # Development knowledge index
 
-Maintained: 2026-10-18 (Asia/Seoul), addon `0.63.0`.
+Maintained: 2026-10-18 (Asia/Seoul), addon `0.64.0`.
+
+Team mode: [Zombie Survival](zombie-survival.md) reuses shared participants,
+countdown, one-second recovery, hostility, K/D/A and role modifiers. Zombie kills
+convert Humans; an optional any-death toggle defaults off. Unconverted Humans
+survive timeout even while awaiting revival. Commands and a compact EN/KO tab
+configure duration and independent Zombie bonuses. Active teams never persist.
 
 Investigation: [host-only cutscene acceleration](cutscene-speed-investigation.md)
 found server-controlled progression but client-local playback clocks. The native

@@ -60,24 +60,14 @@ namespace SephiriaOne
                 if (value == "on" || value == "off")
                     settings = refill ? settings.WithRefill(enabled: value == "on") : settings.WithIncoming(enabled: value == "on");
                 else if (value == "reset")
-                    settings = refill ? settings.WithRefill(true, PlayTagChaserSettings.DefaultRefillMultiplier) :
-                        settings.WithIncoming(true, PlayTagChaserSettings.DefaultIncomingPercent);
-                else if (TryChaserNumber(value, refill, out decimal number))
+                    settings = refill ? settings.WithRefill(true, CombatRoleSettings.DefaultRefillMultiplier) :
+                        settings.WithIncoming(true, CombatRoleSettings.DefaultIncomingPercent);
+                else if (CombatRoleSettings.TryNumber(value, refill, out decimal number))
                     settings = refill ? settings.WithRefill(multiplier: number) : settings.WithIncoming(percent: number);
                 else return true;
                 success = SessionSettings.TrySetPlayTagChaser(settings, out message);
             }
             return true;
-        }
-        private static bool TryChaserNumber(string text, bool refill, out decimal value)
-        {
-            if (refill && text.StartsWith("x", StringComparison.Ordinal)) text = text.Substring(1);
-            else if (!refill && text.EndsWith("%", StringComparison.Ordinal)) text = text.Substring(0, text.Length - 1);
-            int point = text.IndexOf('.');
-            value = 0;
-            return (point < 0 || text.Length - point - 1 <= 2) &&
-                decimal.TryParse(text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out value) &&
-                (refill ? PlayTagChaserSettings.ValidRefillMultiplier(value) : PlayTagChaserSettings.ValidIncomingPercent(value));
         }
     }
 }

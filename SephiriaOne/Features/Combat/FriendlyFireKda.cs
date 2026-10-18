@@ -62,6 +62,14 @@ namespace SephiriaOne
             player != null && opponent != null && matchups.TryGetValue((player, opponent), out long kills) ? kills : 0;
         internal static void ForgetLife(PlayerAvatar player) { if (!ReferenceEquals(player, null)) lives.Remove(player); }
 
+        // Team changes retire unclaimed assists, without resetting scores,
+        // matchups, or other players' captured death notices.
+        internal static void ForgetContributions(PlayerAvatar player)
+        {
+            Score score = For(player);
+            foreach (var entry in lives) entry.Value.Contributors.Remove(score);
+        }
+
         internal static Score For(PlayerAvatar player)
         {
             var spawner = player.spawner;

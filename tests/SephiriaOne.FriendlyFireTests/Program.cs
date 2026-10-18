@@ -186,6 +186,7 @@ DarkCloudTests.Run(Check);
 RapidHitTests.Run(Check);
 HitFrequencyTests.Run(Check);
 ChaserBalanceTests.Run(Check);
+ZombieCombatTests.Run(Check);
 BurnDurationTests.Run(Check);
 PlasmaDurationTests.Run(Check);
 BurnCadenceTests.Run(Check);

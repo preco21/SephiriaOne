@@ -10,7 +10,7 @@ namespace SephiriaOne
     internal static partial class CombatMatchRuntime
     {
         private enum Phase { Idle, Countdown, Active, BetweenRounds }
-        private enum MatchMode { None, Deathmatch, Tournament, PlayTag }
+        private enum MatchMode { None, Deathmatch, Tournament, PlayTag, ZombieSurvival }
         private sealed class Respawn
         {
             internal HostPlayer Subject;
@@ -57,7 +57,7 @@ namespace SephiriaOne
             generation == SessionSettings.ResourceGeneration && ReviveAllAction.IsRunOpen(dungeon, run);
         internal static bool CanStart => !IsRunning && !stopping && !ticking && deathDepth == 0 && DeathmatchFeature.Available && FriendlyFireFeature.Available && ReviveAllAction.CanExecute;
         internal static bool CanResetScores => IsRunning && !stopping && CurrentScope &&
-            (mode == MatchMode.Tournament || mode == MatchMode.PlayTag && (tagBomb == null || !tagBomb.IsDue(Now) && !tagBomb.Resolved) || IsDeathmatch && Now < endsAt);
+            (mode == MatchMode.Tournament || mode == MatchMode.PlayTag && (tagBomb == null || !tagBomb.IsDue(Now) && !tagBomb.Resolved) || (IsDeathmatch || IsZombieSurvival) && Now < endsAt);
         internal static FriendlyFireSettings Effective(FriendlyFireSettings normal) => !IsRunning ? normal :
             normal.WithEnabled(phase == Phase.Active && CurrentScope &&
                 (mode == MatchMode.PlayTag ? tagBomb != null && !tagBomb.Resolved && !tagBomb.IsDue(Now) : Now < endsAt));
@@ -72,7 +72,7 @@ namespace SephiriaOne
             // A departed offline participant can outlive its weak identity key.
             // Keep that entry and its tie-break order, but clear its totals too.
             foreach (var participant in participants.Values) participant.Score.Clear();
-            message = IsPlayTag ? L.T("Play Tag K/D/A scores reset.") : IsTournament ? L.T("Tournament K/D/A scores reset.") : L.T("Deathmatch K/D/A scores reset.");
+            message = IsZombieSurvival ? L.T("Zombie Survival K/D/A scores reset.") : IsPlayTag ? L.T("Play Tag K/D/A scores reset.") : IsTournament ? L.T("Tournament K/D/A scores reset.") : L.T("Deathmatch K/D/A scores reset.");
             Broadcast(null, message);
             return true;
         }
@@ -81,31 +81,33 @@ namespace SephiriaOne
 
         private static bool Start(MatchMode requested, out string message)
         {
-            bool tournament = requested == MatchMode.Tournament, tag = requested == MatchMode.PlayTag;
-            message = tag ? L.T("Play Tag is unavailable, already running, or the session is ending. Check /one tag status and Player.log.") :
+            bool tournament = requested == MatchMode.Tournament, tag = requested == MatchMode.PlayTag, zombie = requested == MatchMode.ZombieSurvival;
+            message = zombie ? L.T("Zombie Survival is unavailable, already running, or the session is ending. Check /one zombie status and Player.log.") : tag ? L.T("Play Tag is unavailable, already running, or the session is ending. Check /one tag status and Player.log.") :
                 tournament ? L.T("Tournament is unavailable, already running, or the session is ending. Check /one tournament status and Player.log.") :
                 L.T("Deathmatch is unavailable, already running, or the session is ending. Check /one deathmatch status and Player.log.");
             if (!NetworkServer.active || !NetworkClient.active || !SessionSettings.EnsureResourceScope() || !CanStart ||
                 !HostStateAdapter.TryCollect(out var context, out message)) return false;
             if (tournament && !CaptureTournament(out message)) return false;
             if (tag && !CapturePlayTag(out message)) return false;
+            if (zombie && !CaptureZombie(out message)) return false;
             PlayTagExplosion.Reset();
             // Capture before entering callbacks. A fresh match never reuses a timer,
             // score, or connection from an earlier match.
             dungeon = context.Dungeon; dungeonId = dungeon.netId; run = SaveManager.CurrentRun;
             generation = SessionSettings.ResourceGeneration; token++;
             mode = requested;
-            duration = tag ? SessionSettings.PlayTagDuration : tournament ? SessionSettings.TournamentDuration : SessionSettings.DeathmatchDuration;
+            duration = zombie ? SessionSettings.ZombieDuration : tag ? SessionSettings.PlayTagDuration : tournament ? SessionSettings.TournamentDuration : SessionSettings.DeathmatchDuration;
             startsAt = Now + 3; endsAt = startsAt + duration;
             openingShown = 3; nextScan = 0; phase = Phase.Countdown;
             pending.Clear(); roster.Clear(); participants.Clear(); FriendlyFireKda.SetEnabled(false);
             if (tournament) { FriendlyFireKda.Reset(); FriendlyFireKda.SetEnabled(true); phase = Phase.BetweenRounds; }
             SessionSettings.DeathmatchChanged();
-            if (tag) ShowPlayTagCountdown(3);
+            if (zombie) ShowZombieCountdown(3);
+            else if (tag) ShowPlayTagCountdown(3);
             else if (!tournament) Broadcast(null, L.T("3..."));
             ObserveRoster();
             if (tournament) AdvanceTournament(Now);
-            message = tag ? L.F("Play Tag starts in 3 seconds with {0} players; initial fuse: {1}s.", tagPlayers.Count, duration) :
+            message = zombie ? L.F("Zombie Survival starts in 3 seconds with {0} players; round: {1}s.", zombiePlayers.Count, duration) : tag ? L.F("Play Tag starts in 3 seconds with {0} players; initial fuse: {1}s.", tagPlayers.Count, duration) :
                 tournament ? L.F("Tournament started with {0} players; each round lasts {1} seconds.", tournamentPlayers.Count, duration) :
                 L.F("Deathmatch starts in 3 seconds and lasts {0} seconds.", duration);
             return true;
@@ -126,6 +128,7 @@ namespace SephiriaOne
                 // Expiry wins over a respawn due on the same frame.
                 if (IsDeathmatch && now >= endsAt) { Stop(true, true); return; }
                 if (IsTournament) AdvanceTournament(now);
+                if (IsZombieSurvival) AdvanceZombie(now);
                 if (IsPlayTag) { AdvancePlayTag(now); if (deathDepth != 0) return; }
                 if (!IsRunning) return;
                 if (!IsTournament && phase == Phase.Countdown)
@@ -136,7 +139,7 @@ namespace SephiriaOne
                         if (seconds != openingShown)
                         {
                             openingShown = seconds;
-                            if (IsPlayTag) ShowPlayTagCountdown(seconds); else Broadcast(null, L.F("{0}...", seconds));
+                            if (IsZombieSurvival) ShowZombieCountdown(seconds); else if (IsPlayTag) ShowPlayTagCountdown(seconds); else Broadcast(null, L.F("{0}...", seconds));
                         }
                     }
                     else
@@ -145,7 +148,7 @@ namespace SephiriaOne
                         if (!IsPlayTag || tagRound == 1)
                         { FriendlyFireKda.Reset(); FriendlyFireKda.SetEnabled(true); participants.Clear(); }
                         SessionSettings.DeathmatchChanged();
-                        if (IsPlayTag) BeginPlayTag(now); else Broadcast(null, L.T("Deathmatch start!"));
+                        if (IsZombieSurvival) BeginZombie(now); else if (IsPlayTag) BeginPlayTag(now); else Broadcast(null, L.T("Deathmatch start!"));
                     }
                 }
                 if (!IsRunning) return;
@@ -176,6 +179,7 @@ namespace SephiriaOne
                 }
                 if (IsTournament && current == token) AdvanceTournament(now);
                 if (IsPlayTag && current == token) AdvancePlayTag(now);
+                if (IsZombieSurvival && current == token) AdvanceZombie(now);
             }
             catch (Exception error)
             { Debug.LogWarning("[SephiriaOne] Combat match stopped after an error: " + error); Stop(true, true); }
@@ -190,7 +194,7 @@ namespace SephiriaOne
         // Loading temporarily blocks revival, not participation or its deadline.
         // Capture still rejects retired/replaced connections even while loading.
         private static bool Eligible(PlayerAvatar player) => FriendlyFireParticipants.Includes(player, requireReady: false) &&
-            (mode == MatchMode.Tournament ? TournamentEnrolled(player) : mode != MatchMode.PlayTag || PlayTagEnrolled(player));
+            (mode == MatchMode.ZombieSurvival ? ZombieEnrolled(player) : mode == MatchMode.Tournament ? TournamentEnrolled(player) : mode != MatchMode.PlayTag || PlayTagEnrolled(player));
 
         private static bool Restore(Respawn respawn, long current, out string failure)
         {
@@ -249,7 +253,7 @@ namespace SephiriaOne
             var spawner = player.spawner;
             if (!spawner || !ReferenceEquals(spawner.PlayerAvatar, player) || !PlayerSpawner.MultiplayerList.Contains(spawner)) return;
             var subject = new HostPlayer(spawner);
-            int delay = IsPlayTag ? 1 : 3;
+            int delay = IsPlayTag || IsZombieSurvival ? 1 : 3;
             pending.Add(player, new Respawn { Subject = subject, Receipt = FriendlyFireParticipants.Capture(player), At = Now + delay, Shown = delay });
             var score = FriendlyFireKda.For(player);
             if (!participants.TryGetValue(score, out var entry)) participants.Add(score, entry = new Participant { Score = score, Order = participants.Count });
@@ -280,6 +284,9 @@ namespace SephiriaOne
                 cleanup.Add(new Respawn { Subject = new HostPlayer(player.spawner), Receipt = receipt });
             if (stopping) DrainRecovery();
             else if (IsPlayTag && deathDepth == 0) AdvancePlayTag(Now);
+            // Zombie victory is committed by infection but concluded on Tick.
+            // A lethal reflected hit may finish this death before the enclosing
+            // attack reaches its own victim's Die; recovery must include both.
         }
         internal static bool ProtectDeath(PlayerAvatar player) => player && player.IsDead && CurrentScope && ReviveAllFeature.Available &&
             (dying.TryGetValue(player, out var receipt) && FriendlyFireParticipants.IsCurrent(receipt) && (IsRunning || stopping) ||
@@ -312,12 +319,16 @@ namespace SephiriaOne
             results.Sort((a, b) => { int c = b.Score.Kills.CompareTo(a.Score.Kills); if (c == 0) c = a.Score.Deaths.CompareTo(b.Score.Deaths);
                 if (c == 0) c = b.Score.Assists.CompareTo(a.Score.Assists); return c != 0 ? c : a.Order.CompareTo(b.Order); });
             MatchMode previousMode = mode;
+            var zombieResults = IsZombieSurvival ? ZombieResults() : null;
             phase = Phase.Idle; pending.Clear(); roster.Clear(); participants.Clear();
             ClearPlayTag(same && tagNaturalStop && tagBomb != null && tagBomb.Resolved);
+            ClearZombie();
             try
             {
                 SessionSettings.EndDeathmatch();
-                if (announce && same && CurrentScope)
+                if (announce && same && CurrentScope && zombieResults != null)
+                    foreach (string line in zombieResults) Broadcast(null, line);
+                else if (announce && same && CurrentScope)
                 {
                     Broadcast(null, previousMode == MatchMode.PlayTag ? L.T("Play Tag ended. Top 5 (K/D/A):") :
                         previousMode == MatchMode.Tournament ? L.T("Tournament ended. Top 5 (K/D/A):") : L.T("Deathmatch ended. Top 5 (K/D/A):"));
@@ -349,7 +360,7 @@ namespace SephiriaOne
             finally { FinishStop(); }
         }
         private static void FinishStop()
-        { cleanup = null; dungeon = null; run = null; stopping = false; mode = MatchMode.None; ClearTournament(); SessionSettings.DeathmatchChanged(); }
+        { cleanup = null; dungeon = null; run = null; stopping = false; mode = MatchMode.None; ClearTournament(); ClearZombie(); SessionSettings.DeathmatchChanged(); }
 
         private static void BroadcastRespawnCountdown(PlayerAvatar player, int seconds)
         {
@@ -360,7 +371,7 @@ namespace SephiriaOne
 
         private static void BroadcastCountdown(PlayerAvatar player, string message, string floating, Respawn respawn = null)
         {
-            long current = token, chaser = ChaserRevision;
+            long current = token, chaser = RoleRevision;
             var bomb = tagBomb;
             var receipt = FriendlyFireParticipants.Capture(player);
             Broadcast(player, message); // Retained during the floating-text trial.
@@ -372,7 +383,7 @@ namespace SephiriaOne
             {
                 if (!player.IsDead || !pending.TryGetValue(player, out var latest) || !ReferenceEquals(latest, respawn)) return;
             }
-            else if (!IsPlayTag || player.IsDead || bomb == null || !ReferenceEquals(bomb, tagBomb) || chaser != ChaserRevision ||
+            else if (!IsPlayTag || player.IsDead || bomb == null || !ReferenceEquals(bomb, tagBomb) || chaser != RoleRevision ||
                 bomb.Resolved || bomb.AwaitingRespawn || bomb.IsDue(Now) || !ReferenceEquals(tagPlayers[bomb.Carrier].Subject.Player, player)) return;
             try { NativePlayerFloatingText.Show(player, floating); }
             catch (Exception error) { Debug.LogWarning("[SephiriaOne] Optional countdown presentation failed: " + error); }

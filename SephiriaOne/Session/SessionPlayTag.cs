@@ -16,15 +16,15 @@ namespace SephiriaOne
             }
             message = L.F("Play Tag round count set to {0} for the next match.", rounds); return true;
         }
-        internal static PlayTagChaserSettings PlayTagChaser => policy.PlayTagChaser;
-        internal static bool TrySetPlayTagChaser(PlayTagChaserSettings settings, out string message)
+        internal static CombatRoleSettings PlayTagChaser => policy.PlayTagChaser;
+        internal static bool TrySetPlayTagChaser(CombatRoleSettings settings, out string message)
         {
             message = PlayTagCommand.Usage;
             if (!NetworkServer.active || !EnsureResourceScope()) return false;
             if (!policy.PlayTagChaser.Equals(settings))
             {
                 policy.RecordPlayTagChaser(settings); intentRevision++;
-                CombatMatchRuntime.ChaserSettingsChanged(); NotifySettingsChanged();
+                CombatMatchRuntime.RoleSettingsChanged(); NotifySettingsChanged();
             }
             message = PlayTagCommand.DescribeChaser(); return true;
         }

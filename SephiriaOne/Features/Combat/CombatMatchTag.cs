@@ -14,8 +14,6 @@ namespace SephiriaOne
         private static string tagPreviousName;
         private static bool tagNaturalStop;
         private static int tagShown = -1;
-        internal static long ChaserRevision { get; private set; }
-        internal static void ChaserSettingsChanged() => ChaserRevision++;
         internal static bool IsPlayTag => mode == MatchMode.PlayTag && IsRunning;
         internal static bool CanStartPlayTag => CanStart && EligibleTournamentCount() >= 2;
         internal static bool StartPlayTag(out string message) => Start(MatchMode.PlayTag, out message);
@@ -29,14 +27,7 @@ namespace SephiriaOne
         private static bool CapturePlayTag(out string message)
         {
             ClearPlayTag(false);
-            foreach (var spawner in PlayerSpawner.MultiplayerList)
-            {
-                if (!spawner || !spawner.PlayerAvatar || !FriendlyFireParticipants.Includes(spawner.PlayerAvatar) ||
-                    tagRoster.ContainsKey(spawner.PlayerAvatar)) continue;
-                var player = spawner.PlayerAvatar;
-                tagRoster.Add(player, tagPlayers.Count);
-                tagPlayers.Add(new RosterEntry { Subject = new HostPlayer(spawner), Receipt = FriendlyFireParticipants.Capture(player) });
-            }
+            CaptureRoster(tagPlayers, tagRoster);
             message = L.T("Play Tag requires at least two eligible players.");
             if (tagPlayers.Count >= 2)
             { tagRound = 1; tagRoundLimit = SessionSettings.PlayTagRounds; return true; }
@@ -62,7 +53,7 @@ namespace SephiriaOne
             }
             if (chosen < 0) { Stop(true, true); return; }
             tagBomb = new PlayTagBomb(tagPlayers.Count, chosen, duration, now);
-            ChaserRevision++;
+            RoleRevision++;
             Broadcast(null, tagRoundLimit == 1 ? L.T("Play Tag start!") : L.F("[Play Tag] Round {0}/{1} start!", tagRound, tagRoundLimit));
             ShowPlayTagCarrier(now);
         }
@@ -91,12 +82,13 @@ namespace SephiriaOne
         // a kill. A pass deliberately leaves combat/assist epochs unchanged.
         internal static void ConfirmedKill(FriendlyFireParticipants.Receipt killer, FriendlyFireParticipants.Receipt victim, long match)
         {
+            if (IsZombieSurvival) { ConfirmedZombieKill(killer, victim, match); return; }
             if (!IsPlayTag || phase != Phase.Active || !CurrentScope || token != match || tagBomb == null ||
                 !FriendlyFireParticipants.IsCurrent(killer) || !FriendlyFireParticipants.IsCurrent(victim) || !victim.Player.IsDead ||
                 !tagRoster.TryGetValue(killer.Player, out int from) || !tagRoster.TryGetValue(victim.Player, out int to) ||
                 !ReferenceEquals(tagPlayers[from].Receipt, killer) || !ReferenceEquals(tagPlayers[to].Receipt, victim) ||
                 !tagBomb.TryPass(from, to, Now)) return;
-            ChaserRevision++;
+            RoleRevision++;
             tagShown = -1;
             tagPreviousName = CombatNames.Player(killer.Player);
             Broadcast(killer.Player, L.T("Bomb passed!"));
@@ -107,6 +99,7 @@ namespace SephiriaOne
 
         internal static void Revived(FriendlyFireParticipants.Receipt receipt, long match)
         {
+            if (IsZombieSurvival) { ZombieRevived(receipt, match); return; }
             if (tagBomb == null || !CurrentTagRevival(receipt, match, out int index) || receipt.Player.IsDead ||
                 !tagBomb.ArmAfterRespawn(index, Now)) return;
             tagShown = -1;
@@ -117,6 +110,7 @@ namespace SephiriaOne
             // Native Revive clears IsDead before callbacks and its RPC. An
             // exceptional manual revive cannot arm the fuse or be retried as a
             // completed recovery; end ownership instead of leaving it unarmed.
+            if (CurrentZombieReceipt(receipt, match, out _)) { Stop(true, true); return; }
             if (CurrentTagRevival(receipt, match, out int index) &&
                 (tagRound > 1 && phase != Phase.Active || tagBomb != null && tagBomb.AwaitingRespawn && tagBomb.Carrier == index)) Stop(true, true);
         }
@@ -186,7 +180,7 @@ namespace SephiriaOne
                 if (Connected(entry.Subject, entry.Receipt)) Broadcast(entry.Subject.Player, "");
             tagBomb = null; tagPlayers.Clear(); tagRoster.Clear(); tagShown = -1; tagPreviousName = null;
             tagRound = tagRoundLimit = 0;
-            ChaserRevision++;
+            RoleRevision++;
             if (!preserveExplosion) PlayTagExplosion.Reset();
         }
 

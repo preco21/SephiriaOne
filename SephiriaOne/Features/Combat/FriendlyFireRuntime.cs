@@ -199,14 +199,12 @@ namespace SephiriaOne
             if (current.Victim is PlayerAvatar victim)
             {
                 var settings = SessionSettings.FriendlyFireForHit;
-                var chaser = SessionSettings.PlayTagChaser;
-                double incoming = chaser.IncomingEnabled && CombatMatchRuntime.IsActiveChaser(victim) ? chaser.IncomingScale : 1;
+                double incoming = CombatMatchRuntime.IncomingRoleScale(victim);
                 if (incoming <= 0) return 0;
                 if (settings.Balance)
                 {
                     double maxHp = victim.MaxHp;
-                    double refill = settings.RefillScale;
-                    if (chaser.RefillEnabled && CombatMatchRuntime.IsActiveChaser(current.Attacker)) refill *= chaser.RefillScale;
+                    double refill = settings.RefillScale * CombatMatchRuntime.RefillRoleScale(current.Attacker);
                     scaled = LimitBalancedDamage(FriendlyFireBalance.Soften(scaled, maxHp), maxHp, refill, settings.RefillScale, incoming, settings.HitFrequency);
                 }
                 // Reduce the damage native code can actually accept, including

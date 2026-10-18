@@ -31,6 +31,7 @@ namespace SephiriaOne
         private const string PvpGuardPresetHeader = "SephiriaOne preset v27";
         private const string PvpDotPresetHeader = "SephiriaOne preset v28";
         private const string HitFrequencyPresetHeader = "SephiriaOne preset v29";
+        private const string ZombiePresetHeader = "SephiriaOne preset v31";
         private const string PlayTagRoundsPresetHeader = "SephiriaOne preset v30";
         private const string PvpRefillPresetHeader = "SephiriaOne preset v24";
         private const string PvpBalancePresetHeader = "SephiriaOne preset v22";
@@ -67,14 +68,15 @@ namespace SephiriaOne
         public IReadOnlyList<string> DescribeSettings()
         {
             var lines = new List<string>();
+            DescribeZombieSettings(lines);
             if (DeathmatchDuration != DeathmatchSettings.DefaultDuration) lines.Add("deathmatch duration " + DeathmatchDuration.ToString(CultureInfo.InvariantCulture));
             if (TournamentDuration != TournamentSettings.DefaultDuration) lines.Add("tournament duration " + TournamentDuration.ToString(CultureInfo.InvariantCulture));
             if (PlayTagDuration != PlayTagSettings.DefaultDuration) lines.Add("tag duration " + PlayTagDuration.ToString(CultureInfo.InvariantCulture));
             if (PlayTagRounds != PlayTagSettings.DefaultRounds) lines.Add("tag rounds " + PlayTagRounds.ToString(CultureInfo.InvariantCulture));
             if (!PlayTagChaser.RefillEnabled) lines.Add("tag chaser-refill-enabled 0");
-            if (PlayTagChaser.RefillMultiplier != PlayTagChaserSettings.DefaultRefillMultiplier) lines.Add("tag chaser-refill " + PlayTagChaser.RefillNumber);
+            if (PlayTagChaser.RefillMultiplier != CombatRoleSettings.DefaultRefillMultiplier) lines.Add("tag chaser-refill " + PlayTagChaser.RefillNumber);
             if (!PlayTagChaser.IncomingEnabled) lines.Add("tag chaser-damage-enabled 0");
-            if (PlayTagChaser.IncomingPercent != PlayTagChaserSettings.DefaultIncomingPercent) lines.Add("tag chaser-damage " + PlayTagChaser.IncomingNumber);
+            if (PlayTagChaser.IncomingPercent != CombatRoleSettings.DefaultIncomingPercent) lines.Add("tag chaser-damage " + PlayTagChaser.IncomingNumber);
             if (EventSpawns.HasChanges) lines.Add("events multiplier " + EventSpawns.Number);
             if (CollinStartingArtifact) lines.Add("collin starting 1");
             if (BatHpSteal) lines.Add("bat hp-steal 1");
@@ -130,7 +132,7 @@ namespace SephiriaOne
             { expandedStats |= stat.RequiresExpandedPreset; companionStats |= stat.IsCompanion; }
             bool multiplier = HasFountainMultiplier;
             foreach (Setting setting in stats.Values) multiplier |= setting.Multiplier;
-            return (PlayTagRounds != PlayTagSettings.DefaultRounds ? PlayTagRoundsPresetHeader : FriendlyFire.HitFrequency ? HitFrequencyPresetHeader : FriendlyFire.DotIntervals.HasChanges ? PvpDotPresetHeader : FriendlyFire.GuardMpPercent != FriendlyFireSettings.DefaultGuardMpPercent ? PvpGuardPresetHeader : PlayTagChaser.HasChanges ? PlayTagChaserPresetHeader : PlayTagDuration != PlayTagSettings.DefaultDuration ? PlayTagPresetHeader : FriendlyFire.RefillPercent != FriendlyFireSettings.DefaultRefillPercent ? PvpRefillPresetHeader : FriendlyFire.BlockLobbyRegen ? LobbyRegenPresetHeader : FriendlyFire.Balance ? PvpBalancePresetHeader : companionStats ? CompanionStatsPresetHeader : TournamentDuration != TournamentSettings.DefaultDuration ? TournamentPresetHeader : FriendlyFire.HasFractionalPercent ? FractionalCombatPresetHeader : DeathmatchDuration != DeathmatchSettings.DefaultDuration ? DeathmatchPresetHeader : expandedStats ? ExpandedStatsPresetHeader : EventSpawns.HasChanges ? EventPresetHeader : CollinStartingArtifact ? CollinPresetHeader : BatHpSteal ? BatPresetHeader : JarSpawns.HasChanges ? JarPresetHeader : FriendlyFire.HasChanges ? CombatPresetHeader : ItemUnlock ? ItemUnlockPresetHeader : RabbitPotions.LevelUpPotion ? RabbitLevelUpPresetHeader : UsesMerchantGuaranteePreset ? MerchantGuaranteePresetHeader : UsesMerchantTypesPreset ? MerchantTypesPresetHeader : Merchants.HasChanges ? MerchantPresetHeader : RabbitPotions.MpCostPerDrink != RabbitPotionSettings.DefaultMpCostPerDrink ? RabbitCostPresetHeader :
+            return (HasZombieChanges ? ZombiePresetHeader : PlayTagRounds != PlayTagSettings.DefaultRounds ? PlayTagRoundsPresetHeader : FriendlyFire.HitFrequency ? HitFrequencyPresetHeader : FriendlyFire.DotIntervals.HasChanges ? PvpDotPresetHeader : FriendlyFire.GuardMpPercent != FriendlyFireSettings.DefaultGuardMpPercent ? PvpGuardPresetHeader : PlayTagChaser.HasChanges ? PlayTagChaserPresetHeader : PlayTagDuration != PlayTagSettings.DefaultDuration ? PlayTagPresetHeader : FriendlyFire.RefillPercent != FriendlyFireSettings.DefaultRefillPercent ? PvpRefillPresetHeader : FriendlyFire.BlockLobbyRegen ? LobbyRegenPresetHeader : FriendlyFire.Balance ? PvpBalancePresetHeader : companionStats ? CompanionStatsPresetHeader : TournamentDuration != TournamentSettings.DefaultDuration ? TournamentPresetHeader : FriendlyFire.HasFractionalPercent ? FractionalCombatPresetHeader : DeathmatchDuration != DeathmatchSettings.DefaultDuration ? DeathmatchPresetHeader : expandedStats ? ExpandedStatsPresetHeader : EventSpawns.HasChanges ? EventPresetHeader : CollinStartingArtifact ? CollinPresetHeader : BatHpSteal ? BatPresetHeader : JarSpawns.HasChanges ? JarPresetHeader : FriendlyFire.HasChanges ? CombatPresetHeader : ItemUnlock ? ItemUnlockPresetHeader : RabbitPotions.LevelUpPotion ? RabbitLevelUpPresetHeader : UsesMerchantGuaranteePreset ? MerchantGuaranteePresetHeader : UsesMerchantTypesPreset ? MerchantTypesPresetHeader : Merchants.HasChanges ? MerchantPresetHeader : RabbitPotions.MpCostPerDrink != RabbitPotionSettings.DefaultMpCostPerDrink ? RabbitCostPresetHeader :
                 RabbitPotions.ConsumeMp || RabbitPotions.SuppressSurvival ? RabbitBalancePresetHeader :
                 RabbitPotions.HasChanges ? RabbitPresetHeader : Resources.HasChanges ? ResourcePresetHeader : multiplier ? MultiplierPresetHeader : PresetHeader) + "\n" +
                 (HasChanges ? string.Join("\n", DescribeSettings()) + "\n" : "");
@@ -142,8 +144,9 @@ namespace SephiriaOne
             error = L.T("Invalid saved preset; no saved settings were applied.");
             if (text == null || text.Length > MaximumPresetLength) return false;
             string[] lines = text.Replace("\r\n", "\n").Split('\n');
-            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader && lines[0] != RabbitBalancePresetHeader && lines[0] != RabbitCostPresetHeader && lines[0] != MerchantPresetHeader && lines[0] != MerchantTypesPresetHeader && lines[0] != MerchantGuaranteePresetHeader && lines[0] != RabbitLevelUpPresetHeader && lines[0] != ItemUnlockPresetHeader && lines[0] != CombatPresetHeader && lines[0] != JarPresetHeader && lines[0] != BatPresetHeader && lines[0] != CollinPresetHeader && lines[0] != EventPresetHeader && lines[0] != ExpandedStatsPresetHeader && lines[0] != DeathmatchPresetHeader && lines[0] != FractionalCombatPresetHeader && lines[0] != TournamentPresetHeader && lines[0] != CompanionStatsPresetHeader && lines[0] != PvpBalancePresetHeader && lines[0] != LobbyRegenPresetHeader && lines[0] != PvpRefillPresetHeader && lines[0] != PlayTagPresetHeader && lines[0] != PlayTagChaserPresetHeader && lines[0] != PvpGuardPresetHeader && lines[0] != PvpDotPresetHeader && lines[0] != HitFrequencyPresetHeader && lines[0] != PlayTagRoundsPresetHeader)) return false;
-            bool allowPlayTagRounds = lines[0] == PlayTagRoundsPresetHeader;
+            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader && lines[0] != RabbitBalancePresetHeader && lines[0] != RabbitCostPresetHeader && lines[0] != MerchantPresetHeader && lines[0] != MerchantTypesPresetHeader && lines[0] != MerchantGuaranteePresetHeader && lines[0] != RabbitLevelUpPresetHeader && lines[0] != ItemUnlockPresetHeader && lines[0] != CombatPresetHeader && lines[0] != JarPresetHeader && lines[0] != BatPresetHeader && lines[0] != CollinPresetHeader && lines[0] != EventPresetHeader && lines[0] != ExpandedStatsPresetHeader && lines[0] != DeathmatchPresetHeader && lines[0] != FractionalCombatPresetHeader && lines[0] != TournamentPresetHeader && lines[0] != CompanionStatsPresetHeader && lines[0] != PvpBalancePresetHeader && lines[0] != LobbyRegenPresetHeader && lines[0] != PvpRefillPresetHeader && lines[0] != PlayTagPresetHeader && lines[0] != PlayTagChaserPresetHeader && lines[0] != PvpGuardPresetHeader && lines[0] != PvpDotPresetHeader && lines[0] != HitFrequencyPresetHeader && lines[0] != PlayTagRoundsPresetHeader && lines[0] != ZombiePresetHeader)) return false;
+            bool allowZombie = lines[0] == ZombiePresetHeader;
+            bool allowPlayTagRounds = lines[0] == PlayTagRoundsPresetHeader || allowZombie;
             bool allowHitFrequency = lines[0] == HitFrequencyPresetHeader || allowPlayTagRounds;
             bool allowPvpDot = lines[0] == PvpDotPresetHeader || allowHitFrequency;
             bool allowPvpGuard = lines[0] == PvpGuardPresetHeader || allowPvpDot;
@@ -180,6 +183,12 @@ namespace SephiriaOne
                 if (parts.Length == 0) continue;
                 if (!decimal.TryParse(parts[parts.Length - 1], NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint,
                     CultureInfo.InvariantCulture, out decimal value) || value < -int.MaxValue || value > int.MaxValue) return false;
+                if (parts[0] == "zombie")
+                {
+                    if (!allowZombie || parts.Length != 3 || !seen.Add("zombie " + parts[1]) ||
+                        !pending.ReadZombieSetting(parts[1], parts[2], value)) return false;
+                    continue;
+                }
                 if (parts[0] == "events")
                 {
                     if (!allowEvents || parts.Length != 3 || parts[1] != "multiplier" || !seen.Add("events") ||
@@ -214,10 +223,10 @@ namespace SephiriaOne
                         pending.RecordPlayTagChaser(pending.PlayTagChaser.WithRefill(enabled: value == 1));
                     else if (allowPlayTagChaser && parts[1] == "chaser-damage-enabled" && (parts[2] == "0" || parts[2] == "1"))
                         pending.RecordPlayTagChaser(pending.PlayTagChaser.WithIncoming(enabled: value == 1));
-                    else if (allowPlayTagChaser && parts[1] == "chaser-refill" && PlayTagChaserSettings.ValidRefillMultiplier(value) &&
+                    else if (allowPlayTagChaser && parts[1] == "chaser-refill" && CombatRoleSettings.ValidRefillMultiplier(value) &&
                         parts[2] == value.ToString("0.##", CultureInfo.InvariantCulture))
                         pending.RecordPlayTagChaser(pending.PlayTagChaser.WithRefill(multiplier: value));
-                    else if (allowPlayTagChaser && parts[1] == "chaser-damage" && PlayTagChaserSettings.ValidIncomingPercent(value) &&
+                    else if (allowPlayTagChaser && parts[1] == "chaser-damage" && CombatRoleSettings.ValidIncomingPercent(value) &&
                         parts[2] == value.ToString("0.##", CultureInfo.InvariantCulture))
                         pending.RecordPlayTagChaser(pending.PlayTagChaser.WithIncoming(percent: value));
                     else return false;

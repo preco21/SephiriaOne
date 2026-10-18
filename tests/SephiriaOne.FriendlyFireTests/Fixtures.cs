@@ -37,10 +37,13 @@ namespace Mirror { public static class NetworkServer { public static bool active
 namespace Mirror { public class SyncList<T> : List<T> { [MethodImpl(MethodImplOptions.NoInlining)] public new bool Contains(T item) => base.Contains(item); } }
 namespace SephiriaOne
 {
-    internal static class CombatMatchRuntime
+    internal static partial class CombatMatchRuntime
     {
         internal static PlayerAvatar Chaser;
-        internal static long ChaserRevision;
+        internal static readonly HashSet<PlayerAvatar> Zombies = new();
+        internal static bool IsActiveZombie(PlayerAvatar player) => player && !player.IsDead && Zombies.Contains(player);
+        internal static bool IsZombieSurvival => Zombies.Count > 0;
+        internal static void CompletedMatchDeath(PlayerAvatar player, long token, bool success, bool anyDeath) { }
         internal static bool IsActiveChaser(PlayerAvatar player) => player && !player.IsDead && ReferenceEquals(player, Chaser);
         internal static Func<PlayerAvatar, PlayerAvatar, bool> PairRule;
         internal static bool KeepScores;
@@ -65,7 +68,8 @@ namespace SephiriaOne
     internal static class ReviveAllFeature { internal static bool Available = true; }
     internal static class SessionSettings
     {
-        internal static PlayTagChaserSettings PlayTagChaser;
+        internal static CombatRoleSettings PlayTagChaser, ZombieModifiers;
+        internal static bool ZombieAnyDeath => false;
         private static FriendlyFireSettings settings;
         internal static long CombatBalanceRevision;
         internal static long CombatFrequencyRevision;

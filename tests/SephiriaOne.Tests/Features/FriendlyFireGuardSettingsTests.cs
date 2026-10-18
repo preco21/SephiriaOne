@@ -49,7 +49,7 @@ internal static class FriendlyFireGuardSettingsTests
         policy.Record(new FriendlyFireCommand(false, blockLobbyRegen: true));
         Check(policy.FriendlyFire.GuardMpPercent == 12.5m && policy.FriendlyFire.WithEnabled(false).GuardMpPercent == 12.5m,
             "All combat edits and match overlays preserve guard percent");
-        policy.RecordPlayTagChaser(new PlayTagChaserSettings(true, 3, true, 50));
+        policy.RecordPlayTagChaser(new CombatRoleSettings(true, 3, true, 50));
         Check(SessionPolicy.TryReadPreset(policy.ToPresetText(), out var combined, out _) && combined.ToPresetText() == policy.ToPresetText(),
             "v27 preserves other combat and chaser fields");
         Check(FriendlyFireCommand.Parse("/ONE FRIENDLYFIRE GUARD-MP RESET", out var reset) == FriendlyFireParseResult.Valid && !reset.TouchesMasterToggle,

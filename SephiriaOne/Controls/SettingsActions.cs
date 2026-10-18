@@ -52,6 +52,8 @@ namespace SephiriaOne
                     return Reply(deathmatchSuccess, deathmatchMessage);
                 if (TournamentCommand.Execute(parts, out bool tournamentSuccess, out string tournamentMessage))
                     return Reply(tournamentSuccess, tournamentMessage);
+                if (ZombieSurvivalCommand.Execute(parts, out bool zombieSuccess, out string zombieMessage))
+                    return Reply(zombieSuccess, zombieMessage);
                 if (PlayTagCommand.Execute(parts, out bool playTagSuccess, out string playTagMessage))
                     return Reply(playTagSuccess, playTagMessage);
                 if (parts.Length >= 2 && parts[0].Equals("/one", StringComparison.OrdinalIgnoreCase) &&
@@ -245,7 +247,7 @@ namespace SephiriaOne
                 if (isPreset)
                 {
                     if (preset == PresetAction.Help)
-                        return Reply(true, presetError + " " + ReviveAllAction.Usage + " " + DeathmatchCommand.Usage + " " + TournamentCommand.Usage + " " + PlayTagCommand.Usage + L.T(" /one ui opens the host settings panel. /one rabbit help lists potion options. /one merchant help lists extra merchant options.") +
+                        return Reply(true, presetError + " " + ReviveAllAction.Usage + " " + DeathmatchCommand.Usage + " " + TournamentCommand.Usage + " " + PlayTagCommand.Usage + " " + ZombieSurvivalCommand.Usage + L.T(" /one ui opens the host settings panel. /one rabbit help lists potion options. /one merchant help lists extra merchant options.") +
                             L.T(" /one items help lists given-item options.") + L.T(" /one friendlyfire help lists allied-damage options.") + L.T(" /one jars help lists Mystic Jar spawn options.") + L.T(" /one events help lists random event options.") + L.T(" /one bat help lists Wingless Bat options.") + L.T(" /one collin help lists costume starting-artifact options.") + L.T(" Language: /one language en|ko|reload|status.") + " " + UpdateCommand.Usage);
                     if (preset == PresetAction.Invalid) return Reply(false, presetError);
                     bool success = SessionSettings.TryExecutePreset(preset, out string[] messages);

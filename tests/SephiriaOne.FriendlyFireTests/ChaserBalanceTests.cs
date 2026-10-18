@@ -14,16 +14,16 @@ internal static class ChaserBalanceTests
             SessionSettings.PlayTagChaser = default;
             source = new(); target = new(); Time.time = 0;
             CombatMatchRuntime.Chaser = attackerChases ? source : target;
-            CombatMatchRuntime.ChaserRevision++;
+            CombatMatchRuntime.RoleSettingsChanged();
         }
         void Strike(float damage = 20) => target.ApplyDamage(new() { origin = source, damage = damage });
         try
         {
             Fresh(); Strike();
             check(target.Hp == 85, "Current chaser takes 75 percent of resolved PvP damage even with balancing off");
-            CombatMatchRuntime.Chaser = source; CombatMatchRuntime.ChaserRevision++; Strike();
+            CombatMatchRuntime.Chaser = source; CombatMatchRuntime.RoleSettingsChanged(); Strike();
             check(target.Hp == 65, "Previous carrier immediately loses incoming protection");
-            CombatMatchRuntime.Chaser = null; CombatMatchRuntime.ChaserRevision++; Strike();
+            CombatMatchRuntime.Chaser = null; CombatMatchRuntime.RoleSettingsChanged(); Strike();
             check(target.Hp == 45, "Ending Tag restores ordinary PvP damage");
             Fresh(); Strike(float.MaxValue);
             check(Math.Abs(-target.Hp - 2147483520d * 0.75) < 256,
@@ -36,14 +36,14 @@ internal static class ChaserBalanceTests
 
             Fresh(true, true); Strike(float.MaxValue); Time.time = 0.1f; Strike(float.MaxValue);
             check(Near(target.Hp, 78), "Chaser global 10-percent refill becomes 20 percent per second");
-            CombatMatchRuntime.Chaser = null; CombatMatchRuntime.ChaserRevision++; Time.time = 0.2f; Strike(float.MaxValue);
+            CombatMatchRuntime.Chaser = null; CombatMatchRuntime.RoleSettingsChanged(); Time.time = 0.2f; Strike(float.MaxValue);
             check(Near(target.Hp, 77), "Losing chaser role immediately restores base refill without resetting tokens");
-            CombatMatchRuntime.Chaser = source; CombatMatchRuntime.ChaserRevision++; Time.time = 0.3f; Strike(float.MaxValue);
+            CombatMatchRuntime.Chaser = source; CombatMatchRuntime.RoleSettingsChanged(); Time.time = 0.3f; Strike(float.MaxValue);
             check(Near(target.Hp, 76), "Role gain never retroactively grants boosted elapsed refill");
             Time.time = 0.4f; Strike(float.MaxValue);
             check(Near(target.Hp, 74), "Steady current carrier receives multiplied refill");
-            CombatMatchRuntime.Chaser = target; CombatMatchRuntime.ChaserRevision++;
-            CombatMatchRuntime.Chaser = source; CombatMatchRuntime.ChaserRevision++;
+            CombatMatchRuntime.Chaser = target; CombatMatchRuntime.RoleSettingsChanged();
+            CombatMatchRuntime.Chaser = source; CombatMatchRuntime.RoleSettingsChanged();
             Time.time = 0.5f; Strike(float.MaxValue);
             check(Near(target.Hp, 73), "Unobserved A-to-B-to-A transfer cannot earn boosted credit for the interval");
 
@@ -55,7 +55,7 @@ internal static class ChaserBalanceTests
             Time.time = 0.1f; Strike(float.MaxValue);
             check(Near(target.Hp, 79), "Refill toggle off uses global rate even when its saved multiplier differs");
             SessionSettings.PlayTagChaser = SessionSettings.PlayTagChaser.WithRefill(enabled: true);
-            CombatMatchRuntime.ChaserRevision++; Time.time = 0.2f; Strike(float.MaxValue);
+            CombatMatchRuntime.RoleSettingsChanged(); Time.time = 0.2f; Strike(float.MaxValue);
             Time.time = 0.3f; Strike(float.MaxValue);
             check(Near(target.Hp, 74), "Live x4 edit preserves credits then refills at four times global value");
 
@@ -72,14 +72,14 @@ internal static class ChaserBalanceTests
             {
                 target.OnHit = null;
                 SessionSettings.PlayTagChaser = SessionSettings.PlayTagChaser.WithIncoming(enabled: false);
-                CombatMatchRuntime.ChaserRevision++;
+                CombatMatchRuntime.RoleSettingsChanged();
             };
             Strike(); Strike(float.MaxValue);
             check(Near(target.Hp, 83.125), "Refund uses the hit's captured factor despite a callback editing settings");
             Fresh(true); SessionSettings.PlayTagChaser = SessionSettings.PlayTagChaser.WithIncoming(percent: 0);
             target.ApplyDebuff(new() { OnApply = (caster, receiver) => receiver.ApplyDamage(EffectTests.Tick(caster, "Debuff_Electric")) }, source);
             check(target.Hp == 100 && target.DebuffApplications == 1, "Zero incoming scale preserves native effect application without damage");
-            SessionSettings.PlayTagChaser = SessionSettings.PlayTagChaser.WithIncoming(percent: 100); CombatMatchRuntime.ChaserRevision++;
+            SessionSettings.PlayTagChaser = SessionSettings.PlayTagChaser.WithIncoming(percent: 100); CombatMatchRuntime.RoleSettingsChanged();
             target.ApplyDebuff(new() { OnApply = (caster, receiver) => receiver.ApplyDamage(EffectTests.Tick(caster, "Debuff_Electric")) }, source);
             check(Near(target.Hp, 87.5), "Zero-damage protection never consumes the next Shock pulse or budget");
 
@@ -95,7 +95,7 @@ internal static class ChaserBalanceTests
             target.ApplyDamage(new() { origin = enemy, damage = 20, targetFactionLayers = -1 });
             enemy.ApplyDamage(new() { origin = target, damage = 20 });
             check(target.Hp == 65 && enemy.Hp == 80, "Chaser options cannot affect incoming or outgoing PvE");
-            Fresh(); source.OnAttackUnitBeforeOperation += (_, _) => { CombatMatchRuntime.Chaser = source; CombatMatchRuntime.ChaserRevision++; };
+            Fresh(); source.OnAttackUnitBeforeOperation += (_, _) => { CombatMatchRuntime.Chaser = source; CombatMatchRuntime.RoleSettingsChanged(); };
             Strike();
             check(target.Hp == 80, "Role is resolved at damage scaling after native before-attack callbacks");
 

@@ -51,14 +51,14 @@ internal static class GamePlayTagTests
         // Modifiers must use the same resolved player-hit hook as direct,
         // companion, reflected and debuff damage, without native stat mutations.
         var scale = Code(addon, "SephiriaOne.FriendlyFireRuntime", "Scale");
-        Require(Calls(scale, "SessionSettings", "get_PlayTagChaser") &&
-            scale.Count(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "CombatMatchRuntime" && m.Name == "IsActiveChaser") == 2 &&
-            Calls(scale, "PlayTagChaserSettings", "get_RefillScale") && Calls(scale, "PlayTagChaserSettings", "get_IncomingScale"),
+        var roles = Code(addon, "SephiriaOne.CombatMatchRuntime", "TryRoleSettings");
+        Require(Calls(roles, "SessionSettings", "get_PlayTagChaser") && Calls(roles, "CombatMatchRuntime", "IsActiveChaser") &&
+            Calls(scale, "CombatMatchRuntime", "RefillRoleScale") && Calls(scale, "CombatMatchRuntime", "IncomingRoleScale"),
             "resolved PvP damage reads both current roles and configured multipliers");
         Require(!scale.Any(i => i.opcode == OpCodes.Stfld || i.opcode == OpCodes.Stsfld),
             "chaser composition does not mutate native stats or retain applied bonuses");
         var budget = Code(addon, "SephiriaOne.FriendlyFireRuntime", "LimitBalancedDamage");
-        Require(Calls(budget, "CombatMatchRuntime", "get_ChaserRevision") &&
+        Require(Calls(budget, "CombatMatchRuntime", "get_RoleRevision") &&
             budget.Any(i => i.opcode == OpCodes.Stfld && i.operand is FieldInfo f && f.Name == "BudgetIncomingScale") &&
             Code(addon, "SephiriaOne.FriendlyFireRuntime", "FinishBalancedDamage").Any(i =>
                 i.opcode == OpCodes.Ldfld && i.operand is FieldInfo f && f.Name == "BudgetIncomingScale"),

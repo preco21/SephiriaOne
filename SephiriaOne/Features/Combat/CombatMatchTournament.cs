@@ -48,6 +48,7 @@ namespace SephiriaOne
         // Do not edit the host's selection just to restrict the current round.
         internal static bool AllowsPair(PlayerAvatar attacker, PlayerAvatar victim)
         {
+            if (IsZombieSurvival) return ZombieAllowsPair(attacker, victim);
             if (IsPlayTag) return PlayTagAllowsPair(attacker, victim);
             if (!IsTournament) return true;
             if (phase != Phase.Active || !CurrentScope || Now >= endsAt || first < 0 || second < 0 ||
@@ -62,6 +63,7 @@ namespace SephiriaOne
         // hostile targeting. Spectators retain native recovery between matches.
         internal static bool AllowsParticipant(PlayerAvatar player)
         {
+            if (IsZombieSurvival) return CurrentZombieCombat && ZombieEnrolled(player);
             if (IsPlayTag) return phase == Phase.Active && CurrentScope && PlayTagEnrolled(player);
             if (!IsTournament) return true;
             if (first < 0 || second < 0) return false;
@@ -74,7 +76,7 @@ namespace SephiriaOne
         // command was executed. Shared stop contains native recovery reentrancy.
         internal static void SelectionChanged()
         {
-            if (IsTournament || IsPlayTag) Stop(true, true);
+            if (IsTournament || IsPlayTag || IsZombieSurvival) Stop(true, true);
         }
 
         private static void TournamentDeath(PlayerAvatar player)

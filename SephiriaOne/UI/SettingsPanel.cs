@@ -52,11 +52,11 @@ namespace SephiriaOne
             scopeLabel = widgets.Text(title, "Scope", "Host · All players", 220, 8, 464, 26, 11);
             scopeLabel.color = PanelWidgets.Muted;
             availability = widgets.Text(window, "Availability", "", 16, 44, 728, 28, 12);
-            string[] pages = { "Stats", "Fountain", "Choices", "Resources", "Presets", "Status", "Rabbit", "Merchant", "Items", "Combat", "Spawns", "Costumes", "Updates", "Deathmatch", "Tournament", "Play Tag" };
+            string[] pages = { "Stats", "Fountain", "Choices", "Resources", "Presets", "Status", "Rabbit", "Merchant", "Items", "Combat", "Spawns", "Costumes", "Updates", "Deathmatch", "Tournament", "Play Tag", "Zombie" };
             for (int i = 0; i < pages.Length; i++)
             {
                 int target = i;
-                var tab = widgets.Button(window, pages[i], 16 + 91 * (i % 8), 78 + 32 * (i / 8), 85, 28, () => SelectPage(target));
+                var tab = widgets.Button(window, pages[i], 16 + 81 * (i % 9), 78 + 32 * (i / 9), 75, 28, () => SelectPage(target));
                 tabs.Add(tab);
                 if (i == 12) updateLabel = tab.GetComponentInChildren<TMP_Text>();
             }
@@ -90,6 +90,7 @@ namespace SephiriaOne
             13 => SnapshotContent.Participants,
             14 => SnapshotContent.Participants,
             15 => SnapshotContent.Participants,
+            16 => SnapshotContent.Participants,
             _ when target >= 6 && target <= 14 => SnapshotContent.None,
             _ => SnapshotContent.All // Status, and safe defaults for future tabs.
         };
@@ -131,6 +132,7 @@ namespace SephiriaOne
             if (page == 13) { RefreshDeathmatch(snapshot); return; }
             if (page == 14) { RefreshTournament(snapshot); return; }
             if (page == 15) { RefreshPlayTag(snapshot); return; }
+            if (page == 16) { RefreshZombie(snapshot); return; }
             bool choicesReady = page == 11 ? snapshot.BatAvailable && snapshot.CollinAvailable : page == 10 ? (eventSpawnsSelected ? snapshot.EventSpawnsAvailable : snapshot.JarSpawnsAvailable) : page == 9 ? snapshot.FriendlyFireAvailable : page == 8 ? snapshot.ItemRestrictionsAvailable : page == 7 ? snapshot.MerchantsAvailable : page == 6 ? snapshot.RabbitPotionsAvailable : page == 2 ? snapshot.ChoicesAvailable : page != 3 || ResourceFeature.IsAvailable(ResourceCatalog.All[resourceIndex].Kind);
             bool levelUpReady = page != 6 || snapshot.RabbitLevelUpPotionsAvailable;
             availability.text = !snapshot.CanMutate ? snapshot.AvailabilityReason : !choicesReady ?
@@ -199,6 +201,8 @@ namespace SephiriaOne
             pvpDotEditors.Clear();
             playTagRounds = playTagRefill = playTagIncoming = null;
             playTagDurationDraft = playTagRoundsDraft = playTagRefillDraft = playTagIncomingDraft = false;
+            zombieRefill = zombieIncoming = null;
+            zombieDurationDraft = zombieRefillDraft = zombieIncomingDraft = false;
             participantRows.Clear(); participantContent = null; participantSummary = null;
             if (pageRoot) { widgets.Forget(pageRoot); pageRoot.gameObject.SetActive(false); Destroy(pageRoot.gameObject); }
             pageRoot = PanelWidgets.Rect(window, "Page", 4, 152, 600, 162);
@@ -214,6 +218,7 @@ namespace SephiriaOne
             else if (page == 13) BuildDeathmatchEditor();
             else if (page == 14) BuildTournamentEditor();
             else if (page == 15) BuildPlayTagEditor();
+            else if (page == 16) BuildZombieEditor();
             else
             {
                 if (page == 4)
@@ -358,6 +363,7 @@ namespace SephiriaOne
         {
             ClearPvpDots();
             ClearFriendlyDamage(); ClearFriendlyRefill(); ClearFriendlyGuardMp();
+            ClearZombieDuration(); ClearZombieRefill(); ClearZombieIncoming();
             ClearPlayTagDuration(); ClearPlayTagRounds(); ClearPlayTagRefill(); ClearPlayTagIncoming();
         }
 

@@ -1,10 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>disable</Nullable><Optimize>true</Optimize></PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../SephiriaOne/Features/Combat/CombatMatchRoles.cs" Link="CombatMatchRoles.cs" />
+    <Compile Include="../../SephiriaOne/Features/Combat/ZombieSurvival/ZombieSurvivalRound.cs" Link="ZombieSurvivalRound.cs" />
     <PackageReference Include="Lib.Harmony" Version="2.4.2" />
     <Compile Include="../../SephiriaOne/Features/Combat/Companions/*.cs" Link="Companions/%(Filename)%(Extension)" />
-    <Compile Include="../../SephiriaOne/Features/Combat/PlayTag/PlayTagChaserSettings.cs" Link="PlayTagChaserSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/*.cs" Exclude="../../SephiriaOne/Features/Combat/FriendlyFireFeature.cs;../../SephiriaOne/Features/Combat/FriendlyFireParticipants.cs;../../SephiriaOne/Features/Combat/FriendlyFireParticipantHooks.cs;../../SephiriaOne/Features/Combat/ReviveAll*.cs;../../SephiriaOne/Features/Combat/Deathmatch*.cs;../../SephiriaOne/Features/Combat/CombatMatch*.cs;../../SephiriaOne/Features/Combat/Tournament*.cs" Link="%(Filename)%(Extension)" />
   </ItemGroup>
-  <ItemGroup><Compile Remove="../../SephiriaOne/Features/Combat/FriendlyFireDeathVisuals.cs;../../SephiriaOne/Features/Combat/FriendlyFireDeathAudio.cs" /></ItemGroup>
+  <ItemGroup>
+    <Compile Remove="../../SephiriaOne/Features/Combat/FriendlyFireDeathVisuals.cs;../../SephiriaOne/Features/Combat/FriendlyFireDeathAudio.cs" /></ItemGroup>
 </Project>

@@ -15,7 +15,7 @@ namespace SephiriaOne
         internal sealed class BalanceWindow
         {
             internal bool Started;
-            internal long CombatEpoch, ParticipantEpoch, Revision, SourceLife, TargetLife, Generation, ChaserRevision;
+            internal long CombatEpoch, ParticipantEpoch, Revision, SourceLife, TargetLife, Generation, RoleRevision;
             internal string SourceFloor, TargetFloor;
             internal FriendlyFireDamageBudget Budget;
             internal FriendlyFireHitFrequency Frequency;
@@ -79,12 +79,12 @@ namespace SephiriaOne
                 // attacks and exhausted-budget barrages share the same history.
                 damage *= window.Frequency.Next(now);
             }
-            long chaserRevision = CombatMatchRuntime.ChaserRevision;
+            long chaserRevision = CombatMatchRuntime.RoleRevision;
             // A carrier can change away and back between two hits. Preserve tokens,
             // but do not award boosted credit across an unobserved role/config edit.
-            double elapsedCeiling = window.ChaserRevision == chaserRevision ? double.PositiveInfinity : baseRefill;
+            double elapsedCeiling = window.RoleRevision == chaserRevision ? double.PositiveInfinity : baseRefill;
             double allowed = window.Budget.Take(damage, maxHp, now, refillPerSecond, elapsedCeiling);
-            window.ChaserRevision = chaserRevision;
+            window.RoleRevision = chaserRevision;
             if (allowed > 0)
             {
                 // Reserve before native callbacks; zero-charge or exhausted

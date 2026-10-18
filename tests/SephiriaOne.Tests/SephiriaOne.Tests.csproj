@@ -6,6 +6,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../SephiriaOne/Session/SessionZombiePolicy.cs" Link="SessionZombiePolicy.cs" />
+    <Compile Include="../../SephiriaOne/Features/Combat/ZombieSurvival/ZombieSurvivalSettings.cs" Link="ZombieSurvivalSettings.cs" />
+
     <Compile Include="../../SephiriaOne/Features/Collin/CollinCommand.cs" Link="CollinCommand.cs" />
     <Compile Include="../../SephiriaOne/Features/Bat/BatCommand.cs" Link="BatCommand.cs" />
     <Compile Include="../../SephiriaOne/Features/Items/ItemRestrictionOverlay.cs" Link="Source/Features/Items/ItemRestrictionOverlay.cs" />
@@ -42,7 +45,7 @@
     <Compile Include="../../SephiriaOne/Features/Combat/DeathmatchSettings.cs" Link="DeathmatchSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/TournamentSettings.cs" Link="TournamentSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/PlayTag/PlayTagSettings.cs" Link="PlayTagSettings.cs" />
-    <Compile Include="../../SephiriaOne/Features/Combat/PlayTag/PlayTagChaserSettings.cs" Link="PlayTagChaserSettings.cs" />
+    <Compile Include="../../SephiriaOne/Features/Combat/CombatRoleSettings.cs" Link="CombatRoleSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Spawns/EventSpawnSettings.cs" Link="EventSpawnSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Spawns/EventSpawnCommand.cs" Link="EventSpawnCommand.cs" />
     <Compile Include="../../SephiriaOne/Features/Spawns/JarSpawnSettings.cs" Link="JarSpawnSettings.cs" />
