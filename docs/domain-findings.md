@@ -16,6 +16,14 @@ A different game build requires renewed contract/asset checks. Start with the
 
 ## State lifetimes and multiplayer
 
+Cutscene progression authority does not imply presentation-clock authority.
+`NetworkCutScenePlayer` broadcasts graph/node identity and termination, while
+guests run local coroutines; an earlier end stops their presentation rather than
+speeding it up. Bespoke events also contain client-local fixed waits, and no
+general native rate transport was found. Prefer scene-specific native skip/
+shorter-wait investigation over a host `Time.timeScale` change. See
+[cutscene timing, native contracts and limitations](cutscene-speed-investigation.md).
+
 Private stock chat normalizes to 120 characters. Pack localized clauses before
 dispatch to avoid silently losing later settings. Read-only role notices can
 share session subjects and connection receipts while observing actual applied

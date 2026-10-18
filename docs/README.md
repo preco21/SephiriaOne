@@ -2,6 +2,11 @@
 
 Maintained: 2026-10-18 (Asia/Seoul), addon `0.63.0`.
 
+Investigation: [host-only cutscene acceleration](cutscene-speed-investigation.md)
+found server-controlled progression but client-local playback clocks. The native
+paths inspected cannot provide uniform 3x–5x playback on stock guests; selected
+shorter pauses or native boss skips remain narrower candidates. Research only.
+
 Prototype: [floating countdown text](overhead-message-transport.md#floating-countdown-prototype-0630)
 adds native cyan text for respawn seconds and the Play Tag bomb timer while
 retaining every existing chat/bubble notice. Native transport and fixture checks
