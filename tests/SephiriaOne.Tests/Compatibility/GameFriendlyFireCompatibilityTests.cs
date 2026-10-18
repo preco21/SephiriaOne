@@ -88,6 +88,7 @@ internal static class GameFriendlyFireCompatibilityTests
         GameFriendlyFireWeaponTests.Run(game, addon);
         GameFriendlyFireDeathVisualTests.Run(game, addon);
         GameNativePlayerChatTests.Run(game, addon);
+        GameFloatingTextTests.Run(game, addon);
         GameReviveAllTests.Run(game, addon);
         GameRespawnVisualTests.Run(game, addon);
         GameDeathmatchTests.Run(game, addon);

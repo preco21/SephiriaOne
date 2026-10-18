@@ -162,8 +162,10 @@ Chat presentation audit (2026-10-18): the stock `RpcChat` receiver always writes
 the HUD log before creating a player bubble. Private targeting changes recipients,
 not presentation. Direct bubble creation is local-only; no bubble-only flag exists
 in that packet. NPC speech can omit logs but is bound to AI components; native
-floating text is a possible, visually different alternative. Preserve current
-delivery under the host-only requirement. See [transport evidence and limits](overhead-message-transport.md).
+floating text is a visually different alternative. Version `0.63.0` adds a native
+floating countdown prototype alongside existing chat/bubbles, sharing payload
+validation with Rabbit's private low-MP alert. Cosmetic failure does not disable
+chat or gameplay. See [transport evidence and live-test limits](overhead-message-transport.md).
 
 Downed-player visuals (`0.48.0`): the native red single-player crash is a local
 world-space SpriteFx, not screen-space UI. Stock casting RPCs can select it but

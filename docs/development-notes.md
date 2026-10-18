@@ -14,6 +14,12 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+- `0.63.0`: [Floating countdown prototype](overhead-message-transport.md#floating-countdown-prototype-0630)
+  adds native cyan respawn/bomb text alongside all existing chat/bubbles. Shared
+  match/connection and specific countdown checks prevent stale output after
+  callbacks. Native transport, EN/KO, runtime regressions and Release build are
+  verified; host/guest rendering remains a live check. Nothing deployed.
+
 - `0.62.1`: Dark Cloud's balanced PvP strike interval increases from 0.25 to
   0.5 seconds per attacker/opponent. Boundary regressions cover rejected strikes,
   burn/FX suppression and admitted queued strikes; the existing budget, other

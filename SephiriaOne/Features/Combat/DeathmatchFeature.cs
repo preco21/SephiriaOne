@@ -13,6 +13,7 @@ namespace SephiriaOne
         internal static void Initialize()
         {
             NativeReviveVisuals.Reset();
+            NativePlayerFloatingText.Reset();
             try { HarmonyRuntime.EnsureLoaded(); Validate(); Available = true; }
             catch (Exception error) { Debug.LogWarning("[SephiriaOne] Deathmatch chat unavailable: " + error); }
         }
@@ -32,6 +33,7 @@ namespace SephiriaOne
                 throw new InvalidOperationException("Deathmatch recovery is finishing a native callback; retry unload after it completes.");
             Available = false;
             NativeReviveVisuals.Reset();
+            NativePlayerFloatingText.Reset();
         }
     }
 }

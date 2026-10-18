@@ -747,6 +747,7 @@
   "Bomb passed!": "Bomb passed!",
   "You have the bomb. Fuse begins after respawn.": "You have the bomb. Fuse begins after respawn.",
   "Bomb: {0}s. Pass the bomb by defeating another player!": "Bomb: {0}s. Pass the bomb by defeating another player!",
+  "Bomb: {0}s": "Bomb: {0}s",
   "Play Tag: {0}'s bomb exploded before any pass.": "Play Tag: {0}'s bomb exploded before any pass.",
   "'{0}' was blown up by '{1}'s bomb.": "'{0}' was blown up by '{1}'s bomb.",
   "Play Tag: {0}. Initial fuse: {1}s. Remaining: {2}s.": "Play Tag: {0}. Initial fuse: {1}s. Remaining: {2}s.",

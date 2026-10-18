@@ -137,7 +137,7 @@ namespace SephiriaOne
             int seconds = tagBomb.Remaining(now);
             if (seconds == tagShown) return;
             tagShown = seconds;
-            Broadcast(player, L.F("Bomb: {0}s. Pass the bomb by defeating another player!", seconds));
+            BroadcastCountdown(player, L.F("Bomb: {0}s. Pass the bomb by defeating another player!", seconds), L.F("Bomb: {0}s", seconds));
         }
 
         internal static bool IsPlayTagExplosion(PlayerAvatar player) => ReferenceEquals(player, tagExplosionVictim);

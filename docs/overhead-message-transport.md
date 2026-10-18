@@ -1,7 +1,8 @@
 # Overhead messages without chat history
 
 Investigated 2026-10-18 against the installed Sephiria 1.0.33 assembly and addon
-`0.62.1`. This is static research; gameplay and message delivery are unchanged.
+`0.62.1`. The initial investigation changed no delivery behavior; the `0.63.0`
+prototype below now adds cosmetic countdown text while retaining chat/bubbles.
 
 ## Conclusion
 
@@ -13,8 +14,69 @@ its recipients, not that behavior. There is no bubble-only flag in its payload.
 An addon on each viewing client could separate these outputs. That does not meet
 this project's requirement to support unmodified guests, so no local-only filter
 or new toggle was added. A host-only floating-text alternative exists in native
-code, but it is a different presentation with significant limitations; it has not
-been implemented or tested in live multiplayer.
+code, but it is a different presentation with significant limitations. Version
+`0.63.0` implements the limited prototype below; live multiplayer presentation
+remains unverified.
+
+## Floating countdown prototype (0.63.0)
+
+The user approved a side-by-side trial, explicitly retaining chat until verified.
+Deathmatch/Tournament respawn countdowns, Play Tag's one-second respawn, and the
+active bomb timer now also emit native cyan floating text near the character's
+head. Respawn particles reuse the existing localized sentence; bomb particles
+use `Bomb: {0}s` / `폭탄: {0}초`. Full instructions, chat entries and ordinary
+bubbles remain unchanged. Global starts, results, opponent notices, costume role
+summaries and private killed-by notices are not converted.
+
+`NativePlayerFloatingText` caches an open native sender delegate after validating
+the exact sender/reader contract, channel 1, owner inclusion, and the receiver's
+cosmetic call sequence. It shares payload validation with `NativePlayerAlert`,
+which already uses this receiver for private guest low-MP feedback. That existing
+alert retains its private reliable delivery and host center-screen behavior.
+The prototype calls the native observer broadcast once, with normal text style
+and damage-visibility filtering disabled. It never invokes actual damage or
+creates a second host-local particle.
+
+The shared `BroadcastCountdown` keeps chat first and checks the captured match
+token and participant receipt again before optional floating output. It also
+rechecks the exact pending respawn or bomb/carrier revision, since chat callbacks
+can revive a player or transfer a bomb without ending the match. Existing
+displayed-second checks bound emission to countdown changes; there are no extra
+pollers, coroutines or per-player components. The adapter rejects stale/unready
+identities, non-finite coordinates and empty text. It normalizes text with the
+native sanitizer, accepts dead avatars, and disables its cached transport with a
+single warning if compatibility or dispatch fails. Feature initialization/unload
+resets that cache. Previously emitted particles finish their native fade; the
+host cannot recall them from stock clients when a match stops.
+
+Automated verification: the runtime fixture suite passes 2,519 checks, including
+countdown uniqueness, retained chat, optional-presentation failure, normal
+revival, loading, disconnect/replacement, run restart, manual revival, stopping,
+and Tag transfer/respawn timing, callback-driven revival/transfer, and simultaneous
+host/guest countdowns. Installed-game contract checks validate native
+registration, payload arguments, cosmetic-only receiver, owner inclusion, EN/KO
+keys and changed-contract rejection. Release build passes without warnings.
+These checks do not establish visibility, readability or network delivery in a
+running host/guest session. No game launch or deployment was performed.
+
+Live verification before any chat suppression is considered:
+
+1. With a host and an unmodified guest observing each other, trigger a death in
+   Deathmatch and Tournament. Check cyan `Respawn in: 3s`, `2s`, `1s` (or Korean)
+   near the dead player, with each original chat entry/bubble still present.
+2. In Play Tag, inspect the short bomb timer while standing and moving, transfer
+   it by killing another player, and confirm the recipient's one-second respawn
+   precedes their reduced bomb timer. Both host and guest carriers need coverage.
+3. Check that a viewer with party-member damage numbers disabled still sees the
+   notices. Test localization, camera distance, tall costumes, visual crowding,
+   fade speed, and duplicate/missing updates. Channel 1 can lose messages; retained
+   reliable chat remains the readable fallback.
+4. Stop/change modes, disconnect/rejoin and restart the run. New particles must
+   stop for the old countdown; a brief final fade is normal. Verify normal damage,
+   K/D/A, revival, Rabbit low-MP alerts and chat remain unaffected.
+
+Do not remove chat based only on automated checks. Replacing repeated chat is a
+separate change after user confirmation that the visual trial is acceptable.
 
 ## Existing message paths
 

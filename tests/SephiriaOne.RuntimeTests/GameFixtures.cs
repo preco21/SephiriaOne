@@ -165,7 +165,9 @@ public static class SaveManager { public static SaveData CurrentRun = new(), Cur
 public sealed partial class DungeonManager : UnityEngine.Object
 {
     public readonly List<(PlayerAvatar Player, string Message)> ChatMessages = new();
-    public void Chat(PlayerAvatar player, string name, string message) => ChatMessages.Add((player, message));
+    public Action ChatCallback;
+    public void Chat(PlayerAvatar player, string name, string message)
+    { ChatMessages.Add((player, message)); ChatCallback?.Invoke(); }
     public bool requestLeaveOnHost;
     public int victoryType;
     public static DungeonManager Instance;

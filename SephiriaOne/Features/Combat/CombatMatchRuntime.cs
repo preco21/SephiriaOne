@@ -163,7 +163,7 @@ namespace SephiriaOne
                     int seconds = Math.Max(0, (int)Math.Ceiling(respawn.At - now));
                     if (seconds > 0)
                     {
-                        if (respawn.Shown != seconds) { respawn.Shown = seconds; Broadcast(player, L.F("Respawn in: {0}s", seconds)); }
+                        if (respawn.Shown != seconds) { respawn.Shown = seconds; BroadcastRespawnCountdown(player, seconds); }
                         continue;
                     }
                     pending.Remove(player);
@@ -254,7 +254,7 @@ namespace SephiriaOne
             var score = FriendlyFireKda.For(player);
             if (!participants.TryGetValue(score, out var entry)) participants.Add(score, entry = new Participant { Score = score, Order = participants.Count });
             entry.Name = CombatNames.Player(player);
-            Broadcast(player, L.F("Respawn in: {0}s", delay));
+            BroadcastRespawnCountdown(player, delay);
         }
         internal static void Reviving(PlayerAvatar player)
         {
@@ -350,6 +350,33 @@ namespace SephiriaOne
         }
         private static void FinishStop()
         { cleanup = null; dungeon = null; run = null; stopping = false; mode = MatchMode.None; ClearTournament(); SessionSettings.DeathmatchChanged(); }
+
+        private static void BroadcastRespawnCountdown(PlayerAvatar player, int seconds)
+        {
+            string message = L.F("Respawn in: {0}s", seconds);
+            pending.TryGetValue(player, out var respawn);
+            BroadcastCountdown(player, message, message, respawn);
+        }
+
+        private static void BroadcastCountdown(PlayerAvatar player, string message, string floating, Respawn respawn = null)
+        {
+            long current = token, chaser = ChaserRevision;
+            var bomb = tagBomb;
+            var receipt = FriendlyFireParticipants.Capture(player);
+            Broadcast(player, message); // Retained during the floating-text trial.
+            if (!FriendlyFireParticipants.IsCurrent(receipt) || !IsRunning || current != token || !CurrentScope) return;
+            // Chat hooks can revive/re-kill a player or transfer the bomb without
+            // changing the match token. The specific countdown must still belong
+            // to this life/carrier before its optional presentation is emitted.
+            if (respawn != null)
+            {
+                if (!player.IsDead || !pending.TryGetValue(player, out var latest) || !ReferenceEquals(latest, respawn)) return;
+            }
+            else if (!IsPlayTag || player.IsDead || bomb == null || !ReferenceEquals(bomb, tagBomb) || chaser != ChaserRevision ||
+                bomb.Resolved || bomb.AwaitingRespawn || bomb.IsDue(Now) || !ReferenceEquals(tagPlayers[bomb.Carrier].Subject.Player, player)) return;
+            try { NativePlayerFloatingText.Show(player, floating); }
+            catch (Exception error) { Debug.LogWarning("[SephiriaOne] Optional countdown presentation failed: " + error); }
+        }
 
         private static void Broadcast(PlayerAvatar player, string message)
         {

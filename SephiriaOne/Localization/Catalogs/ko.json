@@ -747,6 +747,7 @@
   "Bomb passed!": "폭탄을 넘겼습니다!",
   "You have the bomb. Fuse begins after respawn.": "폭탄을 받았습니다. 부활하면 제한 시간이 시작됩니다.",
   "Bomb: {0}s. Pass the bomb by defeating another player!": "폭탄: {0}초. 다른 플레이어를 처치해 폭탄을 넘기세요!",
+  "Bomb: {0}s": "폭탄: {0}초",
   "Play Tag: {0}'s bomb exploded before any pass.": "술래잡기: {0} 님이 폭탄을 넘기기 전에 폭발했습니다.",
   "'{0}' was blown up by '{1}'s bomb.": "'{0}'가 '{1}'의 폭탄에 의해 폭사했습니다.",
   "Play Tag: {0}. Initial fuse: {1}s. Remaining: {2}s.": "술래잡기: {0}. 처음 폭탄 시간: {1}초. 남은 시간: {2}초.",

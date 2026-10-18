@@ -789,6 +789,7 @@ PlayTagRuntimeTests.Run(Start, id => Add(id), Check);
 PlayTagChaserRuntimeTests.Run(Start, id => Add(id), Check);
 KilledByRuntimeTests.Run(Start, id => Add(id), Check);
 RespawnVisualTests.Run(Start, id => Add(id), Check);
+FloatingCountdownTests.Run(Start, id => Add(id), Check);
 DeathmatchScoreResetTests.Run(Start, id => Add(id), Check);
         JarSpawnRuntimeTests.Run(Start, id => Add(id), Check);
         EventSpawnRuntimeTests.Run(Start, id => Add(id), Check);
