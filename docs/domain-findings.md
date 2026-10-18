@@ -158,6 +158,13 @@ Pair totals share KDA score identity but reset explicitly on run/scope changes;
 life invalidation alone is also used between Tournament rounds and must preserve
 history. See [private notice and lifecycle evidence](friendly-fire-killed-by.md).
 
+Chat presentation audit (2026-10-18): the stock `RpcChat` receiver always writes
+the HUD log before creating a player bubble. Private targeting changes recipients,
+not presentation. Direct bubble creation is local-only; no bubble-only flag exists
+in that packet. NPC speech can omit logs but is bound to AI components; native
+floating text is a possible, visually different alternative. Preserve current
+delivery under the host-only requirement. See [transport evidence and limits](overhead-message-transport.md).
+
 Downed-player visuals (`0.48.0`): the native red single-player crash is a local
 world-space SpriteFx, not screen-space UI. Stock casting RPCs can select it but
 introduce transparency/material side effects. Use the separate native impact

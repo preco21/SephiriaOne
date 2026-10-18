@@ -1,0 +1,124 @@
+# Overhead messages without chat history
+
+Investigated 2026-10-18 against the installed Sephiria 1.0.33 assembly and addon
+`0.62.1`. This is static research; gameplay and message delivery are unchanged.
+
+## Conclusion
+
+The ordinary player chat bubble cannot be separated from the HUD chat log by a
+host-only change using the inspected native chat transport. Each stock client
+writes the log before creating the bubble. Targeting the packet privately changes
+its recipients, not that behavior. There is no bubble-only flag in its payload.
+
+An addon on each viewing client could separate these outputs. That does not meet
+this project's requirement to support unmodified guests, so no local-only filter
+or new toggle was added. A host-only floating-text alternative exists in native
+code, but it is a different presentation with significant limitations; it has not
+been implemented or tested in live multiplayer.
+
+## Existing message paths
+
+| Path | Overhead display | HUD chat log | Scope |
+| --- | --- | --- | --- |
+| `CombatMatchRuntime.Broadcast(player, text)` | Player-following chat bubble | Yes | Dungeon observers, including host |
+| `CombatMatchRuntime.Broadcast(null, text)` | None | Yes | Dungeon observers, including host |
+| `NativePlayerChat.Show(player, text)` | None; deliberately sends a null avatar | Yes | That player's connection only |
+| Direct `PlayerAvatar.CreateChatBubble(text)` | Player-following chat bubble | No | Calling client only; no network dispatch |
+
+Respawn countdowns, Tournament opponent notices and Play Tag carrier notices use
+the first path. Global announcements and rankings use chat-only broadcasts.
+Private killed-by/matchup and costume-role notices use the third path, preserving
+the player's current combat bubble. These private notices are not currently
+duplicated overhead.
+
+Native `DungeonManager.RpcChat(PlayerAvatar, string, string)` has only avatar,
+speaker name and message fields (hash `1586055649`, reliable channel 0).
+Its receiver normalizes the text, rejects an empty message, writes both a debug
+log and `GameLogWriter.WriteLog`, then calls `CreateChatBubble` if the avatar is
+present. There is no sender-name/private-message exception. A blank message
+suppresses both outputs; a null avatar suppresses only the bubble.
+
+`GameLogWriter.WriteLog` invokes `OnLogAdded`; the connected
+`UI_HUDLogViewer.SpawnLog` always allocates/reuses a HUD log entry. Formatting a
+message so it renders blank would still consume history entries. Rich-text tricks
+cannot provide clean suppression: chat sanitization strips tags, and the HUD and
+bubble disable rich text. Disconnecting the viewer would hide unrelated logs too.
+
+`CreateChatBubble` replaces the preceding bubble, attaches it to `AppWorldUI`, and
+sets a following transform/height. `UI_ChatBubble` has a three-second timer and is
+a local `MonoBehaviour`, not a replicated object. Calling it on the host cannot
+make it run on guest clients.
+
+## Other native paths inspected
+
+| Candidate | Finding | Suitability |
+| --- | --- | --- |
+| `UnitAI_NewBasic.RpcCreateSpeechBubble` | With `showName=false`, creates NPC speech without writing chat | Follows that AI's avatar, not an arbitrary player |
+| `UnitAI_NewBasic.RpcCreateSpeechBubbleCustomPosition` | Also skips chat with `showName=false`; accepts a world position | Requires an existing networked AI component; fixed position, NPC presentation, shared NPC speech lifetime |
+| `Grasstown_FirstEvent.RpcCreateSpeechBubble` | Uses a scene-specific text index and also writes chat | Not a general player-notice transport |
+| `UnitAvatar.TargetSendCustomMessage` | Raises a client event; inspected subscriber handles shop feedback | No stock subscriber that creates arbitrary player bubbles |
+| `UnitAvatar.RpcShowDamageParticle` | Accepts arbitrary text/position/color and creates a cosmetic world-space text particle without writing chat | Possible host-only alternative, but not a following chat bubble |
+
+The NPC RPC receiver casts its network component to `UnitAI_NewBasic`; sending
+that RPC to `PlayerAvatar` does not turn a player into an NPC speech receiver.
+The custom-position version could show text near a player when a suitable NPC is
+present, but its availability, observer scope and speech ownership depend on that
+NPC. Spawning or repurposing NPCs solely as UI proxies would add lifecycle and
+gameplay risk, rather than provide a reliable shared player-notice mechanism.
+
+The damage-particle receiver creates text at a randomly offset position; the text
+moves and fades independently of the player. The native sender uses channel 1
+(unreliable), and its `isPrivate` argument controls damage-visibility filtering,
+not recipient privacy. The existing reliable targeted-chat contract must not be
+assumed to apply to this RPC. A future replacement would need its own exact
+sender/receiver validation, explicit audience handling, short readable messages,
+and live host/guest checks for timing, placement, visibility and duplicates.
+Do not route notices through actual damage just to produce text.
+
+## Reusable design boundary
+
+Audience and presentation are separate concerns. A shared notice adapter could
+express broadcast/private recipients separately from chat/bubble output, but it
+must expose what the selected transport actually supports. For stock clients,
+the current native player-bubble transport implies a chat entry. Centralizing
+callers alone cannot remove that client-side behavior.
+
+If viewer-side addons become acceptable, a narrow receiver patch could omit only
+the HUD write for explicitly marked addon notices while preserving bubble
+creation and ordinary chat. Host-only patches would improve the host's UI only.
+Keep global results, errors and intentional private chat separate from transient
+countdown notices; do not filter every message named `SephiriaOne` indiscriminately.
+
+## Evidence and verification boundary
+
+Installed `Assembly-CSharp.dll` SHA-256:
+`c57a0daeab8e8d0af7066a344133eec4c57d8f303fd9e25da9410fbfc4cf1510`.
+Module MVID: `ccf97024-28bd-48f1-9666-c768c2bd4b2b`.
+
+REA retained evidence (static file inspection; no game execution):
+
+- Assembly identity: `ev_c3733c62f61d0c4e651bfc15807d5dc53d2140cdbe2e223042a8a4df533a43a1`.
+- Chat, bubble, sanitizer and log types:
+  `ev_60074cc1f6b62340be1b51d9e05757a03cedbe66f08dd11f97e22f1f0a1b8dce`.
+- HUD viewer, NPC speech, UnitAvatar notifications and shop subscriber:
+  `ev_cf33aec2f7a8435ea4bd45ea4d5540ae8c153b2b839e4af6002e98b5455f4669`.
+
+| Finding | Evidence anchor | Confidence / remaining limit |
+| --- | --- | --- |
+| Player chat writes the log before creating the bubble | Chat receiver token `0x06001d4d`; call-edge view `ev_e3938e79b8904de2e484ad307b6e19a53e0a5fea3ded3e85f743f04477254dca` | Observed CIL calls and branch order |
+| Bubble creation is local presentation | `PlayerAvatar.CreateChatBubble`, token `0x06004fb5`; method view `ev_b32b149791787f1e2d23f24ca9cff0471d7b13122a110b5de1711f3098a3ba5e` | Observed method body; no network send |
+| NPC speech has a conditional log write | `CreateSpeechBubbleOnClient` / `CustomPosition`, tokens `0x0600734f` / `0x0600734b` | Observed receiver branch; not a player-attached transport |
+| Floating text does not write chat | Damage-particle receiver token `0x060053ec`; method view `ev_96e85d5cb9a0d4a43eb9fac4d88d4eb2f3dbbcebc5a491ab3672dea01d597bed` | Observed native implementation; proposed notice reuse remains untested |
+
+REA reported complete metadata/member coverage for the selected types. Its
+user-string facet reported malformed terminal flags on some unrelated literals;
+the conclusions above rely on decoded methods/calls and inspected control flow,
+not completeness of a string search. Tokens are specific to this assembly.
+Cross-referenced the external ILSpy game export for control flow, RPC
+registrations, bubble callers and notification alternatives. The negative finding
+is bounded to these native paths in this build; it is not a claim about future
+game versions or every possible UI workaround.
+
+Related: [Deathmatch transport](deathmatch.md), [private killed-by notices](friendly-fire-killed-by.md),
+[costume role notices](costume-role-notices.md), and
+[native private-chat compatibility tests](../tests/SephiriaOne.Tests/Compatibility/GameNativePlayerChatTests.cs).

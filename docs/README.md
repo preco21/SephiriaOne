@@ -2,6 +2,11 @@
 
 Maintained: 2026-10-18 (Asia/Seoul), addon `0.62.1`.
 
+Research: [overhead messages without chat history](overhead-message-transport.md)
+confirms that stock player chat logs and bubbles share one receiver. Private
+delivery cannot suppress the log; NPC speech and floating-text alternatives have
+different constraints. No gameplay or delivery behavior changed.
+
 PvP tuning: [Dark Cloud](pvp-balancing.md#dark-cloud) now admits one strike per
 attacker/opponent every 0.5 seconds while balancing is enabled. Other effect
 intervals, the shared damage budget and native enemy behavior are unchanged.
