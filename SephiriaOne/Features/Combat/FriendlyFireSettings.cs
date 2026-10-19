@@ -11,7 +11,7 @@ namespace SephiriaOne
         private readonly int damageOffset;
         private readonly int refillOffset;
         private readonly int guardMpOffset;
-        public const decimal DefaultGuardMpPercent = 10m;
+        public const decimal DefaultGuardMpPercent = 5m;
         private const int DefaultGuardMpHundredths = (int)(DefaultGuardMpPercent * 100);
         public const decimal DefaultRefillPercent = 70m;
         private const int DefaultRefillHundredths = (int)(DefaultRefillPercent * 100);
@@ -90,7 +90,7 @@ namespace SephiriaOne
             L.T("PvP DoT: /one friendlyfire dot burn|plasma-burn|frostbite|poison|wound|lightning|freeze|chim|dark-cloud 0.05..10|reset (seconds, up to 2 decimals). Lightning includes Plasma shock; Freeze controls damage, not stun. Only with PvP balancing on.") + " " +
             L.T("Keep debuff schedule: /one friendlyfire dot <effect> preserve on|off|reset. Default on; keeps the first native hit, then requires one interval between hits, even on reapplication. Does not change stacks or duration refreshes. Dark Cloud always uses its separate strike clock. Only with PvP balancing on.") + " " +
             L.T("PvP refill: /one friendlyfire refill 1..300|reset (percent of max HP per second, up to 2 decimals). Default 70; applies only with PvP balancing on.") + " " +
-            L.T("PvP guard: /one friendlyfire guard-mp 0..100|reset (percent of max MP, up to 2 decimals). Default 10; native guard reductions apply. Positive costs round up. Only with PvP balancing on.") + " " +
+            L.T("PvP guard: /one friendlyfire guard-mp 0..100|reset (percent of max MP, up to 2 decimals). Default 5; native guard reductions apply. Positive costs round up. Only with PvP balancing on.") + " " +
             L.T("Lobby recovery: /one friendlyfire block-lobby-regen on|off. Default off; blocks automatic HP/MP recovery for active lobby participants. Potions and skill healing remain available.");
         internal static bool TryPercent(string text, out decimal percent)
         {

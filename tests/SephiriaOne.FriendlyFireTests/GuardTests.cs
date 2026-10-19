@@ -11,13 +11,14 @@ internal static class GuardTests
         {
             FriendlyFireParticipants.Clear(); CombatMatchRuntime.PairRule = null; CombatMatchRuntime.Chaser = null;
             Mirror.NetworkServer.active = true;
-            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true);
+            // Keep precision/reduction regressions at an explicit 10%; test the default below.
+            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, guardMpPercent: 10);
             source = new(); target = new() { IsGuarding = true, MaxMp = max, Mp = max };
             hit = new() { origin = source, damage = 20 };
         }
-        Fresh(); target.ApplyDamage(hit);
-        check(target.Mp == 900 && target.Hp == 100 && target.GuardHits == 1,
-            "Balanced guard spends 10 percent maximum MP and retains native block");
+        Fresh(); SessionSettings.FriendlyFireForHit = new(true, 100, balance: true); target.ApplyDamage(hit);
+        check(target.Mp == 950 && target.Hp == 100 && target.GuardHits == 1,
+            "Default balanced guard spends 5 percent maximum MP and retains native block");
         foreach (int max in new[] { 1, 10, 99, 100, 101, 300, 1000, 1000000, int.MaxValue })
         {
             Fresh(max); target.ApplyDamage(hit);
@@ -92,7 +93,7 @@ internal static class GuardTests
         Fresh(); target.OnCalculateDurabilityDamage = cost => { SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, guardMpPercent: 25); return cost; };
         target.ApplyDamage(hit); check(target.Mp == 750, "Cost callbacks can edit policy at the final spend boundary");
         Fresh(); SessionSettings.FriendlyFireForHit = new(true, 100); target.OnGuardSucceeded = _ => SessionSettings.FriendlyFireForHit = new(true, 100, balance: true);
-        target.ApplyDamage(hit); check(target.Mp == 900, "Enabling balancing inside a guard callback immediately applies current cost");
+        target.ApplyDamage(hit); check(target.Mp == 950, "Enabling balancing inside a guard callback immediately applies current default cost");
         Fresh(); target.OnGuardSucceeded = _ => target.MaxMp = 2000; target.ApplyDamage(hit);
         check(target.Mp == 800, "Cost reads maximum MP after native guard callbacks");
         Fresh(); npc = new UnitAvatar { faction = "enemy", IsGuarding = true, MaxMp = 1000, Mp = 1000 };

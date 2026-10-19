@@ -1,6 +1,9 @@
 # Development knowledge index
 
-Maintained: 2026-10-20 (Asia/Seoul), addon `0.69.0`.
+Maintained: 2026-10-20 (Asia/Seoul), addon `0.69.1`.
+
+PvP guard: the default and reset value are now **5% of maximum MP**, before
+native guard reductions. Explicit saved overrides remain unchanged.
 
 PvP reapplication: [Keep schedule / 주기 유지](pvp-dot-intervals.md#preserve-schedules-0690)
 is independently configurable for eight debuff families, enabled by default.

@@ -320,17 +320,19 @@ was deployed or launched.
 
 ## Guard MP cost (`0.58.0`, 2026-10-16)
 
-While balancing is enabled, blocking an admitted PvP hit costs **10% of the
+Default reduced to 5% in `0.69.1` (2026-10-20).
+
+While balancing is enabled, blocking an admitted PvP hit costs **5% of the
 defender's current maximum MP**, before native reductions. Guard Efficiency,
 perfect guard's half-cost and native item/cost callbacks still apply. At 1,000
-maximum MP, an ordinary block costs 100 MP, a perfect guard 50 MP; 40% Guard
-Efficiency lowers those to 60 and 30 MP. This is charged on a successful block,
+maximum MP, an ordinary block costs 50 MP, a perfect guard 25 MP; 40% Guard
+Efficiency lowers those to 30 and 15 MP. This is charged on a successful block,
 not simply on pressing or holding right-click.
 
 Use **Combat → PvP balancing → Guard MP (%)** (`방어 MP (%)`) or:
 
 ```text
-/one friendlyfire guard-mp 10
+/one friendlyfire guard-mp 5
 /one friendlyfire guard-mp 7.5
 /one friendlyfire guard-mp reset
 /one save
@@ -338,10 +340,12 @@ Use **Combat → PvP balancing → Guard MP (%)** (`방어 MP (%)`) or:
 
 Range: 0..100%, up to two decimals, optional `%` suffix. Zero explicitly waives
 the balanced guard cost. Positive fractional MP costs round up; a genuinely
-zero native cost remains zero. Reset restores 10% without touching other
+zero native cost remains zero. Reset restores 5% without touching other
 preferences, scores, participants or the current match. Full friendly-fire reset
-also restores 10%. Saving a nondefault value uses preset v27; all older supported
-presets inherit 10%. Default values add no extra preset row/version requirement.
+also restores 5%. Saving a nondefault value uses preset v27; all older supported
+presets with no guard override inherit 5%. Explicitly saved custom values,
+including 10%, remain unchanged. Default values add no extra preset row/version
+requirement.
 
 The Combat panel has compact **Combat** and **PvP balancing** subsections. The
 balancing toggle, refill and guard editors are together; K/D/A reset, Revive All,
