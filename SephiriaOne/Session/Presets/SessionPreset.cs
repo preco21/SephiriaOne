@@ -92,7 +92,7 @@ namespace SephiriaOne
             for (int i = 0; i < PvpDotSettings.Count; i++)
             {
                 var effect = (PvpDotEffect)i;
-                if (FriendlyFire.DotIntervals.Seconds(effect) != PvpDotSettings.DefaultSeconds)
+                if (FriendlyFire.DotIntervals.Seconds(effect) != PvpDotSettings.DefaultSeconds(effect))
                     lines.Add("friendlyfire dot-" + PvpDotSettings.Key(effect) + " " + FriendlyFire.DotIntervals.Number(effect));
             }
             string Describe(Setting setting) => (setting.Multiplier ? "multiplier " : setting.Absolute ? "set " : "offset ") +

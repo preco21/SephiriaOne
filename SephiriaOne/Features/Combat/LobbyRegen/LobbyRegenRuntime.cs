@@ -18,10 +18,7 @@ namespace SephiriaOne
             if (!dungeon || !dungeon.isServer || !race || !race.lobbyStage || string.IsNullOrEmpty(player.currentFloorGuid) ||
                 !dungeon.generatedFloors.TryGetValue(player.currentFloorGuid, out var floor) || floor == null ||
                 !string.Equals(floor.stageName, race.lobbyStage.name, StringComparison.Ordinal)) return false;
-            // Includes can retire stale selections and stop a tournament. Resolve
-            // effective combat again afterward to avoid blocking a restored player.
-            return FriendlyFireParticipants.Includes(player) && CombatMatchRuntime.AllowsParticipant(player) &&
-                SessionSettings.FriendlyFireForHit.Enabled;
+            return PvpParticipation.IsActive(player);
         }
 
         internal static void HealPlace(UnitAvatar unit, float amount, bool allowOverHeal, bool ignorePenalty)

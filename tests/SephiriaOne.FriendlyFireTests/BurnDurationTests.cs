@@ -18,7 +18,7 @@ internal static class BurnDurationTests
             burn.OnTick = burn.OnUpdate_Server;
             return burn;
         }
-        Fresh(); var burn = Burn(); burn.Step(0.75f); burn.Step(0.75f); burn.Step(0.499f);
+        Fresh(); var burn = Burn(); burn.Step(0.9f); burn.Step(0.9f); burn.Step(0.199f);
         check(!burn.IsEndBuff && burn.Ticks == 2, "Balanced Burn retains ticks before its two-second lifetime");
         Time.time = 102; Time.deltaTime = 0.001f; burn.Update();
         check(burn.IsEndBuff && burn.Ticks == 2 && burn.NativeDuration == 30,
@@ -42,7 +42,7 @@ internal static class BurnDurationTests
             "Refreshed Burn still ends at two seconds regardless of duration bonuses, before another tick");
         burn.RefreshDurationTimer(999, 999); burn.Step(0.75f);
         check(burn.IsEndBuff && burn.Ticks == refreshedTicks, "Refreshing a retired Burn cannot revive it during delayed despawn");
-        var replacement = Burn(burn.NetworkAttacker, burn.NetworkTarget); replacement.Step(0.75f);
+        var replacement = Burn(burn.NetworkAttacker, burn.NetworkTarget); replacement.Step(0.9f);
         check(!replacement.IsEndBuff && replacement.Ticks == 1, "A fresh application after expiry receives an independent lifetime");
         burn.InitializeAndSpawn(new PlayerAvatar(), new PlayerAvatar()); burn.Step(0.75f);
         check(!burn.IsEndBuff, "Reinitializing an effect replaces its old receipt and ended flag");

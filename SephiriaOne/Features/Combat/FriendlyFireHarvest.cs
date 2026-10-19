@@ -9,10 +9,19 @@ namespace SephiriaOne
 {
     internal static partial class FriendlyFireRuntime
     {
-        // Only the two native Harvest call sites use this helper. Generic heals,
+        // Only the native Harvest call sites use these helpers. Generic heals,
         // potions and nested PvE hits cannot borrow the surrounding PvP scope.
         // Read current policy; no stat override or restoration journal survives.
-        internal static float HarvestAmount(float amount)
+        internal static void HarvestHp(UnitAvatar recipient, float amount)
+        {
+            // Heal(0) still writes health and invokes native healing callbacks.
+            // Skip the grant entirely, including admitted companion victims,
+            // independently of the optional player-damage balancing policy.
+            if (current.Friendly && NetworkServer.active && CurrentHitPermitted()) return;
+            recipient.Heal(amount);
+        }
+
+        internal static float HarvestMpAmount(float amount)
         {
             if (!current.Friendly || !(current.Victim is PlayerAvatar) || !NetworkServer.active ||
                 !SessionSettings.FriendlyFireForHit.Balance || !CurrentHitPermitted()) return amount;
@@ -51,14 +60,15 @@ namespace SephiriaOne
                 !code[hpCall - 2].IsLdloc() || !code[hpCall - 1].IsLdloc() ||
                 !code[mpCall - 2].IsLdloc() || !code[mpCall - 1].IsLdloc())
                 throw new InvalidOperationException("Native HP/MP Harvest recovery boundaries changed.");
-            // Amount is already on the stack. Preserve the original recovery
-            // calls, native penalties, caps, and fractional MP accumulation.
-            foreach (int call in new[] { mpCall, hpCall })
-            {
-                var scale = CodeInstruction.Call(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.HarvestAmount));
-                scale.MoveLabelsFrom(code[call]); scale.MoveBlocksFrom(code[call]);
-                code.Insert(call, scale);
-            }
+            // The HP wrapper consumes the same recipient/amount stack as Heal.
+            // MP still adjusts only the amount, preserving its native caps,
+            // modifiers and fractional accumulation.
+            var hpGrant = CodeInstruction.Call(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.HarvestHp));
+            hpGrant.MoveLabelsFrom(code[hpCall]); hpGrant.MoveBlocksFrom(code[hpCall]);
+            code[hpCall] = hpGrant;
+            var mpScale = CodeInstruction.Call(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.HarvestMpAmount));
+            mpScale.MoveLabelsFrom(code[mpCall]); mpScale.MoveBlocksFrom(code[mpCall]);
+            code.Insert(mpCall, mpScale);
             return code;
         }
     }

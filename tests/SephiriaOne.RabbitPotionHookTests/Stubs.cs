@@ -324,7 +324,11 @@ public class SpriteFx
 public class SpriteFxPool { public SpriteFx Spawn(GameObject prefab, Vector3 position, GameObject owner = null) => new(); }
 namespace SephiriaOne
 {
-    internal static class SessionSettings { public static RabbitPotionSettings RabbitPotionsForUse { get; set; } }
+    internal static class SessionSettings
+    {
+        public static RabbitPotionSettings RabbitPotionsForUse { get; set; }
+        public static FriendlyFireSettings FriendlyFireForHit { get; set; }
+    }
     internal static class HarmonyRuntime { public static void EnsureLoaded() { } }
     internal static class HostStateAdapter
     {

@@ -88,6 +88,18 @@ internal static class GameRabbitCompatibilityTests
             throw new Exception("Shared percentage healing must retain native HP replication.");
         var share = AccessTools.DeclaredMethod(hooks, "Share")!;
         if (!Calls(share, healPercent)) throw new Exception("Rabbit sharing must retain the HP-only recipient path.");
+        var participation = addon.GetType("SephiriaOne.PvpParticipation", true)!;
+        var active = AccessTools.DeclaredMethod(participation, "IsActive");
+        var allowed = AccessTools.DeclaredMethod(participation, "CanShareRecovery");
+        var shareCode = PatchProcessor.GetOriginalInstructions(share).ToList();
+        int sharedHeal = shareCode.FindIndex(i => i.Calls(healPercent));
+        if (!Calls(share, active) || !shareCode.Take(sharedHeal).Any(i => i.Calls(allowed)) ||
+            !shareCode.Skip(sharedHeal + 1).Any(i => i.Calls(allowed)))
+            throw new Exception("Shared recovery must check current PvP admission before healing and after native callbacks.");
+        if (!Calls(active, AccessTools.DeclaredMethod(addon.GetType("SephiriaOne.FriendlyFireParticipants", true)!, "Includes")) ||
+            !Calls(active, AccessTools.DeclaredMethod(addon.GetType("SephiriaOne.CombatMatchRuntime", true)!, "AllowsParticipant")) ||
+            PatchProcessor.GetOriginalInstructions(active).Any(i => i.operand is MethodInfo m && m.Name == "get_Balance"))
+            throw new Exception("Recovery must share current participant/mode admission independently of balancing.");
         foreach (var hpOnly in new[] { share, healPercent, healBody, AccessTools.PropertySetter(Type("UnitAvatar"), "Networkhp")! })
             if (PatchProcessor.GetOriginalInstructions(hpOnly).Any(i =>
                 i.operand is MethodInfo m && (m.Name.Contains("PotionDrinkEvent") || m.Name == "CreateEffect_OnDrink" ||

@@ -556,6 +556,10 @@ this cadence policy and retain their existing behavior.
 
 ## Harvest recovery (`0.57.2`, 2026-10-16)
 
+Historical behavior below is superseded for HP by the
+[2026-10-19 follow-up](#hp-steal-disabled-during-pvp-2026-10-19). MP still follows
+the original balancing policy.
+
 While effective friendly fire **and** PvP balancing are enabled, HP Harvest and
 MP Harvest from permitted player-victim hits recover **20% of their native
 amounts**. This uses the shared hit scope in casual friendly fire, Deathmatch,
@@ -609,6 +613,61 @@ combat checks, 2,233 shared runtime checks plus 69 Bat lifecycle checks, the ful
 portable/installed-game suite and all 32 compiled Harmony API references against
 co-installed Harmony 2.9 passed. Independent review found no actionable issues.
 Live host/guest gameplay remains untested; nothing was deployed.
+
+## HP Steal disabled during PvP (2026-10-19)
+
+Active PvP now disables HP Steal from admitted friendly-fire hits, independently
+of the optional balancing toggle. This applies to casual friendly fire and the
+shared Deathmatch, Tournament, Play Tag and Zombie Survival combat paths,
+including reflected damage, debuffs, artifact procs and player-owned companions.
+Companion victims cannot provide an HP Steal bypass. Both `ECustomStat.HPSteal`
+and the per-hit `DamageInstance.hpSteal` contribution are suppressed together
+at their native HP grant; neither rate is changed.
+
+MP Steal keeps its existing policy: 20% of the native amount on balanced,
+permitted player-victim hits, and native recovery with balancing off or on the
+existing companion-victim path. Fractional accumulation, native MP modifiers and
+resource caps remain in `HealMpFloat`.
+
+`FriendlyFireHarvestHooks` replaces only the HP Harvest `Heal(float)` call with
+`HarvestHp(UnitAvatar, float)`. The wrapper checks current server authority and
+the existing admitted-hit/participant/hostility policy immediately before the
+grant. Native `Heal(float, bool, bool)` has no zero-amount early return: on an
+injured living unit, zero still reaches `Networkhp` and
+`OnHpChangedServerside`. Skipping the call avoids those recovery callbacks as
+well as the health gain. The MP amount helper and every other native instruction
+retain their existing order, labels and exception boundaries.
+
+Native PvE, self/system damage and unrelated healing keep their paths. Each
+nested hit owns its existing scope, so enemy hits inside a PvP callback still
+receive native HP Steal and returning to the outer hit restores suppression.
+Ending effective PvP is observed immediately, including during callbacks; there
+are no stat overrides, timers, preset fields or restoration writes. A suppressed
+HP grant cannot run a healing callback that would change the following MP grant.
+Unrelated native heals can still run such callbacks, and MP reads the resulting
+live balance policy.
+
+The installed assembly still has SHA-256
+`C57A0DAEAB8E8D0AF7066A344133EEC4C57D8F303FD9E25DA9410FBFC4CF1510` and MVID
+`ccf97024-28bd-48f1-9666-c768c2bd4b2b`. REA static identity evidence is
+`ev_b2ff80fd487641fed1eca32253a16cab08bd0d6b79d5bd38673c81845959da36`;
+selected `UnitAvatar` member evidence is
+`ev_5d812c79cf8b4450b80a9299fff702fc763ea7301f381920b1bbb2965a45c57f`.
+The cached matching decompilation supplied the heal control-flow observation.
+REA did not execute the game; its member metadata coverage is complete for that
+type, with separately reported malformed terminal flags in some user strings.
+
+The new HP suppression regression failed before implementation. The executable
+combat suite then passed **4,944 checks**, including native callback suppression,
+stat/per-hit rates, both balance settings, companion origins/victims, reflected
+and nested damage, debuffs, current Tournament/Zombie pairs, Tag modifiers,
+reconnects, exceptions, stopping PvP and unload. The warmed Harvest path allocated
+**0 bytes / 1,000 hits**. Release build with `-p:DeployMod=false` passed with zero
+warnings/errors. Installed-IL checks cover the exact HP wrapper and MP insertion,
+preserved native instructions, drift rejection and stock SyncVar transport.
+The complete portable/installed-game contract suite passed, including these
+Harvest contracts and **3,824** bundled localization checks.
+Live host/guest gameplay remains unverified; nothing was deployed or launched.
 
 ## State, persistence and restoration
 

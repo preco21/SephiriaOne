@@ -1,5 +1,46 @@
 # Wing-Eared Rabbit potion options
 
+## PvP recovery exclusion (`0.65.2`, 2026-10-19)
+
+An active PvP participant cannot send or receive Rabbit shared HP-potion healing.
+This covers casual friendly fire, Deathmatch, the current Tournament pair, Play
+Tag and both Zombie teams, even when optional PvP balancing is off. A spectator
+cannot heal a combatant; two spectators can still share healing. Pre-fight
+countdowns, unselected players and players outside Tournament's current pair
+keep native recovery according to the shared effective combat policy.
+
+`PvpParticipation.IsActive` composes effective friendly fire, exact current
+participant admission and `CombatMatchRuntime.AllowsParticipant`; stale selection
+pruning can stop a match, so it rechecks the effective toggle afterward. Both
+Rabbit sharing and lobby-regeneration controls use this common admission gate.
+There is no per-player recovery flag or temporary stat write to restore.
+
+`RabbitPotionNativeHooks.Share` exits before collecting recipients when its
+source is an active combatant. Each recipient is rechecked before the native
+`HealPercent` call and before shared FX/audio, including changes caused by native
+callbacks. Ending a match or turning friendly fire off restores sharing on the
+next drink immediately, without waiting for synchronization. The configured
+Share toggle remains stored and enabled; the PvP exclusion is temporary.
+
+Self potion healing, infinite regular/large HP potions, MP fees, Tension and
+Survival settings are unchanged. Sample potion ID 37 remains entirely native.
+No new RPC, client asset or guest addon is required. EN/KO panel help, costume
+description and role summaries disclose that sharing excludes active PvP.
+
+Executable Rabbit tests cover source/recipient admission, balancing off,
+spectators, mode changes within native callbacks and immediate recovery.
+Runtime tests exercise the real participant and mode rules across all four
+modes, including same-team Zombies and selection retirement during a query.
+Installed-game checks retain native percentage-heal replication and verify the
+shared admission calls. Live stock-guest behavior still requires in-game testing.
+
+`0.65.2` verification: Release build with deployment disabled passed without
+warnings/errors; Rabbit executable suite passed 266 cases plus 12 localized-alert
+checks, runtime integration passed 2,784 checks plus 69 Bat checks, and combat
+hooks passed 4,944 checks. Portable settings/preset/catalog and installed-game
+contracts passed, including the installed HarmonyX API audit. No game launch or
+deployment was performed.
+
 Since `0.27.0`, the costume also receives [Crest of the Iron Wall as a starting
 artifact](rabbit-starting-artifact.md). That costume-bound addition is independent
 of the optional potion settings below.

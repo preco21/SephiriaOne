@@ -1,7 +1,8 @@
 # Independent PvP DoT intervals
 
-Added in `0.59.0`, 2026-10-16. Burn, Plasma Burn, Frostbite and Poison each have
-their own **0.75-second** default interval while PvP balancing is enabled.
+Added in `0.59.0`, 2026-10-16. Since 2026-10-19, Burn defaults to **0.9 seconds**;
+Plasma Burn, Frostbite and Poison retain their independent **0.75-second** defaults
+while PvP balancing is enabled.
 Since `0.59.2`, normal/blue Burn also has a separate
 [two-second lifetime cap](pvp-balancing.md#burn-duration-cap-0592-2026-10-16).
 Since `0.60.1`, that cap includes Plasma Burn and its blue/evolved variants.
@@ -10,7 +11,7 @@ can expire before a tick interval of two seconds or longer completes.
 Configure them under **Combat → DoT intervals** (`전투 → 지속 피해 간격`), or:
 
 ```text
-/one friendlyfire dot burn 0.75
+/one friendlyfire dot burn 0.9
 /one friendlyfire dot plasma-burn 0.75
 /one friendlyfire dot frostbite 0.75
 /one friendlyfire dot poison 0.75
@@ -19,8 +20,9 @@ Configure them under **Combat → DoT intervals** (`전투 → 지속 피해 간
 ```
 
 Each accepts **0.05..10 seconds**, up to two decimals. Per-effect `reset` restores
-only that effect to 0.75; full friendly-fire reset restores all four. Controls
-edit the existing shared balancing policy: effective friendly fire and balancing
+only that effect to its default (Burn 0.9; the other three 0.75); full friendly-fire
+reset restores all four. Controls edit the existing shared balancing policy:
+effective friendly fire and balancing
 must be active for the intervals to apply. An edit takes effect on existing
 debuffs without stopping casual combat, Deathmatch, Tournament or Play Tag, or
 resetting scores, bomb state, participants or damage budgets.
@@ -32,15 +34,19 @@ immediately. Each editor has an independent draft/Apply; the compact 2x2 layout
 retains the existing window size and shared participant/KDA/revive/master actions.
 Refresh formats only values that change. EN/KO labels and command/status output
 include all four settings. Nondefault values are saved in preset v28 as
-`friendlyfire dot-<effect> N`; presets v1..27 inherit 0.75 for every effect.
+`friendlyfire dot-<effect> N`. Fresh sessions and omitted preset rows inherit the
+current per-effect defaults, including presets v1..27 that cannot contain DoT
+rows. Explicit saved intervals remain unchanged: a saved Burn value of 0.75 is
+now a nondefault override and stays serialized. Use `burn reset` to adopt 0.9.
 
 ## Native boundaries
 
 The former implementation was a **0.75 elapsed-time multiplier**, not a fixed
 0.25-second DoT interval. Burn/Plasma constructor defaults then yielded about
-0.667s before speed bonuses, while Frostbite/Poison yielded about 1.333s. The new
-defaults replace those four timings. Wound retains its old multiplier. The
-separate 0.25s Shock/Freeze damage gates and Dark Cloud strike gate are unchanged.
+0.667s before speed bonuses, while Frostbite/Poison yielded about 1.333s. The
+configurable intervals replace those four timings. Wound retains its old
+multiplier. The separate 0.25s Shock/Freeze damage gates and Dark Cloud strike
+gate are unchanged.
 The interval adapter leaves Plasma's shock accumulator, refresh/expiry attacks
 and damage budget unchanged. The separate lifetime cap can end Plasma earlier,
 retaining its native expiry shock. This does not enable Frostbite damage on a
@@ -69,6 +75,13 @@ per-connection settings. Unloading removes the timer hooks with the shared comba
 feature, restoring native cadence.
 
 ## Verification
+
+The 2026-10-19 default update has regression coverage for independent defaults,
+per-effect/full resets, omitted rows in every supported preset version and
+explicit previous Burn values surviving load/save. Cadence fixtures now check
+that default Burn waits past 0.75 seconds and ticks at 0.9, while the other three
+effects keep 0.75-second defaults. The two-second Burn-family lifetime cap is
+unchanged. No deployment or live timing verification was performed.
 
 Rechecked against `0.60.1` on 2026-10-16: all four independent UI inputs,
 commands, 0.75-second defaults, Korean labels and saved-setting paths are already

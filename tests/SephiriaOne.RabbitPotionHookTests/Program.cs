@@ -11,6 +11,10 @@ void Check(string name, Action action)
     PlayerSpawner.MultiplayerList.Clear();
     DungeonManager.Instance = new(); FloorGenerator.All.Clear();
     SessionSettings.RabbitPotionsForUse = default;
+    SessionSettings.FriendlyFireForHit = default;
+    FriendlyFireParticipants.Selected.Clear();
+    FriendlyFireFeature.Available = true;
+    CombatMatchRuntime.ParticipantRule = null;
     try { action(); Console.WriteLine("PASS " + name); passed++; }
     catch (Exception error) { Console.WriteLine("FAIL " + name + ": " + error); failed++; }
     finally { RabbitPotionFeature.Shutdown(); }
@@ -29,6 +33,7 @@ void Assert(bool ok, string reason) { if (!ok) throw new Exception(reason); }
 void Install() { RabbitPotionFeature.Initialize(); Assert(RabbitPotionFeature.Available, "Hook unavailable"); }
 
 TensionTests.Run(Check, Assert, Setup, Install);
+PvpSharedHealTests.Run(Check, Assert, () => Setup(), Install);
 
 Check("off preserves native consumption, healing and both events", () =>
 {

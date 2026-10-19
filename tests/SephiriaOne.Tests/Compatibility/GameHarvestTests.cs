@@ -20,21 +20,31 @@ internal static class GameHarvestTests
         int cursor = 0;
         foreach (var native in code)
         {
-            bool recovery = native.Calls(hp) || native.Calls(mp);
-            if (recovery)
+            if (native.Calls(hp))
             {
-                Require(actual[cursor].operand is MethodInfo m && m.DeclaringType?.Name == "FriendlyFireRuntime" && m.Name == "HarvestAmount" &&
+                Require(actual[cursor].opcode == OpCodes.Call && actual[cursor].operand is MethodInfo m &&
+                    m.DeclaringType?.Name == "FriendlyFireRuntime" && m.Name == "HarvestHp" && m.ReturnType == typeof(void) &&
+                    m.GetParameters().Select(p => p.ParameterType).SequenceEqual(new[] { avatar, typeof(float) }) &&
                     actual[cursor].labels.SequenceEqual(native.labels) && actual[cursor].blocks.SequenceEqual(native.blocks),
-                    "only each Harvest amount is adjusted, with branch/exception boundaries preserved");
+                    "only the native HP Harvest call is wrapped, with the same stack and branch/exception boundaries");
+                cursor++;
+                continue;
+            }
+            bool mpRecovery = native.Calls(mp);
+            if (mpRecovery)
+            {
+                Require(actual[cursor].operand is MethodInfo m && m.DeclaringType?.Name == "FriendlyFireRuntime" && m.Name == "HarvestMpAmount" &&
+                    actual[cursor].labels.SequenceEqual(native.labels) && actual[cursor].blocks.SequenceEqual(native.blocks),
+                    "only the MP Harvest amount is adjusted, with branch/exception boundaries preserved");
                 cursor++;
             }
             Require(actual[cursor].opcode == native.opcode && Equals(actual[cursor].operand, native.operand) &&
-                (recovery ? actual[cursor].labels.Count == 0 && actual[cursor].blocks.Count == 0 :
+                (mpRecovery ? actual[cursor].labels.Count == 0 && actual[cursor].blocks.Count == 0 :
                     actual[cursor].labels.SequenceEqual(native.labels) && actual[cursor].blocks.SequenceEqual(native.blocks)),
-                "all native arithmetic, recovery calls and control flow remain intact");
+                "all other native arithmetic, MP recovery and control flow remain intact");
             cursor++;
         }
-        Require(cursor == actual.Count && actual.Count == code.Count + 2, "exactly two amount helpers added");
+        Require(cursor == actual.Count && actual.Count == code.Count + 1, "exactly one HP wrapper replaces its call and one MP helper is added");
         void Reject(IEnumerable<CodeInstruction> changed, string why)
         {
             bool rejected = false;
@@ -62,12 +72,14 @@ internal static class GameHarvestTests
         var mpHeal = PatchProcessor.GetOriginalInstructions(mp).ToList();
         Require(hpHeal.Any(i => Calls(i, "set_Networkhp")) && hpHeal.Any(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "HEALINGPENALTY")),
             "native HP penalties/caps and authoritative health writes remain in the called method");
+        Require(hpHeal.Any(i => i.operand is FieldInfo f && f.Name == "OnHpChangedServerside"),
+            "native HP heal includes health-change callbacks that the suppression wrapper must bypass");
         Require(mpHeal.Any(i => i.opcode == OpCodes.Stfld && i.operand is FieldInfo f && f.Name == "mpStack") &&
             mpHeal.Any(i => Calls(i, "set_Networkmp")) && mpHeal.Any(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "MPREGENMULTIPLE")),
             "native fractional MP, recovery multiplier and authoritative MP writes remain in the called method");
         foreach (string setter in new[] { "set_Networkhp", "set_Networkmp" })
             Require(PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(avatar, setter)).Any(i =>
                 i.operand is MethodInfo m && m.Name == "GeneratedSyncVarSetter"), "stock clients receive " + setter);
-        Console.WriteLine("Verified HP/MP Harvest call-site isolation, exact native IL preservation, drift rejection and stock HP/MP replication (not live multiplayer).");
+        Console.WriteLine("Verified HP Harvest wrapper and MP amount isolation, other native IL preservation, drift rejection and stock HP/MP replication (not live multiplayer).");
     }
 }

@@ -1,6 +1,12 @@
 # Development knowledge index
 
-Maintained: 2026-10-18 (Asia/Seoul), addon `0.65.1`.
+Maintained: 2026-10-19 (Asia/Seoul), addon `0.65.2`.
+
+PvP recovery: [Rabbit shared healing](rabbit-potions.md#pvp-recovery-exclusion-0652-2026-10-19)
+is blocked from/to active combat participants and [HP Steal](pvp-balancing.md#hp-steal-disabled-during-pvp-2026-10-19)
+is disabled on friendly-fire hits, even with balancing off. Shared live mode and
+participant rules restore PvE behavior immediately. Burn now defaults to 0.9s;
+Zombie incoming damage defaults to 30%. Explicit saved values remain intact.
 
 Lifecycle fix: [repeated addon loading and lobby combat](addon-reload-and-lobby-combat.md)
 traces duplicate hook failures to native loader rescans without unloading. Shared
@@ -95,9 +101,10 @@ defaults to 10% maximum MP before native Guard Efficiency/perfect reductions.
 Live command and dedicated balancing controls share settings across all modes;
 native PvE, parries and MP shields are unchanged. Nondefault saves use v27.
 
-Combat balancing: [HP/MP Harvest](pvp-balancing.md#harvest-recovery-0572-2026-10-16)
-recovers 20% of native amounts on balanced PvP hits across all modes. Native
-stats, PvE, potions and fractional MP accumulation remain unchanged.
+Combat recovery: [HP Steal and MP Harvest](pvp-balancing.md#hp-steal-disabled-during-pvp-2026-10-19)
+use separate recovery rules: no HP Steal on friendly-fire hits; MP Harvest stays
+at 20% on balanced player hits. Native stats, PvE and fractional MP accumulation
+remain unchanged.
 
 Combat fix: [companion penalties](friendly-fire.md#companion-penalty-exemption-0571-2026-10-16)
 exempts admitted friendly-fire companion hits/deaths from party crime, saved

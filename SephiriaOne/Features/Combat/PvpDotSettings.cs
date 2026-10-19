@@ -22,11 +22,16 @@ namespace SephiriaOne
     internal readonly struct PvpDotSettings
     {
         internal const int Count = 4;
-        internal const decimal DefaultSeconds = 0.75m;
-        private const int DefaultHundredths = 75;
+        internal static decimal DefaultSeconds(PvpDotEffect effect) => DefaultHundredths(effect) / 100m;
+        private static int DefaultHundredths(PvpDotEffect effect) => effect switch
+        {
+            PvpDotEffect.Burn => 90,
+            PvpDotEffect.PlasmaBurn => 75, PvpDotEffect.Frostbite => 75, PvpDotEffect.Poison => 75,
+            _ => throw new ArgumentOutOfRangeException(nameof(effect))
+        };
         private readonly int burn, plasma, frostbite, poison;
         public bool HasChanges => burn != 0 || plasma != 0 || frostbite != 0 || poison != 0;
-        public int Hundredths(PvpDotEffect effect) => DefaultHundredths + (effect switch
+        public int Hundredths(PvpDotEffect effect) => DefaultHundredths(effect) + (effect switch
         {
             PvpDotEffect.Burn => burn, PvpDotEffect.PlasmaBurn => plasma,
             PvpDotEffect.Frostbite => frostbite, PvpDotEffect.Poison => poison,
@@ -41,7 +46,7 @@ namespace SephiriaOne
         {
             // Validate default(PvpDotChange), too.
             if (!ValidSeconds(change.Seconds)) throw new ArgumentOutOfRangeException(nameof(change));
-            int offset = (int)(change.Seconds * 100) - DefaultHundredths;
+            int offset = (int)(change.Seconds * 100) - DefaultHundredths(change.Effect);
             burn = change.Effect == PvpDotEffect.Burn ? offset : source.burn;
             plasma = change.Effect == PvpDotEffect.PlasmaBurn ? offset : source.plasma;
             frostbite = change.Effect == PvpDotEffect.Frostbite ? offset : source.frostbite;

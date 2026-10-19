@@ -41,7 +41,7 @@ namespace SephiriaOne
             "\n\n" + L.T("Rabbit only. Keep 1 HP potion; insufficient MP blocks use. Infinite HP potions bypass Tension.") +
             "\n\n" + L.T("Regeneration (Sample) stays native: consumed normally, no MP cost or sharing, Survival bonus allowed.") +
             "\n\n" + L.T("MP cost: 0..10000. Set & on enables charging; Reset restores 10 and turns all options off.") +
-            "\n\n" + L.T("Shared healing: 5 tiles, same floor; recipient penalties apply. Level-up: 1 random non-HP/MP potion.") +
+            "\n\n" + L.T("Shared healing: 5 tiles, same floor; disabled from/to active PvP participants. Level-up: 1 random non-HP/MP potion.") +
             (snapshot.RabbitPotionsAvailable ? "" : "\n" + L.T("Potion hooks unavailable; native behavior continues.")) +
             (snapshot.RabbitLevelUpPotionsAvailable ? "" : "\n" + L.T("Level-up potion hooks unavailable; no level-up reward is granted.")) +
             (snapshot.RabbitDescriptionAvailable ? "" : "\n" + L.T("Description adapter unavailable; see Player.log."));

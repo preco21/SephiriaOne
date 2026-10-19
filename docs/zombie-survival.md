@@ -25,7 +25,7 @@ independent Zombie refill/incoming-damage controls. Equivalent host commands:
 | `/one zombie duration reset` | Restore 120 seconds |
 | `/one zombie any-death on` / `off` / `reset` | Convert on any completed Human death; default/reset off |
 | `/one zombie refill on` / `off` / `x3` / `reset` | Zombie refill multiplier, initially on, default x3, range 0.1..10 |
-| `/one zombie damage on` / `off` / `50%` / `reset` | Zombie incoming PvP damage, initially on, default 50%, range 0..100 |
+| `/one zombie damage on` / `off` / `30%` / `reset` | Zombie incoming PvP damage, initially on, default 30%, range 0..100 |
 | `/one zombie resetkda` | Reset shared K/D/A and matchup records; keep teams and timer |
 | `/one save` | Persist settings only; nondefault Zombie settings use preset v31 |
 
@@ -35,12 +35,13 @@ follows Play Tag semantics: it applies to admitted opposing-player hits even
 when global balancing is off. It never affects PvE damage. Neither modifier
 changes native character stats. Edits do not reset or replenish spent budgets.
 
-## Default tuning (0.64.1)
+## Default tuning (2026-10-19)
 
-Zombie defaults and reset values are now x3 refill / 50% incoming damage, both
+Zombie defaults and reset values are now x3 refill / 30% incoming damage, both
 still enabled. These are mode-specific defaults; Play Tag remains x2 / 75%.
 Fresh sessions and preset rows with omitted values use the new defaults. Explicit
-saved custom values remain intact, including an explicitly saved x2 or 75%.
+saved custom values remain intact, including an explicitly saved 50% from the
+previous default, x2 or 75%. A saved 50% remains a nondefault row on the next save.
 Use `/one zombie refill reset` and `/one zombie damage reset` to adopt the new
 values over an existing override, then `/one save` if desired.
 
@@ -107,6 +108,12 @@ the final-five-second cadence. No new coroutine, network snapshot stream or clie
 polling loop.
 
 ## Verification and live checks
+
+The 2026-10-19 tuning regressions cover fresh/current/older omitted preset values,
+command resets, explicit prior 50% and 75% overrides, and active/converted Zombie
+incoming scaling at 30%. They also retain the independent x3 refill and Play Tag
+x2 / 75% defaults. These runtime fixtures passed with deployment disabled.
+No live match was run.
 
 Release build: zero warnings/errors. Runtime suite: 2,691 integration checks plus
 69 Bat lifecycle checks. Friendly-fire executable hooks: 4,871 checks. Full

@@ -263,6 +263,7 @@ namespace SephiriaOne
 
         private static void Share(DrinkContext context)
         {
+            if (PvpParticipation.IsActive(context.Player)) return;
             var seen = new HashSet<PlayerAvatar>();
             seen.Add(context.Player);
             foreach (var entry in NetworkServer.connections.ToArray())
@@ -279,8 +280,9 @@ namespace SephiriaOne
                     if (!recipient || !seen.Add(recipient) || recipient.IsDead ||
                         recipient.currentFloorGuid != context.Player.currentFloorGuid) continue;
                     Vector3 delta = recipient.transform.position - context.Player.transform.position;
-                    if (!(delta.sqrMagnitude < RabbitPotionSettings.ShareRadiusSquared) || !Current(context) ||
-                        !SessionSettings.RabbitPotionsForUse.Share) continue;
+                    if (!(delta.sqrMagnitude < RabbitPotionSettings.ShareRadiusSquared) ||
+                        !PvpParticipation.CanShareRecovery(context.Player, recipient) ||
+                        !Current(context) || !SessionSettings.RabbitPotionsForUse.Share) continue;
                     float before = recipient.hp;
                     uint recipientId = recipient.netId;
                     var identity = connection.identity;
@@ -291,6 +293,7 @@ namespace SephiriaOne
                     // never send it against a replaced lifetime or replay the heal.
                     if (!float.IsNaN(before) && !float.IsInfinity(before) &&
                         !float.IsNaN(recipient.hp) && !float.IsInfinity(recipient.hp) && recipient.hp > before &&
+                        PvpParticipation.CanShareRecovery(context.Player, recipient) &&
                         Current(context) && SessionSettings.RabbitPotionsForUse.Share &&
                         NetworkServer.connections.TryGetValue(entry.Key, out live) && ReferenceEquals(live, connection) &&
                         connection.isReady && ReferenceEquals(connection.identity, identity) &&

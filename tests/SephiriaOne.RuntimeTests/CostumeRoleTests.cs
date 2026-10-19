@@ -39,7 +39,7 @@ internal static class CostumeRoleTests
         Command("/one rabbit mp-cost 37");
         check(Take(host.PlayerAvatar).Contains("37 MP"), "Live configured MP fee replaces default");
         Command("/one rabbit share on");
-        check(Take(host.PlayerAvatar).Contains("Shared heal: 5 tiles"), "Shared radius uses actual healing radius");
+        check(Take(host.PlayerAvatar).Contains("Shared heal outside PvP: 5 tiles"), "Shared radius uses actual healing radius and discloses the PvP exclusion");
         Command("/one rabbit level-up-potion on");
         string rabbit = Take(host.PlayerAvatar);
         check(rabbit.Contains("random non-HP/MP potion") && rabbit.Contains("Sample excluded"), "Reward type and sample exclusions are clear");

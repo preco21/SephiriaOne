@@ -80,8 +80,9 @@ namespace SephiriaOne
         public static string Usage => L.T("Friendly fire: /one friendlyfire on|off|status|reset|resetkda; /one friendlyfire damage 0..300 (percent, up to 2 decimals; e.g. 0.1). Default 100. /one save persists settings.") + " " +
             L.T("PvP balancing: /one friendlyfire balance on|off. Default off; softens hits, limits rapid damage and Dark Cloud repeats, and uses configurable DoT intervals. Shock/Freeze damage is limited to once per 0.25s; Freeze stun is preserved.") + " " +
             L.T("PvP Evasion: stat-based dodge chance is capped at 50% before anti-Evasion; guaranteed item dodges are unchanged.") + " " +
+            L.T("PvP recovery: HP Steal is disabled on friendly-fire hits. Rabbit shared healing is disabled from/to active participants, even with balancing off.") + " " +
             L.T("Hit-frequency scaling: /one friendlyfire hit-frequency on|off|reset. Default off; reduces damage above roughly 4 hits/s per opponent before the damage budget. Requires PvP balancing.") + " " +
-            L.T("PvP DoT: /one friendlyfire dot burn|plasma-burn|frostbite|poison 0.05..10|reset (seconds, up to 2 decimals). Each defaults to 0.75s, independent of burn speed. Only with PvP balancing on.") + " " +
+            L.T("PvP DoT: /one friendlyfire dot burn|plasma-burn|frostbite|poison 0.05..10|reset (seconds, up to 2 decimals). Burn defaults to 0.9s; the others default to 0.75s, independent of burn speed. Only with PvP balancing on.") + " " +
             L.T("PvP refill: /one friendlyfire refill 1..300|reset (percent of max HP per second, up to 2 decimals). Default 70; applies only with PvP balancing on.") + " " +
             L.T("PvP guard: /one friendlyfire guard-mp 0..100|reset (percent of max MP, up to 2 decimals). Default 10; native guard reductions apply. Positive costs round up. Only with PvP balancing on.") + " " +
             L.T("Lobby recovery: /one friendlyfire block-lobby-regen on|off. Default off; blocks automatic HP/MP recovery for active lobby participants. Potions and skill healing remain available.");
@@ -113,7 +114,7 @@ namespace SephiriaOne
             { command = new FriendlyFireCommand(false, percent); return FriendlyFireParseResult.Valid; }
             if (parts.Length == 5 && op == "dot" && PvpDotSettings.TryEffect(parts[3], out var effect))
             {
-                decimal seconds = PvpDotSettings.DefaultSeconds;
+                decimal seconds = PvpDotSettings.DefaultSeconds(effect);
                 if (parts[4].Equals("reset", StringComparison.OrdinalIgnoreCase) || PvpDotSettings.TrySeconds(parts[4], out seconds))
                 { command = new FriendlyFireCommand(false, dot: new PvpDotChange(effect, seconds)); return FriendlyFireParseResult.Valid; }
             }

@@ -6,7 +6,7 @@ namespace SephiriaOne
     internal static class ZombieSurvivalCommand
     {
         internal static string Usage => L.T("Zombie Survival: /one zombie start|stop|resetkda|status|help; duration 3..3600|reset (default 120s); any-death on|off|reset (default off). Duration applies to the next match; other settings apply live. /one save stores settings.") + " " +
-            L.T("Zombie bonuses: /one zombie refill on|off|xN|N|reset (0.1..10, default x3); damage on|off|N%|N|reset (0..100, default 50%). Both default on; up to 2 decimals. Refill requires PvP balancing.");
+            L.T("Zombie bonuses: /one zombie refill on|off|xN|N|reset (0.1..10, default x3); damage on|off|N%|N|reset (0..100, default 30%). Both default on; up to 2 decimals. Refill requires PvP balancing.");
         internal static string DescribeModifiers()
         {
             var settings = SessionSettings.ZombieModifiers;
