@@ -209,10 +209,16 @@ namespace SephiriaOne
                 }
                 // Reduce the damage native code can actually accept, including
                 // extreme unbalanced hits that would otherwise reach this cap.
-                return (float)(Math.Min(scaled, 2147483520d) * incoming);
+                return PositiveScaledDamage(Math.Min(scaled, 2147483520d) * incoming);
             }
-            return (float)Math.Min(scaled, 2147483520d);
+            return PositiveScaledDamage(scaled);
         }
+
+        // Preserve native vetoes/zero damage and apply the minimum only once,
+        // before shields. Later absorption must never be promoted back to a hit.
+        private static float PositiveScaledDamage(double damage) =>
+            double.IsNaN(damage) || double.IsInfinity(damage) || damage <= 0 ? 0 :
+            (float)Math.Max(1d, Math.Min(damage, 2147483520d));
 
         internal static float Sanitize(float resolved) => !current.Friendly ? resolved :
             !CurrentHitPermitted() || float.IsNaN(resolved) || float.IsInfinity(resolved) || resolved < 0 ? 0 : Math.Min(resolved, 2147483520f);

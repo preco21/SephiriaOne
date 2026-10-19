@@ -378,8 +378,9 @@ avoiding repeated decimal conversion at each target/hit query.
 
 `/one friendlyfire damage 0.1` and `0.1%` are equivalent. A dot is the decimal
 separator regardless of OS language. At 0.1%, 1,000 resolved damage becomes 1;
-at 0.9%, it becomes 9. The addon does not round the scaled result to an integer
-or force it back to one HP. Negative/out-of-range, nonfinite, exponent,
+at 0.9%, it becomes 9. Since `0.67.1`, positive sub-one results use a
+[one-point minimum](pvp-balancing.md#minimum-positive-damage-0671-2026-10-20)
+before shields; fractional results above one remain unchanged. Negative/out-of-range, nonfinite, exponent,
 multiplier and more-than-two-decimal inputs are rejected rather than rounded.
 The slider rounds its draft to two decimals; the numeric field allows exact
 entry below the slider's physical pixel resolution. Invalid edits stay visible
@@ -395,8 +396,10 @@ save/reload retains the exact percentage.
 
 Installed damage contracts retain native defenses, the pre-scale minimum damage
 clamp, float HP/shields and existing guest SyncVars. Native MP shields and damage
-feedback still convert to integers: very small hits can display zero or consume
-zero MP under those native rules. Sword-and-shield guard costs remain native.
+feedback still convert to integers. The `0.67.1` minimum prevents untouched
+sub-one scaled hits from costing zero MP; a fractional remainder after ordinary
+shield absorption can still follow native rounding. Sword-and-shield guard
+costs use the separately configurable balancing rule.
 No new RPC, per-player state, hit allocation or native hook is introduced.
 
 The initial parser regression failed on `0.01` before implementation. Tests cover

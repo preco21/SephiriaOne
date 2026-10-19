@@ -69,7 +69,7 @@ internal static class RapidHitTests
         Fresh(); target.SuperArmor = true; Strike();
         check(target.Hp == 87, "Post-scale super armor preserves native reduction on the first hit");
         for (int i = 0; i < 20; i++) Strike();
-        check(Near(target.Hp, 80), "Saturating super armor is bounded by actual HP damage, not pre-mitigation reservations");
+        check(target.Hp <= 80 && target.Hp > 79, "Armor refunds stay within one minimum hit of the actual-damage budget");
         Fresh(); target.ClampHpDamage = true; target.Hp = 5; target.ExtraLife = true; Strike();
         check(target.Hp == 60 && !target.IsDead, "Native additional life remains native and does not call the dead-player revival hook");
         Strike();

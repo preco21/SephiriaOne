@@ -16,6 +16,14 @@ A different game build requires renewed contract/asset checks. Start with the
 
 ## State lifetimes and multiplayer
 
+Damage floors must be reserved in the same units as the balancing ledger, before
+nested native callbacks. Friendly-fire budgets store pre-role fractions of victim
+maximum HP; a final one-point minimum reserves `1 / incomingScale`, carrying any
+fractional deficit until refill. Applying only a `max(1, damage)` after budget
+admission would otherwise grant rapid attacks free damage. Exclude numerical dust
+from refunds/depletion, preserve genuine zero admission and never floor again
+after shield absorption. See [minimum-damage evidence](pvp-balancing.md#minimum-positive-damage-0671-2026-10-20).
+
 Feature-specific opt-outs belong to the feature's policy, not the shared combat
 participant service. Rabbit's `BlockPvpShare` (default true even for a zeroed
 settings struct) gates only its shared healing checks; White Bread and other

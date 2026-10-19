@@ -32,7 +32,7 @@ internal static class ChaserBalanceTests
             Fresh(true); for (int i = 0; i < 50; i++) Strike(float.MaxValue);
             check(Near(target.Hp, 85), "Rapid-hit saturation cannot refund away the chaser's 25 percent reduction");
             for (int i = 1; i <= 10; i++) { Time.time = i / 10f; Strike(float.MaxValue); }
-            check(Near(target.Hp, 77.5), "Incoming reduction applies to sustained budget refill as well as initial burst");
+            check(target.Hp <= 77.5 && target.Hp > 76.5, "Incoming reduction and refill retain at most one minimum hit of debt");
 
             Fresh(true, true); Strike(float.MaxValue); Time.time = 0.1f; Strike(float.MaxValue);
             check(Near(target.Hp, 78), "Chaser global 10-percent refill becomes 20 percent per second");
@@ -66,7 +66,7 @@ internal static class ChaserBalanceTests
             Fresh(true); target.SuperArmor = true; Strike(float.MaxValue);
             check(Near(target.Hp, 90.25), "Native armor stacks after chaser reduction on an individual hit");
             for (int i = 0; i < 30; i++) Strike(float.MaxValue);
-            check(Near(target.Hp, 85), "Armor refunds cannot remove the chaser's saturated burst reduction");
+            check(target.Hp <= 85 && target.Hp > 84, "Armor refunds retain chaser reduction within one minimum hit of debt");
 
             Fresh(true); target.OnHit = (_, _) =>
             {

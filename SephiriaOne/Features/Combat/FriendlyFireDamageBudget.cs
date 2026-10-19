@@ -11,10 +11,11 @@ namespace SephiriaOne
         private double remaining, lastTime, lastRefill;
 
         internal double Take(double damage, double maxHp, double now, double refillPerSecond = FriendlyFireSettings.DefaultRefillScale,
-            double elapsedRateCeiling = double.PositiveInfinity)
+            double elapsedRateCeiling = double.PositiveInfinity, double minimumDamage = 0)
         {
             if (!Finite(damage) || damage <= 0 || !Finite(maxHp) || maxHp <= 0 || !Finite(now) ||
-                !Finite(refillPerSecond) || refillPerSecond <= 0 || double.IsNaN(elapsedRateCeiling) || elapsedRateCeiling <= 0) return 0;
+                !Finite(refillPerSecond) || refillPerSecond <= 0 || double.IsNaN(elapsedRateCeiling) || elapsedRateCeiling <= 0 ||
+                !Finite(minimumDamage) || minimumDamage < 0) return 0;
             if (!started || now < lastTime)
             { remaining = Capacity; started = true; }
             else
@@ -22,8 +23,19 @@ namespace SephiriaOne
                 // at a higher rate; a decrease takes effect on the next hit as well.
                 remaining = Math.Min(Capacity, remaining + (now - lastTime) * Math.Min(elapsedRateCeiling, Math.Min(lastRefill, refillPerSecond)));
             lastTime = now; lastRefill = refillPerSecond;
-            double allowed = Math.Min(damage, remaining * maxHp);
-            remaining = Math.Max(0, remaining - allowed / maxHp);
+            double available = Math.Max(0, remaining) * maxHp;
+            double allowed = Math.Min(damage, available);
+            if (allowed > 0) allowed = Math.Max(minimumDamage, allowed);
+            // One admitted minimum hit can borrow fractional credit. Keep that
+            // debt until refill repays it; never grant another hit at zero credit.
+            if (allowed > 0)
+            {
+                double remainder = available - allowed;
+                // Use original capacity, not the shrinking last allowance:
+                // hundreds of fraction/HP conversions accumulate precision dust
+                // that must not buy an extra minimum hit at exact depletion.
+                remaining = remainder > 0 && remainder <= maxHp * Capacity * 1e-12d ? 0 : remainder / maxHp;
+            }
             return allowed;
         }
 

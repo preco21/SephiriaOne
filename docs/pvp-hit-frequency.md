@@ -33,7 +33,8 @@ run first. The sequence within PvP balancing is:
 2. Existing Shock/Freeze damage-pulse admission.
 3. Optional frequency multiplier: `min(1, sqrt(4 / recentHitCount))`.
 4. Existing per-opponent damage budget (20% maximum-HP burst, configured refill).
-5. Existing Play Tag incoming modifier, native shields/HP and unused-budget refund.
+5. Current role incoming modifier, positive damage minimum (since `0.67.1`),
+   native shields/HP and unused-budget refund.
 
 | Recent hits against this opponent | Per-hit frequency multiplier |
 | --- | --- |
@@ -47,7 +48,10 @@ damage without changing attack speed or discarding native effects/callbacks.
 The budget is charged only for the frequency-scaled allowance. When the budget
 is already the tighter limit, enabling frequency scaling may not further reduce
 the actual damage of every hit; neither mechanism can increase the other's
-allowance. This is diminishing returns, not a promise of equal DPS for all weapons.
+allowance. Since `0.67.1`, the [positive-hit minimum](pvp-balancing.md#minimum-positive-damage-0671-2026-10-20)
+is charged in full, with fractional debt carried until refill. Sub-one frequency
+results therefore deal one before shields when admitted, but cannot bypass an
+exhausted budget. This is diminishing returns, not a promise of equal DPS for all weapons.
 
 Count positive resolved hit attempts reaching this stage, including those later
 limited to zero by the budget. This prevents exhausted-budget barrages from

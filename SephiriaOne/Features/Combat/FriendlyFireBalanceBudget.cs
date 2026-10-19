@@ -83,7 +83,9 @@ namespace SephiriaOne
             // A carrier can change away and back between two hits. Preserve tokens,
             // but do not award boosted credit across an unobserved role/config edit.
             double elapsedCeiling = window.RoleRevision == chaserRevision ? double.PositiveInfinity : baseRefill;
-            double allowed = window.Budget.Take(damage, maxHp, now, refillPerSecond, elapsedCeiling);
+            // Reserve the final one-point minimum before native callbacks. Role
+            // reduction uses pre-reduction units, matching the refund ledger.
+            double allowed = window.Budget.Take(damage, maxHp, now, refillPerSecond, elapsedCeiling, 1d / incomingScale);
             window.RoleRevision = chaserRevision;
             if (allowed > 0)
             {
@@ -108,7 +110,9 @@ namespace SephiriaOne
             // chaser reduction; otherwise a rapid barrage would refund it away.
             double unused = current.BudgetReserved - current.BudgetAccounted / current.BudgetIncomingScale;
             // The usual fully delivered hit needs no additional lifecycle query.
-            if (unused <= 0 || current.BudgetGeneration != window.Generation || !CurrentHitPermitted()) return;
+            // Native damage is float precision. A double-to-float residue is not
+            // real unused credit and must not seed another one-point minimum hit.
+            if (unused <= current.BudgetReserved * 1e-7d || current.BudgetGeneration != window.Generation || !CurrentHitPermitted()) return;
             // Native shields and HP report their own applied amounts. Preserve
             // fractional credit lost to MP integer rounding or a later veto.
             // Never refund an exceptional hit: it may already have written HP.

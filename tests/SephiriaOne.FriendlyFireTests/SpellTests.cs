@@ -196,7 +196,7 @@ internal static class SpellTests
             var damage = new DamageInstance { origin = source, damage = 20, id = "Skill_LightningBolt", fromType = EDamageFromType.Magic,
                 damageType = EDamageType.Projectile, targetFactionLayers = source.GetHostileFactionLayers(EDamageFromType.None) };
             selected.ApplyDamage(damage);
-            check(Math.Abs(player.Hp - (100 - 20 * percent / 100)) < 0.0001 && damage.damage == 20,
+            check(Math.Abs(player.Hp - (100 - Math.Max(1, 20 * percent / 100))) < 0.0001 && damage.damage == 20,
                 "Magic chain impact uses native damage admission and scales once at " + percent + "%");
         }
         FriendlyFireParticipants.Clear();

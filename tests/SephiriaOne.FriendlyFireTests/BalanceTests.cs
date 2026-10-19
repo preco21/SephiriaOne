@@ -81,8 +81,8 @@ internal static class BalanceTests
         {
             SessionSettings.FriendlyFireForHit = new(true, percent, balance: true);
             target = new PlayerAvatar(); target.ApplyDamage(damage);
-            check(Near(target.Hp, 100 - FriendlyFireBalance.Soften(20 * (double)percent / 100, 100)),
-                "Existing percentage is applied first, with no forced minimum or double scaling: " + percent);
+            check(Near(target.Hp, 100 - (percent == 0 ? 0 : Math.Max(1, FriendlyFireBalance.Soften(20 * (double)percent / 100, 100)))),
+                "Existing percentage is applied once with a positive-only final minimum: " + percent);
         }
         SessionSettings.FriendlyFireForHit = new(true, 100, balance: true);
         target = new PlayerAvatar(); target.ApplyDamage(new() { origin = source, damage = float.MaxValue });

@@ -108,6 +108,11 @@ This task preserves that existing rounding contract; it is not a general lobby
 failure or evidence of lost network messages. Unshielded HP is a float, although
 the native displayed damage number is truncated to an integer.
 
+Follow-up `0.67.1` changes this specific contract: the
+[positive PvP hit minimum](pvp-balancing.md#minimum-positive-damage-0671-2026-10-20)
+now prevents untouched sub-one scaled hits from disappearing in native MP-shield
+conversion. The zero-loss numbers above describe the historical `0.65.1` build.
+
 ## Evidence and verification limits
 
 Installed `Assembly-CSharp.dll` SHA-256:

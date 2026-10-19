@@ -1,6 +1,11 @@
 # Development knowledge index
 
-Maintained: 2026-10-19 (Asia/Seoul), addon `0.67.0`.
+Maintained: 2026-10-20 (Asia/Seoul), addon `0.67.1`.
+
+PvP damage: [positive scaled hits have a one-point minimum](pvp-balancing.md#minimum-positive-damage-0671-2026-10-20)
+before native shields. Zero/invalid/vetoed hits and exhausted budgets remain zero;
+fractional results above one remain unchanged. Minimum hits debit their full
+amount from the shared damage budget, including incoming role reductions.
 
 Rabbit settings: [PvP shared-healing restriction](rabbit-potions.md#pvp-sharing-restriction-toggle-0670-2026-10-19)
 is now a host toggle, default on, in the Rabbit tab or `/one rabbit block-pvp-share

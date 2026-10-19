@@ -61,9 +61,9 @@ internal static class DebuffPulseTests
         check(victim.Hp == 78, "Budget-exhausted shock does not reserve a future pulse interval");
         Fresh(); victim.IsMpShield = true; SessionSettings.FriendlyFireForHit = new(true, 25, balance: true);
         Hit("Debuff_Electric", 2); Hit("Debuff_Electric", 8);
-        check(victim.Mp == 100, "A pulse rounded away by native MP shields still consumes its cadence interval");
+        check(victim.Mp == 99, "A minimum pulse damages MP shields and still consumes its cadence interval");
         Time.time += 0.25f; Hit("Debuff_Electric", 8);
-        check(victim.Mp == 98, "MP rounding refunds damage tokens without stranding the next timed pulse");
+        check(victim.Mp == 97, "The next timed pulse still receives its full scaled damage");
         Fresh(); Hit("Debuff_Electric");
         var freeze = new CharacterDebuff_Freeze(); freeze.InitializeAndSpawn(source, victim); freeze.ApplyDamage();
         check(victim.StunRemaining == 2, "Freeze still immobilizes a player for its native positive duration");

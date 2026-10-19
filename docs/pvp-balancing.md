@@ -3,6 +3,49 @@
 Added in `0.52.0`, 2026-10-13. Host-only installation; the existing native damage
 and FX replication continues to serve stock guests. Default: **off**.
 
+## Minimum positive damage (`0.67.1`, 2026-10-20)
+
+All admitted friendly-fire hits now have a one-point minimum at the existing
+post-defense, post-PvP-scale, pre-shield boundary. For example, 10 resolved damage
+at `0.05%` becomes 1 instead of 0.005. This applies with balancing on or off in
+casual combat, Deathmatch, Tournament, Play Tag and Zombie Survival. Fractional
+results above one remain unchanged; this is a minimum, not integer rounding of
+every hit. Normal PvE does not enter this path.
+
+The minimum requires finite, positive resolved damage and a positive permitted
+result after balancing. Zero percent, zero incoming-role scale, zero/negative/
+nonfinite damage, native protection, unselected/non-opposing targets, rejected
+effect pulses and exhausted budgets stay harmless. Ordinary shields absorb the
+minimum normally; MP shields can now charge one MP for an otherwise sub-one hit.
+The minimum is not applied again after absorption, armor or another native veto.
+Consequently it guarantees positive pre-shield damage, not one HP lost through
+every native defense or a shield that has already absorbed part of the hit.
+
+Balanced hits reserve the whole minimum before callbacks. The budget uses
+pre-incoming-role units, so its minimum is `1 / incomingScale`. A small positive
+credit may authorize a one-point hit and leave fractional debt; further hits
+remain zero until refill repays that debt. For fixed HP and role scaling, the
+cumulative budget can exceed its continuous allowance by less than one final
+damage point, never one extra point per attempted hit. Native undelivered-damage
+refunds remain supported. Double/float arithmetic residue is excluded from
+refunds and depletion so it cannot buy another minimum hit. Existing pair
+receipt, life, floor and epoch cleanup also owns the debt.
+
+No new hooks, RPCs, settings, polling, state collections or guest addon are
+needed. The executable Harmony fixture reproduced the original low-scale loss
+before the change. Regression checks cover HP/MP/ordinary shields, zero and
+invalid inputs, guards, invulnerability, reflection, spell/companion/proc paths,
+role reductions, tiny HP budgets, nested reservations, debt/refill and frequency
+scaling. These are fixtures and installed-code contracts, not live multiplayer
+verification; no game launch or deployment was performed.
+
+Verification: Release build passed with zero warnings/errors; 5,063 executable
+combat checks, 3,205 shared runtime checks (plus 69 Bat lifecycle checks), and the
+portable/installed-game contract suite passed. Review added high-HP regressions
+at 1,710 and 2,300 HP: accumulated conversion residue previously bought an extra
+minimum hit after exact burst depletion. Capacity-relative dust suppression now
+keeps those bursts at exactly 342 and 460 damage respectively.
+
 Updated in `0.60.4`: [stat-based Evasion](#evasion-cap-0604-2026-10-17) is capped
 at 50% before attacker anti-Evasion reductions. Lower chances and guaranteed
 item dodges remain native; no extra setting or stat override is introduced.
@@ -379,10 +422,9 @@ are not normalized. Debuff damage cadence is the targeted exception described be
 The budget below limits sustained damage from one attacker;
 focus fire, knockback and crowd control can still be strong. Strong
 healing or defensive builds may remain hard to kill. This reduces extreme hit
-power, not every possible build advantage. Small hits are not buffed, and very
-low host damage percentages can still produce negligible damage; try 100% as a
-starting point when evaluating balancing. The setting never changes that slider
-automatically or introduces a minimum damage floor.
+power, not every possible build advantage. Since `0.67.1`, positive admitted
+sub-one hits use the minimum described above. The setting never changes the
+host damage slider automatically.
 
 ## Rapid-hit budget (`0.53.0`, configurable in `0.55.0`)
 
@@ -399,7 +441,8 @@ attacker over `T` seconds is bounded by approximately `H * (0.20 + R*T)` from
 a full pool. Thus an initially full-health, unshielded target cannot be killed
 by that attacker in less than about **1.14 seconds at the default** through this
 damage path (`R = refill percent / 100`; minimum time is `0.80 / R`). This
-is a ceiling, not guaranteed DPS or a minimum-damage boost. Actual hits, defenses,
+is an approximate ceiling with less than one point of minimum-hit debt since
+`0.67.1`, not guaranteed DPS. Actual hits, defenses,
 healing and shields can make fights longer; multiple attackers remain independent.
 Setting refill to 100 permits subsecond kills when enough damaging hits land. The budget gives
 rapid direct/magic hits more room without changing native impact detection or
