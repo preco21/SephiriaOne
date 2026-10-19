@@ -40,6 +40,7 @@ internal static class ZombieSurvivalRuntimeTests
         }
         bool Messages(string text) => DungeonManager.Instance.ChatMessages.Any(x => x.Message.Contains(text));
         var all = New(); Begin();
+        FriendlyFireRuntimeTests.CheckMatchIntervals(check);
         var zombie = all.Single(CombatMatchRuntime.IsActiveZombie);
         var humans = all.Where(p => p != zombie).ToArray();
         check(ZombieRoleVisuals.Visible.SetEquals(new[] { zombie }), "Only the initial Zombie owns a sustained role visual");

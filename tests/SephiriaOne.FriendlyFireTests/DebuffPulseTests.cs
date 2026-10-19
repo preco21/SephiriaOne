@@ -23,7 +23,7 @@ internal static class DebuffPulseTests
             source = new(); victim = new();
         }
         void Hit(string id, float amount = 2) => victim.ApplyDamage(EffectTests.Tick(source, id, amount));
-        foreach (string id in new[] { "Debuff_Electric", "Debuff_Freeze" })
+        foreach (string id in new[] { "Debuff_Electric", "Debuff_Freeze", "Debuff_Chim" })
         {
             Fresh(); Hit(id); Time.time = 100.249f; Hit(id);
             check(victim.Hp == 98, id + " cannot damage the same player twice within 0.25 seconds");
@@ -74,6 +74,65 @@ internal static class DebuffPulseTests
         check(enemy.Hp == 96, "Repeated outgoing PvE shock remains native");
         Fresh(); victim.ApplyDamage(EffectTests.Tick(enemy, "Debuff_Freeze", 2)); victim.ApplyDamage(EffectTests.Tick(enemy, "Debuff_Freeze", 2));
         check(victim.Hp == 96, "Repeated incoming PvE freeze remains native");
+        foreach (var (kind, id) in new[] { (PvpDotEffect.Lightning, "Debuff_Electric"),
+            (PvpDotEffect.Freeze, "Debuff_Freeze"), (PvpDotEffect.Chim, "Debuff_Chim") })
+        {
+            Fresh(); Hit(id);
+            SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, dot: new(kind, 1)));
+            Time.time += 0.5f; Hit(id);
+            check(victim.Hp == 98, kind + " live lengthening reads the last admitted pulse, not a reset clock");
+            SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, dot: new(kind, 0.5m)));
+            Hit(id); check(victim.Hp == 96, kind + " live shortening admits the elapsed boundary immediately");
+            foreach (var sibling in Enum.GetValues<PvpDotEffect>())
+                if (sibling != kind) SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, dot: new(sibling, 3)));
+            Time.time += 0.499f; Hit(id); check(victim.Hp == 96, kind + " sibling edits neither reset nor replace its interval");
+            Time.time = 101; Hit(id); check(victim.Hp == 94, kind + " rejected attempts never postpone its next pulse");
+            var direct = EffectTests.Tick(source, id, 2); direct.fromType = EDamageFromType.Magic;
+            victim.ApplyDamage(direct); victim.ApplyDamage(direct);
+            check(victim.Hp == 90, kind + " similarly named direct magic never borrows a debuff cooldown");
+            Fresh(); Hit(id, 0); Hit(id); check(victim.Hp == 98, kind + " zero damage cannot reserve an interval");
+            Fresh(); victim.ApplyDamage(new() { origin = source, damage = float.MaxValue }); Hit(id);
+            Time.time += 0.1f; Hit(id); check(victim.Hp == 78, kind + " exhausted damage budget cannot reserve an interval");
+        }
+        Fresh();
+        SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, dot: new(PvpDotEffect.Lightning, 1)));
+        Hit("Debuff_Electric");
+        var plasma = new CharacterDebuff_Plasma(); plasma.InitializeAndSpawn(source, victim);
+        plasma.OnRefreshAttack = () => Hit("Debuff_Electric");
+        plasma.OnExpire = () => Hit("Debuff_Electric");
+        Time.time += 0.5f; plasma.RefreshDurationTimer(1, 0);
+        check(victim.Hp == 98, "Plasma refresh and normal Lightning share the configured shock interval");
+        Time.time += 0.5f; plasma.Destroy();
+        check(victim.Hp == 96, "Plasma expiry uses the same interval without delaying its native destruction");
+        Fresh();
+        SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, dot: new(PvpDotEffect.Lightning, 1)));
+        void PlasmaShock()
+        {
+            var damage = EffectTests.Tick(source, "Debuff_Plasma", 2); damage.flag = "DEBUFF_ELECTRIC";
+            victim.ApplyDamage(damage);
+        }
+        plasma = new CharacterDebuff_Plasma(); plasma.InitializeAndSpawn(source, victim);
+        plasma.OnRefreshAttack = PlasmaShock; plasma.OnExpire = PlasmaShock;
+        Hit("Debuff_Electric"); Time.time += 0.5f; plasma.RefreshDurationTimer(1, 0);
+        check(victim.Hp == 98, "Serialized Plasma shock ID shares Lightning admission through its native flag");
+        Hit("Debuff_Plasma"); Hit("Debuff_Plasma");
+        check(victim.Hp == 94, "Plasma burn with the same serialized ID does not acquire a Lightning pulse gate");
+        Time.time += 0.5f; plasma.Destroy();
+        check(victim.Hp == 92, "Serialized Plasma expiry shock resumes at the configured Lightning interval");
+        var spell = EffectTests.Tick(source, "Debuff_Plasma", 2); spell.flag = "DEBUFF_ELECTRIC"; spell.fromType = EDamageFromType.Magic;
+        victim.ApplyDamage(spell); victim.ApplyDamage(spell);
+        check(victim.Hp == 88, "Shock-like metadata on direct magic still cannot borrow the debuff pulse clock");
+        SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, balance: false));
+        PlasmaShock(); PlasmaShock(); check(victim.Hp == 84, "Disabling balancing immediately restores serialized Plasma shock damage");
+        Fresh(); Hit("Debuff_Chim");
+        var chim = new CharacterDebuff { OnExpire = () => Hit("Debuff_Chim") };
+        chim.InitializeAndSpawn(source, victim); Time.time += 0.1f; chim.Destroy();
+        check(victim.Hp == 98, "Chim expiry damage obeys its interval without periodic conversion");
+        Fresh();
+        SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, dot: new(PvpDotEffect.Freeze, 5)));
+        freeze = new CharacterDebuff_Freeze(); freeze.InitializeAndSpawn(source, victim); freeze.ApplyDamage();
+        Time.time += 1; victim.StunRemaining = 0; freeze.ApplyDamage();
+        check(victim.Hp == 98 && victim.StunRemaining == 2, "A long custom Freeze damage interval preserves the native stun refresh");
         Fresh(); var hit = EffectTests.Tick(source, "Debuff_Electric", 2);
         for (int i = 0; i < 1000; i++) { Time.time++; victim.ApplyDamage(hit); victim.Hp = 100; }
         long allocated = GC.GetAllocatedBytesForCurrentThread();

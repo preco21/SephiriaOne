@@ -6,8 +6,6 @@ namespace SephiriaOne
 {
     internal static partial class FriendlyFireRuntime
     {
-        internal const float DarkCloudPlayerInterval = 0.5f;
-
         private sealed class DarkCloudTargets
         {
             internal readonly ConditionalWeakTable<FriendlyFireParticipants.Receipt, DarkCloudWindow> Windows =
@@ -16,7 +14,7 @@ namespace SephiriaOne
         private sealed class DarkCloudWindow
         {
             internal bool Started;
-            internal long CombatEpoch, ParticipantEpoch, BalanceRevision;
+            internal long CombatEpoch, ParticipantEpoch, BalanceRevision, SourceLife, TargetLife;
             internal string SourceFloor, TargetFloor;
             internal float LastStrike;
         }
@@ -55,14 +53,17 @@ namespace SephiriaOne
             var window = darkCloudWindows.GetValue(attacker, createCloudTargets).Windows.GetValue(defender, createCloudWindow);
             float now = Time.time;
             long balanceRevision = SessionSettings.CombatBalanceRevision;
+            long sourceLife = BalanceLife(attacker), targetLife = BalanceLife(defender);
             if (window.Started && window.CombatEpoch == combatEpoch && window.ParticipantEpoch == participantEpoch && window.BalanceRevision == balanceRevision &&
+                window.SourceLife == sourceLife && window.TargetLife == targetLife &&
                 window.SourceFloor == source.currentFloorGuid && window.TargetFloor == victim.currentFloorGuid &&
-                now >= window.LastStrike && now - window.LastStrike < DarkCloudPlayerInterval) return false;
+                now >= window.LastStrike && now - window.LastStrike < settings.DotIntervals.Interval(PvpDotEffect.DarkCloud)) return false;
 
             // Reserve before native callbacks: recursive strikes and another
             // cloud object owned by this player share the same pair's window.
             window.Started = true; window.CombatEpoch = combatEpoch; window.ParticipantEpoch = participantEpoch;
             window.BalanceRevision = balanceRevision;
+            window.SourceLife = sourceLife; window.TargetLife = targetLife;
             window.SourceFloor = source.currentFloorGuid; window.TargetFloor = victim.currentFloorGuid; window.LastStrike = now;
             return true;
         }

@@ -6,7 +6,10 @@ internal static class PvpDotSettingsTests
     {
         int checks = 0;
         void Check(bool value, string why) { if (!value) throw new Exception(why); checks++; }
-        decimal ExpectedDefault(PvpDotEffect effect) => effect == PvpDotEffect.Burn ? 0.9m : 0.75m;
+        foreach (string key in new[] { "wound", "lightning", "freeze", "chim", "dark-cloud" })
+            Check(FriendlyFireCommand.Parse("/one friendlyfire dot " + key + " 1.5", out _) == FriendlyFireParseResult.Valid,
+                "Missing effect control is exposed: " + key);
+        decimal ExpectedDefault(PvpDotEffect effect) => effect switch { PvpDotEffect.Burn => 0.9m, PvpDotEffect.Wound => 1.33m, PvpDotEffect.Lightning or PvpDotEffect.Freeze or PvpDotEffect.Chim => 0.25m, PvpDotEffect.DarkCloud => 0.5m, _ => 0.75m };
         Check(FriendlyFireCommand.Parse("/one friendlyfire dot burn 0.75", out var command) == FriendlyFireParseResult.Valid &&
             !command.TouchesMasterToggle && !command.IsReset, "Independent DoT interval command is accepted without toggling combat");
         var policy = new SessionPolicy();
@@ -25,7 +28,7 @@ internal static class PvpDotSettingsTests
                 Check(SessionPolicy.TryReadPreset(policy.ToPresetText(), out var saved, out _) && saved.FriendlyFire.Equals(policy.FriendlyFire), "Interval roundtrip: " + key);
                 Check(policy.FriendlyFire.DotIntervals.Seconds(effect) == ExpectedDefault(effect)
                     ? policy.ToPresetText() == "SephiriaOne preset v1\n"
-                    : policy.ToPresetText() == "SephiriaOne preset v28\nfriendlyfire dot-" + key + " " + value + "\n",
+                    : policy.ToPresetText() == "SephiriaOne preset v" + ((int)effect < 4 ? "28" : "34") + "\nfriendlyfire dot-" + key + " " + value + "\n",
                     "Only each effect's nondefault interval is serialized: " + key);
             }
             foreach (string invalid in new[] { "0", "0.04", "10.01", "0.751", "0.750", "-1", "+1", "1e1", "NaN", "Infinity", "1%", "1,5", "x2", "1 extra" })
@@ -36,8 +39,25 @@ internal static class PvpDotSettingsTests
             Check(policy.FriendlyFire.DotIntervals.Seconds(effect) == ExpectedDefault(effect) && !policy.HasChanges,
                 "Per-effect reset restores the current default and needs no saved row");
         }
-        foreach (string invalid in new[] { "/one friendlyfire dot", "/one friendlyfire dot shock 1", "/one friendlyfire dot burn", "/one friendlyfire dot burn 1 2" })
+        foreach (string invalid in new[] { "/one friendlyfire dot", "/one friendlyfire dot missing 1", "/one friendlyfire dot burn", "/one friendlyfire dot burn 1 2" })
             Check(FriendlyFireCommand.Parse(invalid, out _) == FriendlyFireParseResult.Invalid, "Reject invalid DoT command");
+        Check(FriendlyFireCommand.Parse("/one friendlyfire dot SHOCK 1.5", out command) == FriendlyFireParseResult.Valid,
+            "Shock alias resolves case-insensitively to the Lightning setting");
+        policy.Record(command);
+        Check(policy.ToPresetText() == "SephiriaOne preset v34\nfriendlyfire dot-lightning 1.5\n", "Alias serializes as canonical Lightning");
+        policy = new SessionPolicy();
+        for (int version = 1; version <= 33; version++)
+            foreach (var effect in Enum.GetValues<PvpDotEffect>().Where(e => (int)e >= 4))
+            {
+                Check(SessionPolicy.TryReadPreset($"SephiriaOne preset v{version}\n", out var omitted, out _) &&
+                    omitted.FriendlyFire.DotIntervals.Seconds(effect) == ExpectedDefault(effect), "Legacy schema inherits new default: " + effect);
+                Check(!SessionPolicy.TryReadPreset($"SephiriaOne preset v{version}\nfriendlyfire dot-{PvpDotSettings.Key(effect)} 1\n", out var bad, out _) &&
+                    !bad.HasChanges, "Legacy schema rejects new effect rows atomically: " + effect);
+            }
+        foreach (string row in new[] { "dot-wound 0", "dot-lightning 0.001", "dot-freeze NaN", "dot-chim 11", "dot-dark-cloud 1.00",
+            "dot-shock 1", "dot-DARK-CLOUD 1", "dot-dark-cloud 1\nfriendlyfire dot-dark-cloud 2" })
+            Check(!SessionPolicy.TryReadPreset("SephiriaOne preset v34\nfriendlyfire enabled 1\nfriendlyfire " + row + "\n", out var bad, out _) &&
+                !bad.HasChanges, "Invalid extended preset is atomic: " + row);
         for (int version = 1; version <= 27; version++)
         {
             Check(SessionPolicy.TryReadPreset($"SephiriaOne preset v{version}\n", out var old, out _) && !old.FriendlyFire.DotIntervals.HasChanges,
@@ -46,7 +66,7 @@ internal static class PvpDotSettingsTests
                 Check(old.FriendlyFire.DotIntervals.Seconds(effect) == ExpectedDefault(effect), "Omitted old interval uses current default: " + effect);
             Check(!SessionPolicy.TryReadPreset($"SephiriaOne preset v{version}\nfriendlyfire dot-burn 1\n", out _, out _), "Old schemas reject interval rows");
         }
-        for (int version = 28; version <= 32; version++)
+        for (int version = 28; version <= 34; version++)
         {
             Check(SessionPolicy.TryReadPreset($"SephiriaOne preset v{version}\n", out var omitted, out _) &&
                 !omitted.HasChanges && omitted.FriendlyFire.DotIntervals.Seconds(PvpDotEffect.Burn) == 0.9m,

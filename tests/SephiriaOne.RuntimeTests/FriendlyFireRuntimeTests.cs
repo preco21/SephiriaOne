@@ -3,6 +3,23 @@ using SephiriaOne;
 
 internal static class FriendlyFireRuntimeTests
 {
+    internal static void CheckMatchIntervals(Action<bool, string> check)
+    {
+        var prior = SessionSettings.FriendlyFireForHit.DotIntervals;
+        long token = CombatMatchRuntime.MatchToken, scores = FriendlyFireKda.Epoch,
+            balance = SessionSettings.CombatBalanceRevision, roles = CombatMatchRuntime.RoleRevision;
+        foreach (var effect in Enum.GetValues<PvpDotEffect>())
+        {
+            string command = "/one friendlyfire dot " + PvpDotSettings.Key(effect) + " ";
+            check(SettingsActions.Execute(command + "1.75").Success &&
+                SessionSettings.FriendlyFireForHit.DotIntervals.Seconds(effect) == 1.75m &&
+                CombatMatchRuntime.IsRunning && CombatMatchRuntime.MatchToken == token && FriendlyFireKda.Epoch == scores &&
+                SessionSettings.CombatBalanceRevision == balance && CombatMatchRuntime.RoleRevision == roles,
+                "Live interval edit preserves active mode, scores, budgets and roles: " + effect);
+            check(SettingsActions.Execute(command + prior.Number(effect)).Success, "Restore prior interval: " + effect);
+        }
+    }
+
     public static void Run(Func<PlayerSpawner> start, Func<uint, PlayerSpawner> add, Action<bool, string> check)
     {
         var host = start().PlayerAvatar;
@@ -49,6 +66,8 @@ internal static class FriendlyFireRuntimeTests
         check(SessionSettings.CombatBalanceRevision == balanceRevision && Score(host) == "P(1/0/0)" &&
             SessionSettings.ReadSnapshot().FriendlyFire.DotIntervals.Equals(dotSettings), "DoT edits preserve KDA/budgets and update snapshot immediately");
         check(SettingsActions.Execute("/one friendlyfire status").Messages.Any(m => m.Contains("Burn 1; Plasma Burn 2; Frostbite 3; Poison 4")), "Status reports each independent interval");
+        check(SettingsActions.Execute("/one friendlyfire status").Messages.Any(m => m.Contains("Wound 5; Lightning/Shock 6; Freeze damage 7; Chim 8; Dark Cloud 9")),
+            "Status reports all newly configurable periodic and pulse intervals");
         check(!SettingsActions.Execute("/one friendlyfire dot poison 0").Success && SessionSettings.FriendlyFireForHit.DotIntervals.Equals(dotSettings), "Rejected interval cannot partially change policy");
         check(SettingsActions.Execute("/one friendlyfire block-lobby-regen on").Success &&
             SettingsActions.Execute("/one friendlyfire block-lobby-regen off").Success &&
@@ -67,7 +86,7 @@ internal static class FriendlyFireRuntimeTests
         HorayModAPI.StartSession();
         check(SessionSettings.FriendlyFireForHit.Enabled, "Run restart retains current combat policy");
         check(SessionSettings.FriendlyFireForHit.RefillPercent == 125.5m, "Run restart retains configured refill");
-        check(SessionSettings.FriendlyFireForHit.DotIntervals.Equals(dotSettings), "Run restart retains all four current DoT intervals");
+        check(SessionSettings.FriendlyFireForHit.DotIntervals.Equals(dotSettings), "Run restart retains all nine current effect intervals");
         check(Score(host) == "P(1/0/0)", "Run restart preserves totals");
         Damage(); HorayModAPI.StartSession(); Kill();
         check(Score(host) == "P(2/0/0)" && Score(helper) == "P(0/0/1)", "Run restart clears previous pending assists");
@@ -110,7 +129,7 @@ internal static class FriendlyFireRuntimeTests
         check(Score(host) == "P(0/0/0)", "Reset command clears KDA");
         check(SessionSettings.FriendlyFireForHit.RefillPercent == 70, "Full reset restores default refill");
         check(!SessionSettings.FriendlyFireForHit.HitFrequency, "Full reset restores hit-frequency default off");
-        check(!SessionSettings.FriendlyFireForHit.DotIntervals.HasChanges, "Full reset restores four 0.75-second intervals");
+        check(!SessionSettings.FriendlyFireForHit.DotIntervals.HasChanges, "Full reset restores all nine current per-effect defaults");
         FriendlyFireFeature.Available = false;
         check(!SettingsActions.Execute("/one friendlyfire hit-frequency on").Success &&
             SettingsActions.Execute("/one friendlyfire hit-frequency off").Success && SettingsActions.Execute("/one friendlyfire hit-frequency reset").Success,

@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace SephiriaOne
 {
@@ -16,15 +18,33 @@ namespace SephiriaOne
 
         private void BuildPvpDotEditor()
         {
-            // Four editors fit the existing 273x82 area in two columns. Keep
-            // participant controls and shared KDA/revive/master actions visible.
+            // Scroll inside the original editor area so adding effect families
+            // never pushes participant or shared combat actions out of the panel.
+            var container = PanelWidgets.Rect(pageRoot, "DotIntervals", 16, 80, 273, 82);
+            container.gameObject.AddComponent<Image>().color = new Color32(17, 27, 40, 255);
+            var scroll = container.gameObject.AddComponent<ScrollRect>();
+            var viewport = PanelWidgets.Rect(container, "Viewport", 0, 0, 259, 82);
+            viewport.gameObject.AddComponent<RectMask2D>();
+            var content = PanelWidgets.Rect(viewport, "Effects", 0, 0, 259, ((PvpDotSettings.Count + 1) / 2) * 42);
+            scroll.viewport = viewport; scroll.content = content; scroll.horizontal = false;
+            scroll.movementType = ScrollRect.MovementType.Clamped; scroll.scrollSensitivity = 30;
+            var track = PanelWidgets.Rect(container, "Scrollbar", 265, 0, 8, 82);
+            track.gameObject.AddComponent<Image>().color = new Color32(39, 59, 82, 255);
+            var bar = track.gameObject.AddComponent<Scrollbar>();
+            var handle = PanelWidgets.Rect(track, "Handle", 0, 0, 0, 0);
+            handle.anchorMin = Vector2.zero; handle.anchorMax = Vector2.one;
+            handle.pivot = new Vector2(0.5f, 0.5f);
+            var image = handle.gameObject.AddComponent<Image>(); image.color = PanelWidgets.Accent;
+            bar.handleRect = handle; bar.targetGraphic = image; bar.direction = Scrollbar.Direction.BottomToTop;
+            bar.navigation = new Navigation { mode = Navigation.Mode.None };
+            scroll.verticalScrollbar = bar;
             for (int i = 0; i < PvpDotSettings.Count; i++)
             {
                 var row = new DotIntervalEditor { Effect = (PvpDotEffect)i };
-                int x = 16 + i % 2 * 141, y = 80 + i / 2 * 42;
-                widgets.Text(pageRoot, "DotLabel" + i, PvpDotSettings.Label(row.Effect), x, y, 132, 15, 10);
-                row.Input = widgets.Input(pageRoot, x, y + 15, 62, _ => row.Draft = true);
-                changeButtons.Add(widgets.Button(pageRoot, "Apply", x + 68, y + 15, 64, 25, () => ApplyPvpDot(row)));
+                int x = i % 2 * 134, y = i / 2 * 42;
+                widgets.Text(content, "DotLabel" + i, PvpDotSettings.Label(row.Effect), x, y, 125, 15, 10);
+                row.Input = widgets.Input(content, x, y + 15, 57, _ => row.Draft = true);
+                changeButtons.Add(widgets.Button(content, "Apply", x + 63, y + 15, 62, 25, () => ApplyPvpDot(row)));
                 pvpDotEditors.Add(row);
             }
         }

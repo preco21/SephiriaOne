@@ -22,7 +22,7 @@ internal static class GameFriendlyFireDebuffTests
             var mapped = Map(original);
             int helper = mapped.FindIndex(i => Call(i, "FriendlyFireRuntime", "UpdateDebuffTick"));
             int expectedKind = update.DeclaringType!.Name switch { "CharacterDebuff_Burn" => 0, "CharacterDebuff_Plasma" => 1,
-                "CharacterDebuff_Frostbite" => 2, "CharacterDebuff_Poison" => 3, _ => -1 };
+                "CharacterDebuff_Frostbite" => 2, "CharacterDebuff_Poison" => 3, "CharacterDebuff_Wound" => 4, _ => -1 };
             Require(mapped.Count == original.Count + 2 && helper >= 3 && mapped[helper - 2].opcode == OpCodes.Ldarg_0 &&
                 mapped[helper - 1].LoadsConstant(expectedKind) &&
                 (mapped[helper - 3].opcode == OpCodes.Mul || Call(mapped[helper - 3], "Time", "get_deltaTime")), update + " wraps only the periodic timer with the correct effect kind");
@@ -67,7 +67,33 @@ internal static class GameFriendlyFireDebuffTests
             Require(ctor.Any(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "Debuff_Electric")), "native shock identifier: " + name);
             var attack = PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(type, "Attack"));
             Require(attack.Any(i => Call(i, "CombatBehaviour", "ApplyDamage")), "shock refresh/expiry/luck share the damage path: " + name);
+            Require(attack.Any(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "DEBUFF_ELECTRIC")) &&
+                attack.Any(i => i.opcode == OpCodes.Stfld && i.operand is FieldInfo f && f.DeclaringType?.Name == "DamageInstance" && f.Name == "flag"),
+                "native shock marker survives serialized damage-ID overrides: " + name);
         }
+        var plasmaTick = PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(game.GetType("CharacterDebuff_Plasma", true)!, "OnUpdate_Server"));
+        Require(!plasmaTick.Any(i => i.opcode == OpCodes.Stfld && i.operand is FieldInfo f && f.DeclaringType?.Name == "DamageInstance" && f.Name == "flag"),
+            "Plasma periodic burn does not carry the shock marker");
+        // A newly shipped status class should fail this audit until its damage
+        // path (or reason for exclusion) has been classified explicitly.
+        string[] knownDebuffs = { "CharacterDebuff_Burn", "CharacterDebuff_Plasma", "CharacterDebuff_Frostbite",
+            "CharacterDebuff_Poison", "CharacterDebuff_Wound", "CharacterDebuff_Electric", "CharacterDebuff_Freeze",
+            "CharacterDebuff_ChimDamage", "CharacterDebuff_MagicWound", "CharacterDebuff_StatusInstance", "CharacterDebuff_QliphothDeath" };
+        var debuffBase = game.GetType("CharacterDebuff", true)!;
+        var nativeDebuffs = game.GetTypes().Where(t => t.IsSubclassOf(debuffBase) && !t.IsAbstract).Select(t => t.Name);
+        Require(nativeDebuffs.OrderBy(n => n).SequenceEqual(knownDebuffs.OrderBy(n => n)), "every concrete native debuff classified by the audit");
+        var chim = game.GetType("CharacterDebuff_ChimDamage", true)!;
+        var chimCtor = PatchProcessor.GetOriginalInstructions(AccessTools.Constructor(chim));
+        var chimExpiry = PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(chim, "DestroyInner"));
+        var chimUpdate = PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(chim, "OnUpdate_Server"));
+        Require(chimCtor.Any(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "Debuff_Chim")) &&
+            chimExpiry.Any(i => Call(i, "CombatBehaviour", "ApplyDamage")) &&
+            chimUpdate.Any(i => Call(i, "Timer", "AddTimerNoLimit")) && !chimUpdate.Any(i => Call(i, "CombatBehaviour", "ApplyDamage")),
+            "Chim accumulates charge and damages on expiry, without a periodic damage timer");
+        foreach (string name in new[] { "CharacterDebuff_MagicWound", "CharacterDebuff_StatusInstance", "CharacterDebuff_QliphothDeath" })
+            Require(!game.GetType(name, true)!.GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.DeclaredOnly)
+                .Where(m => m.GetMethodBody() != null).SelectMany(m => PatchProcessor.GetOriginalInstructions(m))
+                .Any(i => Call(i, "CombatBehaviour", "ApplyDamage")), name + " has no independently timed damage hit");
         var frostStack = PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(game.GetType("CharacterDebuff_Frostbite", true)!, "AddStack"));
         Require(frostStack.Any(i => Call(i, "UnitAvatar", "ApplyDebuff")), "native Frostbite-to-Freeze application remains separate from ticks");
         var timer = game.GetType("Timer", true)!;
@@ -75,6 +101,11 @@ internal static class GameFriendlyFireDebuffTests
         var adapter = PatchProcessor.GetOriginalInstructions(AccessTools.Method(addon.GetType("SephiriaOne.FriendlyFireRuntime", true)!, "UpdateDebuffTick")).ToList();
         Require(adapter.Any(i => Call(i, "Time", "get_deltaTime")) && adapter.Any(i => Call(i, "PvpDotSettings", "Interval")) &&
             !adapter.Any(i => i.opcode == OpCodes.Stfld && i.operand is FieldInfo f && f.DeclaringType == timer), "adapter uses real seconds and never writes timer configuration/progress directly");
+        var combat = addon.GetType("SephiriaOne.FriendlyFireRuntime", true)!;
+        var pulses = PatchProcessor.GetOriginalInstructions(AccessTools.Method(combat, "LimitBalancedDamage"));
+        Require(pulses.Count(i => Call(i, "PvpDotSettings", "Interval")) == 3, "Lightning, Freeze and Chim read independent live intervals");
+        var cloud = PatchProcessor.GetOriginalInstructions(AccessTools.Method(combat, "BeforeDarkCloudStrike"));
+        Require(cloud.Any(i => Call(i, "PvpDotSettings", "Interval")), "Dark Cloud reads its own live interval");
         var panel = addon.GetType("SephiriaOne.SettingsPanel", true)!;
         List<CodeInstruction> Panel(string name) => PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(panel, name)).ToList();
         Require(Panel("BuildCombatEditor").Any(i => Call(i, "SettingsPanel", "BuildPvpDotEditor")) &&
@@ -83,8 +114,11 @@ internal static class GameFriendlyFireDebuffTests
             Panel("ApplyPvpDot").Any(i => Call(i, "SettingsPanel", "Execute")), "DoT Apply uses the shared host command");
         Require(Panel("ClearInput").Any(i => Call(i, "SettingsPanel", "ClearPvpDots")) &&
             Panel("RefreshCombat").Any(i => Call(i, "SettingsPanel", "RefreshPvpDots")), "DoT drafts follow normal refresh and scope cleanup");
+        var editor = Panel("BuildPvpDotEditor");
+        Require(editor.Any(i => Call(i, "ScrollRect", "set_content")) && editor.Any(i => Call(i, "ScrollRect", "set_viewport")) &&
+            editor.Any(i => Call(i, "ScrollRect", "set_verticalScrollbar")), "all nine controls are reachable in a bounded scroll area with a visible scroll affordance");
         GamePvpBurnDurationTests.Run(game, addon);
         GameHitFrequencyTests.Run(addon);
-        Console.WriteLine("Verified four independent PvP DoT timers, unchanged Wound/shock/Freeze paths, native progress/expiry and shared UI commands (not live gameplay).");
+        Console.WriteLine("Verified all 11 native debuff types: five configurable periodic timers, three pulse controls, independent Dark Cloud, native variants/stun/expiry and scrollable shared UI (not live gameplay).");
     }
 }

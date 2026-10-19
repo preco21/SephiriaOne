@@ -67,6 +67,7 @@ internal static class DeathmatchTests
         check(SettingsActions.Execute("/one friendlyfire dot burn 1.25").Success && CombatMatchRuntime.IsRunning &&
             SessionSettings.FriendlyFireForHit.DotIntervals.Seconds(PvpDotEffect.Burn) == 1.25m, "DoT edit preserves Deathmatch warmup");
         check(!SessionSettings.FriendlyFireForHit.Enabled, "Damage edits cannot arm the warmup"); At(3);
+        FriendlyFireRuntimeTests.CheckMatchIntervals(check);
         long guardEpoch = FriendlyFireKda.Epoch, balanceRevision = SessionSettings.CombatBalanceRevision;
         check(SettingsActions.Execute("/one friendlyfire hit-frequency on").Success && CombatMatchRuntime.IsRunning &&
             SessionSettings.FriendlyFireForHit.HitFrequency && FriendlyFireKda.Epoch == guardEpoch && SessionSettings.CombatBalanceRevision == balanceRevision,

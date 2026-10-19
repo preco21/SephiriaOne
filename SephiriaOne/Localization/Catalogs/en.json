@@ -1,4 +1,12 @@
 {
+  "Wound (s)": "Wound (s)",
+  "Lightning / Shock (s)": "Lightning / Shock (s)",
+  "Freeze damage (s)": "Freeze damage (s)",
+  "Chim damage (s)": "Chim damage (s)",
+  "Dark Cloud (s)": "Dark Cloud (s)",
+  "PvP effect intervals (s): Wound {0}; Lightning/Shock {1}; Freeze damage {2}; Chim {3}; Dark Cloud {4}.": "PvP effect intervals (s): Wound {0}; Lightning/Shock {1}; Freeze damage {2}; Chim {3}; Dark Cloud {4}.",
+  "PvP balancing: /one friendlyfire balance on|off. Default off; softens hits, limits rapid damage and Dark Cloud repeats, and uses configurable DoT intervals. Lightning/Shock, Freeze, Chim and Dark Cloud have separate configurable damage intervals; Freeze stun is preserved.": "PvP balancing: /one friendlyfire balance on|off. Default off; softens hits, limits rapid damage and Dark Cloud repeats, and uses configurable DoT intervals. Lightning/Shock, Freeze, Chim and Dark Cloud have separate configurable damage intervals; Freeze stun is preserved.",
+  "PvP DoT: /one friendlyfire dot burn|plasma-burn|frostbite|poison|wound|lightning|freeze|chim|dark-cloud 0.05..10|reset (seconds, up to 2 decimals). Lightning includes Plasma shock; Freeze controls damage, not stun. Only with PvP balancing on.": "PvP DoT: /one friendlyfire dot burn|plasma-burn|frostbite|poison|wound|lightning|freeze|chim|dark-cloud 0.05..10|reset (seconds, up to 2 decimals). Lightning includes Plasma shock; Freeze controls damage, not stun. Only with PvP balancing on.",
   "PvP Evasion: stat-based dodge chance is capped at 50% before anti-Evasion; guaranteed item dodges are unchanged.": "PvP Evasion: stat-based dodge chance is capped at 50% before anti-Evasion; guaranteed item dodges are unchanged.",
   "Hit-frequency scaling": "Hit-frequency scaling",
   "Hit-frequency scaling: {0} (requires PvP balancing).": "Hit-frequency scaling: {0} (requires PvP balancing).",

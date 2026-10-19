@@ -20,7 +20,7 @@ namespace SephiriaOne
             internal FriendlyFireDamageBudget Budget;
             internal FriendlyFireHitFrequency Frequency;
             internal long FrequencyRevision;
-            internal DebuffPulse Shock, Freeze;
+            internal DebuffPulse Shock, Freeze, Chim;
         }
 
         private static ConditionalWeakTable<FriendlyFireParticipants.Receipt, BalanceActor> balanceActors =
@@ -31,6 +31,10 @@ namespace SephiriaOne
             NewBalanceWindow;
         private static BalanceActor NewBalanceActor(FriendlyFireParticipants.Receipt _) => new BalanceActor();
         private static BalanceWindow NewBalanceWindow(FriendlyFireParticipants.Receipt _) => new BalanceWindow();
+
+        // Strike admission can precede damage-budget creation (or emit no hit).
+        // Register both actors here so revival also retires those strike windows.
+        private static long BalanceLife(FriendlyFireParticipants.Receipt receipt) => balanceActors.GetValue(receipt, createBalanceActor).Life;
 
         private static void ClearBalanceBudgets() => balanceActors =
             new ConditionalWeakTable<FriendlyFireParticipants.Receipt, BalanceActor>();
@@ -43,7 +47,7 @@ namespace SephiriaOne
             if (receipt != null && balanceActors.TryGetValue(receipt, out BalanceActor actor)) actor.Life++;
         }
 
-        private static double LimitBalancedDamage(double damage, double maxHp, double refillPerSecond, double baseRefill, double incomingScale, bool hitFrequency)
+        private static double LimitBalancedDamage(double damage, double maxHp, double refillPerSecond, double baseRefill, double incomingScale, bool hitFrequency, PvpDotSettings intervals)
         {
             var attacker = current.AttackerReceipt;
             var victim = current.VictimReceipt;
@@ -59,7 +63,7 @@ namespace SephiriaOne
                 window.SourceFloor != sourceFloor || window.TargetFloor != targetFloor)
             {
                 window.Started = true; window.Budget = default; window.Generation++;
-                window.Shock = window.Freeze = default;
+                window.Shock = window.Freeze = window.Chim = default;
                 window.Frequency = default;
                 window.CombatEpoch = epoch; window.ParticipantEpoch = participants; window.Revision = revision;
                 window.SourceLife = source.Life; window.TargetLife = target.Life;
@@ -69,7 +73,9 @@ namespace SephiriaOne
             // consume the owner's same directed budget, regardless of damage ID.
             float now = Time.time;
             int pulse = DebuffPulseKind(current.Damage);
-            if (pulse == 1 && !window.Shock.Ready(now) || pulse == 2 && !window.Freeze.Ready(now)) return 0;
+            if (pulse == 1 && !window.Shock.Ready(now, intervals.Interval(PvpDotEffect.Lightning)) ||
+                pulse == 2 && !window.Freeze.Ready(now, intervals.Interval(PvpDotEffect.Freeze)) ||
+                pulse == 3 && !window.Chim.Ready(now, intervals.Interval(PvpDotEffect.Chim))) return 0;
             if (hitFrequency && damage > 0)
             {
                 long frequencyRevision = SessionSettings.CombatFrequencyRevision;
@@ -94,6 +100,7 @@ namespace SephiriaOne
                 // receipt/life/epoch/floor reset owns both clocks and tokens.
                 if (pulse == 1) window.Shock.Reserve(now);
                 else if (pulse == 2) window.Freeze.Reserve(now);
+                else if (pulse == 3) window.Chim.Reserve(now);
                 current.BudgetWindow = window; current.BudgetGeneration = window.Generation;
                 current.BudgetReserved = allowed; current.BudgetMaxHp = maxHp;
                 current.BudgetIncomingScale = incomingScale;

@@ -1,6 +1,11 @@
 # Development knowledge index
 
-Maintained: 2026-10-20 (Asia/Seoul), addon `0.67.1`.
+Maintained: 2026-10-20 (Asia/Seoul), addon `0.68.0`.
+
+PvP intervals: [all audited debuff damage families and Dark Cloud](pvp-dot-intervals.md)
+now have independent controls. Lightning covers Electric and Plasma shock; Wound,
+Freeze damage and Chim are exposed too. Scroll within Combat → DoT intervals.
+EN/KO commands/status, live edits and v34 preset overrides share existing policy.
 
 PvP damage: [positive scaled hits have a one-point minimum](pvp-balancing.md#minimum-positive-damage-0671-2026-10-20)
 before native shields. Zero/invalid/vetoed hits and exhausted budgets remain zero;

@@ -45,7 +45,7 @@ public class CharacterDebuff_Plasma : PeriodicDebuffFixture
     {
         addDamageTimer.AddTimerNoLimit(Time.deltaTime);
         float speed = Speed;
-        if (tickTimer.Update(Time.deltaTime * speed)) Tick("Debuff_Burn");
+        if (tickTimer.Update(Time.deltaTime * speed)) Tick("Debuff_Plasma");
     }
 }
 
@@ -65,7 +65,7 @@ internal static class ElementalCadenceTests
                 effect.OnTick = effect.OnUpdate_Server; return effect;
             }
             var effect = New(); float interval = effect is CharacterDebuff_Plasma ? 0.5f : 1;
-            float balancedInterval = effect is CharacterDebuff_Wound ? 4f / 3 : 0.75f;
+            float balancedInterval = effect is CharacterDebuff_Wound ? 1.33f : 0.75f;
             effect.Step(balancedInterval - 0.01f);
             check(effect.Ticks == 0, effect.GetType().Name + " waits for its balanced periodic interval");
             effect.Step(0.011f);
@@ -84,7 +84,7 @@ internal static class ElementalCadenceTests
         system.Step(1); check(system.Ticks == 1, "System poison keeps its native timer");
         var settings = default(PvpDotSettings);
         foreach (var kind in Enum.GetValues<PvpDotEffect>()) settings = settings.Apply(new(kind, (int)kind + 1));
-        foreach (var kind in Enum.GetValues<PvpDotEffect>())
+        foreach (var kind in new[] { PvpDotEffect.Burn, PvpDotEffect.PlasmaBurn, PvpDotEffect.Frostbite, PvpDotEffect.Poison, PvpDotEffect.Wound })
         {
             SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, dotIntervals: settings);
             CharacterDebuff effect = kind switch
@@ -92,6 +92,7 @@ internal static class ElementalCadenceTests
                 PvpDotEffect.Burn => new CharacterDebuff_Burn { Speed = 100 },
                 PvpDotEffect.PlasmaBurn => new CharacterDebuff_Plasma { Speed = 100 },
                 PvpDotEffect.Frostbite => new CharacterDebuff_Frostbite(),
+                PvpDotEffect.Wound => new CharacterDebuff_Wound(),
                 _ => new CharacterDebuff_Poison()
             };
             effect.InitializeAndSpawn(new PlayerAvatar(), new PlayerAvatar());
@@ -100,6 +101,7 @@ internal static class ElementalCadenceTests
             Timer timer = effect switch
             {
                 CharacterDebuff_Burn b => b.tickTimer, CharacterDebuff_Plasma p => p.tickTimer,
+                CharacterDebuff_Wound w => w.tickTimer,
                 CharacterDebuff_Frostbite f => f.frostDamageTimer, CharacterDebuff_Poison p => p.poisonTickTimer,
                 _ => throw new Exception()
             };

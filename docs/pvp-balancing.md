@@ -3,6 +3,16 @@
 Added in `0.52.0`, 2026-10-13. Host-only installation; the existing native damage
 and FX replication continues to serve stock guests. Default: **off**.
 
+## Expanded interval controls (`0.68.0`, 2026-10-20)
+
+[All audited debuff damage families and Dark Cloud](pvp-dot-intervals.md) now have
+independent live controls: Burn, Plasma Burn, Frostbite, Poison, Wound,
+Lightning/Shock, Freeze damage, Chim damage and Dark Cloud. Lightning includes
+Plasma's separate shock component. Their new overrides save in v34; existing
+values and all four original defaults are preserved. Freeze stun, ordinary
+spell/weapon rates and PvE behavior stay native. See the linked audit for exact
+timing boundaries, defaults and excluded non-damaging/scripted effects.
+
 ## Minimum positive damage (`0.67.1`, 2026-10-20)
 
 All admitted friendly-fire hits now have a one-point minimum at the existing
@@ -501,10 +511,12 @@ all tables. No new per-frame scans, custom guest state or network messages exist
 
 ## Dark Cloud
 
-The attacker/player-pair strike limit is **0.5 seconds** since `0.62.1`
+The attacker/player-pair strike limit defaults to **0.5 seconds** since `0.62.1`
 (2026-10-18), increased from the 0.25-second setting in `0.55.2`. It remains
 separate from the shared
-70% HP/s default budget and is part of the balancing toggle.
+70% HP/s default budget and is part of the balancing toggle. Since `0.68.0`, edit
+it independently with `/one friendlyfire dot dark-cloud N|reset` or the interval
+panel; live edits retain the last strike timestamp.
 **When balancing is off, that limit is off too**, even if friendly fire
 is on. All other Dark Cloud behavior remains as recorded in the
 [artifact guide](friendly-fire-artifacts.md#dark-cloud-player-strike-limit-0512-2026-10-13).
@@ -518,9 +530,9 @@ rejoins, selections, match rounds, restarts and resets without per-frame work.
 
 ## Debuff cadence (`0.54.2`)
 
-Historical behavior below is superseded for Burn, Plasma Burn, Frostbite and
-Poison by [independent intervals](pvp-dot-intervals.md) in `0.59.0`. Wound keeps
-this earlier rule.
+Historical behavior below was superseded for Burn, Plasma Burn, Frostbite and
+Poison by [independent intervals](pvp-dot-intervals.md) in `0.59.0`. Since `0.68.0`,
+Wound also uses configured seconds (default 1.33s) instead of the old multiplier.
 
 `CharacterDebuff_Burn.OnUpdate_Server` normally advances `tickTimer` by
 `Time.deltaTime * (1 + BURNSPEED/100)`. Only for current permitted player victims
@@ -567,11 +579,17 @@ builds in actual play before further tuning.
 
 ### Shock and Freeze pulses
 
+Since `0.68.0`, these clocks are configurable independently as `lightning` and
+`freeze`, retaining 0.25s defaults. Chim expiry damage has its own `chim` clock,
+also 0.25s by default. Live edits preserve last-hit times, and all three use the
+same receipt/budget lifetime described below.
+
 Electric and Plasma shock damage runs through native `Attack` on refresh, expiry
 and luck procs. Freeze damage runs on application and failed maximum-stack adds;
 it has no periodic damage clock. Their exact native elemental damage IDs
-(`Debuff_Electric`, `Debuff_Freeze`, from-type None) therefore use independent
-0.25s pulse clocks within the existing attacker/victim `BalanceWindow`. Plasma
+(`Debuff_Electric`, `Debuff_Freeze`, from-type None), plus the native
+`DEBUFF_ELECTRIC` flag for serialized Plasma shock (`Debuff_Plasma`), use independent
+default 0.25s pulse clocks within the existing attacker/victim `BalanceWindow`. Plasma
 and companion shock share their owner's shock clock. Direct lightning/Bolt hits
 are not debuff pulses and do not share that clock.
 
@@ -594,8 +612,9 @@ discards the damage result and then calls `StartStun(BuffDuration)`; only resolv
 damage is limited. Native stun duration, immunity and Frostbite-to-Freeze stacking
 are untouched, even if another Freeze damage pulse is currently suppressed. This
 does not introduce crowd-control immunity or prevent repeated native stun refresh.
-Expiry-only Chim damage, system death effects and status-only debuffs are outside
-this cadence policy and retain their existing behavior.
+Since `0.68.0`, expiry-only Chim damage has its own configurable minimum gap.
+Its charge accumulation/lifetime stays native. System death effects and
+status-only debuffs remain outside the cadence policy.
 
 ## Harvest recovery (`0.57.2`, 2026-10-16)
 

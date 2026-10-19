@@ -16,6 +16,16 @@ A different game build requires renewed contract/asset checks. Start with the
 
 ## State lifetimes and multiplayer
 
+Debuff names and elemental damage types are not interchangeable timing domains.
+Burn/Plasma/Frostbite/Poison/Wound have periodic timers; Electric and Plasma's
+shock share the `DEBUFF_ELECTRIC` marker on refresh/expiry (the Plasma prefab
+overrides both burn/shock IDs to `Debuff_Plasma`); Freeze adds stun after
+its damage result is discarded; Chim accumulates charge then hits on expiry.
+Dark Cloud must gate its full strike before attached burn callbacks. Preserve
+these boundaries when adding controls: use shared policy, native timer progress
+or existing owner/victim pulse windows, never a global elemental filter that
+also slows direct magic. See [the complete audit](pvp-dot-intervals.md).
+
 Damage floors must be reserved in the same units as the balancing ledger, before
 nested native callbacks. Friendly-fire budgets store pre-role fractions of victim
 maximum HP; a final one-point minimum reserves `1 / incomingScale`, carrying any

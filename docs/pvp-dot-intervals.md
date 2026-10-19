@@ -1,80 +1,165 @@
-# Independent PvP DoT intervals
+# Independent PvP damage intervals
 
-Added in `0.59.0`, 2026-10-16. Since 2026-10-19, Burn defaults to **0.9 seconds**;
-Plasma Burn, Frostbite and Poison retain their independent **0.75-second** defaults
-while PvP balancing is enabled.
-Since `0.59.2`, normal/blue Burn also has a separate
-[two-second lifetime cap](pvp-balancing.md#burn-duration-cap-0592-2026-10-16).
-Since `0.60.1`, that cap includes Plasma Burn and its blue/evolved variants.
-It does not change the tick intervals; without a refresh, a Burn-family effect
-can expire before a tick interval of two seconds or longer completes.
-Configure them under **Combat → DoT intervals** (`전투 → 지속 피해 간격`), or:
+Expanded in `0.68.0`, 2026-10-20. Use **Combat → DoT intervals**
+(`전투 → 지속 피해 간격`), with the scrollbar or mouse wheel to reach all nine
+controls. Each setting accepts **0.05..10 seconds**, up to two decimals, and has
+its own command/reset. These controls apply only to permitted player pairs while
+friendly fire **and PvP balancing** are active, across casual combat, Deathmatch,
+Tournament, Play Tag and Zombie Survival. Native PvE timing is unchanged.
+
+| Control / command key | Default | Native coverage |
+| --- | --- | --- |
+| Burn / `burn` | 0.9s | `CharacterDebuff_Burn.tickTimer`, including blue/evolved variants. |
+| Plasma Burn / `plasma-burn` | 0.75s | `CharacterDebuff_Plasma.tickTimer`, including blue/evolved variants. Separate from Plasma shock. |
+| Frostbite / `frostbite` | 0.75s | `CharacterDebuff_Frostbite.frostDamageTimer`; still requires native `FROSTBITEDAMAGE`. |
+| Poison / `poison` | 0.75s | `CharacterDebuff_Poison.poisonTickTimer`; system poison excluded. |
+| Wound / `wound` | 1.33s | `CharacterDebuff_Wound.tickTimer`; approximately the previous 1/0.75 cadence. |
+| Lightning / Shock / `lightning` | 0.25s | Electric and Plasma's distinct shock component, including the serialized `Debuff_Plasma` variant marked `DEBUFF_ELECTRIC`. `shock` is a command alias. |
+| Freeze damage / `freeze` | 0.25s | `Debuff_Freeze` application/stack damage. Native stun is preserved. |
+| Chim damage / `chim` | 0.25s | `Debuff_Chim` delayed expiry hit. No new periodic damage or change to its charge/lifetime. |
+| Dark Cloud / `dark-cloud` | 0.5s | Native `ComboEffect_DarkCloud.FireLightning`, including ice variants and attached burn callbacks. |
 
 ```text
-/one friendlyfire dot burn 0.9
-/one friendlyfire dot plasma-burn 0.75
-/one friendlyfire dot frostbite 0.75
-/one friendlyfire dot poison 0.75
-/one friendlyfire dot burn reset
+/one friendlyfire dot lightning 0.75
+/one friendlyfire dot dark-cloud 1
+/one friendlyfire dot wound 1.5
+/one friendlyfire dot lightning reset
+/one friendlyfire status
 /one save
 ```
 
-Each accepts **0.05..10 seconds**, up to two decimals. Per-effect `reset` restores
-only that effect to its default (Burn 0.9; the other three 0.75); full friendly-fire
-reset restores all four. Controls edit the existing shared balancing policy:
-effective friendly fire and balancing
-must be active for the intervals to apply. An edit takes effect on existing
-debuffs without stopping casual combat, Deathmatch, Tournament or Play Tag, or
-resetting scores, bomb state, participants or damage budgets.
+The original four defaults are unchanged. `reset` restores only the named effect;
+full friendly-fire reset restores all nine. Lower intervals admit more frequent
+hits, but do not invent additional native attacks: pulse/Dark Cloud controls are
+minimum gaps, and remain limited by native triggers and the shared damage budget.
+The [two-second Burn-family lifetime cap](pvp-balancing.md#burn-duration-cap-0592-2026-10-16)
+still includes both Burn and Plasma and their variants. Without a refresh, an
+interval of two seconds or longer may never tick before expiry.
 
-These are actual configured periodic intervals, subject to frame granularity,
-not multipliers of native tick speed. BURNSPEED cannot shorten Burn/Plasma Burn's
-PvP interval. PvE and disabled balancing resume native timing and speed bonuses
-immediately. Each editor has an independent draft/Apply; the compact 2x2 layout
-retains the existing window size and shared participant/KDA/revive/master actions.
-Refresh formats only values that change. EN/KO labels and command/status output
-include all four settings. Nondefault values are saved in preset v28 as
-`friendlyfire dot-<effect> N`. Fresh sessions and omitted preset rows inherit the
-current per-effect defaults, including presets v1..27 that cannot contain DoT
-rows. Explicit saved intervals remain unchanged: a saved Burn value of 0.75 is
-now a nondefault override and stays serialized. Use `burn reset` to adopt 0.9.
+## Shared policy and persistence
 
-## Native boundaries
+`PvpDotSettings` extends the existing immutable settings, snapshot, command,
+status, UI and preset flow. No new per-player configuration cache is introduced.
+Edits take effect during active effects/matches without resetting scores, roles,
+participants, matches, damage budgets or pulse timestamps. Rejoins and fresh runs
+read current authoritative settings. Commands and the UI share host validation;
+the English and Korean catalogs cover all labels, help and status output.
 
-The former implementation was a **0.75 elapsed-time multiplier**, not a fixed
-0.25-second DoT interval. Burn/Plasma constructor defaults then yielded about
-0.667s before speed bonuses, while Frostbite/Poison yielded about 1.333s. The
-configurable intervals replace those four timings. Wound retains its old
-multiplier. The separate 0.25s Shock/Freeze damage gates and Dark Cloud strike
-gate are unchanged.
-The interval adapter leaves Plasma's shock accumulator, refresh/expiry attacks
-and damage budget unchanged. The separate lifetime cap can end Plasma earlier,
-retaining its native expiry shock. This does not enable Frostbite damage on a
-build without the native `FROSTBITEDAMAGE` condition, nor change stacks, movement
-slow or Freeze stun.
-See [the other balancing layers](pvp-balancing.md).
+Nondefault new controls require preset **v34**, stored as
+`friendlyfire dot-<effect> N`. Existing four-control-only saves still use v28;
+higher versions remain selected when other features require them. Versions
+v1..33 inherit the five new defaults and reject new-control rows. Existing
+explicit values remain intact; omitted rows and per-effect resets use the current
+default. The `shock` alias saves canonically as `dot-lightning` and is not a preset
+key. Invalid, duplicated, noncanonical or out-of-range rows reject atomically.
+Runtime clocks, victims, connection identities and roles never persist.
 
-`FriendlyFireDebuffBalanceHooks` wraps only each audited periodic `Timer.Update`
-call, passing the native timer, native delta, effect instance and explicit kind.
-`UpdateDebuffTick` checks current server authority, balancing and shared permitted
-player pairs, then advances the same timer by
-`Time.deltaTime * timer.time / configuredSeconds`. Native tick length, elapsed
-storage, reset-on-tick and active-once behavior remain owned by `Timer.Update`.
-Partial interval progress survives edits: halfway through a tick remains halfway
-through after a new interval is selected. Native reset-on-tick means a stalled
-frame produces at most one tick, without a catch-up burst.
+## Timing boundaries
 
-No prefab/timer configuration/stat writes, per-effect dictionary, actor cache,
-extra update pass or custom RPC is introduced. Native damage and FX replication
-serve stock guests. PvE, self hits, system poison, missing/non-player owners and
-nonparticipating players retain native timing; existing hostility admission still
-blocks disallowed damage. Companion effects resolve through owner participation.
-The shared debuff receipts retire effects from departed/replaced connections
-before they tick. Rejoins and run changes read current policy rather than saved
-per-connection settings. Unloading removes the timer hooks with the shared combat
-feature, restoring native cadence.
+The five periodic controls wrap only their audited native `Timer.Update` call.
+`UpdateDebuffTick` checks server authority and current permitted player pairs,
+then advances the same timer by
+`Time.deltaTime * timer.time / configuredSeconds`. Native tick length/progress
+storage, reset-on-tick and active-once semantics remain owned by the game.
+BURNSPEED cannot shorten the configured Burn/Plasma seconds. Half-complete tick
+progress remains half-complete after a live edit. Stalled frames retain the
+native one-tick behavior, without catch-up bursts. No timer/prefab/stat writes or
+restoration journal is needed; disabling balancing resumes native timing.
 
-## Verification
+Lightning, Freeze and Chim instead have independent **per-attacker/victim** pulse
+clocks in the existing `BalanceWindow`. A successful admission reserves the clock
+before native callbacks. Rejected repeats resolve to zero; they are not queued.
+Zero-charge and budget-exhausted attempts do not reserve a new interval. Native
+FX, stacks, expiry, charge and Freeze stun continue normally. Electric and Plasma
+shock intentionally share the same Lightning clock, identified by the native shock
+flag (or the original `Debuff_Electric` ID);
+companion pulses use their owner's clock. Direct lightning/Bolt magic is not a
+shock debuff and does not share this clock. Changing the interval compares against
+the last admitted pulse; rejected attempts and sibling edits do not move it.
+
+Dark Cloud uses its existing separate owner/victim strike window. It checks its
+current configured interval **before** the whole strike, including damage,
+strike-triggered burn and FX. Native cloud costs and scheduling remain unchanged;
+reducing the interval does not force extra bolts. New cloud objects owned by the
+same player cannot bypass the window. Changing its interval preserves the last
+strike, and changing the Lightning setting does not alter Dark Cloud.
+
+These paths retain shared connection receipts, participant/KDA epochs, floor and
+balance revisions; pulse and Dark Cloud clocks also follow the existing death/revival budget
+lifetime. The audit fixed Dark Cloud carrying long intervals across revival by
+sharing the existing actor life generation, including strikes that emit no damage.
+Queued strikes from an owner who is still dead keep their existing limit. Disconnect/rejoin and reset cannot inherit stale permissions. They do
+not add per-frame scans, custom RPCs or guest-side addon state. Native damage/FX
+replication continues to serve stock clients. Normal enemies, self/system
+poison and unowned effects retain native timing; the separate hostility guard
+continues rejecting damage to protected/nonparticipating players.
+
+## Debuff and periodic-damage audit
+
+The installed assembly has **11 concrete `CharacterDebuff` subclasses**. Five are
+periodic controls, Electric/Freeze/Chim are pulse controls, and these three do not
+have an independently timed combat damage hit:
+
+- `CharacterDebuff_MagicWound`: amplifies incoming magic via attack callbacks.
+- `CharacterDebuff_StatusInstance`: applies status modifiers.
+- `CharacterDebuff_QliphothDeath`: scripted countdown/death, not ordinary DoT.
+
+Blue/evolved Burn and Plasma are flags on their two existing classes, not missing
+separate status classes. Plasma has a separate `addDamageTimer` for shock charge;
+it stays native, while all its shock refresh/expiry/luck hits use Lightning's
+control. Chim's `addDamageTimer` also remains a charge accumulator. The Zombie
+visual's cosmetic Chim carrier never enters this damage path.
+
+Other named damage-capable buff paths were checked: `CharacterDebuff_FanaticFlame`
+actually derives from `CharacterBuff` and emits an unattributed self-cost, so it
+is not PvP opponent damage. The old `CharacterBuff_LightningArmor` is a periodic
+aura class without a demonstrated current playable consumer; the installed skill
+uses `ActiveSkill_LightningArmor` and the ordinary chain-lightning utility. See
+[spell/asset evidence](friendly-fire-spells.md#other-audited-searches).
+Weapon, projectile, chain, retaliation, aura and ground-area attack rates otherwise
+retain their own mechanics and use the shared PvP damage budget/hit-frequency
+option; any debuffs they inflict use the controls above. There is no universal
+Lightning/Fire/Ice elemental gate that would also slow direct attacks.
+
+Current native metadata was read with REA; code paths were cross-checked against
+the matching cached local decompilation and executable installed-game contracts.
+The current `sharedassets0.assets` was also read with UnityPy: Plasma component
+187142 sets both `damageId` and `electricDamageId` to `Debuff_Plasma`, overriding
+the C# constructor defaults `Debuff_Burn`/`Debuff_Electric`. Its `Attack` writes
+`DamageInstance.flag = DEBUFF_ELECTRIC`; its burn tick does not. Using that native
+marker prevents serialized Plasma shock bypassing the Lightning control without
+adding a second throttle to Plasma burn. Electric 187143, Chim 187141 and Wound
+186523 retain their expected native IDs. StatusInstance 204764 is `SHOCK`, a
+status-only modifier rather than a separate Lightning damage tick.
+Assembly SHA-256:
+`C57A0DAEAB8E8D0AF7066A344133EEC4C57D8F303FD9E25DA9410FBFC4CF1510`;
+MVID `ccf97024-28bd-48f1-9666-c768c2bd4b2b`.
+REA member evidence:
+`ev_9468670e58c43eedb119e8f4bbf6f2e5b27085d8a46b2ea8f48de617de4258f8`.
+Game binaries and decompiled sources remain outside the repository. The native
+contract suite enumerates concrete debuffs and will fail on an unclassified type
+after an update. Different damage IDs/assets still require renewed investigation.
+
+## Verification for 0.68.0
+
+Release build passed with zero warnings/errors and deployment disabled. Passed
+5,124 executable combat checks, 3,283 runtime integration checks plus 69 Bat
+lifecycle checks, 1,707 interval policy/preset checks, 3,931 catalog
+checks, panel policy tests and installed-game contracts, including all 11 debuff
+types and 33 compiled Harmony API references against co-installed HarmonyX 2.9.
+Tests cover independent/default/reset intervals, presets v1..34, live increases
+and decreases, rejected attempts, Plasma variants, Freeze stun, Chim expiry,
+Dark Cloud callbacks/FX, depleted/zero damage, ownership/connection transitions
+and zero warmed allocations in periodic/pulse/strike paths.
+
+The expanded UI uses a two-column scroll region with a visible scrollbar inside
+the original 273x82 area; participant and master controls retain their space.
+Independent read-only review found the revival edge case; it was corrected and
+re-reviewed with no remaining material findings. The serialized Plasma regression
+was also re-reviewed. Rendered scrolling and live host/stock-guest timing still
+require in-game verification. No game launch or deployment was performed.
+
+## Earlier verification
 
 The 2026-10-19 default update has regression coverage for independent defaults,
 per-effect/full resets, omitted rows in every supported preset version and

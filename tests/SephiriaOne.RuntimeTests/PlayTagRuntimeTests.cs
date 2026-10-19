@@ -50,6 +50,7 @@ internal static class PlayTagRuntimeTests
         check(players.All(a => players.All(b => a == b || CombatMatchRuntime.AllowsPair(a, b))),
             "Every enrolled pair can fight in active Tag");
         var guardBomb = Bomb(); long guardToken = CombatMatchRuntime.MatchToken, guardEpoch = FriendlyFireKda.Epoch;
+        FriendlyFireRuntimeTests.CheckMatchIntervals(check);
         check(SettingsActions.Execute("/one friendlyfire hit-frequency on").Success && SessionSettings.FriendlyFireForHit.HitFrequency &&
             CombatMatchRuntime.IsRunning && ReferenceEquals(guardBomb, Bomb()) && CombatMatchRuntime.MatchToken == guardToken && FriendlyFireKda.Epoch == guardEpoch,
             "Live hit-frequency toggle preserves Tag carrier, fuse and scores");

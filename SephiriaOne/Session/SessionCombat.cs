@@ -84,6 +84,10 @@ namespace SephiriaOne
             L.F("PvP DoT intervals (s): Burn {0}; Plasma Burn {1}; Frostbite {2}; Poison {3}.",
                 settings.DotIntervals.Number(PvpDotEffect.Burn), settings.DotIntervals.Number(PvpDotEffect.PlasmaBurn),
                 settings.DotIntervals.Number(PvpDotEffect.Frostbite), settings.DotIntervals.Number(PvpDotEffect.Poison)) + " " +
+            L.F("PvP effect intervals (s): Wound {0}; Lightning/Shock {1}; Freeze damage {2}; Chim {3}; Dark Cloud {4}.",
+                settings.DotIntervals.Number(PvpDotEffect.Wound), settings.DotIntervals.Number(PvpDotEffect.Lightning),
+                settings.DotIntervals.Number(PvpDotEffect.Freeze), settings.DotIntervals.Number(PvpDotEffect.Chim),
+                settings.DotIntervals.Number(PvpDotEffect.DarkCloud)) + " " +
             L.F("Block lobby HP/MP recovery: {0}.", L.T(settings.BlockLobbyRegen ? "on" : "off")) +
             (settings.BlockLobbyRegen && !LobbyRegenFeature.Available ? " " + L.T("Lobby recovery hooks unavailable; off/reset remain available. See Player.log.") : "");
     }

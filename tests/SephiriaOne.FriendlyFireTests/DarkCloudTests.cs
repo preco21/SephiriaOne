@@ -154,6 +154,49 @@ internal static class DarkCloudTests
         SessionSettings.FriendlyFireForHit = new(true, 50, balance: true);
         pair.Cloud.FireLightning(pair.Target);
         check(pair.Target.Hp == 50 && pair.Cloud.Strikes == 5, "Off/on with no intervening hit cannot retain a stale cloud window");
+        pair = Fresh(); pair.Cloud.OnAttackUnit += t => t.ApplyDebuff(new(), pair.Source);
+        pair.Cloud.FireLightning(pair.Target);
+        SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, dot: new(PvpDotEffect.DarkCloud, 1.5m)));
+        Time.time += 0.5f; pair.Cloud.FireLightning(pair.Target);
+        check(pair.Target.Hp == 90 && pair.Cloud.Effects == 1 && pair.Target.DebuffApplications == 1,
+            "Lengthened Dark Cloud interval suppresses damage, callbacks and FX using the prior successful strike");
+        SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, dot: new(PvpDotEffect.DarkCloud, 0.2m)));
+        pair.Cloud.FireLightning(pair.Target);
+        check(pair.Target.Hp == 80 && pair.Cloud.Effects == 2 && pair.Target.DebuffApplications == 2,
+            "Shortened Dark Cloud interval applies live without restarting its window");
+        foreach (var sibling in Enum.GetValues<PvpDotEffect>())
+            if (sibling != PvpDotEffect.DarkCloud)
+                SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, dot: new(sibling, 3)));
+        Time.time += 0.19f; pair.Cloud.FireLightning(pair.Target);
+        check(pair.Target.Hp == 80, "Editing other effects neither clears nor changes the Dark Cloud interval");
+        Time.time += 0.02f; pair.Cloud.FireLightning(pair.Target);
+        check(pair.Target.Hp == 70 && pair.Cloud.Effects == 3 && pair.Target.DebuffApplications == 3,
+            "Dark Cloud resumes on its own cadence; rejected strikes do not extend it");
+        foreach (bool reviveOwner in new[] { false, true })
+        {
+            pair = Fresh();
+            SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, dot: new(PvpDotEffect.DarkCloud, 10)));
+            pair.Cloud.OnAttackUnit += t => t.ApplyDebuff(new(), pair.Source);
+            pair.Cloud.FireLightning(pair.Target);
+            var dead = reviveOwner ? pair.Source : pair.Target;
+            dead.IsDead = true; Time.time += 3;
+            if (reviveOwner)
+            {
+                pair.Cloud.FireLightning(pair.Target);
+                check(pair.Cloud.Strikes == 1, "A dead owner does not bypass the long interval before revival");
+            }
+            dead.Revive(100);
+            pair.Cloud.FireLightning(pair.Target);
+            check(pair.Cloud.Strikes == 2 && pair.Cloud.Effects == 2 && pair.Target.DebuffApplications == 2,
+                "Successful revival retires Dark Cloud interval from previous life: owner=" + reviveOwner);
+            pair.Cloud.FireLightning(pair.Target);
+            check(pair.Cloud.Strikes == 2, "Revival grants only one fresh Dark Cloud strike before the new interval");
+        }
+        pair = Fresh();
+        SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, dot: new(PvpDotEffect.DarkCloud, 10)));
+        check(FriendlyFireRuntime.BeforeDarkCloudStrike(pair.Cloud, pair.Target), "Strike can be admitted before native damage is emitted");
+        pair.Target.IsDead = true; pair.Target.Revive(100); Time.time += 1;
+        check(FriendlyFireRuntime.BeforeDarkCloudStrike(pair.Cloud, pair.Target), "A strike without a damage budget still retires on revival");
         CombatMatchRuntime.PairRule = null; FriendlyFireParticipants.Clear(); Time.time = 0;
     }
 

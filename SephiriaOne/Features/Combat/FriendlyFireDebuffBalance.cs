@@ -15,17 +15,23 @@ namespace SephiriaOne
         {
             private bool started;
             private float last;
-            internal bool Ready(float now) => !float.IsNaN(now) && !float.IsInfinity(now) &&
-                (!started || now < last || now - last >= 0.25f);
+            internal bool Ready(float now, float interval) => !float.IsNaN(now) && !float.IsInfinity(now) &&
+                (!started || now < last || now - last >= interval);
             internal void Reserve(float now) { started = true; last = now; }
         }
 
-        // Shock (including Plasma) and Freeze deal damage on refresh/application,
-        // not a periodic tick. Limit only their resolved damage, never the native
-        // caller's stun/stack/expiry work that follows ApplyDamage.
-        private static int DebuffPulseKind(DamageInstance damage) => damage != null &&
-            damage.damageType == EDamageType.ElementalEffectDamage && damage.fromType == EDamageFromType.None
-                ? damage.id == "Debuff_Electric" ? 1 : damage.id == "Debuff_Freeze" ? 2 : 0 : 0;
+        // Shock (including Plasma), Freeze and Chim deal damage on refresh,
+        // application or expiry, not a periodic tick. Limit only their resolved
+        // damage, never the native caller's stun/stack/expiry work.
+        private static int DebuffPulseKind(DamageInstance damage)
+        {
+            if (damage == null || damage.damageType != EDamageType.ElementalEffectDamage || damage.fromType != EDamageFromType.None) return 0;
+            // The shipped Plasma prefab overrides BOTH damage IDs to Debuff_Plasma.
+            // Only its shock attack carries this flag; its burn tick must not
+            // borrow the Lightning clock despite having the same damage ID.
+            if (damage.id == "Debuff_Electric" || damage.flag == "DEBUFF_ELECTRIC") return 1;
+            return damage.id == "Debuff_Freeze" ? 2 : damage.id == "Debuff_Chim" ? 3 : 0;
+        }
 
         // Preserve native timer progress/lifetime and Update's reset/activeOnce
         // semantics. No interval writes or retained override need restoration.
@@ -38,10 +44,8 @@ namespace SephiriaOne
             if (!settings.Balance) return timer.Update(elapsed);
             var source = effect.NetworkAttacker;
             if (!source || ReferenceEquals(source, victim) || !CanAffectTeam(source, victim)) return timer.Update(elapsed);
-            // Wound is not one of the configurable effects; retain its existing
-            // cadence. Burn and Plasma use raw delta so BURNSPEED cannot shorten
+            // Burn and Plasma use raw delta so BURNSPEED cannot shorten
             // the configured seconds. Plasma's shock accumulator stays native.
-            if (kind < 0) return timer.Update(elapsed * 0.75f);
             if (!(timer.time > 0) || float.IsInfinity(timer.time)) return timer.Update(elapsed);
             float delta = Time.deltaTime;
             if (!(delta > 0) || float.IsInfinity(delta)) delta = 0;
@@ -57,7 +61,7 @@ namespace SephiriaOne
             (typeof(CharacterDebuff_Plasma), "tickTimer", true, 2, (int)PvpDotEffect.PlasmaBurn),
             (typeof(CharacterDebuff_Frostbite), "frostDamageTimer", false, 1, (int)PvpDotEffect.Frostbite),
             (typeof(CharacterDebuff_Poison), "poisonTickTimer", false, 1, (int)PvpDotEffect.Poison),
-            (typeof(CharacterDebuff_Wound), "tickTimer", false, 1, -1)
+            (typeof(CharacterDebuff_Wound), "tickTimer", false, 1, (int)PvpDotEffect.Wound)
         };
         internal static IEnumerable<MethodInfo> Updates() => Sites.Select(s =>
             AccessTools.DeclaredMethod(s.Type, "OnUpdate_Server", Type.EmptyTypes));

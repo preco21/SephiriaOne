@@ -61,6 +61,7 @@ internal static class TournamentRuntimeTests
             "Refill edit preserves the active tournament pair and overlay");
         check(players.All(p => LobbyRegenRuntime.Suppress(p) == pair.Contains(p)), "Only the current tournament pair loses automatic lobby recovery");
         long dotEpoch = FriendlyFireKda.Epoch, dotMatch = CombatMatchRuntime.MatchToken;
+        FriendlyFireRuntimeTests.CheckMatchIntervals(check);
         check(SettingsActions.Execute("/one friendlyfire dot frostbite 1.5").Success && CombatMatchRuntime.IsRunning &&
             SessionSettings.FriendlyFireForHit.DotIntervals.Seconds(PvpDotEffect.Frostbite) == 1.5m &&
             CombatMatchRuntime.AllowsPair(pair[0], pair[1]) && FriendlyFireKda.Epoch == dotEpoch && CombatMatchRuntime.MatchToken == dotMatch,

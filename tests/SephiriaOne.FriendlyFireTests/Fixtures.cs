@@ -108,6 +108,7 @@ public class DamageInstance
     public bool UsedAbsoluteEvasion;
     public void AddFlag(string flag) { if (flag == "USE_ABSOLUTEEVASION_STAT") UsedAbsoluteEvasion = true; }
     public string id = "";
+    public string flag = "";
     public EDamageFromType fromType;
     public EDamageType damageType;
 }
