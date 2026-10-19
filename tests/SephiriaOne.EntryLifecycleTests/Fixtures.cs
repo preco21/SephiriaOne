@@ -87,6 +87,7 @@ namespace SephiriaOne
     internal static class ResourceFeature { internal static void Initialize() => LifecycleProbe.Initialize("Resource"); internal static void Shutdown() => LifecycleProbe.Shutdown("Resource"); }
     internal static class RabbitPotionFeature { internal static void Initialize() => LifecycleProbe.Initialize("RabbitPotion"); internal static void Shutdown() => LifecycleProbe.Shutdown("RabbitPotion"); }
     internal static class RabbitLevelUpFeature { internal static void Initialize() => LifecycleProbe.Initialize("RabbitLevelUp"); internal static void Shutdown() => LifecycleProbe.Shutdown("RabbitLevelUp"); internal static void OnDatabasesReady() => LifecycleProbe.Events.Add("ready:RabbitLevelUp"); }
+    internal static class LargePotionGrant { internal static void Load() => LifecycleProbe.Events.Add("ready:LargePotion"); internal static void Clear() => LifecycleProbe.Shutdown("LargePotion"); }
     internal static class RabbitDescriptionFeature { internal static void Initialize() => LifecycleProbe.Initialize("RabbitDescription"); internal static void Shutdown() => LifecycleProbe.Shutdown("RabbitDescription"); }
     internal static class MerchantFeature { internal static void Initialize() => LifecycleProbe.Initialize("Merchant"); internal static void Shutdown() => LifecycleProbe.Shutdown("Merchant"); }
     internal static class ItemRestrictionFeature { internal static void Initialize() => LifecycleProbe.Initialize("ItemRestriction"); internal static void Shutdown() => LifecycleProbe.Shutdown("ItemRestriction"); }

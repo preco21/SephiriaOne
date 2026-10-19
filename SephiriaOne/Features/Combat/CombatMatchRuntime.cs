@@ -196,6 +196,9 @@ namespace SephiriaOne
 
         // Loading temporarily blocks revival, not participation or its deadline.
         // Capture still rejects retired/replaced connections even while loading.
+        // Supplies cover the full captured roster, including countdowns and waiting duelists.
+        internal static bool IsSupplyParticipant(PlayerAvatar player) => IsRunning && CurrentScope && Eligible(player);
+
         private static bool Eligible(PlayerAvatar player) => FriendlyFireParticipants.Includes(player, requireReady: false) &&
             (mode == MatchMode.ZombieSurvival ? ZombieEnrolled(player) : mode == MatchMode.Tournament ? TournamentEnrolled(player) : mode != MatchMode.PlayTag || PlayTagEnrolled(player));
 

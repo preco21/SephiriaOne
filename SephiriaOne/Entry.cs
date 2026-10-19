@@ -65,6 +65,7 @@ namespace SephiriaOne
             RabbitStartingArtifactFeature.Apply();
             CollinFeature.OnDatabasesReady();
             RabbitLevelUpFeature.OnDatabasesReady();
+            LargePotionGrant.Load();
             Debug.Log("[SephiriaOne] All databases ready");
         }
 
@@ -91,6 +92,7 @@ namespace SephiriaOne
                 RabbitDescriptionFeature.Shutdown();
                 RabbitStartingArtifactFeature.Shutdown();
                 RabbitLevelUpFeature.Shutdown();
+                LargePotionGrant.Clear();
                 RabbitPotionFeature.Shutdown();
                 DisconnectDiagnosticsFeature.Shutdown();
                 if (owner.hotkeys) { owner.hotkeys.enabled = false; owner.hotkeys = null; }

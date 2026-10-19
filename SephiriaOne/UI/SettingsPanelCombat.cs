@@ -13,7 +13,7 @@ namespace SephiriaOne
         private TMP_InputField friendlyRefill;
         private bool friendlyRefillDraft;
         private int combatSettingsSection;
-        private Button reviveAll, combatResetKda;
+        private Button reviveAll, combatResetKda, giveLargePotions;
 
         private void BuildCombatEditor()
         {
@@ -24,14 +24,25 @@ namespace SephiriaOne
                 s => s.CanMutate || CombatMatchRuntime.IsRunning && s.HostActive && s.SessionIdentity != null);
             resetAll = widgets.Button(pageRoot, "Reset", 200, 25, 89, 21, () => Execute("/one friendlyfire reset", true));
             var combatTab = widgets.Button(pageRoot, "Combat", 16, 52, 60, 22, () => SelectCombatSettings(0));
-            var balanceTab = widgets.Button(pageRoot, "PvP balancing", 84, 52, 109, 22, () => SelectCombatSettings(1));
-            var dotTab = widgets.Button(pageRoot, "DoT intervals", 201, 52, 88, 22, () => SelectCombatSettings(2));
-            var selectedTab = combatSettingsSection == 2 ? dotTab : combatSettingsSection == 1 ? balanceTab : combatTab;
+            var balanceTab = widgets.Button(pageRoot, "Balancing", 82, 52, 74, 22, () => SelectCombatSettings(1));
+            var dotTab = widgets.Button(pageRoot, "DoT", 162, 52, 48, 22, () => SelectCombatSettings(2));
+            var supplyTab = widgets.Button(pageRoot, "Supplies", 216, 52, 73, 22, () => SelectCombatSettings(3));
+            var selectedTab = combatSettingsSection == 3 ? supplyTab : combatSettingsSection == 2 ? dotTab : combatSettingsSection == 1 ? balanceTab : combatTab;
             var colors = selectedTab.colors; colors.normalColor = PanelWidgets.Accent; colors.selectedColor = colors.normalColor; selectedTab.colors = colors;
-            if (combatSettingsSection == 2) BuildPvpDotEditor();
+            if (combatSettingsSection == 3) BuildPvpSuppliesEditor();
+            else if (combatSettingsSection == 2) BuildPvpDotEditor();
             else if (combatSettingsSection == 1) BuildPvpBalanceEditor();
             else BuildFriendlyDamageEditor();
             BuildParticipantsEditor();
+        }
+
+        private void BuildPvpSuppliesEditor()
+        {
+            giveLargePotions = widgets.Button(pageRoot, "Give Large Potion to all", 16, 80, 273, 25,
+                () => Execute("/one friendlyfire potion", true));
+            AddCheckbox("Auto Large Potion", 16, 112, 273, 21, s => s.FriendlyFire.AutoPotion,
+                s => s.FriendlyFireAvailable && LargePotionGrant.Available, "/one friendlyfire auto-potion");
+            widgets.Text(pageRoot, "PotionHint", "On PvP entry; participants without one only.", 16, 140, 273, 22, 11);
         }
 
         private void SelectCombatSettings(int section) { combatSettingsSection = section; SelectPage(9); }
@@ -60,6 +71,7 @@ namespace SephiriaOne
         private void RefreshCombat(SettingsSnapshot snapshot)
         {
             if (page != 9) return;
+            if (giveLargePotions) giveLargePotions.interactable = LargePotionGrant.CanExecute;
             if (reviveAll) reviveAll.interactable = ReviveAllAction.CanExecute;
             if (combatResetKda) combatResetKda.interactable = snapshot.HostActive && snapshot.SessionIdentity != null && SessionSettings.CanResetFriendlyFireScores;
             RefreshPvpBalance(snapshot);

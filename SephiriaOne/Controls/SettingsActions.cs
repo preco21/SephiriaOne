@@ -164,6 +164,8 @@ namespace SephiriaOne
                     recognized = true;
                     if (combat == FriendlyFireParseResult.Help) return Reply(true, FriendlyFireCommand.Usage + " " + FriendlyFireSelectionCommand.Usage);
                     if (combat == FriendlyFireParseResult.Invalid) return Reply(false, FriendlyFireCommand.Usage + " " + FriendlyFireSelectionCommand.Usage);
+                    if (combat == FriendlyFireParseResult.GivePotions)
+                        return Reply(LargePotionGrant.GiveAll(out string potionMessage), potionMessage);
                     if (combat == FriendlyFireParseResult.ResetScores)
                         return Reply(SessionSettings.TryResetFriendlyFireScores(out string scoreMessage), scoreMessage);
                     if (combat == FriendlyFireParseResult.Status)

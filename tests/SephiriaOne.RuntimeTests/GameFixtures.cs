@@ -124,7 +124,7 @@ public sealed partial class GridInventory : UnityEngine.Object
 }
 
 public struct ItemPosition { public sbyte x, y; }
-public sealed class NewItemOwnInstance { }
+public sealed class NewItemOwnInstance { public int EntityID; public sbyte Quantity; }
 public sealed class UIManager : UnityEngine.Object
 {
     public static UIManager Instance;

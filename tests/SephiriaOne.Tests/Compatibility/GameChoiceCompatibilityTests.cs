@@ -26,6 +26,7 @@ internal static class GameChoiceCompatibilityTests
         GameRabbitCompatibilityTests.Run(game, addon);
         GameRabbitArtifactCompatibilityTests.Run(game, addon);
         GameRabbitLevelUpCompatibilityTests.Run(game, addon);
+        GamePotionSupplyCompatibilityTests.Run(game, addon);
         GameMerchantCompatibilityTests.Run(game, addon);
         GameItemRestrictionCompatibilityTests.Run(game, addon);
         GameFriendlyFireCompatibilityTests.Run(game, addon);

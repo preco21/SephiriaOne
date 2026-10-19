@@ -1,6 +1,11 @@
 # Development knowledge index
 
-Maintained: 2026-10-20 (Asia/Seoul), addon `0.69.1`.
+Maintained: 2026-10-20 (Asia/Seoul), addon `0.70.0`.
+
+[PvP Large Potion supplies](pvp-potions.md): host command/button grants one to
+each player who lacks it. Optional automatic supply follows the shared PvP
+participant roster on entry/match start; default off, saved in v36 presets.
+Consumption and loading do not automatically refill supplies.
 
 PvP guard: the default and reset value are now **5% of maximum MP**, before
 native guard reductions. Explicit saved overrides remain unchanged.
@@ -13,7 +18,7 @@ Commands, UI and v35 presets use the existing shared combat policy.
 
 PvP intervals: [all audited debuff damage families and Dark Cloud](pvp-dot-intervals.md)
 now have independent controls. Lightning covers Electric and Plasma shock; Wound,
-Freeze damage and Chim are exposed too. Scroll within Combat → DoT intervals.
+Freeze damage and Chim are exposed too. Scroll within Combat → DoT.
 EN/KO commands/status, live edits and v34 preset overrides share existing policy.
 
 PvP damage: [positive scaled hits have a one-point minimum](pvp-balancing.md#minimum-positive-damage-0671-2026-10-20)

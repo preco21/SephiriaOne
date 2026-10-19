@@ -7,6 +7,7 @@ namespace SephiriaOne
         // Same event-time scope resolution as potions. Never cache per-player
         // policy or rely on the joining connection's prior incarnation.
         internal static FriendlyFireSettings FriendlyFireForHit => EnsureResourceScope() ? CombatMatchRuntime.Effective(policy.FriendlyFire) : default;
+        internal static FriendlyFireSettings FriendlyFireSupplies => EnsureResourceScope() ? policy.FriendlyFire : default;
         internal static long CombatBalanceRevision { get; private set; }
         internal static long CombatFrequencyRevision { get; private set; }
 
@@ -14,7 +15,10 @@ namespace SephiriaOne
         {
             bool previous = policy.FriendlyFire.Balance;
             bool previousFrequency = policy.FriendlyFire.HitFrequency;
+            var before = policy.FriendlyFire;
             policy.Record(command);
+            if (before.Enabled != policy.FriendlyFire.Enabled || before.AutoPotion != policy.FriendlyFire.AutoPotion)
+                PvpPotionSupplies.SettingsChanged();
             if (previous != policy.FriendlyFire.Balance || command.Reset) CombatBalanceRevision++;
             if (previousFrequency != policy.FriendlyFire.HitFrequency || command.Reset) CombatFrequencyRevision++;
             if (command.Reset) FriendlyFireParticipants.ResetSelection();
@@ -53,6 +57,8 @@ namespace SephiriaOne
             if (command.TouchesMasterToggle) CombatMatchRuntime.Stop(true, true);
             if (!command.IsReset && !FriendlyFireFeature.Available)
             { message = L.T("Friendly-fire compatibility checks failed. Off/reset remain available; see Player.log."); return false; }
+            if (command.AutoPotion == true && !LargePotionGrant.Available)
+            { message = L.T("Large Potion is unavailable; see Player.log."); return false; }
             if (command.BlockLobbyRegen == true && !LobbyRegenFeature.Available)
             { message = L.T("Lobby recovery hooks unavailable; off/reset remain available. See Player.log."); return false; }
             if (interrupted)
@@ -77,6 +83,7 @@ namespace SephiriaOne
         internal static string DescribeFriendlyFire(FriendlyFireSettings settings) =>
             L.F("Friendly fire: {0}; allied damage: {1}%.", L.T(settings.Enabled ? "on" : "off"), settings.Number) + " " +
             (settings.Enabled ? L.T("PvP recovery: HP Steal is disabled on friendly-fire hits.") + " " + DescribeRabbitPvpSharing(RabbitPotionsForDisplay) + " " : "") +
+            L.F("Automatic Large Potion: {0}.", L.T(settings.AutoPotion ? "on" : "off")) + " " +
             L.F("PvP balancing: {0}.", L.T(settings.Balance ? "on" : "off")) + " " +
             L.F("Hit-frequency scaling: {0} (requires PvP balancing).", L.T(settings.HitFrequency ? "on" : "off")) + " " +
             L.F("PvP refill: {0}% max HP/s.", settings.RefillNumber) + " " +

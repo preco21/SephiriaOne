@@ -554,3 +554,12 @@ raising potion gameplay events. Player death audio is locally owned, so exclude
 the victim when adding a stock-client cue for observers. Targeted native messages
 also reach the host's local connection; extra direct host playback duplicates
 them. See [event-audio evidence and send-failure handling](remote-event-audio.md).
+
+## Native Large Potion supplies (2026-10-20)
+
+See [PvP supplies](pvp-potions.md) for audited item ID 1, resources.assets path
+28856, three-store duplicate detection, borrowed native inventory permissions
+and stock-client delivery. Optional one-shot rules must keep readiness inside
+first delivery: a transient readiness gate on a shared coordinator can otherwise
+replay an already-applied or faulted action. Match supplies use the full captured
+roster, including waiting Tournament players, rather than active damage pairs.

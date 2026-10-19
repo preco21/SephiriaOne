@@ -2,6 +2,8 @@ using Mirror;
 using SephiriaOne;
 
 int checks = 0;
+if (FriendlyFireCommand.Parse("/one friendlyfire auto-potion on", out _) != FriendlyFireParseResult.Valid)
+    throw new Exception("Automatic Large Potion command must be recognized.");
 string testDataRoot = Path.Combine(Path.GetTempPath(), "SephiriaOne-runtime-" + Guid.NewGuid().ToString("N"));
 void Check(bool condition, string scenario)
 {
@@ -69,6 +71,7 @@ if (args.Length == 1 && args[0] == "--participants")
     FriendlyFireParticipantTests.Run(Start, id => Add(id), Check);
     LargePartyCombatTests.Run(Start, id => Add(id), Check);
     PvpRecoveryParticipationTests.Run(Start, id => Add(id), Check);
+PotionSupplyTests.Run(Start, id => Add(id), Check);
     Console.WriteLine($"Passed {checks} participant lifecycle checks.");
     return;
 }
@@ -785,6 +788,7 @@ FriendlyFireParticipantTests.Run(Start, id => Add(id), Check);
 ReviveAllTests.Run(Start, id => Add(id), Check);
 LargePartyCombatTests.Run(Start, id => Add(id), Check);
 PvpRecoveryParticipationTests.Run(Start, id => Add(id), Check);
+PotionSupplyTests.Run(Start, id => Add(id), Check);
 DeathmatchTests.Run(Start, id => Add(id), Check);
 TournamentControlsTests.Run(Start, id => Add(id), Check);
 TournamentRuntimeTests.Run(Start, id => Add(id), Check);

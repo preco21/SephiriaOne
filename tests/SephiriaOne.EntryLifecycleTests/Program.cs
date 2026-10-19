@@ -30,10 +30,12 @@ Check(GameObject.Created.Count == 1 && GameObject.Created[0].Components.Count ==
 HorayModAPI.Ready(); HorayModAPI.Ready();
 Check(LifecycleProbe.Count("ready:Collin") == 2 && LifecycleProbe.Count("ready:RabbitLevelUp") == 2 && LifecycleProbe.Count("ready:RabbitStartingArtifact") == 2,
     "Each new database initialization still reaches the original owner once");
+Check(LifecycleProbe.Count("ready:LargePotion") == 2, "Supply catalog refreshes once per database event");
 a.UnloadMod(); b.UnloadMod();
 Check(LifecycleProbe.Count("stop:FriendlyFire") == 0 && !GameObject.Created[0].Destroyed, "Stale wrappers cannot unload the active runtime");
 c.UnloadMod(); c.UnloadMod();
 Check(LifecycleProbe.Count("stop:FriendlyFire") == 1 && HorayModAPI.SubscriberCount == 0, "Latest wrapper unloads original owner exactly once");
+Check(LifecycleProbe.Count("stop:LargePotion") == 1, "Latest wrapper clears supply catalog and cursors exactly once");
 Check(GameObject.Created[0].Destroyed && GameObject.Created[0].Components.All(component => !component.enabled), "Latest wrapper releases original owner's controller fields");
 Check(LifecycleProbe.Events.IndexOf("stop:Deathmatch") < LifecycleProbe.Events.IndexOf("stop:FriendlyFire") &&
     LifecycleProbe.Events.IndexOf("stop:BatCostume") < LifecycleProbe.Events.IndexOf("stop:Choice"), "Match recovery and Bat restoration retain teardown order");

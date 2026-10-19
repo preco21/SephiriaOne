@@ -8,7 +8,7 @@ namespace SephiriaOne
     public sealed class SessionSettingsController : MonoBehaviour
     {
         private void OnEnable() => SessionSettings.Start();
-        private void LateUpdate() { SessionSettings.Synchronize(); CombatMatchRuntime.Tick(); }
+        private void LateUpdate() { SessionSettings.Synchronize(); CombatMatchRuntime.Tick(); PvpPotionSupplies.Tick(); }
         private void OnDisable() => SessionSettings.Stop();
     }
 
@@ -83,6 +83,7 @@ namespace SephiriaOne
         {
             CombatMatchRuntime.Stop(false, false);
             FriendlyFireParticipants.Clear();
+            PvpPotionSupplies.Clear();
             RestoreBat();
             ItemRestrictionFeature.Clear();
             MerchantFeature.Clear();
@@ -110,6 +111,7 @@ namespace SephiriaOne
         private static void OnStartSession(bool isSaved)
         {
             if (enabled && NetworkServer.active) FriendlyFireParticipants.Clear();
+            PvpPotionSupplies.Clear();
             if (enabled && NetworkServer.active && dungeon && ReferenceEquals(dungeon, DungeonManager.Instance))
             { CombatMatchRuntime.Stop(false, false); runGeneration++; FriendlyFireKda.ClearLives(); restoreFountainLimit = true; session.Invalidate(dungeon, SyncDomain.Limits); }
         }
