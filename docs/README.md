@@ -2,6 +2,12 @@
 
 Maintained: 2026-10-19 (Asia/Seoul), addon `0.66.1`.
 
+Zombie visibility research: [a more prominent persistent marker](zombie-role-visual.md#more-prominent-marker-investigation-2026-10-19)
+identifies the native looping green X as a candidate replacement for subtle
+Poison particles. It can reuse the cosmetic carrier lifecycle without chat
+traffic; expiry damage must remain isolated. Nameplate tags have native refresh
+delay. Research only; runtime presentation remains unchanged.
+
 Zombie notices: [faction markers and conversion bubbles](zombie-survival.md#faction-and-conversion-notices-0661-2026-10-19)
 use font-safe `[Z]` / `[H]`, name every initial Zombie, and send opening role
 bubbles only to them. Conversion combines infector, actual revival time and
