@@ -2,7 +2,7 @@ using Mirror;
 
 namespace SephiriaOne
 {
-    // Shared by recovery rules. Effective combat includes the current mode's
+    // Shared by participant-scoped recovery and artifact rules. Includes the mode's
     // countdown, pair/team membership and connection lifetime, not Balance.
     internal static class PvpParticipation
     {

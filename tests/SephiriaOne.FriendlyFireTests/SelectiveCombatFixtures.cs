@@ -19,5 +19,11 @@ namespace SephiriaOne
         internal static void Rejoin(PlayerAvatar player) { receipts.Remove(player); selected.Remove(player); Epoch++; }
         internal static void Clear() { FriendlyFireKda.ClearMatchups(); receipts = new(); selected.Clear(); scope++; Epoch++; }
     }
+    internal static class FriendlyFireFeature { internal static bool Available = true; }
+    internal static partial class CombatMatchRuntime
+    {
+        internal static Func<PlayerAvatar, bool> ParticipantRule;
+        internal static bool AllowsParticipant(PlayerAvatar player) => ParticipantRule?.Invoke(player) ?? true;
+    }
     internal static class FriendlyFireParticipantHooks { internal static void Install(HarmonyLib.Harmony harmony) { } }
 }

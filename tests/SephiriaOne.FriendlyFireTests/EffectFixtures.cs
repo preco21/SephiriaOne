@@ -22,7 +22,7 @@ public class CharacterDebuff : UnityEngine.Object
     [MethodImpl(MethodImplOptions.NoInlining)] public virtual void AddStack() { if (renewDurationOnStacked) RefreshDurationTimer(0, 0); OnTick?.Invoke(); }
     [MethodImpl(MethodImplOptions.NoInlining)] public virtual void RefreshDurationTimer(float defaultDuration, float bonusPercent) { NativeElapsed = 0; }
 }
-public class Charm_Basic
+public partial class Charm_Basic : UnityEngine.Object
 {
     public UnitAvatar NetworkAvatar { get; set; }
     public UnitAvatar Target;

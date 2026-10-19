@@ -1,6 +1,11 @@
 # Development knowledge index
 
-Maintained: 2026-10-19 (Asia/Seoul), addon `0.66.2`.
+Maintained: 2026-10-19 (Asia/Seoul), addon `0.66.3`.
+
+PvP artifact rule: [White Bread](pvp-white-bread.md) loses its added post-hit
+invulnerability time for active combat participants in every mode, independently
+of optional balancing. Native base/fall/dodge/revive protection remains; native
+artifact behavior resumes immediately when PvP ends. No guest addon is needed.
 
 Zombie visibility: [the persistent green X marker](zombie-role-visual.md#green-x-implementation-0662-2026-10-19)
 replaces subtle Poison particles using the native Chim sprite loop. Owned

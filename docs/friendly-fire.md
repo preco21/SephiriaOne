@@ -1,5 +1,9 @@
 # Friendly fire
 
+Version `0.66.3` suppresses [White Bread's extra hit-invulnerability window](pvp-white-bread.md)
+for active PvP participants in all modes. It does not require optional balancing;
+PvP off and spectators retain native artifact behavior.
+
 Version `0.57.1` exempts [admitted companion damage/deaths](#companion-penalty-exemption-0571-2026-10-16)
 from native crime, negotiation/reputation loss and shared faction hostility.
 This follows the existing friendly-fire rules in casual play and all match modes;

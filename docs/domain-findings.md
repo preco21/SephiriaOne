@@ -16,6 +16,14 @@ A different game build requires renewed contract/asset checks. Start with the
 
 ## State lifetimes and multiplayer
 
+Some artifact effects are contributions to native fields rather than separately
+applied buffs. White Bread adds to `UnitAvatar.invincibleTime`. A read-time
+admission adapter can exclude just that contribution using the native unique-item
+registry and shared participation policy, preserving original timers and avoiding
+restoration bookkeeping. Preserve fall grace and separate invulnerability paths;
+read serialized level values instead of assuming C# initializer defaults. See
+[White Bread evidence and tests](pvp-white-bread.md).
+
 A sustained stock-client visual can use a separately owned registered network
 prefab only after auditing the entire client/server boundary. Disabling a host
 NetworkBehaviour does not suppress Mirror's start callbacks or serialize its

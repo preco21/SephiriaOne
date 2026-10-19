@@ -6,6 +6,7 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../SephiriaOne/Features/Combat/PvpWhiteBread.cs" Link="PvpWhiteBread.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/PvpParticipation.cs" Link="PvpParticipation.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionZombie.cs" Link="SessionZombie.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/CombatRoleSettings.cs" Link="CombatRoleSettings.cs" />

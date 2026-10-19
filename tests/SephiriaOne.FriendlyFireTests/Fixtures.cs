@@ -194,6 +194,7 @@ public partial class UnitAvatar : CombatBehaviour
                 attacker.NetworkLeader.OnAttackUnitBeforeOperation_AsLeader?.Invoke(attacker, this, damage);
             // Native parry and guard callbacks run before ordinary damage/veto.
             if (IsParrying) { OnParry?.Invoke(damage); return EApplyDamageResult.Fail_Block; }
+            if (isHitInvincibleEnabled) return EApplyDamageResult.Fail_Absolute;
             if (IsGuarding)
             {
                 float guardCost = 10f;

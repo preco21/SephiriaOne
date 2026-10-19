@@ -107,7 +107,7 @@ public sealed class FixtureStats : Dictionary<string, int>, IDictionary<string, 
     bool IDictionary<string, int>.Remove(string key) => Remove(key);
 }
 
-public sealed class GridInventory : UnityEngine.Object
+public sealed partial class GridInventory : UnityEngine.Object
 {
     public byte Width = 6;
     public short CurrentInventoryStorage = 24;

@@ -5,6 +5,8 @@ using SephiriaOne;
 int checks = 0;
 void Check(bool value, string name) { if (!value) throw new Exception(name); checks++; }
 typeof(FriendlyFireSettings).Assembly.GetType("SephiriaOne.FriendlyFireHooks")?.GetMethod("Install", BindingFlags.Static | BindingFlags.NonPublic)?.Invoke(null,null);
+WhiteBreadTests.Run(Check);
+SessionSettings.FriendlyFireForHit = default;
 var attacker = new PlayerAvatar { Name = "Alice" };
 var victim = new PlayerAvatar { Name = "Bob" };
 DamageInstance Hit(float amount = 10) => new() { origin = attacker, damage = amount };
