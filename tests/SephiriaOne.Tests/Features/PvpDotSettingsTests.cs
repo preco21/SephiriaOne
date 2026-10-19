@@ -8,10 +8,10 @@ internal static class PvpDotSettingsTests
         void Check(bool value, string why) { if (!value) throw new Exception(why); checks++; }
         Check(FriendlyFireCommand.Parse("/one friendlyfire dot burn preserve off", out var schedule) == FriendlyFireParseResult.Valid &&
             !schedule.TouchesMasterToggle, "Per-effect schedule control must not toggle friendly fire");
-        foreach (string key in new[] { "wound", "lightning", "freeze", "chim", "dark-cloud" })
+        foreach (string key in new[] { "wound", "lightning", "plasma-shock", "freeze", "chim", "dark-cloud" })
             Check(FriendlyFireCommand.Parse("/one friendlyfire dot " + key + " 1.5", out _) == FriendlyFireParseResult.Valid,
                 "Missing effect control is exposed: " + key);
-        decimal ExpectedDefault(PvpDotEffect effect) => effect switch { PvpDotEffect.Burn => 0.9m, PvpDotEffect.Wound => 1.33m, PvpDotEffect.Lightning or PvpDotEffect.Freeze or PvpDotEffect.Chim => 0.25m, PvpDotEffect.DarkCloud => 0.5m, _ => 0.75m };
+        decimal ExpectedDefault(PvpDotEffect effect) => effect switch { PvpDotEffect.Burn or PvpDotEffect.PlasmaShock => 0.9m, PvpDotEffect.Wound => 1.33m, PvpDotEffect.Lightning => 0.5m, PvpDotEffect.Freeze or PvpDotEffect.Chim => 0.25m, PvpDotEffect.DarkCloud => 0.7m, _ => 0.75m };
         Check(FriendlyFireCommand.Parse("/one friendlyfire dot burn 0.75", out var command) == FriendlyFireParseResult.Valid &&
             !command.TouchesMasterToggle && !command.IsReset, "Independent DoT interval command is accepted without toggling combat");
         var policy = new SessionPolicy();
@@ -30,7 +30,7 @@ internal static class PvpDotSettingsTests
                 Check(SessionPolicy.TryReadPreset(policy.ToPresetText(), out var saved, out _) && saved.FriendlyFire.Equals(policy.FriendlyFire), "Interval roundtrip: " + key);
                 Check(policy.FriendlyFire.DotIntervals.Seconds(effect) == ExpectedDefault(effect)
                     ? policy.ToPresetText() == "SephiriaOne preset v1\n"
-                    : policy.ToPresetText() == "SephiriaOne preset v" + ((int)effect < 4 ? "28" : "34") + "\nfriendlyfire dot-" + key + " " + value + "\n",
+                    : policy.ToPresetText() == "SephiriaOne preset v" + (effect is PvpDotEffect.Lightning or PvpDotEffect.PlasmaShock ? "37" : (int)effect < 4 ? "28" : "34") + "\nfriendlyfire dot-" + key + " " + value + "\n",
                     "Only each effect's nondefault interval is serialized: " + key);
             }
             foreach (string invalid in new[] { "0", "0.04", "10.01", "0.751", "0.750", "-1", "+1", "1e1", "NaN", "Infinity", "1%", "1,5", "x2", "1 extra" })
@@ -46,8 +46,27 @@ internal static class PvpDotSettingsTests
         Check(FriendlyFireCommand.Parse("/one friendlyfire dot SHOCK 1.5", out command) == FriendlyFireParseResult.Valid,
             "Shock alias resolves case-insensitively to the Lightning setting");
         policy.Record(command);
-        Check(policy.ToPresetText() == "SephiriaOne preset v34\nfriendlyfire dot-lightning 1.5\n", "Alias serializes as canonical Lightning");
+        Check(policy.ToPresetText() == "SephiriaOne preset v37\nfriendlyfire dot-lightning 1.5\n", "Alias serializes as canonical Lightning");
         policy = new SessionPolicy();
+        for (int version = 34; version <= 37; version++)
+        {
+            Check(SessionPolicy.TryReadPreset($"SephiriaOne preset v{version}\nfriendlyfire dot-lightning 1.25\nfriendlyfire dot-dark-cloud 0.5\n", out var migrated, out _) &&
+                migrated.FriendlyFire.DotIntervals.Seconds(PvpDotEffect.Lightning) == 1.25m &&
+                migrated.FriendlyFire.DotIntervals.Seconds(PvpDotEffect.PlasmaShock) == (version < 37 ? 1.25m : 0.9m) &&
+                migrated.FriendlyFire.DotIntervals.Seconds(PvpDotEffect.DarkCloud) == 0.5m,
+                "Legacy explicit shared shock override migrates to both clocks; v37 separates them");
+            Check(SessionPolicy.TryReadPreset(migrated.ToPresetText(), out var reloaded, out _) && reloaded.FriendlyFire.Equals(migrated.FriendlyFire),
+                "Migrated shock settings roundtrip without changing a saved custom Dark Cloud interval");
+            if (version >= 35)
+                Check(SessionPolicy.TryReadPreset($"SephiriaOne preset v{version}\nfriendlyfire dot-preserve-lightning 0\n", out var oldSchedule, out _) &&
+                    !oldSchedule.FriendlyFire.DotIntervals.PreserveSchedule(PvpDotEffect.Lightning) &&
+                    oldSchedule.FriendlyFire.DotIntervals.PreserveSchedule(PvpDotEffect.PlasmaShock) == (version == 37),
+                    "Legacy explicit shared schedule toggle migrates to both effects");
+            if (version < 37)
+                foreach (string row in new[] { "dot-plasma-shock 0.9", "dot-preserve-plasma-shock 0" })
+                    Check(!SessionPolicy.TryReadPreset($"SephiriaOne preset v{version}\nfriendlyfire {row}\n", out var bad, out _) && !bad.HasChanges,
+                        "Legacy schemas reject separate Plasma shock controls atomically");
+        }
         for (int version = 1; version <= 33; version++)
             foreach (var effect in Enum.GetValues<PvpDotEffect>().Where(e => (int)e >= 4))
             {

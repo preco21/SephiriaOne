@@ -20,7 +20,7 @@ namespace SephiriaOne
             internal FriendlyFireDamageBudget Budget;
             internal FriendlyFireHitFrequency Frequency;
             internal long FrequencyRevision;
-            private DebuffPulse burn, plasma, frostbite, poison, wound, shock, freeze, chim;
+            private DebuffPulse burn, plasma, frostbite, poison, wound, shock, freeze, chim, plasmaShock;
             internal ref DebuffPulse Pulse(PvpDotEffect effect)
             {
                 switch (effect)
@@ -31,12 +31,13 @@ namespace SephiriaOne
                     case PvpDotEffect.Poison: return ref poison;
                     case PvpDotEffect.Wound: return ref wound;
                     case PvpDotEffect.Lightning: return ref shock;
+                    case PvpDotEffect.PlasmaShock: return ref plasmaShock;
                     case PvpDotEffect.Freeze: return ref freeze;
                     case PvpDotEffect.Chim: return ref chim;
                     default: throw new System.ArgumentOutOfRangeException(nameof(effect));
                 }
             }
-            internal void ResetPulses() => burn = plasma = frostbite = poison = wound = shock = freeze = chim = default;
+            internal void ResetPulses() => burn = plasma = frostbite = poison = wound = shock = freeze = chim = plasmaShock = default;
         }
 
         private static ConditionalWeakTable<FriendlyFireParticipants.Receipt, BalanceActor> balanceActors =

@@ -30,9 +30,10 @@ internal static class DebuffPulseTests
         }
         foreach (string id in new[] { "Debuff_Electric", "Debuff_Freeze", "Debuff_Chim" })
         {
-            Fresh(); Hit(id); Time.time = 100.249f; Hit(id);
-            check(victim.Hp == 98, id + " cannot damage the same player twice within 0.25 seconds");
-            Time.time = 100.25f; Hit(id); check(victim.Hp == 96, id + " permits the exact quarter-second interval boundary");
+            Fresh(); float interval = id == "Debuff_Electric" ? 0.5f : 0.25f;
+            Hit(id); Time.time = 100 + interval - 0.001f; Hit(id);
+            check(victim.Hp == 98, id + " cannot damage the same player twice within its own default interval");
+            Time.time = 100 + interval; Hit(id); check(victim.Hp == 96, id + " permits the exact default interval boundary");
             Hit(id); check(victim.Hp == 96, id + " does not allow another pulse on the same frame at the boundary");
             victim.ApplyDamage(new() { origin = source, damage = 2, fromType = EDamageFromType.Magic });
             check(victim.Hp == 94, "Direct Bolt/magic damage does not share the debuff pulse cooldown");
@@ -54,7 +55,7 @@ internal static class DebuffPulseTests
         Fresh(); Hit("Debuff_Electric"); Hit("Debuff_Freeze");
         check(victim.Hp == 96, "Shock and Freeze have independent cadence within the shared damage budget");
         victim.ApplyDamage(EffectTests.Tick(new UnitAvatar { NetworkLeader = source }, "Debuff_Electric", 2));
-        check(victim.Hp == 96, "Companions and Plasma-style shock share the owner's same shock cooldown");
+        check(victim.Hp == 96, "Companions share their owner's Lightning cooldown");
         victim.ApplyDamage(EffectTests.Tick(new PlayerAvatar(), "Debuff_Electric", 2));
         check(victim.Hp == 94, "Other attackers retain independent pulses");
         var other = new PlayerAvatar(); other.ApplyDamage(EffectTests.Tick(source, "Debuff_Electric", 2));
@@ -67,7 +68,7 @@ internal static class DebuffPulseTests
         Fresh(); victim.IsMpShield = true; SessionSettings.FriendlyFireForHit = new(true, 25, balance: true);
         Hit("Debuff_Electric", 2); Hit("Debuff_Electric", 8);
         check(victim.Mp == 99, "A minimum pulse damages MP shields and still consumes its cadence interval");
-        Time.time += 0.25f; Hit("Debuff_Electric", 8);
+        Time.time += 0.5f; Hit("Debuff_Electric", 8);
         check(victim.Mp == 97, "The next timed pulse still receives its full scaled damage");
         Fresh(); Hit("Debuff_Electric");
         var freeze = new CharacterDebuff_Freeze(); freeze.InitializeAndSpawn(source, victim); freeze.ApplyDamage();
@@ -118,17 +119,21 @@ internal static class DebuffPulseTests
         }
         plasma = new CharacterDebuff_Plasma(); plasma.InitializeAndSpawn(source, victim);
         plasma.OnRefreshAttack = PlasmaShock; plasma.OnExpire = PlasmaShock;
-        Hit("Debuff_Electric"); Time.time += 0.5f; plasma.RefreshDurationTimer(1, 0);
-        check(victim.Hp == 98, "Serialized Plasma shock ID shares Lightning admission through its native flag");
+        Hit("Debuff_Electric"); PlasmaShock(); PlasmaShock();
+        check(victim.Hp == 96, "Serialized Plasma shock has its own first hit and repeat gate, separate from Lightning");
+        Time.time += 0.5f; plasma.RefreshDurationTimer(1, 0);
+        check(victim.Hp == 96, "Plasma shock refresh waits for its 0.9-second default");
         Hit("Debuff_Plasma"); Hit("Debuff_Plasma");
-        check(victim.Hp == 96, "Plasma burn has its own schedule, independent of the Lightning pulse gate");
-        Time.time += 0.5f; plasma.Destroy();
-        check(victim.Hp == 94, "Serialized Plasma expiry shock resumes at the configured Lightning interval");
+        check(victim.Hp == 94, "Plasma burn has its own schedule, independent of both shock clocks");
+        Time.time = 100.9f; plasma.Destroy();
+        check(victim.Hp == 92, "Serialized Plasma expiry shock resumes at its own default boundary");
+        Hit("Debuff_Electric"); check(victim.Hp == 92, "Plasma shock does not shorten Lightning's configured 1-second interval");
+        Time.time = 101; Hit("Debuff_Electric"); check(victim.Hp == 90, "Lightning retains its independent boundary");
         var spell = EffectTests.Tick(source, "Debuff_Plasma", 2); spell.flag = "DEBUFF_ELECTRIC"; spell.fromType = EDamageFromType.Magic;
         victim.ApplyDamage(spell); victim.ApplyDamage(spell);
-        check(victim.Hp == 90, "Shock-like metadata on direct magic still cannot borrow the debuff pulse clock");
+        check(victim.Hp == 86, "Shock-like metadata on direct magic still cannot borrow the debuff pulse clock");
         SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, balance: false));
-        PlasmaShock(); PlasmaShock(); check(victim.Hp == 86, "Disabling balancing immediately restores serialized Plasma shock damage");
+        PlasmaShock(); PlasmaShock(); check(victim.Hp == 82, "Disabling balancing immediately restores serialized Plasma shock damage");
         Fresh(); Hit("Debuff_Chim");
         var chim = new CharacterDebuff { OnExpire = () => Hit("Debuff_Chim") };
         chim.InitializeAndSpawn(source, victim); Time.time += 0.1f; chim.Destroy();

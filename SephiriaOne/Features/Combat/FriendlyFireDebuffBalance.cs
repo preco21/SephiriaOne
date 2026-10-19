@@ -36,7 +36,8 @@ namespace SephiriaOne
             if (damage == null || damage.damageType != EDamageType.ElementalEffectDamage || damage.fromType != EDamageFromType.None) return -1;
             // The shipped Plasma prefab overrides BOTH damage IDs to Debuff_Plasma.
             // Only its shock attack carries this flag; its burn tick must not
-            // borrow the Lightning clock despite having the same damage ID.
+            // borrow either the Plasma shock or Lightning clock despite sharing its damage ID.
+            if (damage.id == "Debuff_Plasma" && damage.flag == "DEBUFF_ELECTRIC") return (int)PvpDotEffect.PlasmaShock;
             if (damage.id == "Debuff_Electric" || damage.flag == "DEBUFF_ELECTRIC") return (int)PvpDotEffect.Lightning;
             return damage.id switch
             {

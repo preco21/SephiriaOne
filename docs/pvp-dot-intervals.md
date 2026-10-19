@@ -1,8 +1,9 @@
 # Independent PvP damage intervals
 
-Expanded in `0.68.0`; schedule protection added in `0.69.0`, 2026-10-20.
+Expanded in `0.68.0`; schedule protection added in `0.69.0` and separate Plasma
+shock in `0.71.0`, 2026-10-20.
 Use **Combat → DoT intervals**
-(`전투 → 지속 피해 간격`), with the scrollbar or mouse wheel to reach all nine
+(`전투 → 지속 피해 간격`), with the scrollbar or mouse wheel to reach all ten
 controls. Each setting accepts **0.05..10 seconds**, up to two decimals, and has
 its own command/reset. These controls apply only to permitted player pairs while
 friendly fire **and PvP balancing** are active, across casual combat, Deathmatch,
@@ -15,13 +16,15 @@ Tournament, Play Tag and Zombie Survival. Native PvE timing is unchanged.
 | Frostbite / `frostbite` | 0.75s | `CharacterDebuff_Frostbite.frostDamageTimer`; still requires native `FROSTBITEDAMAGE`. |
 | Poison / `poison` | 0.75s | `CharacterDebuff_Poison.poisonTickTimer`; system poison excluded. |
 | Wound / `wound` | 1.33s | `CharacterDebuff_Wound.tickTimer`; approximately the previous 1/0.75 cadence. |
-| Lightning / Shock / `lightning` | 0.25s | Electric and Plasma's distinct shock component, including the serialized `Debuff_Plasma` variant marked `DEBUFF_ELECTRIC`. `shock` is a command alias. |
+| Lightning / Shock / `lightning` | 0.5s | Electric's `Debuff_Electric` damage. `shock` is a command alias. |
+| Plasma shock / `plasma-shock` | 0.9s | Plasma's `Debuff_Plasma` damage marked `DEBUFF_ELECTRIC`, separate from its burn ticks. |
 | Freeze damage / `freeze` | 0.25s | `Debuff_Freeze` application/stack damage. Native stun is preserved. |
 | Chim damage / `chim` | 0.25s | `Debuff_Chim` delayed expiry hit. No new periodic damage or change to its charge/lifetime. |
-| Dark Cloud / `dark-cloud` | 0.5s | Native `ComboEffect_DarkCloud.FireLightning`, including ice variants and attached burn callbacks. |
+| Dark Cloud / `dark-cloud` | 0.7s | Native `ComboEffect_DarkCloud.FireLightning`, including ice variants and attached burn callbacks. |
 
 ```text
 /one friendlyfire dot lightning 0.75
+/one friendlyfire dot plasma-shock 0.9
 /one friendlyfire dot dark-cloud 1
 /one friendlyfire dot wound 1.5
 /one friendlyfire dot lightning reset
@@ -30,7 +33,7 @@ Tournament, Play Tag and Zombie Survival. Native PvE timing is unchanged.
 ```
 
 The original four defaults are unchanged. `reset` restores only the named effect;
-full friendly-fire reset restores all nine. Lower intervals admit more frequent
+full friendly-fire reset restores all ten. Lower intervals admit more frequent
 hits, but do not invent additional native attacks: pulse/Dark Cloud controls are
 minimum gaps, and remain limited by native triggers and the shared damage budget.
 The [two-second Burn-family lifetime cap](pvp-balancing.md#burn-duration-cap-0592-2026-10-16)
@@ -39,7 +42,8 @@ interval of two seconds or longer may never tick before expiry.
 
 ## Preserve schedules (`0.69.0`)
 
-Each of the eight debuff controls has a **Keep schedule / 주기 유지** checkbox,
+Each debuff control has a **Keep schedule / 주기 유지** checkbox (eight originally,
+nine since Plasma shock was separated in 0.71.0),
 enabled by default. Dark Cloud is not a debuff reapplication path and always
 retains its existing separate strike clock.
 
@@ -65,8 +69,8 @@ not queued for later, and native shock charge/expiry handling still runs.
 
 Turning an effect's checkbox off restores its native reapplication damage
 behavior while keeping its configured periodic interval (where it has a periodic
-timer) and shared PvP budget. For application/expiry-only Lightning, Freeze and
-Chim, off disables that effect's minimum-gap gate. Reenabling uses the latest
+timer) and shared PvP budget. For application/expiry-only Lightning, Plasma shock,
+Freeze and Chim, off disables that effect's minimum-gap gate. Reenabling uses the latest
 admitted hit, including hits while the checkbox was off, so it does not award an
 extra immediate hit. Interval/toggle edits do not reset scores, modes or budgets.
 
@@ -97,6 +101,37 @@ components. Frostbite 186521 and Freeze 196504 use their hardcoded native IDs.
 These are local asset observations, not assets shipped with the addon.
 
 ## Shared policy and persistence
+
+### Separate Plasma shock and updated defaults (0.71.0)
+
+Current defaults are Lightning 0.5s, Plasma shock 0.9s and Dark Cloud 0.7s. Wound
+1.33s, Freeze damage 0.25s and Chim damage 0.25s are retained as requested.
+Other defaults are unchanged. Explicit saved custom values remain intact.
+
+`CharacterDebuff_Plasma.Attack` marks its shock hit with `DEBUFF_ELECTRIC` while
+its periodic burn lacks that flag. The audited prefab (sharedassets0, 187142)
+uses `Debuff_Plasma` for both IDs. Checking the ID/flag pair before generic electric
+classification separates Plasma shock safely. The existing balance window owns
+its clock; reconnect, life, floor and role resets clear it with all other clocks.
+The settings, status, scrolling UI and EN/KO catalogs use the same registry.
+
+Preset **v37** distinguishes the two shock interval/schedule controls. Older
+v34..36 explicit Lightning intervals and v35..36 explicit schedule toggles are
+copied to both effects on load, preserving their original shared meaning.
+Omitted values inherit the new defaults. Modern Lightning-only overrides also
+save as v37 so a reload cannot accidentally expand them to Plasma shock.
+
+Dark Cloud still has its own per-attacker/opponent strike gate. It now reuses
+the shared precision-safe `DebuffPulse` comparison: decimal intervals such as
+0.7s must not spuriously reject the boundary because float subtraction is just
+below 0.7. Admission remains reserved before native callbacks, including failed
+callbacks; repeated same-frame strikes stay suppressed.
+
+Verification: 2,013 interval-policy and 842 schedule-policy checks, separate
+native electric/Plasma admission cases, 6,188 combat checks and installed-game
+contracts. Live gameplay remains unverified. These changes were not deployed.
+
+### Earlier schemas
 
 `PvpDotSettings` extends the existing immutable settings, snapshot, command,
 status, UI and preset flow. No new per-player configuration cache is introduced.

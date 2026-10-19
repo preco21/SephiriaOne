@@ -1,4 +1,51 @@
-# Large Potion supplies (0.70.0)
+# PvP potion supplies and consumption
+
+## Infinite HP potions (0.71.0)
+
+**Combat → Supplies → Infinite PvP HP potions** / `/one friendlyfire infinite-hp
+on|off|reset` is a separate toggle, default **off**. `/one save` stores it in preset
+v37. It does not require PvP balancing or enable the automatic Large Potion grant.
+
+Active combat participants of any costume retain ordinary HP potions (ID 0) and
+Large Potions (ID 1) after a successful drink. Native self-healing and potion
+callbacks still run. The Sample potion (ID 37), MP potions and other potion types
+remain fully native. This preserves the prior Sample exclusion.
+
+The shared live `PvpParticipation` rule covers casual friendly fire, Deathmatch,
+Tournament, Play Tag and Zombie Survival. Selection, role and connection changes
+take effect without a separate potion roster/cache. Countdowns and spectators,
+including Tournament players outside the current pair, keep normal consumption.
+The supply grant deliberately uses the broader entry roster described below.
+
+Turning the option off or ending active PvP immediately restores native consumption
+for subsequent drinks. Rabbit's original costume option remains independent and
+can still retain HP potions outside PvP. Enabling the PvP option does not grant
+other costumes Rabbit's MP fee, sharing, Survival suppression or Tension bypass.
+The Rabbit-specific settings still apply to Rabbit normally.
+
+### Native boundary and lifecycle
+
+`PvpPotionPolicy` borrows the existing guarded `RabbitPotionNativeHooks` drink
+scope rather than installing a second patch. The scope captures an existing
+participant receipt and costume, checks connection/run/floor/inventory/item
+identity, and changes only the native `itemDecreased` result after one successful
+HP heal. No quantity refund, retained inventory mutation, new RPC or guest addon
+is needed. The existing death-transition protection remains in use.
+
+`WieldingPotion.Drink` calls the native effect and returns its consumption decision
+before `ItemController.OnDrinkPotionServerside`. Changes inside the effect/heal
+callback are rechecked before that decision. A completed drink is atomic: a later
+controller notification cannot retroactively consume it; an option/mode change
+there affects the next drink. Regression coverage asserts both sides of this
+boundary, plus stale connections, costume changes, dead/late completions,
+non-Rabbit isolation, all shared modes and live toggle changes.
+
+Verified with a non-deploying Release build (zero warnings/errors), 301 potion
+hook cases plus 12 localized alerts, 96 new potion setting/preset checks, shared
+runtime/combat suites and installed native contracts. Live host/stock-guest
+drinking and belt-count rendering remain unverified; nothing was deployed.
+
+## Large Potion supplies (0.70.0)
 
 Host controls under **Combat → Supplies**:
 

@@ -3,7 +3,7 @@ using System.Globalization;
 
 namespace SephiriaOne
 {
-    internal enum PvpDotEffect { Burn, PlasmaBurn, Frostbite, Poison, Wound, Lightning, Freeze, Chim, DarkCloud }
+    internal enum PvpDotEffect { Burn, PlasmaBurn, Frostbite, Poison, Wound, Lightning, Freeze, Chim, DarkCloud, PlasmaShock }
 
     internal readonly struct PvpDotScheduleChange
     {
@@ -32,30 +32,32 @@ namespace SephiriaOne
     // preset comparisons exact without dictionaries or per-tick allocations.
     internal readonly struct PvpDotSettings
     {
-        internal const int Count = 9;
+        internal const int Count = 10;
         internal static decimal DefaultSeconds(PvpDotEffect effect) => DefaultHundredths(effect) / 100m;
         private static int DefaultHundredths(PvpDotEffect effect) => effect switch
         {
             PvpDotEffect.Burn => 90,
             PvpDotEffect.PlasmaBurn => 75, PvpDotEffect.Frostbite => 75, PvpDotEffect.Poison => 75,
-            PvpDotEffect.Wound => 133, PvpDotEffect.Lightning => 25, PvpDotEffect.Freeze => 25,
-            PvpDotEffect.Chim => 25, PvpDotEffect.DarkCloud => 50,
+            PvpDotEffect.Wound => 133, PvpDotEffect.Lightning => 50, PvpDotEffect.Freeze => 25,
+            PvpDotEffect.Chim => 25, PvpDotEffect.DarkCloud => 70, PvpDotEffect.PlasmaShock => 90,
             _ => throw new ArgumentOutOfRangeException(nameof(effect))
         };
-        private readonly int burn, plasma, frostbite, poison, wound, lightning, freeze, chim, darkCloud;
+        private readonly int burn, plasma, frostbite, poison, wound, lightning, freeze, chim, darkCloud, plasmaShock;
         // Zero-initialized settings enable protection, including old presets.
         private readonly int nativeSchedules;
         public bool HasScheduleChanges => nativeSchedules != 0;
-        internal static bool SupportsSchedule(PvpDotEffect effect) => (uint)effect < (uint)PvpDotEffect.DarkCloud;
+        internal static bool SupportsSchedule(PvpDotEffect effect) => (uint)effect < Count && effect != PvpDotEffect.DarkCloud;
         public bool PreserveSchedule(PvpDotEffect effect) => SupportsSchedule(effect) && (nativeSchedules & (1 << (int)effect)) == 0;
-        public bool HasExtendedChanges => wound != 0 || lightning != 0 || freeze != 0 || chim != 0 || darkCloud != 0;
+        public bool HasSeparatedShockChanges => lightning != 0 || plasmaShock != 0 ||
+            !PreserveSchedule(PvpDotEffect.Lightning) || !PreserveSchedule(PvpDotEffect.PlasmaShock);
+        public bool HasExtendedChanges => HasSeparatedShockChanges || wound != 0 || lightning != 0 || freeze != 0 || chim != 0 || darkCloud != 0;
         public bool HasChanges => burn != 0 || plasma != 0 || frostbite != 0 || poison != 0 || HasExtendedChanges || HasScheduleChanges;
         public int Hundredths(PvpDotEffect effect) => DefaultHundredths(effect) + (effect switch
         {
             PvpDotEffect.Burn => burn, PvpDotEffect.PlasmaBurn => plasma,
             PvpDotEffect.Frostbite => frostbite, PvpDotEffect.Poison => poison,
             PvpDotEffect.Wound => wound, PvpDotEffect.Lightning => lightning, PvpDotEffect.Freeze => freeze,
-            PvpDotEffect.Chim => chim, PvpDotEffect.DarkCloud => darkCloud,
+            PvpDotEffect.Chim => chim, PvpDotEffect.DarkCloud => darkCloud, PvpDotEffect.PlasmaShock => plasmaShock,
             _ => throw new ArgumentOutOfRangeException(nameof(effect))
         });
         public decimal Seconds(PvpDotEffect effect) => Hundredths(effect) / 100m;
@@ -84,6 +86,7 @@ namespace SephiriaOne
             freeze = change.Effect == PvpDotEffect.Freeze ? offset : source.freeze;
             chim = change.Effect == PvpDotEffect.Chim ? offset : source.chim;
             darkCloud = change.Effect == PvpDotEffect.DarkCloud ? offset : source.darkCloud;
+            plasmaShock = change.Effect == PvpDotEffect.PlasmaShock ? offset : source.plasmaShock;
             nativeSchedules = source.nativeSchedules;
         }
         internal static string Key(PvpDotEffect effect) => effect switch
@@ -91,7 +94,7 @@ namespace SephiriaOne
             PvpDotEffect.Burn => "burn", PvpDotEffect.PlasmaBurn => "plasma-burn",
             PvpDotEffect.Frostbite => "frostbite", PvpDotEffect.Poison => "poison",
             PvpDotEffect.Wound => "wound", PvpDotEffect.Lightning => "lightning", PvpDotEffect.Freeze => "freeze",
-            PvpDotEffect.Chim => "chim", PvpDotEffect.DarkCloud => "dark-cloud",
+            PvpDotEffect.Chim => "chim", PvpDotEffect.DarkCloud => "dark-cloud", PvpDotEffect.PlasmaShock => "plasma-shock",
             _ => throw new ArgumentOutOfRangeException(nameof(effect))
         };
         internal static string Label(PvpDotEffect effect) => effect switch
@@ -100,7 +103,7 @@ namespace SephiriaOne
             PvpDotEffect.Frostbite => "Frostbite (s)", PvpDotEffect.Poison => "Poison (s)",
             PvpDotEffect.Wound => "Wound (s)", PvpDotEffect.Lightning => "Lightning / Shock (s)",
             PvpDotEffect.Freeze => "Freeze damage (s)", PvpDotEffect.Chim => "Chim damage (s)",
-            PvpDotEffect.DarkCloud => "Dark Cloud (s)",
+            PvpDotEffect.DarkCloud => "Dark Cloud (s)", PvpDotEffect.PlasmaShock => "Plasma shock (s)",
             _ => throw new ArgumentOutOfRangeException(nameof(effect))
         };
         internal static bool TryEffect(string key, out PvpDotEffect effect)

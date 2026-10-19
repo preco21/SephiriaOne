@@ -25,10 +25,11 @@ internal static class PvpDotScheduleTests
             Check(!policy.FriendlyFire.DotIntervals.PreserveSchedule(effect) && policy.HasChanges && !policy.FriendlyFire.Enabled,
                 "One protection can be disabled without enabling combat");
             string text = policy.ToPresetText();
-            Check(text == "SephiriaOne preset v35\nfriendlyfire dot-preserve-" + key + " 0\n", "New schema saves only nondefault protection");
+            Check(text == "SephiriaOne preset v" + (effect is PvpDotEffect.Lightning or PvpDotEffect.PlasmaShock ? "37" : "35") + "\nfriendlyfire dot-preserve-" + key + " 0\n", "New schema saves only nondefault protection");
             Check(SessionPolicy.TryReadPreset(text, out var saved, out _) && saved.FriendlyFire.Equals(policy.FriendlyFire), "Protection roundtrip");
-            for (int j = 0; j < (int)PvpDotEffect.DarkCloud; j++)
-                if (j != i) Check(policy.FriendlyFire.DotIntervals.PreserveSchedule((PvpDotEffect)j), "Sibling protection remains enabled");
+            for (int j = 0; j < PvpDotSettings.Count; j++)
+                if (j != i && PvpDotSettings.SupportsSchedule((PvpDotEffect)j))
+                    Check(policy.FriendlyFire.DotIntervals.PreserveSchedule((PvpDotEffect)j), "Sibling protection remains enabled");
             policy.Record(new FriendlyFireCommand(false, dot: new(effect, 1.25m)));
             Check(!policy.FriendlyFire.DotIntervals.PreserveSchedule(effect), "Interval edits preserve the independent toggle");
             policy.Record(new FriendlyFireCommand(true)); policy.Record(new FriendlyFireCommand(false, balance: true)); policy.Record(new FriendlyFireCommand(false, percent: 0.05m));

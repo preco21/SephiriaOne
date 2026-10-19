@@ -121,7 +121,7 @@ internal static class GameFriendlyFireDebuffTests
         var pulses = PatchProcessor.GetOriginalInstructions(AccessTools.Method(combat, "LimitBalancedDamage"));
         Require(pulses.Count(i => Call(i, "PvpDotSettings", "Interval")) == 1 &&
             pulses.Any(i => Call(i, "PvpDotSettings", "PreserveSchedule")) && pulses.Any(i => Call(i, "BalanceWindow", "Pulse")),
-            "All eight debuff clocks read the selected effect's live interval and protection toggle");
+            "All nine debuff clocks read the selected effect's live interval and protection toggle");
         var classify = PatchProcessor.GetOriginalInstructions(AccessTools.Method(combat, "DebuffPulseKind"));
         foreach (string id in new[] { "Debuff_Burn", "Debuff_Plasma", "Debuff_Frostbite", "Debuff_Poison", "Debuff_Wound",
             "Debuff_Electric", "DEBUFF_ELECTRIC", "Debuff_Freeze", "Debuff_Chim" })
@@ -140,9 +140,9 @@ internal static class GameFriendlyFireDebuffTests
         Require(editor.Any(i => Call(i, "PvpDotSettings", "SupportsSchedule")) && editor.Any(i => Call(i, "SettingsPanel", "AddCheckbox")),
             "Debuff rows expose shared checkbox bindings while Dark Cloud keeps only its strike interval");
         Require(editor.Any(i => Call(i, "ScrollRect", "set_content")) && editor.Any(i => Call(i, "ScrollRect", "set_viewport")) &&
-            editor.Any(i => Call(i, "ScrollRect", "set_verticalScrollbar")), "all nine controls are reachable in a bounded scroll area with a visible scroll affordance");
+            editor.Any(i => Call(i, "ScrollRect", "set_verticalScrollbar")), "all ten controls are reachable in a bounded scroll area with a visible scroll affordance");
         GamePvpBurnDurationTests.Run(game, addon);
         GameHitFrequencyTests.Run(addon);
-        Console.WriteLine("Verified all 11 native debuff types: five configurable periodic timers, three pulse controls, independent Dark Cloud, native variants/stun/expiry and scrollable shared UI (not live gameplay).");
+        Console.WriteLine("Verified all 11 native debuff types: five configurable periodic timers, four pulse controls, independent Dark Cloud, native variants/stun/expiry and scrollable shared UI (not live gameplay).");
     }
 }

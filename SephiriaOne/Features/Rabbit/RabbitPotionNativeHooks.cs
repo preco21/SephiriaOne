@@ -33,6 +33,8 @@ namespace SephiriaOne
             public DungeonManager Dungeon;
             public string Floor;
             public RabbitPotionSettings Settings;
+            public string Costume;
+            public FriendlyFireParticipants.Receipt PvpReceipt;
             public float HealStrength;
             public int HealCalls;
             public DrinkContext NativeDrink;
@@ -176,13 +178,14 @@ namespace SephiriaOne
             if (!Available || !NetworkServer.active || !potion || !potion.isServer || potion.netId == 0 ||
                 potion.effect == null || potion.effect.GetType() != typeof(PotionEffect_Regeneration) ||
                 !Allowed(potion.entityID)) return null;
-            RabbitPotionSettings settings = SessionSettings.RabbitPotionsForUse;
-            if (!(settings.Infinite && CanRetainPotion(potion.entityID)) && !settings.Share && !settings.ConsumeMp &&
-                !(settings.SuppressSurvival && CanSuppressSurvival(potion.entityID))) return null;
             ItemController controller = potion.NetworkController;
             PlayerAvatar player = controller?.Avatar as PlayerAvatar;
             PlayerSpawner spawner = player?.spawner;
             if (!SourceReady(potion, controller, player, spawner, allowDead)) return null;
+            // One native completion scope; costume mechanics never spill into PvP-only drinks.
+            RabbitPotionSettings settings = player.currentCostume == "HolyRabbit" ? SessionSettings.RabbitPotionsForUse : default;
+            var pvpReceipt = PvpPotionPolicy.Applies(player) ? FriendlyFireParticipants.Capture(player) : null;
+            if (pvpReceipt == null && !settings.Infinite && !settings.Share && !settings.ConsumeMp && !settings.SuppressSurvival) return null;
             GridInventory inventory = player.Inventory;
             int selected = controller.SelectedQuickSlotIdx;
             if (selected < 0 || selected >= controller.quickSlotTable.Count) return null;
@@ -193,7 +196,7 @@ namespace SephiriaOne
             return new DrinkContext { Potion = potion, Effect = potion.effect, Controller = controller,
                 Player = player, Spawner = spawner, Connection = spawner.connectionToClient, Inventory = inventory, Item = item,
                 InstanceId = instanceId, EntityId = potion.entityID, Slot = slot, Run = SaveManager.CurrentRun,
-                Dungeon = DungeonManager.Instance, Floor = player.currentFloorGuid, Settings = settings };
+                Dungeon = DungeonManager.Instance, Floor = player.currentFloorGuid, Settings = settings, Costume = player.currentCostume, PvpReceipt = pvpReceipt };
         }
 
         private static bool SourceReady(WieldingPotion potion, ItemController controller, PlayerAvatar player, PlayerSpawner spawner,
@@ -208,7 +211,7 @@ namespace SephiriaOne
         {
             if (!controller || !controller.isServer || controller.netId == 0 ||
                 !ReferenceEquals(controller.Avatar, player) ||
-                !player || (player.IsDead && !allowDead) || player.currentCostume != "HolyRabbit" || !spawner ||
+                !player || (player.IsDead && !allowDead) || !spawner ||
                 !ReferenceEquals(spawner.PlayerAvatar, player) || !HostStateAdapter.IsReady(spawner) ||
                 !PlayerSpawner.MultiplayerList.Contains(spawner)) return false;
             var connection = spawner.connectionToClient;
@@ -232,7 +235,7 @@ namespace SephiriaOne
                     context.Potion.entityID != context.EntityId)) ||
                 !ReferenceEquals(context.Spawner.connectionToClient, context.Connection) ||
                 !ReferenceEquals(DungeonManager.Instance, context.Dungeon) ||
-                context.Player.currentFloorGuid != context.Floor ||
+                context.Player.currentFloorGuid != context.Floor || context.Player.currentCostume != context.Costume ||
                 !SourceReady(context.Potion, context.Controller, context.Player, context.Spawner, deathCleanup) ||
                 context.Controller.SelectedQuickSlotIdx < 0 ||
                 context.Controller.SelectedQuickSlotIdx >= context.Controller.quickSlotTable.Count ||
@@ -249,7 +252,10 @@ namespace SephiriaOne
             {
                 if (!Current(__state, retainDeath: true) || __state.HealCalls != 1) return;
                 RabbitPotionSettings now = SessionSettings.RabbitPotionsForUse;
-                if (CanRetainPotion(__state.EntityId) && __state.Settings.Infinite && now.Infinite && itemDecreased) itemDecreased = false;
+                bool rabbitInfinite = __state.Settings.Infinite && now.Infinite;
+                bool pvpInfinite = __state.PvpReceipt != null && FriendlyFireParticipants.IsCurrent(__state.PvpReceipt) &&
+                    PvpPotionPolicy.Applies(__state.Player);
+                if (CanRetainPotion(__state.EntityId) && (rabbitInfinite || pvpInfinite) && itemDecreased) itemDecreased = false;
                 if (__state.Settings.Share && now.Share && IsFinitePositive(__state.HealStrength) && Current(__state)) Share(__state);
             }
             catch { /* An optional callback must never cancel the native drink. */ }

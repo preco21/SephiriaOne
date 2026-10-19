@@ -57,6 +57,8 @@ namespace SephiriaOne
             if (command.TouchesMasterToggle) CombatMatchRuntime.Stop(true, true);
             if (!command.IsReset && !FriendlyFireFeature.Available)
             { message = L.T("Friendly-fire compatibility checks failed. Off/reset remain available; see Player.log."); return false; }
+            if (command.InfiniteHpPotions == true && !RabbitPotionFeature.Available)
+            { message = L.T("HP potion hooks unavailable; off/reset remain available. See Player.log."); return false; }
             if (command.AutoPotion == true && !LargePotionGrant.Available)
             { message = L.T("Large Potion is unavailable; see Player.log."); return false; }
             if (command.BlockLobbyRegen == true && !LobbyRegenFeature.Available)
@@ -83,6 +85,7 @@ namespace SephiriaOne
         internal static string DescribeFriendlyFire(FriendlyFireSettings settings) =>
             L.F("Friendly fire: {0}; allied damage: {1}%.", L.T(settings.Enabled ? "on" : "off"), settings.Number) + " " +
             (settings.Enabled ? L.T("PvP recovery: HP Steal is disabled on friendly-fire hits.") + " " + DescribeRabbitPvpSharing(RabbitPotionsForDisplay) + " " : "") +
+            L.F("Infinite PvP HP potions: {0}.", L.T(settings.InfiniteHpPotions ? "on" : "off")) + " " +
             L.F("Automatic Large Potion: {0}.", L.T(settings.AutoPotion ? "on" : "off")) + " " +
             L.F("PvP balancing: {0}.", L.T(settings.Balance ? "on" : "off")) + " " +
             L.F("Hit-frequency scaling: {0} (requires PvP balancing).", L.T(settings.HitFrequency ? "on" : "off")) + " " +
@@ -95,6 +98,7 @@ namespace SephiriaOne
                 settings.DotIntervals.Number(PvpDotEffect.Wound), settings.DotIntervals.Number(PvpDotEffect.Lightning),
                 settings.DotIntervals.Number(PvpDotEffect.Freeze), settings.DotIntervals.Number(PvpDotEffect.Chim),
                 settings.DotIntervals.Number(PvpDotEffect.DarkCloud)) + " " +
+            L.F("Plasma shock interval: {0}s.", settings.DotIntervals.Number(PvpDotEffect.PlasmaShock)) + " " +
             DescribeDebuffSchedules(settings.DotIntervals) + " " +
             L.F("Block lobby HP/MP recovery: {0}.", L.T(settings.BlockLobbyRegen ? "on" : "off")) +
             (settings.BlockLobbyRegen && !LobbyRegenFeature.Available ? " " + L.T("Lobby recovery hooks unavailable; off/reset remain available. See Player.log.") : "");
@@ -102,9 +106,10 @@ namespace SephiriaOne
         private static string DescribeDebuffSchedules(PvpDotSettings settings)
         {
             var values = new System.Text.StringBuilder();
-            for (int i = 0; i < (int)PvpDotEffect.DarkCloud; i++)
+            for (int i = 0; i < PvpDotSettings.Count; i++)
             {
                 var effect = (PvpDotEffect)i;
+                if (!PvpDotSettings.SupportsSchedule(effect)) continue;
                 if (i != 0) values.Append("; ");
                 values.Append(PvpDotSettings.Key(effect)).Append(' ').Append(L.T(settings.PreserveSchedule(effect) ? "on" : "off"));
             }

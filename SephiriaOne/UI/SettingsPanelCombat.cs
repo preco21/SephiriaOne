@@ -42,7 +42,8 @@ namespace SephiriaOne
                 () => Execute("/one friendlyfire potion", true));
             AddCheckbox("Auto Large Potion", 16, 112, 273, 21, s => s.FriendlyFire.AutoPotion,
                 s => s.FriendlyFireAvailable && LargePotionGrant.Available, "/one friendlyfire auto-potion");
-            widgets.Text(pageRoot, "PotionHint", "On PvP entry; participants without one only.", 16, 140, 273, 22, 11);
+            AddCheckbox("Infinite PvP HP potions", 16, 140, 273, 21, s => s.FriendlyFire.InfiniteHpPotions,
+                s => s.FriendlyFireAvailable && RabbitPotionFeature.Available, "/one friendlyfire infinite-hp");
         }
 
         private void SelectCombatSettings(int section) { combatSettingsSection = section; SelectPage(9); }

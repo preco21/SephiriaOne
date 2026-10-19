@@ -32,6 +32,7 @@ namespace SephiriaOne
         private const string PvpDotPresetHeader = "SephiriaOne preset v28";
         private const string HitFrequencyPresetHeader = "SephiriaOne preset v29";
         private const string ExtendedPvpDotPresetHeader = "SephiriaOne preset v34";
+        private const string PvpPotionPresetHeader = "SephiriaOne preset v37";
         private const string PotionPresetHeader = "SephiriaOne preset v36";
         private const string PvpDotSchedulePresetHeader = "SephiriaOne preset v35";
         private const string RabbitPvpSharePresetHeader = "SephiriaOne preset v33";
@@ -87,6 +88,7 @@ namespace SephiriaOne
             if (BatHpSteal) lines.Add("bat hp-steal 1");
             if (JarSpawns.HasChanges) lines.Add("jars " + (JarSpawns.Mode == JarSpawnMode.Chance ? "chance " : "multiplier ") + JarSpawns.Number);
             if (ItemUnlock) lines.Add("items unlock 1");
+            if (FriendlyFire.InfiniteHpPotions) lines.Add("friendlyfire infinite-hp 1");
             if (FriendlyFire.AutoPotion) lines.Add("friendlyfire auto-potion 1");
             if (FriendlyFire.Enabled) lines.Add("friendlyfire enabled 1");
             if (FriendlyFire.BlockLobbyRegen) lines.Add("friendlyfire block-lobby-regen 1");
@@ -141,7 +143,7 @@ namespace SephiriaOne
             { expandedStats |= stat.RequiresExpandedPreset; companionStats |= stat.IsCompanion; }
             bool multiplier = HasFountainMultiplier;
             foreach (Setting setting in stats.Values) multiplier |= setting.Multiplier;
-            return (FriendlyFire.AutoPotion ? PotionPresetHeader : FriendlyFire.DotIntervals.HasScheduleChanges ? PvpDotSchedulePresetHeader : FriendlyFire.DotIntervals.HasExtendedChanges ? ExtendedPvpDotPresetHeader : !RabbitPotions.BlockPvpShare ? RabbitPvpSharePresetHeader : ZombieStartingCount != ZombieSurvivalSettings.DefaultStartingCount ? ZombieCountPresetHeader : HasZombieChanges ? ZombiePresetHeader : PlayTagRounds != PlayTagSettings.DefaultRounds ? PlayTagRoundsPresetHeader : FriendlyFire.HitFrequency ? HitFrequencyPresetHeader : FriendlyFire.DotIntervals.HasChanges ? PvpDotPresetHeader : FriendlyFire.GuardMpPercent != FriendlyFireSettings.DefaultGuardMpPercent ? PvpGuardPresetHeader : PlayTagChaser.HasChanges ? PlayTagChaserPresetHeader : PlayTagDuration != PlayTagSettings.DefaultDuration ? PlayTagPresetHeader : FriendlyFire.RefillPercent != FriendlyFireSettings.DefaultRefillPercent ? PvpRefillPresetHeader : FriendlyFire.BlockLobbyRegen ? LobbyRegenPresetHeader : FriendlyFire.Balance ? PvpBalancePresetHeader : companionStats ? CompanionStatsPresetHeader : TournamentDuration != TournamentSettings.DefaultDuration ? TournamentPresetHeader : FriendlyFire.HasFractionalPercent ? FractionalCombatPresetHeader : DeathmatchDuration != DeathmatchSettings.DefaultDuration ? DeathmatchPresetHeader : expandedStats ? ExpandedStatsPresetHeader : EventSpawns.HasChanges ? EventPresetHeader : CollinStartingArtifact ? CollinPresetHeader : BatHpSteal ? BatPresetHeader : JarSpawns.HasChanges ? JarPresetHeader : FriendlyFire.HasChanges ? CombatPresetHeader : ItemUnlock ? ItemUnlockPresetHeader : RabbitPotions.LevelUpPotion ? RabbitLevelUpPresetHeader : UsesMerchantGuaranteePreset ? MerchantGuaranteePresetHeader : UsesMerchantTypesPreset ? MerchantTypesPresetHeader : Merchants.HasChanges ? MerchantPresetHeader : RabbitPotions.MpCostPerDrink != RabbitPotionSettings.DefaultMpCostPerDrink ? RabbitCostPresetHeader :
+            return (FriendlyFire.InfiniteHpPotions || FriendlyFire.DotIntervals.HasSeparatedShockChanges ? PvpPotionPresetHeader : FriendlyFire.AutoPotion ? PotionPresetHeader : FriendlyFire.DotIntervals.HasScheduleChanges ? PvpDotSchedulePresetHeader : FriendlyFire.DotIntervals.HasExtendedChanges ? ExtendedPvpDotPresetHeader : !RabbitPotions.BlockPvpShare ? RabbitPvpSharePresetHeader : ZombieStartingCount != ZombieSurvivalSettings.DefaultStartingCount ? ZombieCountPresetHeader : HasZombieChanges ? ZombiePresetHeader : PlayTagRounds != PlayTagSettings.DefaultRounds ? PlayTagRoundsPresetHeader : FriendlyFire.HitFrequency ? HitFrequencyPresetHeader : FriendlyFire.DotIntervals.HasChanges ? PvpDotPresetHeader : FriendlyFire.GuardMpPercent != FriendlyFireSettings.DefaultGuardMpPercent ? PvpGuardPresetHeader : PlayTagChaser.HasChanges ? PlayTagChaserPresetHeader : PlayTagDuration != PlayTagSettings.DefaultDuration ? PlayTagPresetHeader : FriendlyFire.RefillPercent != FriendlyFireSettings.DefaultRefillPercent ? PvpRefillPresetHeader : FriendlyFire.BlockLobbyRegen ? LobbyRegenPresetHeader : FriendlyFire.Balance ? PvpBalancePresetHeader : companionStats ? CompanionStatsPresetHeader : TournamentDuration != TournamentSettings.DefaultDuration ? TournamentPresetHeader : FriendlyFire.HasFractionalPercent ? FractionalCombatPresetHeader : DeathmatchDuration != DeathmatchSettings.DefaultDuration ? DeathmatchPresetHeader : expandedStats ? ExpandedStatsPresetHeader : EventSpawns.HasChanges ? EventPresetHeader : CollinStartingArtifact ? CollinPresetHeader : BatHpSteal ? BatPresetHeader : JarSpawns.HasChanges ? JarPresetHeader : FriendlyFire.HasChanges ? CombatPresetHeader : ItemUnlock ? ItemUnlockPresetHeader : RabbitPotions.LevelUpPotion ? RabbitLevelUpPresetHeader : UsesMerchantGuaranteePreset ? MerchantGuaranteePresetHeader : UsesMerchantTypesPreset ? MerchantTypesPresetHeader : Merchants.HasChanges ? MerchantPresetHeader : RabbitPotions.MpCostPerDrink != RabbitPotionSettings.DefaultMpCostPerDrink ? RabbitCostPresetHeader :
                 RabbitPotions.ConsumeMp || RabbitPotions.SuppressSurvival ? RabbitBalancePresetHeader :
                 RabbitPotions.HasChanges ? RabbitPresetHeader : Resources.HasChanges ? ResourcePresetHeader : multiplier ? MultiplierPresetHeader : PresetHeader) + "\n" +
                 (HasChanges ? string.Join("\n", DescribeSettings()) + "\n" : "");
@@ -153,8 +155,9 @@ namespace SephiriaOne
             error = L.T("Invalid saved preset; no saved settings were applied.");
             if (text == null || text.Length > MaximumPresetLength) return false;
             string[] lines = text.Replace("\r\n", "\n").Split('\n');
-            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader && lines[0] != RabbitBalancePresetHeader && lines[0] != RabbitCostPresetHeader && lines[0] != MerchantPresetHeader && lines[0] != MerchantTypesPresetHeader && lines[0] != MerchantGuaranteePresetHeader && lines[0] != RabbitLevelUpPresetHeader && lines[0] != ItemUnlockPresetHeader && lines[0] != CombatPresetHeader && lines[0] != JarPresetHeader && lines[0] != BatPresetHeader && lines[0] != CollinPresetHeader && lines[0] != EventPresetHeader && lines[0] != ExpandedStatsPresetHeader && lines[0] != DeathmatchPresetHeader && lines[0] != FractionalCombatPresetHeader && lines[0] != TournamentPresetHeader && lines[0] != CompanionStatsPresetHeader && lines[0] != PvpBalancePresetHeader && lines[0] != LobbyRegenPresetHeader && lines[0] != PvpRefillPresetHeader && lines[0] != PlayTagPresetHeader && lines[0] != PlayTagChaserPresetHeader && lines[0] != PvpGuardPresetHeader && lines[0] != PvpDotPresetHeader && lines[0] != HitFrequencyPresetHeader && lines[0] != PlayTagRoundsPresetHeader && lines[0] != ZombiePresetHeader && lines[0] != ZombieCountPresetHeader && lines[0] != RabbitPvpSharePresetHeader && lines[0] != ExtendedPvpDotPresetHeader && lines[0] != PvpDotSchedulePresetHeader && lines[0] != PotionPresetHeader)) return false;
-            bool allowPotion = lines[0] == PotionPresetHeader;
+            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader && lines[0] != RabbitBalancePresetHeader && lines[0] != RabbitCostPresetHeader && lines[0] != MerchantPresetHeader && lines[0] != MerchantTypesPresetHeader && lines[0] != MerchantGuaranteePresetHeader && lines[0] != RabbitLevelUpPresetHeader && lines[0] != ItemUnlockPresetHeader && lines[0] != CombatPresetHeader && lines[0] != JarPresetHeader && lines[0] != BatPresetHeader && lines[0] != CollinPresetHeader && lines[0] != EventPresetHeader && lines[0] != ExpandedStatsPresetHeader && lines[0] != DeathmatchPresetHeader && lines[0] != FractionalCombatPresetHeader && lines[0] != TournamentPresetHeader && lines[0] != CompanionStatsPresetHeader && lines[0] != PvpBalancePresetHeader && lines[0] != LobbyRegenPresetHeader && lines[0] != PvpRefillPresetHeader && lines[0] != PlayTagPresetHeader && lines[0] != PlayTagChaserPresetHeader && lines[0] != PvpGuardPresetHeader && lines[0] != PvpDotPresetHeader && lines[0] != HitFrequencyPresetHeader && lines[0] != PlayTagRoundsPresetHeader && lines[0] != ZombiePresetHeader && lines[0] != ZombieCountPresetHeader && lines[0] != RabbitPvpSharePresetHeader && lines[0] != ExtendedPvpDotPresetHeader && lines[0] != PvpDotSchedulePresetHeader && lines[0] != PotionPresetHeader && lines[0] != PvpPotionPresetHeader)) return false;
+            bool allowPvpPotions = lines[0] == PvpPotionPresetHeader;
+            bool allowPotion = lines[0] == PotionPresetHeader || allowPvpPotions;
             bool allowDotSchedule = lines[0] == PvpDotSchedulePresetHeader || allowPotion;
             bool allowExtendedPvpDot = lines[0] == ExtendedPvpDotPresetHeader || allowDotSchedule;
             bool allowRabbitPvpShare = lines[0] == RabbitPvpSharePresetHeader || allowExtendedPvpDot;
@@ -276,6 +279,8 @@ namespace SephiriaOne
                     if (!allowCombat || parts.Length != 3 || !seen.Add("friendlyfire " + parts[1])) return false;
                     if (parts[1] == "enabled" && (parts[2] == "0" || parts[2] == "1"))
                         pending.Record(new FriendlyFireCommand(value == 1));
+                    else if (allowPvpPotions && parts[1] == "infinite-hp" && (parts[2] == "0" || parts[2] == "1"))
+                        pending.Record(new FriendlyFireCommand(false, infiniteHpPotions: value == 1));
                     else if (allowPotion && parts[1] == "auto-potion" && (parts[2] == "0" || parts[2] == "1"))
                         pending.Record(new FriendlyFireCommand(false, autoPotion: value == 1));
                     else if (allowLobbyRegen && parts[1] == "block-lobby-regen" && (parts[2] == "0" || parts[2] == "1"))
@@ -292,13 +297,21 @@ namespace SephiriaOne
                         pending.Record(new FriendlyFireCommand(false, guardMpPercent: value));
                     else if (allowDotSchedule && parts[1].StartsWith("dot-preserve-", StringComparison.Ordinal) &&
                         PvpDotSettings.TryEffect(parts[1].Substring(13), out var scheduleEffect) &&
-                        PvpDotSettings.SupportsSchedule(scheduleEffect) && parts[1] == "dot-preserve-" + PvpDotSettings.Key(scheduleEffect) &&
+                        PvpDotSettings.SupportsSchedule(scheduleEffect) && (scheduleEffect != PvpDotEffect.PlasmaShock || allowPvpPotions) && parts[1] == "dot-preserve-" + PvpDotSettings.Key(scheduleEffect) &&
                         (parts[2] == "0" || parts[2] == "1"))
+                    {
                         pending.Record(new FriendlyFireCommand(false, dotSchedule: new PvpDotScheduleChange(scheduleEffect, value == 1)));
+                        if (!allowPvpPotions && scheduleEffect == PvpDotEffect.Lightning)
+                            pending.Record(new FriendlyFireCommand(false, dotSchedule: new PvpDotScheduleChange(PvpDotEffect.PlasmaShock, value == 1)));
+                    }
                     else if (allowPvpDot && parts[1].StartsWith("dot-", StringComparison.Ordinal) &&
                         PvpDotSettings.TryEffect(parts[1].Substring(4), out var effect) && parts[1] == "dot-" + PvpDotSettings.Key(effect) &&
-                        ((int)effect < 4 || allowExtendedPvpDot) && PvpDotSettings.ValidSeconds(value) && parts[2] == value.ToString("0.##", CultureInfo.InvariantCulture))
+                        ((int)effect < 4 || allowExtendedPvpDot) && (effect != PvpDotEffect.PlasmaShock || allowPvpPotions) && PvpDotSettings.ValidSeconds(value) && parts[2] == value.ToString("0.##", CultureInfo.InvariantCulture))
+                    {
                         pending.Record(new FriendlyFireCommand(false, dot: new PvpDotChange(effect, value)));
+                        if (!allowPvpPotions && effect == PvpDotEffect.Lightning)
+                            pending.Record(new FriendlyFireCommand(false, dot: new PvpDotChange(PvpDotEffect.PlasmaShock, value)));
+                    }
                     else if (parts[1] == "damage" && FriendlyFireSettings.ValidPercent(value) &&
                         (allowFractionalCombat || value == decimal.Truncate(value)) && parts[2] == value.ToString("0.##", CultureInfo.InvariantCulture))
                         pending.Record(new FriendlyFireCommand(false, value));

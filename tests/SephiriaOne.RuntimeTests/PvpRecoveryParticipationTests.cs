@@ -11,6 +11,7 @@ internal static class PvpRecoveryParticipationTests
             foreach (var player in all) player.Inventory.Bread = new Charm_HitInvincible
             { NetworkAvatar = player, IsEffectEnabled = true };
             SessionSettings.EnsureResourceScope();
+            check(SettingsActions.Execute("/one friendlyfire infinite-hp on").Success, "Infinite HP potions can be configured before combat");
             return all;
         }
         bool BreadProtects(PlayerAvatar player) => PvpWhiteBread.IsHitInvincible(true, player, 0.4f, EInvincibleType.Normal, null);
@@ -19,6 +20,7 @@ internal static class PvpRecoveryParticipationTests
         check(players.All(p => !PvpParticipation.IsActive(p)), "PvE keeps shared recovery enabled");
         check(SettingsActions.Execute("/one friendlyfire on").Success && players.All(PvpParticipation.IsActive),
             "Casual PvP uses all current players when selection is empty");
+        check(players.All(PvpPotionPolicy.Applies), "All costumes qualify for casual PvP infinite HP potions");
         check(SettingsActions.Execute("/one friendlyfire balance off").Success && players.All(PvpParticipation.IsActive),
             "Recovery restrictions do not depend on optional balancing");
         check(players.All(p => !BreadProtects(p)), "Casual PvP suppresses White Bread even with balancing off");
@@ -30,9 +32,12 @@ internal static class PvpRecoveryParticipationTests
             "Selected PvP participants neither send nor receive sharing; spectators can share with spectators");
         check(!BreadProtects(players[0]) && !BreadProtects(players[1]) && BreadProtects(players[2]) && BreadProtects(players[3]),
             "White Bread follows the same live participant selection");
+        check(PvpPotionPolicy.Applies(players[0]) && PvpPotionPolicy.Applies(players[1]) && !PvpPotionPolicy.Applies(players[2]),
+            "Infinite HP potions follow selection and exclude spectators");
         check(SettingsActions.Execute("/one friendlyfire off").Success && players.All(p => !PvpParticipation.IsActive(p)),
             "Turning casual PvP off restores recovery immediately");
         check(players.All(BreadProtects), "Casual PvP off restores Bread without an equipment refresh");
+        check(players.All(p => !PvpPotionPolicy.Applies(p)), "Casual PvP off immediately restores potion consumption");
 
         foreach (string mode in new[] { "deathmatch", "tournament", "tag", "zombie" })
         {
@@ -40,10 +45,16 @@ internal static class PvpRecoveryParticipationTests
             check(SettingsActions.Execute("/one " + mode + " start").Success && players.All(p => !PvpParticipation.IsActive(p)),
                 mode + ": pre-fight countdown retains native recovery");
             check(players.All(BreadProtects), mode + ": countdown keeps native Bread behavior");
+            check(players.All(p => !PvpPotionPolicy.Applies(p)), mode + ": countdown keeps native potion consumption");
             UnityEngine.Time.unscaledTime = 3; CombatMatchRuntime.Tick();
             var fighters = players.Where(PvpParticipation.IsActive).ToArray();
             check(players.All(p => BreadProtects(p) == !fighters.Contains(p)), mode + ": only current fighters lose Bread extension");
             check(fighters.Length == (mode == "tournament" ? 2 : 4), mode + ": effective participation scopes shared recovery");
+            check(players.All(p => PvpPotionPolicy.Applies(p) == fighters.Contains(p)), mode + ": HP potion retention follows active mode roster");
+            check(SettingsActions.Execute("/one friendlyfire infinite-hp off").Success && CombatMatchRuntime.IsRunning &&
+                players.All(p => !PvpPotionPolicy.Applies(p)), mode + ": live option off restores consumption without interrupting match");
+            check(SettingsActions.Execute("/one friendlyfire infinite-hp on").Success && CombatMatchRuntime.IsRunning && fighters.All(PvpPotionPolicy.Applies),
+                mode + ": live on restores retention without changing Rabbit policy");
             check(fighters.All(a => players.All(b => !PvpParticipation.CanShareRecovery(a, b) &&
                 !PvpParticipation.CanShareRecovery(b, a))), mode + ": active combat blocks both directions of shared healing");
             if (mode == "zombie")
@@ -65,6 +76,7 @@ internal static class PvpRecoveryParticipationTests
             check(SettingsActions.Execute("/one " + mode + " stop").Success && players.All(p => !PvpParticipation.IsActive(p)),
                 mode + ": ending the mode restores recovery without a sync frame");
             check(players.All(BreadProtects), mode + ": mode cleanup restores Bread immediately");
+            check(players.All(p => !PvpPotionPolicy.Applies(p)), mode + ": mode cleanup restores HP potion consumption immediately");
         }
 
         players = New(); SettingsActions.Execute("/one tournament start");

@@ -34,6 +34,14 @@ void Install() { RabbitPotionFeature.Initialize(); Assert(RabbitPotionFeature.Av
 
 TensionTests.Run(Check, Assert, Setup, Install);
 PvpSharedHealTests.Run(Check, Assert, () => Setup(), Install);
+PvpInfinitePotionTests.Run(Check, Assert, Setup, Install);
+Check("PvP infinite HP potion works without Rabbit costume or options", () =>
+{
+    var source = Setup(); source.player.currentCostume = "Mole";
+    SessionSettings.FriendlyFireForHit = new() { Enabled = true, InfiniteHpPotions = true };
+    Install(); source.controller.RunDrink();
+    Assert(source.item.Quantity == 3 && source.player.Heals.Count == 1, "PvP player must heal without losing HP potion");
+});
 
 Check("off preserves native consumption, healing and both events", () =>
 {

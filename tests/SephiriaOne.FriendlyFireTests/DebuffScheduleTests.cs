@@ -30,7 +30,13 @@ internal static class DebuffScheduleTests
             (PvpDotEffect.Burn, "Debuff_Burn"), (PvpDotEffect.PlasmaBurn, "Debuff_Plasma"),
             (PvpDotEffect.Frostbite, "Debuff_Frostbite"), (PvpDotEffect.Poison, "Debuff_Poison"),
             (PvpDotEffect.Wound, "Debuff_Wound"), (PvpDotEffect.Lightning, "Debuff_Electric"),
-            (PvpDotEffect.Freeze, "Debuff_Freeze"), (PvpDotEffect.Chim, "Debuff_Chim") };
+            (PvpDotEffect.PlasmaShock, "Debuff_Plasma"), (PvpDotEffect.Freeze, "Debuff_Freeze"), (PvpDotEffect.Chim, "Debuff_Chim") };
+        DamageInstance Damage(UnitAvatar source, string id, PvpDotEffect effect, float amount)
+        {
+            var result = EffectTests.Tick(source, id, amount);
+            if (effect == PvpDotEffect.PlasmaShock) result.flag = "DEBUFF_ELECTRIC";
+            return result;
+        }
         foreach (var (effect, id) in cases)
         {
             var clock = new FriendlyFireRuntime.DebuffPulse();
@@ -44,7 +50,7 @@ internal static class DebuffScheduleTests
             FriendlyFireParticipants.Clear(); Time.time = 100;
             SessionSettings.FriendlyFireForHit = new(true, 100, balance: true);
             var source = new PlayerAvatar(); var target = new PlayerAvatar();
-            void Hit(float amount = 2) => target.ApplyDamage(EffectTests.Tick(source, id, amount));
+            void Hit(float amount = 2) => target.ApplyDamage(Damage(source, id, effect, amount));
             void Toggle(bool enabled) => SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false,
                 dotSchedule: new(effect, enabled)));
             void Interval(decimal seconds) => SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false,
@@ -71,7 +77,7 @@ internal static class DebuffScheduleTests
             foreach (var (other, otherId) in cases)
                 if (other != effect)
                 {
-                    target.ApplyDamage(EffectTests.Tick(source, otherId, 1));
+                    target.ApplyDamage(Damage(source, otherId, other, 1));
                     check(target.Hp < 90, "Sibling effect has independent first hit: " + other);
                 }
             target.Hp = 100; Hit();
@@ -79,10 +85,10 @@ internal static class DebuffScheduleTests
             target.OnHit = (_, _) => Hit(); Time.time += 1; Hit(); target.OnHit = null;
             check(target.Hp == 98, effect + " reserve precedes nested native callbacks");
             var companion = new UnitAvatar { NetworkLeader = source };
-            target.ApplyDamage(EffectTests.Tick(companion, id, 2));
+            target.ApplyDamage(Damage(companion, id, effect, 2));
             check(target.Hp == 98, effect + " companions share their owner's clock");
             var nextSource = new PlayerAvatar();
-            target.ApplyDamage(EffectTests.Tick(nextSource, id, 2));
+            target.ApplyDamage(Damage(nextSource, id, effect, 2));
             check(target.Hp == 96, effect + " unrelated attackers retain independent clocks");
             FriendlyFireParticipants.Depart(source); FriendlyFireParticipants.Rejoin(source); Hit();
             check(target.Hp == 94, effect + " rejoin never inherits a previous connection clock");
@@ -94,9 +100,9 @@ internal static class DebuffScheduleTests
             Hit(); Hit(); check(target.Hp == 90, effect + " disabling balancing restores native repeated damage");
             SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, balance: true));
             var enemy = new UnitAvatar { faction = "enemy" };
-            enemy.ApplyDamage(EffectTests.Tick(source, id, 2)); enemy.ApplyDamage(EffectTests.Tick(source, id, 2));
+            enemy.ApplyDamage(Damage(source, id, effect, 2)); enemy.ApplyDamage(Damage(source, id, effect, 2));
             check(enemy.Hp == 96, effect + " outgoing PvE keeps all native hits");
-            target.ApplyDamage(EffectTests.Tick(enemy, id, 2)); target.ApplyDamage(EffectTests.Tick(enemy, id, 2));
+            target.ApplyDamage(Damage(enemy, id, effect, 2)); target.ApplyDamage(Damage(enemy, id, effect, 2));
             check(target.Hp == 86, effect + " incoming PvE keeps all native hits");
         }
         // Real periodic timer adapter plus native-like duration refresh: neither restarts cadence.

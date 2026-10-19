@@ -1,6 +1,12 @@
 # Development knowledge index
 
-Maintained: 2026-10-20 (Asia/Seoul), addon `0.70.0`.
+Maintained: 2026-10-20 (Asia/Seoul), addon `0.71.0`.
+
+[Infinite PvP HP potions](pvp-potions.md#infinite-hp-potions-0710): separate default-off
+toggle in Combat → Supplies or `/one friendlyfire infinite-hp on|off|reset`.
+Active combat participants retain regular/Large HP potions with native self-healing;
+Sample/MP potions and Rabbit-only mechanics remain separate. Shared participation,
+receipt and guarded drink infrastructure cover every current mode; v37 saves it.
 
 [PvP Large Potion supplies](pvp-potions.md): host command/button grants one to
 each player who lacks it. Optional automatic supply follows the shared PvP
@@ -11,15 +17,16 @@ PvP guard: the default and reset value are now **5% of maximum MP**, before
 native guard reductions. Explicit saved overrides remain unchanged.
 
 PvP reapplication: [Keep schedule / 주기 유지](pvp-dot-intervals.md#preserve-schedules-0690)
-is independently configurable for eight debuff families, enabled by default.
+is independently configurable for nine debuff families, enabled by default.
 The first native immediate hit remains; repeated applications cannot bypass the
 configured interval. Native stacks, duration refreshes and Freeze stun remain.
-Commands, UI and v35 presets use the existing shared combat policy.
+Commands, UI and presets use the existing shared combat policy.
 
 PvP intervals: [all audited debuff damage families and Dark Cloud](pvp-dot-intervals.md)
-now have independent controls. Lightning covers Electric and Plasma shock; Wound,
-Freeze damage and Chim are exposed too. Scroll within Combat → DoT.
-EN/KO commands/status, live edits and v34 preset overrides share existing policy.
+have independent controls. Defaults: Lightning/Shock 0.5s, separate Plasma shock
+0.9s, Dark Cloud 0.7s, Wound 1.33s, Freeze damage 0.25s and Chim damage 0.25s.
+Scroll within Combat → DoT. v37 separates shock overrides while migrating explicit
+older shared values to both effects; custom saved intervals are preserved.
 
 PvP damage: [positive scaled hits have a one-point minimum](pvp-balancing.md#minimum-positive-damage-0671-2026-10-20)
 before native shields. Zero/invalid/vetoed hits and exhausted budgets remain zero;

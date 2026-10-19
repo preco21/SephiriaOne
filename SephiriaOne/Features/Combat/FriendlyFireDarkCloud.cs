@@ -16,7 +16,7 @@ namespace SephiriaOne
             internal bool Started;
             internal long CombatEpoch, ParticipantEpoch, BalanceRevision, SourceLife, TargetLife;
             internal string SourceFloor, TargetFloor;
-            internal float LastStrike;
+            internal DebuffPulse Strike;
         }
         private static ConditionalWeakTable<FriendlyFireParticipants.Receipt, DarkCloudTargets> darkCloudWindows =
             new ConditionalWeakTable<FriendlyFireParticipants.Receipt, DarkCloudTargets>();
@@ -57,14 +57,14 @@ namespace SephiriaOne
             if (window.Started && window.CombatEpoch == combatEpoch && window.ParticipantEpoch == participantEpoch && window.BalanceRevision == balanceRevision &&
                 window.SourceLife == sourceLife && window.TargetLife == targetLife &&
                 window.SourceFloor == source.currentFloorGuid && window.TargetFloor == victim.currentFloorGuid &&
-                now >= window.LastStrike && now - window.LastStrike < settings.DotIntervals.Interval(PvpDotEffect.DarkCloud)) return false;
+                !window.Strike.Ready(now, settings.DotIntervals.Interval(PvpDotEffect.DarkCloud))) return false;
 
             // Reserve before native callbacks: recursive strikes and another
             // cloud object owned by this player share the same pair's window.
             window.Started = true; window.CombatEpoch = combatEpoch; window.ParticipantEpoch = participantEpoch;
             window.BalanceRevision = balanceRevision;
             window.SourceLife = sourceLife; window.TargetLife = targetLife;
-            window.SourceFloor = source.currentFloorGuid; window.TargetFloor = victim.currentFloorGuid; window.LastStrike = now;
+            window.SourceFloor = source.currentFloorGuid; window.TargetFloor = victim.currentFloorGuid; window.Strike.Reserve(now);
             return true;
         }
     }
