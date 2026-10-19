@@ -13,7 +13,7 @@ namespace SephiriaOne
         private const string PatchId = "SephiriaOne.ZombieRoleVisuals";
         private sealed class Marker
         {
-            internal CharacterDebuff_Poison Effect;
+            internal CharacterDebuff_ChimDamage Effect;
             internal FriendlyFireParticipants.Receipt Receipt;
             internal long Match;
             internal bool Spawning, Retired;
@@ -50,7 +50,11 @@ namespace SephiriaOne
                     // Publish ownership before native spawning can invoke callbacks.
                     marker.Effect = UnityEngine.Object.Instantiate(prefab, player.transform.position, Quaternion.identity);
                     marker.Effect.enabled = false;
-                    marker.Effect.damage = 0; marker.Effect.debuffResistDecrease = 0;
+                    // Chim has hardcoded expiry damage. Server Update and native
+                    // gameplay Destroy are guarded; its impact FX are unused too.
+                    marker.Effect.bonusDamageId = string.Empty;
+                    marker.Effect.damageFxPrefab = null;
+                    marker.Effect.chimDamageEvent = default;
                     owned.Add(marker.Effect); markers.Add(player, marker);
                     marker.Effect.NetworkTarget = player;
                     marker.Effect.NetworkAttacker = null;
@@ -86,11 +90,15 @@ namespace SephiriaOne
             updateClient = ZombieVisualNative.ClientUpdate;
             harmony = new Harmony(PatchId);
             harmony.Patch(AccessTools.DeclaredMethod(typeof(CharacterDebuff), "OnStartServer"),
-                prefix: new HarmonyMethod(typeof(ZombieRoleVisuals), nameof(BeforeStartServer)));
+                prefix: new HarmonyMethod(typeof(ZombieRoleVisuals), nameof(BeforeGameplay)));
+            // Never enter Chim's damage-on-expiry path, even if another native
+            // cleanup path requests it. Retire uses network destruction instead.
+            harmony.Patch(AccessTools.DeclaredMethod(typeof(CharacterDebuff), "Destroy"),
+                prefix: new HarmonyMethod(typeof(ZombieRoleVisuals), nameof(BeforeGameplay)));
             return true;
         }
 
-        private static bool BeforeStartServer(CharacterDebuff __instance) => !owned.Contains(__instance);
+        private static bool BeforeGameplay(CharacterDebuff __instance) => !owned.Contains(__instance);
 
         internal static void Clear()
         {

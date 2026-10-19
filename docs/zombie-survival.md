@@ -1,6 +1,6 @@
-# Zombie Survival (0.66.1, 2026-10-19)
+# Zombie Survival (0.66.2, 2026-10-19)
 
-Current Zombies have a [persistent native particle indicator](zombie-role-visual.md),
+Current Zombies have a [persistent native green X indicator](zombie-role-visual.md),
 including while awaiting revival. It is cosmetic, uses stock guest transport,
 and clears with the shared match lifecycle. Live guest rendering remains to be checked.
 

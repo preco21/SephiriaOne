@@ -1,12 +1,12 @@
 # Development knowledge index
 
-Maintained: 2026-10-19 (Asia/Seoul), addon `0.66.1`.
+Maintained: 2026-10-19 (Asia/Seoul), addon `0.66.2`.
 
-Zombie visibility research: [a more prominent persistent marker](zombie-role-visual.md#more-prominent-marker-investigation-2026-10-19)
-identifies the native looping green X as a candidate replacement for subtle
-Poison particles. It can reuse the cosmetic carrier lifecycle without chat
-traffic; expiry damage must remain isolated. Nameplate tags have native refresh
-delay. Research only; runtime presentation remains unchanged.
+Zombie visibility: [the persistent green X marker](zombie-role-visual.md#green-x-implementation-0662-2026-10-19)
+replaces subtle Poison particles using the native Chim sprite loop. Owned
+carriers cannot enter native expiry damage; normal debuffs stay unchanged.
+Existing role/reconnect/cleanup handling and countdown cadence remain intact.
+Stock-client contracts pass; live combat readability still needs verification.
 
 Zombie notices: [faction markers and conversion bubbles](zombie-survival.md#faction-and-conversion-notices-0661-2026-10-19)
 use font-safe `[Z]` / `[H]`, name every initial Zombie, and send opening role
@@ -30,8 +30,8 @@ entry ownership prevents stacked hooks/controllers and preserves correct cleanup
 Nine-player fixtures cover all combat modes and independent damage budgets;
 intentional throttling and the native fractional MP-shield limitation are documented.
 
-Zombie presentation: [persistent role particles](zombie-role-visual.md) reuse the
-native Poison loop as a separately owned cosmetic carrier. Current Zombies keep
+Zombie presentation: [persistent role marks](zombie-role-visual.md) reuse the
+native Chim loop as a separately owned cosmetic carrier. Current Zombies keep
 it through respawn; shared match cleanup removes it. No gameplay debuff is applied.
 Native stock-client transport is checked; live multiplayer rendering remains unverified.
 

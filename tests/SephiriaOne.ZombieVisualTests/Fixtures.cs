@@ -11,11 +11,11 @@ namespace UnityEngine
         public static T Instantiate<T>(T prefab, Vector3 position, Quaternion rotation) where T : Object
         {
             if (FailInstantiate) throw new InvalidOperationException("instantiate failure");
-            var copy = new CharacterDebuff_Poison(); copy.transform.position = position;
+            var copy = new CharacterDebuff_ChimDamage(); copy.transform.position = position;
             Created.Add(copy); return (T)(Object)copy;
         }
         internal static bool FailInstantiate;
-        internal static readonly List<CharacterDebuff_Poison> Created = new();
+        internal static readonly List<CharacterDebuff_ChimDamage> Created = new();
         public static void Destroy(Object value)
         {
             if (value is GameObject go)
@@ -72,9 +72,11 @@ public class CharacterDebuff : UnityEngine.Object
     public NetworkIdentity netIdentity = new();
     public UnitAvatar NetworkTarget, NetworkAttacker;
     public sbyte NetworkCurrentStack;
-    internal int ServerStarts, ServerUpdates, ClientUpdates;
+    internal int ServerStarts, ServerUpdates, ClientUpdates, GameplayEnds;
     internal CharacterDebuff() { gameObject = new() { Effect = this }; }
     [MethodImpl(MethodImplOptions.NoInlining)] public virtual void OnStartServer() { ServerStarts++; }
+    [MethodImpl(MethodImplOptions.NoInlining)] public void Destroy() { GameplayEnds++; Visual = false; DestroyInner(); }
+    protected virtual void DestroyInner() { }
     internal void Frame() { if (enabled && !Destroyed) ServerUpdates++; }
     internal void ClientFrame()
     {
@@ -82,7 +84,25 @@ public class CharacterDebuff : UnityEngine.Object
         if (SephiriaOne.ZombieVisualNative.FailUpdate) throw new InvalidOperationException("client update failure");
     }
 }
-public class CharacterDebuff_Poison : CharacterDebuff { public float damage = 20; public int debuffResistDecrease = 20; }
+public class CharacterDebuff_Poison : CharacterDebuff { }
+public struct TestEventReference
+{
+    public bool HasValue;
+    public bool IsNull => !HasValue;
+}
+public class CharacterDebuff_ChimDamage : CharacterDebuff
+{
+    public string bonusDamageId = "CHIMDAMAGEBONUS";
+    public GameObject damageFxPrefab = new();
+    public TestEventReference chimDamageEvent = new() { HasValue = true };
+    internal int DamageApplications, Sounds;
+    protected override void DestroyInner()
+    {
+        if (!NetworkTarget) return;
+        DamageApplications++;
+        if (!chimDamageEvent.IsNull) Sounds++;
+    }
+}
 namespace SephiriaOne
 {
     internal sealed class ReferenceComparer<T> : IEqualityComparer<T> where T : class
@@ -109,10 +129,10 @@ namespace SephiriaOne
     {
         internal static bool FailContract, FailUpdate;
         internal static int Validations;
-        internal static CharacterDebuff_Poison Prefab = new();
+        internal static CharacterDebuff_ChimDamage Prefab = new();
         internal static Action<CharacterDebuff> ClientUpdate = effect => effect.ClientFrame();
         internal static bool ValidateNativeCode() => !FailContract;
-        internal static CharacterDebuff_Poison ValidateAndGetPrefab()
+        internal static CharacterDebuff_ChimDamage ValidateAndGetPrefab()
         {
             Validations++;
             if (FailContract) throw new InvalidOperationException("unsupported contract");

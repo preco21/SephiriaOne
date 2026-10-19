@@ -1,12 +1,14 @@
-# Zombie role indicator (0.65.0, 2026-10-18)
+# Zombie role indicator
 
-Zombie Survival automatically gives each Zombie the native `Poison_Charm`
-particle loop. It is a cosmetic role marker, including during death and pending
-conversion; it does not apply Poison, damage, stat changes, a status HUD icon or
-an attacker attribution. No configuration or guest addon is required by the
-audited native transport. Live host/stock-guest rendering still needs testing.
+Since `0.66.2`, Zombie Survival gives each current Zombie the native
+**looping green X-shaped mark** (`BuffFx_Chim`) centered on the character.
+It replaces the small Poison particles introduced in `0.65.0`. The marker
+follows movement and remains through death/pending conversion without adding
+chat messages, actual debuffs, damage, sound, stat changes or a status HUD icon.
+The audited native transport supports host and unmodified guests; live combat
+readability remains unverified. See the [implementation follow-up](#green-x-implementation-0662-2026-10-19).
 
-## Effect selection and shipped evidence
+## Original Poison selection and shipped evidence (0.65.0)
 
 The installed Poison effect is a small sprite-particle loop, without a startup
 sound or startup burst prefab. Its main particles have a 0.25-second lifetime,
@@ -44,13 +46,15 @@ infection marker could interrupt normal casting.
 `ZombieRoleVisuals` creates its own clone of the registered native prefab. It
 disables the cloned **component**, leaving the GameObject active for Mirror's
 observer handling, before network exposure. It owns the clone before Spawn and
-suppresses `CharacterDebuff.OnStartServer` only for that owned instance. The
-component's disabled state prevents its automatic server Update, poison ticks,
-HUD updates and native death/expiry path. Damage/resistance fields are also zero
-on the clone as defense in depth. The original prefab remains untouched.
+suppresses `CharacterDebuff.OnStartServer` and, since `0.66.2`, gameplay
+`CharacterDebuff.Destroy` only for that owned instance. The
+component's disabled state prevents its automatic server Update, HUD updates
+and native death/expiry path. The Chim clone's unused impact FX/sound and bonus
+stat ID are cleared as defense in depth; its hardcoded expiry damage is blocked
+by the owned-only Destroy guard. The original prefab remains untouched.
 
 It never calls `ApplyDebuff`, `InitializeAndSpawn`, `ApplyStatus`, or registers
-the carrier in the avatar's gameplay debuff collection. Ordinary Poison and
+the carrier in the avatar's gameplay debuff collection. Ordinary Chim, Poison and
 normal cleansing therefore remain independent of this role marker.
 
 Mirror invokes network start callbacks and serializes components even when they
@@ -74,7 +78,7 @@ target spawn can resolve through the native SyncVar getter on later updates.
   A rejoining player cannot inherit a former connection's marker.
 - Cleanup uses **NetworkServer.Destroy**, rather than ending a gameplay debuff
   or unspawning to a pool. Stock client destruction invokes `CharacterDebuff`
-  `OnDestroy`, which stops, hides and destroys the owned particle loop. Network
+  `OnDestroy`, which stops, hides and destroys the owned loop. Network
   delivery is subject to normal transport latency and Unity end-of-frame cleanup.
 - If native callbacks end the match during Spawn, retirement waits for Spawn
   to unwind, then destroys the completed identity. Unload keeps the startup
@@ -122,7 +126,7 @@ Run the dedicated suite with:
 dotnet run --project tests/SephiriaOne.ZombieVisualTests -c Release -p:DeployMod=false
 ```
 
-Verified: release build with zero warnings/errors; 32 executable visual checks,
+Verified for the original `0.65.0` marker: release build with zero warnings/errors; 32 executable visual checks,
 2,704 runtime integration checks plus 69 Bat lifecycle checks, and 4,871
 friendly-fire hook checks. Stable visual updates allocate zero bytes across
 10,000 warmed observations. The complete portable/catalog/installed-game runner
@@ -138,7 +142,7 @@ was launched and no output was deployed for this change.
 ## More prominent marker investigation (2026-10-19)
 
 Research against addon `0.66.1` and the same installed game fingerprint above.
-**No runtime change in this investigation.** The existing small Poison loop is
+**Historical research only; implemented in `0.66.2` below.** At the time, the small Poison loop was
 still the active marker. Five-second round announcements do not control its
 lifetime: it is already persistent independently of chat. Small particles can
 nevertheless be hard to recognize among combat effects.
@@ -232,3 +236,48 @@ Fifteen read-only shipped-asset assertions passed for carrier identity,
 registration, silent startup, visual components, animation frames/events and
 the unchanged asset SHA-256. Documentation whitespace checks passed. No
 gameplay build/test or deployment was needed for this research-only change.
+
+## Green X implementation (0.66.2, 2026-10-19)
+
+The approved replacement uses the exact Chim carrier/animation identified above.
+`ZombieVisualNative` validates its registration and complete visual hierarchy:
+one Transform, SpriteRenderer and Animator2D_SpriteRenderer; no other scripts,
+children or colliders. It also checks enabled state, renderer binding, absent
+animation delegates/event performer, and the ten repeated `ChimFx` IDLE
+keyframes at 10 fps with no frame actions, sounds or transform attributes.
+Validation runs on creation, not on every update. A modified or incompatible
+prefab fails closed once, leaving match gameplay available.
+
+`ZombieRoleVisuals` retains the shared match/receipt lifetime. It owns a disabled
+Chim clone before Mirror callbacks, assigns only the target, and never inserts
+it into actual debuffs. The same owned-only Harmony predicate now guards both
+server startup and gameplay `CharacterDebuff.Destroy`. This second guard
+explicitly prevents an expiry request from entering Chim's hardcoded damage and
+impact-sound path. Ordinary Chim/Poison still execute native startup and expiry.
+The clone's unused impact prefab, sound reference and bonus-stat ID are cleared;
+the registered original is never changed. Real removal still uses
+`NetworkServer.Destroy`, not gameplay expiry. The guard remains installed while
+reentrant spawning is finishing, including during unload.
+
+No new messages, countdown cadence, timers, target policies or role settings
+were introduced. The existing one-carrier-per-Zombie lifecycle handles initial
+selection, infection, respawn, readiness loss/recovery, receipt replacement,
+native network cleanup, match stop and unload. Guests instantiate their stock
+Chim prefab and follow the synchronized target locally; no new visual asset,
+custom packet, network movement stream or guest addon is needed by this path.
+
+Verified: `0.66.2` Release build with zero warnings/errors; 36 executable visual
+lifecycle checks, 3,163 runtime integration checks plus 69 Bat lifecycle checks,
+and the portable/catalog/installed-game suite including all 33 compiled Harmony
+API references against installed HarmonyX 2.9. The expiry-guard regression and
+Chim identity contract both failed before implementation, then passed. Stable
+marker updates still allocate zero bytes across 10,000 warmed observations.
+Read-only shipped-asset checks confirm active prefab/renderer/animator bindings
+and all ten animation frames match the replacement validator. Independent
+review found no actionable code regressions.
+
+Live checks remain necessary: host and stock guest should observe each other's green mark
+while moving, dying and reviving; stop/rejoin must remove it; ordinary Chim and
+Poison must retain gameplay behavior. The native Chim visual can also appear
+from a real debuff, so it is not an exclusive Zombie symbol. No deployment or
+game launch is part of this change.

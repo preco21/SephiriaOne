@@ -29,12 +29,19 @@ zombie.transform.position = new(12);
 ZombieRoleVisuals.Update(zombie);
 var effect = UO.Created.Single();
 Check(NetworkServer.Spawns == 1 && effect.Visual && !effect.enabled && effect.ServerStarts == 0, "Owned host startup suppressed but client visual starts");
+effect.Destroy();
+Check(effect.GameplayEnds == 0 && effect.Visual, "Owned marker rejects gameplay expiry instead of invoking native damage/end callbacks");
 Check(ReferenceEquals(effect.NetworkTarget, zombie) && effect.NetworkAttacker == null && effect.NetworkCurrentStack == 0 &&
-    effect.damage == 0 && effect.debuffResistDecrease == 0, "Only target is transmitted; no gameplay attribution or damage");
+    effect.bonusDamageId == string.Empty && !effect.damageFxPrefab && effect.chimDamageEvent.IsNull, "Only target is transmitted; unused impact hooks cleared on clone");
 effect.Frame(); Check(effect.ServerUpdates == 0, "Disabled clone cannot execute server update");
-Check(ZombieVisualNative.Prefab.enabled && ZombieVisualNative.Prefab.damage == 20, "Original registered prefab remains unchanged for guests/real poison");
-var ordinary = new CharacterDebuff_Poison(); ordinary.OnStartServer(); ordinary.Frame();
-Check(ordinary.ServerStarts == 1 && ordinary.ServerUpdates == 1, "Ordinary Poison is untouched by owned prefix");
+Check(ZombieVisualNative.Prefab.enabled && ZombieVisualNative.Prefab.damageFxPrefab &&
+    !ZombieVisualNative.Prefab.chimDamageEvent.IsNull && ZombieVisualNative.Prefab.bonusDamageId == "CHIMDAMAGEBONUS", "Original registered Chim prefab remains unchanged for guests/real debuffs");
+var ordinary = new CharacterDebuff_ChimDamage { NetworkTarget = human }; ordinary.OnStartServer(); ordinary.Frame();
+ordinary.Destroy();
+Check(ordinary.ServerStarts == 1 && ordinary.ServerUpdates == 1 && ordinary.GameplayEnds == 1 && ordinary.DamageApplications == 1 && ordinary.Sounds == 1,
+    "Ordinary Chim keeps native startup, updates and damage/sound on expiry");
+var poison = new CharacterDebuff_Poison(); poison.OnStartServer(); poison.Frame(); poison.Destroy();
+Check(poison.ServerStarts == 1 && poison.ServerUpdates == 1 && poison.GameplayEnds == 1, "Ordinary Poison stays native too");
 zombie.transform.position = new(25); zombie.IsDead = true; ZombieRoleVisuals.Update(zombie);
 Check(effect.transform.position.x == 25 && effect.Visual && NetworkServer.Spawns == 1, "Same indicator follows while dead/pending respawn");
 zombie.IsDead = false; ZombieRoleVisuals.Update(zombie);
@@ -57,7 +64,8 @@ Check(NetworkServer.Spawns == 2, "Reconnected player cannot inherit a prior role
 Reset(); zombie = New(); ZombieRoleVisuals.Update(zombie); var second = New(); ZombieRoleVisuals.Update(second);
 ZombieRoleVisuals.Clear(); ZombieRoleVisuals.Clear();
 Check(NetworkServer.spawned.Count == 0 && UO.Created.All(e => !e && !e.Visual), "Idempotent clear destroys all independent markers");
-ordinary.OnStartServer(); Check(ordinary.ServerStarts == 2, "Real Poison startup remains available after match clear");
+Check(UO.Created.All(e => e.GameplayEnds == 0 && e.DamageApplications == 0 && e.Sounds == 0), "Network cleanup never expires Chim or plays its impact sound");
+ordinary.OnStartServer(); Check(ordinary.ServerStarts == 2, "Real Chim startup remains available after match clear");
 
 foreach (string failure in new[] { "contract", "instantiate", "before spawn", "after spawn", "update" })
 {
@@ -77,6 +85,8 @@ NetworkServer.DuringSpawn = e =>
 {
     CombatMatchRuntime.MatchToken = 0;
     ZombieRoleVisuals.Clear();
+    e.Destroy();
+    Check(e.GameplayEnds == 0, "Gameplay expiry stays guarded while reentrant spawn retirement is pending");
     Check(e && !e.enabled, "Reentrant stop defers destruction until spawn returns");
     try { ZombieRoleVisuals.Shutdown(); } catch (InvalidOperationException) { shutdownDeferred = true; }
 };
@@ -93,5 +103,7 @@ Reset(); zombie = New(); ZombieRoleVisuals.Update(zombie); NetworkServer.active 
 ZombieRoleVisuals.Clear(); Check(!UO.Created.Single(), "Lost authority still removes host-local loop");
 Reset(); zombie = New(); ZombieRoleVisuals.Update(zombie); NetworkServer.FailDestroy = true;
 ZombieRoleVisuals.Clear(); Check(!UO.Created.Single(), "Exceptional native destruction still removes disabled host loop");
-Reset(); ordinary.OnStartServer(); Check(ordinary.ServerStarts == 3, "Unload restores original startup");
+Reset(); ordinary.OnStartServer(); ordinary.Destroy();
+Check(ordinary.ServerStarts == 3 && ordinary.GameplayEnds == 2 && ordinary.DamageApplications == 2 && ordinary.Sounds == 2,
+    "Unload restores ordinary Chim startup and expiry");
 Console.WriteLine($"Passed {checks} Zombie visual lifecycle/owned-hook checks; 0 bytes/10000 stable updates. Native guest transport checked separately.");

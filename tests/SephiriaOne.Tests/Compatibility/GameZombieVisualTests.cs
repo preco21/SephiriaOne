@@ -11,24 +11,34 @@ internal static class GameZombieVisualTests
         IEnumerable<MethodInfo> Calls(IEnumerable<CodeInstruction> code) => code.Select(i => i.operand).OfType<MethodInfo>();
         var adapter = addon.GetType("SephiriaOne.ZombieRoleVisuals", true)!;
         var native = addon.GetType("SephiriaOne.ZombieVisualNative", true)!;
+        Require((uint)AccessTools.Field(native, "AssetId").GetRawConstantValue()! == 4098245047,
+            "Green X uses the registered native Chim carrier, not Poison particles");
         var debuff = game.GetType("CharacterDebuff", true)!;
-        var poison = game.GetType("CharacterDebuff_Poison", true)!;
+        var chim = game.GetType("CharacterDebuff_ChimDamage", true)!;
         var mirror = debuff.BaseType!.Assembly;
         var identity = mirror.GetType("Mirror.NetworkIdentity", true)!;
         var client = mirror.GetType("Mirror.NetworkClient", true)!;
         var server = mirror.GetType("Mirror.NetworkServer", true)!;
         Require((bool)AccessTools.DeclaredMethod(native, "ValidateNativeCode").Invoke(null, null)!, "exact game/Mirror code fingerprints accepted");
         foreach (string name in new[] { "OnStartServer", "OnStartClient", "OnUpdate_Client", "OnDestroy", "Start" })
-            Require(AccessTools.Method(poison, name).DeclaringType == debuff, "Poison inherits audited " + name);
-        Require(AccessTools.Method(poison, "Awake") == null, "Instantiation has no poison gameplay callback");
+            Require(AccessTools.Method(chim, name).DeclaringType == debuff, "Chim inherits audited " + name);
+        Require(AccessTools.Method(chim, "Awake") == null, "Instantiation has no Chim gameplay callback");
         Require(Code(debuff, "Start").All(i => i.opcode == OpCodes.Ret || i.opcode == OpCodes.Nop), "Deferred Start is empty");
+
+        Require(Calls(Code(chim, "DestroyInner")).Any(m => m.Name == "ApplyDamage") &&
+            Calls(Code(chim, "DestroyInner")).Any(m => m.Name == "RpcChimFx"), "Chim gameplay expiry is a real damage/audio hazard");
+        Require(!Calls(Code(debuff, "OnDestroy")).Any(m => m.Name is "DestroyInner" or "DestroyDelay") &&
+            AccessTools.DeclaredMethod(chim, "OnStopServer") == null && AccessTools.DeclaredMethod(debuff, "OnStopServer") == null,
+            "Actual network/object removal does not enter gameplay expiry");
+        Require(AccessTools.DeclaredMethod(native, "ValidateAndGetPrefab").ReturnType == chim &&
+            Code(native, "ValidateAndGetPrefab").Any(i => Equals(i.operand, "CHIM_DAMAGE")), "Adapter resolves exact Chim type and database ID");
 
         var update = Code(debuff, "Update");
         int serverGate = update.FindIndex(i => i.operand is MethodInfo m && m.Name == "get_isServer");
         Require(serverGate >= 0 && update[serverGate + 1].Branches(out Label? branch) && branch.HasValue, "Native update gates server work");
         Label serverEnd = (Label)update[serverGate + 1].operand;
         int end = update.FindIndex(i => i.labels.Contains(serverEnd));
-        Require(end > serverGate && !Calls(update.Skip(end)).Any(m => m.Name is "OnUpdate_Server" or "Destroy" or "ApplyDamage"), "Guest update cannot tick poison or expire carrier");
+        Require(end > serverGate && !Calls(update.Skip(end)).Any(m => m.Name is "OnUpdate_Server" or "Destroy" or "ApplyDamage"), "Guest update cannot tick Chim or expire carrier");
         foreach (string method in new[] { "OnStartClient", "OnUpdate_Client", "CreateLoopFx", "CreateStartFx", "SetLoopFxPositionClientside", "OnDestroy" })
             Require(!Calls(Code(debuff, method)).Any(m => m.Name is "ApplyDamage" or "ApplyDebuff" or "ApplyStatus" or "AddCustomStatUnsafe" or "CreateEffectHUD"), "Presentation-only native path: " + method);
         Require(Calls(Code(debuff, "OnUpdate_Client")).Any(m => m.Name == "SetLoopFxPositionClientside") &&
@@ -47,12 +57,14 @@ internal static class GameZombieVisualTests
         Require(components > 0 && initialize[components - 1].opcode == OpCodes.Ldc_I4_1, "Mirror inventories inactive/disabled network components");
         Require(Calls(Code(client, "SpawnPrefab")).Any(m => m.Name == "Instantiate") &&
             !Calls(Code(client, "ApplySpawnPayload")).Any(m => m.Name == "set_enabled"), "Guests instantiate original prefab without host disabled flag");
-        Require(Calls(Code(client, "DestroyObject")).Any(m => m.DeclaringType?.FullName == "UnityEngine.Object" && m.Name == "Destroy"), "Stock network destroy executes particle teardown");
+        Require(Calls(Code(client, "DestroyObject")).Any(m => m.DeclaringType?.FullName == "UnityEngine.Object" && m.Name == "Destroy"), "Stock network destroy executes loop teardown");
         var spawnFields = mirror.GetType("Mirror.SpawnMessage", true)!.GetFields().Select(f => f.Name).ToArray();
         Require(!spawnFields.Contains("enabled"), "Spawn envelope cannot replicate Behaviour.enabled");
 
         var allCode = adapter.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic).SelectMany(m => Code(adapter, m.Name)).ToList();
-        Require(!Calls(allCode).Any(m => m.Name is "ApplyDebuff" or "InitializeAndSpawn" or "ApplyStatus" or "OnUpdate_Server" or "CreateEffectHUD"), "Adapter never registers or drives gameplay debuff paths");
+        Require(!Calls(allCode).Any(m => m.Name is "ApplyDebuff" or "InitializeAndSpawn" or "ApplyStatus" or "OnUpdate_Server" or "CreateEffectHUD" or "InitializeInner" or "DestroyInner" or "RequestEnd" or "AddStack"), "Adapter never registers or drives gameplay debuff paths");
+        Require(!Calls(allCode).Any(m => m.DeclaringType == debuff && m.Name == "Destroy"), "Adapter never ends a gameplay debuff");
+        Require(Code(adapter, "EnsureNative").Any(i => Equals(i.operand, "Destroy")), "Native expiry entry has an owned-only guard");
         var create = Code(adapter, "Update");
         int disable = create.FindIndex(i => i.operand is MethodInfo m && m.Name == "set_enabled");
         int spawn = create.FindIndex(i => i.operand is MethodInfo m && m.DeclaringType == server && m.Name == "Spawn");

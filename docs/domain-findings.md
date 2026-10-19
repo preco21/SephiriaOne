@@ -21,7 +21,7 @@ prefab only after auditing the entire client/server boundary. Disabling a host
 NetworkBehaviour does not suppress Mirror's start callbacks or serialize its
 disabled state to guests. The Zombie marker separately guards owned server
 startup, disables automatic host Update, and invokes only native client visual
-updates. Destroy the network object to run guest particle cleanup; do not apply
+updates. Destroy the network object to run guest visual cleanup; do not apply
 the real debuff or share native casting handles. See [Zombie role visual](zombie-role-visual.md)
 for asset identities, observer behavior, transition recovery and limitations.
 
