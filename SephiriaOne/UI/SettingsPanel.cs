@@ -202,7 +202,7 @@ namespace SephiriaOne
             playTagRounds = playTagRefill = playTagIncoming = null;
             playTagDurationDraft = playTagRoundsDraft = playTagRefillDraft = playTagIncomingDraft = false;
             zombieRefill = zombieIncoming = null;
-            zombieDurationDraft = zombieRefillDraft = zombieIncomingDraft = false;
+            zombieDurationDraft = zombieCountDraft = zombieRefillDraft = zombieIncomingDraft = false;
             participantRows.Clear(); participantContent = null; participantSummary = null;
             if (pageRoot) { widgets.Forget(pageRoot); pageRoot.gameObject.SetActive(false); Destroy(pageRoot.gameObject); }
             pageRoot = PanelWidgets.Rect(window, "Page", 4, 152, 600, 162);
@@ -363,7 +363,7 @@ namespace SephiriaOne
         {
             ClearPvpDots();
             ClearFriendlyDamage(); ClearFriendlyRefill(); ClearFriendlyGuardMp();
-            ClearZombieDuration(); ClearZombieRefill(); ClearZombieIncoming();
+            ClearZombieDuration(); ClearZombieCount(); ClearZombieRefill(); ClearZombieIncoming();
             ClearPlayTagDuration(); ClearPlayTagRounds(); ClearPlayTagRefill(); ClearPlayTagIncoming();
         }
 

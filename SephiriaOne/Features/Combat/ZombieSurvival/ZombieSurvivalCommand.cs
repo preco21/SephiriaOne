@@ -5,7 +5,7 @@ namespace SephiriaOne
 {
     internal static class ZombieSurvivalCommand
     {
-        internal static string Usage => L.T("Zombie Survival: /one zombie start|stop|resetkda|status|help; duration 3..3600|reset (default 120s); any-death on|off|reset (default off). Duration applies to the next match; other settings apply live. /one save stores settings.") + " " +
+        internal static string Usage => L.T("Zombie Survival: /one zombie start|stop|resetkda|status|help; duration 3..3600|reset (default 120s); count N|reset (positive integer, default 1); any-death on|off|reset (default off). Duration and count apply to the next match; count leaves at least one Human. Other settings apply live. /one save stores settings.") + " " +
             L.T("Zombie bonuses: /one zombie refill on|off|xN|N|reset (0.1..10, default x3); damage on|off|N%|N|reset (0..100, default 30%). Both default on; up to 2 decimals. Refill requires PvP balancing.");
         internal static string DescribeModifiers()
         {
@@ -26,7 +26,8 @@ namespace SephiriaOne
             if (parts.Length <= 3 && op == "status")
             {
                 SessionSettings.EnsureResourceScope();
-                success = true; message = CombatMatchRuntime.DescribeZombie() + "\n" + DescribeModifiers();
+                success = true; message = CombatMatchRuntime.DescribeZombie() + "\n" +
+                    L.F("Starting Zombies: {0} for the next match (clamped to leave one Human).", SessionSettings.ZombieStartingCount) + "\n" + DescribeModifiers();
             }
             else if (parts.Length == 3 && op == "start") success = CombatMatchRuntime.StartZombie(out message);
             else if (parts.Length == 3 && op == "resetkda") success = SessionSettings.TryResetFriendlyFireScores(out message);
@@ -41,6 +42,13 @@ namespace SephiriaOne
                     success = SessionSettings.TrySetZombieDuration(ZombieSurvivalSettings.DefaultDuration, out message);
                 else if (int.TryParse(parts[3], NumberStyles.None, CultureInfo.InvariantCulture, out int seconds) && ZombieSurvivalSettings.ValidDuration(seconds))
                     success = SessionSettings.TrySetZombieDuration(seconds, out message);
+            }
+            else if (parts.Length == 4 && op == "count")
+            {
+                if (parts[3].Equals("reset", StringComparison.OrdinalIgnoreCase))
+                    success = SessionSettings.TrySetZombieStartingCount(ZombieSurvivalSettings.DefaultStartingCount, out message);
+                else if (int.TryParse(parts[3], NumberStyles.None, CultureInfo.InvariantCulture, out int count) && ZombieSurvivalSettings.ValidStartingCount(count))
+                    success = SessionSettings.TrySetZombieStartingCount(count, out message);
             }
             else if (parts.Length == 4 && op == "any-death")
             {

@@ -5,6 +5,7 @@ namespace SephiriaOne
     internal static partial class SessionSettings
     {
         internal static int ZombieDuration => policy.ZombieDuration;
+        internal static int ZombieStartingCount => policy.ZombieStartingCount;
         internal static bool ZombieAnyDeath => policy.ZombieAnyDeath;
         internal static CombatRoleSettings ZombieModifiers => policy.ZombieModifiers;
         internal static bool TrySetZombieDuration(int seconds, out string message)
@@ -22,6 +23,14 @@ namespace SephiriaOne
             if (policy.ZombieAnyDeath != enabled)
             { policy.RecordZombieAnyDeath(enabled); intentRevision++; NotifySettingsChanged(); }
             message = L.F("Convert on any Human death: {0}.", L.T(enabled ? "ON" : "OFF")); return true;
+        }
+        internal static bool TrySetZombieStartingCount(int count, out string message)
+        {
+            message = ZombieSurvivalCommand.Usage;
+            if (!NetworkServer.active || !ZombieSurvivalSettings.ValidStartingCount(count) || !EnsureResourceScope()) return false;
+            if (policy.ZombieStartingCount != count)
+            { policy.RecordZombieStartingCount(count); intentRevision++; NotifySettingsChanged(); }
+            message = L.F("Starting Zombies: {0} for the next match (clamped to leave one Human).", count); return true;
         }
         internal static bool TrySetZombieModifiers(CombatRoleSettings settings, out string message)
         {

@@ -14,6 +14,7 @@ namespace SephiriaOne
         private static string[] zombieNames;
         private static string zombieOutcome;
         private static int zombieTimeShown = -1;
+        private static int zombieStartingCount;
         internal static bool IsZombieSurvival => mode == MatchMode.ZombieSurvival && IsRunning;
         internal static bool CanStartZombie => CanStart && EligibleTournamentCount() >= 2;
         internal static bool StartZombie(out string message) => Start(MatchMode.ZombieSurvival, out message);
@@ -25,6 +26,7 @@ namespace SephiriaOne
             message = L.T("Zombie Survival requires at least two eligible players.");
             if (zombiePlayers.Count >= 2)
             {
+                zombieStartingCount = Math.Min(SessionSettings.ZombieStartingCount, zombiePlayers.Count - 1);
                 zombieNames = new string[zombiePlayers.Count]; zombieScores = new FriendlyFireKda.Score[zombiePlayers.Count];
                 for (int i = 0; i < zombiePlayers.Count; i++) zombieNames[i] = CombatNames.Player(zombiePlayers[i].Subject.Player);
                 return true;
@@ -55,23 +57,23 @@ namespace SephiriaOne
         private static void BeginZombie(double now)
         {
             // The activation notification can enter native callbacks. Recheck
-            // readiness after it before selecting an initial, living carrier.
+            // readiness after it before selecting the initial, living Zombies.
             for (int i = 0; i < zombiePlayers.Count; i++)
             {
                 var entry = zombiePlayers[i];
                 if (!Connected(entry.Subject, entry.Receipt)) { Stop(true, true); return; }
                 if (!entry.Subject.IsReady || entry.Subject.Player.IsDead) { phase = Phase.BetweenRounds; return; }
             }
-            int chosen = zombieRandom.Next(zombiePlayers.Count);
-            zombieRound = new ZombieSurvivalRound(zombiePlayers.Count, chosen);
+            zombieRound = new ZombieSurvivalRound(zombiePlayers.Count, zombieStartingCount, zombieRandom);
             endsAt = now + duration; RoleRevision++;
             for (int i = 0; i < zombiePlayers.Count; i++) zombieScores[i] = FriendlyFireKda.For(zombiePlayers[i].Subject.Player);
             long current = token;
-            ZombieRoleVisuals.Update(zombiePlayers[chosen].Subject.Player);
-            if (!IsZombieSurvival || current != token) return;
-            Broadcast(null, L.F("[Zombie Survival] {0} is the first Zombie! Survive for {1}s.", zombieNames[chosen], duration));
             for (int i = 0; i < zombiePlayers.Count && IsZombieSurvival && current == token; i++)
-                Broadcast(zombiePlayers[i].Subject.Player, L.T(i == chosen ?
+                if (zombieRound.IsZombie(i)) ZombieRoleVisuals.Update(zombiePlayers[i].Subject.Player);
+            if (!IsZombieSurvival || current != token) return;
+            Broadcast(null, L.F("[Zombie Survival] Starting Zombies: {0}. Survive for {1}s.", zombiePlayers.Count - zombieRound.Humans, duration));
+            for (int i = 0; i < zombiePlayers.Count && IsZombieSurvival && current == token; i++)
+                Broadcast(zombiePlayers[i].Subject.Player, L.T(zombieRound.IsZombie(i) ?
                     "[Zombie Survival] You are a Zombie. Defeat Humans to convert them!" :
                     "[Zombie Survival] You are Human. Survive until time runs out!"));
         }
@@ -177,7 +179,7 @@ namespace SephiriaOne
         private static void ClearZombie()
         {
             ZombieRoleVisuals.Clear();
-            zombieRound = null; zombieScores = null; zombieNames = null; zombieOutcome = null; zombieTimeShown = -1;
+            zombieRound = null; zombieScores = null; zombieNames = null; zombieOutcome = null; zombieTimeShown = -1; zombieStartingCount = 0;
             zombiePlayers.Clear(); zombieRoster.Clear(); RoleRevision++;
         }
 

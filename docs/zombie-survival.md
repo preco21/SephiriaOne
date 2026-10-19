@@ -1,4 +1,4 @@
-# Zombie Survival (0.65.0, 2026-10-18)
+# Zombie Survival (0.66.0, 2026-10-19)
 
 Current Zombies have a [persistent native particle indicator](zombie-role-visual.md),
 including while awaiting revival. It is cosmetic, uses stock guest transport,
@@ -13,7 +13,7 @@ Nothing was deployed or launched during implementation.
 ## Controls
 
 Open the **Zombie / 좀비** tab. It includes the existing participant editor,
-start/stop and K/D/A reset, round duration, optional any-death infection, and
+start/stop and K/D/A reset, round duration, starting Zombie count, optional any-death infection, and
 independent Zombie refill/incoming-damage controls. Equivalent host commands:
 
 | Command | Behavior |
@@ -23,11 +23,13 @@ independent Zombie refill/incoming-damage controls. Equivalent host commands:
 | `/one zombie status` or `help` | Show state/settings or command syntax |
 | `/one zombie duration 120` | Next match's duration; 3..3600 whole seconds, default 120 |
 | `/one zombie duration reset` | Restore 120 seconds |
+| `/one zombie count N` | Starting Zombies for the next match; positive whole number, default 1 |
+| `/one zombie count reset` | Restore one starting Zombie |
 | `/one zombie any-death on` / `off` / `reset` | Convert on any completed Human death; default/reset off |
 | `/one zombie refill on` / `off` / `x3` / `reset` | Zombie refill multiplier, initially on, default x3, range 0.1..10 |
 | `/one zombie damage on` / `off` / `30%` / `reset` | Zombie incoming PvP damage, initially on, default 30%, range 0..100 |
 | `/one zombie resetkda` | Reset shared K/D/A and matchup records; keep teams and timer |
-| `/one save` | Persist settings only; nondefault Zombie settings use preset v31 |
+| `/one save` | Persist settings only; nondefault starting count uses v32, other Zombie settings use v31 |
 
 Both multipliers accept up to two decimal places and apply live. Refill multiplies
 the global PvP damage-budget refill and requires PvP balancing. Incoming damage
@@ -49,7 +51,9 @@ values over an existing override, then `/one save` if desired.
 
 - An empty explicit selection means everyone. Otherwise only selected current
   connections enter. Require at least two ready participants. After recovery and
-  countdown, choose one living entrant uniformly as the initial Zombie.
+  countdown, choose the configured number of distinct living entrants uniformly
+  as the initial Zombies. Clamp to 1..eligible participants minus 1 so at least
+  one Human remains; one-player matches are still rejected.
 - Only opposing teams can damage one another. Existing shared hostility filters
   cover companions, artifacts, debuffs, reflection, homing and auto-targeting.
 - A confirmed Zombie kill infects a Human. Infection immediately revokes their
@@ -95,8 +99,36 @@ player's old assist contributions against their new teammates without clearing
 accumulated scores, matchups or unrelated pending death notices.
 
 No role, roster, timer, score or pending conversion is serialized. Preset v31
-stores only nondefault settings; v1..v30 load Zombie defaults and reject new
-Zombie rows. Strict parsing rejects duplicate/invalid rows before atomic apply.
+stores the original nondefault settings; v32 additionally supports `zombie count`.
+Older presets retain count 1 and reject the count row; v1..v30 also reject all
+other Zombie rows. Strict parsing rejects duplicate/invalid rows before atomic apply.
+
+## Starting count (0.66.0, 2026-10-19)
+
+The host can configure `/one zombie count 3` or use **Starting Zombies / 시작 좀비 수**
+in the Zombie tab. Any positive 32-bit integer is accepted, without allocating
+anything based on the requested number. Capture clamps to the frozen eligible
+roster, excluding spectators and late arrivals, and always leaves one Human.
+For example, request 3 with two participants: one Zombie and one Human. The
+stored preference remains 3 for a later larger match.
+
+Duration and count are captured when Start is accepted. Changes during countdown
+or active play affect only the next match; readiness recovery does not recapture
+or reroll count. Actual roles are selected after recovery/countdown. A single
+bounded roster scan samples uniformly without replacement, creates combat-active
+initial roles (not pending infections), then reuses existing role visuals,
+bonuses, role bubbles and team hostility. Announcement reports actual
+starting count. No new RPC, guest state, native hooks or per-frame allocations.
+
+Runtime regression coverage includes default, two and excess requested counts;
+two- and nine-player rosters; selected participants/late arrivals; countdown and
+active edits; cleanup/next match; shared bonuses/visuals/team hostility; strict
+v32 save/read and old headers; reset, invalid input and host-only access. Seeded
+pure-model checks verify exact distinct active teams and varying selections.
+Activation-callback edits and readiness retries retain the captured count.
+Release build, 3,134 runtime checks plus 69 Bat checks, 4,944 friendly-fire checks,
+portable/localization checks and installed native/UI contract checks passed.
+Live multiplayer behavior and UI rendering have not been exercised.
 
 Unchanged match observation allocates no per-frame state in the runtime fixture.
 Roster scans are bounded by session size, respawn observation reuses the existing

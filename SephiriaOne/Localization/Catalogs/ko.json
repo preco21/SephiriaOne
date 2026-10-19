@@ -787,7 +787,6 @@
   "Zombie Survival is unavailable, already running, or the session is ending. Check /one zombie status and Player.log.": "좀비 서바이벌을 사용할 수 없거나, 경기가 진행 중이거나, 세션이 종료 중입니다. /one zombie status와 Player.log를 확인하세요.",
   "Zombie Survival starts in 3 seconds with {0} players; round: {1}s.": "좀비 서바이벌이 3초 후 시작됩니다. 참가자 {0}명, 제한 시간 {1}초.",
   "Zombie Survival requires at least two eligible players.": "좀비 서바이벌에는 참가 가능한 플레이어가 최소 2명 필요합니다.",
-  "[Zombie Survival] {0} is the first Zombie! Survive for {1}s.": "[좀비 서바이벌] 첫 좀비는 {0}입니다! {1}초 동안 생존하세요.",
   "[Zombie Survival] You are a Zombie. Defeat Humans to convert them!": "[좀비 서바이벌] 당신은 좀비입니다. 인간을 처치하여 감염시키세요!",
   "[Zombie Survival] You are Human. Survive until time runs out!": "[좀비 서바이벌] 당신은 인간입니다. 제한 시간까지 생존하세요!",
   "[Zombie Survival] Starts in: {0}s": "[좀비 서바이벌] 시작까지: {0}초",
@@ -800,12 +799,15 @@
   "Zombie Survival: {0}. Round: {1}s. Remaining: {2}s. Humans: {3}; Zombies: {4}.": "좀비 서바이벌: {0}. 제한 {1}초 / 남은 시간 {2}초. 인간 {3}명 / 좀비 {4}명.",
   "Zombie Survival duration set to {0} seconds for the next match.": "다음 좀비 서바이벌 경기의 제한 시간을 {0}초로 설정했습니다.",
   "Convert on any Human death: {0}.": "인간의 모든 사망 시 감염: {0}.",
-  "Zombie Survival: /one zombie start|stop|resetkda|status|help; duration 3..3600|reset (default 120s); any-death on|off|reset (default off). Duration applies to the next match; other settings apply live. /one save stores settings.": "좀비 서바이벌: /one zombie start|stop|resetkda|status|help; duration 3..3600|reset (기본 120초); any-death on|off|reset (기본 off). 시간은 다음 경기에, 나머지는 즉시 적용됩니다. /one save로 설정을 저장합니다.",
   "Zombie bonuses: /one zombie refill on|off|xN|N|reset (0.1..10, default x3); damage on|off|N%|N|reset (0..100, default 30%). Both default on; up to 2 decimals. Refill requires PvP balancing.": "좀비 보너스: /one zombie refill on|off|xN|N|reset (0.1..10, 기본 x3); damage on|off|N%|N|reset (0..100, 기본 30%). 둘 다 기본 on, 소수 둘째 자리까지. 충전 배율은 PvP 밸런싱이 필요합니다.",
   "Zombie refill: {0} (x{1}, PvP balancing only); incoming damage: {2} ({3}%).": "좀비 충전: {0} (x{1}, PvP 밸런싱 전용); 받는 피해: {2} ({3}%).",
   "Only the host can control Zombie Survival.": "호스트만 좀비 서바이벌을 제어할 수 있습니다.",
   "No Zombie Survival match is running.": "진행 중인 좀비 서바이벌 경기가 없습니다.",
   "Zombie Survival stopped.": "좀비 서바이벌을 중단했습니다.",
   "Zombie Survival compatibility checks failed. Stop remains available; see Player.log.": "좀비 서바이벌 호환성 검사에 실패했습니다. 중단은 가능합니다. Player.log를 확인하세요.",
-  "PvP recovery: HP Steal is disabled on friendly-fire hits. Rabbit shared healing is disabled from/to active participants, even with balancing off.": "PvP 회복: 팀킬 피해로는 HP를 흡수할 수 없습니다. 밸런싱을 꺼도 PvP 참가자는 토끼의 회복 공유를 주거나 받을 수 없습니다."
+  "PvP recovery: HP Steal is disabled on friendly-fire hits. Rabbit shared healing is disabled from/to active participants, even with balancing off.": "PvP 회복: 팀킬 피해로는 HP를 흡수할 수 없습니다. 밸런싱을 꺼도 PvP 참가자는 토끼의 회복 공유를 주거나 받을 수 없습니다.",
+  "Zombie Survival: /one zombie start|stop|resetkda|status|help; duration 3..3600|reset (default 120s); count N|reset (positive integer, default 1); any-death on|off|reset (default off). Duration and count apply to the next match; count leaves at least one Human. Other settings apply live. /one save stores settings.": "좀비 서바이벌: /one zombie start|stop|resetkda|status|help; duration 3..3600|reset (기본 120초); count N|reset (양의 정수, 기본 1); any-death on|off|reset (기본 꺼짐). 시간과 시작 좀비 수는 다음 경기에 적용되며 인간은 최소 1명 남습니다. 나머지 설정은 즉시 적용됩니다. /one save로 저장합니다.",
+  "[Zombie Survival] Starting Zombies: {0}. Survive for {1}s.": "[좀비 서바이벌] 시작 좀비: {0}명. {1}초 동안 생존하세요!",
+  "Starting Zombies: {0} for the next match (clamped to leave one Human).": "다음 경기 시작 좀비: {0}명 (인간이 1명 이상 남도록 제한).",
+  "Starting Zombies": "시작 좀비 수"
 }

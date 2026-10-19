@@ -787,7 +787,6 @@
   "Zombie Survival is unavailable, already running, or the session is ending. Check /one zombie status and Player.log.": "Zombie Survival is unavailable, already running, or the session is ending. Check /one zombie status and Player.log.",
   "Zombie Survival starts in 3 seconds with {0} players; round: {1}s.": "Zombie Survival starts in 3 seconds with {0} players; round: {1}s.",
   "Zombie Survival requires at least two eligible players.": "Zombie Survival requires at least two eligible players.",
-  "[Zombie Survival] {0} is the first Zombie! Survive for {1}s.": "[Zombie Survival] {0} is the first Zombie! Survive for {1}s.",
   "[Zombie Survival] You are a Zombie. Defeat Humans to convert them!": "[Zombie Survival] You are a Zombie. Defeat Humans to convert them!",
   "[Zombie Survival] You are Human. Survive until time runs out!": "[Zombie Survival] You are Human. Survive until time runs out!",
   "[Zombie Survival] Starts in: {0}s": "[Zombie Survival] Starts in: {0}s",
@@ -800,12 +799,15 @@
   "Zombie Survival: {0}. Round: {1}s. Remaining: {2}s. Humans: {3}; Zombies: {4}.": "Zombie Survival: {0}. Round: {1}s. Remaining: {2}s. Humans: {3}; Zombies: {4}.",
   "Zombie Survival duration set to {0} seconds for the next match.": "Zombie Survival duration set to {0} seconds for the next match.",
   "Convert on any Human death: {0}.": "Convert on any Human death: {0}.",
-  "Zombie Survival: /one zombie start|stop|resetkda|status|help; duration 3..3600|reset (default 120s); any-death on|off|reset (default off). Duration applies to the next match; other settings apply live. /one save stores settings.": "Zombie Survival: /one zombie start|stop|resetkda|status|help; duration 3..3600|reset (default 120s); any-death on|off|reset (default off). Duration applies to the next match; other settings apply live. /one save stores settings.",
   "Zombie bonuses: /one zombie refill on|off|xN|N|reset (0.1..10, default x3); damage on|off|N%|N|reset (0..100, default 30%). Both default on; up to 2 decimals. Refill requires PvP balancing.": "Zombie bonuses: /one zombie refill on|off|xN|N|reset (0.1..10, default x3); damage on|off|N%|N|reset (0..100, default 30%). Both default on; up to 2 decimals. Refill requires PvP balancing.",
   "Zombie refill: {0} (x{1}, PvP balancing only); incoming damage: {2} ({3}%).": "Zombie refill: {0} (x{1}, PvP balancing only); incoming damage: {2} ({3}%).",
   "Only the host can control Zombie Survival.": "Only the host can control Zombie Survival.",
   "No Zombie Survival match is running.": "No Zombie Survival match is running.",
   "Zombie Survival stopped.": "Zombie Survival stopped.",
   "Zombie Survival compatibility checks failed. Stop remains available; see Player.log.": "Zombie Survival compatibility checks failed. Stop remains available; see Player.log.",
-  "PvP recovery: HP Steal is disabled on friendly-fire hits. Rabbit shared healing is disabled from/to active participants, even with balancing off.": "PvP recovery: HP Steal is disabled on friendly-fire hits. Rabbit shared healing is disabled from/to active participants, even with balancing off."
+  "PvP recovery: HP Steal is disabled on friendly-fire hits. Rabbit shared healing is disabled from/to active participants, even with balancing off.": "PvP recovery: HP Steal is disabled on friendly-fire hits. Rabbit shared healing is disabled from/to active participants, even with balancing off.",
+  "Zombie Survival: /one zombie start|stop|resetkda|status|help; duration 3..3600|reset (default 120s); count N|reset (positive integer, default 1); any-death on|off|reset (default off). Duration and count apply to the next match; count leaves at least one Human. Other settings apply live. /one save stores settings.": "Zombie Survival: /one zombie start|stop|resetkda|status|help; duration 3..3600|reset (default 120s); count N|reset (positive integer, default 1); any-death on|off|reset (default off). Duration and count apply to the next match; count leaves at least one Human. Other settings apply live. /one save stores settings.",
+  "[Zombie Survival] Starting Zombies: {0}. Survive for {1}s.": "[Zombie Survival] Starting Zombies: {0}. Survive for {1}s.",
+  "Starting Zombies: {0} for the next match (clamped to leave one Human).": "Starting Zombies: {0} for the next match (clamped to leave one Human).",
+  "Starting Zombies": "Starting Zombies"
 }

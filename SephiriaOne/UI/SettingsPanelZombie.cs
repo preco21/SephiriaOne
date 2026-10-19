@@ -8,8 +8,9 @@ namespace SephiriaOne
     {
         private Button zombieStart, zombieStop, zombieApply, zombieResetDuration, zombieResetKda;
         private Button zombieRefillApply, zombieIncomingApply;
-        private TMP_InputField zombieRefill, zombieIncoming;
-        private bool zombieDurationDraft, zombieRefillDraft, zombieIncomingDraft;
+        private Button zombieCountApply, zombieCountReset;
+        private TMP_InputField zombieCount, zombieRefill, zombieIncoming;
+        private bool zombieDurationDraft, zombieCountDraft, zombieRefillDraft, zombieIncomingDraft;
         private void BuildZombieEditor()
         {
             widgets.Text(pageRoot, "ZombieDuration", "Round (s)", 16, 0, 72, 25, 11);
@@ -17,9 +18,14 @@ namespace SephiriaOne
             zombieApply = widgets.Button(pageRoot, "Apply", 153, 0, 62, 25, ApplyZombieDuration);
             zombieResetDuration = widgets.Button(pageRoot, "Reset", 223, 0, 66, 25,
                 () => Execute("/one zombie duration reset", true, clearInputOnSuccess: ClearZombieDuration));
-            zombieStart = widgets.Button(pageRoot, "Start match", 16, 27, 132, 25, () => Execute("/one zombie start", true));
-            zombieStop = widgets.Button(pageRoot, "Stop match", 156, 27, 133, 25, () => Execute("/one zombie stop", true));
-            zombieResetKda = widgets.Button(pageRoot, "Reset K/D/A", 16, 54, 273, 25,
+            widgets.Text(pageRoot, "ZombieCount", "Starting Zombies", 16, 27, 118, 25, 11);
+            zombieCount = widgets.Input(pageRoot, 140, 27, 49, EditZombieCount);
+            zombieCountApply = widgets.Button(pageRoot, "Apply", 197, 27, 40, 25, ApplyZombieCount);
+            zombieCountReset = widgets.Button(pageRoot, "Reset", 245, 27, 44, 25,
+                () => Execute("/one zombie count reset", true, clearInputOnSuccess: ClearZombieCount));
+            zombieStart = widgets.Button(pageRoot, "Start match", 16, 54, 87, 25, () => Execute("/one zombie start", true));
+            zombieStop = widgets.Button(pageRoot, "Stop match", 109, 54, 87, 25, () => Execute("/one zombie stop", true));
+            zombieResetKda = widgets.Button(pageRoot, "Reset K/D/A", 202, 54, 87, 25,
                 () => Execute("/one zombie resetkda", true));
             AddCheckbox("Any death converts", 16, 81, 273, 25, s => SessionSettings.ZombieAnyDeath, s => true,
                 "/one zombie any-death", s => s.HostActive && s.SessionIdentity != null);
@@ -40,8 +46,10 @@ namespace SephiriaOne
             zombieStop.interactable = host && CombatMatchRuntime.IsZombieSurvival;
             zombieResetKda.interactable = host && SessionSettings.CanResetFriendlyFireScores;
             zombieApply.interactable = zombieResetDuration.interactable = amount.interactable = host;
+            zombieCount.interactable = zombieCountApply.interactable = zombieCountReset.interactable = host;
             zombieRefill.interactable = zombieIncoming.interactable = zombieRefillApply.interactable = zombieIncomingApply.interactable = host;
             if (!zombieDurationDraft) amount.SetTextWithoutNotify(SessionSettings.ZombieDuration.ToString(CultureInfo.InvariantCulture));
+            if (!zombieCountDraft) zombieCount.SetTextWithoutNotify(SessionSettings.ZombieStartingCount.ToString(CultureInfo.InvariantCulture));
             var modifiers = SessionSettings.ZombieModifiers;
             if (!zombieRefillDraft) zombieRefill.SetTextWithoutNotify(modifiers.RefillNumber);
             if (!zombieIncomingDraft) zombieIncoming.SetTextWithoutNotify(modifiers.IncomingNumber);
@@ -52,15 +60,19 @@ namespace SephiriaOne
             RefreshParticipants(snapshot);
         }
         private void EditZombieDuration(string text) => zombieDurationDraft = true;
+        private void EditZombieCount(string text) => zombieCountDraft = true;
         private void EditZombieRefill(string text) => zombieRefillDraft = true;
         private void EditZombieIncoming(string text) => zombieIncomingDraft = true;
         private void ApplyZombieDuration() => Execute("/one zombie duration " + amount.text.Trim(), true,
             clearInputOnSuccess: ClearZombieDuration);
+        private void ApplyZombieCount() => Execute("/one zombie count " + zombieCount.text.Trim(), true,
+            clearInputOnSuccess: ClearZombieCount);
         private void ApplyZombieRefill() => Execute("/one zombie refill " + zombieRefill.text.Trim(), true,
             clearInputOnSuccess: ClearZombieRefill);
         private void ApplyZombieIncoming() => Execute("/one zombie damage " + zombieIncoming.text.Trim(), true,
             clearInputOnSuccess: ClearZombieIncoming);
         private void ClearZombieDuration() { zombieDurationDraft = false; if (amount) amount.SetTextWithoutNotify(""); }
+        private void ClearZombieCount() { zombieCountDraft = false; if (zombieCount) zombieCount.SetTextWithoutNotify(""); }
         private void ClearZombieRefill() { zombieRefillDraft = false; if (zombieRefill) zombieRefill.SetTextWithoutNotify(""); }
         private void ClearZombieIncoming() { zombieIncomingDraft = false; if (zombieIncoming) zombieIncoming.SetTextWithoutNotify(""); }
     }

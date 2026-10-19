@@ -18,10 +18,10 @@ internal static class GameZombieTests
             Calls("FriendlyFireRuntime", "FinishDeath", "CombatMatchRuntime", "CompletedMatchDeath") &&
             Calls("CombatMatchRuntime", "Revived", "CombatMatchRuntime", "ZombieRevived"), "Conversion uses completed native death/revival callbacks");
         var panel = Code("SettingsPanel", "BuildZombieEditor");
-        Require(panel.Count(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "PanelWidgets" && m.Name == "Input") == 3 &&
+        Require(panel.Count(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "PanelWidgets" && m.Name == "Input") == 4 &&
             panel.Any(i => i.operand is string s && s == "/one zombie any-death") &&
-            Calls("SettingsPanel", "BuildZombieEditor", "SettingsPanel", "BuildParticipantsEditor"), "Zombie panel exposes timer, bonuses and shared selection");
-        foreach (string suffix in new[] { "Duration", "Refill", "Incoming" })
+            Calls("SettingsPanel", "BuildZombieEditor", "SettingsPanel", "BuildParticipantsEditor"), "Zombie panel exposes count, timer, bonuses and shared selection");
+        foreach (string suffix in new[] { "Duration", "Count", "Refill", "Incoming" })
             Require(Calls("SettingsPanel", "ApplyZombie" + suffix, "SettingsPanel", "Execute") &&
                 Calls("SettingsPanel", "ClearInput", "SettingsPanel", "ClearZombie" + suffix), "Zombie input dispatch/cleanup: " + suffix);
         Console.WriteLine("Verified Zombie shared hostility, role modifiers, native callback and panel wiring (not live multiplayer).");

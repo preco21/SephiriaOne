@@ -46,7 +46,7 @@ internal static class PvpDotSettingsTests
                 Check(old.FriendlyFire.DotIntervals.Seconds(effect) == ExpectedDefault(effect), "Omitted old interval uses current default: " + effect);
             Check(!SessionPolicy.TryReadPreset($"SephiriaOne preset v{version}\nfriendlyfire dot-burn 1\n", out _, out _), "Old schemas reject interval rows");
         }
-        for (int version = 28; version <= 31; version++)
+        for (int version = 28; version <= 32; version++)
         {
             Check(SessionPolicy.TryReadPreset($"SephiriaOne preset v{version}\n", out var omitted, out _) &&
                 !omitted.HasChanges && omitted.FriendlyFire.DotIntervals.Seconds(PvpDotEffect.Burn) == 0.9m,

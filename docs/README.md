@@ -1,6 +1,11 @@
 # Development knowledge index
 
-Maintained: 2026-10-19 (Asia/Seoul), addon `0.65.2`.
+Maintained: 2026-10-19 (Asia/Seoul), addon `0.66.0`.
+
+Zombie setup: [starting Zombie count](zombie-survival.md#starting-count-0660-2026-10-19)
+is configurable in the Zombie tab or `/one zombie count N|reset` (default 1).
+Each match selects distinct entrants randomly and clamps to leave one Human.
+Edits apply to the next match; v32 saves the requested count, never teams.
 
 PvP recovery: [Rabbit shared healing](rabbit-potions.md#pvp-recovery-exclusion-0652-2026-10-19)
 is blocked from/to active combat participants and [HP Steal](pvp-balancing.md#hp-steal-disabled-during-pvp-2026-10-19)
