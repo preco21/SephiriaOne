@@ -1,6 +1,11 @@
 # Development knowledge index
 
-Maintained: 2026-10-19 (Asia/Seoul), addon `0.66.3`.
+Maintained: 2026-10-19 (Asia/Seoul), addon `0.67.0`.
+
+Rabbit settings: [PvP shared-healing restriction](rabbit-potions.md#pvp-sharing-restriction-toggle-0670-2026-10-19)
+is now a host toggle, default on, in the Rabbit tab or `/one rabbit block-pvp-share
+on|off`. Opt-outs save in v33; old saves/reset keep the restriction on. Live command,
+status, tooltip and role notices reflect the option in English/Korean.
 
 PvP artifact rule: [White Bread](pvp-white-bread.md) loses its added post-hit
 invulnerability time for active combat participants in every mode, independently

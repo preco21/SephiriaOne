@@ -35,7 +35,18 @@ static class Program
         toggle.UserEdit(false, false, true, value => { actions++; return true; });
         Check(!toggle.Value && actions == 2, "Successful disable applies");
 
+        var restriction = new PanelToggleState(recoveryValue: true);
+        restriction.Observe(false);
+        Check(restriction.CanEdit(true, false, true), "Default-on toggle can restore restriction without hooks");
+        Check(!restriction.CanEdit(false, false, true), "Removing default-on restriction requires compatible hooks");
+        Check(!restriction.CanEdit(true, true, false), "Restoring restriction still requires host authority");
+        restriction.UserEdit(true, false, true, value => false);
+        Check(!restriction.Value, "Failed default-on recovery retains the old value");
+        restriction.UserEdit(true, false, true, value => true);
+        Check(restriction.Value, "Default-on recovery commits on without hooks");
+        restriction.UserEdit(false, true, true, value => true);
+        Check(!restriction.Value, "Available hooks allow restriction opt-out");
         PanelBindingLifetimeTests.Run();
-        Console.WriteLine("Passed 10 window geometry and checkbox intent checks.");
+        Console.WriteLine("Passed 16 window geometry and checkbox intent checks.");
     }
 }

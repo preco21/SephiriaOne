@@ -29,12 +29,17 @@ internal static class GameNativePlayerChatTests
         Require(Equals(normalize.Invoke(null, new object[] { sample }), sample), "stock guest preserves the exact Korean message");
         Type role = addon.GetType("SephiriaOne.CostumeRoleText", true)!;
         Type potionSettings = addon.GetType("SephiriaOne.RabbitPotionSettings", true)!;
-        object options = Activator.CreateInstance(potionSettings, new object[] { true, true, true, false, 37, true })!;
+        object options = Activator.CreateInstance(potionSettings, new object[] { true, true, true, false, 37, true, true })!;
         var clauses = (List<string>)AccessTools.DeclaredMethod(role, "Rabbit").Invoke(null, new[] { options, true, true })!;
         var pack = AccessTools.DeclaredMethod(role, "Pack");
         var roleLines = (List<string>)pack.Invoke(null, new object[] { clauses })!;
         Require(string.Join(" ", roleLines).Contains("37 MP") && string.Join(" ", roleLines).Contains("5 tiles"),
             "role notice uses active fee and actual shared-heal radius");
+        object unrestricted = Activator.CreateInstance(potionSettings, new object[] { true, true, true, false, 37, true, false })!;
+        var unrestrictedClauses = (List<string>)AccessTools.DeclaredMethod(role, "Rabbit").Invoke(null, new[] { unrestricted, true, true })!;
+        Require(string.Join(" ", unrestrictedClauses).Contains("including PvP") && !string.Join(" ", unrestrictedClauses).Contains("outside PvP"),
+            "role notice reflects current PvP sharing opt-out");
+        roleLines.AddRange((List<string>)pack.Invoke(null, new object[] { unrestrictedClauses })!);
         var companionLines = (List<string>)pack.Invoke(null, new object[] { new List<string>
         {
             "Farmer Squirrel · Companions", "Companion attack speed ×3", "Companion damage ×2",

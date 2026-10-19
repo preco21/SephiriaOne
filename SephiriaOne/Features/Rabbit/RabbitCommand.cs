@@ -4,7 +4,7 @@ using System.Globalization;
 
 namespace SephiriaOne
 {
-    internal enum RabbitOption { Infinite, Share, ConsumeMp, SuppressSurvival, Reset, MpAmount, LevelUpPotion }
+    internal enum RabbitOption { Infinite, Share, ConsumeMp, SuppressSurvival, Reset, MpAmount, LevelUpPotion, BlockPvpShare }
     internal enum RabbitParseResult { NotCommand, Help, Status, Invalid, Valid }
 
     internal readonly struct RabbitCommand
@@ -12,11 +12,13 @@ namespace SephiriaOne
         public RabbitOption Option { get; }
         public bool Enabled { get; }
         public int Amount { get; }
-        public bool IsReset => Option == RabbitOption.Reset || (Option != RabbitOption.MpAmount && !Enabled);
+        public bool IsReset => Option == RabbitOption.Reset ||
+            (Option == RabbitOption.BlockPvpShare ? Enabled : Option != RabbitOption.MpAmount && !Enabled);
         public static string Usage => L.T("Host only: /one rabbit infinite on|off, /one rabbit share on|off, /one rabbit mp-cost on|off|<0..10000>, /one rabbit suppress-survival on|off, /one rabbit reset, /one rabbit status. A number sets the MP fee and enables it; on/off retain the amount. Applies to Wing-Eared Rabbit HP potions. Save for future sessions: /one save.") + " " +
             L.T("Potion of Regeneration (Sample) is excluded from all Rabbit HP potion options: no MP cost or shared healing; normal consumption and Survival bonuses remain.") + " " +
             L.T("With infinite HP potions enabled, Wing-Eared Rabbit can use regular HP potions during Tension boss combat. Sample, MP and other potions remain restricted.") + " " +
-            L.T("/one rabbit level-up-potion on|off: gain one random non-HP/MP potion on each level-up while wearing Wing-Eared Rabbit.");
+            L.T("/one rabbit level-up-potion on|off: gain one random non-HP/MP potion on each level-up while wearing Wing-Eared Rabbit.") + " " +
+            L.T("/one rabbit block-pvp-share on|off: block shared healing from/to PvP participants (default on). Share must be on to heal nearby players.");
 
         public RabbitCommand(RabbitOption option, bool enabled, int amount = RabbitPotionSettings.DefaultMpCostPerDrink)
         { Option = option; Enabled = enabled; Amount = amount; }
@@ -43,6 +45,7 @@ namespace SephiriaOne
             else if (parts[2].Equals("share", StringComparison.OrdinalIgnoreCase)) option = RabbitOption.Share;
             else if (parts[2].Equals("mp-cost", StringComparison.OrdinalIgnoreCase)) option = RabbitOption.ConsumeMp;
             else if (parts[2].Equals("suppress-survival", StringComparison.OrdinalIgnoreCase)) option = RabbitOption.SuppressSurvival;
+            else if (parts[2].Equals("block-pvp-share", StringComparison.OrdinalIgnoreCase)) option = RabbitOption.BlockPvpShare;
             else if (parts[2].Equals("level-up-potion", StringComparison.OrdinalIgnoreCase)) option = RabbitOption.LevelUpPotion;
             else return RabbitParseResult.Invalid;
             if (option == RabbitOption.ConsumeMp && TryParseMpCost(parts[3], out int amount))

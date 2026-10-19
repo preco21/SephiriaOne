@@ -31,6 +31,9 @@ Check(shareOnly.Contains("except Potion of Regeneration (Sample)"), "Sharing too
 Check(!shareOnly.Contains("not consumed"), "infinite line is absent");
 Check(!shareOnly.Contains("Tension"), "Sharing alone must not claim a Tension exemption");
 
+string unrestricted = RabbitDescriptionText.Decorate(native, rabbit, false, true, true, blockPvpShare: false);
+Check(unrestricted.Contains("including during PvP") && !unrestricted.Contains("Disabled from/to"), "Tooltip reflects unrestricted sharing");
+Check(shareOnly.Contains("Disabled from/to"), "Tooltip still explains default PvP restriction");
 string both = Show(rabbit, true, true);
 Check(both.Contains("not consumed") && both.Contains("Nearby allies"), "both lines appear");
 string costOnly = RabbitDescriptionText.Decorate(native, rabbit, false, false, true, true, false);
@@ -83,6 +86,10 @@ Check(panel.tooltipEffectText.text.Contains("not consumed"), "policy event refre
 SessionSettings.Change(true, true);
 Check(panel.tooltipEffectText.text.Contains("Nearby allies"), "second option refreshes current tooltip");
 Check(panel.tooltipEffectText.text.Split("Nearby allies").Length == 2, "refresh does not duplicate line");
+SessionSettings.Change(true, true, blockPvpShare: false);
+Check(panel.tooltipEffectText.text.Contains("including during PvP") && !panel.tooltipEffectText.text.Contains("Disabled from/to"),
+    "Open costume tooltip refreshes on live PvP policy change");
+SessionSettings.Change(true, true);
 SessionSettings.Change(false, false, true, true);
 Check(panel.tooltipEffectText.text.Contains("10 MP") && panel.tooltipEffectText.text.Contains("Survival"), "balance options refresh current tooltip");
 SessionSettings.Change(false, false, true, true, 25);

@@ -812,5 +812,15 @@
   "[Z] \"{0}\" is a Zombie!": "[Z] \"{0}\" 님이 좀비입니다!",
   "[Z] Zombies:": "[Z] 좀비:",
   "[Z] Infected! Reviving as Zombie in {0}s - hunt remaining [H] Humans!": "[Z] 감염됨! {0}초 후 좀비로 부활 - 남은 [H] 인간을 사냥하세요!",
-  "[Z] \"{0}\" infected you! Reviving as Zombie in {1}s - hunt remaining [H] Humans!": "[Z] \"{0}\"에게 감염됨! {1}초 후 좀비로 부활 - 남은 [H] 인간을 사냥하세요!"
+  "[Z] \"{0}\" infected you! Reviving as Zombie in {1}s - hunt remaining [H] Humans!": "[Z] \"{0}\"에게 감염됨! {1}초 후 좀비로 부활 - 남은 [H] 인간을 사냥하세요!",
+  "/one rabbit block-pvp-share on|off: block shared healing from/to PvP participants (default on). Share must be on to heal nearby players.": "/one rabbit block-pvp-share on|off: PvP 참가자와의 회복 공유를 차단합니다(기본 on). 주변 플레이어를 회복하려면 share도 켜야 합니다.",
+  "Block shared healing in PvP": "PvP 회복 공유 차단",
+  "Block Rabbit shared healing in PvP: {0}.": "날개귀 토끼 PvP 회복 공유 차단: {0}.",
+  "PvP recovery: HP Steal is disabled on friendly-fire hits.": "PvP 회복: 팀킬 피해의 HP 흡수는 적용되지 않습니다.",
+  "MP cost: 0..10000. Reset restores 10, turns healing options off and blocks PvP sharing.": "MP 비용: 0~10000. 초기화하면 비용 10, 회복 옵션 꺼짐, PvP 공유 차단으로 복원됩니다.",
+  "Shared healing: 5 tiles, same floor. PvP sharing follows the toggle. Level-up: 1 random non-HP/MP potion.": "회복 공유: 같은 층 5칸 이내. PvP 공유는 토글 설정을 따릅니다. 레벨업: HP/MP 외 물약 1개.",
+  "- <indent=10>Nearby players within {0} tiles receive the same healing from HP potions, except Potion of Regeneration (Sample), including during PvP.</indent>": "- <indent=10>재생의 포션 (맛보기 샘플)을 제외한 HP 물약의 회복 효과를 {0}칸 이내 플레이어에게 공유합니다. PvP 중에도 공유됩니다.</indent>",
+  "Shared heal (including PvP): {0} tiles": "회복 공유(PvP 포함): {0}칸",
+  "Rabbit shared healing is blocked in PvP by default. /one rabbit block-pvp-share off permits it when Share HP healing is enabled.": "PvP에서는 기본적으로 토끼의 회복 공유가 차단됩니다. HP 회복 공유를 켠 상태에서 /one rabbit block-pvp-share off로 PvP 공유를 허용할 수 있습니다.",
+  "Rabbit potion compatibility checks failed. Restore the PvP sharing restriction with on, or use reset; see Player.log.": "토끼 물약 호환성 검사에 실패했습니다. on으로 PvP 공유 차단을 복원하거나 reset을 사용하세요. Player.log를 확인하세요."
 }

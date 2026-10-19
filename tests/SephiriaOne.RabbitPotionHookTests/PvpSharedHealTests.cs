@@ -8,6 +8,45 @@ internal static class PvpSharedHealTests
     {
         foreach (bool balance in new[] { false, true })
         foreach (string active in new[] { "source", "recipient", "both" })
+            check("PvP restriction opt-out restores sharing for " + active + ", balance " + balance, () =>
+            {
+                var source = setup(); var recipient = new PlayerAvatar(); _ = new PlayerSpawner(recipient);
+                SessionSettings.RabbitPotionsForUse = new(true, true, true, true, blockPvpShare: false);
+                SessionSettings.FriendlyFireForHit = new() { Enabled = true, Balance = balance };
+                if (active != "recipient") FriendlyFireParticipants.Selected.Add(source.player);
+                if (active != "source") FriendlyFireParticipants.Selected.Add(recipient);
+                install(); source.controller.RunDrink();
+                assert(recipient.Heals.Count == 1 && recipient.HealVisuals == 1 && source.player.Heals.Count == 1 &&
+                    source.player.mp == 20 && source.item.Quantity == 3, "Opt-out enables heal/FX and preserves other potion behaviors");
+                SessionSettings.RabbitPotionsForUse = SessionSettings.RabbitPotionsForUse.Apply(new(RabbitOption.BlockPvpShare, true));
+                source.controller.RunDrink();
+                assert(recipient.Heals.Count == 1 && recipient.HealVisuals == 1, "Re-enabling the restriction applies on next drink");
+                SessionSettings.RabbitPotionsForUse = new(true, false, blockPvpShare: false);
+                source.controller.RunDrink();
+                assert(recipient.Heals.Count == 1, "Opt-out alone never enables sharing");
+            });
+        check("Restriction toggle is read live inside drink and heal callbacks", () =>
+        {
+            var source = setup(); var first = new PlayerAvatar(); _ = new PlayerSpawner(first);
+            var later = new PlayerAvatar(); _ = new PlayerSpawner(later);
+            SessionSettings.RabbitPotionsForUse = new(true, true);
+            SessionSettings.FriendlyFireForHit = new() { Enabled = true };
+            source.player.OnPotionEvent = () => SessionSettings.RabbitPotionsForUse = new(true, true, blockPvpShare: false);
+            install(); source.controller.RunDrink();
+            assert(first.Heals.Count == 1 && later.Heals.Count == 1, "Opting out mid-drink is effective before sharing");
+            source.player.OnPotionEvent = () => SessionSettings.RabbitPotionsForUse = new(true, true);
+            source.controller.RunDrink();
+            assert(first.Heals.Count == 1 && later.Heals.Count == 1, "Re-enabling restriction mid-drink prevents sharing");
+            source.player.OnPotionEvent = null;
+            SessionSettings.RabbitPotionsForUse = new(true, true, blockPvpShare: false);
+            first.OnHealed = () => SessionSettings.RabbitPotionsForUse = new(true, true);
+            source.controller.RunDrink();
+            assert(first.Heals.Count == 2 && first.HealVisuals == 1 && later.Heals.Count == 1,
+                "Enabling restriction inside a heal suppresses its FX and all later recipients");
+        });
+
+        foreach (bool balance in new[] { false, true })
+        foreach (string active in new[] { "source", "recipient", "both" })
             check("PvP blocks Rabbit sharing for " + active + ", balance " + balance, () =>
             {
                 var source = setup();

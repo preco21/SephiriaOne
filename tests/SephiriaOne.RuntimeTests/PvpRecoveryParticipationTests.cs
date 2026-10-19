@@ -56,6 +56,12 @@ internal static class PvpRecoveryParticipationTests
             check(SettingsActions.Execute("/one friendlyfire balance off").Success && fighters.All(PvpParticipation.IsActive),
                 mode + ": turning balancing off keeps recovery restrictions active");
             check(fighters.All(p => !BreadProtects(p)), mode + ": Bread suppression is independent of balancing");
+            check(SettingsActions.Execute("/one rabbit block-pvp-share off").Success && CombatMatchRuntime.IsRunning &&
+                !SessionSettings.RabbitPotionsForUse.BlockPvpShare && fighters.All(PvpParticipation.IsActive) && fighters.All(p => !BreadProtects(p)),
+                mode + ": Rabbit opt-out is live without stopping combat or changing White Bread/participant rules");
+            check(SessionSettings.DescribeFriendlyFire(SessionSettings.FriendlyFireForHit).Contains("Block Rabbit shared healing in PvP: off.") &&
+                SettingsActions.Execute("/one rabbit block-pvp-share on").Success && SessionSettings.RabbitPotionsForUse.BlockPvpShare,
+                mode + ": combat status reflects live restriction and on restores it");
             check(SettingsActions.Execute("/one " + mode + " stop").Success && players.All(p => !PvpParticipation.IsActive(p)),
                 mode + ": ending the mode restores recovery without a sync frame");
             check(players.All(BreadProtects), mode + ": mode cleanup restores Bread immediately");

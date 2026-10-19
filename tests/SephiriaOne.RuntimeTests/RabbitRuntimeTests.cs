@@ -39,6 +39,10 @@ internal static class RabbitRuntimeTests
             int previous = notifications;
             check(Command("status") && notifications == previous && SessionSettings.ReadSnapshot().Revision == revision, "Rabbit status is read-only");
             check(Command("share on"), "Host enables sharing");
+            check(Command("block-pvp-share off") && !SessionSettings.ReadSnapshot().RabbitPotions.BlockPvpShare &&
+                !SessionSettings.RabbitPotionsForUse.BlockPvpShare &&
+                SessionSettings.DescribeRabbit(SessionSettings.RabbitPotionsForUse).Contains("Block Rabbit shared healing in PvP: off."),
+                "Host toggle is live and displayed through shared command/UI policy");
             var snapshot = SessionSettings.ReadSnapshot();
             check(snapshot.RabbitPotions.Infinite && snapshot.RabbitPotions.Share && snapshot.RabbitPotions.LevelUpPotion &&
                 snapshot.RabbitPotionsAvailable && snapshot.RabbitLevelUpPotionsAvailable,
@@ -70,15 +74,22 @@ internal static class RabbitRuntimeTests
                 SessionSettings.RabbitPotionsForUse.MpCostPerDrink == 35 && SessionSettings.RabbitPotionsForUse.LevelUpPotion &&
                 rejoined.PlayerAvatar.customStats.Count == 2, "Rejoining uses current custom fee without adding player markers or healing state");
             check(SettingsActions.Execute("/one save").Success, "Rabbit flags save with common preset action");
+            check(!SessionSettings.RabbitPotionsForUse.BlockPvpShare, "Other edits and rejoin preserve the current PvP sharing policy");
             check(Command("reset") && !SessionSettings.RabbitPotionsForUse.HasChanges && SessionSettings.RabbitPotionsForUse.MpCostPerDrink == 10,
                 "Reset clears active toggles and custom fee");
+            check(SessionSettings.RabbitPotionsForUse.BlockPvpShare, "Rabbit reset restores default PvP restriction");
             DungeonManager.Instance = new DungeonManager();
             check(!SessionSettings.RabbitPotionsForDisplay.HasChanges, "Display never reuses old dungeon intent");
             check(SessionSettings.RabbitPotionsForUse.Infinite && SessionSettings.RabbitPotionsForUse.Share &&
                 SessionSettings.RabbitPotionsForUse.ConsumeMp && SessionSettings.RabbitPotionsForUse.SuppressSurvival &&
                 SessionSettings.RabbitPotionsForUse.MpCostPerDrink == 35 && SessionSettings.RabbitPotionsForUse.LevelUpPotion,
                 "First use in new session loads saved flags and cost including level-up potion");
+            check(!SessionSettings.RabbitPotionsForUse.BlockPvpShare, "New session reloads explicit opt-out from saved preset");
             RabbitPotionFeature.Available = false;
+            check(Command("block-pvp-share on") && SessionSettings.RabbitPotionsForUse.BlockPvpShare && SessionSettings.RabbitPotionsForUse.Share,
+                "Restoring default restriction is allowed without potion hooks and preserves other Rabbit options");
+            check(!Command("block-pvp-share off") && SessionSettings.RabbitPotionsForUse.BlockPvpShare,
+                "Removing restriction requires working potion hooks");
             check(Command("level-up-potion off") && Command("level-up-potion on") && SessionSettings.RabbitPotionsForUse.LevelUpPotion,
                 "Level-up potion can be enabled when drinking hooks are unavailable");
             snapshot = SessionSettings.ReadSnapshot();
@@ -114,6 +125,7 @@ internal static class RabbitRuntimeTests
             NetworkServer.active = false;
             check(!Command("level-up-potion on") && !Command("level-up-potion off"), "Guest cannot change level-up potion rewards");
             check(!Command("mp-cost 25"), "Guest cannot change numeric Rabbit fee");
+            check(!Command("block-pvp-share off") && !Command("block-pvp-share on"), "Guest cannot change PvP healing restriction");
             check(!Command("infinite on") && !Command("share off") && !SessionSettings.RabbitPotionsForDisplay.HasChanges && !SessionSettings.RabbitPotionsForUse.HasChanges,
                 "Guest cannot change or consume host-only policy");
             NetworkServer.active = true;

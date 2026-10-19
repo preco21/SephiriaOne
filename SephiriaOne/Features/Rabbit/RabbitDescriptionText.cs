@@ -4,18 +4,19 @@ namespace SephiriaOne
     {
         private const string Infinite = "- <indent=10>HP potions, except Potion of Regeneration (Sample), are not consumed after a successful drink (requires one potion). These potions can be used during boss combat with Tension.</indent>";
         private const string Share = "- <indent=10>Nearby allies within {0} tiles receive the same healing from HP potions, except Potion of Regeneration (Sample). Disabled from/to active PvP participants.</indent>";
+        private const string ShareUnrestricted = "- <indent=10>Nearby players within {0} tiles receive the same healing from HP potions, except Potion of Regeneration (Sample), including during PvP.</indent>";
         private const string Survival = "- <indent=10>HP potion drinks, except Potion of Regeneration (Sample), do not trigger Survival rank 5 random-stat gains.</indent>";
 
         internal static string Decorate(string original, string costumeId, bool infinite, bool share, bool compatible,
             bool consumeMp = false, bool suppressSurvival = false, int mpCost = RabbitPotionSettings.DefaultMpCostPerDrink,
-            bool levelUpPotion = false, bool levelUpCompatible = false)
+            bool levelUpPotion = false, bool levelUpCompatible = false, bool blockPvpShare = true)
         {
             string native = original ?? "";
             if (native.Length == 0 || costumeId != "HolyRabbit") return native;
             if (compatible)
             {
                 if (infinite) native = Append(native, L.T(Infinite));
-                if (share) native = Append(native, L.F(Share, RabbitPotionSettings.ShareRadiusTiles));
+                if (share) native = Append(native, L.F(blockPvpShare ? Share : ShareUnrestricted, RabbitPotionSettings.ShareRadiusTiles));
                 if (consumeMp) native = Append(native, L.F("- <indent=10>Each Wing-Eared Rabbit HP potion drink, except Potion of Regeneration (Sample), costs {0} MP; insufficient MP blocks the drink.</indent>", mpCost));
                 if (suppressSurvival) native = Append(native, L.T(Survival));
             }

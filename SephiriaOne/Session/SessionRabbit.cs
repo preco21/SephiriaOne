@@ -19,7 +19,9 @@ namespace SephiriaOne
             bool available = command.Option == RabbitOption.LevelUpPotion ? RabbitLevelUpFeature.Available : RabbitPotionFeature.Available;
             if (!command.IsReset && !available)
             {
-                message = command.Option == RabbitOption.LevelUpPotion ?
+                message = command.Option == RabbitOption.BlockPvpShare ?
+                    L.T("Rabbit potion compatibility checks failed. Restore the PvP sharing restriction with on, or use reset; see Player.log.") :
+                    command.Option == RabbitOption.LevelUpPotion ?
                     L.T("Rabbit level-up potion compatibility checks failed. Off/reset remain available; see Player.log.") :
                     L.T("Rabbit potion compatibility checks failed. Off/reset remain available; see Player.log.");
                 return false;
@@ -30,10 +32,14 @@ namespace SephiriaOne
             return true;
         }
 
+        internal static string DescribeRabbitPvpSharing(RabbitPotionSettings settings) =>
+            L.F("Block Rabbit shared healing in PvP: {0}.", L.T(settings.BlockPvpShare ? "on" : "off"));
+
         internal static string DescribeRabbit(RabbitPotionSettings settings) =>
             L.F("Wing-Eared Rabbit HP potions: infinite uses {0}; nearby healing {1}; {2} MP per drink {3}; Survival random-stat suppression {4}.",
                 L.T(settings.Infinite ? "on" : "off"), L.T(settings.Share ? "on" : "off"), settings.MpCostPerDrink,
                 L.T(settings.ConsumeMp ? "on" : "off"), L.T(settings.SuppressSurvival ? "on" : "off")) + " " +
-            L.F("Level-up non-HP/MP potion: {0}.", L.T(settings.LevelUpPotion ? "on" : "off"));
+            L.F("Level-up non-HP/MP potion: {0}.", L.T(settings.LevelUpPotion ? "on" : "off")) + " " +
+            DescribeRabbitPvpSharing(settings);
     }
 }

@@ -15,7 +15,7 @@ namespace SephiriaOne
             {
                 if (settings.Infinite) parts.Add(L.T("Unlimited HP potions (requires one)"));
                 if (settings.ConsumeMp) parts.Add(L.F("HP potion: {0} MP", settings.MpCostPerDrink));
-                if (settings.Share) parts.Add(L.F("Shared heal outside PvP: {0} tiles", RabbitPotionSettings.ShareRadiusTiles));
+                if (settings.Share) parts.Add(L.F(settings.BlockPvpShare ? "Shared heal outside PvP: {0} tiles" : "Shared heal (including PvP): {0} tiles", RabbitPotionSettings.ShareRadiusTiles));
                 if (settings.Infinite || settings.ConsumeMp || settings.Share) parts.Add(L.T("Sample excluded"));
             }
             if (levelUp && settings.LevelUpPotion) parts.Add(L.T("Level-up: random non-HP/MP potion"));

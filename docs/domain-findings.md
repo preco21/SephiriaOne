@@ -16,6 +16,15 @@ A different game build requires renewed contract/asset checks. Start with the
 
 ## State lifetimes and multiplayer
 
+Feature-specific opt-outs belong to the feature's policy, not the shared combat
+participant service. Rabbit's `BlockPvpShare` (default true even for a zeroed
+settings struct) gates only its shared healing checks; White Bread and other
+participant rules remain independent. Re-read feature policy at the callback
+boundaries, and version explicit opt-outs so older saves preserve existing
+behavior. A default-on restriction also needs `on` as its recovery action; the
+shared checkbox accepts a recovery value while existing toggles still recover
+to off. See [Rabbit PvP toggle](rabbit-potions.md#pvp-sharing-restriction-toggle-0670-2026-10-19).
+
 Some artifact effects are contributions to native fields rather than separately
 applied buffs. White Bread adds to `UnitAvatar.invincibleTime`. A read-time
 admission adapter can exclude just that contribution using the native unique-item

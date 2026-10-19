@@ -352,10 +352,10 @@ namespace SephiriaOne
             window.anchoredPosition = new Vector2(geometry.X, geometry.Y);
         }
         private void AddCheckbox(string label, float x, float y, float width, float height,
-            Func<SettingsSnapshot, bool> value, Func<SettingsSnapshot, bool> available, string prefix, Func<SettingsSnapshot, bool> mutable = null)
+            Func<SettingsSnapshot, bool> value, Func<SettingsSnapshot, bool> available, string prefix, Func<SettingsSnapshot, bool> mutable = null, bool recoveryValue = false)
         {
             checkboxes.Add(new PanelCheckbox(widgets.Checkbox(pageRoot, label, x, y, width, height), value, available,
-                enabled => Execute(prefix + (enabled ? " on" : " off"), true), mutable));
+                enabled => Execute(prefix + (enabled ? " on" : " off"), true), mutable, recoveryValue));
         }
 
         private void RefreshSaved() { Refresh(ReadCurrentSnapshot(true)); feedback.text = L.T("Refreshed."); }

@@ -76,7 +76,7 @@ namespace SephiriaOne
 
         internal static string DescribeFriendlyFire(FriendlyFireSettings settings) =>
             L.F("Friendly fire: {0}; allied damage: {1}%.", L.T(settings.Enabled ? "on" : "off"), settings.Number) + " " +
-            (settings.Enabled ? L.T("PvP recovery: HP Steal is disabled on friendly-fire hits. Rabbit shared healing is disabled from/to active participants, even with balancing off.") + " " : "") +
+            (settings.Enabled ? L.T("PvP recovery: HP Steal is disabled on friendly-fire hits.") + " " + DescribeRabbitPvpSharing(RabbitPotionsForDisplay) + " " : "") +
             L.F("PvP balancing: {0}.", L.T(settings.Balance ? "on" : "off")) + " " +
             L.F("Hit-frequency scaling: {0} (requires PvP balancing).", L.T(settings.HitFrequency ? "on" : "off")) + " " +
             L.F("PvP refill: {0}% max HP/s.", settings.RefillNumber) + " " +

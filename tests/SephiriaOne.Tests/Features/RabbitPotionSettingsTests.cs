@@ -12,6 +12,13 @@ internal static class RabbitPotionSettingsTests
             Check(RabbitCommand.Parse(text, out var command, out _) == RabbitParseResult.Valid, text);
             return command;
         }
+        Check(RabbitCommand.Parse("/one rabbit block-pvp-share off", out var pvpToggle, out _) == RabbitParseResult.Valid,
+            "Host can toggle the Rabbit PvP shared-healing restriction");
+        Check(FriendlyFireCommand.Usage.Contains("/one rabbit block-pvp-share off") &&
+            !FriendlyFireCommand.Usage.Contains("Rabbit shared healing is disabled from/to"),
+            "Friendly-fire help explains the optional Rabbit restriction instead of claiming it is unconditional");
+        Check(!pvpToggle.IsReset && Parse("/one rabbit block-pvp-share on").IsReset,
+            "Default-on restriction restores on as recovery while off requires compatibility");
         var policy = new SessionPolicy();
         Check(!policy.HasChanges && !policy.RabbitPotions.HasChanges && !policy.RabbitPotions.LevelUpPotion, "Defaults are native");
         var levelUpOn = Parse(" /ONE RABBIT LEVEL-UP-POTION ON ");
@@ -173,6 +180,40 @@ internal static class RabbitPotionSettingsTests
                 "Reject bad cost preset atomically " + row);
         policy.Record(Parse("/one rabbit reset"));
         Check(!policy.HasChanges && policy.RabbitPotions.MpCostPerDrink == 10, "Reset clears custom fee to ten");
+        Check(default(RabbitPotionSettings).BlockPvpShare && policy.RabbitPotions.BlockPvpShare,
+            "Default struct and reset keep PvP sharing blocked");
+        policy.Record(pvpToggle);
+        Check(!policy.RabbitPotions.BlockPvpShare && policy.HasChanges && !policy.RabbitPotions.Share,
+            "Opting out of restriction is independent from enabling shared healing");
+        const string pvpPreset = "SephiriaOne preset v33\nrabbit block-pvp-share 0\n";
+        Check(policy.ToPresetText() == pvpPreset && SessionPolicy.TryReadPreset(pvpPreset, out loaded, out _) &&
+            !loaded.RabbitPotions.BlockPvpShare && loaded.ToPresetText() == pvpPreset, "Restriction opt-out round trips as v33");
+        foreach (string other in new[] { "infinite on", "infinite off", "share on", "share off", "mp-cost on", "mp-cost off",
+            "mp-cost 35", "suppress-survival on", "suppress-survival off", "level-up-potion on", "level-up-potion off" })
+        {
+            policy.Record(Parse("/one rabbit " + other));
+            Check(!policy.RabbitPotions.BlockPvpShare, "Other Rabbit options retain PvP policy: " + other);
+        }
+        policy.Record(Parse("/ONE RABBIT BLOCK-PVP-SHARE ON"));
+        Check(policy.RabbitPotions.BlockPvpShare && policy.RabbitPotions.MpCostPerDrink == 35,
+            "Re-enabling restriction leaves other settings intact");
+        for (int version = 1; version <= 32; version++)
+        {
+            string old = "SephiriaOne preset v" + version + "\n";
+            Check(SessionPolicy.TryReadPreset(old, out loaded, out _) && loaded.RabbitPotions.BlockPvpShare,
+                "Old presets preserve the restriction: " + version);
+            Check(!SessionPolicy.TryReadPreset(old + "rabbit block-pvp-share 0\n", out loaded, out _) && !loaded.HasChanges,
+                "Older schemas reject new toggle atomically: " + version);
+        }
+        foreach (string row in new[] { "rabbit block-pvp-share 2", "rabbit block-pvp-share -1", "rabbit block-pvp-share off",
+            "rabbit block-pvp-share 0 extra", "rabbit block-pvp-share 0\nrabbit block-pvp-share 1" })
+            Check(!SessionPolicy.TryReadPreset("SephiriaOne preset v33\n" + row, out loaded, out _) && !loaded.HasChanges,
+                "Reject malformed opt-out preset: " + row);
+        foreach (string tail in new[] { "", "yes", "0", "off extra" })
+            Check(RabbitCommand.Parse("/one rabbit block-pvp-share " + tail, out _, out _) == RabbitParseResult.Invalid,
+                "Reject invalid toggle argument " + tail);
+        policy.Record(pvpToggle); policy.Clear();
+        Check(policy.RabbitPotions.BlockPvpShare && !policy.HasChanges, "New session/reset does not inherit opt-out");
         return checks;
     }
 }

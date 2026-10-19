@@ -31,9 +31,9 @@ namespace SephiriaOne
     {
         internal static event Action SettingsChanged;
         internal static RabbitPotionSettings RabbitPotionsForDisplay { get; set; }
-        internal static void Change(bool infinite, bool share, bool consumeMp = false, bool suppressSurvival = false, int mpCost = 10, bool levelUpPotion = false)
+        internal static void Change(bool infinite, bool share, bool consumeMp = false, bool suppressSurvival = false, int mpCost = 10, bool levelUpPotion = false, bool blockPvpShare = true)
         {
-            RabbitPotionsForDisplay = new RabbitPotionSettings(infinite, share, consumeMp, suppressSurvival, mpCost, levelUpPotion);
+            RabbitPotionsForDisplay = new RabbitPotionSettings(infinite, share, consumeMp, suppressSurvival, mpCost, levelUpPotion, blockPvpShare);
             SettingsChanged?.Invoke();
         }
     }

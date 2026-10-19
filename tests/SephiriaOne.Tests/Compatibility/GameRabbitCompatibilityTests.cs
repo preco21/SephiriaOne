@@ -92,6 +92,9 @@ internal static class GameRabbitCompatibilityTests
         var active = AccessTools.DeclaredMethod(participation, "IsActive");
         var allowed = AccessTools.DeclaredMethod(participation, "CanShareRecovery");
         var shareCode = PatchProcessor.GetOriginalInstructions(share).ToList();
+        var restriction = AccessTools.PropertyGetter(addon.GetType("SephiriaOne.RabbitPotionSettings", true)!, "BlockPvpShare");
+        if (shareCode.Count(i => i.Calls(restriction)) != 3)
+            throw new Exception("Rabbit sharing must re-read the PvP restriction for source, each recipient and presentation.");
         int sharedHeal = shareCode.FindIndex(i => i.Calls(healPercent));
         if (!Calls(share, active) || !shareCode.Take(sharedHeal).Any(i => i.Calls(allowed)) ||
             !shareCode.Skip(sharedHeal + 1).Any(i => i.Calls(allowed)))

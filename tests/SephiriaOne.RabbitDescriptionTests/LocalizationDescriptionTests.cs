@@ -39,6 +39,10 @@ internal static class LocalizationDescriptionTests
                 SessionSettings.Change(false, true);
                 Check(panel.tooltipEffectText.text.Contains(sample),
                     language + " sharing-only tooltip identifies the Sample exception");
+                SessionSettings.Change(false, true, blockPvpShare: false);
+                Check(panel.tooltipEffectText.text.Contains(sample) && panel.tooltipEffectText.text.Contains(language == "ko" ? "PvP 중에도" : "including during PvP") &&
+                    !panel.tooltipEffectText.text.Contains(language == "ko" ? "공유받을 수 없습니다" : "Disabled from/to"),
+                    language + " tooltip refreshes restriction opt-out and preserves the Sample exception");
                 SessionSettings.Change(false, false, true, false, 25);
                 Check(panel.tooltipEffectText.text.Contains(sample) && panel.tooltipEffectText.text.Contains("25 MP"),
                     language + " MP-only tooltip identifies the Sample exception");

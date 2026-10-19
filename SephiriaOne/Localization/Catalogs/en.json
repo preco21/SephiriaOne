@@ -812,5 +812,15 @@
   "[Z] \"{0}\" is a Zombie!": "[Z] \"{0}\" is a Zombie!",
   "[Z] Zombies:": "[Z] Zombies:",
   "[Z] Infected! Reviving as Zombie in {0}s - hunt remaining [H] Humans!": "[Z] Infected! Reviving as Zombie in {0}s - hunt remaining [H] Humans!",
-  "[Z] \"{0}\" infected you! Reviving as Zombie in {1}s - hunt remaining [H] Humans!": "[Z] \"{0}\" infected you! Reviving as Zombie in {1}s - hunt remaining [H] Humans!"
+  "[Z] \"{0}\" infected you! Reviving as Zombie in {1}s - hunt remaining [H] Humans!": "[Z] \"{0}\" infected you! Reviving as Zombie in {1}s - hunt remaining [H] Humans!",
+  "/one rabbit block-pvp-share on|off: block shared healing from/to PvP participants (default on). Share must be on to heal nearby players.": "/one rabbit block-pvp-share on|off: block shared healing from/to PvP participants (default on). Share must be on to heal nearby players.",
+  "Block shared healing in PvP": "Block shared healing in PvP",
+  "Block Rabbit shared healing in PvP: {0}.": "Block Rabbit shared healing in PvP: {0}.",
+  "PvP recovery: HP Steal is disabled on friendly-fire hits.": "PvP recovery: HP Steal is disabled on friendly-fire hits.",
+  "MP cost: 0..10000. Reset restores 10, turns healing options off and blocks PvP sharing.": "MP cost: 0..10000. Reset restores 10, turns healing options off and blocks PvP sharing.",
+  "Shared healing: 5 tiles, same floor. PvP sharing follows the toggle. Level-up: 1 random non-HP/MP potion.": "Shared healing: 5 tiles, same floor. PvP sharing follows the toggle. Level-up: 1 random non-HP/MP potion.",
+  "- <indent=10>Nearby players within {0} tiles receive the same healing from HP potions, except Potion of Regeneration (Sample), including during PvP.</indent>": "- <indent=10>Nearby players within {0} tiles receive the same healing from HP potions, except Potion of Regeneration (Sample), including during PvP.</indent>",
+  "Shared heal (including PvP): {0} tiles": "Shared heal (including PvP): {0} tiles",
+  "Rabbit shared healing is blocked in PvP by default. /one rabbit block-pvp-share off permits it when Share HP healing is enabled.": "Rabbit shared healing is blocked in PvP by default. /one rabbit block-pvp-share off permits it when Share HP healing is enabled.",
+  "Rabbit potion compatibility checks failed. Restore the PvP sharing restriction with on, or use reset; see Player.log.": "Rabbit potion compatibility checks failed. Restore the PvP sharing restriction with on, or use reset; see Player.log."
 }

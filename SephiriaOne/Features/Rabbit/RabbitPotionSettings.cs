@@ -7,6 +7,9 @@ namespace SephiriaOne
         public bool ConsumeMp { get; }
         public bool SuppressSurvival { get; }
         public bool LevelUpPotion { get; }
+        // The all-zero/default struct retains the existing PvP restriction.
+        private readonly bool allowPvpShare;
+        public bool BlockPvpShare => !allowPvpShare;
         public const int DefaultMpCostPerDrink = 10;
         public const int MaximumMpCostPerDrink = 10000;
         // Native map tiles span two world units. Presentation and gameplay share
@@ -16,23 +19,24 @@ namespace SephiriaOne
         // An all-zero struct still represents the native/default policy with a 10 MP fee.
         private readonly int mpCostOffset;
         public int MpCostPerDrink => DefaultMpCostPerDrink + mpCostOffset;
-        public bool HasChanges => Infinite || Share || ConsumeMp || SuppressSurvival || mpCostOffset != 0 || LevelUpPotion;
+        public bool HasChanges => Infinite || Share || ConsumeMp || SuppressSurvival || mpCostOffset != 0 || LevelUpPotion || allowPvpShare;
 
         public RabbitPotionSettings(bool infinite, bool share, bool consumeMp = false, bool suppressSurvival = false,
-            int mpCost = DefaultMpCostPerDrink, bool levelUpPotion = false)
+            int mpCost = DefaultMpCostPerDrink, bool levelUpPotion = false, bool blockPvpShare = true)
         {
             if (mpCost < 0 || mpCost > MaximumMpCostPerDrink) throw new System.ArgumentOutOfRangeException(nameof(mpCost));
             Infinite = infinite; Share = share; ConsumeMp = consumeMp; SuppressSurvival = suppressSurvival;
             mpCostOffset = mpCost - DefaultMpCostPerDrink;
-            LevelUpPotion = levelUpPotion;
+            LevelUpPotion = levelUpPotion; allowPvpShare = !blockPvpShare;
         }
 
         public RabbitPotionSettings Apply(RabbitCommand command) => command.Option == RabbitOption.Reset ? default :
-            command.Option == RabbitOption.Infinite ? new RabbitPotionSettings(command.Enabled, Share, ConsumeMp, SuppressSurvival, MpCostPerDrink, LevelUpPotion) :
-            command.Option == RabbitOption.Share ? new RabbitPotionSettings(Infinite, command.Enabled, ConsumeMp, SuppressSurvival, MpCostPerDrink, LevelUpPotion) :
-            command.Option == RabbitOption.ConsumeMp ? new RabbitPotionSettings(Infinite, Share, command.Enabled, SuppressSurvival, MpCostPerDrink, LevelUpPotion) :
-            command.Option == RabbitOption.MpAmount ? new RabbitPotionSettings(Infinite, Share, command.Enabled, SuppressSurvival, command.Amount, LevelUpPotion) :
-            command.Option == RabbitOption.LevelUpPotion ? new RabbitPotionSettings(Infinite, Share, ConsumeMp, SuppressSurvival, MpCostPerDrink, command.Enabled) :
-            new RabbitPotionSettings(Infinite, Share, ConsumeMp, command.Enabled, MpCostPerDrink, LevelUpPotion);
+            command.Option == RabbitOption.Infinite ? new RabbitPotionSettings(command.Enabled, Share, ConsumeMp, SuppressSurvival, MpCostPerDrink, LevelUpPotion, BlockPvpShare) :
+            command.Option == RabbitOption.Share ? new RabbitPotionSettings(Infinite, command.Enabled, ConsumeMp, SuppressSurvival, MpCostPerDrink, LevelUpPotion, BlockPvpShare) :
+            command.Option == RabbitOption.ConsumeMp ? new RabbitPotionSettings(Infinite, Share, command.Enabled, SuppressSurvival, MpCostPerDrink, LevelUpPotion, BlockPvpShare) :
+            command.Option == RabbitOption.MpAmount ? new RabbitPotionSettings(Infinite, Share, command.Enabled, SuppressSurvival, command.Amount, LevelUpPotion, BlockPvpShare) :
+            command.Option == RabbitOption.LevelUpPotion ? new RabbitPotionSettings(Infinite, Share, ConsumeMp, SuppressSurvival, MpCostPerDrink, command.Enabled, BlockPvpShare) :
+            command.Option == RabbitOption.BlockPvpShare ? new RabbitPotionSettings(Infinite, Share, ConsumeMp, SuppressSurvival, MpCostPerDrink, LevelUpPotion, command.Enabled) :
+            new RabbitPotionSettings(Infinite, Share, ConsumeMp, command.Enabled, MpCostPerDrink, LevelUpPotion, BlockPvpShare);
     }
 }

@@ -1,8 +1,54 @@
 # Wing-Eared Rabbit potion options
 
+## PvP sharing restriction toggle (`0.67.0`, 2026-10-19)
+
+The Rabbit tab now has **Block shared healing in PvP** / **PvP 회복 공유 차단**,
+initially on. Restoring `on` or using Reset remains available if potion hooks fail;
+turning the restriction off requires compatible hooks. Other Rabbit options are
+preserved when restoring this toggle. Host commands:
+
+```text
+/one rabbit block-pvp-share off
+/one rabbit block-pvp-share on
+/one save
+```
+
+`off` permits shared healing to/from current PvP participants. **Share HP healing**
+(`/one rabbit share on`) must also be enabled. This does not introduce team-based
+healing: nearby players can receive it even if they are opponents in PvP. With
+`on`, the existing participant restriction below applies across casual friendly
+fire, Deathmatch, Tournament, Play Tag and Zombie Survival, independently of
+optional balancing. Edits apply live without stopping the active match.
+
+Self healing, MP fees, Survival suppression, sample-potion exclusions, radius,
+floor and connection guards retain their existing behavior. HP Steal and White
+Bread rules are unrelated and stay in force. The toggle is re-read before
+recipient collection, each heal and FX/audio delivery, so native callbacks that
+change settings cannot leave later recipients using an old restriction. No
+per-player state, polling, network messages or guest addon are added.
+
+Command/status, the panel, native costume tooltip and private costume role notice
+reflect the configured value with EN/KO translations. Reset turns healing options
+off and restores this restriction to on. Preset v33 records an explicit opt-out
+as `rabbit block-pvp-share 0`; v1–v32 load with the restriction on, while v33 also
+accepts previous settings. Existing Rabbit edits preserve the new toggle.
+
+Verification: command/preset tests include defaults, old-version migration,
+invalid/duplicate rows and independent edits. Actual Harmony drink fixtures cover
+sender/recipient/both in PvP with balancing on/off, heal/FX restoration, Share off,
+and toggling inside drink/heal callbacks. Shared mode tests cover live edits in
+all modes and saved/rejoined settings; localized tooltip/role tests cover current
+wording. Release build passed with zero warnings/errors. All 273 potion-hook scenarios,
+51 description checks plus 12 localized checks, 3,205 runtime checks plus 69 Bat
+checks, 16 panel geometry/toggle checks plus 12 binding/lifetime checks, portable settings/catalog tests and installed-game/Harmony contracts
+passed. Live host/guest UI and gameplay are not claimed verified; nothing was
+deployed.
+
+
 ## PvP recovery exclusion (`0.65.2`, 2026-10-19)
 
-An active PvP participant cannot send or receive Rabbit shared HP-potion healing.
+With **Block shared healing in PvP** enabled (the default), an active PvP
+participant cannot send or receive Rabbit shared HP-potion healing.
 This covers casual friendly fire, Deathmatch, the current Tournament pair, Play
 Tag and both Zombie teams, even when optional PvP balancing is off. A spectator
 cannot heal a combatant; two spectators can still share healing. Pre-fight
