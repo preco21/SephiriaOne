@@ -88,7 +88,20 @@ namespace SephiriaOne
                 settings.DotIntervals.Number(PvpDotEffect.Wound), settings.DotIntervals.Number(PvpDotEffect.Lightning),
                 settings.DotIntervals.Number(PvpDotEffect.Freeze), settings.DotIntervals.Number(PvpDotEffect.Chim),
                 settings.DotIntervals.Number(PvpDotEffect.DarkCloud)) + " " +
+            DescribeDebuffSchedules(settings.DotIntervals) + " " +
             L.F("Block lobby HP/MP recovery: {0}.", L.T(settings.BlockLobbyRegen ? "on" : "off")) +
             (settings.BlockLobbyRegen && !LobbyRegenFeature.Available ? " " + L.T("Lobby recovery hooks unavailable; off/reset remain available. See Player.log.") : "");
+
+        private static string DescribeDebuffSchedules(PvpDotSettings settings)
+        {
+            var values = new System.Text.StringBuilder();
+            for (int i = 0; i < (int)PvpDotEffect.DarkCloud; i++)
+            {
+                var effect = (PvpDotEffect)i;
+                if (i != 0) values.Append("; ");
+                values.Append(PvpDotSettings.Key(effect)).Append(' ').Append(L.T(settings.PreserveSchedule(effect) ? "on" : "off"));
+            }
+            return L.F("Keep debuff schedules: {0} (requires PvP balancing).", values.ToString());
+        }
     }
 }

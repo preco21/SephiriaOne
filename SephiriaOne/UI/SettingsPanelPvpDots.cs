@@ -25,7 +25,7 @@ namespace SephiriaOne
             var scroll = container.gameObject.AddComponent<ScrollRect>();
             var viewport = PanelWidgets.Rect(container, "Viewport", 0, 0, 259, 82);
             viewport.gameObject.AddComponent<RectMask2D>();
-            var content = PanelWidgets.Rect(viewport, "Effects", 0, 0, 259, ((PvpDotSettings.Count + 1) / 2) * 42);
+            var content = PanelWidgets.Rect(viewport, "Effects", 0, 0, 259, ((PvpDotSettings.Count + 1) / 2) * 64);
             scroll.viewport = viewport; scroll.content = content; scroll.horizontal = false;
             scroll.movementType = ScrollRect.MovementType.Clamped; scroll.scrollSensitivity = 30;
             var track = PanelWidgets.Rect(container, "Scrollbar", 265, 0, 8, 82);
@@ -41,10 +41,14 @@ namespace SephiriaOne
             for (int i = 0; i < PvpDotSettings.Count; i++)
             {
                 var row = new DotIntervalEditor { Effect = (PvpDotEffect)i };
-                int x = i % 2 * 134, y = i / 2 * 42;
+                int x = i % 2 * 134, y = i / 2 * 64;
                 widgets.Text(content, "DotLabel" + i, PvpDotSettings.Label(row.Effect), x, y, 125, 15, 10);
                 row.Input = widgets.Input(content, x, y + 15, 57, _ => row.Draft = true);
                 changeButtons.Add(widgets.Button(content, "Apply", x + 63, y + 15, 62, 25, () => ApplyPvpDot(row)));
+                if (PvpDotSettings.SupportsSchedule(row.Effect))
+                    AddCheckbox("Keep schedule", x, y + 41, 125, 20,
+                        s => s.FriendlyFire.DotIntervals.PreserveSchedule(row.Effect), s => s.FriendlyFireAvailable,
+                        "/one friendlyfire dot " + PvpDotSettings.Key(row.Effect) + " preserve", parent: content);
                 pvpDotEditors.Add(row);
             }
         }

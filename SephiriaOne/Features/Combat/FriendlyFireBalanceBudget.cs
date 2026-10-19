@@ -20,7 +20,23 @@ namespace SephiriaOne
             internal FriendlyFireDamageBudget Budget;
             internal FriendlyFireHitFrequency Frequency;
             internal long FrequencyRevision;
-            internal DebuffPulse Shock, Freeze, Chim;
+            private DebuffPulse burn, plasma, frostbite, poison, wound, shock, freeze, chim;
+            internal ref DebuffPulse Pulse(PvpDotEffect effect)
+            {
+                switch (effect)
+                {
+                    case PvpDotEffect.Burn: return ref burn;
+                    case PvpDotEffect.PlasmaBurn: return ref plasma;
+                    case PvpDotEffect.Frostbite: return ref frostbite;
+                    case PvpDotEffect.Poison: return ref poison;
+                    case PvpDotEffect.Wound: return ref wound;
+                    case PvpDotEffect.Lightning: return ref shock;
+                    case PvpDotEffect.Freeze: return ref freeze;
+                    case PvpDotEffect.Chim: return ref chim;
+                    default: throw new System.ArgumentOutOfRangeException(nameof(effect));
+                }
+            }
+            internal void ResetPulses() => burn = plasma = frostbite = poison = wound = shock = freeze = chim = default;
         }
 
         private static ConditionalWeakTable<FriendlyFireParticipants.Receipt, BalanceActor> balanceActors =
@@ -63,7 +79,7 @@ namespace SephiriaOne
                 window.SourceFloor != sourceFloor || window.TargetFloor != targetFloor)
             {
                 window.Started = true; window.Budget = default; window.Generation++;
-                window.Shock = window.Freeze = window.Chim = default;
+                window.ResetPulses();
                 window.Frequency = default;
                 window.CombatEpoch = epoch; window.ParticipantEpoch = participants; window.Revision = revision;
                 window.SourceLife = source.Life; window.TargetLife = target.Life;
@@ -73,9 +89,9 @@ namespace SephiriaOne
             // consume the owner's same directed budget, regardless of damage ID.
             float now = Time.time;
             int pulse = DebuffPulseKind(current.Damage);
-            if (pulse == 1 && !window.Shock.Ready(now, intervals.Interval(PvpDotEffect.Lightning)) ||
-                pulse == 2 && !window.Freeze.Ready(now, intervals.Interval(PvpDotEffect.Freeze)) ||
-                pulse == 3 && !window.Chim.Ready(now, intervals.Interval(PvpDotEffect.Chim))) return 0;
+            var effect = (PvpDotEffect)pulse;
+            if (pulse >= 0 && intervals.PreserveSchedule(effect) &&
+                !window.Pulse(effect).Ready(now, intervals.Interval(effect))) return 0;
             if (hitFrequency && damage > 0)
             {
                 long frequencyRevision = SessionSettings.CombatFrequencyRevision;
@@ -98,9 +114,9 @@ namespace SephiriaOne
                 // Reserve before native callbacks; zero-charge or exhausted
                 // hits must not consume the next available pulse. The existing
                 // receipt/life/epoch/floor reset owns both clocks and tokens.
-                if (pulse == 1) window.Shock.Reserve(now);
-                else if (pulse == 2) window.Freeze.Reserve(now);
-                else if (pulse == 3) window.Chim.Reserve(now);
+                // Keep history even when protection is off; enabling it live
+                // must not award an extra immediate hit or reset the budget.
+                if (pulse >= 0) window.Pulse(effect).Reserve(now);
                 current.BudgetWindow = window; current.BudgetGeneration = window.Generation;
                 current.BudgetReserved = allowed; current.BudgetMaxHp = maxHp;
                 current.BudgetIncomingScale = incomingScale;

@@ -3,6 +3,16 @@
 Added in `0.52.0`, 2026-10-13. Host-only installation; the existing native damage
 and FX replication continues to serve stock guests. Default: **off**.
 
+## Debuff schedule protection (`0.69.0`, 2026-10-20)
+
+[Keep schedule](pvp-dot-intervals.md#preserve-schedules-0690) adds eight independent,
+default-on toggles beside the interval controls. Reapplication cannot bypass the
+same attacker/opponent/effect clock. First native immediate hits, duration
+refreshes, stacks and Freeze stun remain. Commands use
+`/one friendlyfire dot <effect> preserve on|off|reset`; nondefault toggles save in
+v35 presets. Dark Cloud retains its separate strike limiter. Only balanced PvP
+uses these clocks; no temporary stats or client-side addon state are introduced.
+
 ## Expanded interval controls (`0.68.0`, 2026-10-20)
 
 [All audited debuff damage families and Dark Cloud](pvp-dot-intervals.md) now have

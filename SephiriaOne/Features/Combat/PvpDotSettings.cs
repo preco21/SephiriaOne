@@ -5,6 +5,17 @@ namespace SephiriaOne
 {
     internal enum PvpDotEffect { Burn, PlasmaBurn, Frostbite, Poison, Wound, Lightning, Freeze, Chim, DarkCloud }
 
+    internal readonly struct PvpDotScheduleChange
+    {
+        public PvpDotEffect Effect { get; }
+        public bool Enabled { get; }
+        public PvpDotScheduleChange(PvpDotEffect effect, bool enabled)
+        {
+            if (!PvpDotSettings.SupportsSchedule(effect)) throw new ArgumentOutOfRangeException(nameof(effect));
+            Effect = effect; Enabled = enabled;
+        }
+    }
+
     internal readonly struct PvpDotChange
     {
         public PvpDotEffect Effect { get; }
@@ -32,8 +43,13 @@ namespace SephiriaOne
             _ => throw new ArgumentOutOfRangeException(nameof(effect))
         };
         private readonly int burn, plasma, frostbite, poison, wound, lightning, freeze, chim, darkCloud;
+        // Zero-initialized settings enable protection, including old presets.
+        private readonly int nativeSchedules;
+        public bool HasScheduleChanges => nativeSchedules != 0;
+        internal static bool SupportsSchedule(PvpDotEffect effect) => (uint)effect < (uint)PvpDotEffect.DarkCloud;
+        public bool PreserveSchedule(PvpDotEffect effect) => SupportsSchedule(effect) && (nativeSchedules & (1 << (int)effect)) == 0;
         public bool HasExtendedChanges => wound != 0 || lightning != 0 || freeze != 0 || chim != 0 || darkCloud != 0;
-        public bool HasChanges => burn != 0 || plasma != 0 || frostbite != 0 || poison != 0 || HasExtendedChanges;
+        public bool HasChanges => burn != 0 || plasma != 0 || frostbite != 0 || poison != 0 || HasExtendedChanges || HasScheduleChanges;
         public int Hundredths(PvpDotEffect effect) => DefaultHundredths(effect) + (effect switch
         {
             PvpDotEffect.Burn => burn, PvpDotEffect.PlasmaBurn => plasma,
@@ -47,6 +63,13 @@ namespace SephiriaOne
         public string Number(PvpDotEffect effect) => Seconds(effect).ToString("0.##", CultureInfo.InvariantCulture);
         public static bool ValidSeconds(decimal value) => value >= 0.05m && value <= 10m && value * 100 == decimal.Truncate(value * 100);
         public PvpDotSettings Apply(PvpDotChange change) => new PvpDotSettings(this, change);
+        public PvpDotSettings ApplySchedule(PvpDotScheduleChange change) => new PvpDotSettings(this, change);
+        private PvpDotSettings(PvpDotSettings source, PvpDotScheduleChange change)
+        {
+            this = source;
+            int bit = 1 << (int)change.Effect;
+            nativeSchedules = change.Enabled ? source.nativeSchedules & ~bit : source.nativeSchedules | bit;
+        }
         private PvpDotSettings(PvpDotSettings source, PvpDotChange change)
         {
             // Validate default(PvpDotChange), too.
@@ -61,6 +84,7 @@ namespace SephiriaOne
             freeze = change.Effect == PvpDotEffect.Freeze ? offset : source.freeze;
             chim = change.Effect == PvpDotEffect.Chim ? offset : source.chim;
             darkCloud = change.Effect == PvpDotEffect.DarkCloud ? offset : source.darkCloud;
+            nativeSchedules = source.nativeSchedules;
         }
         internal static string Key(PvpDotEffect effect) => effect switch
         {

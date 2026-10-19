@@ -26,6 +26,18 @@ these boundaries when adding controls: use shared policy, native timer progress
 or existing owner/victim pulse windows, never a global elemental filter that
 also slows direct magic. See [the complete audit](pvp-dot-intervals.md).
 
+Native debuff reapplication refreshes `buffTimer` (lifetime), not the five
+periodic damage timers. Electric/Plasma can deal shock damage during refresh;
+Freeze's application damage is followed by stun independently of its result.
+`0.69.0` therefore extends existing owner/victim damage clocks instead of
+intercepting stack/lifetime callbacks. Eight default-on schedule toggles share
+connection/life/floor/epoch cleanup and live settings. Gate damage before nested
+callbacks, reserve only budget-admitted hits, and keep history while a toggle is
+off. Do not restore Plasma's `addDamageTimer`: it is a native charge accumulator
+whose reset follows a shock attempt, not the periodic Burn timer. Installed-game
+contract tests assert that native stack/refresh methods do not touch periodic
+timers; a changed game build requires rechecking that assumption.
+
 Damage floors must be reserved in the same units as the balancing ledger, before
 nested native callbacks. Friendly-fire budgets store pre-role fractions of victim
 maximum HP; a final one-point minimum reserves `1 / incomingScale`, carrying any

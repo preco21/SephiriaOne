@@ -1,6 +1,7 @@
 # Independent PvP damage intervals
 
-Expanded in `0.68.0`, 2026-10-20. Use **Combat → DoT intervals**
+Expanded in `0.68.0`; schedule protection added in `0.69.0`, 2026-10-20.
+Use **Combat → DoT intervals**
 (`전투 → 지속 피해 간격`), with the scrollbar or mouse wheel to reach all nine
 controls. Each setting accepts **0.05..10 seconds**, up to two decimals, and has
 its own command/reset. These controls apply only to permitted player pairs while
@@ -36,6 +37,65 @@ The [two-second Burn-family lifetime cap](pvp-balancing.md#burn-duration-cap-059
 still includes both Burn and Plasma and their variants. Without a refresh, an
 interval of two seconds or longer may never tick before expiry.
 
+## Preserve schedules (`0.69.0`)
+
+Each of the eight debuff controls has a **Keep schedule / 주기 유지** checkbox,
+enabled by default. Dark Cloud is not a debuff reapplication path and always
+retains its existing separate strike clock.
+
+```text
+/one friendlyfire dot burn preserve on
+/one friendlyfire dot plasma-burn preserve off
+/one friendlyfire dot lightning preserve reset
+/one save
+```
+
+The first native immediate hit is allowed. Further hits of that effect from the
+same attacker to the same opponent require the configured interval since the
+last admitted hit. Reapplication, a replacement debuff instance, additional
+stacks or another companion owned by that attacker cannot acquire a new clock.
+Rejected repeats do not advance/postpone the clock or consume damage-budget
+credit. Different effects, attackers and victims retain independent clocks;
+all admitted damage still uses the common PvP budget.
+
+Periodic effects such as Burn keep their normal first-tick delay; the option
+does not introduce a new immediate hit. Stacks, duration refreshes, the two-second
+Burn-family duration cap and Freeze's stun are unchanged. Suppressed damage is
+not queued for later, and native shock charge/expiry handling still runs.
+
+Turning an effect's checkbox off restores its native reapplication damage
+behavior while keeping its configured periodic interval (where it has a periodic
+timer) and shared PvP budget. For application/expiry-only Lightning, Freeze and
+Chim, off disables that effect's minimum-gap gate. Reenabling uses the latest
+admitted hit, including hits while the checkbox was off, so it does not award an
+extra immediate hit. Interval/toggle edits do not reset scores, modes or budgets.
+
+Native investigation found that `CharacterDebuff.AddStack` and the base
+`RefreshDurationTimer` refresh the **lifetime** timer, not the five periodic
+damage timers. Their derived stack/refresh methods likewise leave periodic
+progress intact. No speculative timer-restoration hooks were added. The new
+protection extends the existing combat clock across all eight damage families.
+It bounds repeated damage from reapplication/replacement; it does **not** remove
+the damage increase from native stacking or establish that Piola Gavel's reported
+strength was solely caused by timer resets.
+
+Verification for this change: non-deploying Release build with zero warnings or
+errors; 6,120 executable combat checks; 3,387 runtime integration checks plus 69
+Bat lifecycle checks; 742 new schedule-policy checks, 1,708 interval-policy
+checks, 3,945 catalog checks and panel tests. Installed-game contracts and all
+33 compiled Harmony API references against co-installed HarmonyX 2.9 passed.
+The independent review found an absolute-clock rounding case that could skip a
+native periodic tick; an accumulated-frame regression reproduced it before the
+precision fix and passes afterward. No live game or guest test was performed;
+nothing was deployed.
+
+The serialized prefab IDs were rechecked for schedule admission: Burn 184460
+uses `Debuff_Burn`; Wound 186523 uses `Debuff_Wound`; Poison 186524 uses
+`Debuff_Poison` with system damage off; Chim 187141 uses `Debuff_Chim`; Electric
+187143 uses `Debuff_Electric`; Plasma 187142 uses `Debuff_Plasma` for both
+components. Frostbite 186521 and Freeze 196504 use their hardcoded native IDs.
+These are local asset observations, not assets shipped with the addon.
+
 ## Shared policy and persistence
 
 `PvpDotSettings` extends the existing immutable settings, snapshot, command,
@@ -54,6 +114,13 @@ default. The `shock` alias saves canonically as `dot-lightning` and is not a pre
 key. Invalid, duplicated, noncanonical or out-of-range rows reject atomically.
 Runtime clocks, victims, connection identities and roles never persist.
 
+Nondefault schedule toggles use **v35**, with
+`friendlyfire dot-preserve-<effect> 0`. Omitted values and `preserve reset` enable
+protection. v1..34 presets inherit enabled defaults and reject the new rows;
+v35 also supports every earlier setting. Malformed, duplicated, noncanonical
+and unsupported rows reject atomically. Neither `shock` nor `dark-cloud` is a
+valid saved schedule key; the command alias `shock` saves as `lightning`.
+
 ## Timing boundaries
 
 The five periodic controls wrap only their audited native `Timer.Update` call.
@@ -66,8 +133,10 @@ progress remains half-complete after a live edit. Stalled frames retain the
 native one-tick behavior, without catch-up bursts. No timer/prefab/stat writes or
 restoration journal is needed; disabling balancing resumes native timing.
 
-Lightning, Freeze and Chim instead have independent **per-attacker/victim** pulse
-clocks in the existing `BalanceWindow`. A successful admission reserves the clock
+All eight debuff families have independent **per-attacker/victim** damage
+clocks in the existing `BalanceWindow`, checked when their schedule protection
+is enabled. Lightning, Freeze and Chim have no periodic damage timer to wrap.
+A successful admission reserves the clock
 before native callbacks. Rejected repeats resolve to zero; they are not queued.
 Zero-charge and budget-exhausted attempts do not reserve a new interval. Native
 FX, stacks, expiry, charge and Freeze stun continue normally. Electric and Plasma
@@ -76,6 +145,11 @@ flag (or the original `Debuff_Electric` ID);
 companion pulses use their owner's clock. Direct lightning/Bolt magic is not a
 shock debuff and does not share this clock. Changing the interval compares against
 the last admitted pulse; rejected attempts and sibling edits do not move it.
+Clock comparisons allow only float timestamp precision to account for the
+independently accumulated native timer and absolute clock. This is not a
+frame-sized allowance; the same timestamp can never admit another hit. Tests
+accumulate frame deltas at 60/120/144 FPS across different game uptimes to prevent
+false early-hit rejection followed by an extra full interval of waiting.
 
 Dark Cloud uses its existing separate owner/victim strike window. It checks its
 current configured interval **before** the whole strike, including damage,

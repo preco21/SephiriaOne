@@ -6,6 +6,8 @@ internal static class PvpDotSettingsTests
     {
         int checks = 0;
         void Check(bool value, string why) { if (!value) throw new Exception(why); checks++; }
+        Check(FriendlyFireCommand.Parse("/one friendlyfire dot burn preserve off", out var schedule) == FriendlyFireParseResult.Valid &&
+            !schedule.TouchesMasterToggle, "Per-effect schedule control must not toggle friendly fire");
         foreach (string key in new[] { "wound", "lightning", "freeze", "chim", "dark-cloud" })
             Check(FriendlyFireCommand.Parse("/one friendlyfire dot " + key + " 1.5", out _) == FriendlyFireParseResult.Valid,
                 "Missing effect control is exposed: " + key);

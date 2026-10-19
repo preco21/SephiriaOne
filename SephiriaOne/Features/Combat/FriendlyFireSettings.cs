@@ -56,7 +56,8 @@ namespace SephiriaOne
         public FriendlyFireSettings Apply(FriendlyFireCommand command) => command.Reset ? default :
             new FriendlyFireSettings(command.TouchesMasterToggle ? command.Enabled : Enabled, command.Percent ?? DamagePercent,
                 command.Balance ?? Balance, command.BlockLobbyRegen ?? BlockLobbyRegen, command.RefillPercent ?? RefillPercent,
-                command.GuardMpPercent ?? GuardMpPercent, command.Dot.HasValue ? DotIntervals.Apply(command.Dot.Value) : DotIntervals,
+                command.GuardMpPercent ?? GuardMpPercent, command.Dot.HasValue ? DotIntervals.Apply(command.Dot.Value) :
+                    command.DotSchedule.HasValue ? DotIntervals.ApplySchedule(command.DotSchedule.Value) : DotIntervals,
                 command.HitFrequency ?? HitFrequency);
     }
 
@@ -69,14 +70,17 @@ namespace SephiriaOne
         public decimal? RefillPercent { get; }
         public decimal? GuardMpPercent { get; }
         public PvpDotChange? Dot { get; }
+        public PvpDotScheduleChange? DotSchedule { get; }
         public bool? Balance { get; }
         public bool? HitFrequency { get; }
         public bool? BlockLobbyRegen { get; }
         public FriendlyFireCommand(bool enabled, decimal? percent = null, bool reset = false, bool? balance = null, bool? blockLobbyRegen = null,
-            decimal? refillPercent = null, decimal? guardMpPercent = null, PvpDotChange? dot = null, bool? hitFrequency = null)
-        { Enabled = enabled; Percent = percent; Reset = reset; Balance = balance; HitFrequency = hitFrequency; BlockLobbyRegen = blockLobbyRegen; RefillPercent = refillPercent; GuardMpPercent = guardMpPercent; Dot = dot; }
-        public bool IsReset => Reset || !Dot.HasValue && !GuardMpPercent.HasValue && !RefillPercent.HasValue && (HitFrequency.HasValue ? !HitFrequency.Value : BlockLobbyRegen.HasValue ? !BlockLobbyRegen.Value : Balance.HasValue ? !Balance.Value : !Percent.HasValue && !Enabled);
-        public bool TouchesMasterToggle => Reset || !Percent.HasValue && !Balance.HasValue && !HitFrequency.HasValue && !BlockLobbyRegen.HasValue && !RefillPercent.HasValue && !GuardMpPercent.HasValue && !Dot.HasValue;
+            decimal? refillPercent = null, decimal? guardMpPercent = null, PvpDotChange? dot = null, bool? hitFrequency = null,
+            PvpDotScheduleChange? dotSchedule = null)
+        { Enabled = enabled; Percent = percent; Reset = reset; Balance = balance; HitFrequency = hitFrequency; BlockLobbyRegen = blockLobbyRegen; RefillPercent = refillPercent; GuardMpPercent = guardMpPercent; Dot = dot; DotSchedule = dotSchedule; }
+        public bool IsReset => Reset || !Dot.HasValue && !GuardMpPercent.HasValue && !RefillPercent.HasValue &&
+            (DotSchedule.HasValue ? !DotSchedule.Value.Enabled : HitFrequency.HasValue ? !HitFrequency.Value : BlockLobbyRegen.HasValue ? !BlockLobbyRegen.Value : Balance.HasValue ? !Balance.Value : !Percent.HasValue && !Enabled);
+        public bool TouchesMasterToggle => Reset || !Percent.HasValue && !Balance.HasValue && !HitFrequency.HasValue && !BlockLobbyRegen.HasValue && !RefillPercent.HasValue && !GuardMpPercent.HasValue && !Dot.HasValue && !DotSchedule.HasValue;
         public static string Usage => L.T("Friendly fire: /one friendlyfire on|off|status|reset|resetkda; /one friendlyfire damage 0..300 (percent, up to 2 decimals; e.g. 0.1). Default 100. /one save persists settings.") + " " +
             L.T("PvP balancing: /one friendlyfire balance on|off. Default off; softens hits, limits rapid damage and Dark Cloud repeats, and uses configurable DoT intervals. Lightning/Shock, Freeze, Chim and Dark Cloud have separate configurable damage intervals; Freeze stun is preserved.") + " " +
             L.T("PvP Evasion: stat-based dodge chance is capped at 50% before anti-Evasion; guaranteed item dodges are unchanged.") + " " +
@@ -84,6 +88,7 @@ namespace SephiriaOne
             L.T("Rabbit shared healing is blocked in PvP by default. /one rabbit block-pvp-share off permits it when Share HP healing is enabled.") + " " +
             L.T("Hit-frequency scaling: /one friendlyfire hit-frequency on|off|reset. Default off; reduces damage above roughly 4 hits/s per opponent before the damage budget. Requires PvP balancing.") + " " +
             L.T("PvP DoT: /one friendlyfire dot burn|plasma-burn|frostbite|poison|wound|lightning|freeze|chim|dark-cloud 0.05..10|reset (seconds, up to 2 decimals). Lightning includes Plasma shock; Freeze controls damage, not stun. Only with PvP balancing on.") + " " +
+            L.T("Keep debuff schedule: /one friendlyfire dot <effect> preserve on|off|reset. Default on; keeps the first native hit, then requires one interval between hits, even on reapplication. Does not change stacks or duration refreshes. Dark Cloud always uses its separate strike clock. Only with PvP balancing on.") + " " +
             L.T("PvP refill: /one friendlyfire refill 1..300|reset (percent of max HP per second, up to 2 decimals). Default 70; applies only with PvP balancing on.") + " " +
             L.T("PvP guard: /one friendlyfire guard-mp 0..100|reset (percent of max MP, up to 2 decimals). Default 10; native guard reductions apply. Positive costs round up. Only with PvP balancing on.") + " " +
             L.T("Lobby recovery: /one friendlyfire block-lobby-regen on|off. Default off; blocks automatic HP/MP recovery for active lobby participants. Potions and skill healing remain available.");
@@ -118,6 +123,15 @@ namespace SephiriaOne
                 decimal seconds = PvpDotSettings.DefaultSeconds(effect);
                 if (parts[4].Equals("reset", StringComparison.OrdinalIgnoreCase) || PvpDotSettings.TrySeconds(parts[4], out seconds))
                 { command = new FriendlyFireCommand(false, dot: new PvpDotChange(effect, seconds)); return FriendlyFireParseResult.Valid; }
+            }
+            if (parts.Length == 6 && op == "dot" && PvpDotSettings.TryEffect(parts[3], out var scheduleEffect) &&
+                PvpDotSettings.SupportsSchedule(scheduleEffect) && parts[4].Equals("preserve", StringComparison.OrdinalIgnoreCase) &&
+                (parts[5].Equals("on", StringComparison.OrdinalIgnoreCase) || parts[5].Equals("off", StringComparison.OrdinalIgnoreCase) ||
+                 parts[5].Equals("reset", StringComparison.OrdinalIgnoreCase)))
+            {
+                command = new FriendlyFireCommand(false, dotSchedule: new PvpDotScheduleChange(scheduleEffect,
+                    !parts[5].Equals("off", StringComparison.OrdinalIgnoreCase)));
+                return FriendlyFireParseResult.Valid;
             }
             if (parts.Length == 4 && op == "refill")
             {

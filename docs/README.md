@@ -1,6 +1,12 @@
 # Development knowledge index
 
-Maintained: 2026-10-20 (Asia/Seoul), addon `0.68.0`.
+Maintained: 2026-10-20 (Asia/Seoul), addon `0.69.0`.
+
+PvP reapplication: [Keep schedule / 주기 유지](pvp-dot-intervals.md#preserve-schedules-0690)
+is independently configurable for eight debuff families, enabled by default.
+The first native immediate hit remains; repeated applications cannot bypass the
+configured interval. Native stacks, duration refreshes and Freeze stun remain.
+Commands, UI and v35 presets use the existing shared combat policy.
 
 PvP intervals: [all audited debuff damage families and Dark Cloud](pvp-dot-intervals.md)
 now have independent controls. Lightning covers Electric and Plasma shock; Wound,

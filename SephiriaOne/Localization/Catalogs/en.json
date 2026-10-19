@@ -1,4 +1,7 @@
 {
+  "Keep schedule": "Keep schedule",
+  "Keep debuff schedules: {0} (requires PvP balancing).": "Keep debuff schedules: {0} (requires PvP balancing).",
+  "Keep debuff schedule: /one friendlyfire dot <effect> preserve on|off|reset. Default on; keeps the first native hit, then requires one interval between hits, even on reapplication. Does not change stacks or duration refreshes. Dark Cloud always uses its separate strike clock. Only with PvP balancing on.": "Keep debuff schedule: /one friendlyfire dot <effect> preserve on|off|reset. Default on; keeps the first native hit, then requires one interval between hits, even on reapplication. Does not change stacks or duration refreshes. Dark Cloud always uses its separate strike clock. Only with PvP balancing on.",
   "Wound (s)": "Wound (s)",
   "Lightning / Shock (s)": "Lightning / Shock (s)",
   "Freeze damage (s)": "Freeze damage (s)",

@@ -23,6 +23,11 @@ internal static class DebuffPulseTests
             source = new(); victim = new();
         }
         void Hit(string id, float amount = 2) => victim.ApplyDamage(EffectTests.Tick(source, id, amount));
+        foreach (string id in new[] { "Debuff_Burn", "Debuff_Plasma", "Debuff_Frostbite", "Debuff_Poison", "Debuff_Wound" })
+        {
+            Fresh(); Hit(id); Time.time += 0.01f; Hit(id);
+            check(victim.Hp == 98, id + " keeps the first hit but blocks reapplication inside its own interval");
+        }
         foreach (string id in new[] { "Debuff_Electric", "Debuff_Freeze", "Debuff_Chim" })
         {
             Fresh(); Hit(id); Time.time = 100.249f; Hit(id);
@@ -116,14 +121,14 @@ internal static class DebuffPulseTests
         Hit("Debuff_Electric"); Time.time += 0.5f; plasma.RefreshDurationTimer(1, 0);
         check(victim.Hp == 98, "Serialized Plasma shock ID shares Lightning admission through its native flag");
         Hit("Debuff_Plasma"); Hit("Debuff_Plasma");
-        check(victim.Hp == 94, "Plasma burn with the same serialized ID does not acquire a Lightning pulse gate");
+        check(victim.Hp == 96, "Plasma burn has its own schedule, independent of the Lightning pulse gate");
         Time.time += 0.5f; plasma.Destroy();
-        check(victim.Hp == 92, "Serialized Plasma expiry shock resumes at the configured Lightning interval");
+        check(victim.Hp == 94, "Serialized Plasma expiry shock resumes at the configured Lightning interval");
         var spell = EffectTests.Tick(source, "Debuff_Plasma", 2); spell.flag = "DEBUFF_ELECTRIC"; spell.fromType = EDamageFromType.Magic;
         victim.ApplyDamage(spell); victim.ApplyDamage(spell);
-        check(victim.Hp == 88, "Shock-like metadata on direct magic still cannot borrow the debuff pulse clock");
+        check(victim.Hp == 90, "Shock-like metadata on direct magic still cannot borrow the debuff pulse clock");
         SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, balance: false));
-        PlasmaShock(); PlasmaShock(); check(victim.Hp == 84, "Disabling balancing immediately restores serialized Plasma shock damage");
+        PlasmaShock(); PlasmaShock(); check(victim.Hp == 86, "Disabling balancing immediately restores serialized Plasma shock damage");
         Fresh(); Hit("Debuff_Chim");
         var chim = new CharacterDebuff { OnExpire = () => Hit("Debuff_Chim") };
         chim.InitializeAndSpawn(source, victim); Time.time += 0.1f; chim.Destroy();

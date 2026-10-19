@@ -196,6 +196,7 @@ PlasmaDurationTests.Run(Check);
 BurnCadenceTests.Run(Check);
 ElementalCadenceTests.Run(Check);
 DebuffPulseTests.Run(Check);
+DebuffScheduleTests.Run(Check);
 BalanceTests.Run(Check);
 HarvestTests.Run(Check);
 GuardTests.Run(Check);

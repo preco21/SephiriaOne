@@ -1,4 +1,7 @@
 {
+  "Keep schedule": "주기 유지",
+  "Keep debuff schedules: {0} (requires PvP balancing).": "디버프 주기 유지: {0} (PvP 밸런싱 필요).",
+  "Keep debuff schedule: /one friendlyfire dot <effect> preserve on|off|reset. Default on; keeps the first native hit, then requires one interval between hits, even on reapplication. Does not change stacks or duration refreshes. Dark Cloud always uses its separate strike clock. Only with PvP balancing on.": "디버프 주기 유지: /one friendlyfire dot <effect> preserve on|off|reset. 기본 켜짐. 첫 타격은 유지하며, 재적용해도 다음 피해까지 설정된 주기를 기다립니다. 중첩 및 지속 시간 갱신은 유지됩니다. 먹구름은 항상 별도의 타격 주기를 사용합니다. PvP 밸런싱이 켜져 있을 때만 적용됩니다.",
   "Wound (s)": "상처 (초)",
   "Lightning / Shock (s)": "번개 / 감전 (초)",
   "Freeze damage (s)": "빙결 피해 (초)",

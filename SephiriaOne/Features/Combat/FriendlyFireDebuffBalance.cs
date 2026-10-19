@@ -15,22 +15,40 @@ namespace SephiriaOne
         {
             private bool started;
             private float last;
-            internal bool Ready(float now, float interval) => !float.IsNaN(now) && !float.IsInfinity(now) &&
-                (!started || now < last || now - last >= interval);
+            internal bool Ready(float now, float interval)
+            {
+                if (float.IsNaN(now) || float.IsInfinity(now)) return false;
+                if (!started || now < last) return true;
+                if (now <= last) return false;
+                // Native timer progress and Time.time round independently. Allow
+                // only float timestamp precision (not a frame-sized grace), or
+                // an exactly due periodic tick could be skipped for a full cycle.
+                double precision = Math.Max(Math.Abs(now), Math.Abs(last)) * 1.1920928955078125e-7d;
+                return (double)now - last + precision >= interval;
+            }
             internal void Reserve(float now) { started = true; last = now; }
         }
 
-        // Shock (including Plasma), Freeze and Chim deal damage on refresh,
-        // application or expiry, not a periodic tick. Limit only their resolved
-        // damage, never the native caller's stun/stack/expiry work.
+        // A replacement effect or companion must not acquire a fresh clock.
+        // Limit resolved damage only, never native stun/stack/expiry work.
         private static int DebuffPulseKind(DamageInstance damage)
         {
-            if (damage == null || damage.damageType != EDamageType.ElementalEffectDamage || damage.fromType != EDamageFromType.None) return 0;
+            if (damage == null || damage.damageType != EDamageType.ElementalEffectDamage || damage.fromType != EDamageFromType.None) return -1;
             // The shipped Plasma prefab overrides BOTH damage IDs to Debuff_Plasma.
             // Only its shock attack carries this flag; its burn tick must not
             // borrow the Lightning clock despite having the same damage ID.
-            if (damage.id == "Debuff_Electric" || damage.flag == "DEBUFF_ELECTRIC") return 1;
-            return damage.id == "Debuff_Freeze" ? 2 : damage.id == "Debuff_Chim" ? 3 : 0;
+            if (damage.id == "Debuff_Electric" || damage.flag == "DEBUFF_ELECTRIC") return (int)PvpDotEffect.Lightning;
+            return damage.id switch
+            {
+                "Debuff_Burn" => (int)PvpDotEffect.Burn,
+                "Debuff_Plasma" => (int)PvpDotEffect.PlasmaBurn,
+                "Debuff_Frostbite" => (int)PvpDotEffect.Frostbite,
+                "Debuff_Poison" => (int)PvpDotEffect.Poison,
+                "Debuff_Wound" => (int)PvpDotEffect.Wound,
+                "Debuff_Freeze" => (int)PvpDotEffect.Freeze,
+                "Debuff_Chim" => (int)PvpDotEffect.Chim,
+                _ => -1
+            };
         }
 
         // Preserve native timer progress/lifetime and Update's reset/activeOnce

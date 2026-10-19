@@ -98,12 +98,34 @@ internal static class GameFriendlyFireDebuffTests
         Require(frostStack.Any(i => Call(i, "UnitAvatar", "ApplyDebuff")), "native Frostbite-to-Freeze application remains separate from ticks");
         var timer = game.GetType("Timer", true)!;
         Require(timer.GetField("time")?.FieldType == typeof(float), "native public timer length can be read without mutation");
+        // The protection deliberately leaves native reapplication alone. Check
+        // that none of those entry points resets a periodic damage timer.
+        var periodicFields = updates.SelectMany(m => m.DeclaringType!.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+            .Where(f => f.FieldType == timer && f.Name != "addDamageTimer").ToHashSet();
+        foreach (var type in updates.Select(m => m.DeclaringType!).Append(game.GetType("CharacterDebuff", true)!))
+            foreach (string method in new[] { "AddStack", "AddStackInner", "AddStackFailedByMaxStackCount", "RefreshDurationTimer" })
+            {
+                var entry = AccessTools.DeclaredMethod(type, method);
+                if (entry == null || entry.GetMethodBody() == null) continue;
+                var code = PatchProcessor.GetOriginalInstructions(entry);
+                Require(!code.Any(i => i.operand is FieldInfo f && periodicFields.Contains(f)),
+                    type.Name + "." + method + " keeps existing periodic timer progress");
+            }
+        var refresh = PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(game.GetType("CharacterDebuff", true)!, "RefreshDurationTimer"));
+        Require(refresh.Any(i => i.operand is FieldInfo f && f.Name == "buffTimer") && refresh.Any(i => Call(i, "Timer", "SetTimer")),
+            "Native reapplication still refreshes the lifetime timer separately");
         var adapter = PatchProcessor.GetOriginalInstructions(AccessTools.Method(addon.GetType("SephiriaOne.FriendlyFireRuntime", true)!, "UpdateDebuffTick")).ToList();
         Require(adapter.Any(i => Call(i, "Time", "get_deltaTime")) && adapter.Any(i => Call(i, "PvpDotSettings", "Interval")) &&
             !adapter.Any(i => i.opcode == OpCodes.Stfld && i.operand is FieldInfo f && f.DeclaringType == timer), "adapter uses real seconds and never writes timer configuration/progress directly");
         var combat = addon.GetType("SephiriaOne.FriendlyFireRuntime", true)!;
         var pulses = PatchProcessor.GetOriginalInstructions(AccessTools.Method(combat, "LimitBalancedDamage"));
-        Require(pulses.Count(i => Call(i, "PvpDotSettings", "Interval")) == 3, "Lightning, Freeze and Chim read independent live intervals");
+        Require(pulses.Count(i => Call(i, "PvpDotSettings", "Interval")) == 1 &&
+            pulses.Any(i => Call(i, "PvpDotSettings", "PreserveSchedule")) && pulses.Any(i => Call(i, "BalanceWindow", "Pulse")),
+            "All eight debuff clocks read the selected effect's live interval and protection toggle");
+        var classify = PatchProcessor.GetOriginalInstructions(AccessTools.Method(combat, "DebuffPulseKind"));
+        foreach (string id in new[] { "Debuff_Burn", "Debuff_Plasma", "Debuff_Frostbite", "Debuff_Poison", "Debuff_Wound",
+            "Debuff_Electric", "DEBUFF_ELECTRIC", "Debuff_Freeze", "Debuff_Chim" })
+            Require(classify.Any(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, id)), "Shared clock recognizes " + id);
         var cloud = PatchProcessor.GetOriginalInstructions(AccessTools.Method(combat, "BeforeDarkCloudStrike"));
         Require(cloud.Any(i => Call(i, "PvpDotSettings", "Interval")), "Dark Cloud reads its own live interval");
         var panel = addon.GetType("SephiriaOne.SettingsPanel", true)!;
@@ -115,6 +137,8 @@ internal static class GameFriendlyFireDebuffTests
         Require(Panel("ClearInput").Any(i => Call(i, "SettingsPanel", "ClearPvpDots")) &&
             Panel("RefreshCombat").Any(i => Call(i, "SettingsPanel", "RefreshPvpDots")), "DoT drafts follow normal refresh and scope cleanup");
         var editor = Panel("BuildPvpDotEditor");
+        Require(editor.Any(i => Call(i, "PvpDotSettings", "SupportsSchedule")) && editor.Any(i => Call(i, "SettingsPanel", "AddCheckbox")),
+            "Debuff rows expose shared checkbox bindings while Dark Cloud keeps only its strike interval");
         Require(editor.Any(i => Call(i, "ScrollRect", "set_content")) && editor.Any(i => Call(i, "ScrollRect", "set_viewport")) &&
             editor.Any(i => Call(i, "ScrollRect", "set_verticalScrollbar")), "all nine controls are reachable in a bounded scroll area with a visible scroll affordance");
         GamePvpBurnDurationTests.Run(game, addon);

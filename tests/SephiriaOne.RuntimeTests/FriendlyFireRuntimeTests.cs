@@ -17,6 +17,15 @@ internal static class FriendlyFireRuntimeTests
                 SessionSettings.CombatBalanceRevision == balance && CombatMatchRuntime.RoleRevision == roles,
                 "Live interval edit preserves active mode, scores, budgets and roles: " + effect);
             check(SettingsActions.Execute(command + prior.Number(effect)).Success, "Restore prior interval: " + effect);
+            if (!PvpDotSettings.SupportsSchedule(effect)) continue;
+            foreach (bool enabled in new[] { false, true })
+                check(SettingsActions.Execute(command + "preserve " + (enabled ? "on" : "off")).Success &&
+                    SessionSettings.FriendlyFireForHit.DotIntervals.PreserveSchedule(effect) == enabled &&
+                    CombatMatchRuntime.MatchToken == token && FriendlyFireKda.Epoch == scores &&
+                    SessionSettings.CombatBalanceRevision == balance && CombatMatchRuntime.RoleRevision == roles,
+                    "Live schedule toggle preserves active mode, scores, budgets and roles: " + effect);
+            check(SettingsActions.Execute(command + "preserve " + (prior.PreserveSchedule(effect) ? "on" : "off")).Success,
+                "Restore prior schedule toggle: " + effect);
         }
     }
 
@@ -62,6 +71,10 @@ internal static class FriendlyFireRuntimeTests
         foreach (var effect in Enum.GetValues<PvpDotEffect>())
             check(SettingsActions.Execute("/one friendlyfire dot " + PvpDotSettings.Key(effect) + " " + ((int)effect + 1)).Success,
                 "Host can edit each DoT interval live: " + effect);
+        foreach (var effect in Enum.GetValues<PvpDotEffect>())
+            if (PvpDotSettings.SupportsSchedule(effect))
+                check(SettingsActions.Execute("/one friendlyfire dot " + PvpDotSettings.Key(effect) + " preserve off").Success,
+                    "Host can edit protection independently: " + effect);
         var dotSettings = SessionSettings.FriendlyFireForHit.DotIntervals;
         check(SessionSettings.CombatBalanceRevision == balanceRevision && Score(host) == "P(1/0/0)" &&
             SessionSettings.ReadSnapshot().FriendlyFire.DotIntervals.Equals(dotSettings), "DoT edits preserve KDA/budgets and update snapshot immediately");
