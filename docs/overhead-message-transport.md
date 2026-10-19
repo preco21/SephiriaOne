@@ -4,6 +4,10 @@ Investigated 2026-10-18 against the installed Sephiria 1.0.33 assembly and addon
 `0.62.1`. The initial investigation changed no delivery behavior; the `0.63.0`
 prototype below now adds cosmetic countdown text while retaining chat/bubbles.
 
+Exception since `0.66.1`: [Zombie conversions](zombie-survival.md#faction-and-conversion-notices-0661-2026-10-19)
+use one combined infection/revival bubble instead of the generic respawn bubble
+and floating-text duplicate. Ordinary deaths and the rest of the trial remain.
+
 ## Conclusion
 
 The ordinary player chat bubble cannot be separated from the HUD chat log by a

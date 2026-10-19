@@ -1,6 +1,11 @@
 # Development knowledge index
 
-Maintained: 2026-10-19 (Asia/Seoul), addon `0.66.0`.
+Maintained: 2026-10-19 (Asia/Seoul), addon `0.66.1`.
+
+Zombie notices: [faction markers and conversion bubbles](zombie-survival.md#faction-and-conversion-notices-0661-2026-10-19)
+use font-safe `[Z]` / `[H]`, name every initial Zombie, and send opening role
+bubbles only to them. Conversion combines infector, actual revival time and
+Zombie instructions into one bubble without generic respawn/floating overlap.
 
 Zombie setup: [starting Zombie count](zombie-survival.md#starting-count-0660-2026-10-19)
 is configurable in the Zombie tab or `/one zombie count N|reset` (default 1).

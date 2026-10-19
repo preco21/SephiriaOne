@@ -45,6 +45,10 @@ namespace SephiriaOne
         internal static bool IsActiveZombie(PlayerAvatar player) => CurrentZombieCombat && player && !player.IsDead &&
             TryZombieIndex(player, out int index) && zombieRound.IsZombie(index) && !zombieRound.IsPending(index);
 
+        internal static string ZombieFactionMarker(FriendlyFireParticipants.Receipt receipt) =>
+            zombieRound != null && CurrentZombieReceipt(receipt, token, out int index)
+                ? zombieRound.IsZombie(index) ? "[Z]" : "[H]" : "";
+
         // Presentation remains attached during death/pending conversion; combat
         // bonuses and hostility still require successful revival above.
         internal static bool IsZombieVisualCurrent(PlayerAvatar player, FriendlyFireParticipants.Receipt receipt, long match) =>
@@ -66,16 +70,32 @@ namespace SephiriaOne
             }
             zombieRound = new ZombieSurvivalRound(zombiePlayers.Count, zombieStartingCount, zombieRandom);
             endsAt = now + duration; RoleRevision++;
-            for (int i = 0; i < zombiePlayers.Count; i++) zombieScores[i] = FriendlyFireKda.For(zombiePlayers[i].Subject.Player);
+            var initialNames = new List<string>();
+            var initialPlayers = new List<RosterEntry>();
+            for (int i = 0; i < zombiePlayers.Count; i++)
+            {
+                var player = zombiePlayers[i].Subject.Player;
+                zombieScores[i] = FriendlyFireKda.For(player);
+                zombieNames[i] = CombatNames.Player(player);
+                if (zombieRound.IsZombie(i)) { initialNames.Add(zombieNames[i]); initialPlayers.Add(zombiePlayers[i]); }
+            }
             long current = token;
-            for (int i = 0; i < zombiePlayers.Count && IsZombieSurvival && current == token; i++)
-                if (zombieRound.IsZombie(i)) ZombieRoleVisuals.Update(zombiePlayers[i].Subject.Player);
+            for (int i = 0; i < initialPlayers.Count && IsZombieSurvival && current == token; i++)
+                ZombieRoleVisuals.Update(initialPlayers[i].Subject.Player);
             if (!IsZombieSurvival || current != token) return;
-            Broadcast(null, L.F("[Zombie Survival] Starting Zombies: {0}. Survive for {1}s.", zombiePlayers.Count - zombieRound.Humans, duration));
-            for (int i = 0; i < zombiePlayers.Count && IsZombieSurvival && current == token; i++)
-                Broadcast(zombiePlayers[i].Subject.Player, L.T(zombieRound.IsZombie(i) ?
-                    "[Zombie Survival] You are a Zombie. Defeat Humans to convert them!" :
-                    "[Zombie Survival] You are Human. Survive until time runs out!"));
+            foreach (string message in ZombieSurvivalMessages.Starting(initialNames))
+            {
+                if (!IsZombieSurvival || current != token) return;
+                Broadcast(null, message);
+            }
+            // Announcement callbacks can infect a Human or kill an initial Zombie.
+            // Keep the opening recipients frozen and preserve their death bubbles.
+            for (int i = 0; i < initialPlayers.Count && IsZombieSurvival && current == token; i++)
+            {
+                var entry = initialPlayers[i];
+                if (Connected(entry.Subject, entry.Receipt) && IsActiveZombie(entry.Subject.Player))
+                    Broadcast(entry.Subject.Player, L.T("[Z] You are a Zombie. Hunt [H] Humans to infect them!"));
+            }
         }
 
         private static void ShowZombieCountdown(int seconds) => Broadcast(null, L.F("[Zombie Survival] Starts in: {0}s", seconds));
@@ -106,7 +126,7 @@ namespace SephiriaOne
             // was recorded before expiry wins even if cleanup reaches this late.
             if (zombieRound.Humans == 0 || now >= endsAt)
             {
-                zombieOutcome = zombieRound.Humans == 0 ? "[Zombie Survival] Zombies win!" : "[Zombie Survival] Humans win!";
+                zombieOutcome = zombieRound.Humans == 0 ? "[Zombie Survival] [Z] Zombies win!" : "[Zombie Survival] [H] Humans win!";
                 Stop(true, true); return;
             }
             int remaining = (int)Math.Ceiling(endsAt - now);
@@ -117,7 +137,7 @@ namespace SephiriaOne
             if (remaining != zombieTimeShown && (remaining <= 5 || remaining % 5 == 0))
             {
                 zombieTimeShown = remaining;
-                Broadcast(null, L.F("[Zombie Survival] {0}s left. Humans: {1}; Zombies: {2}.", remaining, zombieRound.Humans, zombiePlayers.Count - zombieRound.Humans));
+                Broadcast(null, L.F("[Zombie Survival] {0}s left. [H] Humans: {1}; [Z] Zombies: {2}.", remaining, zombieRound.Humans, zombiePlayers.Count - zombieRound.Humans));
             }
         }
 
@@ -128,12 +148,12 @@ namespace SephiriaOne
                 TryZombieIndex(receipt.Player, out index) && ReferenceEquals(zombiePlayers[index].Receipt, receipt);
         }
 
-        private static void ConfirmedZombieKill(FriendlyFireParticipants.Receipt killer, FriendlyFireParticipants.Receipt victim, long match)
+        private static void ConfirmedZombieKill(FriendlyFireParticipants.Receipt killer, FriendlyFireParticipants.Receipt victim, long match, string killerName)
         {
             if (!CurrentZombieCombat || !CurrentZombieReceipt(killer, match, out int from) ||
                 !CurrentZombieReceipt(victim, match, out int to) || !victim.Player.IsDead ||
                 !zombieRound.IsZombie(from) || !zombieRound.AllowsPair(from, to)) return;
-            InfectZombie(to);
+            InfectZombie(to, killerName ?? CombatNames.Player(killer.Player));
         }
 
         internal static void CompletedMatchDeath(PlayerAvatar player, long match, bool success, bool convertAnyDeath)
@@ -143,15 +163,16 @@ namespace SephiriaOne
             if (CurrentZombieCombat && player.IsDead && convertAnyDeath) InfectZombie(index);
         }
 
-        private static void InfectZombie(int index)
+        private static void InfectZombie(int index, string infector = null)
         {
             if (!zombieRound.Infect(index)) return;
+            if (pending.TryGetValue(zombiePlayers[index].Subject.Player, out var respawn))
+            { respawn.ZombieConversion = true; respawn.ZombieInfector = infector; }
             FriendlyFireKda.ForgetContributions(zombiePlayers[index].Subject.Player);
             RoleRevision++;
-            long current = token;
             ZombieRoleVisuals.Update(zombiePlayers[index].Subject.Player);
-            if (!IsZombieSurvival || current != token) return;
-            Broadcast(zombiePlayers[index].Subject.Player, L.T("[Zombie Survival] Infected! You join the Zombies after respawning."));
+            // The shared death finalizer now sends the combined conversion and
+            // respawn message once attribution/any-death policy is complete.
         }
 
         private static void ZombieRevived(FriendlyFireParticipants.Receipt receipt, long match)
@@ -159,7 +180,6 @@ namespace SephiriaOne
             if (!CurrentZombieReceipt(receipt, match, out int index) || zombieRound == null || receipt.Player.IsDead ||
                 !zombieRound.Revived(index)) return;
             RoleRevision++;
-            Broadcast(receipt.Player, L.T("[Zombie Survival] You are a Zombie. Defeat Humans to convert them!"));
         }
 
         private static List<string> ZombieResults()
@@ -170,7 +190,7 @@ namespace SephiriaOne
                 var entry = zombiePlayers[i];
                 if (Connected(entry.Subject, entry.Receipt)) zombieNames[i] = CombatNames.Player(entry.Subject.Player);
                 var score = zombieScores[i];
-                lines.Add(L.F("{0} - {1} ({2}/{3}/{4})", zombieNames[i], L.T(zombieRound != null && zombieRound.IsZombie(i) ? "Zombie" : "Human"),
+                lines.Add(L.F("{0} - {1} ({2}/{3}/{4})", zombieNames[i], L.T(zombieRound != null && zombieRound.IsZombie(i) ? "[Z] Zombie" : "[H] Human"),
                     score?.Kills ?? 0, score?.Deaths ?? 0, score?.Assists ?? 0));
             }
             return lines;
@@ -183,7 +203,7 @@ namespace SephiriaOne
             zombiePlayers.Clear(); zombieRoster.Clear(); RoleRevision++;
         }
 
-        internal static string DescribeZombie() => L.F("Zombie Survival: {0}. Round: {1}s. Remaining: {2}s. Humans: {3}; Zombies: {4}.",
+        internal static string DescribeZombie() => L.F("Zombie Survival: {0}. Round: {1}s. Remaining: {2}s. [H] Humans: {3}; [Z] Zombies: {4}.",
             L.T(!IsZombieSurvival ? "off" : phase == Phase.Countdown ? "countdown" : phase == Phase.BetweenRounds ? "waiting" : "active"),
             IsZombieSurvival ? duration : SessionSettings.ZombieDuration,
             !IsZombieSurvival ? 0 : Math.Max(0, (int)Math.Ceiling((phase == Phase.Countdown ? startsAt : endsAt) - Now)),

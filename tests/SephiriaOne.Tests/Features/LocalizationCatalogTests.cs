@@ -18,6 +18,12 @@ internal static class LocalizationCatalogTests
         var english = Read("en");
         var korean = Read("ko");
         Check(english.Count > 300 && english.Keys.ToHashSet().SetEquals(korean.Keys), "Bundled catalogs must cover the same complete set of keys");
+        foreach (var catalog in new[] { english, korean })
+        {
+            string conversion = string.Format(catalog["[Z] \"{0}\" infected you! Reviving as Zombie in {1}s - hunt remaining [H] Humans!"], new string('A', 32), 1);
+            Check(conversion.Length <= 120 && conversion.Contains("[Z]") && conversion.Contains("[H]") && conversion.Contains(new string('A', 32)),
+                "Default conversion translations fit the stock limit with a full-length name and both faction markers");
+        }
         string folder = Path.Combine(Path.GetTempPath(), "SephiriaOne-Catalog-" + Guid.NewGuid().ToString("N"));
         var warnings = new List<string>();
         try

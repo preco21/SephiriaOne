@@ -18,7 +18,7 @@ namespace SephiriaOne
             zombieApply = widgets.Button(pageRoot, "Apply", 153, 0, 62, 25, ApplyZombieDuration);
             zombieResetDuration = widgets.Button(pageRoot, "Reset", 223, 0, 66, 25,
                 () => Execute("/one zombie duration reset", true, clearInputOnSuccess: ClearZombieDuration));
-            widgets.Text(pageRoot, "ZombieCount", "Starting Zombies", 16, 27, 118, 25, 11);
+            widgets.Text(pageRoot, "ZombieCount", "[Z] Starting Zombies", 16, 27, 118, 25, 11);
             zombieCount = widgets.Input(pageRoot, 140, 27, 49, EditZombieCount);
             zombieCountApply = widgets.Button(pageRoot, "Apply", 197, 27, 40, 25, ApplyZombieCount);
             zombieCountReset = widgets.Button(pageRoot, "Reset", 245, 27, 44, 25,

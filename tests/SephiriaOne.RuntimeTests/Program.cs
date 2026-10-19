@@ -792,6 +792,7 @@ PlayTagControlsTests.Run(Start, id => Add(id), Check);
 ZombieSurvivalRuntimeTests.Run(Start, id => Add(id), Check);
 ZombieSurvivalControlsTests.Run(Start, Check);
 ZombieStartingCountTests.Run(Start, id => Add(id), Check);
+ZombieAnnouncementTests.Run(Start, id => Add(id), Check);
 PlayTagRuntimeTests.Run(Start, id => Add(id), Check);
 PlayTagChaserRuntimeTests.Run(Start, id => Add(id), Check);
 KilledByRuntimeTests.Run(Start, id => Add(id), Check);

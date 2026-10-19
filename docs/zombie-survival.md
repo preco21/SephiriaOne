@@ -1,4 +1,4 @@
-# Zombie Survival (0.66.0, 2026-10-19)
+# Zombie Survival (0.66.1, 2026-10-19)
 
 Current Zombies have a [persistent native particle indicator](zombie-role-visual.md),
 including while awaiting revival. It is cosmetic, uses stock guest transport,
@@ -9,6 +9,57 @@ Tournament and Play Tag. Uses native damage, death, revival, chat/bubbles and
 cosmetic transports; guests do not need new assets, packets or addon state.
 Automated/native checks are not proof of live stock-guest rendering or gameplay.
 Nothing was deployed or launched during implementation.
+
+## Faction and conversion notices (0.66.1, 2026-10-19)
+
+Use `[Z]` for Zombies and `[H]` for Humans in role labels, live participant rows,
+status/countdown totals and results. These basic ASCII letters/brackets already
+occur in native/addon chat; no biohazard/emoji glyph or extra font is required.
+The marker is stable in both languages; the role words are translated. Pending
+infection already displays `[Z]`, while combat activation still waits for revival.
+Stale receipts, spectators, countdown-only entrants and stopped modes have no marker.
+
+At activation, announce the actual initial Zombie names:
+
+```text
+[Z] "PlayerX" is a Zombie!
+[Z] Zombies: "PlayerX", "PlayerY", "PlayerZ"
+```
+
+Names use existing safe-name handling. Multi-player lists pack complete quoted
+names into messages of at most 120 characters for the stock chat receiver.
+Only initial Zombies receive opening role bubbles; Humans receive none.
+Opening recipients are captured before visual/chat callbacks. A Human infected
+inside one of those callbacks keeps their conversion notice, and a dead initial
+Zombie keeps their respawn notice instead of receiving an opening instruction.
+
+Confirmed conversions use the killer name captured at death entry and the shared
+respawn deadline. The current delay remains **one second**, not three:
+
+```text
+[Z] "PlayerX" infected you! Reviving as Zombie in 1s - hunt remaining [H] Humans!
+[Z] "PlayerX"에게 감염됨! 1초 후 좀비로 부활 - 남은 [H] 인간을 사냥하세요!
+```
+
+Zombie-mode `Died` queues recovery but defers its initial announcement while a
+native death scope is open. `ConfirmedKill` records the attributed infector;
+`CompletedMatchDeath` handles opt-in environmental infection. `LeaveDeath` then
+sends the resolved countdown once. A reentrant tick cannot restore/announce that
+player before the death scope finishes. Conversion without an attributed killer
+uses a neutral "Infected!" message instead of inventing a name.
+
+Conversion fields belong to the existing per-life respawn entry, not a permanent
+player map. The combined bubble replaces the generic countdown; no generic
+floating countdown, separate revival role instruction or `Respawned!` bubble
+overwrites it. Ordinary deaths and other modes keep their existing messages.
+Normal K/D/A kill logs and private matchup records remain separate and unchanged.
+Manual revival, stop, failed death/revival and session cleanup discard the entry.
+
+Verification includes single/multiple names, a nine-player long-name roster,
+EN/KO conversion length, Human opening silence, death-entry rename preservation,
+environmental conversion, next-life cleanup, reentrant ticks, stop inside chat,
+and infection during opening announcements. No live font/UI or guest session
+was launched; stock transport contracts and executable fixtures are the evidence.
 
 ## Controls
 
@@ -71,7 +122,8 @@ values over an existing override, then `/one save` if desired.
   callbacks finish. New hostile actions are already blocked at final infection
   or expiry. This catches lethal reflection where the inner Human death precedes
   the enclosing attack's Zombie death; neither player is left outside recovery.
-- Results report every entrant as `Name - Zombie/Human (K/D/A)`. A cancellation
+- Results report every entrant as `Name - [Z] Zombie (K/D/A)` or
+  `Name - [H] Human (K/D/A)`. A cancellation
   says the match stopped instead of declaring a winner. K/D/A uses the existing
   shared attribution and callback-invalidation rules.
 

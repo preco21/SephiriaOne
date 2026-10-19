@@ -11,6 +11,7 @@
     <Compile Include="../../SephiriaOne/Features/Combat/CombatRoleSettings.cs" Link="CombatRoleSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/ZombieSurvival/ZombieSurvivalCommand.cs" Link="ZombieSurvivalCommand.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/ZombieSurvival/ZombieSurvivalRound.cs" Link="ZombieSurvivalRound.cs" />
+    <Compile Include="../../SephiriaOne/Features/Combat/ZombieSurvival/ZombieSurvivalMessages.cs" Link="ZombieSurvivalMessages.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionZombiePolicy.cs" Link="SessionZombiePolicy.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/ZombieSurvival/ZombieSurvivalSettings.cs" Link="ZombieSurvivalSettings.cs" />
 

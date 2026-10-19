@@ -76,7 +76,7 @@ internal static class ZombieSurvivalRuntimeTests
         Kill(zombie, humans[2]);
         At(7.1f);
         check(!CombatMatchRuntime.IsRunning && !humans[2].IsDead && !SessionSettings.FriendlyFireForHit.Enabled &&
-            Messages("Zombies win!") && all.All(p => Messages(p.Name + " - Zombie (")), "Last infection ends match, restores pending players and reports every final team");
+            Messages("Zombies win!") && all.All(p => Messages(p.Name + " - [Z] Zombie (")), "Last infection ends match, restores pending players and reports every final team");
         check(all.All(p => CombatMatchRuntime.IncomingRoleScale(p) == 1 && CombatMatchRuntime.RefillRoleScale(p) == 1), "End removes every role bonus immediately");
         check(ZombieRoleVisuals.Visible.Count == 0, "Natural conclusion removes every Zombie visual");
 
@@ -90,7 +90,7 @@ internal static class ZombieSurvivalRuntimeTests
 
         all = New(2); Begin(3); zombie = all.Single(CombatMatchRuntime.IsActiveZombie); var human = all.Single(p => p != zombie);
         UnityEngine.Time.unscaledTime = 5.5f; human.Die(0, null); At(6);
-        check(!CombatMatchRuntime.IsRunning && !human.IsDead && Messages("Humans win!") && Messages(human.Name + " - Human ("), "Unconverted pending Human survives deadline and recovers");
+        check(!CombatMatchRuntime.IsRunning && !human.IsDead && Messages("Humans win!") && Messages(human.Name + " - [H] Human ("), "Unconverted pending Human survives deadline and recovers");
         all = New(2); Begin(3); zombie = all.Single(CombatMatchRuntime.IsActiveZombie); human = all.Single(p => p != zombie);
         UnityEngine.Time.unscaledTime = 6; Kill(zombie, human); At(6);
         check(Messages("Humans win!") && !Messages("Zombies win!"), "Death at deadline cannot infect or overturn timeout");

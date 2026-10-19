@@ -80,9 +80,9 @@ namespace SephiriaOne
         // Called only after native normal completion AND successful KDA completion.
         // The captured token/receipts prevent another run or connection inheriting
         // a kill. A pass deliberately leaves combat/assist epochs unchanged.
-        internal static void ConfirmedKill(FriendlyFireParticipants.Receipt killer, FriendlyFireParticipants.Receipt victim, long match)
+        internal static void ConfirmedKill(FriendlyFireParticipants.Receipt killer, FriendlyFireParticipants.Receipt victim, long match, string killerName = null)
         {
-            if (IsZombieSurvival) { ConfirmedZombieKill(killer, victim, match); return; }
+            if (IsZombieSurvival) { ConfirmedZombieKill(killer, victim, match, killerName); return; }
             if (!IsPlayTag || phase != Phase.Active || !CurrentScope || token != match || tagBomb == null ||
                 !FriendlyFireParticipants.IsCurrent(killer) || !FriendlyFireParticipants.IsCurrent(victim) || !victim.Player.IsDead ||
                 !tagRoster.TryGetValue(killer.Player, out int from) || !tagRoster.TryGetValue(victim.Player, out int to) ||

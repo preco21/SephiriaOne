@@ -24,6 +24,10 @@ internal static class GameZombieTests
         foreach (string suffix in new[] { "Duration", "Count", "Refill", "Incoming" })
             Require(Calls("SettingsPanel", "ApplyZombie" + suffix, "SettingsPanel", "Execute") &&
                 Calls("SettingsPanel", "ClearInput", "SettingsPanel", "ClearZombie" + suffix), "Zombie input dispatch/cleanup: " + suffix);
+        Require(Calls("SettingsPanel", "RefreshParticipants", "CombatMatchRuntime", "ZombieFactionMarker"), "Participant rows use live receipt-bound faction markers");
+        Require(Calls("CombatMatchRuntime", "BroadcastRespawnCountdown", "ZombieSurvivalMessages", "Conversion") &&
+            !Calls("CombatMatchRuntime", "InfectZombie", "CombatMatchRuntime", "Broadcast") &&
+            !Calls("CombatMatchRuntime", "ZombieRevived", "CombatMatchRuntime", "Broadcast"), "Shared countdown owns the single conversion notice");
         Console.WriteLine("Verified Zombie shared hostility, role modifiers, native callback and panel wiring (not live multiplayer).");
     }
 }

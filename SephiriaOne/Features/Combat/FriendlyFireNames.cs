@@ -95,7 +95,7 @@ namespace SephiriaOne
                 if (__instance is PlayerAvatar victim && FriendlyFireKda.CompleteDeath(victim, __state.Kda))
                 {
                     if (!__state.Exceptional)
-                        CombatMatchRuntime.ConfirmedKill(__state.KillerReceipt, __state.VictimReceipt, __state.MatchToken);
+                        CombatMatchRuntime.ConfirmedKill(__state.KillerReceipt, __state.VictimReceipt, __state.MatchToken, __state.ReliableKiller ?? __state.Killer);
                     if (__state.ReliableKiller != null && FriendlyFireParticipants.IsCurrent(__state.PlayerReceipt) &&
                         __state.PresentationEpoch == FriendlyFireParticipants.Epoch)
                     {

@@ -17,6 +17,8 @@ namespace SephiriaOne
             internal FriendlyFireParticipants.Receipt Receipt;
             internal double At;
             internal int Shown;
+            internal bool ZombieConversion;
+            internal string ZombieInfector;
         }
         private sealed class RosterEntry
         {
@@ -161,6 +163,7 @@ namespace SephiriaOne
                 {
                     var respawn = due[i]; var player = respawn.Subject.Player;
                     if (!pending.TryGetValue(player, out var latest) || !ReferenceEquals(latest, respawn)) continue;
+                    if (IsZombieSurvival && dying.ContainsKey(player)) continue; // Wait for infection attribution/finalization.
                     if (!Connected(respawn.Subject, respawn.Receipt) || !Eligible(player) || !player.IsDead) { pending.Remove(player); continue; }
                     if (!respawn.Subject.IsReady) continue;
                     int seconds = Math.Max(0, (int)Math.Ceiling(respawn.At - now));
@@ -175,7 +178,7 @@ namespace SephiriaOne
                         Broadcast(null, failure);
                         Stop(true, true); break;
                     }
-                    Broadcast(player, L.T("Respawned!"));
+                    if (!respawn.ZombieConversion) Broadcast(player, L.T("Respawned!"));
                 }
                 if (IsTournament && current == token) AdvanceTournament(now);
                 if (IsPlayTag && current == token) AdvancePlayTag(now);
@@ -254,11 +257,12 @@ namespace SephiriaOne
             if (!spawner || !ReferenceEquals(spawner.PlayerAvatar, player) || !PlayerSpawner.MultiplayerList.Contains(spawner)) return;
             var subject = new HostPlayer(spawner);
             int delay = IsPlayTag || IsZombieSurvival ? 1 : 3;
-            pending.Add(player, new Respawn { Subject = subject, Receipt = FriendlyFireParticipants.Capture(player), At = Now + delay, Shown = delay });
+            bool deferNotice = IsZombieSurvival && dying.ContainsKey(player);
+            pending.Add(player, new Respawn { Subject = subject, Receipt = FriendlyFireParticipants.Capture(player), At = Now + delay, Shown = deferNotice ? -1 : delay });
             var score = FriendlyFireKda.For(player);
             if (!participants.TryGetValue(score, out var entry)) participants.Add(score, entry = new Participant { Score = score, Order = participants.Count });
             entry.Name = CombatNames.Player(player);
-            BroadcastRespawnCountdown(player, delay);
+            if (!deferNotice) BroadcastRespawnCountdown(player, delay);
         }
         internal static void Reviving(PlayerAvatar player)
         {
@@ -283,6 +287,12 @@ namespace SephiriaOne
                 !cleanup.Exists(r => ReferenceEquals(r.Subject.Player, player)))
                 cleanup.Add(new Respawn { Subject = new HostPlayer(player.spawner), Receipt = receipt });
             if (stopping) DrainRecovery();
+            else if (IsZombieSurvival && CurrentScope && player && player.IsDead &&
+                pending.TryGetValue(player, out var respawn) && respawn.Shown < 0 && Connected(respawn.Subject, respawn.Receipt))
+            {
+                respawn.Shown = Math.Max(0, (int)Math.Ceiling(respawn.At - Now));
+                BroadcastRespawnCountdown(player, respawn.Shown);
+            }
             else if (IsPlayTag && deathDepth == 0) AdvancePlayTag(Now);
             // Zombie victory is committed by infection but concluded on Tick.
             // A lethal reflected hit may finish this death before the enclosing
@@ -353,7 +363,7 @@ namespace SephiriaOne
                     if (Connected(respawn.Subject, respawn.Receipt) && respawn.Subject.Player.IsDead)
                     {
                         if (!ReviveAllAction.TryRevive(respawn.Subject, () => current == token && CurrentScope && Connected(respawn.Subject, respawn.Receipt), out string failure, out _)) Broadcast(null, failure);
-                        else Broadcast(respawn.Subject.Player, L.T("Respawned!"));
+                        else if (!respawn.ZombieConversion) Broadcast(respawn.Subject.Player, L.T("Respawned!"));
                     }
                 }
             }
@@ -364,8 +374,15 @@ namespace SephiriaOne
 
         private static void BroadcastRespawnCountdown(PlayerAvatar player, int seconds)
         {
-            string message = L.F("Respawn in: {0}s", seconds);
             pending.TryGetValue(player, out var respawn);
+            if (IsZombieSurvival && respawn != null && respawn.ZombieConversion)
+            {
+                // One bubble carries infection and revival instructions. Do not
+                // layer the generic or experimental floating countdown over it.
+                Broadcast(player, ZombieSurvivalMessages.Conversion(respawn.ZombieInfector, seconds));
+                return;
+            }
+            string message = L.F("Respawn in: {0}s", seconds);
             BroadcastCountdown(player, message, message, respawn);
         }
 

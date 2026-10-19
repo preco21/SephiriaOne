@@ -60,7 +60,8 @@ namespace SephiriaOne
                 }
                 var current = participantRows[i]; var data = snapshot.FriendlyFirePlayers[i];
                 current.Player = data; current.Toggle.gameObject.SetActive(true);
-                current.Label.text = data.Id + ": " + data.Name;
+                string faction = CombatMatchRuntime.ZombieFactionMarker(data.Identity as FriendlyFireParticipants.Receipt);
+                current.Label.text = (faction.Length == 0 ? "" : faction + " ") + data.Id + ": " + data.Name;
                 current.Toggle.SetIsOnWithoutNotify(data.Selected);
                 current.Toggle.interactable = host && (snapshot.FriendlyFireAvailable || data.Selected);
             }
