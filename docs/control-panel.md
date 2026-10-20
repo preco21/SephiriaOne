@@ -12,7 +12,7 @@ See [interval semantics](pvp-dot-intervals.md).
 
 Version `0.58.0` groups Combat settings into **Combat** and **PvP balancing**
 subsections within the existing tab. The latter contains balancing, refill and
-**Guard MP (%) / 방어 MP (%)** (default 10% of maximum MP before native reductions).
+**Guard MP (%) / 방어 MP (%)** (current default 8% of maximum MP before native reductions).
 The guard input uses `/one friendlyfire guard-mp N` and applies live without
 stopping a match or clearing scores. K/D/A reset, Revive All, master/reset and
 participant controls stay accessible in both sections. Input drafts remain

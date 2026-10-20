@@ -56,7 +56,7 @@
   "Plasma Burn (s)": "플라즈마 화상 (초)",
   "Frostbite (s)": "동상 (초)",
   "Poison (s)": "중독 (초)",
-  "PvP guard: /one friendlyfire guard-mp 0..100|reset (percent of max MP, up to 2 decimals). Default 5; native guard reductions apply. Positive costs round up. Only with PvP balancing on.": "PvP 방어: /one friendlyfire guard-mp 0..100|reset (최대 MP 비율, 소수점 둘째 자리까지). 기본 5. 기존 방어 소모량 감소 효과가 적용되며, 양수 비용은 올림합니다. PvP 밸런스 보정이 켜져 있을 때만 적용됩니다.",
+  "PvP guard: /one friendlyfire guard-mp 0..100|reset (percent of max MP, up to 2 decimals). Default 8; native guard reductions apply. Positive costs round up. Only with PvP balancing on.": "PvP 방어: /one friendlyfire guard-mp 0..100|reset (최대 MP 비율, 소수점 둘째 자리까지). 기본 8. 기존 방어 소모량 감소 효과가 적용되며, 양수 비용은 올림합니다. PvP 밸런스 보정이 켜져 있을 때만 적용됩니다.",
   "PvP guard: {0}% max MP before native reductions.": "PvP 방어: 기존 감소 효과 적용 전 최대 MP의 {0}% 소모.",
   "Guard MP (%)": "방어 MP (%)",
   "Block lobby HP/MP recovery": "대기실 HP/MP 자동 회복 차단",

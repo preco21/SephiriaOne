@@ -1,6 +1,6 @@
 # Development knowledge index
 
-Maintained: 2026-10-21 (Asia/Seoul), addon `0.78.0`.
+Maintained: 2026-10-21 (Asia/Seoul), addon `0.78.1`.
 
 [Minority-side Zombie balancing](zombie-survival.md#dynamic-balancing-0760):
 neutral parity, modest minority-Zombie help and stronger minority-Human offense
@@ -56,7 +56,7 @@ each player who lacks it. Optional automatic supply follows the shared PvP
 participant roster on entry/match start; default off, saved in v36 presets.
 Consumption and loading do not automatically refill supplies.
 
-PvP guard: the default and reset value are now **5% of maximum MP**, before
+PvP guard: the default and reset value are now **8% of maximum MP**, before
 native guard reductions. Explicit saved overrides remain unchanged.
 
 PvP reapplication: [Keep schedule / 주기 유지](pvp-dot-intervals.md#preserve-schedules-0690)
