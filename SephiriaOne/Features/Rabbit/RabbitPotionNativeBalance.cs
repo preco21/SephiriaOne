@@ -83,7 +83,8 @@ namespace SephiriaOne
             // A pending animation may reach the native consumer after death. Reject before any
             // event or MP charge rather than falling through to unprotected native consumption.
             if (context != null && context.Player.IsDead) throw new RejectedDrink();
-            if (context != null && context.Settings.ConsumeMp && context.Settings.MpCostPerDrink > 0)
+            if (context != null && context.Settings.ConsumeMp && context.Settings.MpCostPerDrink > 0 &&
+                !CurrentPvpPolicy(context))
             {
                 int cost = context.Settings.MpCostPerDrink;
                 int balance = context.Player.mp;
@@ -108,10 +109,21 @@ namespace SephiriaOne
         private static bool AllowSurvival(PassiveObject_PotionAndRandomStat __instance, PotionEffect effect)
         {
             DrinkContext drink = drinks != null && drinks.Count != 0 ? drinks.Peek() : null;
-            return !IsNativeCompletion(drink) ||
+            if (!IsNativeCompletion(drink) ||
                 !CanSuppressSurvival(drink.EntityId) ||
-                !ReferenceEquals(__instance.player, drink.Player) || !ReferenceEquals(effect, drink.Effect) ||
-                !drink.Settings.SuppressSurvival || !SessionSettings.RabbitPotionsForUse.SuppressSurvival || !Current(drink, retainDeath: true);
+                !ReferenceEquals(__instance.player, drink.Player) || !ReferenceEquals(effect, drink.Effect)) return true;
+            if (!Current(drink, retainDeath: true))
+            {
+                // Even a temporarily invalid item/player scope must not regain
+                // free PvP consumption after allowing this native talent callback.
+                drink.PvpReceipt = null;
+                return true;
+            }
+            // PvP retention and Survival suppression are one policy, independent
+            // of costume and the Rabbit-only suppression preference.
+            bool pvp = CurrentPvpPolicy(drink);
+            bool rabbit = drink.Settings.SuppressSurvival && SessionSettings.RabbitPotionsForUse.SuppressSurvival;
+            return !pvp && !rabbit;
         }
 
         private static bool IsNativeCompletion(DrinkContext drink) => drink != null &&

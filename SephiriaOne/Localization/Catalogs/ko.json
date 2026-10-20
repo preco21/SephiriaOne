@@ -15,7 +15,7 @@
   "Enter a hosted session first.": "먼저 호스트 세션에 입장하세요.",
   "Infinite PvP HP potions": "PvP HP 포션 무제한",
   "Infinite PvP HP potions: {0}.": "PvP HP 포션 무제한: {0}.",
-  "Infinite PvP HP potions: /one friendlyfire infinite-hp on|off|reset. Default on; active participants keep regular and Large HP potions after drinking. Sample and other potions are excluded. Rabbit options remain independent.": "PvP HP 포션 무제한: /one friendlyfire infinite-hp on|off|reset. 기본 켜짐; 전투 중인 참가자는 일반·대형 HP 포션을 사용해도 수량이 줄지 않습니다. 샘플과 다른 포션은 제외되며, 날개귀 토끼 옵션과 별개입니다.",
+  "Infinite PvP HP potions: /one friendlyfire infinite-hp on|off|reset. Default on; active participants keep Small/Large HP potions, pay no MP and gain no Survival random stat. Sample and other potions are excluded.": "PvP HP 물약 무한 사용: /one friendlyfire infinite-hp on|off|reset. 기본 켜짐. 전투 참가자는 소형/대형 HP 물약을 소모하지 않고 MP 비용 없이 사용하며, 생존 특성의 무작위 능력치 증가도 발생하지 않습니다. 견본 및 다른 종류의 물약은 제외됩니다.",
   "HP potion hooks unavailable; off/reset remain available. See Player.log.": "HP 포션 기능을 사용할 수 없습니다. 끄기/초기화는 가능합니다. Player.log를 확인하세요.",
   "Plasma shock (s)": "플라즈마 감전 (초)",
   "Plasma shock interval: {0}s.": "플라즈마 감전 간격: {0}초.",

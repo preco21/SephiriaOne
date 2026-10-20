@@ -608,6 +608,15 @@ them. See [event-audio evidence and send-failure handling](remote-event-audio.md
 
 ## Native Large Potion supplies (2026-10-20)
 
+`0.77.1` ties PvP HP retention to the existing controller completion scope and
+Survival callback guard. Native Survival runs before the regeneration heal;
+temporarily invalid scope/policy can let it run before state becomes valid again.
+Retire the captured PvP receipt whenever that exact callback is allowed through
+due to revoked policy or invalid identity. Rechecking only at final retention
+allows both stat gain and a free potion. Fee waiver happens before callbacks,
+never as a later MP refund. No new native hook is required; native contract tests
+verify the existing ordering against the installed assembly.
+
 See [PvP supplies](pvp-potions.md) for audited item ID 1, resources.assets path
 28856, three-store duplicate detection, borrowed native inventory permissions
 and stock-client delivery. Optional one-shot rules must keep readiness inside

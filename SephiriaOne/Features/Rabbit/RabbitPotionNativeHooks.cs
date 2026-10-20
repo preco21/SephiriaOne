@@ -253,12 +253,21 @@ namespace SephiriaOne
                 if (!Current(__state, retainDeath: true) || __state.HealCalls != 1) return;
                 RabbitPotionSettings now = SessionSettings.RabbitPotionsForUse;
                 bool rabbitInfinite = __state.Settings.Infinite && now.Infinite;
-                bool pvpInfinite = __state.PvpReceipt != null && FriendlyFireParticipants.IsCurrent(__state.PvpReceipt) &&
-                    PvpPotionPolicy.Applies(__state.Player);
+                bool pvpInfinite = IsNativeCompletion(__state) && CurrentPvpPolicy(__state);
                 if (CanRetainPotion(__state.EntityId) && (rabbitInfinite || pvpInfinite) && itemDecreased) itemDecreased = false;
                 if (__state.Settings.Share && now.Share && IsFinitePositive(__state.HealStrength) && Current(__state)) Share(__state);
             }
             catch { /* An optional callback must never cancel the native drink. */ }
+        }
+
+        private static bool CurrentPvpPolicy(DrinkContext context)
+        {
+            if (context?.PvpReceipt == null) return false;
+            if (FriendlyFireParticipants.IsCurrent(context.PvpReceipt) && PvpPotionPolicy.Applies(context.Player)) return true;
+            // Survival may run after eligibility is revoked. A later callback
+            // must not reacquire free consumption for that same drink.
+            context.PvpReceipt = null;
+            return false;
         }
 
         private static Exception EndDrink(Exception __exception)

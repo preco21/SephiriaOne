@@ -2,6 +2,11 @@
 
 ## Infinite HP potions (0.71.0; default changed in 0.72.0)
 
+Corrected in `0.77.1` (2026-10-21): PvP retention, zero MP cost and suppression
+of Survival's 5-point random-stat bonus now use the same guarded drink policy.
+Previously only retention used PvP eligibility; Survival and MP still depended
+on the independent Rabbit settings.
+
 **Combat → Supplies → Infinite PvP HP potions** / `/one friendlyfire infinite-hp
 on|off|reset` is a separate toggle, default **on**. `/one save` stores it in preset
 v37. Explicit saved `infinite-hp 0` remains off; omitted settings inherit on.
@@ -10,8 +15,10 @@ that omitted the old off default cannot distinguish an opt-out from no preferenc
 It does not require PvP balancing or enable the automatic Large Potion grant.
 
 Active combat participants of any costume retain ordinary HP potions (ID 0) and
-Large Potions (ID 1) after a successful drink. Native self-healing and potion
-callbacks still run. The Sample potion (ID 37), MP potions and other potion types
+Large Potions (ID 1) after a successful drink, pay no addon MP fee (including
+Wing-Eared Rabbit), and do not gain Survival's random stat for that use.
+Native self-healing and unrelated potion callbacks still run. The Sample potion
+(ID 37), MP potions and other potion types
 remain fully native. This preserves the prior Sample exclusion.
 
 The shared live `PvpParticipation` rule covers casual friendly fire, Deathmatch,
@@ -22,18 +29,23 @@ The supply grant deliberately uses the broader entry roster described below.
 
 Turning the option off or ending active PvP immediately restores native consumption
 for subsequent drinks. Rabbit's original costume option remains independent and
-can still retain HP potions outside PvP. Enabling the PvP option does not grant
-other costumes Rabbit's MP fee, sharing, Survival suppression or Tension bypass.
-The Rabbit-specific settings still apply to Rabbit normally.
+can still retain HP potions outside PvP. With the PvP option active, the MP fee
+is waived and Survival is suppressed regardless of the Rabbit-specific fee and
+suppression toggles. When PvP ends or the option is disabled, subsequent drinks
+use the costume's configured behavior again. Sharing and Tension remain separate
+Rabbit mechanics; other costumes do not acquire them through this option.
 
 ### Native boundary and lifecycle
 
 `PvpPotionPolicy` borrows the existing guarded `RabbitPotionNativeHooks` drink
 scope rather than installing a second patch. The scope captures an existing
 participant receipt and costume, checks connection/run/floor/inventory/item
-identity, and changes only the native `itemDecreased` result after one successful
-HP heal. No quantity refund, retained inventory mutation, new RPC or guest addon
-is needed. The existing death-transition protection remains in use.
+identity, and changes the native `itemDecreased` result after one successful HP
+heal. The existing targeted Survival callback guard suppresses only the exact
+player/effect in that controller scope. The fee waiver is decided at completion
+entry, before any potion callback, with no later compensating MP write. No
+quantity refund, retained inventory mutation, new RPC or guest addon is needed.
+The existing death-transition protection remains in use.
 
 `WieldingPotion.Drink` calls the native effect and returns its consumption decision
 before `ItemController.OnDrinkPotionServerside`. Changes inside the effect/heal
@@ -41,11 +53,18 @@ callback are rechecked before that decision. A completed drink is atomic: a late
 controller notification cannot retroactively consume it; an option/mode change
 there affects the next drink. Regression coverage asserts both sides of this
 boundary, plus stale connections, costume changes, dead/late completions,
-non-Rabbit isolation, all shared modes and live toggle changes.
+non-Rabbit isolation, all shared modes and live toggle changes. Standalone or
+nested direct `WieldingPotion.Drink` calls cannot borrow a controller's PvP
+retention/suppression scope. If live policy or item/player validation permits
+Survival to run, retire that drink's PvP receipt so a later callback cannot
+restore free PvP consumption. This also covers temporary costume, floor, slot
+or readiness changes restored during healing.
 
-Verified with a non-deploying Release build (zero warnings/errors), 301 potion
+Historical `0.71.0` verification: non-deploying Release build, 301 potion
 hook cases plus 12 localized alerts, 96 new potion setting/preset checks, shared
-runtime/combat suites and installed native contracts. Live host/stock-guest
+runtime/combat suites and installed native contracts. `0.77.1` adds Survival,
+zero-MP Rabbit, callback revocation and nested-event regressions; the dated
+implementation plan records current results. Live host/stock-guest
 drinking and belt-count rendering remain unverified; nothing was deployed.
 
 ## Large Potion supplies (0.70.0)

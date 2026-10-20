@@ -1,6 +1,11 @@
 # Development knowledge index
 
-Maintained: 2026-10-21 (Asia/Seoul), addon `0.77.0`.
+Maintained: 2026-10-21 (Asia/Seoul), addon `0.77.1`.
+
+[PvP infinite-potion correction](pvp-potions.md): Small/Large HP drinks now
+combine retention, zero MP cost and Survival random-stat suppression for active
+participants, including Rabbit. Sample/other potions retain native behavior;
+the existing toggle and shared mode/connection lifetime still control eligibility.
 
 [Responsive PvP damage and cadence](pvp-hit-frequency.md): direct attacks and
 incidental damage have separate hit-rate histories with one shared allowance.
