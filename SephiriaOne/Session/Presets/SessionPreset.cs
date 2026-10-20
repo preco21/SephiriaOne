@@ -33,6 +33,7 @@ namespace SephiriaOne
         private const string HitFrequencyPresetHeader = "SephiriaOne preset v29";
         private const string ExtendedPvpDotPresetHeader = "SephiriaOne preset v34";
         private const string ExperiencePresetHeader = "SephiriaOne preset v39";
+        private const string ProjectilePresetHeader = "SephiriaOne preset v42";
         private const string ZombieDynamicPresetHeader = "SephiriaOne preset v41";
         private const string SlateSelectionPresetHeader = "SephiriaOne preset v40";
         private const string RequitalPresetHeader = "SephiriaOne preset v38";
@@ -79,6 +80,14 @@ namespace SephiriaOne
         {
             var lines = new List<string>();
             DescribeZombieSettings(lines);
+            if (Projectiles.Enabled) lines.Add("projectiles enabled 1");
+            if (Projectiles.PlayerLimit != ProjectileLimitSettings.DefaultPlayerLimit)
+                lines.Add("projectiles total " + Projectiles.PlayerLimit.ToString(CultureInfo.InvariantCulture));
+            if (Projectiles.DefaultSourceLimit != ProjectileLimitSettings.DefaultPerSourceLimit)
+                lines.Add("projectiles default " + Projectiles.DefaultSourceLimit.ToString(CultureInfo.InvariantCulture));
+            foreach (var source in ProjectileLimitCatalog.All)
+                if (Projectiles.SourceLimits.TryGetValue(source.Id, out int sourceLimit))
+                    lines.Add("projectiles source " + source.Id + " " + sourceLimit.ToString(CultureInfo.InvariantCulture));
             if (Experience.Block) lines.Add("xp block 1");
             if (Experience.RabbitExempt) lines.Add("xp rabbit-exempt 1");
             if (Requital.Kind != SlateKind.Requital) lines.Add("slates type " + ((int)Requital.Kind).ToString(CultureInfo.InvariantCulture));
@@ -152,7 +161,7 @@ namespace SephiriaOne
             { expandedStats |= stat.RequiresExpandedPreset; companionStats |= stat.IsCompanion; }
             bool multiplier = HasFountainMultiplier;
             foreach (Setting setting in stats.Values) multiplier |= setting.Multiplier;
-            return (ZombieDynamicBalance ? ZombieDynamicPresetHeader : Requital.Kind != SlateKind.Requital ? SlateSelectionPresetHeader : Experience.HasChanges ? ExperiencePresetHeader : Requital.HasChanges ? RequitalPresetHeader : !FriendlyFire.InfiniteHpPotions || FriendlyFire.DotIntervals.HasSeparatedShockChanges ? PvpPotionPresetHeader : FriendlyFire.AutoPotion ? PotionPresetHeader : FriendlyFire.DotIntervals.HasScheduleChanges ? PvpDotSchedulePresetHeader : FriendlyFire.DotIntervals.HasExtendedChanges ? ExtendedPvpDotPresetHeader : !RabbitPotions.BlockPvpShare ? RabbitPvpSharePresetHeader : ZombieStartingCount != ZombieSurvivalSettings.DefaultStartingCount ? ZombieCountPresetHeader : HasZombieChanges ? ZombiePresetHeader : PlayTagRounds != PlayTagSettings.DefaultRounds ? PlayTagRoundsPresetHeader : FriendlyFire.HitFrequency ? HitFrequencyPresetHeader : FriendlyFire.DotIntervals.HasChanges ? PvpDotPresetHeader : FriendlyFire.GuardMpPercent != FriendlyFireSettings.DefaultGuardMpPercent ? PvpGuardPresetHeader : PlayTagChaser.HasChanges ? PlayTagChaserPresetHeader : PlayTagDuration != PlayTagSettings.DefaultDuration ? PlayTagPresetHeader : FriendlyFire.RefillPercent != FriendlyFireSettings.DefaultRefillPercent ? PvpRefillPresetHeader : FriendlyFire.BlockLobbyRegen ? LobbyRegenPresetHeader : FriendlyFire.Balance ? PvpBalancePresetHeader : companionStats ? CompanionStatsPresetHeader : TournamentDuration != TournamentSettings.DefaultDuration ? TournamentPresetHeader : FriendlyFire.HasFractionalPercent ? FractionalCombatPresetHeader : DeathmatchDuration != DeathmatchSettings.DefaultDuration ? DeathmatchPresetHeader : expandedStats ? ExpandedStatsPresetHeader : EventSpawns.HasChanges ? EventPresetHeader : CollinStartingArtifact ? CollinPresetHeader : BatHpSteal ? BatPresetHeader : JarSpawns.HasChanges ? JarPresetHeader : FriendlyFire.HasChanges ? CombatPresetHeader : ItemUnlock ? ItemUnlockPresetHeader : RabbitPotions.LevelUpPotion ? RabbitLevelUpPresetHeader : UsesMerchantGuaranteePreset ? MerchantGuaranteePresetHeader : UsesMerchantTypesPreset ? MerchantTypesPresetHeader : Merchants.HasChanges ? MerchantPresetHeader : RabbitPotions.MpCostPerDrink != RabbitPotionSettings.DefaultMpCostPerDrink ? RabbitCostPresetHeader :
+            return (Projectiles.HasChanges ? ProjectilePresetHeader : ZombieDynamicBalance ? ZombieDynamicPresetHeader : Requital.Kind != SlateKind.Requital ? SlateSelectionPresetHeader : Experience.HasChanges ? ExperiencePresetHeader : Requital.HasChanges ? RequitalPresetHeader : !FriendlyFire.InfiniteHpPotions || FriendlyFire.DotIntervals.HasSeparatedShockChanges ? PvpPotionPresetHeader : FriendlyFire.AutoPotion ? PotionPresetHeader : FriendlyFire.DotIntervals.HasScheduleChanges ? PvpDotSchedulePresetHeader : FriendlyFire.DotIntervals.HasExtendedChanges ? ExtendedPvpDotPresetHeader : !RabbitPotions.BlockPvpShare ? RabbitPvpSharePresetHeader : ZombieStartingCount != ZombieSurvivalSettings.DefaultStartingCount ? ZombieCountPresetHeader : HasZombieChanges ? ZombiePresetHeader : PlayTagRounds != PlayTagSettings.DefaultRounds ? PlayTagRoundsPresetHeader : FriendlyFire.HitFrequency ? HitFrequencyPresetHeader : FriendlyFire.DotIntervals.HasChanges ? PvpDotPresetHeader : FriendlyFire.GuardMpPercent != FriendlyFireSettings.DefaultGuardMpPercent ? PvpGuardPresetHeader : PlayTagChaser.HasChanges ? PlayTagChaserPresetHeader : PlayTagDuration != PlayTagSettings.DefaultDuration ? PlayTagPresetHeader : FriendlyFire.RefillPercent != FriendlyFireSettings.DefaultRefillPercent ? PvpRefillPresetHeader : FriendlyFire.BlockLobbyRegen ? LobbyRegenPresetHeader : FriendlyFire.Balance ? PvpBalancePresetHeader : companionStats ? CompanionStatsPresetHeader : TournamentDuration != TournamentSettings.DefaultDuration ? TournamentPresetHeader : FriendlyFire.HasFractionalPercent ? FractionalCombatPresetHeader : DeathmatchDuration != DeathmatchSettings.DefaultDuration ? DeathmatchPresetHeader : expandedStats ? ExpandedStatsPresetHeader : EventSpawns.HasChanges ? EventPresetHeader : CollinStartingArtifact ? CollinPresetHeader : BatHpSteal ? BatPresetHeader : JarSpawns.HasChanges ? JarPresetHeader : FriendlyFire.HasChanges ? CombatPresetHeader : ItemUnlock ? ItemUnlockPresetHeader : RabbitPotions.LevelUpPotion ? RabbitLevelUpPresetHeader : UsesMerchantGuaranteePreset ? MerchantGuaranteePresetHeader : UsesMerchantTypesPreset ? MerchantTypesPresetHeader : Merchants.HasChanges ? MerchantPresetHeader : RabbitPotions.MpCostPerDrink != RabbitPotionSettings.DefaultMpCostPerDrink ? RabbitCostPresetHeader :
                 RabbitPotions.ConsumeMp || RabbitPotions.SuppressSurvival ? RabbitBalancePresetHeader :
                 RabbitPotions.HasChanges ? RabbitPresetHeader : Resources.HasChanges ? ResourcePresetHeader : multiplier ? MultiplierPresetHeader : PresetHeader) + "\n" +
                 (HasChanges ? string.Join("\n", DescribeSettings()) + "\n" : "");
@@ -164,8 +173,9 @@ namespace SephiriaOne
             error = L.T("Invalid saved preset; no saved settings were applied.");
             if (text == null || text.Length > MaximumPresetLength) return false;
             string[] lines = text.Replace("\r\n", "\n").Split('\n');
-            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader && lines[0] != RabbitBalancePresetHeader && lines[0] != RabbitCostPresetHeader && lines[0] != MerchantPresetHeader && lines[0] != MerchantTypesPresetHeader && lines[0] != MerchantGuaranteePresetHeader && lines[0] != RabbitLevelUpPresetHeader && lines[0] != ItemUnlockPresetHeader && lines[0] != CombatPresetHeader && lines[0] != JarPresetHeader && lines[0] != BatPresetHeader && lines[0] != CollinPresetHeader && lines[0] != EventPresetHeader && lines[0] != ExpandedStatsPresetHeader && lines[0] != DeathmatchPresetHeader && lines[0] != FractionalCombatPresetHeader && lines[0] != TournamentPresetHeader && lines[0] != CompanionStatsPresetHeader && lines[0] != PvpBalancePresetHeader && lines[0] != LobbyRegenPresetHeader && lines[0] != PvpRefillPresetHeader && lines[0] != PlayTagPresetHeader && lines[0] != PlayTagChaserPresetHeader && lines[0] != PvpGuardPresetHeader && lines[0] != PvpDotPresetHeader && lines[0] != HitFrequencyPresetHeader && lines[0] != PlayTagRoundsPresetHeader && lines[0] != ZombiePresetHeader && lines[0] != ZombieCountPresetHeader && lines[0] != RabbitPvpSharePresetHeader && lines[0] != ExtendedPvpDotPresetHeader && lines[0] != PvpDotSchedulePresetHeader && lines[0] != PotionPresetHeader && lines[0] != PvpPotionPresetHeader && lines[0] != RequitalPresetHeader && lines[0] != ExperiencePresetHeader && lines[0] != SlateSelectionPresetHeader && lines[0] != ZombieDynamicPresetHeader)) return false;
-            bool allowZombieDynamic = lines[0] == ZombieDynamicPresetHeader;
+            if (lines.Length == 0 || (lines[0] != PresetHeader && lines[0] != MultiplierPresetHeader && lines[0] != ResourcePresetHeader && lines[0] != RabbitPresetHeader && lines[0] != RabbitBalancePresetHeader && lines[0] != RabbitCostPresetHeader && lines[0] != MerchantPresetHeader && lines[0] != MerchantTypesPresetHeader && lines[0] != MerchantGuaranteePresetHeader && lines[0] != RabbitLevelUpPresetHeader && lines[0] != ItemUnlockPresetHeader && lines[0] != CombatPresetHeader && lines[0] != JarPresetHeader && lines[0] != BatPresetHeader && lines[0] != CollinPresetHeader && lines[0] != EventPresetHeader && lines[0] != ExpandedStatsPresetHeader && lines[0] != DeathmatchPresetHeader && lines[0] != FractionalCombatPresetHeader && lines[0] != TournamentPresetHeader && lines[0] != CompanionStatsPresetHeader && lines[0] != PvpBalancePresetHeader && lines[0] != LobbyRegenPresetHeader && lines[0] != PvpRefillPresetHeader && lines[0] != PlayTagPresetHeader && lines[0] != PlayTagChaserPresetHeader && lines[0] != PvpGuardPresetHeader && lines[0] != PvpDotPresetHeader && lines[0] != HitFrequencyPresetHeader && lines[0] != PlayTagRoundsPresetHeader && lines[0] != ZombiePresetHeader && lines[0] != ZombieCountPresetHeader && lines[0] != RabbitPvpSharePresetHeader && lines[0] != ExtendedPvpDotPresetHeader && lines[0] != PvpDotSchedulePresetHeader && lines[0] != PotionPresetHeader && lines[0] != PvpPotionPresetHeader && lines[0] != RequitalPresetHeader && lines[0] != ExperiencePresetHeader && lines[0] != SlateSelectionPresetHeader && lines[0] != ZombieDynamicPresetHeader && lines[0] != ProjectilePresetHeader)) return false;
+            bool allowProjectiles = lines[0] == ProjectilePresetHeader;
+            bool allowZombieDynamic = lines[0] == ZombieDynamicPresetHeader || allowProjectiles;
             bool allowSlateSelection = lines[0] == SlateSelectionPresetHeader || allowZombieDynamic;
             bool allowExperience = lines[0] == ExperiencePresetHeader || allowSlateSelection;
             bool allowRequital = lines[0] == RequitalPresetHeader || allowExperience;
@@ -213,6 +223,33 @@ namespace SephiriaOne
                 if (parts.Length == 0) continue;
                 if (!decimal.TryParse(parts[parts.Length - 1], NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint,
                     CultureInfo.InvariantCulture, out decimal value) || value < -int.MaxValue || value > int.MaxValue) return false;
+                if (parts[0] == "projectiles")
+                {
+                    if (!allowProjectiles || (parts.Length != 3 && parts.Length != 4)) return false;
+                    string field = parts[1];
+                    string number = parts[parts.Length - 1];
+                    if (!int.TryParse(number, NumberStyles.None, CultureInfo.InvariantCulture, out int limit) ||
+                        number != limit.ToString(CultureInfo.InvariantCulture)) return false;
+                    if (parts.Length == 3)
+                    {
+                        if (!seen.Add("projectiles " + field)) return false;
+                        if (field == "enabled" && (limit == 0 || limit == 1))
+                            pending.Projectiles = pending.Projectiles.WithEnabled(limit == 1);
+                        else if (field == "total" && ProjectileLimitSettings.ValidLimit(limit))
+                            pending.Projectiles = pending.Projectiles.WithPlayerLimit(limit);
+                        else if (field == "default" && ProjectileLimitSettings.ValidLimit(limit))
+                            pending.Projectiles = pending.Projectiles.WithDefaultSourceLimit(limit);
+                        else return false;
+                    }
+                    else
+                    {
+                        var source = ProjectileLimitCatalog.Find(parts[2]);
+                        if (field != "source" || source == null || source.Id != parts[2] ||
+                            !ProjectileLimitSettings.ValidLimit(limit) || !seen.Add("projectiles source " + source.Id)) return false;
+                        pending.Projectiles = pending.Projectiles.WithSourceLimit(source.Id, limit);
+                    }
+                    continue;
+                }
                 if (parts[0] == "xp")
                 {
                     if (!allowExperience || parts.Length != 3 || !seen.Add("xp " + parts[1]) ||

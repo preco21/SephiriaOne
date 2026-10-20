@@ -75,6 +75,7 @@ Console.WriteLine($"Passed {JarSpawnPolicyTests.Run()} Mystic Jar policy/preset 
 Console.WriteLine($"Passed {BatPolicyTests.Run()} Bat policy/preset checks.");
 Console.WriteLine($"Passed {CollinPolicyTests.Run()} Collin policy/preset checks.");
 Console.WriteLine($"Passed {ExperienceTests.Run()} XP policy/preset checks.");
+Console.WriteLine($"Passed {ProjectileLimitPolicyTests.Run()} projectile limit policy/preset checks.");
 Console.WriteLine($"Passed {ChoiceCommandTests.Run()} candidate command checks.");
 Console.WriteLine($"Passed {ChoiceTranspilerTests.Run()} candidate generation guard checks.");
 Console.WriteLine($"Passed {LocalizationCatalogTests.Run()} bundled catalog checks.");

@@ -39,6 +39,8 @@ Check(LifecycleProbe.Count("stop:FriendlyFire") == 1 && HorayModAPI.SubscriberCo
 Check(LifecycleProbe.Count("stop:Requital") == 1, "Requital teardown runs exactly once");
 Check(LifecycleProbe.Count("init:Experience") == 1 && LifecycleProbe.Count("stop:Experience") == 1,
     "XP patch shares the single addon lifetime");
+Check(LifecycleProbe.Count("init:Projectiles") == 1 && LifecycleProbe.Count("stop:Projectiles") == 1,
+    "Projectile limiter shares the single addon lifetime");
 Check(LifecycleProbe.Count("stop:LargePotion") == 1, "Latest wrapper clears supply catalog and cursors exactly once");
 Check(GameObject.Created[0].Destroyed && GameObject.Created[0].Components.All(component => !component.enabled), "Latest wrapper releases original owner's controller fields");
 Check(LifecycleProbe.Events.IndexOf("stop:Deathmatch") < LifecycleProbe.Events.IndexOf("stop:FriendlyFire") &&

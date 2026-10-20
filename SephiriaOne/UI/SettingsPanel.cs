@@ -134,12 +134,12 @@ namespace SephiriaOne
             if (page == 14) { RefreshTournament(snapshot); return; }
             if (page == 15) { RefreshPlayTag(snapshot); return; }
             if (page == 16) { RefreshZombie(snapshot); return; }
-            bool choicesReady = page == 17 ? snapshot.ExperienceAvailable : page == 11 ? snapshot.BatAvailable && snapshot.CollinAvailable : page == 10 ? (eventSpawnsSelected ? snapshot.EventSpawnsAvailable : snapshot.JarSpawnsAvailable) : page == 9 ? snapshot.FriendlyFireAvailable : page == 8 ? snapshot.ItemRestrictionsAvailable : page == 7 ? snapshot.MerchantsAvailable : page == 6 ? snapshot.RabbitPotionsAvailable : page == 2 ? snapshot.ChoicesAvailable : page != 3 || ResourceFeature.IsAvailable(ResourceCatalog.All[resourceIndex].Kind);
+            bool choicesReady = page == 17 ? snapshot.ExperienceAvailable : page == 11 ? snapshot.BatAvailable && snapshot.CollinAvailable : page == 10 ? SpawnAvailable(snapshot) : page == 9 ? snapshot.FriendlyFireAvailable : page == 8 ? snapshot.ItemRestrictionsAvailable : page == 7 ? snapshot.MerchantsAvailable : page == 6 ? snapshot.RabbitPotionsAvailable : page == 2 ? snapshot.ChoicesAvailable : page != 3 || ResourceFeature.IsAvailable(ResourceCatalog.All[resourceIndex].Kind);
             bool levelUpReady = page != 6 || snapshot.RabbitLevelUpPotionsAvailable;
             availability.text = !snapshot.CanMutate ? snapshot.AvailabilityReason : !choicesReady ?
                 (page == 17 ? L.T("XP compatibility checks failed. Off/reset remain available; see Player.log.") :
                 page == 11 ? L.T("Some costume controls are unavailable. See the details on the right and Player.log.") :
-                page == 10 ? (eventSpawnsSelected ? L.T("Random event compatibility checks failed. Reset remains available; see Player.log.") : L.T("Mystic Jar compatibility checks failed. Reset remains available; see Player.log.")) :
+                page == 10 ? SpawnUnavailableMessage() :
                 page == 9 ? L.T("Friendly-fire compatibility checks failed. Off/reset remain available; see Player.log.") :
                 page == 8 ? L.T("Item restriction compatibility checks failed. Off/reset remain available; see Player.log.") :
                 page == 7 ? L.T("Merchant compatibility checks failed. Off/reset remain available; see Player.log.") :
@@ -156,12 +156,13 @@ namespace SephiriaOne
                 (snapshot.FaultedFeature == "collin" || snapshot.FaultedFeature == "inheritance"));
             if (amount) amount.interactable = snapshot.CanMutate && choicesReady;
             // Full-family reset is intentionally available for the existing recovery path.
-            string family = page == 17 ? "xp" : page == 0 ? "stats" : page == 1 ? "fountain" : page == 3 ? "resources" : page == 6 ? "rabbit" : page == 7 ? "merchant" : page == 8 ? "items" : page == 9 ? "combat" : page == 10 ? (eventSpawnsSelected ? "events" : "jars") : page == 11 ? "bat" : "choices";
+            string family = page == 17 ? "xp" : page == 0 ? "stats" : page == 1 ? "fountain" : page == 3 ? "resources" : page == 6 ? "rabbit" : page == 7 ? "merchant" : page == 8 ? "items" : page == 9 ? "combat" : page == 10 ? SpawnCommandFamily : page == 11 ? "bat" : "choices";
             bool recovery = snapshot.HostActive && snapshot.SessionIdentity != null &&
                 (snapshot.FaultedFeature == family || snapshot.FaultedFeature == "inheritance");
             if (resetAll) resetAll.interactable = snapshot.CanMutate || recovery;
             if (page == 9 && resetAll && CombatMatchRuntime.IsRunning && snapshot.HostActive && snapshot.SessionIdentity != null) resetAll.interactable = true;
             if (resetOne) resetOne.interactable = snapshot.CanMutate;
+            RefreshProjectileEditor(snapshot);
             if (save) save.interactable = snapshot.CanSave;
             if (forget) forget.interactable = snapshot.CanForget;
             if (page == 17) readout.SetText(SessionSettings.DescribeExperience(snapshot.Experience));
@@ -170,7 +171,7 @@ namespace SephiriaOne
             else if (page == 7) readout.SetText(MerchantValues(snapshot));
             else if (page == 8) readout.SetText(ItemValues(snapshot));
             else if (page == 9) RefreshParticipants(snapshot);
-            else if (page == 10) readout.SetText(eventSpawnsSelected ? EventValues(snapshot) : JarValues(snapshot));
+            else if (page == 10) readout.SetText(projectilesSelected ? ProjectileValues(snapshot) : eventSpawnsSelected ? EventValues(snapshot) : JarValues(snapshot));
             else if (page == 11) readout.SetText(CostumeValues(snapshot));
             else if (page == 4) readout.SetText(PresetValues(snapshot));
             else readout.SetText(L.T("Name gradient: #408af1 → #a8d7fa") +
@@ -199,6 +200,8 @@ namespace SephiriaOne
             for (int i = 0; i < tabs.Count; i++) { var colors = tabs[i].colors; colors.normalColor = i == target ? PanelWidgets.Accent : (Color)new Color32(39, 59, 82, 255); colors.selectedColor = colors.normalColor; tabs[i].colors = colors; }
             statPicker = null; amount = null; resetOne = resetAll = save = forget = null;
             collinReset = null;
+            projectileTotal = projectileDefault = projectileSource = null; projectilePicker = null;
+            projectileTotalDraft = projectileDefaultDraft = projectileSourceDraft = false;
             requitalCount = null; slatePicker = null; requitalCountDraft = false; requitalApply = requitalGive = requitalReset = null;
             updateInstall = updateCheck = null; updateAutomatic = null;
             friendlyDamage = null; friendlyDraft = false; friendlyRefill = null; friendlyRefillDraft = false;
@@ -368,7 +371,7 @@ namespace SephiriaOne
         private void RefreshSaved() { Refresh(ReadCurrentSnapshot(true)); feedback.text = L.T("Refreshed."); }
         private void ClearInput()
         {
-            ClearPvpDots(); ClearRequitalCount();
+            ClearPvpDots(); ClearRequitalCount(); ClearProjectileInputs();
             ClearFriendlyDamage(); ClearFriendlyRefill(); ClearFriendlyGuardMp();
             ClearZombieDuration(); ClearZombieCount(); ClearZombieRefill(); ClearZombieIncoming();
             ClearPlayTagDuration(); ClearPlayTagRounds(); ClearPlayTagRefill(); ClearPlayTagIncoming();

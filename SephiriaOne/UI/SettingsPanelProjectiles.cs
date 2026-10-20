@@ -1,0 +1,71 @@
+using System.Collections.Generic;
+using System.Globalization;
+using TMPro;
+
+namespace SephiriaOne
+{
+    public sealed partial class SettingsPanel
+    {
+        private TMP_InputField projectileTotal, projectileDefault, projectileSource;
+        private TMP_Dropdown projectilePicker;
+        private bool projectileTotalDraft, projectileDefaultDraft, projectileSourceDraft;
+        private int projectileSourceIndex;
+
+        private void BuildProjectileEditor()
+        {
+            AddCheckbox("Limit secondary projectiles", 16, 29, 273, 25, s => s.Projectiles.Enabled,
+                s => s.ProjectilesAvailable, "/one projectiles");
+            widgets.Text(pageRoot, "ProjectileTotal", "Total / player", 16, 61, 126, 25, 11);
+            projectileTotal = widgets.Input(pageRoot, 148, 61, 60, _ => projectileTotalDraft = true);
+            changeButtons.Add(widgets.Button(pageRoot, "Apply", 215, 61, 74, 25,
+                () => Execute("/one projectiles total " + projectileTotal.text.Trim(), true)));
+            widgets.Text(pageRoot, "ProjectileDefault", "Default / source", 16, 93, 126, 25, 11);
+            projectileDefault = widgets.Input(pageRoot, 148, 93, 60, _ => projectileDefaultDraft = true);
+            changeButtons.Add(widgets.Button(pageRoot, "Apply", 215, 93, 74, 25,
+                () => Execute("/one projectiles source default " + projectileDefault.text.Trim(), true)));
+            resetAll = widgets.Button(pageRoot, "Reset", 16, 137, 273, 25, () => Execute("/one projectiles reset", true));
+
+            var names = new List<string>();
+            foreach (var source in ProjectileLimitCatalog.All) names.Add(L.T(source.Label));
+            projectilePicker = widgets.Dropdown(pageRoot, 312, 0, 272, 25, names, index =>
+            {
+                projectileSourceIndex = index; projectileSourceDraft = false; Refresh(ReadCurrentSnapshot());
+            });
+            projectilePicker.SetValueWithoutNotify(projectileSourceIndex);
+            widgets.Text(pageRoot, "ProjectileSource", "Source limit · 1–4096", 312, 30, 272, 22, 10);
+            projectileSource = widgets.Input(pageRoot, 312, 55, 88, _ => projectileSourceDraft = true);
+            changeButtons.Add(widgets.Button(pageRoot, "Apply", 408, 55, 80, 25, () =>
+                Execute("/one projectiles source " + ProjectileLimitCatalog.All[projectileSourceIndex].Id + " " + projectileSource.text.Trim(), true)));
+            resetOne = widgets.Button(pageRoot, "Reset", 496, 55, 88, 25, () =>
+                Execute("/one projectiles source " + ProjectileLimitCatalog.All[projectileSourceIndex].Id + " reset", true));
+            readout = widgets.Scroll(pageRoot, 312, 91, 272, 71);
+        }
+
+        private void RefreshProjectileEditor(SettingsSnapshot snapshot)
+        {
+            if (!projectileTotal) return;
+            bool canEdit = snapshot.CanMutate && snapshot.ProjectilesAvailable;
+            projectileTotal.interactable = projectileDefault.interactable = projectileSource.interactable = canEdit;
+            resetOne.interactable = canEdit;
+            if (!projectileTotalDraft) projectileTotal.SetTextWithoutNotify(snapshot.Projectiles.PlayerLimit.ToString(CultureInfo.InvariantCulture));
+            if (!projectileDefaultDraft) projectileDefault.SetTextWithoutNotify(snapshot.Projectiles.DefaultSourceLimit.ToString(CultureInfo.InvariantCulture));
+            if (!projectileSourceDraft) projectileSource.SetTextWithoutNotify(snapshot.Projectiles.GetSourceLimit(
+                ProjectileLimitCatalog.All[projectileSourceIndex].Id).ToString(CultureInfo.InvariantCulture));
+        }
+
+        private void ClearProjectileInputs()
+        {
+            projectileTotalDraft = projectileDefaultDraft = projectileSourceDraft = false;
+            if (projectileTotal) projectileTotal.SetTextWithoutNotify("");
+            if (projectileDefault) projectileDefault.SetTextWithoutNotify("");
+            if (projectileSource) projectileSource.SetTextWithoutNotify("");
+        }
+
+        private string ProjectileValues(SettingsSnapshot snapshot)
+        {
+            string source = ProjectileLimitCatalog.All[projectileSourceIndex].Id;
+            return L.F("Source: {0} · {1}", source, L.T(snapshot.Projectiles.SourceLimits.ContainsKey(source) ? "override" : "default")) +
+                "\n" + L.T("Caps per player. Existing projectiles finish. Primary attacks stay native.");
+        }
+    }
+}

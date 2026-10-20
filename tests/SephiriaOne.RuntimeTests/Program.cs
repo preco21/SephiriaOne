@@ -811,6 +811,7 @@ DeathmatchScoreResetTests.Run(Start, id => Add(id), Check);
         CollinRuntimeTests.Run(Start, Check);
         RequitalControlTests.Run(Start, Check);
         ExperienceControlTests.Run(Start, Check);
+        ProjectileLimitControlTests.Run(Start, Check);
         VisibleStatRuntimeTests.Run(Start, id => Add(id), Check);
 CostumeRoleTests.Run(Start, id => Add(id), Check);
 

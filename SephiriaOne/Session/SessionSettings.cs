@@ -85,6 +85,7 @@ namespace SephiriaOne
             FriendlyFireParticipants.Clear();
             PvpPotionSupplies.Clear();
             RequitalRuntime.Clear();
+            ProjectileLimitRuntime.Clear();
             RestoreBat();
             ItemRestrictionFeature.Clear();
             MerchantFeature.Clear();
@@ -115,7 +116,7 @@ namespace SephiriaOne
             PvpPotionSupplies.Clear();
             RequitalRuntime.Clear();
             if (enabled && NetworkServer.active && dungeon && ReferenceEquals(dungeon, DungeonManager.Instance))
-            { CombatMatchRuntime.Stop(false, false); runGeneration++; FriendlyFireKda.ClearLives(); restoreFountainLimit = true; session.Invalidate(dungeon, SyncDomain.Limits); }
+            { CombatMatchRuntime.Stop(false, false); runGeneration++; FriendlyFireKda.ClearLives(); restoreFountainLimit = true; session.Invalidate(dungeon, SyncDomain.Limits); ProjectileLimitRuntime.Refresh(); }
         }
 
         public static bool IsReady(PlayerSpawner spawner) => HostStateAdapter.IsReady(spawner);

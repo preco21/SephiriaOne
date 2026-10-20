@@ -1,5 +1,13 @@
 # Sephiria domain findings
 
+Secondary instance accounting (0.79.0): the native `ProjectileSpawner<T>.Pool`
+name does not imply reuse; it instantiates and network-spawns fresh objects.
+Guard audited emitter call sites, because Pallas/FuryMP/Yearning dereference
+spawn results. Release at actual despawn/destruction, not `DestroySelf`, which
+can begin a delayed explosion. Preserve child provenance before teardown.
+See [secondary projectile limits](projectile-limits.md) for coverage, contracts,
+performance design and stock-guest limitations.
+
 Consolidated 2026-10-09 (Asia/Seoul), source through addon `0.38.0`.
 This summarizes reusable findings; linked feature documents contain detailed
 symbols, tests and limitations. It is not a new live gameplay audit.

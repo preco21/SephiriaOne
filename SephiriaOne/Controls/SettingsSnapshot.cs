@@ -100,6 +100,8 @@ namespace SephiriaOne
         public int FriendlyFireSelectedCount { get; }
         public ExperienceSettings Experience { get; }
         public bool ExperienceAvailable { get; }
+        public ProjectileLimitSettings Projectiles { get; }
+        public bool ProjectilesAvailable { get; }
         public RequitalSettings Requital { get; }
         public bool RequitalAvailable { get; }
         public bool ItemUnlock { get; }
@@ -135,9 +137,11 @@ namespace SephiriaOne
             bool batHpSteal = false, bool batAvailable = false,
             bool collinStartingArtifact = false, bool collinAvailable = false,
             EventSpawnSettings eventSpawns = default, bool eventSpawnsAvailable = false,
-            IEnumerable<FriendlyFirePlayerSnapshot> friendlyFirePlayers = null, int friendlyFireSelectedCount = 0, RequitalSettings requital = default, bool requitalAvailable = false, ExperienceSettings experience = default, bool experienceAvailable = false)
+            IEnumerable<FriendlyFirePlayerSnapshot> friendlyFirePlayers = null, int friendlyFireSelectedCount = 0, RequitalSettings requital = default, bool requitalAvailable = false, ExperienceSettings experience = default, bool experienceAvailable = false,
+            ProjectileLimitSettings projectiles = default, bool projectilesAvailable = false)
         {
             Experience = experience; ExperienceAvailable = experienceAvailable;
+            Projectiles = projectiles; ProjectilesAvailable = projectilesAvailable;
             SessionIdentity = sessionIdentity; Epoch = epoch; RunGeneration = runGeneration; Revision = revision;
             HostActive = hostActive; CanMutate = canMutate; CanSave = canSave; CanForget = canForget;
             ChoicesAvailable = choicesAvailable; SavedValid = savedValid;

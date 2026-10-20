@@ -94,6 +94,21 @@ namespace SephiriaOne
                         new[] { L.T("Only the host can open the session settings panel.") });
                 }
 
+                var projectiles = ProjectileLimitCommand.Parse(command, out var projectileCommand);
+                if (projectiles != ProjectileLimitParseResult.NotCommand)
+                {
+                    recognized = true;
+                    if (projectiles == ProjectileLimitParseResult.Help) return Reply(true, ProjectileLimitCommand.Usage);
+                    if (projectiles == ProjectileLimitParseResult.Invalid) return Reply(false, ProjectileLimitCommand.Usage);
+                    if (projectiles == ProjectileLimitParseResult.Status)
+                    {
+                        var snapshot = SessionSettings.ReadSnapshot(SnapshotContent.None);
+                        if (!snapshot.HostActive || snapshot.SessionIdentity == null) return Reply(false, snapshot.AvailabilityReason);
+                        return Reply(true, SessionSettings.DescribeProjectileSources(snapshot.Projectiles) +
+                            (snapshot.ProjectilesAvailable ? "" : " " + L.T("Projectile compatibility checks failed. Off/reset remain available; see Player.log.")));
+                    }
+                    return Reply(SessionSettings.TryExecuteProjectiles(projectileCommand, out string projectileMessage), projectileMessage);
+                }
                 var xp = ExperienceCommand.Parse(command, out var experienceCommand);
                 if (xp != ExperienceParseResult.NotCommand)
                 {
@@ -281,7 +296,7 @@ namespace SephiriaOne
                 {
                     if (preset == PresetAction.Help)
                         return Reply(true, presetError + " " + ReviveAllAction.Usage + " " + DeathmatchCommand.Usage + " " + TournamentCommand.Usage + " " + PlayTagCommand.Usage + " " + ZombieSurvivalCommand.Usage + L.T(" /one ui opens the host settings panel. /one rabbit help lists potion options. /one merchant help lists extra merchant options.") +
-                            L.T(" /one slates help lists Slate options.") + L.T(" /one xp help lists XP options.") + L.T(" /one items help lists given-item options.") + L.T(" /one friendlyfire help lists allied-damage options.") + L.T(" /one jars help lists Mystic Jar spawn options.") + L.T(" /one events help lists random event options.") + L.T(" /one bat help lists Wingless Bat options.") + L.T(" /one collin help lists costume starting-artifact options.") + L.T(" Language: /one language en|ko|reload|status.") + " " + UpdateCommand.Usage);
+                            L.T(" /one slates help lists Slate options.") + L.T(" /one xp help lists XP options.") + L.T(" /one items help lists given-item options.") + L.T(" /one friendlyfire help lists allied-damage options.") + L.T(" /one jars help lists Mystic Jar spawn options.") + L.T(" /one events help lists random event options.") + L.T(" /one projectiles help lists secondary projectile limits.") + L.T(" /one bat help lists Wingless Bat options.") + L.T(" /one collin help lists costume starting-artifact options.") + L.T(" Language: /one language en|ko|reload|status.") + " " + UpdateCommand.Usage);
                     if (preset == PresetAction.Invalid) return Reply(false, presetError);
                     bool success = SessionSettings.TryExecutePreset(preset, out string[] messages);
                     return new SettingsActionResult(true, success, false, messages);

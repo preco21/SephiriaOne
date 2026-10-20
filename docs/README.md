@@ -1,6 +1,12 @@
 # Development knowledge index
 
-Maintained: 2026-10-21 (Asia/Seoul), addon `0.78.2`.
+Maintained: 2026-10-21 (Asia/Seoul), addon `0.79.0`.
+
+[Secondary projectile limits](projectile-limits.md): optional host-side PvE/PvP
+caps for Pallas, Liberation and audited secondary sources. Spawns → Secondary
+projectiles or `/one projectiles`; default off, 64/player and 16/source with
+overrides. Existing instances finish; ordinary attacks and Minigun remain native.
+Includes v42 presets, EN/KO, lifecycle accounting and explicit coverage boundaries.
 
 [Large-MP guard correction](pvp-balancing.md#large-mp-guard-correction-0782):
 balanced PvP guard costs widen the native Final MP multiplication and addition,

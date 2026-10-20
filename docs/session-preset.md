@@ -1,5 +1,23 @@
 # Active settings and saved preset
 
+Schema v42 saves optional secondary-projectile limits. Nondefault rows are
+`projectiles enabled 1`, `projectiles total N`, `projectiles default N`, and
+`projectiles source <id> N`. Limits are whole numbers from 1 to 4096; defaults
+are off, 64 total per player and 16 per source. An explicit source override
+remains independent of later default changes, including when its number equals
+the current default. Missing rows and older presets preserve safe defaults.
+Invalid, duplicate, noncanonical or unknown-source rows reject the whole file.
+Only configured intent persists; live projectiles, counters and reservations do
+not. Disabled custom limits still require v42; a full reset restores the lowest
+schema required by other settings.
+
+Commands: `/one projectiles on|off|reset|status`, `total N`,
+`source default N`, and `source <id> N|reset`. `off` retains custom limits,
+while `reset` clears the complete family. `status` lists recognized source IDs;
+Spawns → Secondary projectiles offers the same controls. Changes require the
+host; off/reset remain available when native compatibility is unavailable.
+Save explicitly with `/one save`.
+
 Version `0.57.0` adds v26 for [Play Tag chaser settings](play-tag.md).
 Optional canonical rows are `tag chaser-refill-enabled 0`, `tag chaser-refill N`,
 `tag chaser-damage-enabled 0` and `tag chaser-damage N`. Missing rows and older

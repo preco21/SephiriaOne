@@ -6,6 +6,10 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../SephiriaOne/Session/SessionProjectiles.cs" Link="SessionProjectiles.cs" />
+    <Compile Include="../../SephiriaOne/Features/ProjectileLimits/ProjectileLimitSettings.cs" Link="ProjectileLimitSettings.cs" />
+    <Compile Include="../../SephiriaOne/Features/ProjectileLimits/ProjectileLimitCatalog.cs" Link="ProjectileLimitCatalog.cs" />
+    <Compile Include="../../SephiriaOne/Features/ProjectileLimits/ProjectileLimitCommand.cs" Link="ProjectileLimitCommand.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionExperience.cs" Link="SessionExperience.cs" />
     <Compile Include="../../SephiriaOne/Features/Experience/ExperienceSettings.cs" Link="ExperienceSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Experience/ExperienceCommand.cs" Link="ExperienceCommand.cs" />
