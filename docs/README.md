@@ -1,6 +1,12 @@
 # Development knowledge index
 
-Maintained: 2026-10-21 (Asia/Seoul), addon `0.78.1`.
+Maintained: 2026-10-21 (Asia/Seoul), addon `0.78.2`.
+
+[Large-MP guard correction](pvp-balancing.md#large-mp-guard-correction-0782):
+balanced PvP guard costs widen the native Final MP multiplication and addition,
+so extreme pools cannot wrap into a smaller or zero percentage cost. Ordinary
+rounding, guard reductions and PvE behavior remain. The exact reported
+nine-Aquamarine scenario still needs live confirmation.
 
 [Minority-side Zombie balancing](zombie-survival.md#dynamic-balancing-0760):
 neutral parity, modest minority-Zombie help and stronger minority-Human offense

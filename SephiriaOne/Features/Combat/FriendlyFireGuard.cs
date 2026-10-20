@@ -32,8 +32,22 @@ namespace SephiriaOne
                 units = roundedUnits;
             // Integer twentieths/percentage units also avoid intermediate
             // rounding before ceiling. No cached max MP or mutable stat state.
-            double cost = units * Math.Max(0, victim.MaxMp) * settings.GuardMpHundredths / 2000000d;
+            double cost = units * GuardMaximumMp(victim) * settings.GuardMpHundredths / 2000000d;
             return (int)Math.Min(int.MaxValue, Math.Ceiling(cost));
+        }
+
+        private static int GuardMaximumMp(PlayerAvatar victim)
+        {
+            if (victim.GetCustomStatUnsafe("INFINITYMP") > 0) return Math.Max(0, victim.MaxMp);
+            // Native MaxMp multiplies FinalMP * maxMp as int before casting.
+            // Retain its ordinary float rounding, but widen the product and
+            // sum so large stacks cannot wrap into a smaller/free guard cost.
+            int baseMp = victim.maxMp;
+            long product = (long)victim.GetCustomStat(ECustomStat.FinalMP) * baseMp;
+            double bonus = product >= int.MinValue && product <= int.MaxValue
+                ? (float)product / 100f : product / 100d;
+            double total = baseMp + Math.Truncate(bonus);
+            return (int)Math.Max(0, Math.Min(int.MaxValue, total));
         }
     }
 

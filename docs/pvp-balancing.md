@@ -368,7 +368,7 @@ Each numeric editor preserves its own draft until Apply or a page/scope change.
 
 Implementation uses the existing authoritative `ApplyDamage` hit scope. Only the
 final float-to-int conversion before the guard branch's `UseMp` is replaced:
-`ceil(nativeModifiedCost / 10 * MaxMp * configuredPercent / 100)`. It reads both
+`ceil(nativeModifiedCost / 10 * effectiveMaxMp * configuredPercent / 100)`. It reads both
 current policy and maximum MP after native callbacks. No stats are rewritten,
 no guard cost is cached, and no restore pass, polling or network message is added.
 Native `UseMp` retains MP callbacks, SyncVar replication for unmodified guests,
@@ -376,6 +376,66 @@ infinite-MP handling and the subsequent guard break. Separate parry and MP-shiel
 paths remain native. There is no scaled spending for PvE, self/system damage,
 non-player victims, excluded participants or Tournament bystanders. Owned
 companion attacks against permitted players use the same guard rule.
+
+### Large-MP guard correction (`0.78.2`)
+
+The installed `UnitAvatar.MaxMp` getter evaluates
+`maxMp + (int)((float)(GetCustomStat(FinalMP) * maxMp) / 100f)`.
+The product and final addition are signed 32-bit operations. Overflow can wrap
+the result into a smaller positive maximum or a negative maximum. Previously,
+`GuardMpCost` read that getter and clamped negative results to zero, allowing a
+free balanced PvP guard despite a positive cost and large positive inputs.
+
+`GuardMaximumMp` now reads the same current base MP and Final MP inputs, widens
+their product to `long`, and bounds the computed total to `0..int.MaxValue`
+before percentage scaling. Ordinary representable products keep native float
+rounding; overflowing products use double division. The guard's native
+reductions and final positive-cost ceiling are unchanged. It reads values after
+guard callbacks and performs no stat writes, reflection, allocations, caching
+or per-frame work. This fixes the guard calculation only; it does not globally
+rewrite the game's maximum-MP getter or unrelated native UI/recovery behavior.
+
+Example reproduced in the executable hook fixture: base MP 10,000,000 plus
+297% Final MP should yield 39,700,000 maximum MP. Native multiplication wraps
+negative, so the old hook charged zero; the corrected 8% ordinary block costs
+3,176,000 MP. Product wrap to positive values and addition overflow are also
+covered. Values beyond the game's signed-integer MP capacity saturate rather
+than wrap.
+
+Star Aquamarine is item `1124`, name key `Item_FinalMP_Name`, resource prefab
+`sharedassets0.assets:67923`. Its `Charm_StatusInstance` component
+(`205884`) grants `FINAL_MP` values `[10,20,33,45,60]` by level. Its Lake category
+uses `ComboEffectBase` at prefab `84901` / component `184227`: thresholds 3/6/9
+grant maximum-MP/regen or MP-skill-damage bonuses, not `INFINITYMP`.
+Nine Aquamarines alone at ordinary base MP do not demonstrate this overflow;
+the actual reported maximum MP and right-click versus passive-shield path
+remain unconfirmed.
+
+Other distinct semantics remain explicit: native Guard Efficiency/perfect guard
+can reduce the configured percentage; it is not a hard floor after reductions.
+Native Magic Reflow (`INFINITYMP`) uses its fixed maximum and waives `UseMp`;
+the artifact stack above does not itself enable it. Passive `MPSHIELD` absorption
+has a separate damage-to-MP cost and is not a right-click guard. Those paths were
+not broadened by this arithmetic fix.
+
+Evidence: installed assembly SHA-256
+`c57a0daeab8e8d0af7066a344133eec4c57d8f303fd9e25da9410fbfc4cf1510`;
+fresh ILSpy 11.1 exports of `UnitAvatar`, installed EN/KO localization, and
+UnityPy asset reads (the generic ComboEffect tree failed decoding, so its raw
+serialized threshold/status strings were checked against `ComboEffectBase`).
+REA `ev_026b08ae3701bcbf4fdb06d0b9bc2a96a1799eb550783ea54de4c740e546b039`
+established artifact identity but reported unavailable member analysis due to its
+64-MiB metadata budget; it is not evidence of decoded method behavior.
+Decompiled source/assets remain outside the repository. These are static and
+fixture observations, not a live multiplayer reproduction.
+
+Verification: the new overflow reproduction failed before the correction and
+passed afterward. Release build passed with zero warnings/errors; 6,240
+friendly-fire executable checks, 13,753 runtime checks plus 69 Bat checks, and
+the portable/installed-game compatibility suite passed. The latter verifies
+the current getter inputs/order and unchanged guard spending/break boundaries.
+Warmed guard scaling still allocates zero bytes per 1,000 blocks. Independent
+code review found no actionable defect. Nothing was deployed.
 
 Disabling balancing, ending effective friendly fire or unloading the addon
 immediately restores the native cost. Deathmatch, Tournament and Play Tag all

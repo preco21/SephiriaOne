@@ -594,6 +594,13 @@ shields. Read current policy/maximum MP at that final boundary because callbacks
 may change them. Float cancellation at 99% efficiency can turn an intended 1 MP
 into 2 when ceiling a scaled amount; normalize exact native float formula results
 before scaling, retaining unrelated callback values and positive tiny charges.
+Native `MaxMp` itself multiplies `FinalMP * maxMp` as signed int before converting
+to float, and adds the bonus as int. Large valid inputs can therefore wrap.
+Since `0.78.2`, balanced guard cost derives the same maximum with wide arithmetic,
+retains ordinary native rounding, and saturates at the MP field's integer limit.
+Do not treat the game's maximum-MP getter as overflow-safe or globally change
+it when fixing one consumer; infinite-MP mode and passive MP shields are separate
+contracts. Nine Star Aquamarines grant Final MP/Lake bonuses, not infinite MP.
 See [guard scaling and contracts](pvp-balancing.md#guard-mp-cost-0580-2026-10-16).
 
 Waiting-room recovery has distinct native sources: `PlayerAvatar.Update` provides

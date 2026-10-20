@@ -50,6 +50,19 @@ internal static class GameGuardTests
         var spendCode = PatchProcessor.GetOriginalInstructions(useMp).ToList();
         Require(spendCode.Any(i => Call(i, "UnitAvatar", "set_Networkmp")) &&
             spendCode.Any(i => i.operand is FieldInfo f && f.Name == "OnMpUsedServerside"), "native MP callback and stock replication remain authoritative");
+        var nativeMaximum = PatchProcessor.GetOriginalInstructions(AccessTools.PropertyGetter(avatar, "MaxMp")).ToList();
+        int multiply = nativeMaximum.FindIndex(i => i.opcode == OpCodes.Mul);
+        Require(nativeMaximum.Any(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "INFINITYMP")) &&
+            nativeMaximum.Any(i => Call(i, "KeywordDatabase", "GetConstValue")) &&
+            nativeMaximum.Any(i => i.LoadsField(AccessTools.DeclaredField(avatar, "maxMp"))) &&
+            nativeMaximum.Any(i => i.LoadsConstant(Convert.ToInt32(Enum.Parse(game.GetType("ECustomStat", true)!, "FinalMP")))) &&
+            multiply >= 0 && nativeMaximum[multiply + 1].opcode == OpCodes.Conv_R4,
+            "guard maximum mirrors native FinalMP/base-MP inputs and the separate infinite-MP constant");
+        var runtime = addon.GetType("SephiriaOne.FriendlyFireRuntime", true)!;
+        var safeMaximum = PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(runtime, "GuardMaximumMp")).ToList();
+        Require(safeMaximum.Any(i => i.opcode == OpCodes.Conv_I8) &&
+            !safeMaximum.Any(i => i.opcode == OpCodes.Stfld || i.opcode == OpCodes.Stsfld),
+            "overflow-safe guard maximum widens arithmetic without changing native stats");
 
         var panel = addon.GetType("SephiriaOne.SettingsPanel", true)!;
         List<CodeInstruction> Panel(string name) => PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(panel, name)).ToList();

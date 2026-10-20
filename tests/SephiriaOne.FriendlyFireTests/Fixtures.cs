@@ -178,11 +178,12 @@ public partial class UnitAvatar : CombatBehaviour
         debuffPrefab.InitializeAndSpawn(caster, this);
         debuffPrefab.OnApply?.Invoke(caster, this);
     }
-    [MethodImpl(MethodImplOptions.NoInlining)] private int GetCustomStatUnsafe(string key) => key switch
+    [MethodImpl(MethodImplOptions.NoInlining)] public int GetCustomStatUnsafe(string key) => key switch
     {
         "MPSHIELD" => IsMpShield ? 1 : 0,
         "IGNOREEVASION" => IgnoreEvasion,
         "ABSOLUTEEVASION" => AbsoluteEvasion,
+        "INFINITYMP" => InfiniteMp ? 1 : 0,
         _ => 0
     };
     [MethodImpl(MethodImplOptions.NoInlining)] public override EApplyDamageResult ApplyDamage(DamageInstance damage)

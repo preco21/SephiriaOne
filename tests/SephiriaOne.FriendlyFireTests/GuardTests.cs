@@ -19,6 +19,39 @@ internal static class GuardTests
         Fresh(); SessionSettings.FriendlyFireForHit = new(true, 100, balance: true); target.ApplyDamage(hit);
         check(target.Mp == 920 && target.Hp == 100 && target.GuardHits == 1,
             "Default balanced guard spends 8 percent maximum MP and retains native block");
+        Fresh(10_000_000); target.FinalMp = 9 * 33; target.Mp = 39_700_000;
+        check(target.MaxMp < 0, "Fixture reproduces native Final MP multiplication overflow");
+        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true); target.ApplyDamage(hit);
+        check(target.LastMpCost == 3_176_000 && target.Mp == 36_524_000,
+            "Large Final MP stacks still pay eight percent of full maximum MP");
+        foreach (var sample in new[] {
+            (Base: 1000, Final: 9 * 33, Maximum: 3970),
+            (Base: 5_000_000, Final: 9 * 60, Maximum: 32_000_000),
+            (Base: 10_000_000, Final: 1000, Maximum: 110_000_000),
+            (Base: 2_000_000_000, Final: 50, Maximum: int.MaxValue),
+            (Base: int.MaxValue, Final: int.MaxValue, Maximum: int.MaxValue),
+            (Base: 1000, Final: -100, Maximum: 0),
+            (Base: 1000, Final: int.MinValue, Maximum: 0) })
+        {
+            Fresh(sample.Base); target.FinalMp = sample.Final; target.Mp = int.MaxValue;
+            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true);
+            target.ApplyDamage(hit);
+            check(target.LastMpCost == (int)Math.Ceiling(sample.Maximum * 0.08d),
+                "Effective guard maximum is safe for Final MP product/addition overflow: " + sample);
+        }
+        Fresh(10_000_000); target.FinalMp = 297; target.Mp = 39_700_000;
+        target.GuardResistance = 40; target.PerfectGuard = true;
+        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true); target.ApplyDamage(hit);
+        check(target.LastMpCost == 952_800, "Large-pool guard retains Guard Efficiency and perfect-guard reductions");
+        Fresh(1000); target.OnGuardSucceeded = _ => { target.maxMp = 10_000_000; target.FinalMp = 297; target.Mp = 39_700_000; };
+        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true); target.ApplyDamage(hit);
+        check(target.LastMpCost == 3_176_000, "Final MP and base MP are read after native guard callbacks");
+        Fresh(10_000_000); target.FinalMp = 297; target.Mp = 39_700_000;
+        SessionSettings.FriendlyFireForHit = new(true, 100); target.ApplyDamage(hit);
+        check(target.LastMpCost == 10, "Balancing off restores native cost even for overflowing maximum MP");
+        Fresh(10_000_000); target.FinalMp = 297; target.Mp = 39_700_000;
+        hit.origin = new UnitAvatar { faction = "enemy" }; hit.targetFactionLayers = -1; target.ApplyDamage(hit);
+        check(target.LastMpCost == 10, "PvE does not borrow the overflow-safe balanced guard charge");
         foreach (int max in new[] { 1, 10, 99, 100, 101, 300, 1000, 1000000, int.MaxValue })
         {
             Fresh(max); target.ApplyDamage(hit);
