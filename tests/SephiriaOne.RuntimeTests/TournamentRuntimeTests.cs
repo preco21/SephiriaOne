@@ -270,9 +270,10 @@ internal static class TournamentRuntimeTests
         players = New(5); SettingsActions.Execute("/one tournament duration 3600");
         SettingsActions.Execute("/one tournament start"); At(3);
         for (int i = 0; i < 50; i++) Advance(0.11f);
+        At(9.1f);
         long allocated = GC.GetAllocatedBytesForCurrentThread();
-        for (int i = 0; i < 1000; i++) Advance(0.11f);
-        check(GC.GetAllocatedBytesForCurrentThread() == allocated, "Active five-player tournament ticks allocate zero bytes after warmup");
+        for (int i = 0; i < 1000; i++) Advance(0.0005f);
+        check(GC.GetAllocatedBytesForCurrentThread() == allocated, "Active tournament frames between message refreshes allocate zero bytes after warmup");
         CombatMatchRuntime.Stop(true, false);
         harmony.UnpatchAll("Tournament.integration.tests"); ReviveAllHooks.Uninstall(); start();
     }

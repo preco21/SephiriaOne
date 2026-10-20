@@ -13,6 +13,13 @@ internal static class GameDeathmatchTests
         Require(Calls(Code(game, "DungeonManager", "Chat"), "RpcChat") && Calls(Code(game, "DungeonManager", "RpcChat"), "SendRPCInternal"), "host native chat broadcasts to stock guests");
         Require(Calls(Code(game, "DungeonManager", "UserCode_RpcChat__PlayerAvatar__String__String"), "CreateChatBubble"), "avatar chat renders native overhead bubble");
         Require(Calls(Code(game, "PlayerAvatar", "CreateChatBubble"), "Destroy") && Calls(Code(game, "PlayerAvatar", "CreateChatBubble"), "SetText"), "each countdown update replaces the previous bubble");
+        Require(Calls(Code(game, "DungeonManager", "Chat"), "IsNullOrWhiteSpace") &&
+            Calls(Code(game, "DungeonManager", "UserCode_RpcChat__PlayerAvatar__String__String"), "IsNullOrWhiteSpace"),
+            "empty messages are filtered on sender and receiver; clearing requires a nonempty replacement notice");
+        Require(Calls(Code(game, "UI_ChatBubble", "Update"), "Destroy") &&
+            PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredConstructor(game.GetType("UI_ChatBubble", true)!))
+                .Any(i => i.opcode == System.Reflection.Emit.OpCodes.Ldc_R4 && Equals(i.operand, 3f)),
+            "native bubbles expire after three seconds without refresh");
         foreach (var pair in new[] { ("PlayerAvatar", "CreateChatBubble"), ("UI_ChatBubble", "SetText"), ("UI_ChatBubble", "Update") })
             Require(!Code(game, pair.Item1, pair.Item2).Any(i => i.operand is FieldInfo f && (f.Name == "IsDead" || f.Name == "hiddenType")), "dead/hidden body does not suppress native bubble: " + pair);
         Require(Calls(Code(addon, "SephiriaOne.SessionSettingsController", "LateUpdate"), "Tick"), "existing host controller drives temporary match timers");

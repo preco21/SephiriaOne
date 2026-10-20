@@ -33,9 +33,9 @@ temporary and are never saved. Deathmatch and Tournament cannot run together.
 - Each fighter sees `[Tournament] Round 1 | "opponent" is your opponent! Fight in: 3...`,
   then 2 and 1. The start bubble is `[Tournament] Match started: Kill "opponent"!
   (30 secs)`. These use native avatar chat, including stock guests, in the host's
-  configured language. Korean equivalents are bundled. The starting bubble shows
-  the round duration; it is not a continuously refreshed clock. Status/UI shows
-  remaining time.
+  configured language. Korean equivalents are bundled. Since `0.74.0`, the
+  start bubble transitions into a once-per-second opponent/time status throughout
+  the active match. See the presentation lifecycle below.
 - Since `0.50.1`, the countdown round is **1 + the lower prior-win count** of the
   two fighters. A first-match entrant or winless draw survivor keeps the pairing
   at round 1; two entrants with one win each meet in round 2; two with two wins
@@ -104,7 +104,60 @@ Unselected bystanders and late joiners receive no automatic match recovery.
 No new Harmony targets, coroutines, per-player controllers or custom RPCs were
 added. Roster/disconnect maintenance shares the 10 Hz scan; active pair deadlines
 are checked each frame. Pair scheduling is event-only O(n²), with bounded per-run
-storage. Idle and warmed active living-player ticks allocate zero in fixtures.
+storage. Idle and warmed active frames between message refreshes allocate zero
+in fixtures; once-per-second sends format two short strings.
+
+## Live opponent status (0.74.0, 2026-10-20)
+
+Both active fighters receive `[Tournament] Opponent: "name" | 9s left`,
+or `[토너먼트] 상대: "이름" | 남은 시간: 9초`. The original start notice already
+contains the opponent and full duration, so it is retained for the first second.
+Refresh only when the ceiling of remaining seconds changes; missed frames send
+the current value once rather than replaying earlier seconds. Spectators get no
+status bubble. This preserves the shared stock chat transport for unmodified
+guests, including its persistent chat-log entries. The optional floating-text
+trial is not used: floating text drifts and cannot be retired with the bubble.
+
+`CombatMatchTournamentMessages` owns only the two current recipients, their
+captured connection receipts, the last displayed second and a message revision.
+Every send validates the match token, scope, pair, phase, live connection and
+living/ready players. Revalidate after the first native send; a synchronous
+death, stop or pair retirement must not emit stale text to the second fighter.
+There is no per-player controller, coroutine, queued timer or per-frame string
+formatting. The death callback retires presentation before the shared respawn
+service writes its own bubble; subsequent bracket settlement does not clear
+that newer respawn notice.
+
+Native limitations matter for cleanup. The installed `DungeonManager.Chat`
+**and** `UserCode_RpcChat__PlayerAvatar__String__String` reject empty/whitespace
+messages before `PlayerAvatar.CreateChatBubble`. Sending `""` is not a clear
+operation. `CreateChatBubble` destroys the previous bubble and creates a new
+`UI_ChatBubble`, whose timer expires after three seconds and whose position
+follows the avatar. There is no dedicated safe stock remote clear operation.
+Therefore death, timeout, stop, interrupted preparation and pair withdrawal
+replace the old clock with `[Tournament] Match ended.` (Korean:
+`[토너먼트] 경기가 종료되었습니다.`). The brief notice fades normally or is
+immediately replaced by a respawn/next-pair countdown. This removes the stale
+opponent/timer text, not the bubble object outright. No invisible-character
+workaround, custom RPC or guest addon is used.
+
+Cleanup starts before deferred revival, and keeps ownership of any unsent
+recipient until its replacement is dispatched so nested stop callbacks cannot
+strand the other fighter's clock. Disconnected/replaced connections are never
+addressed. If the native dungeon/run or authority has already disappeared,
+discard ownership without sending into another scope; any surviving native UI
+uses its own three-second expiry. This is not an immediate-clear guarantee
+after connection loss.
+
+Validation: Release build with zero warnings/errors; 3,603 runtime integration
+checks, 41,176 scheduler checks, 50 localization checks, 4,143 bundled catalog
+checks and the full portable/installed-game contract suite passed. Runtime
+regressions cover current-pair-only delivery, EN/KO, same-second suppression,
+delayed frames, deaths, timeout/rematch, disconnect/rejoin, changed opponents,
+nested death/stop/manual revival during delivery and cleanup, deferred native recovery and
+preparation interrupted by readiness. The native contract suite checks the
+empty-message filters and three-second bubble timer. Builds used
+`-p:DeployMod=false`; no deployment or live multiplayer test was performed.
 
 ## Verification and limits
 

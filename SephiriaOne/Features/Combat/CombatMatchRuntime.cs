@@ -250,7 +250,15 @@ namespace SephiriaOne
         {
             if (!IsRunning || !CurrentScope || !player || !player.IsDead || !Eligible(player)) return;
             if (!IsRunning) return; // Selection pruning may have stopped the match.
-            if (IsTournament) TournamentDeath(player);
+            if (IsTournament)
+            {
+                long current = token;
+                var receipt = FriendlyFireParticipants.Capture(player);
+                TournamentDeath(player);
+                // Native chat callbacks may stop, revive or replace the fighter.
+                if (!IsRunning || current != token || !CurrentScope || !player || !player.IsDead ||
+                    !FriendlyFireParticipants.IsCurrent(receipt)) return;
+            }
             if (pending.TryGetValue(player, out var prior))
             {
                 if (Connected(prior.Subject, prior.Receipt)) return;
@@ -334,6 +342,7 @@ namespace SephiriaOne
             MatchMode previousMode = mode;
             var zombieResults = IsZombieSurvival ? ZombieResults() : null;
             phase = Phase.Idle; pending.Clear(); roster.Clear(); participants.Clear();
+            ClearTournamentMessages();
             ClearPlayTag(same && tagNaturalStop && tagBomb != null && tagBomb.Resolved);
             ClearZombie();
             try

@@ -1,6 +1,12 @@
 # Development knowledge index
 
-Maintained: 2026-10-20 (Asia/Seoul), addon `0.73.0`.
+Maintained: 2026-10-20 (Asia/Seoul), addon `0.74.0`.
+
+[Tournament opponent status](tournament.md#live-opponent-status-0740-2026-10-20):
+the active pair sees opponent/time bubbles refreshed once per second in EN/KO.
+Deaths, pairing changes and stops retire the clock through native replacement
+notices; empty chat cannot clear a stock guest's bubble. Shared respawn and
+connection lifetimes prevent stale messages.
 
 [XP restriction](experience.md): Progression-tab toggles block new XP for all
 hosted-session players, with an optional Wing-Eared Rabbit exception. Both default

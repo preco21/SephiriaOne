@@ -16,6 +16,15 @@ A different game build requires renewed contract/asset checks. Start with the
 
 ## State lifetimes and multiplayer
 
+Native overhead chat cleanup requires a nonempty replacement: both
+`DungeonManager.Chat` and its stock `RpcChat` receiver reject whitespace before
+`CreateChatBubble`. Empty-string sends do **not** remove a remote bubble.
+`UI_ChatBubble` follows its player and expires after three seconds; refreshes
+replace it. The [Tournament status lifecycle](tournament.md#live-opponent-status-0740-2026-10-20)
+uses terminal notices plus exact connection receipts, without overwriting the
+subsequent respawn bubble or sending into another run. Native chat also writes
+the persistent log; it is not an overhead-only transport.
+
 Starting-item registration and delivery are separate lifetimes. Native
 `AddStartingItem` registers before delivery and suppresses delivery inside a run;
 `RestockStartingItem` delivers registrations on fresh runs, not each floor. Ordinary

@@ -92,6 +92,8 @@
   "[Tournament] Round unresolved; other eligible pairings will be considered.": "[토너먼트] 이번 라운드는 무승부입니다. 가능한 다른 대진을 진행합니다.",
   "[Tournament] {0} wins the round.": "[토너먼트] {0} 님이 이번 라운드에서 승리했습니다.",
   "[Tournament] Match started: Kill \"{0}\"! ({1} secs)": "[토너먼트] 경기 시작: \"{0}\" 님을 처치하세요! ({1}초)",
+  "[Tournament] Opponent: \"{0}\" | {1}s left": "[토너먼트] 상대: \"{0}\" | 남은 시간: {1}초",
+  "[Tournament] Match ended.": "[토너먼트] 경기가 종료되었습니다.",
   "[Tournament] Round {2} | \"{0}\" is your opponent! Fight in: {1}...": "[토너먼트] 라운드 {2} | 상대는 \"{0}\" 님입니다! 경기 시작까지: {1}...",
   "[Tournament] Round {2} | Rematch | \"{0}\" is your opponent! Fight in: {1}...": "[토너먼트] 라운드 {2} | 재대결 | 상대는 \"{0}\" 님입니다! 경기 시작까지: {1}...",
   "Tournament: {0}. Round duration: {1}s. Remaining: {2}s.": "토너먼트: {0}. 라운드 시간: {1}초. 남은 시간: {2}초.",

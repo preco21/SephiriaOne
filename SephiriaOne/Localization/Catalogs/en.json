@@ -92,6 +92,8 @@
   "[Tournament] Round unresolved; other eligible pairings will be considered.": "[Tournament] Round unresolved; other eligible pairings will be considered.",
   "[Tournament] {0} wins the round.": "[Tournament] {0} wins the round.",
   "[Tournament] Match started: Kill \"{0}\"! ({1} secs)": "[Tournament] Match started: Kill \"{0}\"! ({1} secs)",
+  "[Tournament] Opponent: \"{0}\" | {1}s left": "[Tournament] Opponent: \"{0}\" | {1}s left",
+  "[Tournament] Match ended.": "[Tournament] Match ended.",
   "[Tournament] Round {2} | \"{0}\" is your opponent! Fight in: {1}...": "[Tournament] Round {2} | \"{0}\" is your opponent! Fight in: {1}...",
   "[Tournament] Round {2} | Rematch | \"{0}\" is your opponent! Fight in: {1}...": "[Tournament] Round {2} | Rematch | \"{0}\" is your opponent! Fight in: {1}...",
   "Tournament: {0}. Round duration: {1}s. Remaining: {2}s.": "Tournament: {0}. Round duration: {1}s. Remaining: {2}s.",

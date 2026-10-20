@@ -792,6 +792,7 @@ PotionSupplyTests.Run(Start, id => Add(id), Check);
 DeathmatchTests.Run(Start, id => Add(id), Check);
 TournamentControlsTests.Run(Start, id => Add(id), Check);
 TournamentRuntimeTests.Run(Start, id => Add(id), Check);
+TournamentMessageTests.Run(Start, id => Add(id), Check);
 PlayTagControlsTests.Run(Start, id => Add(id), Check);
 ZombieSurvivalRuntimeTests.Run(Start, id => Add(id), Check);
 ZombieSurvivalControlsTests.Run(Start, Check);

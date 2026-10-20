@@ -81,9 +81,18 @@ namespace SephiriaOne
 
         private static void TournamentDeath(PlayerAvatar player)
         {
-            if (phase != Phase.Active || first < 0 || second < 0 || Now >= endsAt) return;
-            if (ReferenceEquals(player, tournamentPlayers[first].Subject.Player)) firstDied = true;
-            if (ReferenceEquals(player, tournamentPlayers[second].Subject.Player)) secondDied = true;
+            if (first < 0 || second < 0) return;
+            bool a = ReferenceEquals(player, tournamentPlayers[first].Subject.Player);
+            bool b = ReferenceEquals(player, tournamentPlayers[second].Subject.Player);
+            if (!a && !b) return;
+            if (phase == Phase.Active && Now < endsAt)
+            {
+                firstDied |= a;
+                secondDied |= b;
+            }
+            // Retire the pair's notices before the shared death service writes
+            // a respawn countdown. Later settlement must not overwrite it.
+            ClearTournamentMessages();
         }
 
         private static void AdvanceTournament(double now)
@@ -114,6 +123,7 @@ namespace SephiriaOne
                     ClearTournamentPair();
                     Broadcast(null, result);
                 }
+                else ShowTournamentStatus(now);
                 return;
             }
             if (phase == Phase.BetweenRounds)
@@ -134,7 +144,7 @@ namespace SephiriaOne
             {
                 var a = tournamentPlayers[first]; var b = tournamentPlayers[second];
                 if (!a.Subject.IsReady || !b.Subject.IsReady || a.Subject.Player.IsDead || b.Subject.Player.IsDead)
-                { phase = Phase.BetweenRounds; return; }
+                { phase = Phase.BetweenRounds; ClearTournamentMessages(); return; }
                 int seconds = (int)Math.Ceiling(startsAt - now);
                 if (seconds > 0)
                 {
@@ -144,13 +154,16 @@ namespace SephiriaOne
                 phase = Phase.Active;
                 endsAt = now + duration;
                 SessionSettings.DeathmatchChanged();
+                tournamentTimeShown = duration;
                 PairMessage(true, duration);
             }
         }
 
         private static void ClearTournamentPair()
         {
-            phase = Phase.BetweenRounds; first = second = -1; firstDied = secondDied = false;
+            phase = Phase.BetweenRounds;
+            ClearTournamentMessages();
+            first = second = -1; firstDied = secondDied = false;
             FriendlyFireParticipants.InvalidateCombat();
             SessionSettings.DeathmatchChanged();
         }
@@ -159,18 +172,16 @@ namespace SephiriaOne
         private static void PairMessage(bool started, int seconds)
         {
             if (first < 0 || second < 0 || !IsTournament) return;
-            long current = token;
-            PlayerAvatar a = tournamentPlayers[first].Subject.Player, b = tournamentPlayers[second].Subject.Player;
             int round = schedule.PendingRound;
             string format = started ? "[Tournament] Match started: Kill \"{0}\"! ({1} secs)" :
                 schedule.PendingIsRematch ? "[Tournament] Round {2} | Rematch | \"{0}\" is your opponent! Fight in: {1}..." :
                 "[Tournament] Round {2} | \"{0}\" is your opponent! Fight in: {1}...";
-            Broadcast(a, L.F(format, CombatNames.Player(b), seconds, round));
-            if (current == token && IsTournament) Broadcast(b, L.F(format, CombatNames.Player(a), seconds, round));
+            SendTournamentMessages(format, seconds, round);
         }
 
         private static void ClearTournament()
         {
+            ForgetTournamentMessages();
             schedule = null; tournamentPlayers.Clear(); tournamentRoster.Clear();
             first = second = -1; firstDied = secondDied = false;
         }
