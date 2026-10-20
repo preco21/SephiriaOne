@@ -68,6 +68,7 @@ namespace SephiriaOne
                 if (!zombieIncomingDraft) zombieIncoming.SetTextWithoutNotify(modifiers.IncomingNumber);
             }
             availability.text = CombatMatchRuntime.DescribeZombie();
+            if (dynamic) availability.text += "\n" + ZombieSurvivalCommand.DescribeHumanModifier();
             availability.color = PanelWidgets.Muted;
             if (!DeathmatchFeature.Available || !FriendlyFireFeature.Available || !ReviveAllFeature.Available)
                 availability.text = L.T("Zombie Survival compatibility checks failed. Stop remains available; see Player.log.");

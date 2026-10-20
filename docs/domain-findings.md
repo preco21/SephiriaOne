@@ -24,6 +24,12 @@ not repeatedly bump the shared role revision: that revision protects elapsed
 damage-budget credit across discrete role changes, not animation frames.
 The [bounded Zombie curve](zombie-survival.md#dynamic-balancing-0760) uses existing
 role/damage consumers without new network state or native stat writes.
+The `0.78.0` minority curve crosses neutral at equal teams, raises majority-Zombie
+incoming damage above 100% and protects minority Humans through that same
+incoming-role boundary. A single live-team lookup must reject pending/dead and
+stale/spectator roles for either side. Cached curve outputs avoid repeated
+polynomial work at a shared timestamp. Keep the shared damage ledger in pre-role
+units even for vulnerability above 100%; otherwise refunds can manufacture credit.
 
 Native overhead chat cleanup requires a nonempty replacement: both
 `DungeonManager.Chat` and its stock `RpcChat` receiver reject whitespace before

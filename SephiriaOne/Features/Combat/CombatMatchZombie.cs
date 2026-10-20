@@ -42,8 +42,15 @@ namespace SephiriaOne
         }
         private static bool CurrentZombieCombat => IsZombieSurvival && phase == Phase.Active && !stopping && CurrentScope &&
             zombieRound != null && zombieRound.Humans > 0 && Now < endsAt;
-        internal static bool IsActiveZombie(PlayerAvatar player) => CurrentZombieCombat && player && !player.IsDead &&
-            TryZombieIndex(player, out int index) && zombieRound.IsZombie(index) && !zombieRound.IsPending(index);
+        private static bool TryActiveZombieRole(PlayerAvatar player, out bool zombie)
+        {
+            zombie = false;
+            if (!CurrentZombieCombat || !player || player.IsDead ||
+                !TryZombieIndex(player, out int index) || zombieRound.IsPending(index)) return false;
+            zombie = zombieRound.IsZombie(index);
+            return true;
+        }
+        internal static bool IsActiveZombie(PlayerAvatar player) => TryActiveZombieRole(player, out bool zombie) && zombie;
 
         internal static string ZombieFactionMarker(FriendlyFireParticipants.Receipt receipt) =>
             zombieRound != null && CurrentZombieReceipt(receipt, token, out int index)

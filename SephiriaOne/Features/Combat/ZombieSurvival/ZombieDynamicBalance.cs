@@ -9,12 +9,13 @@ namespace SephiriaOne
         internal const double TimeConstant = 1d;
         private bool started;
         private double share, target, time;
+        private double refill, incoming, humanIncoming;
 
         internal void Retarget(int zombies, int humans, double now)
         {
             if (zombies < 1 || humans < 0 || !Finite(now)) return;
             double next = humans / ((double)humans + zombies);
-            if (!started) { started = true; share = next; time = now; }
+            if (!started) { started = true; share = next; time = now; UpdateScales(); }
             else Advance(now); // Settle old composition before changing the target.
             target = next;
         }
@@ -26,11 +27,25 @@ namespace SephiriaOne
             {
                 share = target + (share - target) * Math.Exp(-(now - time) / TimeConstant);
                 if (Math.Abs(share - target) < 1e-10d) share = target;
+                UpdateScales();
             }
             time = now;
         }
-        internal double RefillScale(double now) { Advance(now); return started ? 1d + 2d * share : 1d; }
-        internal double IncomingScale(double now) { Advance(now); return started ? 1d - .7d * share : 1d; }
+        private void UpdateScales()
+        {
+            // Smoothstep of bounded team imbalance: neutral at parity, with no
+            // slope jump when the favored side changes. Cache all three outputs.
+            double imbalance = 2d * share - 1d;
+            double magnitude = Math.Abs(imbalance);
+            double strength = magnitude * magnitude * (3d - 2d * magnitude);
+            bool minorityZombie = imbalance >= 0;
+            refill = 1d + (minorityZombie ? .5d : -.4d) * strength;
+            incoming = 1d + (minorityZombie ? -.2d : .6d) * strength;
+            humanIncoming = minorityZombie ? 1d : 1d - .4d * strength;
+        }
+        internal double RefillScale(double now) { Advance(now); return started ? refill : 1d; }
+        internal double IncomingScale(double now) { Advance(now); return started ? incoming : 1d; }
+        internal double HumanIncomingScale(double now) { Advance(now); return started ? humanIncoming : 1d; }
         private static bool Finite(double value) => !double.IsNaN(value) && !double.IsInfinity(value);
     }
 }

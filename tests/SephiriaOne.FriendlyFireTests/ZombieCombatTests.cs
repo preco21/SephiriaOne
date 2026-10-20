@@ -12,6 +12,7 @@ internal static class ZombieCombatTests
         FriendlyFireRuntime.Clear(); FriendlyFireParticipants.Clear();
         SessionSettings.FriendlyFireForHit = new(true, 100);
         SessionSettings.ZombieModifiers = default; CombatMatchRuntime.Chaser = null;
+        CombatMatchRuntime.Humans.Add(human); CombatMatchRuntime.Humans.Add(other);
         CombatMatchRuntime.Zombies.Add(zombie); CombatMatchRuntime.RoleSettingsChanged();
         CombatMatchRuntime.PairRule = (a, b) => Array.IndexOf(players, a) is int x && x >= 0 && Array.IndexOf(players, b) is int y && y >= 0 && round.AllowsPair(x, y);
         try
@@ -33,7 +34,7 @@ internal static class ZombieCombatTests
             round.Infect(1);
             check(!FriendlyFireRuntime.ItemTarget(zombie, EDamageFromType.Magic, human) &&
                 FriendlyFireRuntime.HomingTargetLost(zombie, bolt), "Conversion revokes old homing and targeting immediately");
-            round.Revived(1); CombatMatchRuntime.Zombies.Add(human); CombatMatchRuntime.RoleSettingsChanged();
+            round.Revived(1); CombatMatchRuntime.Zombies.Add(human); CombatMatchRuntime.Humans.Remove(human); CombatMatchRuntime.RoleSettingsChanged();
             check(!FriendlyFireRuntime.ItemTarget(zombie, EDamageFromType.Magic, human) &&
                 FriendlyFireRuntime.ItemTarget(other, EDamageFromType.Magic, human), "Revived Zombie acquires its former Human teammates");
             other.IsGuarding = false;
@@ -61,7 +62,7 @@ internal static class ZombieCombatTests
             other.ApplyDamage(Hit(human, float.MaxValue));
             Time.time = Time.unscaledTime = .1f;
             other.ApplyDamage(Hit(human, float.MaxValue));
-            check(Math.Abs(other.Hp - (80 - 8d / 3)) < .001, "Dynamic x2.67 shares ordinary burst and damage-budget ledger");
+            check(Math.Abs(other.Hp - (80 - 37d / 27)) < .001, "Modest dynamic refill shares ordinary burst and damage-budget ledger");
             float hpBefore = other.Hp;
             CombatMatchRuntime.DynamicZombieRatio(2, 4); CombatMatchRuntime.RoleSettingsChanged();
             other.ApplyDamage(Hit(human, float.MaxValue));
@@ -82,10 +83,40 @@ internal static class ZombieCombatTests
             human.Hp = 100; enemy.Hp = 100;
             human.ApplyDamage(Hit(enemy)); enemy.ApplyDamage(Hit(human));
             check(human.Hp == 80 && enemy.Hp == 80, "Dynamic policy cannot change PvE in either direction");
+
+            FriendlyFireRuntime.Clear(); FriendlyFireParticipants.Clear();
+            Time.time = Time.unscaledTime = 10;
+            CombatMatchRuntime.DynamicZombieRatio(5, 1);
+            Time.time = Time.unscaledTime = 40; // Settle composition; no extra budget or match.
+            human.Hp = other.Hp = 100;
+            human.ApplyDamage(Hit(other)); other.ApplyDamage(Hit(human));
+            check(Math.Abs(human.Hp - (100 - 20 * 13d / 9)) < .001 &&
+                Math.Abs(other.Hp - (100 - 20 * 19d / 27)) < .001,
+                "Human minority deals stronger direct hits and takes reduced damage independently of balancing");
+            float priorHumanHp = other.Hp;
+            other.ApplyDamage(Hit(enemy));
+            check(other.Hp == priorHumanHp - 20, "Minority-Human protection never applies to incoming PvE");
+            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, refillPercent: 10);
+            human.Hp = other.Hp = 100;
+            human.ApplyDamage(Hit(other, float.MaxValue)); other.ApplyDamage(Hit(human, float.MaxValue));
+            check(Math.Abs(human.Hp - (100 - 20 * 13d / 9)) < .001 &&
+                Math.Abs(other.Hp - (100 - 20 * 19d / 27)) < .001,
+                "Both minority modifiers compose with the existing burst budget");
+            priorHumanHp = other.Hp;
+            float priorZombieHp = human.Hp;
+            human.ApplyDamage(Hit(other, float.MaxValue)); other.ApplyDamage(Hit(human, float.MaxValue));
+            check(human.Hp == priorZombieHp - 1 && other.Hp == priorHumanHp - 1,
+                "Exhausted budgets retain only the final minimum for both dynamic teams");
+            Time.time = Time.unscaledTime = 40.5f;
+            priorHumanHp = other.Hp; priorZombieHp = human.Hp;
+            human.ApplyDamage(Hit(other, float.MaxValue)); other.ApplyDamage(Hit(human, float.MaxValue));
+            check(Math.Abs(human.Hp - (priorZombieHp - 5 * 13d / 9)) < .001 &&
+                Math.Abs(other.Hp - (priorHumanHp - 5 * 19d / 27 * 19d / 27)) < .001,
+                "Vulnerability/refunds preserve funded units and Human defense combines with lower Zombie refill");
         }
         finally
         {
-            CombatMatchRuntime.Zombies.Clear(); CombatMatchRuntime.PairRule = null; CombatMatchRuntime.RoleSettingsChanged();
+            CombatMatchRuntime.Zombies.Clear(); CombatMatchRuntime.Humans.Clear(); CombatMatchRuntime.PairRule = null; CombatMatchRuntime.RoleSettingsChanged();
             SessionSettings.ZombieModifiers = default; SessionSettings.ZombieDynamicBalance = false; SessionSettings.FriendlyFireForHit = default;
             FriendlyFireRuntime.Clear(); FriendlyFireParticipants.Clear();
         }

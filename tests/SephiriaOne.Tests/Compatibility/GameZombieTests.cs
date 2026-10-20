@@ -12,8 +12,11 @@ internal static class GameZombieTests
         void Require(bool value, string why) { if (!value) throw new Exception("Zombie integration: " + why); }
         Require(Calls("CombatMatchRuntime", "AllowsPair", "CombatMatchRuntime", "ZombieAllowsPair") &&
             Calls("FriendlyFireRuntime", "CanAffectTeam", "CombatMatchRuntime", "AllowsPair"), "Zombie policy participates in existing shared hostility boundary");
-        Require(Calls("CombatMatchRuntime", "TryRoleSettings", "CombatMatchRuntime", "IsActiveZombie") &&
-            Calls("CombatMatchRuntime", "TryRoleSettings", "SessionSettings", "get_ZombieModifiers"), "Shared modifiers select current Zombie role");
+        Require(Calls("CombatMatchRuntime", "TryRoleSettings", "CombatMatchRuntime", "TryActiveZombieRole") &&
+            Calls("CombatMatchRuntime", "IsActiveZombie", "CombatMatchRuntime", "TryActiveZombieRole") &&
+            Calls("CombatMatchRuntime", "TryActiveZombieRole", "CombatMatchRuntime", "TryZombieIndex") &&
+            Calls("CombatMatchRuntime", "TryRoleSettings", "SessionSettings", "get_ZombieModifiers"),
+            "Shared modifiers select either active team through the same receipt-bound roster lookup");
         Require(Calls("CombatMatchRuntime", "ConfirmedKill", "CombatMatchRuntime", "ConfirmedZombieKill") &&
             Calls("FriendlyFireRuntime", "FinishDeath", "CombatMatchRuntime", "CompletedMatchDeath") &&
             Calls("CombatMatchRuntime", "Revived", "CombatMatchRuntime", "ZombieRevived"), "Conversion uses completed native death/revival callbacks");
@@ -25,6 +28,9 @@ internal static class GameZombieTests
             Require(Calls("SettingsPanel", "ApplyZombie" + suffix, "SettingsPanel", "Execute") &&
                 Calls("SettingsPanel", "ClearInput", "SettingsPanel", "ClearZombie" + suffix), "Zombie input dispatch/cleanup: " + suffix);
         Require(Calls("SettingsPanel", "RefreshParticipants", "CombatMatchRuntime", "ZombieFactionMarker"), "Participant rows use live receipt-bound faction markers");
+        Require(Calls("SettingsPanel", "RefreshZombie", "ZombieSurvivalCommand", "DescribeHumanModifier") &&
+            Calls("ZombieSurvivalCommand", "DescribeModifiers", "ZombieSurvivalCommand", "DescribeHumanModifier"),
+            "Panel and command status share the effective Human protection readout");
         Require(Calls("CombatMatchRuntime", "BroadcastRespawnCountdown", "ZombieSurvivalMessages", "Conversion") &&
             !Calls("CombatMatchRuntime", "InfectZombie", "CombatMatchRuntime", "Broadcast") &&
             !Calls("CombatMatchRuntime", "ZombieRevived", "CombatMatchRuntime", "Broadcast"), "Shared countdown owns the single conversion notice");

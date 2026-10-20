@@ -7,7 +7,9 @@ namespace SephiriaOne
     {
         internal static string Usage => L.T("Zombie Survival: /one zombie start|stop|resetkda|status|help; duration 3..3600|reset (default 120s); count N|reset (positive integer, default 1); any-death on|off|reset (default off). Duration and count apply to the next match; count leaves at least one Human. Other settings apply live. /one save stores settings.") + " " +
             L.T("Zombie bonuses: /one zombie refill on|off|xN|N|reset (0.1..10, default x3); damage on|off|N%|N|reset (0..100, default 30%). Both default on; up to 2 decimals. Refill requires PvP balancing.") + " " +
-            L.T("Dynamic Balancing: /one zombie dynamic on|off|reset (default off). Team ratio controls refill x1..3 and incoming damage 30..100%; changes ease over about 3s. Manual values are retained; individual modifier switches still apply.");
+            L.T("Dynamic Balancing: /one zombie dynamic on|off|reset (default off). Favors the minority, neutral at equal teams. Zombie refill x0.6..1.5; Zombie incoming damage 80..160%; Human incoming damage 60..100%. Changes ease over about 3s. Incoming switch controls both teams; manual values return when disabled.");
+        internal static string DescribeHumanModifier() => L.F("[H] Incoming damage: {0}%.",
+            (CombatMatchRuntime.ZombieHumanIncomingScale * 100).ToString("0.##", CultureInfo.InvariantCulture));
         internal static string DescribeModifiers()
         {
             var settings = SessionSettings.ZombieModifiers;
@@ -21,6 +23,7 @@ namespace SephiriaOne
                 L.F("Zombie refill: {0} (x{1}, PvP balancing only); incoming damage: {2} ({3}%).",
                 L.T(settings.RefillEnabled ? "ON" : "OFF"), refill,
                 L.T(settings.IncomingEnabled ? "ON" : "OFF"), incoming) + " " +
+                (SessionSettings.ZombieDynamicBalance ? DescribeHumanModifier() + " " : "") +
                 L.F("Convert on any Human death: {0}.", L.T(SessionSettings.ZombieAnyDeath ? "ON" : "OFF"));
         }
         internal static bool Execute(string[] parts, out bool success, out string message)

@@ -1,6 +1,12 @@
 # Development knowledge index
 
-Maintained: 2026-10-21 (Asia/Seoul), addon `0.77.1`.
+Maintained: 2026-10-21 (Asia/Seoul), addon `0.78.0`.
+
+[Minority-side Zombie balancing](zombie-survival.md#dynamic-balancing-0760):
+neutral parity, modest minority-Zombie help and stronger minority-Human offense
+and protection. Zombie refill ×0.6..1.5, incoming 80..160%; Human incoming
+60..100%. Existing smoothing, toggles and manual settings remain; EN/KO status
+and the Zombie panel show the Human protection value.
 
 [PvP infinite-potion correction](pvp-potions.md): Small/Large HP drinks now
 combine retention, zero MP cost and Survival random-stat suppression for active
@@ -14,8 +20,8 @@ prevent free credit. Extreme-rate minimum hits can exceed the refill limit.
 No new toggle, preset version or per-frame task; native effect schedules remain.
 
 [Zombie Dynamic Balancing](zombie-survival.md#dynamic-balancing-0760):
-optional team-ratio curve (refill ×1..×3, incoming damage 30..100%) eases across
-conversions. Toggle in Zombie or `/one zombie dynamic on|off|reset`, default off.
+optional team-ratio curve eases across conversions. Toggle in Zombie or
+`/one zombie dynamic on|off|reset`, default off.
 Manual values and individual switches remain available; v41 saves the toggle.
 
 [Heaven/Requital Slates](requital-slates.md): Items → Starting Slates now selects

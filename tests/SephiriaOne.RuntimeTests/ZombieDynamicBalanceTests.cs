@@ -49,13 +49,13 @@ internal static class ZombieDynamicBalanceTests
         bool Near(double a, double b) => Math.Abs(a - b) < .000001;
         var all = New(6); Begin();
         var zombie = all.Single(CombatMatchRuntime.IsActiveZombie);
-        check(Near(CombatMatchRuntime.RefillRoleScale(zombie), 8d / 3) &&
-            Near(CombatMatchRuntime.IncomingRoleScale(zombie), 5d / 12), "1:5 yields bounded meaningful advantage");
+        check(Near(CombatMatchRuntime.RefillRoleScale(zombie), 37d / 27) &&
+            Near(CombatMatchRuntime.IncomingRoleScale(zombie), 23d / 27), "1:5 yields bounded meaningful advantage");
         check(all.Where(p => p != zombie).All(p => CombatMatchRuntime.RefillRoleScale(p) == 1 &&
             CombatMatchRuntime.IncomingRoleScale(p) == 1), "Humans retain native role modifiers");
         long initialRevision = CombatMatchRuntime.RoleRevision;
         check(SettingsActions.Execute("/one zombie refill x7").Success && SettingsActions.Execute("/one zombie damage 12%").Success &&
-            Near(CombatMatchRuntime.RefillRoleScale(zombie), 8d / 3) && CombatMatchRuntime.RoleRevision == initialRevision,
+            Near(CombatMatchRuntime.RefillRoleScale(zombie), 37d / 27) && CombatMatchRuntime.RoleRevision == initialRevision,
             "Dormant manual edits neither override dynamic values nor invalidate budgets");
         check(SettingsActions.Execute("/one zombie dynamic off").Success &&
             CombatMatchRuntime.RefillRoleScale(zombie) == 7 && CombatMatchRuntime.IncomingRoleScale(zombie) == .12,
@@ -70,8 +70,31 @@ internal static class ZombieDynamicBalanceTests
             "Stop removes all dynamic role modifiers");
         all = New(9); Begin(8);
         zombie = all.First(CombatMatchRuntime.IsActiveZombie);
-        check(Near(CombatMatchRuntime.RefillRoleScale(zombie), 11d / 9) &&
-            Near(CombatMatchRuntime.IncomingRoleScale(zombie), 83d / 90), "New nine-player match cannot reuse old ratio");
+        check(Near(CombatMatchRuntime.RefillRoleScale(zombie), 2371d / 3645) &&
+            Near(CombatMatchRuntime.IncomingRoleScale(zombie), 1852d / 1215), "New nine-player match cannot reuse old ratio");
+        var lastHuman = all.Single(p => !CombatMatchRuntime.IsActiveZombie(p));
+        check(Near(CombatMatchRuntime.IncomingRoleScale(lastHuman), 2371d / 3645) &&
+            CombatMatchRuntime.RefillRoleScale(lastHuman) == 1,
+            "Last Human gains direct protection; offense comes from Zombie vulnerability, not a second refill boost");
+        check(ZombieSurvivalCommand.DescribeModifiers().Contains("[H] Incoming damage: 65.05%."),
+            "Dynamic status reports current minority-Human compensation");
+        var spectator = add(99).PlayerAvatar;
+        check(CombatMatchRuntime.IncomingRoleScale(spectator) == 1 && CombatMatchRuntime.RefillRoleScale(spectator) == 1,
+            "Late spectator cannot acquire minority-Human protection");
+        lastHuman.IsDead = true;
+        check(CombatMatchRuntime.IncomingRoleScale(lastHuman) == 1, "Dead Human cannot retain an active combat modifier");
+        lastHuman.IsDead = false;
+        check(SettingsActions.Execute("/one zombie damage off").Success &&
+            all.All(p => CombatMatchRuntime.IncomingRoleScale(p) == 1),
+            "Incoming switch disables dynamic protection/vulnerability for both teams");
+        check(SettingsActions.Execute("/one zombie damage on").Success &&
+            Near(CombatMatchRuntime.IncomingRoleScale(lastHuman), 2371d / 3645),
+            "Incoming switch resumes current Human protection without resetting composition");
+        check(SettingsActions.Execute("/one zombie dynamic off").Success &&
+            CombatMatchRuntime.IncomingRoleScale(lastHuman) == 1 &&
+            CombatMatchRuntime.IncomingRoleScale(zombie) == SessionSettings.ZombieModifiers.IncomingScale,
+            "Static mode removes Human protection immediately and restores exact manual Zombie policy");
+        SettingsActions.Execute("/one zombie dynamic on");
         CombatMatchRuntime.Stop(true, false);
         var harmony = new Harmony("Zombie.dynamic.tests");
         ReviveAllHooks.Install();
@@ -90,9 +113,8 @@ internal static class ZombieDynamicBalanceTests
                 CombatMatchRuntime.RefillRoleScale(human) == 1, "Conversion retargets continuously; corpse gets no active bonus");
             long revision = CombatMatchRuntime.RoleRevision;
             UnityEngine.Time.unscaledTime = 3.5f;
-            double share = 4d / 6 + (1d / 6) * Math.Exp(-.5);
-            check(Near(CombatMatchRuntime.RefillRoleScale(zombie), 1 + 2 * share) &&
-                Near(CombatMatchRuntime.IncomingRoleScale(zombie), 1 - .7 * share) &&
+            check(Near(CombatMatchRuntime.RefillRoleScale(zombie), 1.2765878874031307) &&
+                Near(CombatMatchRuntime.IncomingRoleScale(zombie), 0.8893648450387477) &&
                 CombatMatchRuntime.RoleRevision == revision, "Pending infection counts immediately; smoothing does not invalidate budgets");
             At(4);
             check(!human.IsDead && CombatMatchRuntime.IsActiveZombie(human) &&
@@ -103,7 +125,7 @@ internal static class ZombieDynamicBalanceTests
             environmental.Die(0, null);
             check(Near(CombatMatchRuntime.RefillRoleScale(zombie), prior), "Nonconverting death cannot manipulate ratio");
             At(6);
-            check(Near(CombatMatchRuntime.RefillRoleScale(zombie), 1 + 2 * (4d / 6 + (1d / 6) * Math.Exp(-3))),
+            check(Near(CombatMatchRuntime.RefillRoleScale(zombie), 1.1408265603210406),
                 "Three seconds approaches new composition without abrupt jump");
             SettingsActions.Execute("/one zombie any-death on");
             environmental.Die(0, null);
@@ -122,11 +144,12 @@ internal static class ZombieDynamicBalanceTests
                 Near(CombatMatchRuntime.RefillRoleScale(zombie), beforeRevive),
                 "KDA reset keeps the active team composition and smoothing state");
             // No extra messages/roster allocations from the role-query hot path.
-            QueryRoles(zombie);
+            var remainingHuman = all.First(p => !CombatMatchRuntime.IsActiveZombie(p));
+            QueryRoles(zombie); QueryRoles(remainingHuman);
             long allocated = GC.GetAllocatedBytesForCurrentThread();
-            QueryRoles(zombie);
+            QueryRoles(zombie); QueryRoles(remainingHuman);
             long bytes = GC.GetAllocatedBytesForCurrentThread() - allocated;
-            Console.WriteLine($"Dynamic Zombie role queries: {bytes} bytes/10000 pairs");
+            Console.WriteLine($"Dynamic Zombie/Human role queries: {bytes} bytes/20000 pairs");
             check(bytes == 0, "Dynamic role queries allocate no memory");
             var old = human.spawner;
             FriendlyFireParticipants.Retire(old); PlayerSpawner.MultiplayerList.Remove(old);
@@ -165,34 +188,69 @@ internal static class ZombieDynamicBalanceTests
         bool Near(double a, double b) => Math.Abs(a - b) < 1e-9;
         var curve = new ZombieDynamicBalance();
         check(curve.RefillScale(0) == 1 && curve.IncomingScale(0) == 1, "Absent match has neutral dynamic policy");
+        foreach (var example in new[]
+        {
+            (z: 1, h: 1, refill: 1d, incoming: 1d),
+            (z: 1, h: 5, refill: 37d / 27, incoming: 23d / 27),
+            (z: 5, h: 1, refill: 19d / 27, incoming: 13d / 9),
+            (z: 8, h: 1, refill: 2371d / 3645, incoming: 1852d / 1215)
+        })
+        {
+            curve = default; curve.Retarget(example.z, example.h, 0);
+            check(Near(curve.RefillScale(0), example.refill) && Near(curve.IncomingScale(0), example.incoming),
+                $"Minority curve target {example.z}:{example.h} is neutral at parity and favors the outnumbered side");
+            check(Near(curve.HumanIncomingScale(0), example.z > example.h ? example.refill : 1),
+                "Only a Human minority receives incoming-damage compensation");
+        }
         for (int zombies = 1; zombies <= 100; zombies++)
         {
-            double last = 1;
+            double last = .6, lastIncoming = 1.6, lastHuman = .6;
             for (int humans = 1; humans <= 100; humans++)
             {
                 curve = default; curve.Retarget(zombies, humans, 0);
                 double refill = curve.RefillScale(0), incoming = curve.IncomingScale(0);
-                check(refill >= last && refill <= 3 && incoming >= .3 && incoming <= 1,
+                check(refill >= last && refill <= 1.5 && incoming >= .8 && incoming <= lastIncoming &&
+                    curve.HumanIncomingScale(0) >= lastHuman && curve.HumanIncomingScale(0) <= 1,
                     "Ratio curve is bounded and monotone");
-                last = refill;
+                last = refill; lastIncoming = incoming; lastHuman = curve.HumanIncomingScale(0);
             }
         }
         curve = default; curve.Retarget(int.MaxValue, int.MaxValue, 0);
-        check(curve.RefillScale(0) == 2 && curve.IncomingScale(0) == .65, "Large counts cannot overflow total");
+        check(curve.RefillScale(0) == 1 && curve.IncomingScale(0) == 1 && curve.HumanIncomingScale(0) == 1, "Large counts cannot overflow total");
         curve = default; curve.Retarget(1, 5, 0); curve.Retarget(2, 4, 1);
         double initial = curve.RefillScale(1);
-        check(Near(initial, 8d / 3), "Retarget does not jump");
+        check(Near(initial, 37d / 27), "Retarget does not jump");
         var partitioned = curve;
         for (int i = 1; i <= 20; i++) partitioned.RefillScale(1 + i / 10d);
         check(Near(curve.RefillScale(3), partitioned.RefillScale(3)), "Smoothing independent of query/frame frequency");
         curve.Retarget(3, 3, 3);
-        double before = curve.RefillScale(3);
-        check(Near(curve.RefillScale(4), 2 + (before - 2) * Math.Exp(-1)), "Repeated conversion settles previous segment");
+        check(Near(curve.RefillScale(4), 1.0263757016404627), "Repeated conversion settles previous segment");
         double valid = curve.RefillScale(4);
         curve.Retarget(0, 3, 5); curve.Retarget(3, -1, 5); curve.Retarget(1, 5, double.NaN);
         check(Near(curve.RefillScale(double.NaN), valid) && Near(curve.RefillScale(double.PositiveInfinity), valid) &&
             Near(curve.RefillScale(2), valid), "Invalid inputs/backward time cannot corrupt smoothing");
         curve = default; curve.Retarget(1, int.MaxValue, 0);
-        check(curve.RefillScale(0) < 3 && curve.IncomingScale(0) > .3, "Extreme outnumbering saturates below bounds");
+        check(curve.RefillScale(0) <= 1.5 && curve.IncomingScale(0) >= .8 && curve.HumanIncomingScale(0) == 1, "Extreme outnumbering saturates below bounds");
+        curve = default; curve.Retarget(int.MaxValue, 1, 0);
+        check(curve.RefillScale(0) >= .6 && curve.IncomingScale(0) <= 1.6 && curve.HumanIncomingScale(0) >= .6,
+            "Last-Human compensation stays finite and never grants invulnerability");
+        foreach (int humans in new[] { 999999, 1000001 })
+        {
+            curve = default; curve.Retarget(1000000, humans, 0);
+            check(Math.Abs(curve.RefillScale(0) - 1) < 1e-10 && Math.Abs(curve.IncomingScale(0) - 1) < 1e-10 &&
+                Math.Abs(curve.HumanIncomingScale(0) - 1) < 1e-10, "No slope jump or bonus step at team parity");
+        }
+        curve = default; curve.Retarget(1, 5, 0);
+        double priorZombie = curve.IncomingScale(0), priorHuman = curve.HumanIncomingScale(0);
+        curve.Retarget(5, 1, 0);
+        check(curve.IncomingScale(0) == priorZombie && curve.HumanIncomingScale(0) == priorHuman,
+            "Crossing parity changes targets without jumping current protection");
+        for (int i = 1; i <= 30; i++)
+        {
+            double now = i / 10d, nextZombie = curve.IncomingScale(now), nextHuman = curve.HumanIncomingScale(now);
+            check(nextZombie >= priorZombie && nextHuman <= priorHuman && nextHuman >= .6,
+                "Conversions smoothly transfer advantage from Zombies to Humans");
+            priorZombie = nextZombie; priorHuman = nextHuman;
+        }
     }
 }

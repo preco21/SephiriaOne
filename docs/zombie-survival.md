@@ -1,4 +1,4 @@
-# Zombie Survival (0.76.0, 2026-10-21)
+# Zombie Survival (0.78.0, 2026-10-21)
 
 ## Dynamic Balancing (0.76.0)
 
@@ -7,24 +7,39 @@ Host commands: `/one zombie dynamic on|off|reset`; reset restores off.
 `/one save` persists it in v41. Older presets remain static, and schemas v1..40
 reject the new row rather than silently misinterpreting it.
 
-When enabled, the current team composition determines Zombie bonuses. Let
-`s = Humans / (Humans + Zombies)`, equivalent to `ratio / (1 + ratio)`.
+Retuned in `0.78.0` to favor the minority side. The original curve still gave
+Zombies ×2 refill / 65% incoming damage at parity and never favored Humans.
+Even teams are now neutral; minority Zombies get a modest advantage, while
+minority Humans get stronger offense and direct protection.
 
-- Refill multiplier: `1 + 2s`, bounded to **×1..×3**.
-- Incoming damage: `1 - 0.7s`, bounded to **30..100%** of normal PvP damage.
+Let `s = Humans / (Humans + Zombies)`, signed imbalance `b = 2s - 1`,
+and `u = |b|² (3 - 2|b|)`. This bounded smoothstep has no first-derivative jump
+at parity; extreme ratios approach finite bounds with diminishing returns.
 
-| Zombies : Humans | Refill | Incoming damage |
-| --- | --- | --- |
-| 1 : 5 | ×2.67 | 41.67% |
-| 1 : 1 | ×2 | 65% |
-| 5 : 1 | ×1.33 | 88.33% |
+| Condition | Zombie refill | Zombie incoming | Human incoming |
+| --- | --- | --- | --- |
+| Humans ≥ Zombies | `1 + 0.5u` | `1 - 0.2u` | `1` |
+| Zombies > Humans | `1 - 0.4u` | `1 + 0.6u` | `1 - 0.4u` |
 
-These are target values, with diminishing returns at extreme ratios. Initial
+| Zombies : Humans | Zombie refill | Damage Zombies take | Damage Humans take |
+| --- | --- | --- | --- |
+| 1 : 5 | ×1.37 | 85.19% | 100% |
+| 1 : 1 | ×1.00 | 100% | 100% |
+| 5 : 1 | ×0.70 | 144.44% | 70.37% |
+| 8 : 1 | ×0.65 | 152.43% | 65.05% |
+
+Bounds: Zombie refill **×0.6..×1.5**, Zombie incoming **80..160%**, Human incoming
+**60..100%**. Human offense improves by making majority Zombies more vulnerable;
+Human refill is unchanged. Direct Human protection also reduces initial bursts
+and works independently of the optional global PvP-balancing toggle.
+
+These are settled target values. Initial
 roles initialize the curve immediately. Each conversion settles the previous
 target up to that instant, then eases toward the new target exponentially with a
-one-second time constant: approximately 63% of the change after one second and
-95% after three seconds. Several conversions during this interval remain
-continuous. Query/frame frequency does not change the curve.
+one-second time constant. The underlying Human share moves approximately 63% of
+the way after one second and 95% after three seconds; the nonlinear multipliers
+follow that share. Several conversions remain continuous, including crossings
+of parity. Query/frame frequency does not change the curve.
 
 Counts use the captured roster and committed team roles, including pending
 respawns. A temporary death/loading state does not alter the ratio. A converted
@@ -32,13 +47,16 @@ corpse counts on its new team immediately, but combat modifiers only activate
 after successful revival. Late joiners remain spectators; departure/reconnection
 cancels through the existing connection-receipt lifecycle.
 
-The existing refill/incoming enable switches still apply independently. Numeric
-manual settings are retained; the UI shows read-only dynamic values while on.
-Turning dynamic balancing off immediately restores the exact manual values.
+The existing switches still apply: refill controls Zombie refill, and incoming
+controls **both teams'** incoming modifiers while dynamic balancing is enabled.
+Numeric manual settings are retained; the UI shows read-only Zombie values plus
+the effective Human incoming percentage in its status line. `/one zombie status`
+also shows Human protection, with EN/KO text. Turning dynamic balancing off
+immediately restores exact manual Zombie values and neutral Human modifiers.
 Commands may edit dormant manual values without perturbing the active damage
 budget. Outside a started round the dynamic model is neutral (×1 / 100%).
 
-Refill still requires global PvP balancing; incoming reduction has the same
+Refill still requires global PvP balancing; incoming scaling has the same
 opposing-player scope as static Zombie modifiers. Native stats, PvE and other
 modes are unchanged. Neither conversion nor smoothing replenishes spent damage
 budget. Actual role/config transitions keep the existing conservative elapsed
@@ -46,6 +64,9 @@ refill protection; smoothing itself does not advance `RoleRevision` each frame.
 
 `ZombieDynamicBalance` is a small pure, match-owned smoothing policy, consumed
 by the shared `CombatMatchRoles` path. Start/conversion/clear own its lifecycle.
+One shared active-role lookup identifies either live team through the existing
+receipt-bound roster. Smoothed outputs are cached and recalculated only when
+the share advances; repeated queries at the same time reuse them.
 The implementation adds no network messages or per-query roster allocations;
 guests receive the already-established host-authoritative damage results.
 
@@ -54,8 +75,15 @@ consecutive conversions, pending/manual respawns, nonconverting deaths, live
 switches and dormant edits, 9-player starts, repeat matches, reconnect,
 selection/master-toggle cancellation, scope/authority loss, timeout/victory,
 strict preset migration, real damage-hook budgeting and PvE isolation. Warmed
-10,000 paired role queries allocate zero bytes in fixtures. No game was launched
+20,000 paired role queries across both teams allocate zero bytes in fixtures.
+Golden-ratio, neutral parity, both minority bounds, real damage/refund/minimum
+tests and static restoration cover the retuning. No game was launched
 or deployed; live guest gameplay and UI rendering still require verification.
+
+This is bounded compensation, not equalized team DPS or a guaranteed TTK.
+Builds, focus fire, shields and crowd control still matter. The established
+one-point positive-hit minimum remains, so it can limit reductions at tiny
+damage values. No native combat stats, attack mechanics or PvE damage are changed.
 
 Current Zombies have a [persistent native green X indicator](zombie-role-visual.md),
 including while awaiting revival. It is cosmetic, uses stock guest transport,

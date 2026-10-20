@@ -1,7 +1,8 @@
 {
   "Dynamic Balancing": "동적 밸런싱",
   "Dynamic Balancing: {0}.": "동적 밸런싱: {0}.",
-  "Dynamic Balancing: /one zombie dynamic on|off|reset (default off). Team ratio controls refill x1..3 and incoming damage 30..100%; changes ease over about 3s. Manual values are retained; individual modifier switches still apply.": "동적 밸런싱: /one zombie dynamic on|off|reset (기본 꺼짐). 팀 비율에 따라 충전 배율 x1~3, 받는 피해 30~100%로 조정하며 약 3초에 걸쳐 부드럽게 변경합니다. 수동 설정값은 보존되며 각 보너스의 켜기/끄기는 유지됩니다.",
+  "Dynamic Balancing: /one zombie dynamic on|off|reset (default off). Favors the minority, neutral at equal teams. Zombie refill x0.6..1.5; Zombie incoming damage 80..160%; Human incoming damage 60..100%. Changes ease over about 3s. Incoming switch controls both teams; manual values return when disabled.": "동적 밸런싱: /one zombie dynamic on|off|reset (기본 꺼짐). 소수 진영을 보정하며 같은 인원에서는 중립입니다. 좀비 회복률 ×0.6~1.5, 좀비 받는 피해 80~160%, 인간 받는 피해 60~100%. 약 3초에 걸쳐 부드럽게 바뀝니다. 받는 피해 스위치는 양 진영에 적용되며, 동적 보정을 끄면 수동 설정으로 돌아갑니다.",
+  "[H] Incoming damage: {0}%.": "[H] 받는 피해: {0}%.",
   " /one xp help lists XP options.": " /one xp help로 경험치 옵션을 확인하세요.",
   "Host only: /one xp block on|off|reset; rabbit-exempt on|off|reset; status; reset. Both default off. Blocks new XP for all players; existing levels stay unchanged. /one save persists settings.": "호스트 전용: /one xp block on|off|reset; rabbit-exempt on|off|reset; status; reset. 기본값은 모두 꺼짐입니다. 모든 플레이어의 경험치 획득을 차단하며 기존 레벨은 유지합니다. /one save로 저장합니다.",
   "Only the host can change XP settings.": "호스트만 경험치 설정을 변경할 수 있습니다.",
