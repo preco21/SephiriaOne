@@ -41,6 +41,7 @@ namespace SephiriaOne
                 EventSpawnFeature.Initialize();
                 BatCostumeFeature.Initialize();
                 CollinFeature.Initialize();
+                RequitalRuntime.Initialize();
                 DisconnectDiagnosticsFeature.Initialize();
                 if (!nameColor)
                 {
@@ -66,6 +67,7 @@ namespace SephiriaOne
             CollinFeature.OnDatabasesReady();
             RabbitLevelUpFeature.OnDatabasesReady();
             LargePotionGrant.Load();
+            RequitalRuntime.Load();
             Debug.Log("[SephiriaOne] All databases ready");
         }
 
@@ -80,6 +82,7 @@ namespace SephiriaOne
                 DeathmatchFeature.Shutdown();
                 BatCostumeFeature.Shutdown();
                 CollinFeature.Shutdown();
+                RequitalRuntime.Shutdown();
                 ChoiceFeature.Shutdown();
                 EventSpawnFeature.Shutdown();
                 JarSpawnFeature.Shutdown();

@@ -69,6 +69,8 @@ namespace SephiriaOne
         private readonly Dictionary<string, int> choices = new Dictionary<string, int>();
         private readonly Dictionary<StatDefinition, Setting> stats = new Dictionary<StatDefinition, Setting>();
         public ResourcePolicy Resources { get; } = new ResourcePolicy();
+        public RequitalSettings Requital { get; private set; }
+        public void RecordRequital(RequitalSettings settings) => Requital = settings;
         public bool ItemUnlock { get; private set; }
         public FriendlyFireSettings FriendlyFire { get; private set; }
         public int DeathmatchDuration { get; private set; } = DeathmatchSettings.DefaultDuration;
@@ -113,7 +115,7 @@ namespace SephiriaOne
         public void RecordBat(bool reduce) => BatHpSteal = reduce;
         public bool CollinStartingArtifact { get; private set; }
         public void RecordCollin(bool grant) => CollinStartingArtifact = grant;
-        public bool HasChanges => HasZombieChanges || fountain.HasValue || choices.Count != 0 || stats.Count != 0 || Resources.HasChanges || RabbitPotions.HasChanges || Merchants.HasChanges || ItemUnlock || FriendlyFire.HasChanges || JarSpawns.HasChanges || EventSpawns.HasChanges || BatHpSteal || CollinStartingArtifact || DeathmatchDuration != DeathmatchSettings.DefaultDuration || TournamentDuration != TournamentSettings.DefaultDuration || PlayTagDuration != PlayTagSettings.DefaultDuration || PlayTagRounds != PlayTagSettings.DefaultRounds || PlayTagChaser.HasChanges;
+        public bool HasChanges => Requital.HasChanges || HasZombieChanges || fountain.HasValue || choices.Count != 0 || stats.Count != 0 || Resources.HasChanges || RabbitPotions.HasChanges || Merchants.HasChanges || ItemUnlock || FriendlyFire.HasChanges || JarSpawns.HasChanges || EventSpawns.HasChanges || BatHpSteal || CollinStartingArtifact || DeathmatchDuration != DeathmatchSettings.DefaultDuration || TournamentDuration != TournamentSettings.DefaultDuration || PlayTagDuration != PlayTagSettings.DefaultDuration || PlayTagRounds != PlayTagSettings.DefaultRounds || PlayTagChaser.HasChanges;
         public bool HasFountainSetting => fountain.HasValue;
         public bool HasFountainMultiplier => fountain.HasValue && fountain.Value.Multiplier;
 
@@ -155,6 +157,7 @@ namespace SephiriaOne
             stats.Clear();
             Resources.Clear();
             ItemUnlock = false;
+            Requital = default;
             FriendlyFire = default;
             DeathmatchDuration = DeathmatchSettings.DefaultDuration;
             TournamentDuration = TournamentSettings.DefaultDuration;

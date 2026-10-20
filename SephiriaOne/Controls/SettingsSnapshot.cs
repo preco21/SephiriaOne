@@ -98,6 +98,8 @@ namespace SephiriaOne
         public bool FriendlyFireAvailable { get; }
         public IReadOnlyList<FriendlyFirePlayerSnapshot> FriendlyFirePlayers { get; }
         public int FriendlyFireSelectedCount { get; }
+        public RequitalSettings Requital { get; }
+        public bool RequitalAvailable { get; }
         public bool ItemUnlock { get; }
         public bool ItemRestrictionsAvailable { get; }
         public RabbitPotionSettings RabbitPotions { get; }
@@ -131,7 +133,7 @@ namespace SephiriaOne
             bool batHpSteal = false, bool batAvailable = false,
             bool collinStartingArtifact = false, bool collinAvailable = false,
             EventSpawnSettings eventSpawns = default, bool eventSpawnsAvailable = false,
-            IEnumerable<FriendlyFirePlayerSnapshot> friendlyFirePlayers = null, int friendlyFireSelectedCount = 0)
+            IEnumerable<FriendlyFirePlayerSnapshot> friendlyFirePlayers = null, int friendlyFireSelectedCount = 0, RequitalSettings requital = default, bool requitalAvailable = false)
         {
             SessionIdentity = sessionIdentity; Epoch = epoch; RunGeneration = runGeneration; Revision = revision;
             HostActive = hostActive; CanMutate = canMutate; CanSave = canSave; CanForget = canForget;
@@ -144,6 +146,7 @@ namespace SephiriaOne
             FriendlyFirePlayers = friendlyFirePlayers == null ? (IReadOnlyList<FriendlyFirePlayerSnapshot>)System.Array.Empty<FriendlyFirePlayerSnapshot>() :
                 new List<FriendlyFirePlayerSnapshot>(friendlyFirePlayers).AsReadOnly();
             FriendlyFireSelectedCount = friendlyFireSelectedCount;
+            Requital = requital; RequitalAvailable = requitalAvailable;
             ItemUnlock = itemUnlock; ItemRestrictionsAvailable = itemRestrictionsAvailable;
             RabbitPotions = rabbitPotions; RabbitPotionsAvailable = rabbitPotionsAvailable;
             RabbitLevelUpPotionsAvailable = rabbitLevelUpPotionsAvailable;

@@ -1,8 +1,13 @@
 # Development knowledge index
 
-Maintained: 2026-10-20 (Asia/Seoul), addon `0.71.0`.
+Maintained: 2026-10-20 (Asia/Seoul), addon `0.72.0`.
 
-[Infinite PvP HP potions](pvp-potions.md#infinite-hp-potions-0710): separate default-off
+[Requital Slates](requital-slates.md): Items-tab automatic starting loadout
+(default off, 1 per player, configurable 0..20), plus a live Give now button.
+`/one slates auto on|off`, `count N`, `give`, `reset`; v38 saves the settings.
+Automatic gifts are tracked by exact instance ID for retraction.
+
+[Infinite PvP HP potions](pvp-potions.md): separate default-on
 toggle in Combat → Supplies or `/one friendlyfire infinite-hp on|off|reset`.
 Active combat participants retain regular/Large HP potions with native self-healing;
 Sample/MP potions and Rabbit-only mechanics remain separate. Shared participation,

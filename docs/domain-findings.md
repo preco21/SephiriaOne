@@ -16,6 +16,16 @@ A different game build requires renewed contract/asset checks. Start with the
 
 ## State lifetimes and multiplayer
 
+Starting-item registration and delivery are separate lifetimes. Native
+`AddStartingItem` registers before delivery and suppresses delivery inside a run;
+`RestockStartingItem` delivers registrations on fresh runs, not each floor. Ordinary
+live gifts therefore use a separate native inventory path. Requital (보은) is
+ID **2100**, an Eternal Slate whose active type is **WitchHat**, not Default.
+Do not select all Eternal items or reject this known costume-type item solely
+because of that active type. Automatic ownership must use exact instance IDs,
+not item type; original costume/passive Slates and manual gifts remain separate.
+See [Requital grant and retraction evidence](requital-slates.md).
+
 Debuff names and elemental damage types are not interchangeable timing domains.
 Burn/Plasma/Frostbite/Poison/Wound have periodic timers; Electric and Plasma's
 shock share the `DEBUFF_ELECTRIC` marker on refresh/expiry (the Plasma prefab

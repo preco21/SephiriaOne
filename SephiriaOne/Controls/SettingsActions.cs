@@ -94,6 +94,22 @@ namespace SephiriaOne
                         new[] { L.T("Only the host can open the session settings panel.") });
                 }
 
+                var slates = RequitalCommand.Parse(command, out var slateCommand);
+                if (slates != RequitalParseResult.NotCommand)
+                {
+                    recognized = true;
+                    if (slates == RequitalParseResult.Help) return Reply(true, RequitalCommand.Usage);
+                    if (slates == RequitalParseResult.Invalid) return Reply(false, RequitalCommand.Usage);
+                    if (slates == RequitalParseResult.Give) return Reply(RequitalRuntime.GiveAll(out string giftMessage), giftMessage);
+                    if (slates == RequitalParseResult.Status)
+                    {
+                        var snapshot = SessionSettings.ReadSnapshot();
+                        if (!snapshot.HostActive || snapshot.SessionIdentity == null) return Reply(false, snapshot.AvailabilityReason);
+                        return Reply(true, SessionSettings.DescribeRequital(snapshot.Requital) +
+                            (snapshot.RequitalAvailable ? "" : " " + L.T("Requital compatibility checks failed. Off/reset remain available; see Player.log.")));
+                    }
+                    return Reply(SessionSettings.TryExecuteRequital(slateCommand, out string slateMessage), slateMessage);
+                }
                 var collin = CollinCommand.Parse(command, out bool collinEnabled);
                 if (collin != CollinParseResult.NotCommand)
                 {
@@ -250,7 +266,7 @@ namespace SephiriaOne
                 {
                     if (preset == PresetAction.Help)
                         return Reply(true, presetError + " " + ReviveAllAction.Usage + " " + DeathmatchCommand.Usage + " " + TournamentCommand.Usage + " " + PlayTagCommand.Usage + " " + ZombieSurvivalCommand.Usage + L.T(" /one ui opens the host settings panel. /one rabbit help lists potion options. /one merchant help lists extra merchant options.") +
-                            L.T(" /one items help lists given-item options.") + L.T(" /one friendlyfire help lists allied-damage options.") + L.T(" /one jars help lists Mystic Jar spawn options.") + L.T(" /one events help lists random event options.") + L.T(" /one bat help lists Wingless Bat options.") + L.T(" /one collin help lists costume starting-artifact options.") + L.T(" Language: /one language en|ko|reload|status.") + " " + UpdateCommand.Usage);
+                            L.T(" /one slates help lists Requital Slate options.") + L.T(" /one items help lists given-item options.") + L.T(" /one friendlyfire help lists allied-damage options.") + L.T(" /one jars help lists Mystic Jar spawn options.") + L.T(" /one events help lists random event options.") + L.T(" /one bat help lists Wingless Bat options.") + L.T(" /one collin help lists costume starting-artifact options.") + L.T(" Language: /one language en|ko|reload|status.") + " " + UpdateCommand.Usage);
                     if (preset == PresetAction.Invalid) return Reply(false, presetError);
                     bool success = SessionSettings.TryExecutePreset(preset, out string[] messages);
                     return new SettingsActionResult(true, success, false, messages);

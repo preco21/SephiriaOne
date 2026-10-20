@@ -149,6 +149,7 @@ namespace SephiriaOne
             availability.color = snapshot.CanMutate && choicesReady && levelUpReady ? PanelWidgets.Muted : (Color)new Color32(255, 200, 122, 255);
             foreach (var button in changeButtons) button.interactable = snapshot.CanMutate && choicesReady;
             RefreshCombat(snapshot);
+            RefreshRequital(snapshot);
             if (collinReset) collinReset.interactable = snapshot.CanMutate || (snapshot.HostActive && snapshot.SessionIdentity != null &&
                 (snapshot.FaultedFeature == "collin" || snapshot.FaultedFeature == "inheritance"));
             if (amount) amount.interactable = snapshot.CanMutate && choicesReady;
@@ -195,6 +196,7 @@ namespace SephiriaOne
             for (int i = 0; i < tabs.Count; i++) { var colors = tabs[i].colors; colors.normalColor = i == target ? PanelWidgets.Accent : (Color)new Color32(39, 59, 82, 255); colors.selectedColor = colors.normalColor; tabs[i].colors = colors; }
             statPicker = null; amount = null; resetOne = resetAll = save = forget = null;
             collinReset = null;
+            requitalCount = null; requitalCountDraft = false; requitalApply = requitalGive = requitalReset = null;
             updateInstall = updateCheck = null; updateAutomatic = null;
             friendlyDamage = null; friendlyDraft = false; friendlyRefill = null; friendlyRefillDraft = false;
             friendlyGuardMp = null; friendlyGuardMpDraft = false;
@@ -362,7 +364,7 @@ namespace SephiriaOne
         private void RefreshSaved() { Refresh(ReadCurrentSnapshot(true)); feedback.text = L.T("Refreshed."); }
         private void ClearInput()
         {
-            ClearPvpDots();
+            ClearPvpDots(); ClearRequitalCount();
             ClearFriendlyDamage(); ClearFriendlyRefill(); ClearFriendlyGuardMp();
             ClearZombieDuration(); ClearZombieCount(); ClearZombieRefill(); ClearZombieIncoming();
             ClearPlayTagDuration(); ClearPlayTagRounds(); ClearPlayTagRefill(); ClearPlayTagIncoming();

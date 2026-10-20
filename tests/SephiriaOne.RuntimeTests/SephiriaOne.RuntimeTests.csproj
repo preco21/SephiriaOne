@@ -6,6 +6,8 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../SephiriaOne/Session/SessionRequital.cs" Link="SessionRequital.cs" />
+    <Compile Include="../../SephiriaOne/Features/Items/Requital/RequitalSettings.cs" Link="RequitalSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/Supplies/*.cs" Link="Supplies/%(Filename)%(Extension)" />
     <Compile Include="../../SephiriaOne/Features/Combat/PvpWhiteBread.cs" Link="PvpWhiteBread.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/PvpParticipation.cs" Link="PvpParticipation.cs" />

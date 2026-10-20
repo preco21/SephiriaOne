@@ -197,3 +197,14 @@ through targeted Mirror dispatch. Validate the exact payload, stock receiver,
 host-local delivery and all receiver side effects first. Null avatar chat avoids
 overwriting a countdown bubble. Keep presentation failures separate from score
 accounting and recovery. See [reusable private chat adapter](friendly-fire-killed-by.md).
+
+## Optional inventory settings (0.72.0)
+
+[Requital starting Slates](requital-slates.md) reuse the receipt-based change
+coordinator in a separate optional rule, so an inventory write failure does not
+block stats/Fountain synchronization. Keep readiness inside the initial apply
+attempt: a later loading frame must not reset an applied or ambiguous-write
+cursor. Stable frames observe settings/lifetimes instead of scanning inventories.
+Retraction requires exact-ID provenance, including transferred and offline saved
+copies. Native metadata clears and starting-item retention differ at fresh-run
+boundaries; model both explicitly in fixtures.
