@@ -20,7 +20,8 @@ namespace SephiriaOne
         public bool Balance { get; }
         public bool HitFrequency { get; }
         public bool AutoPotion { get; }
-        public bool InfiniteHpPotions { get; }
+        private readonly bool finiteHpPotions;
+        public bool InfiniteHpPotions => !finiteHpPotions;
         public bool BlockLobbyRegen { get; }
         public PvpDotSettings DotIntervals { get; }
         public decimal DamagePercent => (damageOffset + 10000) / 100m;
@@ -34,10 +35,10 @@ namespace SephiriaOne
         public decimal GuardMpPercent => (guardMpOffset + DefaultGuardMpHundredths) / 100m;
         internal int GuardMpHundredths => guardMpOffset + DefaultGuardMpHundredths;
         public string GuardMpNumber => GuardMpPercent.ToString("0.##", CultureInfo.InvariantCulture);
-        public bool HasChanges => Enabled || Balance || HitFrequency || AutoPotion || InfiniteHpPotions || BlockLobbyRegen || damageOffset != 0 || refillOffset != 0 || guardMpOffset != 0 || DotIntervals.HasChanges;
+        public bool HasChanges => Enabled || Balance || HitFrequency || AutoPotion || !InfiniteHpPotions || BlockLobbyRegen || damageOffset != 0 || refillOffset != 0 || guardMpOffset != 0 || DotIntervals.HasChanges;
         public FriendlyFireSettings(bool enabled, decimal damagePercent, bool balance = false, bool blockLobbyRegen = false,
             decimal refillPercent = DefaultRefillPercent, decimal guardMpPercent = DefaultGuardMpPercent, PvpDotSettings dotIntervals = default,
-            bool hitFrequency = false, bool autoPotion = false, bool infiniteHpPotions = false)
+            bool hitFrequency = false, bool autoPotion = false, bool infiniteHpPotions = true)
         {
             if (!ValidPercent(damagePercent)) throw new ArgumentOutOfRangeException(nameof(damagePercent));
             if (!ValidRefillPercent(refillPercent)) throw new ArgumentOutOfRangeException(nameof(refillPercent));
@@ -46,13 +47,13 @@ namespace SephiriaOne
             refillOffset = (int)(refillPercent * 100) - DefaultRefillHundredths;
             guardMpOffset = (int)(guardMpPercent * 100) - DefaultGuardMpHundredths;
             DotIntervals = dotIntervals;
-            HitFrequency = hitFrequency; AutoPotion = autoPotion; InfiniteHpPotions = infiniteHpPotions;
+            HitFrequency = hitFrequency; AutoPotion = autoPotion; finiteHpPotions = !infiniteHpPotions;
         }
         public static bool ValidPercent(decimal percent) => percent >= 0 && percent <= 300 && percent * 100 == decimal.Truncate(percent * 100);
         public static bool ValidRefillPercent(decimal percent) => percent >= 1 && ValidPercent(percent);
         public static bool ValidGuardMpPercent(decimal percent) => percent <= 100 && ValidPercent(percent);
         private FriendlyFireSettings(FriendlyFireSettings source, bool enabled)
-        { Enabled = enabled; Balance = source.Balance; HitFrequency = source.HitFrequency; AutoPotion = source.AutoPotion; InfiniteHpPotions = source.InfiniteHpPotions; BlockLobbyRegen = source.BlockLobbyRegen; damageOffset = source.damageOffset; refillOffset = source.refillOffset; guardMpOffset = source.guardMpOffset; DotIntervals = source.DotIntervals; }
+        { Enabled = enabled; Balance = source.Balance; HitFrequency = source.HitFrequency; AutoPotion = source.AutoPotion; finiteHpPotions = source.finiteHpPotions; BlockLobbyRegen = source.BlockLobbyRegen; damageOffset = source.damageOffset; refillOffset = source.refillOffset; guardMpOffset = source.guardMpOffset; DotIntervals = source.DotIntervals; }
         // Deathmatch reads this at hit time; keep toggle overlays in integer space.
         public FriendlyFireSettings WithEnabled(bool enabled) => new FriendlyFireSettings(this, enabled);
         public FriendlyFireSettings Apply(FriendlyFireCommand command) => command.Reset ? default :
@@ -85,7 +86,7 @@ namespace SephiriaOne
         public bool IsReset => Reset || !Dot.HasValue && !GuardMpPercent.HasValue && !RefillPercent.HasValue &&
             (InfiniteHpPotions.HasValue ? !InfiniteHpPotions.Value : AutoPotion.HasValue ? !AutoPotion.Value : DotSchedule.HasValue ? !DotSchedule.Value.Enabled : HitFrequency.HasValue ? !HitFrequency.Value : BlockLobbyRegen.HasValue ? !BlockLobbyRegen.Value : Balance.HasValue ? !Balance.Value : !Percent.HasValue && !Enabled);
         public bool TouchesMasterToggle => Reset || !InfiniteHpPotions.HasValue && !AutoPotion.HasValue && !Percent.HasValue && !Balance.HasValue && !HitFrequency.HasValue && !BlockLobbyRegen.HasValue && !RefillPercent.HasValue && !GuardMpPercent.HasValue && !Dot.HasValue && !DotSchedule.HasValue;
-        public static string Usage => L.T("Infinite PvP HP potions: /one friendlyfire infinite-hp on|off|reset. Default off; active participants keep regular and Large HP potions after drinking. Sample and other potions are excluded. Rabbit options remain independent.") + " " + L.T("Large Potion: /one friendlyfire potion gives one to each player who lacks it. /one friendlyfire auto-potion on|off|reset grants one on PvP entry or match start, only to participants. Default off; /one save persists it.") + " " + L.T("Friendly fire: /one friendlyfire on|off|status|reset|resetkda; /one friendlyfire damage 0..300 (percent, up to 2 decimals; e.g. 0.1). Default 100. /one save persists settings.") + " " +
+        public static string Usage => L.T("Infinite PvP HP potions: /one friendlyfire infinite-hp on|off|reset. Default on; active participants keep regular and Large HP potions after drinking. Sample and other potions are excluded. Rabbit options remain independent.") + " " + L.T("Large Potion: /one friendlyfire potion gives one to each player who lacks it. /one friendlyfire auto-potion on|off|reset grants one on PvP entry or match start, only to participants. Default off; /one save persists it.") + " " + L.T("Friendly fire: /one friendlyfire on|off|status|reset|resetkda; /one friendlyfire damage 0..300 (percent, up to 2 decimals; e.g. 0.1). Default 100. /one save persists settings.") + " " +
             L.T("PvP balancing: /one friendlyfire balance on|off. Default off; softens hits, limits rapid damage and Dark Cloud repeats, and uses configurable DoT intervals. Lightning/Shock, Freeze, Chim and Dark Cloud have separate configurable damage intervals; Freeze stun is preserved.") + " " +
             L.T("PvP Evasion: stat-based dodge chance is capped at 50% before anti-Evasion; guaranteed item dodges are unchanged.") + " " +
             L.T("PvP recovery: HP Steal is disabled on friendly-fire hits.") + " " +
@@ -123,7 +124,7 @@ namespace SephiriaOne
             }
             if (parts.Length == 4 && op == "infinite-hp" && (parts[3].Equals("on", StringComparison.OrdinalIgnoreCase) ||
                 parts[3].Equals("off", StringComparison.OrdinalIgnoreCase) || parts[3].Equals("reset", StringComparison.OrdinalIgnoreCase)))
-            { command = new FriendlyFireCommand(false, infiniteHpPotions: parts[3].Equals("on", StringComparison.OrdinalIgnoreCase)); return FriendlyFireParseResult.Valid; }
+            { command = new FriendlyFireCommand(false, infiniteHpPotions: !parts[3].Equals("off", StringComparison.OrdinalIgnoreCase)); return FriendlyFireParseResult.Valid; }
             if (parts.Length == 4 && op == "auto-potion" && (parts[3].Equals("on", StringComparison.OrdinalIgnoreCase) ||
                 parts[3].Equals("off", StringComparison.OrdinalIgnoreCase) || parts[3].Equals("reset", StringComparison.OrdinalIgnoreCase)))
             { command = new FriendlyFireCommand(false, autoPotion: parts[3].Equals("on", StringComparison.OrdinalIgnoreCase)); return FriendlyFireParseResult.Valid; }

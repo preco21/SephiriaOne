@@ -1,7 +1,7 @@
 {
   "Infinite PvP HP potions": "Infinite PvP HP potions",
   "Infinite PvP HP potions: {0}.": "Infinite PvP HP potions: {0}.",
-  "Infinite PvP HP potions: /one friendlyfire infinite-hp on|off|reset. Default off; active participants keep regular and Large HP potions after drinking. Sample and other potions are excluded. Rabbit options remain independent.": "Infinite PvP HP potions: /one friendlyfire infinite-hp on|off|reset. Default off; active participants keep regular and Large HP potions after drinking. Sample and other potions are excluded. Rabbit options remain independent.",
+  "Infinite PvP HP potions: /one friendlyfire infinite-hp on|off|reset. Default on; active participants keep regular and Large HP potions after drinking. Sample and other potions are excluded. Rabbit options remain independent.": "Infinite PvP HP potions: /one friendlyfire infinite-hp on|off|reset. Default on; active participants keep regular and Large HP potions after drinking. Sample and other potions are excluded. Rabbit options remain independent.",
   "HP potion hooks unavailable; off/reset remain available. See Player.log.": "HP potion hooks unavailable; off/reset remain available. See Player.log.",
   "Plasma shock (s)": "Plasma shock (s)",
   "Plasma shock interval: {0}s.": "Plasma shock interval: {0}s.",

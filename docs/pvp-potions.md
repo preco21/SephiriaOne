@@ -1,10 +1,13 @@
 # PvP potion supplies and consumption
 
-## Infinite HP potions (0.71.0)
+## Infinite HP potions (0.71.0; default changed in 0.72.0)
 
 **Combat → Supplies → Infinite PvP HP potions** / `/one friendlyfire infinite-hp
-on|off|reset` is a separate toggle, default **off**. `/one save` stores it in preset
-v37. It does not require PvP balancing or enable the automatic Large Potion grant.
+on|off|reset` is a separate toggle, default **on**. `/one save` stores it in preset
+v37. Explicit saved `infinite-hp 0` remains off; omitted settings inherit on.
+Both per-option reset and full friendly-fire reset restore on. Earlier saves
+that omitted the old off default cannot distinguish an opt-out from no preference.
+It does not require PvP balancing or enable the automatic Large Potion grant.
 
 Active combat participants of any costume retain ordinary HP potions (ID 0) and
 Large Potions (ID 1) after a successful drink. Native self-healing and potion
