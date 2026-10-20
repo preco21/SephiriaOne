@@ -30,9 +30,9 @@ internal static class ChaserBalanceTests
                 "Extreme unbalanced hits reduce the same safely capped original damage by 25 percent");
 
             Fresh(true); for (int i = 0; i < 50; i++) Strike(float.MaxValue);
-            check(Near(target.Hp, 85), "Rapid-hit saturation cannot refund away the chaser's 25 percent reduction");
+            check(Near(target.Hp, 36), "Chaser reduction applies to funded damage; exhausted hits retain their final floor");
             for (int i = 1; i <= 10; i++) { Time.time = i / 10f; Strike(float.MaxValue); }
-            check(target.Hp <= 77.5 && target.Hp > 76.5, "Incoming reduction and refill retain at most one minimum hit of debt");
+            check(Near(target.Hp, 26), "Sub-one role-reduced refill remains responsive without floor debt");
 
             Fresh(true, true); Strike(float.MaxValue); Time.time = 0.1f; Strike(float.MaxValue);
             check(Near(target.Hp, 78), "Chaser global 10-percent refill becomes 20 percent per second");
@@ -66,7 +66,8 @@ internal static class ChaserBalanceTests
             Fresh(true); target.SuperArmor = true; Strike(float.MaxValue);
             check(Near(target.Hp, 90.25), "Native armor stacks after chaser reduction on an individual hit");
             for (int i = 0; i < 30; i++) Strike(float.MaxValue);
-            check(target.Hp <= 85 && target.Hp > 84, "Armor refunds retain chaser reduction within one minimum hit of debt");
+            float armorBefore = target.Hp; Strike(float.MaxValue);
+            check(Near(armorBefore - target.Hp, .65), "Minimum-only armor hits cannot refund free role-adjusted credit");
 
             Fresh(true); target.OnHit = (_, _) =>
             {

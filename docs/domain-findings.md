@@ -455,6 +455,24 @@ when a native comparison is inclusive. See [jars](mystic-jar.md) and
 
 ## Combat and disconnect interpretation
 
+PvP cadence classification (`0.77.0`) uses existing source/context and native
+metadata, with two fixed histories per directed pair and one shared allowance.
+Native `DamageInstance` defaults to `Magic`; `EDamageFromType.None` identifies
+many incidental attacks. Growth daggers use `Charm_DaggerGrowth`; the
+`FlameSwordReturn.Update` damage constructor explicitly passes `fromType=None`.
+The `Charm_` prefix and synchronous artifact scope cover additional procs.
+Recheck pooled metadata per hit; never cache classification on a damage object.
+REA reconfirmed the installed hash above and these native contracts
+(`ev_b381dbcc75732c4428252012b960402be7bb6c8a4cbdd7ce18a747c1bdcf087a`,
+`ev_3283eaf5aa29e68d33bdd60982580822c91ca3d11644d220ad4549c9bb6fd08e`).
+
+A positive damage floor at exhausted credit requires separating delivered
+allowance from funded reservation. Refund only funded credit minus actual
+delivery in matching pre-role units. Otherwise native armor/vetoes can refund
+unfunded minimum damage into a new burst. The floor is intentionally outside
+the strict DPS bound and still obeys native defense and debuff schedule gates.
+See [current policy and historical fairness audit](pvp-hit-frequency.md).
+
 Allowing allied collision alone did not enable HP damage: the native player's
 team-protection callback vetoed it after guard MP could already be spent. Friendly
 fire therefore scopes admission through the matching native callback while

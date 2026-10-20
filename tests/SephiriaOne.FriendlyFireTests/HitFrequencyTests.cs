@@ -12,7 +12,7 @@ internal static class HitFrequencyTests
             FriendlyFireParticipants.Clear(); FriendlyFireRuntime.Clear(); CombatMatchRuntime.PairRule = null;
             Mirror.NetworkServer.active = true; Time.time = 10;
             SessionSettings.FriendlyFireForHit = new(true, 100, balance: balance, hitFrequency: frequency);
-            source = new(); target = new(); hit = new() { origin = source, damage = 2 };
+            source = new(); target = new(); hit = new() { origin = source, damage = 2, fromType = EDamageFromType.DirectAttack };
         }
         void Strike(int count = 1) { for (int i = 0; i < count; i++) target.ApplyDamage(hit); }
         Fresh(); Strike(4); float before = target.Hp; Strike();
@@ -29,7 +29,7 @@ internal static class HitFrequencyTests
         before = target.Hp; hit.origin = new PlayerAvatar(); Strike();
         check(before - target.Hp == 2, "Other attackers have separate hit histories");
         Fresh(); Strike(4); hit.origin = new UnitAvatar { NetworkLeader = source }; before = target.Hp; Strike();
-        check(Near(before - target.Hp, 2 * Math.Sqrt(4d / 5)), "Companion damage joins its owner's hit history");
+        check(before - target.Hp == 2, "Companion damage uses incidental cadence without inheriting direct hit count");
         Fresh(); Strike(4); hit.fromType = EDamageFromType.Magic; hit.id = "Bolt"; before = target.Hp; Strike();
         check(Near(before - target.Hp, 2 * Math.Sqrt(4d / 5)), "Changing weapon or spell ID cannot bypass hit history");
         Fresh(); Strike(4); hit.damage = 0; Strike(20); hit.damage = 2; before = target.Hp; Strike();
@@ -39,11 +39,11 @@ internal static class HitFrequencyTests
         target.ApplyDamage(new() { origin = enemy, damage = 2, targetFactionLayers = -1 });
         check(target.Hp == 90, "Incoming PvE ignores the scaler");
         before = target.Hp; Strike(); check(Near(before - target.Hp, 2 * Math.Sqrt(4d / 5)), "PvE also leaves PvP hit history unchanged");
-        Fresh(); hit.damage = float.MaxValue; Strike(100);
-        check(target.Hp == 80, "Frequency-scaled hits cannot exceed the same-frame damage budget");
+        Fresh(); hit.damage = float.MaxValue; Strike(10);
+        check(target.Hp == 71, "Exhausted frequency-scaled barrage retains the one-point floor");
         SessionSettings.FriendlyFireForHit = new(true, 100, balance: true); Strike();
         SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, hitFrequency: true); Strike();
-        check(target.Hp == 80, "Frequency toggle edits never refill an exhausted damage budget");
+        check(target.Hp == 69, "Frequency toggles grant only minimum hits, not a new burst");
         Fresh(); Strike(8);
         SessionSettings.FriendlyFireForHit = new(true, 100, balance: true);
         SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, hitFrequency: true);
@@ -63,13 +63,13 @@ internal static class HitFrequencyTests
         for (int i = 0; i < 20; i++) target.ApplyDamage(EffectTests.Tick(source, "Debuff_Electric", 2));
         before = target.Hp; Strike(3); check(before - target.Hp == 6, "Rejected shock pulses do not count toward frequency");
         before = target.Hp; target.ApplyDamage(EffectTests.Tick(source, "Debuff_Burn", 2));
-        check(Near(before - target.Hp, 2 * Math.Sqrt(4d / 5)), "Admitted DoT damage shares the owner's hit frequency");
+        check(before - target.Hp == 2, "Admitted DoT damage uses incidental history independently of direct hits");
         Fresh(); target.OnHit = (_, _) => source.ApplyDamage(new() { origin = target, id = "Ability_Thorns", damage = 2 });
         Strike(4); before = source.Hp; Strike();
         check(Near(before - source.Hp, 2 * Math.Sqrt(4d / 5)), "Reflected damage scales using the reverse directed pair");
-        Fresh(); var proc = new Charm_FrostiumRing { NetworkAvatar = source, Target = target, Damage = hit };
+        Fresh(); var proc = new Charm_FrostiumRing { NetworkAvatar = source, Target = target, Damage = new() { origin = source, damage = 2, fromType = EDamageFromType.None } };
         Strike(3); target.OnHit = (_, _) => { target.OnHit = null; proc.HandleAttackUnit(); }; before = target.Hp; Strike();
-        check(Near(before - target.Hp, 2 + 2 * Math.Sqrt(4d / 5)), "Nested artifact procs see outer hit frequency before native callbacks");
+        check(before - target.Hp == 4, "Nested artifact procs do not inflate outer direct cadence");
         Fresh(); Strike(4); FriendlyFireParticipants.Depart(target); FriendlyFireParticipants.Rejoin(target); before = target.Hp; Strike();
         check(before - target.Hp == 2, "Rejoined victim gets fresh pair history");
         Fresh(); Strike(4); FriendlyFireParticipants.Select(source, target); before = target.Hp; Strike();
@@ -85,7 +85,7 @@ internal static class HitFrequencyTests
         Fresh(); Strike(4); FriendlyFireRuntime.Clear(); before = target.Hp; Strike();
         check(before - target.Hp == 2, "Runtime cleanup releases hit history with the existing budget storage");
         Arithmetic(check);
-        Fresh(); hit.damage = 0.001f; Strike(100);
+        Fresh(); target.Hp = target.MaxHp = 10000; hit.damage = 0.001f; Strike(100);
         long allocated = GC.GetAllocatedBytesForCurrentThread(); Strike(1000);
         check(GC.GetAllocatedBytesForCurrentThread() == allocated, "Warmed frequency scaling adds no per-hit allocation");
         SessionSettings.FriendlyFireForHit = default; FriendlyFireRuntime.Clear();

@@ -64,7 +64,9 @@ internal static class DebuffPulseTests
         check(victim.Hp == 98, "Initial zero-charge shock cannot consume the first nonzero pulse");
         Fresh(); victim.ApplyDamage(new() { origin = source, damage = float.MaxValue }); Hit("Debuff_Electric");
         Time.time += 0.1f; Hit("Debuff_Electric");
-        check(victim.Hp == 78, "Budget-exhausted shock does not reserve a future pulse interval");
+        check(victim.Hp == 79, "Budget-exhausted shock deals its minimum and reserves its normal pulse interval");
+        Time.time += .4f; Hit("Debuff_Electric");
+        check(victim.Hp == 77, "The next due shock uses refilled credit without replaying suppressed pulses");
         Fresh(); victim.IsMpShield = true; SessionSettings.FriendlyFireForHit = new(true, 25, balance: true);
         Hit("Debuff_Electric", 2); Hit("Debuff_Electric", 8);
         check(victim.Mp == 99, "A minimum pulse damages MP shields and still consumes its cadence interval");
@@ -98,7 +100,7 @@ internal static class DebuffPulseTests
             check(victim.Hp == 90, kind + " similarly named direct magic never borrows a debuff cooldown");
             Fresh(); Hit(id, 0); Hit(id); check(victim.Hp == 98, kind + " zero damage cannot reserve an interval");
             Fresh(); victim.ApplyDamage(new() { origin = source, damage = float.MaxValue }); Hit(id);
-            Time.time += 0.1f; Hit(id); check(victim.Hp == 78, kind + " exhausted damage budget cannot reserve an interval");
+            Time.time += 0.1f; Hit(id); check(victim.Hp == 79, kind + " minimum-only hit still reserves its cadence interval");
         }
         Fresh();
         SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, dot: new(PvpDotEffect.Lightning, 1)));

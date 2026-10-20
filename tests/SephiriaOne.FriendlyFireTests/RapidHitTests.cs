@@ -13,15 +13,15 @@ internal static class RapidHitTests
         int callbacks = 0;
         target.OnHit = (_, _) => callbacks++;
         for (int i = 0; i < 20; i++) target.ApplyDamage(hit);
-        check(target.Hp == 80, "Rapid same-pair impacts share one 20%-max-HP burst instead of each receiving a full allowance");
+        check(target.Hp == 62, "Rapid impacts share the initial burst, then retain only minimum damage");
         check(target.Hits == 20 && callbacks == 20 && hit.damage == 20,
             "Budget preserves native attack callbacks and pooled source damage");
         target = new PlayerAvatar { IsMpShield = true, Mp = 200 };
         hit.damage = float.MaxValue;
         target.ApplyDamage(hit);
         for (int i = 1; i <= 100; i++) { Time.time = 10 + i / 100f; target.ApplyDamage(hit); }
-        check(target.Mp >= 109 && target.Mp <= 111 && target.Hp == 100,
-            "Rapid refill is not lost to native integer MP shield rounding; actual shield damage spends the budget");
+        check(target.Mp == 80 && target.Hp == 100,
+            "Minimum hits reach native MP spending even when refill per hit is below one");
         Arithmetic(check);
 
         void Fresh()
@@ -49,27 +49,28 @@ internal static class RapidHitTests
         hit.origin = new UnitAvatar { NetworkLeader = source }; Strike();
         hit.origin = source; hit.id = "Charm_PallasCard"; Strike();
         target.ApplyDebuff(new() { OnApply = (caster, receiver) => receiver.ApplyDamage(EffectTests.Tick(caster, "Debuff_Electric")) }, source);
-        check(target.Hp == 80 && target.DebuffApplications == 1, "Companions, card projectiles and debuff ticks share the owner's budget");
+        check(target.Hp == 77 && target.DebuffApplications == 1, "Companions, card projectiles and debuffs receive only minimum damage after shared credit is spent");
         var otherVictim = new PlayerAvatar(); otherVictim.ApplyDamage(hit);
         check(otherVictim.Hp == 80, "One attacker has an independent budget for another opponent");
         hit.origin = new PlayerAvatar(); Strike();
-        check(target.Hp == 60, "Another attacker can damage the same victim independently");
+        check(target.Hp == 57, "Another attacker can damage the same victim independently");
 
         Fresh();
         var proc = new Charm_FrostiumRing { NetworkAvatar = source, Target = target, Damage = hit };
         target.OnHit = (_, _) => { target.OnHit = null; proc.HandleAttackUnit(); };
         Strike();
-        check(target.Hp == 80 && target.Hits == 2, "Nested same-pair artifact reserves from the same budget before native callbacks");
+        check(target.Hp == 79 && target.Hits == 2, "Nested same-pair artifact reserves from the same budget before native callbacks");
         Fresh(); target.OnHit = (_, _) => source.ApplyDamage(new() { origin = target, id = "Ability_Thorns", damage = float.MaxValue });
         Strike(); Strike();
-        check(source.Hp == 80 && target.Hp == 80, "Reflection has its own reverse-direction budget and cannot bypass repeated-hit limits");
+        check(source.Hp == 79 && target.Hp == 79, "Reflection has its own reverse-direction budget and cannot bypass repeated-hit limits");
 
         Fresh(); target.Shield = 15; Strike(); Strike();
-        check(target.Shield == 0 && target.Hp == 95, "Shield absorption and HP overflow spend the same allowance exactly once");
+        check(target.Shield == 0 && target.Hp == 94, "Shield absorption and HP overflow spend the same allowance exactly once");
         Fresh(); target.SuperArmor = true; Strike();
         check(target.Hp == 87, "Post-scale super armor preserves native reduction on the first hit");
         for (int i = 0; i < 20; i++) Strike();
-        check(target.Hp <= 80 && target.Hp > 79, "Armor refunds stay within one minimum hit of the actual-damage budget");
+        float armorBefore = target.Hp; Strike();
+        check(Near(armorBefore - target.Hp, .65), "Unfunded minimum preserves native armor but cannot refund new allowance");
         Fresh(); target.ClampHpDamage = true; target.Hp = 5; target.ExtraLife = true; Strike();
         check(target.Hp == 60 && !target.IsDead, "Native additional life remains native and does not call the dead-player revival hook");
         Strike();
@@ -90,7 +91,7 @@ internal static class RapidHitTests
         Fresh(); target.OnHit = (_, _) => throw new InvalidOperationException("budget fixture");
         try { Strike(); } catch (InvalidOperationException) { }
         target.OnHit = null; Strike();
-        check(target.Hp == 80, "Exceptions preserve already-consumed damage and restore the surrounding hit context");
+        check(target.Hp == 79, "Exceptions preserve already-consumed damage and restore the surrounding hit context");
 
         Fresh(); Strike();
         SessionSettings.FriendlyFireForHit = new(true, 100, balance: false); Strike();
@@ -100,15 +101,15 @@ internal static class RapidHitTests
         SessionSettings.FriendlyFireForHit = new(true, 100, balance: true); Strike();
         check(target.Hp == 60, "Off/on without intervening impacts starts a fresh budget");
         Fresh(); Strike(); SessionSettings.FriendlyFireForHit = new(true, 50, balance: true); Strike();
-        check(target.Hp == 80, "Editing damage percentage does not refill a depleted budget");
+        check(target.Hp == 79, "Editing damage percentage does not refill a depleted budget");
         SessionSettings.FriendlyFireForHit = new(true, 50, balance: true, refillPercent: 200); Strike();
-        check(target.Hp == 80, "Editing refill percentage does not grant a new burst");
+        check(target.Hp == 78, "Editing refill percentage does not grant a new burst");
         FriendlyFireKda.ResetScores(); Strike();
-        check(target.Hp == 60, "KDA reset clears previous combat allowance state");
+        check(target.Hp == 58, "KDA reset clears previous combat allowance state");
         FriendlyFireParticipants.Select(source, target); Strike();
-        check(target.Hp == 40, "Participant/match epoch changes start fresh budgets");
+        check(target.Hp == 38, "Participant/match epoch changes start fresh budgets");
         target.currentFloorGuid = "floor-2"; Strike();
-        check(target.Hp == 20, "Floor transitions retire the prior floor's allowance");
+        check(target.Hp == 18, "Floor transitions retire the prior floor's allowance");
 
         Fresh(); Strike(); FriendlyFireParticipants.Depart(target); Strike();
         check(target.Hp == 80, "Departed victims cannot consume or receive damage");
@@ -123,14 +124,14 @@ internal static class RapidHitTests
         Fresh(); Strike(); Time.time = 0; Strike();
         check(target.Hp == 60, "Game-clock restart cannot leave a permanently exhausted budget");
         Fresh(); Strike(); target.MaxHp = 200; Strike();
-        check(target.Hp == 80, "Changing maximum HP never manufactures an immediate new allowance");
+        check(target.Hp == 79, "Changing maximum HP never manufactures an immediate new allowance");
         Time.time += 0.1f; Strike();
-        check(Near(target.Hp, 66), "Future refill scales from the victim's current maximum HP");
+        check(Near(target.Hp, 65), "Future refill scales from the victim's current maximum HP");
 
         Fresh(); Strike(); source.IsDead = true; Strike();
-        check(target.Hp == 80, "Queued projectiles from a dead owner retain the existing budget");
+        check(target.Hp == 79, "Queued projectiles from a dead owner retain the existing budget");
         source.Revive(100); Strike();
-        check(target.Hp == 60, "Immediate source revival starts a new combat life");
+        check(target.Hp == 59, "Immediate source revival starts a new combat life");
         target.IsDead = true; target.Revive(100); Strike();
         check(target.Hp == 80, "Immediate victim revival does not inherit pre-death allowance debt");
         Fresh(); Strike();
@@ -139,7 +140,7 @@ internal static class RapidHitTests
         enemy.ApplyDamage(pveHit); enemy.ApplyDamage(pveHit);
         target.ApplyDamage(new() { origin = enemy, damage = 10, targetFactionLayers = -1 });
         Strike();
-        check(enemy.Hp == 800 && target.Hp == 70, "Exhausted PvP allowance neither limits nor is refilled by outgoing/incoming PvE");
+        check(enemy.Hp == 800 && target.Hp == 69, "Exhausted PvP allowance neither limits nor is refilled by outgoing/incoming PvE");
 
         Fresh(); Strike();
         for (int i = 1; i <= 18; i++) { Time.time = 10 + i * 0.05f; Strike(); }

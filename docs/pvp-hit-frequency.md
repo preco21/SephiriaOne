@@ -4,6 +4,11 @@ Added in `0.60.0`, 2026-10-16. Default **off**, host-controlled, using the exist
 damage path for unmodified guests. Requires friendly fire **and** PvP balancing.
 The user's selected starting threshold is **4 hits per second per opponent**.
 
+Updated in `0.77.0`, 2026-10-21: recommendation 3 from the audit below is
+implemented. Direct attacks and incidental damage now have separate cadence
+histories but share one allowance. The user's additional responsiveness request
+also replaces zero-budget rejection with a positive pre-shield minimum.
+
 ## Controls
 
 In **Combat → PvP balancing**, enable **Hit-frequency scaling** (`연타 피해 보정`).
@@ -31,8 +36,10 @@ run first. The sequence within PvP balancing is:
 
 1. Existing per-hit damage softening.
 2. Existing Shock/Freeze damage-pulse admission.
-3. Optional frequency multiplier: `min(1, sqrt(4 / recentHitCount))`.
-4. Existing per-opponent damage budget (20% maximum-HP burst, configured refill).
+3. Optional frequency multiplier: `min(1, sqrt(4 / recentHitCount))`, using the
+   hit's direct or incidental history.
+4. Shared per-opponent damage budget (20% maximum-HP burst, configured refill),
+   clipped continuously to available credit with a positive minimum at exhaustion.
 5. Current role incoming modifier, positive damage minimum (since `0.67.1`),
    native shields/HP and unused-budget refund.
 
@@ -45,22 +52,37 @@ run first. The sequence within PvP balancing is:
 
 The first hits retain their strength. Further rapid hits progressively lose
 damage without changing attack speed or discarding native effects/callbacks.
-The budget is charged only for the frequency-scaled allowance. When the budget
-is already the tighter limit, enabling frequency scaling may not further reduce
-the actual damage of every hit; neither mechanism can increase the other's
-allowance. Since `0.67.1`, the [positive-hit minimum](pvp-balancing.md#minimum-positive-damage-0671-2026-10-20)
-is charged in full, with fractional debt carried until refill. Sub-one frequency
-results therefore deal one before shields when admitted, but cannot bypass an
-exhausted budget. This is diminishing returns, not a promise of equal DPS for all weapons.
+When the budget is already the tighter limit, frequency scaling may not further
+reduce that hit. Since `0.77.0`, the [positive-hit minimum](pvp-balancing.md#minimum-positive-damage-0671-2026-10-20)
+also survives an empty pool. In pre-role units, `floor = 1 / incomingScale`,
+`allowed = max(floor, min(scaledDamage, available))`, and
+`charged = min(available, allowed)`. Only funded credit is reserved/refundable.
+Unfunded floor damage creates neither debt nor later credit, including when a
+nested proc, armor, shield, native veto or overkill changes actual delivery.
 
-Count positive resolved hit attempts reaching this stage, including those later
-limited to zero by the budget. This prevents exhausted-budget barrages from
+This preserves a minimum of one before native shields/armor for valid positive
+damage and positive configured scales. It does not revive invalid/zero hits or
+bypass native defenses and effect schedules. There is no delayed damage queue.
+At extreme rates, many minimum-only hits can exceed the refill rate: this is
+intentionally **not a strict DPS cap**. Low-scale, rapid-hit fairness is still
+limited by the one-point floor; the other audit recommendations remain deferred.
+
+Count positive resolved hit attempts reaching this stage, including minimum-only
+hits. This prevents exhausted-budget barrages from
 appearing slow. Misses, invulnerability, native guard/parry, invalid or zero
 resolved damage, and rejected Shock/Freeze pulses do not add hits. Shield
 absorption and later native reductions retain their existing accounting; they
-do not roll back the hit count. The same attacker shares history across weapons,
-spells, DoT, secondary artifacts and owned companions. Reflections use the reverse
-directed pair. Other attackers and victims remain independent.
+do not roll back the hit count. Weapons and ordinary spells share direct history.
+DoT, owned companions, reflection and identified artifact procs share incidental
+history. Changing item IDs does not create another counter or damage allowance.
+Reflections use the reverse directed pair. Other attackers/victims are independent.
+
+Classification uses the existing captured hit context: companion source identity,
+reflection/debuff/artifact scopes, native `fromType=None`, elemental-effect damage,
+or a `Charm_` ID prefix. It reads current metadata each hit because damage objects
+are pooled. No asset lookup, stack inspection, per-effect dictionary or native
+attack-activation model is introduced. Unknown future procs tagged like ordinary
+magic may require adding a verified classification rule.
 
 This does not change native player stats, proc chances, status applications,
 crowd control, attack cadence or pooled `DamageInstance` values. Existing Burn
@@ -73,8 +95,9 @@ PvE, self hits, non-player victims and disallowed participants bypass this scale
 sum avoids scanning prior hits; time advancement touches at most eight buckets.
 This approximates the last second: a hit ages out after 0.875–1 seconds depending
 on its position within a bucket. It has no polling or per-hit collection growth.
-The eight-counter array is allocated on the first eligible hit in a pair's
-lifetime; warmed hits allocate nothing. Counts saturate safely, invalid clocks
+There are two such histories; each eight-counter array is allocated only on its
+first eligible hit in a pair's lifetime. A hit advances only its chosen history;
+warmed hits allocate nothing. Counts saturate safely, invalid clocks
 do not modify history, and clock rollback clears stale history.
 
 The struct lives in `FriendlyFireRuntime.BalanceWindow`, using the same weak
@@ -83,7 +106,7 @@ generations and floor identities as the damage budget. Native revival, K/D/A
 reset, participant changes, reconnects, floor transitions and mode cleanup
 therefore cannot inherit an old pair's hit-rate penalty. Match start/end and
 selection continue through the existing shared runtime for casual combat,
-Deathmatch, Tournament and Play Tag.
+Deathmatch, Tournament, Play Tag and Zombie Survival.
 
 `SessionSettings.CombatFrequencyRevision` advances only when this preference
 changes or full combat reset occurs. A pair lazily discards its old frequency
@@ -109,17 +132,20 @@ Session tests cover live edits in every combat mode, saved settings and restarts
 Compiled integration checks verify UI/command wiring and frequency-before-budget
 ordering. English/Korean catalogs pass key/placeholder checks.
 
-Release build passed with zero warnings/errors; 3,995 executable combat checks,
-2,266 session checks plus 69 Bat lifecycle checks, 83 frequency setting checks,
-the full policy/catalog/installed-game suites, and the 33-reference Harmony 2.9
-API audit passed. Independent review found no actionable issues.
+The `0.77.0` regression suite additionally covers mixed direct/incidental barrages,
+pooled ID reuse, independent cadence with a shared pool, exhausted/partially
+funded refunds, nested procs, role reductions and floor-only pulse scheduling.
+Warmed mixed traffic allocates zero bytes across 2,000 executable-hook hits.
+The dated implementation plan records final verification.
 
 These are automated fixtures and installed-assembly checks. Live Unity UI layout
 and host/stock-guest gameplay still need testing. Nothing was deployed or launched.
 
 ## Low-scale fairness audit (2026-10-20, 0.73.0)
 
-This is an investigation and recommendation, not a gameplay change. The user
+This section records **historical 0.73.0 behavior**, before the `0.77.0` changes
+above; zero-budget rejection and a single cadence history no longer apply.
+The user
 reported 0–4 displayed damage and suspected skipped rapid hits at `0.05%`, tested
 before the minimum-one patch. The current percentage means multiplication by
 `0.0005`, not `0.05`.
@@ -229,5 +255,6 @@ passing the mechanics tests does not establish weapon balance.
    stay visibly positive, use a separately designed continuous attenuation policy
    and accept its limits rather than claiming a strict cap never suppresses hits.
 
-Recommendations are not implemented. In particular, raising refill alone cannot
-fix the low-scale minimum bias when both builds already stay below the budget.
+Recommendation 3 and the subsequently requested positive exhausted-budget floor
+are implemented in `0.77.0`. Other recommendations remain deferred. Raising refill
+alone cannot fix low-scale minimum bias when both builds already stay below budget.

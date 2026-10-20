@@ -20,7 +20,7 @@ namespace SephiriaOne
             internal FriendlyFireParticipants.Receipt AttackerReceipt, VictimReceipt;
             internal BalanceWindow BudgetWindow;
             internal long BudgetGeneration;
-            internal double BudgetReserved, BudgetMaxHp, BudgetAccounted, BudgetIncomingScale;
+            internal double BudgetCharged, BudgetMaxHp, BudgetAccounted, BudgetIncomingScale;
         }
         [ThreadStatic] private static HitContext current;
         private static bool warned;

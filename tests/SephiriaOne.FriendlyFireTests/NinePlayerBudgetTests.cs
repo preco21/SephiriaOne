@@ -26,14 +26,14 @@ internal static class NinePlayerBudgetTests
             players[i].ApplyDamage(hit);
             check(players[i].Hp == 80, "Nine-player attacker gets a full independent burst against victim " + i);
             players[i].ApplyDamage(hit);
-            check(players[i].Hp == 80, "Depleting victim " + i + " cannot borrow another victim's allowance");
+            check(players[i].Hp == 79, "Depleting victim " + i + " cannot borrow another victim's allowance");
         }
 
         players = Fresh();
         var target = players[0];
         // Healing between passes keeps this same target alive without revival,
         // clock advancement or a fresh receipt that could reset any pair budget.
-        foreach (float expected in new[] { 8.75f, 8.75f, 2.5f, 0f })
+        foreach (float expected in new[] { 8.75f, 8.75f, 2.5f, 1f })
         {
             for (int i = 1; i < players.Length; i++)
             {
@@ -51,13 +51,14 @@ internal static class NinePlayerBudgetTests
         target.ApplyDamage(hit);
         check(target.Hp == 80, "Nine-player second same-frame hit spends the remaining burst");
         target.ApplyDamage(hit);
-        check(target.Hp == 80 && target.Hits == 3, "Exhausted allowance produces zero damage while retaining the native impact");
+        check(target.Hp == 79 && target.Hits == 3, "Exhausted allowance retains a positive native impact");
         Time.time += 0.1f;
         target.ApplyDamage(hit);
-        check(Near(target.Hp, 73), "Elapsed game time restores seven HP of the default allowance after one tenth second");
+        check(Near(target.Hp, 72), "Elapsed game time restores seven HP of the default allowance after one tenth second");
         float depletedHp = target.Hp;
         target.ApplyDamage(hit);
-        check(target.Hp == depletedHp, "The newly refilled allowance is exhausted again on the same frame");
+        check(target.Hp == depletedHp - 1, "The next same-frame hit remains positive after spending new credit");
+        depletedHp = target.Hp;
         SessionSettings.FriendlyFireForHit = new(true, 100, balance: false);
         target.ApplyDamage(hit);
         check(Near(depletedHp - target.Hp, 20), "Disabling balancing immediately bypasses an exhausted pair budget without waiting");

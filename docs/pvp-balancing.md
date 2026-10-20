@@ -3,6 +3,20 @@
 Added in `0.52.0`, 2026-10-13. Host-only installation; the existing native damage
 and FX replication continues to serve stock guests. Default: **off**.
 
+## Responsive damage allowance (`0.77.0`, 2026-10-21)
+
+[Hit-frequency scaling](pvp-hit-frequency.md) now separates direct attack cadence
+from incidental procs, debuffs and companions. Both histories retain one shared
+damage allowance and the same connection/life/match cleanup.
+
+Valid positive hits keep at least one pre-shield damage when allowance runs out;
+frequency scaling and budget exhaustion no longer discard them. Only funded
+credit can be refunded. This deliberately permits minimum-only barrages above
+the configured refill rate, so the budget is no longer a strict DPS/TTK bound.
+Native defenses, zero/invalid hits, explicit zero damage settings, effect-specific
+tick schedules and Dark Cloud's strike interval remain unchanged. No extra
+per-frame work, network state or per-hit allocation is introduced.
+
 ## Debuff schedule protection (`0.69.0`, 2026-10-20)
 
 [Keep schedule](pvp-dot-intervals.md#preserve-schedules-0690) adds eight independent,
@@ -35,21 +49,21 @@ every hit. Normal PvE does not enter this path.
 The minimum requires finite, positive resolved damage and a positive permitted
 result after balancing. Zero percent, zero incoming-role scale, zero/negative/
 nonfinite damage, native protection, unselected/non-opposing targets, rejected
-effect pulses and exhausted budgets stay harmless. Ordinary shields absorb the
+effect pulses stay harmless. Since `0.77.0`, budget exhaustion alone no longer
+rejects a valid positive hit. Ordinary shields absorb the
 minimum normally; MP shields can now charge one MP for an otherwise sub-one hit.
 The minimum is not applied again after absorption, armor or another native veto.
 Consequently it guarantees positive pre-shield damage, not one HP lost through
 every native defense or a shield that has already absorbed part of the hit.
 
-Balanced hits reserve the whole minimum before callbacks. The budget uses
-pre-incoming-role units, so its minimum is `1 / incomingScale`. A small positive
-credit may authorize a one-point hit and leave fractional debt; further hits
-remain zero until refill repays that debt. For fixed HP and role scaling, the
-cumulative budget can exceed its continuous allowance by less than one final
-damage point, never one extra point per attempted hit. Native undelivered-damage
-refunds remain supported. Double/float arithmetic residue is excluded from
-refunds and depletion so it cannot buy another minimum hit. Existing pair
-receipt, life, floor and epoch cleanup also owns the debt.
+The budget uses pre-incoming-role units, so its minimum is `1 / incomingScale`.
+Since `0.77.0`, it reserves only available funded credit before callbacks, with
+no debt for any remaining minimum damage. Native undelivered-damage refunds
+cannot exceed that funded reservation. Double/float arithmetic residue is
+excluded from refunds and depletion so it cannot manufacture allowance.
+Existing pair receipt, life, floor and epoch cleanup owns the shared pool.
+Earlier `0.67.1` behavior charged the whole minimum and rejected hits at
+exhaustion; that policy has been replaced.
 
 No new hooks, RPCs, settings, polling, state collections or guest addon are
 needed. The executable Harmony fixture reproduced the original low-scale loss
@@ -59,7 +73,7 @@ role reductions, tiny HP budgets, nested reservations, debt/refill and frequency
 scaling. These are fixtures and installed-code contracts, not live multiplayer
 verification; no game launch or deployment was performed.
 
-Verification: Release build passed with zero warnings/errors; 5,063 executable
+Historical `0.67.1` verification: Release build passed with zero warnings/errors; 5,063 executable
 combat checks, 3,205 shared runtime checks (plus 69 Bat lifecycle checks), and the
 portable/installed-game contract suite passed. Review added high-HP regressions
 at 1,710 and 2,300 HP: accumulated conversion residue previously bought an extra
@@ -460,15 +474,11 @@ same pool against that victim. Changing damage IDs, weapons or projectile object
 does not grant another pool. Other attackers and other victims remain independent;
 reflection uses the reverse directed pair. Dark Cloud retains its separate limit.
 
-For fixed maximum HP `H`, applied HP plus regular/MP-shield damage from one
-attacker over `T` seconds is bounded by approximately `H * (0.20 + R*T)` from
-a full pool. Thus an initially full-health, unshielded target cannot be killed
-by that attacker in less than about **1.14 seconds at the default** through this
-damage path (`R = refill percent / 100`; minimum time is `0.80 / R`). This
-is an approximate ceiling with less than one point of minimum-hit debt since
-`0.67.1`, not guaranteed DPS. Actual hits, defenses,
-healing and shields can make fights longer; multiple attackers remain independent.
-Setting refill to 100 permits subsecond kills when enough damaging hits land. The budget gives
+For fixed maximum HP `H`, funded damage credit over `T` seconds is bounded by
+`H * (0.20 + R*T)` from a full pool (`R = refill percent / 100`, before role
+modifiers). Since `0.77.0`, minimum-only damage can exceed that allowance, so it
+does not establish a minimum time to kill. Actual cadence, defenses, healing and
+shields affect the outcome; multiple attackers remain independent. The budget gives
 rapid direct/magic hits more room without changing native impact detection or
 invulnerability. It also applies to the same shared artifact/companion/DoT pool;
 there are no separate additive allowances that multi-effect builds can combine.
@@ -501,8 +511,8 @@ native invulnerability and gradual refill rather than granting a new burst.
 
 Tokens are HP fractions, not cached HP points. Max-HP changes affect subsequent
 damage/refill without resetting available capacity; current low HP never shrinks
-the budget. No damage debt is delayed and emitted later. Zero-budget hits can
-deal zero damage while native non-damage callbacks still run. This is not a
+the budget. No damage debt is delayed and emitted later. Empty-budget positive
+hits retain the pre-shield minimum, while native callbacks still run. This is not a
 universal rate limit on stuns, knockback, debuff application, visuals or direct
 health writes outside the audited damage pipeline.
 
@@ -607,11 +617,12 @@ default 0.25s pulse clocks within the existing attacker/victim `BalanceWindow`. 
 and companion shock share their owner's shock clock. Direct lightning/Bolt hits
 are not debuff pulses and do not share that clock.
 
-The first nonzero pulse with available budget reserves its clock before native
+The first admitted positive pulse reserves its clock before native
 callbacks. Attempts within the interval resolve to zero damage; they consume no
 tokens and are not queued or accumulated for a later burst. Native FX and other
-callbacks still run. Zero charge and exhausted-budget hits do not reserve a new
-interval. Shield/HP refunds return unused damage tokens, not time; an admitted
+callbacks still run. Since `0.77.0`, an exhausted-budget pulse deals the minimum
+and reserves its interval even with zero funded charge. Shield/HP refunds return
+unused funded damage tokens, not time; an admitted
 pulse that later loses fractional damage to native MP rounding still counts as
 a pulse. This deliberately limits damage cadence rather than status application.
 

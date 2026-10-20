@@ -3,7 +3,8 @@ using System;
 namespace SephiriaOne
 {
     // Fractions of current maximum HP, not stored HP or a fixed-duration window.
-    // Slow attacks retain their softened damage; rapid attacks consume one pool.
+    // All sources consume one pool. A requested positive minimum remains
+    // responsive at exhaustion; only funded damage can later be refunded.
     internal struct FriendlyFireDamageBudget
     {
         internal const double Capacity = 0.20d;
@@ -11,8 +12,14 @@ namespace SephiriaOne
         private double remaining, lastTime, lastRefill;
 
         internal double Take(double damage, double maxHp, double now, double refillPerSecond = FriendlyFireSettings.DefaultRefillScale,
+            double elapsedRateCeiling = double.PositiveInfinity, double minimumDamage = 0) =>
+            Take(damage, maxHp, now, out _, refillPerSecond, elapsedRateCeiling, minimumDamage);
+
+        internal double Take(double damage, double maxHp, double now, out double charged,
+            double refillPerSecond = FriendlyFireSettings.DefaultRefillScale,
             double elapsedRateCeiling = double.PositiveInfinity, double minimumDamage = 0)
         {
+            charged = 0;
             if (!Finite(damage) || damage <= 0 || !Finite(maxHp) || maxHp <= 0 || !Finite(now) ||
                 !Finite(refillPerSecond) || refillPerSecond <= 0 || double.IsNaN(elapsedRateCeiling) || elapsedRateCeiling <= 0 ||
                 !Finite(minimumDamage) || minimumDamage < 0) return 0;
@@ -24,16 +31,16 @@ namespace SephiriaOne
                 remaining = Math.Min(Capacity, remaining + (now - lastTime) * Math.Min(elapsedRateCeiling, Math.Min(lastRefill, refillPerSecond)));
             lastTime = now; lastRefill = refillPerSecond;
             double available = Math.Max(0, remaining) * maxHp;
-            double allowed = Math.Min(damage, available);
-            if (allowed > 0) allowed = Math.Max(minimumDamage, allowed);
-            // One admitted minimum hit can borrow fractional credit. Keep that
-            // debt until refill repays it; never grant another hit at zero credit.
-            if (allowed > 0)
+            double allowed = Math.Max(minimumDamage, Math.Min(damage, available));
+            charged = Math.Min(available, allowed);
+            // Continuous clipping stops at the caller's positive floor. Excess
+            // floor damage is deliberately unbudgeted, never debt or free credit.
+            if (charged > 0)
             {
-                double remainder = available - allowed;
+                double remainder = available - charged;
                 // Use original capacity, not the shrinking last allowance:
                 // hundreds of fraction/HP conversions accumulate precision dust
-                // that must not buy an extra minimum hit at exact depletion.
+                // that must not manufacture funded allowance at exact depletion.
                 remaining = remainder > 0 && remainder <= maxHp * Capacity * 1e-12d ? 0 : remainder / maxHp;
             }
             return allowed;

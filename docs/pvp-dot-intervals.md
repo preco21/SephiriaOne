@@ -173,7 +173,8 @@ clocks in the existing `BalanceWindow`, checked when their schedule protection
 is enabled. Lightning, Freeze and Chim have no periodic damage timer to wrap.
 A successful admission reserves the clock
 before native callbacks. Rejected repeats resolve to zero; they are not queued.
-Zero-charge and budget-exhausted attempts do not reserve a new interval. Native
+Since `0.77.0`, a budget-exhausted hit retains minimum damage and reserves its
+interval even with zero funded charge; this prevents minimum-only pulse spam. Native
 FX, stacks, expiry, charge and Freeze stun continue normally. Electric and Plasma
 shock intentionally share the same Lightning clock, identified by the native shock
 flag (or the original `Debuff_Electric` ID);

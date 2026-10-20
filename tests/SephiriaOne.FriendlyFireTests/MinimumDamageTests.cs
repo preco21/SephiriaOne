@@ -42,29 +42,29 @@ internal static class MinimumDamageTests
         Fresh(true);
         var attacker = new PlayerAvatar(); var victim = new PlayerAvatar();
         var tiny = new DamageInstance { origin = attacker, damage = 10 };
-        for (int i = 0; i < 100; i++) victim.ApplyDamage(tiny);
-        check(Math.Abs(victim.Hp - 80) < 0.001, "Minimum hits are charged in full and cannot bypass the same-frame budget");
+        for (int i = 0; i < 25; i++) victim.ApplyDamage(tiny);
+        check(victim.Hp == 75, "Every positive minimum hit remains effective after budget exhaustion");
         Time.time += 0.005f; victim.ApplyDamage(tiny);
-        check(victim.Hp == 79, "A positive fractional refill allows one minimum hit");
-        for (int i = 0; i < 100; i++) victim.ApplyDamage(tiny);
-        check(victim.Hp == 79, "Rounding debt blocks further hits until refill repays it");
+        check(victim.Hp == 74, "Fractional refill preserves the minimum");
+        for (int i = 0; i < 25; i++) victim.ApplyDamage(tiny);
+        check(victim.Hp == 49, "Empty credit never suppresses subsequent minimum hits");
         Time.time += 0.005f; victim.ApplyDamage(tiny);
-        check(victim.Hp == 79, "Partial refill cannot erase minimum-hit debt");
+        check(victim.Hp == 48, "Partial refill does not cause skipped hits");
         Time.time += 0.01f; victim.ApplyDamage(tiny);
-        check(victim.Hp == 78, "Further refill repays debt and restores positive hits");
+        check(victim.Hp == 47, "Every valid low-damage hit retains its effect");
 
         // Reservation precedes callbacks, including a nested artifact hitting
-        // the same pair while an outer minimum hit already borrowed the refill.
+        // the same pair while an outer minimum hit already spent the refill.
         var proc = new Charm_FrostiumRing { NetworkAvatar = attacker, Target = victim, Damage = tiny };
         victim.OnHit = (_, _) => { victim.OnHit = null; proc.HandleAttackUnit(); };
         Time.time += 0.01f; victim.ApplyDamage(tiny);
-        check(victim.Hp == 77, "Nested damage cannot reuse credit borrowed for an outer minimum hit");
+        check(victim.Hp == 45, "Nested damage retains only its minimum after outer credit is spent");
 
         Fresh(true);
         SessionSettings.FriendlyFireForHit = new(true, 0.05m, balance: true, hitFrequency: true);
         attacker = new(); victim = new(); tiny = new() { origin = attacker, damage = 10 };
-        for (int i = 0; i < 100; i++) victim.ApplyDamage(tiny);
-        check(victim.Hp == 80, "Hit-frequency reductions share the minimum and its full budget charge");
+        for (int i = 0; i < 25; i++) victim.ApplyDamage(tiny);
+        check(victim.Hp == 75, "Hit-frequency reductions cannot discard positive minimum hits");
 
         foreach (decimal incoming in new[] { 0m, 0.01m, 30m, 75m, 100m })
         {
@@ -80,32 +80,30 @@ internal static class MinimumDamageTests
                     victim.ApplyDamage(tiny);
                     check(victim.Hp == (incoming == 0 ? 100 : 99), "Role reduction cannot lose a positive minimum or promote zero: " + incoming);
                     if (!balance || incoming == 0) continue;
-                    for (int i = 0; i < 100; i++) victim.ApplyDamage(tiny);
-                    double allowance = 20 * (double)incoming / 100;
-                    double loss = 100 - victim.Hp;
-                    check(loss >= allowance && loss < allowance + 1, "Role-reduced minimum charges pre-role units with less than one point of debt");
+                    for (int i = 0; i < 25; i++) victim.ApplyDamage(tiny);
+                    check(victim.Hp == 74, "Positive role-reduced hits retain the same final floor after exhaustion");
                     float before = victim.Hp;
                     CombatMatchRuntime.Chaser = null; CombatMatchRuntime.RoleSettingsChanged(); victim.ApplyDamage(tiny);
-                    check(victim.Hp == before, "Removing role protection cannot erase existing minimum-hit debt");
+                    check(victim.Hp == before - 1, "Removing role protection does not grant a new burst or drop a hit");
                 }
                 finally { CombatMatchRuntime.Chaser = null; SessionSettings.PlayTagChaser = default; CombatMatchRuntime.RoleSettingsChanged(); }
             }
         }
 
-        // Tiny real HP pools can still receive a hit, but cannot borrow once
-        // per attempt forever when their entire burst is less than one point.
+        // The minimum intentionally exceeds a strict cap at extreme hit rates.
+        // No accumulated floor debt or precision dust can create extra credit.
         foreach (double maxHp in new[] { 100d, 1710, 2300, 10000 })
         {
             var repeated = new FriendlyFireDamageBudget();
             double total = 0;
             for (int i = 0; i < 3000; i++) total += repeated.Take(0.005, maxHp, 0, minimumDamage: 1);
-            check(total == maxHp * 0.2, "Repeated minimum hits cannot amplify accumulated precision dust at HP " + maxHp);
+            check(total == 3000, "Every minimum hit survives independently of pool size: " + maxHp);
         }
         var budget = new FriendlyFireDamageBudget();
-        check(budget.Take(0.1, 2, 0, minimumDamage: 1) == 1 && budget.Take(0.1, 2, 0, minimumDamage: 1) == 0,
-            "A sub-one burst capacity permits one minimum hit then keeps its debt");
-        check(budget.Take(0.1, 2, 0.25, minimumDamage: 1) == 0 && budget.Take(0.1, 2, 0.5, minimumDamage: 1) == 1,
-            "Small-HP minimum debt is repaid at the actual configured refill rate");
+        check(budget.Take(0.1, 2, 0, minimumDamage: 1) == 1 && budget.Take(0.1, 2, 0, minimumDamage: 1) == 1,
+            "A sub-one capacity cannot discard later positive hits");
+        check(budget.Take(0.1, 2, 0.25, minimumDamage: 1) == 1 && budget.Take(0.1, 2, 0.5, minimumDamage: 1) == 1,
+            "Small HP and fractional refill preserve responsive hits");
         foreach (double invalid in new[] { -1, double.NaN, double.PositiveInfinity })
         {
             budget = default;

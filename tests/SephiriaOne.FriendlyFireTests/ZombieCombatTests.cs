@@ -65,7 +65,8 @@ internal static class ZombieCombatTests
             float hpBefore = other.Hp;
             CombatMatchRuntime.DynamicZombieRatio(2, 4); CombatMatchRuntime.RoleSettingsChanged();
             other.ApplyDamage(Hit(human, float.MaxValue));
-            check(other.Hp == hpBefore, "Conversion does not refill or reset spent budget");
+            check(other.Hp == hpBefore - 1, "Conversion retains only the floor without refilling spent budget");
+            hpBefore = other.Hp;
             Time.time = Time.unscaledTime = .2f; other.ApplyDamage(Hit(human, float.MaxValue));
             check(Math.Abs(other.Hp - (hpBefore - CombatMatchRuntime.RefillRoleScale(human))) < .001,
                 "Observed conversion retains tokens and smoothly updates refill rate");

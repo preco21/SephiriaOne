@@ -3,7 +3,7 @@ using System;
 namespace SephiriaOne
 {
     // Eight fixed time buckets approximate the last second to 125 ms. Storage
-    // is allocated once per active pair/lifetime, never once per hit. No polling.
+    // is allocated once per active pair/category/lifetime, never once per hit. No polling.
     internal struct FriendlyFireHitFrequency
     {
         private const int BucketCount = 8;

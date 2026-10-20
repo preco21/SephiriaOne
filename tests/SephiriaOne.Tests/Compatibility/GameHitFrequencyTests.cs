@@ -14,7 +14,7 @@ internal static class GameHitFrequencyTests
         int frequency = limit.FindIndex(i => Call(i, "FriendlyFireHitFrequency", "Next"));
         int budget = limit.FindIndex(i => Call(i, "FriendlyFireDamageBudget", "Take"));
         Require(frequency >= 0 && budget > frequency && limit.Take(frequency).Any(i => Call(i, "DebuffPulse", "Ready")),
-            "pulse admission precedes frequency scaling, which precedes the unchanged damage budget");
+            "pulse admission precedes frequency scaling, which precedes the shared damage budget");
         Require(Code("FriendlyFireRuntime", "Scale").Any(i => Call(i, "FriendlyFireSettings", "get_HitFrequency")),
             "runtime reads the effective current policy");
         var panel = Code("SettingsPanel", "BuildPvpBalanceEditor");

@@ -91,7 +91,8 @@ namespace SephiriaOne
             L.T("PvP Evasion: stat-based dodge chance is capped at 50% before anti-Evasion; guaranteed item dodges are unchanged.") + " " +
             L.T("PvP recovery: HP Steal is disabled on friendly-fire hits.") + " " +
             L.T("Rabbit shared healing is blocked in PvP by default. /one rabbit block-pvp-share off permits it when Share HP healing is enabled.") + " " +
-            L.T("Hit-frequency scaling: /one friendlyfire hit-frequency on|off|reset. Default off; reduces damage above roughly 4 hits/s per opponent before the damage budget. Requires PvP balancing.") + " " +
+            L.T("Hit-frequency scaling: /one friendlyfire hit-frequency on|off|reset. Default off; direct and incidental hits have separate rate histories, with one shared damage allowance. Requires PvP balancing.") + " " +
+            L.T("PvP damage allowance: valid positive hits retain at least 1 damage before shields when credit runs out. Native defenses and debuff intervals still apply; extreme hit rates can exceed the refill limit.") + " " +
             L.T("PvP DoT: /one friendlyfire dot burn|plasma-burn|frostbite|poison|wound|lightning|plasma-shock|freeze|chim|dark-cloud 0.05..10|reset (seconds, up to 2 decimals). Lightning and Plasma shock have separate clocks; Freeze controls damage, not stun. Only with PvP balancing on.") + " " +
             L.T("Keep debuff schedule: /one friendlyfire dot <effect> preserve on|off|reset. Default on; keeps the first native hit, then requires one interval between hits, even on reapplication. Does not change stacks or duration refreshes. Dark Cloud always uses its separate strike clock. Only with PvP balancing on.") + " " +
             L.T("PvP refill: /one friendlyfire refill 1..300|reset (percent of max HP per second, up to 2 decimals). Default 70; applies only with PvP balancing on.") + " " +

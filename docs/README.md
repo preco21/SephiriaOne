@@ -1,6 +1,12 @@
 # Development knowledge index
 
-Maintained: 2026-10-21 (Asia/Seoul), addon `0.76.0`.
+Maintained: 2026-10-21 (Asia/Seoul), addon `0.77.0`.
+
+[Responsive PvP damage and cadence](pvp-hit-frequency.md): direct attacks and
+incidental damage have separate hit-rate histories with one shared allowance.
+Exhausted credit retains a positive pre-shield minimum; funded-only refunds
+prevent free credit. Extreme-rate minimum hits can exceed the refill limit.
+No new toggle, preset version or per-frame task; native effect schedules remain.
 
 [Zombie Dynamic Balancing](zombie-survival.md#dynamic-balancing-0760):
 optional team-ratio curve (refill ×1..×3, incoming damage 30..100%) eases across
