@@ -23,6 +23,8 @@ void Reset()
     SessionSettings.Requital = new(false, 1);
     ItemDatabase.Items[2100] = new() { id = 2100, aName = new() { key = "Item_StoneTablet_Requital_Name" },
         type = EItemType.StoneTablet, rarity = EItemRarity.Eternal, activeType = EItemActiveType.WitchHat };
+    ItemDatabase.Items[2099] = new() { id = 2099, aName = new() { key = "Item_StoneTablet_Heaven_Name" },
+        type = EItemType.StoneTablet, rarity = EItemRarity.Eternal, activeType = EItemActiveType.Hidden };
     RequitalRuntime.Initialize(); RequitalRuntime.Load();
 }
 Reset();
@@ -216,4 +218,5 @@ Check(player.Inventory.Grants == 1, "first ambiguous restock write blocks later 
 player.Inventory.ThrowAfterWrite = false; player.Inventory.RestockStartingItem(0);
 Check(player.Inventory.Grants == 1, "later restock cannot replay a latched ambiguous automatic write");
 RequitalRuntime.Shutdown();
-Console.WriteLine($"Requital runtime: {checks} assertions passed.");
+SlateSelectionTests.Run(Reset, Player, Check);
+Console.WriteLine($"Slate runtime: {checks} assertions passed.");

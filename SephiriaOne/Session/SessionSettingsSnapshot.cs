@@ -95,7 +95,7 @@ namespace SephiriaOne
                 lines.Add(DescribeExperience(sameSession ? policy.Experience : default));
                 if (!ExperienceFeature.Available) lines.Add(L.T("XP compatibility checks failed. Off/reset remain available; see Player.log."));
                 lines.Add(DescribeRequital(sameSession ? policy.Requital : default));
-                if (!RequitalRuntime.Available) lines.Add(L.T("Requital compatibility checks failed. Off/reset remain available; see Player.log."));
+                if (!RequitalRuntime.Available) lines.Add(L.T("Selected Slate compatibility checks failed. Off/reset remain available; see Player.log."));
                 if (!SessionBoundaryFeature.Available)
                     lines.Add(L.T("Fountain grant synchronization guard is unavailable; frame polling remains active. Check Player.log."));
             }

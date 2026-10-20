@@ -38,7 +38,7 @@ public static class SaveManager { public static SaveData CurrentRun = new(); }
 public static class HorayNetworkAuthenticator { public static bool AccessDeny_InDungeon; }
 public enum EItemType { StoneTablet, Potion }
 public enum EItemRarity { Common, Eternal }
-public enum EItemActiveType { Disabled, WitchHat }
+public enum EItemActiveType { Disabled, WitchHat, Hidden }
 public enum ERestrictedOwnType { StartingItem }
 public sealed class LocalizedString { public string key; }
 public sealed class ItemEntity : UnityEngine.Object

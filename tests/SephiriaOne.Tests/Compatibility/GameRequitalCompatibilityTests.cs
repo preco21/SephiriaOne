@@ -14,6 +14,23 @@ internal static class GameRequitalCompatibilityTests
         var runtime = addon.GetType("SephiriaOne.RequitalRuntime", true)!;
         Require((bool)AccessTools.Method(hooks, "ValidateNative").Invoke(null, null)!, "installed ownership/restock contract accepted");
         Require((int)AccessTools.Field(runtime, "ItemId").GetRawConstantValue()! == 2100, "exact audited Requital identity");
+        Require((int)AccessTools.Field(runtime, "HeavenItemId").GetRawConstantValue()! == 2099, "exact audited Heaven identity");
+        var identity = PatchProcessor.GetOriginalInstructions(AccessTools.Method(runtime, "ValidItem")).ToList();
+        Require(identity.Any(i => Equals(i.operand, "Item_StoneTablet_Heaven_Name")) &&
+            identity.Any(i => Equals(i.operand, "Item_StoneTablet_Requital_Name")),
+            "both selected items retain exact localized asset identity checks");
+        var panel = addon.GetType("SephiriaOne.SettingsPanel", true)!;
+        var picker = AccessTools.Field(panel, "slatePicker");
+        Require(picker.FieldType.FullName == "TMPro.TMP_Dropdown" &&
+            PatchProcessor.GetOriginalInstructions(AccessTools.Method(panel, "RefreshRequital")).Any(i =>
+                i.operand is MethodInfo m && m.Name == "SetValueWithoutNotify"),
+            "Slate selector observes authoritative settings without issuing refresh commands");
+        Require(panel.GetMethods(BindingFlags.Instance | BindingFlags.NonPublic).Any(m => m.GetMethodBody() != null &&
+            PatchProcessor.GetOriginalInstructions(m).Any(i => Equals(i.operand, "/one slates type "))),
+            "Slate picker uses the shared host command action");
+        Require(!PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(inventory, "LocalAddItem"))
+            .Any(i => i.operand is FieldInfo f && f.Name == "activeType"),
+            "native direct item insertion does not reject Heaven's Hidden catalog flag");
         foreach (string name in new[] { "instanceID", "entityID", "playerIdx" })
             Require(AccessTools.Field(pending, name)?.FieldType == typeof(int), "pending " + name);
         Require(AccessTools.Field(pending, "quantity")?.FieldType == typeof(sbyte), "pending quantity");
@@ -47,6 +64,6 @@ internal static class GameRequitalCompatibilityTests
         foreach (var pair in new[] { ("OnModLoaded", "Initialize"), ("OnDatabasesReady", "Load"), ("OnModUnloaded", "Shutdown") })
             Require(PatchProcessor.GetOriginalInstructions(AccessTools.Method(entry, pair.Item1))
                 .Any(i => i.Calls(AccessTools.Method(runtime, pair.Item2))), "Entry lifecycle: " + pair.Item2);
-        Console.WriteLine("Verified Requital native restock rewrite, full-inventory queue, exact-ID cleanup, provenance and stock Slate sync contracts (asset separately audited; not live guest gameplay).");
+        Console.WriteLine("Verified Requital/Heaven selection, native insertion/restock, full-inventory queue, exact-ID cleanup, provenance and stock Slate sync contracts (assets separately audited; not live guest gameplay).");
     }
 }

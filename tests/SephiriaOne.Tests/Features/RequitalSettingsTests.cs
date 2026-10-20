@@ -38,6 +38,43 @@ internal static class RequitalSettingsTests
         Check(RequitalCommand.Parse("/one slates status", out _) == RequitalParseResult.Status, "Status is read-only");
         Check(RequitalCommand.Parse("/one slates", out _) == RequitalParseResult.Help, "Bare command gives help");
         Check(RequitalCommand.Parse("/one slate auto on", out _) == RequitalParseResult.NotCommand, "Unrelated command ignored");
+        Check(RequitalCommand.Parse("/one slates type HEAVEN", out command) == RequitalParseResult.Valid,
+            "Host can select Heaven by name");
+        var heaven = new RequitalSettings(true, 3).Apply(command);
+        Check(heaven.Kind == SlateKind.Heaven && heaven.Automatic && heaven.Count == 3,
+            "Selection preserves the automatic toggle and count");
+        foreach (string change in new[] { "/one slates count 2", "/one slates auto off", "/one slates count reset", "/one slates auto reset" })
+        {
+            Check(RequitalCommand.Parse(change, out command) == RequitalParseResult.Valid &&
+                heaven.Apply(command).Kind == SlateKind.Heaven, "Other Slate edits preserve the selected type");
+        }
+        foreach (var kind in new[] { SlateKind.Requital, SlateKind.Heaven })
+        foreach (bool auto in new[] { false, true })
+        {
+            policy.RecordRequital(new RequitalSettings(auto, 3, kind));
+            Check(SessionPolicy.TryReadPreset(policy.ToPresetText(), out var roundtrip, out _) &&
+                roundtrip.Requital.Equals(policy.Requital), "Selected type roundtrips with either automatic state");
+        }
+        Check(RequitalCommand.Parse("/one slates type reset", out command) == RequitalParseResult.Valid &&
+            heaven.Apply(command).Equals(new RequitalSettings(true, 3)), "Type reset selects Requital without changing count or toggle");
+        foreach (string type in new[] { "hell", "2099", "1", "heaven extra" })
+            Check(RequitalCommand.Parse("/one slates type " + type, out _) == RequitalParseResult.Invalid,
+                "Only audited named Slate choices are accepted");
+        foreach (string rows in new[] { "slates type 2", "slates type -1", "slates type 01", "slates type heaven",
+            "slates type 1\nslates type 0" })
+            Check(!SessionPolicy.TryReadPreset("SephiriaOne preset v40\n" + rows + "\n", out var rejected, out _) && !rejected.HasChanges,
+                "Invalid type rows fail atomically");
+        foreach (int version in new[] { 38, 39 })
+        {
+            Check(SessionPolicy.TryReadPreset($"SephiriaOne preset v{version}\nslates auto 1\nslates count 3\n",
+                out var legacy, out _) && legacy.Requital.Equals(new RequitalSettings(true, 3)),
+                "Existing saved loadouts retain Requital");
+            Check(!SessionPolicy.TryReadPreset($"SephiriaOne preset v{version}\nslates type 1\n", out _, out _),
+                "Older schemas reject a selection field they cannot represent");
+        }
+        Check(SessionPolicy.TryReadPreset("SephiriaOne preset v40\nslates type 1\nslates auto 1\nslates count 2\n",
+            out var reordered, out _) && reordered.Requital.Equals(new RequitalSettings(true, 2, SlateKind.Heaven)),
+            "Preset row order cannot erase a selected type");
         for (int version = 1; version < 38; version++)
         {
             Check(SessionPolicy.TryReadPreset($"SephiriaOne preset v{version}\n", out var saved, out _) && !saved.Requital.HasChanges,

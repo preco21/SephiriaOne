@@ -5,11 +5,26 @@ namespace SephiriaOne
 {
     internal static partial class RequitalRuntime
     {
-        private static bool Registered(GridInventory inventory, int id)
+        private static bool Registered(GridInventory inventory, ItemMetadata owned)
         {
             foreach (var item in inventory.startingItems)
-                if (item.instanceID == id && item.entityID == ItemId && item.quantity == 1) return true;
+                if (item.instanceID == owned.instanceID && item.entityID == owned.entityID && item.quantity == 1) return true;
             return false;
+        }
+        private static bool Owns(Ownership state, int id, int entity = 0)
+        {
+            foreach (var item in state.Items)
+                if (item.instanceID == id && (entity == 0 || item.entityID == entity)) return true;
+            return false;
+        }
+        private static SlateKind SavedKind(DungeonManager dungeon, int id)
+        {
+            string value = dungeon.GetGlobalItemStatValue(id, KindMarker);
+            // Pre-selection versions wrote only the owner marker: those exact
+            // IDs are Requital. Never infer type from a recipient's loadout.
+            if (string.IsNullOrEmpty(value)) return SlateKind.Requital;
+            if (value == "heaven") return SlateKind.Heaven;
+            throw new InvalidOperationException("Unknown saved automatic Slate type.");
         }
         private static void Recover(Ownership state)
         {
@@ -22,7 +37,7 @@ namespace SephiriaOne
                 string prefix = entry.Key.Substring(0, entry.Key.Length - suffix.Length);
                 if (int.TryParse(prefix, out int id) && entry.Key == state.Dungeon.BuildGlobalItemStatKey(id, Marker) &&
                     !IsRetired(state.Dungeon, id) &&
-                    !state.Ids.Contains(id)) state.Ids.Add(id);
+                    !Owns(state, id)) state.Items.Add(new ItemMetadata(id, ItemIdFor(SavedKind(state.Dungeon, id)), 1));
             }
         }
         private static bool IsRetired(DungeonManager dungeon, int id) =>
@@ -34,6 +49,7 @@ namespace SephiriaOne
             // saved copy may be offline; its next enrollment must still retract it.
             dungeon.globalItemStatTable[dungeon.BuildGlobalItemStatKey(id, RetiredMarker)] = owner;
             dungeon.globalItemStatTable.Remove(dungeon.BuildGlobalItemStatKey(id, Marker));
+            dungeon.globalItemStatTable.Remove(dungeon.BuildGlobalItemStatKey(id, KindMarker));
         }
 
         private static List<(int Id, string Owner)> Marked(DungeonManager dungeon, string marker)
@@ -59,7 +75,7 @@ namespace SephiriaOne
             {
                 Require(currentOwner());
                 counts.TryGetValue(entry.Owner, out int count);
-                if (count >= desired) Retire(dungeon, entry.Id, entry.Owner);
+                if (count >= desired || SavedKind(dungeon, entry.Id) != settings.Kind) Retire(dungeon, entry.Id, entry.Owner);
                 else counts[entry.Owner] = count + 1;
             }
             Require(currentOwner());
@@ -76,8 +92,12 @@ namespace SephiriaOne
                 Require(currentOwner());
             }
         }
-        private static void Mark(Ownership state, int id) =>
+        private static void Mark(Ownership state, ItemMetadata item)
+        {
+            int id = item.instanceID;
+            if (item.entityID == HeavenItemId) state.Dungeon.globalItemStatTable[state.Dungeon.BuildGlobalItemStatKey(id, KindMarker)] = "heaven";
             state.Dungeon.globalItemStatTable[state.Dungeon.BuildGlobalItemStatKey(id, Marker)] = state.Guid;
+        }
         private static void Require(bool valid) { if (!valid) throw new InvalidOperationException("Requital native owner/settings changed during write."); }
 
         private static void DeliverStarting(PlayerAvatar player, GridInventory inventory, ItemMetadata item, bool notification,
@@ -96,7 +116,7 @@ namespace SephiriaOne
                         if (retries[i].instanceID == item.instanceID) retries.RemoveAt(i);
                     if (PresentAnywhere(item.instanceID)) return;
                 }
-                if (inventory.LocalAddItem(item.instanceID, ItemId, 1, 0, notification, isReward: false))
+                if (inventory.LocalAddItem(item.instanceID, item.entityID, 1, 0, notification, isReward: false))
                 {
                     Require(currentOwner());
                     DungeonManager.Instance.BoundOnServer(item.instanceID, player.spawner.currentPlayerIdx);
@@ -107,7 +127,7 @@ namespace SephiriaOne
                     Require(currentOwner() && (bool)permission.GetValue(inventory));
                     ((List<GridInventory.StartingItemAdditionFailedInfo>)pending.GetValue(inventory)).Add(
                         new GridInventory.StartingItemAdditionFailedInfo {
-                            instanceID = item.instanceID, entityID = ItemId, quantity = 1, playerIdx = player.spawner.currentPlayerIdx });
+                            instanceID = item.instanceID, entityID = item.entityID, quantity = 1, playerIdx = player.spawner.currentPlayerIdx });
                 }
             }
         }
@@ -133,17 +153,18 @@ namespace SephiriaOne
         internal static void RestockItem(GridInventory inventory, ItemMetadata item, int rotation, bool notification, bool isReward)
         {
             var player = inventory ? inventory.UnitAvatar as PlayerAvatar : null;
-            if (item.entityID != ItemId || !IsHost(player) || !ReferenceEquals(player.Inventory, inventory))
+            if ((item.entityID != ItemId && item.entityID != HeavenItemId) || !IsHost(player) || !ReferenceEquals(player.Inventory, inventory))
             { inventory.AddItem(item, rotation, notification, isReward); return; }
             // Ordinary native items retain native error/overflow semantics too.
             if (!ownership.TryGetValue(inventory, out var state) || !ReferenceEquals(state.Dungeon, DungeonManager.Instance) ||
-                state.Guid != player.spawner.playerGuid || !state.Ids.Contains(item.instanceID))
+                state.Guid != player.spawner.playerGuid || !Owns(state, item.instanceID, item.entityID))
             { inventory.AddItem(item, rotation, notification, isReward); return; }
             if (state.Faulted) return;
             try
             {
-                if (writing || !Available || !ValidItem()) throw new InvalidOperationException("Requital restock adapter unavailable or reentrant.");
                 var settings = SessionSettings.Requital;
+                if (writing || !AvailableFor(settings.Kind) || !ValidItem(settings.Kind) || item.entityID != ItemIdFor(settings.Kind))
+                    throw new InvalidOperationException("Slate restock adapter unavailable, changed or reentrant.");
                 var run = SaveManager.CurrentRun;
                 long observedScope = scope, generation = SessionSettings.ResourceGeneration;
                 var receipt = FriendlyFireParticipants.Capture(player);

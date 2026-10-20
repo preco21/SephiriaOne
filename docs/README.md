@@ -1,6 +1,11 @@
 # Development knowledge index
 
-Maintained: 2026-10-20 (Asia/Seoul), addon `0.74.0`.
+Maintained: 2026-10-20 (Asia/Seoul), addon `0.75.0`.
+
+[Heaven/Requital Slates](requital-slates.md): Items → Starting Slates now selects
+either native Slate for automatic loadouts and Give now.
+`/one slates type heaven|requital|reset`; v40 saves Heaven selection. Changing type
+retracts old automatic IDs, while ordinary/manual gifts remain untouched.
 
 [Tournament opponent status](tournament.md#live-opponent-status-0740-2026-10-20):
 the active pair sees opponent/time bubbles refreshed once per second in EN/KO.
@@ -13,9 +18,9 @@ hosted-session players, with an optional Wing-Eared Rabbit exception. Both defau
 off; `/one xp block on|off`, `rabbit-exempt on|off`, `status`, `reset`; v39 saves them.
 Existing levels and XP remain intact; changes apply at the next native XP grant.
 
-[Requital Slates](requital-slates.md): Items-tab automatic starting loadout
+[Starting Slates](requital-slates.md): Items-tab automatic starting loadout
 (default off, 1 per player, configurable 0..20), plus a live Give now button.
-`/one slates auto on|off`, `count N`, `give`, `reset`; v38 saves the settings.
+`/one slates auto on|off`, `count N`, `give`, `reset`; Requital remains the default.
 Automatic gifts are tracked by exact instance ID for retraction.
 
 [Infinite PvP HP potions](pvp-potions.md): separate default-on

@@ -10,8 +10,10 @@ namespace SephiriaOne
     internal static partial class RequitalRuntime
     {
         internal const int ItemId = 2100;
+        internal const int HeavenItemId = 2099;
         private const string Marker = "SephiriaOne_RequitalStartingOwner";
         private const string RetiredMarker = "SephiriaOne_RequitalRetiredOwner";
+        private const string KindMarker = "SephiriaOne_StartingSlateKind";
         private const string Rule = "requital-starting-items";
         private static readonly FieldInfo permission = typeof(GridInventory).GetField("writePermission", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly FieldInfo pending = typeof(GridInventory).GetField("additionFailedStartingItems", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -22,7 +24,7 @@ namespace SephiriaOne
         private static readonly HashSet<FriendlyFireParticipants.Receipt> current = new HashSet<FriendlyFireParticipants.Receipt>();
         private static readonly List<FriendlyFireParticipants.Receipt> roster = new List<FriendlyFireParticipants.Receipt>();
         private static readonly List<FriendlyFireParticipants.Receipt> departed = new List<FriendlyFireParticipants.Receipt>();
-        private static bool hooks, itemAvailable, ticking, writing;
+        private static bool hooks, itemAvailable, heavenAvailable, ticking, writing;
         private static long scope;
         private static long catalogRevision;
         private static DungeonManager retirementDungeon;
@@ -36,12 +38,14 @@ namespace SephiriaOne
         {
             internal readonly DungeonManager Dungeon = DungeonManager.Instance;
             internal readonly string Guid;
-            internal readonly List<int> Ids = new List<int>();
+            internal readonly List<ItemMetadata> Items = new List<ItemMetadata>();
             internal bool Faulted;
             internal Ownership(string guid) { Guid = guid; }
         }
 
-        internal static bool Available => hooks && itemAvailable;
+        internal static bool Available => AvailableFor(SessionSettings.Requital.Kind);
+        internal static bool AvailableFor(SlateKind kind) => hooks &&
+            (kind == SlateKind.Requital ? itemAvailable : kind == SlateKind.Heaven && heavenAvailable);
         internal static bool CanExecute => Available && NetworkServer.active && !writing &&
             SessionSettings.EnsureResourceScope() && ReviveAllAction.IsRunOpen(DungeonManager.Instance, SaveManager.CurrentRun);
 
@@ -56,17 +60,24 @@ namespace SephiriaOne
 
         internal static void Load()
         {
-            try { itemAvailable = ValidateFields() && ValidItem(); }
-            catch (Exception error) { itemAvailable = false; Warn("database unavailable", error); }
-            if (!itemAvailable) Debug.LogWarning("[SephiriaOne] Requital identity/inventory contract unavailable.");
+            try
+            {
+                itemAvailable = ValidateFields() && ValidItem(SlateKind.Requital);
+                heavenAvailable = ValidateFields() && ValidItem(SlateKind.Heaven);
+            }
+            catch (Exception error) { itemAvailable = heavenAvailable = false; Warn("database unavailable", error); }
+            if (!itemAvailable || !heavenAvailable) Debug.LogWarning("[SephiriaOne] A starting Slate identity/inventory contract is unavailable.");
             catalogRevision++;
         }
-        private static bool ValidItem()
+        private static int ItemIdFor(SlateKind kind) => kind == SlateKind.Heaven ? HeavenItemId : ItemId;
+        private static bool ValidItem(SlateKind kind)
         {
-            var item = ItemDatabase.FindItemById(ItemId);
-            return item && item.id == ItemId && item.aName?.key == "Item_StoneTablet_Requital_Name" &&
+            int id = ItemIdFor(kind);
+            var item = ItemDatabase.FindItemById(id);
+            return item && item.id == id && item.aName?.key ==
+                (kind == SlateKind.Heaven ? "Item_StoneTablet_Heaven_Name" : "Item_StoneTablet_Requital_Name") &&
                 item.type == EItemType.StoneTablet && item.rarity == EItemRarity.Eternal &&
-                item.activeType == EItemActiveType.WitchHat && item.resourcePrefab;
+                item.activeType == (kind == SlateKind.Heaven ? EItemActiveType.Hidden : EItemActiveType.WitchHat) && item.resourcePrefab;
         }
         internal static bool ValidateFields() => permission?.FieldType == typeof(bool) &&
             pending?.FieldType == typeof(List<GridInventory.StartingItemAdditionFailedInfo>);
@@ -127,7 +138,16 @@ namespace SephiriaOne
             if (writing || !FriendlyFireParticipants.IsCurrent(receipt) || !HostStateAdapter.IsReady(receipt.Spawner) ||
                 !receipt.Player.Inventory || string.IsNullOrWhiteSpace(receipt.Spawner.playerGuid))
                 return ReconcileResult.Waiting("Waiting for Requital inventory readiness.");
-            return Reconcile(receipt.Player, false, () => FriendlyFireParticipants.IsCurrent(receipt));
+            var observed = SessionSettings.Requital;
+            long observedScope = scope;
+            var result = Reconcile(receipt.Player, false, () => FriendlyFireParticipants.IsCurrent(receipt));
+            // The coordinator captures inputs again after Apply. Preserve a
+            // settings change made inside a native callback as pending work;
+            // the fault latch still forbids replaying ambiguous additions.
+            var latest = SessionSettings.Requital;
+            if (scope == observedScope && FriendlyFireParticipants.IsCurrent(receipt) && !observed.Equals(latest))
+                coordinator.Invalidate(receipt, SyncDomain.Identity);
+            return result;
         }
 
         internal static void BeforeRestock(GridInventory inventory)
@@ -168,37 +188,41 @@ namespace SephiriaOne
                 int desired = settings.Automatic ? settings.Count : 0;
                 RetireExcess(settings, Current);
                 RemoveRetired(inventory, Current);
-                state.Ids.RemoveAll(id => IsRetired(state.Dungeon, id));
+                state.Items.RemoveAll(item => IsRetired(state.Dungeon, item.instanceID));
                 Recover(state);
-                while (state.Ids.Count > desired)
+                int selectedId = ItemIdFor(settings.Kind);
+                for (int i = state.Items.Count - 1; i >= 0; i--)
                 {
+                    // A selection change retires the old identity; do not turn
+                    // a saved Requital instance into Heaven under the same ID.
+                    if (state.Items[i].entityID == selectedId && state.Items.Count <= desired) continue;
                     Require(Current());
-                    int id = state.Ids[state.Ids.Count - 1];
+                    int id = state.Items[i].instanceID;
                     Retire(state.Dungeon, id, state.Guid);
                     RemoveEverywhere(player, id, Current);
-                    state.Ids.RemoveAt(state.Ids.Count - 1);
+                    state.Items.RemoveAt(i);
                 }
                 if (desired == 0) { state.Faulted = false; return ReconcileResult.Applied(); }
-                if (!Available || !ValidItem()) return ReconcileResult.Suspended("Requital native item is unavailable.");
+                if (!AvailableFor(settings.Kind) || !ValidItem(settings.Kind)) return ReconcileResult.Suspended("Selected native Slate is unavailable.");
                 // Saved inventory restoration does not restore startingItems.
                 // Rebuild metadata for proven IDs without delivering them again.
-                foreach (int id in state.Ids)
+                foreach (var item in state.Items)
                 {
                     Require(Current());
-                    Mark(state, id);
-                    if (!state.Faulted && !Registered(inventory, id)) inventory.startingItems.Add(new ItemMetadata(id, ItemId, 1));
+                    Mark(state, item);
+                    if (!state.Faulted && !Registered(inventory, item)) inventory.startingItems.Add(item);
                 }
                 // Exact-ID removal above is idempotent and remains possible on
                 // an explicit reduction/off. Ambiguous additions never replay.
                 if (state.Faulted) return ReconcileResult.Faulted("Requital automatic write paused after an ambiguous native callback.");
-                while (state.Ids.Count < desired)
+                while (state.Items.Count < desired)
                 {
-                    Require(Current() && ValidItem());
+                    Require(Current() && ValidItem(settings.Kind));
                     // Allocate the ID before any native callback. Inferring all
                     // new list entries afterward could claim another addon's gift.
                     int id = ItemDatabase.GenerateInstanceID(random);
-                    var item = new ItemMetadata(id, ItemId, 1);
-                    state.Ids.Add(id); Mark(state, id);
+                    var item = new ItemMetadata(id, selectedId, 1);
+                    state.Items.Add(item); Mark(state, item);
                     inventory.startingItems.Add(item);
                     Require(Current());
                     if (!restock && !HorayNetworkAuthenticator.AccessDeny_InDungeon)
@@ -237,12 +261,12 @@ namespace SephiriaOne
                         {
                             RemoveRetired(player.Inventory, () => IsHost(player) && ReferenceEquals(state.Dungeon, DungeonManager.Instance));
                             Recover(state);
-                            while (state.Ids.Count != 0)
+                            while (state.Items.Count != 0)
                             {
-                                int id = state.Ids[state.Ids.Count - 1];
+                                int id = state.Items[state.Items.Count - 1].instanceID;
                                 Retire(state.Dungeon, id, state.Guid);
                                 RemoveEverywhere(player, id, () => IsHost(player) && ReferenceEquals(state.Dungeon, DungeonManager.Instance));
-                                state.Ids.RemoveAt(state.Ids.Count - 1);
+                                state.Items.RemoveAt(state.Items.Count - 1);
                             }
                             state.Faulted = false;
                         }
@@ -251,7 +275,7 @@ namespace SephiriaOne
                 }
                 finally { writing = false; }
             }
-            Clear(); itemAvailable = false;
+            Clear(); itemAvailable = heavenAvailable = false;
             if (hooks) { hooks = false; Uninstall(); }
         }
         private static void Warn(string action, Exception error) =>

@@ -199,7 +199,7 @@ namespace SephiriaOne
             for (int i = 0; i < tabs.Count; i++) { var colors = tabs[i].colors; colors.normalColor = i == target ? PanelWidgets.Accent : (Color)new Color32(39, 59, 82, 255); colors.selectedColor = colors.normalColor; tabs[i].colors = colors; }
             statPicker = null; amount = null; resetOne = resetAll = save = forget = null;
             collinReset = null;
-            requitalCount = null; requitalCountDraft = false; requitalApply = requitalGive = requitalReset = null;
+            requitalCount = null; slatePicker = null; requitalCountDraft = false; requitalApply = requitalGive = requitalReset = null;
             updateInstall = updateCheck = null; updateAutomatic = null;
             friendlyDamage = null; friendlyDraft = false; friendlyRefill = null; friendlyRefillDraft = false;
             friendlyGuardMp = null; friendlyGuardMpDraft = false;

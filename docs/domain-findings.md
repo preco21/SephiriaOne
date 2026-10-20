@@ -30,6 +30,11 @@ Starting-item registration and delivery are separate lifetimes. Native
 `RestockStartingItem` delivers registrations on fresh runs, not each floor. Ordinary
 live gifts therefore use a separate native inventory path. Requital (보은) is
 ID **2100**, an Eternal Slate whose active type is **WitchHat**, not Default.
+Heaven (천국) is ID **2099**, Eternal StoneTablet, active type **Hidden**,
+name key `Item_StoneTablet_Heaven_Name`. Native direct inventory insertion does
+not filter this catalog flag. Both native assets can use the same grant service.
+Saved exact-ID provenance must include the entity type: absent type markers
+represent legacy Requital, not whichever type the host currently selects.
 Do not select all Eternal items or reject this known costume-type item solely
 because of that active type. Automatic ownership must use exact instance IDs,
 not item type; original costume/passive Slates and manual gifts remain separate.
