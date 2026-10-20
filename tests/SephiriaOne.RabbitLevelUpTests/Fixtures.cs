@@ -41,6 +41,9 @@ public class LevelController : NetworkBehaviour
     public static readonly int[] ExpTableByLevel = { 0, 10, 20, 30, 40, 50 };
     public PlayerAvatar Avatar { get; set; }
     public int currentLevel = 1, currentExp, NativeCalls, RestoredChoices;
+    public int NetworkcurrentExp { get => currentExp; [MethodImpl(MethodImplOptions.NoInlining)] set => currentExp = value; }
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    public void UserCode_CmdAddExp__Int32(int exp) => LocalAddExp(exp);
     public int NetworkcurrentLevel { get => currentLevel; [MethodImpl(MethodImplOptions.NoInlining)] set => currentLevel = value; }
     public Action OnLevel;
     [MethodImpl(MethodImplOptions.NoInlining)]
@@ -49,13 +52,15 @@ public class LevelController : NetworkBehaviour
     private void LocalAddExp(int exp)
     {
         if (!NetworkServer.active) return;
-        currentExp += exp;
+        NetworkcurrentExp = currentExp + exp;
         while (currentLevel < ExpTableByLevel.Length && currentExp >= ExpTableByLevel[currentLevel])
         { NetworkcurrentLevel = currentLevel + 1; LevelUpOnServer(); }
     }
     [MethodImpl(MethodImplOptions.NoInlining)]
     public void LevelUpOnServer() { NativeCalls++; OnLevel?.Invoke(); }
-    public void Initialize(int level, int exp) { currentLevel = level; currentExp = exp; }
+    public void Initialize(int level, int exp) => LocalInitialize(level, exp);
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void LocalInitialize(int level, int exp) { currentLevel = level; NetworkcurrentExp = exp; }
     public void GenerateItem(int seed) => RestoredChoices++;
 }
 public class ItemMetadata
@@ -125,6 +130,7 @@ namespace SephiriaOne
     }
     internal static class SessionSettings
     {
+        public static ExperienceSettings ExperienceForUse;
         public static RabbitPotionSettings RabbitPotionsForUse;
         public static long ResourceGeneration;
     }

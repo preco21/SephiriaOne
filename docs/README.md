@@ -1,6 +1,11 @@
 # Development knowledge index
 
-Maintained: 2026-10-20 (Asia/Seoul), addon `0.72.0`.
+Maintained: 2026-10-20 (Asia/Seoul), addon `0.73.0`.
+
+[XP restriction](experience.md): Progression-tab toggles block new XP for all
+hosted-session players, with an optional Wing-Eared Rabbit exception. Both default
+off; `/one xp block on|off`, `rabbit-exempt on|off`, `status`, `reset`; v39 saves them.
+Existing levels and XP remain intact; changes apply at the next native XP grant.
 
 [Requital Slates](requital-slates.md): Items-tab automatic starting loadout
 (default off, 1 per player, configurable 0..20), plus a live Give now button.

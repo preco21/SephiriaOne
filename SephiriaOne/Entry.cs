@@ -42,6 +42,7 @@ namespace SephiriaOne
                 BatCostumeFeature.Initialize();
                 CollinFeature.Initialize();
                 RequitalRuntime.Initialize();
+                ExperienceFeature.Initialize();
                 DisconnectDiagnosticsFeature.Initialize();
                 if (!nameColor)
                 {
@@ -82,6 +83,7 @@ namespace SephiriaOne
                 DeathmatchFeature.Shutdown();
                 BatCostumeFeature.Shutdown();
                 CollinFeature.Shutdown();
+                ExperienceFeature.Shutdown();
                 RequitalRuntime.Shutdown();
                 ChoiceFeature.Shutdown();
                 EventSpawnFeature.Shutdown();

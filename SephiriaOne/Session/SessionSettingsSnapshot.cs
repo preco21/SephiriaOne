@@ -92,6 +92,8 @@ namespace SephiriaOne
                     (FriendlyFireFeature.Available ? "" : L.T(" Friendly-fire hooks unavailable; see Player.log.")));
                 lines.Add(DescribeItemUnlock(sameSession && policy.ItemUnlock) +
                     (ItemRestrictionFeature.Available ? "" : L.T(" Item restriction hooks unavailable; see Player.log.")));
+                lines.Add(DescribeExperience(sameSession ? policy.Experience : default));
+                if (!ExperienceFeature.Available) lines.Add(L.T("XP compatibility checks failed. Off/reset remain available; see Player.log."));
                 lines.Add(DescribeRequital(sameSession ? policy.Requital : default));
                 if (!RequitalRuntime.Available) lines.Add(L.T("Requital compatibility checks failed. Off/reset remain available; see Player.log."));
                 if (!SessionBoundaryFeature.Available)
@@ -233,7 +235,8 @@ namespace SephiriaOne
                 sameSession && policy.BatHpSteal, BatCostumeFeature.Available,
                 sameSession && policy.CollinStartingArtifact, CollinFeature.Available,
                 sameSession ? policy.EventSpawns : default, EventSpawnFeature.Available, combatPlayers, selectedPlayers,
-                sameSession ? policy.Requital : default, RequitalRuntime.Available);
+                sameSession ? policy.Requital : default, RequitalRuntime.Available,
+                sameSession ? policy.Experience : default, ExperienceFeature.Available);
         }
 
         private static readonly string[] ChoiceSnapshotNames = { "item", "weapon", "miracle" };

@@ -1,4 +1,12 @@
 {
+  " /one xp help lists XP options.": " /one xp help로 경험치 옵션을 확인하세요.",
+  "Host only: /one xp block on|off|reset; rabbit-exempt on|off|reset; status; reset. Both default off. Blocks new XP for all players; existing levels stay unchanged. /one save persists settings.": "호스트 전용: /one xp block on|off|reset; rabbit-exempt on|off|reset; status; reset. 기본값은 모두 꺼짐입니다. 모든 플레이어의 경험치 획득을 차단하며 기존 레벨은 유지합니다. /one save로 저장합니다.",
+  "Only the host can change XP settings.": "호스트만 경험치 설정을 변경할 수 있습니다.",
+  "XP compatibility checks failed. Off/reset remain available; see Player.log.": "경험치 호환성 확인 실패. 끄기/초기화는 가능합니다. Player.log를 확인하세요.",
+  "Block XP: {0}. Wing-Eared Rabbit exception: {1}. Applies immediately to new XP; existing levels and XP stay unchanged.": "경험치 차단: {0}. 날개귀 토끼 제외: {1}. 경험치 획득에 즉시 적용하며 기존 레벨과 경험치는 유지합니다.",
+  "Progression": "성장",
+  "Block XP gain": "경험치 획득 차단",
+  "Exempt Wing-Eared Rabbit": "날개귀 토끼 제외",
   " /one slates help lists Requital Slate options.": " /one slates help로 보은 석판 옵션을 확인하세요.",
   "Only the host can give Requital Slates.": "호스트만 보은 석판을 지급할 수 있습니다.",
   "Requital Slates require a ready hosted session; see Player.log if unavailable.": "호스트 세션이 준비되어야 보은 석판을 지급할 수 있습니다. 사용할 수 없다면 Player.log를 확인하세요.",

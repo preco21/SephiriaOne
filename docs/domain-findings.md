@@ -573,3 +573,13 @@ and stock-client delivery. Optional one-shot rules must keep readiness inside
 first delivery: a transient readiness gate on a shared coordinator can otherwise
 replay an already-applied or faulted action. Match supplies use the full captured
 roster, including waiting Tournament players, rather than active damage pairs.
+
+## XP restriction (0.73.0, 2026-10-20)
+
+`LevelController.LocalAddExp(int)` is the authoritative convergence point for
+XP pickups, magic-fountain rewards, stock guest XP commands and recovered XP
+after rejoin. `LocalInitialize(level, exp)` restores saved progression separately.
+Use the grant boundary for permission rules; changing EXP multipliers or freezing
+levels after the fact misses sources or leaves level-up side effects. The native
+rejoin flow equips its costume before awarding preserved XP. See [XP restriction](experience.md)
+for contracts, behavior and test limitations.

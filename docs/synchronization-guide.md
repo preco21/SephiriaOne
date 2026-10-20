@@ -19,6 +19,7 @@ Version `0.13.0` adds a [host settings panel](control-panel.md) on the same serv
 | Owned name publication | Shared coordinator and readiness; bounded native-command acknowledgment retry | Format name and use the owned native transport |
 | Rabbit potion options | Policy, command authority/batch commit, presets and snapshots | Read current host intent on the native drink event; never replay healing during reconciliation |
 | Bat costume HP steal | Policy, command preflight/paired write readback, inheritance, presets and scope cleanup | Change the native costume-owned status and matching synchronized contribution; native removal uses the exact applied amount |
+| XP restriction | Policy, host command/batch commit, scope, presets and snapshot | Gate `LevelController.LocalAddExp` at the server consumer; read the current costume each time, with no per-player enrollment or restoration writes. See [XP](experience.md). |
 | Read-only settings views | `SessionSettings.SettingsChanged` after commit, preset load and scope clear; isolated callback failures | Refresh rendered text from current read-only policy without gameplay writes |
 | Costume role notices | Existing subject/connection lifetimes and post-stat-maintenance observation | Format current applied bonuses, deduplicate text, respect native chat limits and retry unsent lines; see [role notices](costume-role-notices.md) |
 

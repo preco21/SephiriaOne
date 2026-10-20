@@ -1,4 +1,12 @@
 {
+  " /one xp help lists XP options.": " /one xp help lists XP options.",
+  "Host only: /one xp block on|off|reset; rabbit-exempt on|off|reset; status; reset. Both default off. Blocks new XP for all players; existing levels stay unchanged. /one save persists settings.": "Host only: /one xp block on|off|reset; rabbit-exempt on|off|reset; status; reset. Both default off. Blocks new XP for all players; existing levels stay unchanged. /one save persists settings.",
+  "Only the host can change XP settings.": "Only the host can change XP settings.",
+  "XP compatibility checks failed. Off/reset remain available; see Player.log.": "XP compatibility checks failed. Off/reset remain available; see Player.log.",
+  "Block XP: {0}. Wing-Eared Rabbit exception: {1}. Applies immediately to new XP; existing levels and XP stay unchanged.": "Block XP: {0}. Wing-Eared Rabbit exception: {1}. Applies immediately to new XP; existing levels and XP stay unchanged.",
+  "Progression": "Progression",
+  "Block XP gain": "Block XP gain",
+  "Exempt Wing-Eared Rabbit": "Exempt Wing-Eared Rabbit",
   " /one slates help lists Requital Slate options.": " /one slates help lists Requital Slate options.",
   "Only the host can give Requital Slates.": "Only the host can give Requital Slates.",
   "Requital Slates require a ready hosted session; see Player.log if unavailable.": "Requital Slates require a ready hosted session; see Player.log if unavailable.",

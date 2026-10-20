@@ -6,6 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../SephiriaOne/Features/Experience/ExperienceSettings.cs" Link="ExperienceSettings.cs" />
+    <Compile Include="../../SephiriaOne/Features/Experience/ExperienceCommand.cs" Link="ExperienceCommand.cs" />
     <Compile Include="../../SephiriaOne/Features/Items/Requital/RequitalSettings.cs" Link="RequitalSettings.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionZombiePolicy.cs" Link="SessionZombiePolicy.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/ZombieSurvival/ZombieSurvivalSettings.cs" Link="ZombieSurvivalSettings.cs" />

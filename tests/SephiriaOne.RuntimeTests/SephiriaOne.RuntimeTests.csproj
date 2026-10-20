@@ -6,6 +6,9 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../SephiriaOne/Session/SessionExperience.cs" Link="SessionExperience.cs" />
+    <Compile Include="../../SephiriaOne/Features/Experience/ExperienceSettings.cs" Link="ExperienceSettings.cs" />
+    <Compile Include="../../SephiriaOne/Features/Experience/ExperienceCommand.cs" Link="ExperienceCommand.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionRequital.cs" Link="SessionRequital.cs" />
     <Compile Include="../../SephiriaOne/Features/Items/Requital/RequitalSettings.cs" Link="RequitalSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/Supplies/*.cs" Link="Supplies/%(Filename)%(Extension)" />

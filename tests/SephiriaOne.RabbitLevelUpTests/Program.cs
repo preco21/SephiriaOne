@@ -106,4 +106,51 @@ foreach(int id in identities.Select(i=>i.Id))
 }
 Reset(); level=NewPlayer(); RabbitLevelUpFeature.Shutdown(); level.AddExp(10);
 Check(level.NativeCalls==1 && level.Avatar.Inventory.Grants==0, "Unload restores native method");
-Console.WriteLine($"Passed {checks} Rabbit earned-level reward checks.");
+// The XP prefix and earned-level transpiler must compose in either install order.
+for (int order = 0; order < 2; order++)
+{
+    Reset();
+    if (order == 1) RabbitLevelUpFeature.Shutdown();
+    ExperienceFeature.Initialize();
+    if (order == 1) { RabbitLevelUpFeature.Initialize(); LoadCatalog(); }
+    Check(ExperienceFeature.Available && RabbitLevelUpFeature.Available, "XP and Rabbit hooks coexist: " + string.Join("\n", UnityEngine.Debug.Warnings));
+    level = NewPlayer(); inventory = level.Avatar.Inventory;
+    SessionSettings.ExperienceForUse = new(true, false);
+    level.AddExp(30); level.UserCode_CmdAddExp__Int32(30);
+    Check(level.currentExp == 0 && level.currentLevel == 1 && level.NativeCalls == 0 && inventory.Grants == 0,
+        "Host and stock guest grants blocked before XP writes or level-up rewards");
+    level.Initialize(3, 20);
+    Check(level.currentLevel == 3 && level.currentExp == 20, "Saved level and XP restoration preserved while blocking");
+    level.Initialize(1, 0);
+    SessionSettings.ExperienceForUse = new(true, true);
+    level.UserCode_CmdAddExp__Int32(10);
+    Check(level.currentLevel == 2 && inventory.Grants == 1, "Exempt Rabbit gains native levels and addon potions");
+    level.Avatar.currentCostume = "Mole"; level.AddExp(10);
+    Check(level.currentExp == 10 && level.NativeCalls == 1, "Switching away immediately ends exemption");
+    level.Avatar.currentCostume = "HolyRabbit"; level.AddExp(10);
+    Check(level.currentExp == 20 && inventory.Grants == 2, "Switching back immediately restores exemption");
+    SessionSettings.ExperienceForUse = new(true, false); level.AddExp(10);
+    Check(level.currentExp == 20, "Removing exception immediately blocks Rabbit");
+    var rejoined = NewPlayer(); rejoined.Initialize(3, 20); rejoined.UserCode_CmdAddExp__Int32(10);
+    Check(rejoined.currentExp == 20 && rejoined.NativeCalls == 0, "Fresh reconnect gets current policy, without per-player enrollment");
+    var party = Enumerable.Range(0, 9).Select(_ => NewPlayer()).ToArray();
+    SessionSettings.ExperienceForUse = new(true, true);
+    for (int i = 0; i < party.Length; i++)
+    {
+        party[i].Avatar.currentCostume = i == 8 ? "HolyRabbit" : "Mole";
+        party[i].UserCode_CmdAddExp__Int32(10);
+    }
+    Check(party.Take(8).All(p => p.currentExp == 0) && party[8].currentExp == 10,
+        "Nine-player party applies the rule independently, without a fixed roster limit");
+    SessionSettings.ExperienceForUse = new(true, false);
+    rejoined.Avatar.IsDead = true; rejoined.AddExp(10);
+    Check(rejoined.currentExp == 20, "Death does not bypass XP restriction");
+    SessionSettings.ExperienceForUse = default; level.AddExp(10);
+    Check(level.currentExp == 30 && inventory.Grants == 3, "Off immediately restores native gains, without banking blocked XP");
+    SessionSettings.ExperienceForUse = new(true, false);
+    ExperienceFeature.Shutdown(); level.AddExp(10);
+    Check(level.currentExp == 40 && inventory.Grants == 4, "XP unpatch leaves Rabbit earned-level rewards intact");
+    SessionSettings.ExperienceForUse = default;
+}
+RabbitLevelUpFeature.Shutdown();
+Console.WriteLine($"Passed {checks} Rabbit earned-level/XP restriction checks.");
