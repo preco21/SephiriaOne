@@ -141,6 +141,11 @@ default-off checkbox/command that reduces rapid hits above roughly four per
 second per opponent before the existing damage budget. Shares its lifetimes,
 with an independent toggle revision that cannot refill the budget.
 
+[Low-scale PvP fairness audit](pvp-hit-frequency.md#low-scale-fairness-audit-2026-10-20-0730):
+explains intentional zero-budget hits, fractional damage display, the one-point
+minimum's rapid-hit bias, and slow-attack compression. Includes controlled
+comparisons and proposed fixes; gameplay behavior is unchanged by this audit.
+
 Combat balancing: [Burn's two-second lifetime cap](pvp-balancing.md#burn-duration-cap-0592-2026-10-16)
 now includes Plasma Burn and both families' Blue Flame/evolved variants. It uses
 the existing lifecycle to cap each application and refresh, prevent late despawn
