@@ -69,6 +69,7 @@ namespace SephiriaOne
                 if (!entry.Subject.IsReady || entry.Subject.Player.IsDead) { phase = Phase.BetweenRounds; return; }
             }
             zombieRound = new ZombieSurvivalRound(zombiePlayers.Count, zombieStartingCount, zombieRandom);
+            RetargetZombieBalance(now);
             endsAt = now + duration; RoleRevision++;
             var initialNames = new List<string>();
             var initialPlayers = new List<RosterEntry>();
@@ -166,6 +167,7 @@ namespace SephiriaOne
         private static void InfectZombie(int index, string infector = null)
         {
             if (!zombieRound.Infect(index)) return;
+            RetargetZombieBalance(Now);
             if (pending.TryGetValue(zombiePlayers[index].Subject.Player, out var respawn))
             { respawn.ZombieConversion = true; respawn.ZombieInfector = infector; }
             FriendlyFireKda.ForgetContributions(zombiePlayers[index].Subject.Player);
@@ -199,9 +201,13 @@ namespace SephiriaOne
         private static void ClearZombie()
         {
             ZombieRoleVisuals.Clear();
+            zombieBalance = default;
             zombieRound = null; zombieScores = null; zombieNames = null; zombieOutcome = null; zombieTimeShown = -1; zombieStartingCount = 0;
             zombiePlayers.Clear(); zombieRoster.Clear(); RoleRevision++;
         }
+
+        private static void RetargetZombieBalance(double now) =>
+            zombieBalance.Retarget(zombiePlayers.Count - zombieRound.Humans, zombieRound.Humans, now);
 
         internal static string DescribeZombie() => L.F("Zombie Survival: {0}. Round: {1}s. Remaining: {2}s. [H] Humans: {3}; [Z] Zombies: {4}.",
             L.T(!IsZombieSurvival ? "off" : phase == Phase.Countdown ? "countdown" : phase == Phase.BetweenRounds ? "waiting" : "active"),

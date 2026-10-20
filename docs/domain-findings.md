@@ -16,6 +16,15 @@ A different game build requires renewed contract/asset checks. Start with the
 
 ## State lifetimes and multiplayer
 
+Ratio-based combat policy belongs to the match, not individual avatars. Zombie
+Dynamic Balancing counts committed teams including pending respawns; using
+currently living players would let death manipulate the ratio. Settle the old
+smoothing target at conversion before changing it. Continuous value changes must
+not repeatedly bump the shared role revision: that revision protects elapsed
+damage-budget credit across discrete role changes, not animation frames.
+The [bounded Zombie curve](zombie-survival.md#dynamic-balancing-0760) uses existing
+role/damage consumers without new network state or native stat writes.
+
 Native overhead chat cleanup requires a nonempty replacement: both
 `DungeonManager.Chat` and its stock `RpcChat` receiver reject whitespace before
 `CreateChatBubble`. Empty-string sends do **not** remove a remote bubble.

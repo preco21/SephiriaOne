@@ -53,11 +53,39 @@ internal static class ZombieCombatTests
             SessionSettings.ZombieModifiers = SessionSettings.ZombieModifiers.WithRefill(enabled: false); CombatMatchRuntime.RoleSettingsChanged();
             Time.time = .2f; other.ApplyDamage(Hit(human, float.MaxValue));
             check(Math.Abs(other.Hp - 77) < .001, "Disabling Zombie refill preserves spent budget and restores native rate immediately");
+
+            FriendlyFireRuntime.Clear(); FriendlyFireParticipants.Clear();
+            SessionSettings.ZombieModifiers = default; SessionSettings.ZombieDynamicBalance = true;
+            Time.time = Time.unscaledTime = 0; CombatMatchRuntime.DynamicZombieRatio(1, 5); CombatMatchRuntime.RoleSettingsChanged();
+            other.Hp = 100;
+            other.ApplyDamage(Hit(human, float.MaxValue));
+            Time.time = Time.unscaledTime = .1f;
+            other.ApplyDamage(Hit(human, float.MaxValue));
+            check(Math.Abs(other.Hp - (80 - 8d / 3)) < .001, "Dynamic x2.67 shares ordinary burst and damage-budget ledger");
+            float hpBefore = other.Hp;
+            CombatMatchRuntime.DynamicZombieRatio(2, 4); CombatMatchRuntime.RoleSettingsChanged();
+            other.ApplyDamage(Hit(human, float.MaxValue));
+            check(other.Hp == hpBefore, "Conversion does not refill or reset spent budget");
+            Time.time = Time.unscaledTime = .2f; other.ApplyDamage(Hit(human, float.MaxValue));
+            check(Math.Abs(other.Hp - (hpBefore - CombatMatchRuntime.RefillRoleScale(human))) < .001,
+                "Observed conversion retains tokens and smoothly updates refill rate");
+            hpBefore = other.Hp;
+            Time.time = Time.unscaledTime = .3f;
+            double scale = CombatMatchRuntime.RefillRoleScale(human);
+            other.ApplyDamage(Hit(human, float.MaxValue));
+            check(Math.Abs(other.Hp - (hpBefore - scale)) < .001, "Following hits use smooth refill without repeated role invalidation");
+            SessionSettings.FriendlyFireForHit = new(true, 100);
+            human.Hp = 100; human.ApplyDamage(Hit(other));
+            check(Math.Abs(human.Hp - (100 - 20 * CombatMatchRuntime.IncomingRoleScale(human))) < .001,
+                "Dynamic incoming scale follows existing opposite-team damage path");
+            human.Hp = 100; enemy.Hp = 100;
+            human.ApplyDamage(Hit(enemy)); enemy.ApplyDamage(Hit(human));
+            check(human.Hp == 80 && enemy.Hp == 80, "Dynamic policy cannot change PvE in either direction");
         }
         finally
         {
             CombatMatchRuntime.Zombies.Clear(); CombatMatchRuntime.PairRule = null; CombatMatchRuntime.RoleSettingsChanged();
-            SessionSettings.ZombieModifiers = default; SessionSettings.FriendlyFireForHit = default;
+            SessionSettings.ZombieModifiers = default; SessionSettings.ZombieDynamicBalance = false; SessionSettings.FriendlyFireForHit = default;
             FriendlyFireRuntime.Clear(); FriendlyFireParticipants.Clear();
         }
     }

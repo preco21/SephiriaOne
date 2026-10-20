@@ -7,6 +7,7 @@ namespace SephiriaOne
         internal static int ZombieDuration => policy.ZombieDuration;
         internal static int ZombieStartingCount => policy.ZombieStartingCount;
         internal static bool ZombieAnyDeath => policy.ZombieAnyDeath;
+        internal static bool ZombieDynamicBalance => policy.ZombieDynamicBalance;
         internal static CombatRoleSettings ZombieModifiers => policy.ZombieModifiers;
         internal static bool TrySetZombieDuration(int seconds, out string message)
         {
@@ -38,7 +39,22 @@ namespace SephiriaOne
             if (!NetworkServer.active || !EnsureResourceScope()) return false;
             if (!policy.ZombieModifiers.Equals(settings))
             {
+                bool effectiveChange = !policy.ZombieDynamicBalance ||
+                    policy.ZombieModifiers.RefillEnabled != settings.RefillEnabled ||
+                    policy.ZombieModifiers.IncomingEnabled != settings.IncomingEnabled;
                 policy.RecordZombieModifiers(settings); intentRevision++;
+                if (effectiveChange) CombatMatchRuntime.RoleSettingsChanged();
+                NotifySettingsChanged();
+            }
+            message = ZombieSurvivalCommand.DescribeModifiers(); return true;
+        }
+        internal static bool TrySetZombieDynamicBalance(bool enabled, out string message)
+        {
+            message = ZombieSurvivalCommand.Usage;
+            if (!NetworkServer.active || !EnsureResourceScope()) return false;
+            if (policy.ZombieDynamicBalance != enabled)
+            {
+                policy.RecordZombieDynamicBalance(enabled); intentRevision++;
                 CombatMatchRuntime.RoleSettingsChanged(); NotifySettingsChanged();
             }
             message = ZombieSurvivalCommand.DescribeModifiers(); return true;

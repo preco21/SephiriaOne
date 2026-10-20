@@ -27,8 +27,10 @@ namespace SephiriaOne
             zombieStop = widgets.Button(pageRoot, "Stop match", 109, 54, 87, 25, () => Execute("/one zombie stop", true));
             zombieResetKda = widgets.Button(pageRoot, "Reset K/D/A", 202, 54, 87, 25,
                 () => Execute("/one zombie resetkda", true));
-            AddCheckbox("Any death converts", 16, 81, 273, 25, s => SessionSettings.ZombieAnyDeath, s => true,
+            AddCheckbox("Any death converts", 16, 81, 132, 25, s => SessionSettings.ZombieAnyDeath, s => true,
                 "/one zombie any-death", s => s.HostActive && s.SessionIdentity != null);
+            AddCheckbox("Dynamic Balancing", 154, 81, 135, 25, s => SessionSettings.ZombieDynamicBalance, s => true,
+                "/one zombie dynamic", s => s.HostActive && s.SessionIdentity != null);
             AddCheckbox("Refill (x)", 16, 108, 150, 25, s => SessionSettings.ZombieModifiers.RefillEnabled, s => true,
                 "/one zombie refill", s => s.HostActive && s.SessionIdentity != null);
             zombieRefill = widgets.Input(pageRoot, 174, 108, 56, EditZombieRefill);
@@ -47,12 +49,24 @@ namespace SephiriaOne
             zombieResetKda.interactable = host && SessionSettings.CanResetFriendlyFireScores;
             zombieApply.interactable = zombieResetDuration.interactable = amount.interactable = host;
             zombieCount.interactable = zombieCountApply.interactable = zombieCountReset.interactable = host;
-            zombieRefill.interactable = zombieIncoming.interactable = zombieRefillApply.interactable = zombieIncomingApply.interactable = host;
+            bool dynamic = SessionSettings.ZombieDynamicBalance;
+            zombieRefill.interactable = zombieIncoming.interactable = zombieRefillApply.interactable = zombieIncomingApply.interactable = host && !dynamic;
             if (!zombieDurationDraft) amount.SetTextWithoutNotify(SessionSettings.ZombieDuration.ToString(CultureInfo.InvariantCulture));
             if (!zombieCountDraft) zombieCount.SetTextWithoutNotify(SessionSettings.ZombieStartingCount.ToString(CultureInfo.InvariantCulture));
             var modifiers = SessionSettings.ZombieModifiers;
-            if (!zombieRefillDraft) zombieRefill.SetTextWithoutNotify(modifiers.RefillNumber);
-            if (!zombieIncomingDraft) zombieIncoming.SetTextWithoutNotify(modifiers.IncomingNumber);
+            if (dynamic)
+            {
+                // Discard stale numeric drafts when switching modes; saved manual
+                // values remain in policy and return when dynamic mode is disabled.
+                zombieRefillDraft = zombieIncomingDraft = false;
+                zombieRefill.SetTextWithoutNotify(CombatMatchRuntime.ZombieRefillScale.ToString("0.##", CultureInfo.InvariantCulture));
+                zombieIncoming.SetTextWithoutNotify((CombatMatchRuntime.ZombieIncomingScale * 100).ToString("0.##", CultureInfo.InvariantCulture));
+            }
+            else
+            {
+                if (!zombieRefillDraft) zombieRefill.SetTextWithoutNotify(modifiers.RefillNumber);
+                if (!zombieIncomingDraft) zombieIncoming.SetTextWithoutNotify(modifiers.IncomingNumber);
+            }
             availability.text = CombatMatchRuntime.DescribeZombie();
             availability.color = PanelWidgets.Muted;
             if (!DeathmatchFeature.Available || !FriendlyFireFeature.Available || !ReviveAllFeature.Available)

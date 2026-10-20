@@ -1,4 +1,7 @@
 {
+  "Dynamic Balancing": "Dynamic Balancing",
+  "Dynamic Balancing: {0}.": "Dynamic Balancing: {0}.",
+  "Dynamic Balancing: /one zombie dynamic on|off|reset (default off). Team ratio controls refill x1..3 and incoming damage 30..100%; changes ease over about 3s. Manual values are retained; individual modifier switches still apply.": "Dynamic Balancing: /one zombie dynamic on|off|reset (default off). Team ratio controls refill x1..3 and incoming damage 30..100%; changes ease over about 3s. Manual values are retained; individual modifier switches still apply.",
   " /one xp help lists XP options.": " /one xp help lists XP options.",
   "Host only: /one xp block on|off|reset; rabbit-exempt on|off|reset; status; reset. Both default off. Blocks new XP for all players; existing levels stay unchanged. /one save persists settings.": "Host only: /one xp block on|off|reset; rabbit-exempt on|off|reset; status; reset. Both default off. Blocks new XP for all players; existing levels stay unchanged. /one save persists settings.",
   "Only the host can change XP settings.": "Only the host can change XP settings.",

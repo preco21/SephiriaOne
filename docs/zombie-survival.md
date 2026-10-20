@@ -1,4 +1,61 @@
-# Zombie Survival (0.66.2, 2026-10-19)
+# Zombie Survival (0.76.0, 2026-10-21)
+
+## Dynamic Balancing (0.76.0)
+
+The Zombie tab has a **Dynamic Balancing / 동적 밸런싱** toggle, default off.
+Host commands: `/one zombie dynamic on|off|reset`; reset restores off.
+`/one save` persists it in v41. Older presets remain static, and schemas v1..40
+reject the new row rather than silently misinterpreting it.
+
+When enabled, the current team composition determines Zombie bonuses. Let
+`s = Humans / (Humans + Zombies)`, equivalent to `ratio / (1 + ratio)`.
+
+- Refill multiplier: `1 + 2s`, bounded to **×1..×3**.
+- Incoming damage: `1 - 0.7s`, bounded to **30..100%** of normal PvP damage.
+
+| Zombies : Humans | Refill | Incoming damage |
+| --- | --- | --- |
+| 1 : 5 | ×2.67 | 41.67% |
+| 1 : 1 | ×2 | 65% |
+| 5 : 1 | ×1.33 | 88.33% |
+
+These are target values, with diminishing returns at extreme ratios. Initial
+roles initialize the curve immediately. Each conversion settles the previous
+target up to that instant, then eases toward the new target exponentially with a
+one-second time constant: approximately 63% of the change after one second and
+95% after three seconds. Several conversions during this interval remain
+continuous. Query/frame frequency does not change the curve.
+
+Counts use the captured roster and committed team roles, including pending
+respawns. A temporary death/loading state does not alter the ratio. A converted
+corpse counts on its new team immediately, but combat modifiers only activate
+after successful revival. Late joiners remain spectators; departure/reconnection
+cancels through the existing connection-receipt lifecycle.
+
+The existing refill/incoming enable switches still apply independently. Numeric
+manual settings are retained; the UI shows read-only dynamic values while on.
+Turning dynamic balancing off immediately restores the exact manual values.
+Commands may edit dormant manual values without perturbing the active damage
+budget. Outside a started round the dynamic model is neutral (×1 / 100%).
+
+Refill still requires global PvP balancing; incoming reduction has the same
+opposing-player scope as static Zombie modifiers. Native stats, PvE and other
+modes are unchanged. Neither conversion nor smoothing replenishes spent damage
+budget. Actual role/config transitions keep the existing conservative elapsed
+refill protection; smoothing itself does not advance `RoleRevision` each frame.
+
+`ZombieDynamicBalance` is a small pure, match-owned smoothing policy, consumed
+by the shared `CombatMatchRoles` path. Start/conversion/clear own its lifecycle.
+The implementation adds no network messages or per-query roster allocations;
+guests receive the already-established host-authoritative damage results.
+
+Verification covers curve bounds/monotonicity, frame-rate independence,
+consecutive conversions, pending/manual respawns, nonconverting deaths, live
+switches and dormant edits, 9-player starts, repeat matches, reconnect,
+selection/master-toggle cancellation, scope/authority loss, timeout/victory,
+strict preset migration, real damage-hook budgeting and PvE isolation. Warmed
+10,000 paired role queries allocate zero bytes in fixtures. No game was launched
+or deployed; live guest gameplay and UI rendering still require verification.
 
 Current Zombies have a [persistent native green X indicator](zombie-role-visual.md),
 including while awaiting revival. It is cosmetic, uses stock guest transport,
@@ -77,10 +134,11 @@ independent Zombie refill/incoming-damage controls. Equivalent host commands:
 | `/one zombie count N` | Starting Zombies for the next match; positive whole number, default 1 |
 | `/one zombie count reset` | Restore one starting Zombie |
 | `/one zombie any-death on` / `off` / `reset` | Convert on any completed Human death; default/reset off |
+| `/one zombie dynamic on` / `off` / `reset` | Derive modifiers from team composition; default/reset off |
 | `/one zombie refill on` / `off` / `x3` / `reset` | Zombie refill multiplier, initially on, default x3, range 0.1..10 |
 | `/one zombie damage on` / `off` / `30%` / `reset` | Zombie incoming PvP damage, initially on, default 30%, range 0..100 |
 | `/one zombie resetkda` | Reset shared K/D/A and matchup records; keep teams and timer |
-| `/one save` | Persist settings only; nondefault starting count uses v32, other Zombie settings use v31 |
+| `/one save` | Persist settings only; dynamic on uses v41, nondefault count v32, other Zombie settings v31 |
 
 Both multipliers accept up to two decimal places and apply live. Refill multiplies
 the global PvP damage-budget refill and requires PvP balancing. Incoming damage

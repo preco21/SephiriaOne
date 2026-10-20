@@ -11,7 +11,7 @@ namespace UnityEngine
         public override int GetHashCode() => base.GetHashCode();
     }
     public static class Debug { public static void LogWarning(object message) {} }
-    public static class Time { public static float time; public static float deltaTime { get; set; } }
+    public static class Time { public static float time, unscaledTime; public static float deltaTime { get; set; } }
     public struct Vector2
     {
         public float x, y;
@@ -41,6 +41,8 @@ namespace SephiriaOne
     {
         internal static PlayerAvatar Chaser;
         internal static readonly HashSet<PlayerAvatar> Zombies = new();
+        internal static void DynamicZombieRatio(int zombies, int humans) =>
+            zombieBalance.Retarget(zombies, humans, UnityEngine.Time.unscaledTime);
         internal static bool IsActiveZombie(PlayerAvatar player) => player && !player.IsDead && Zombies.Contains(player);
         internal static bool IsZombieSurvival => Zombies.Count > 0;
         internal static void CompletedMatchDeath(PlayerAvatar player, long token, bool success, bool anyDeath) { }
@@ -68,6 +70,7 @@ namespace SephiriaOne
     internal static class ReviveAllFeature { internal static bool Available = true; }
     internal static class SessionSettings
     {
+        internal static bool ZombieDynamicBalance;
         internal static CombatRoleSettings PlayTagChaser, ZombieModifiers;
         internal static bool ZombieAnyDeath => false;
         private static FriendlyFireSettings settings;

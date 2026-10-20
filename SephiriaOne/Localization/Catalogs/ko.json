@@ -1,4 +1,7 @@
 {
+  "Dynamic Balancing": "동적 밸런싱",
+  "Dynamic Balancing: {0}.": "동적 밸런싱: {0}.",
+  "Dynamic Balancing: /one zombie dynamic on|off|reset (default off). Team ratio controls refill x1..3 and incoming damage 30..100%; changes ease over about 3s. Manual values are retained; individual modifier switches still apply.": "동적 밸런싱: /one zombie dynamic on|off|reset (기본 꺼짐). 팀 비율에 따라 충전 배율 x1~3, 받는 피해 30~100%로 조정하며 약 3초에 걸쳐 부드럽게 변경합니다. 수동 설정값은 보존되며 각 보너스의 켜기/끄기는 유지됩니다.",
   " /one xp help lists XP options.": " /one xp help로 경험치 옵션을 확인하세요.",
   "Host only: /one xp block on|off|reset; rabbit-exempt on|off|reset; status; reset. Both default off. Blocks new XP for all players; existing levels stay unchanged. /one save persists settings.": "호스트 전용: /one xp block on|off|reset; rabbit-exempt on|off|reset; status; reset. 기본값은 모두 꺼짐입니다. 모든 플레이어의 경험치 획득을 차단하며 기존 레벨은 유지합니다. /one save로 저장합니다.",
   "Only the host can change XP settings.": "호스트만 경험치 설정을 변경할 수 있습니다.",

@@ -1,6 +1,11 @@
 # Development knowledge index
 
-Maintained: 2026-10-20 (Asia/Seoul), addon `0.75.0`.
+Maintained: 2026-10-21 (Asia/Seoul), addon `0.76.0`.
+
+[Zombie Dynamic Balancing](zombie-survival.md#dynamic-balancing-0760):
+optional team-ratio curve (refill ×1..×3, incoming damage 30..100%) eases across
+conversions. Toggle in Zombie or `/one zombie dynamic on|off|reset`, default off.
+Manual values and individual switches remain available; v41 saves the toggle.
 
 [Heaven/Requital Slates](requital-slates.md): Items → Starting Slates now selects
 either native Slate for automatic loadouts and Give now.

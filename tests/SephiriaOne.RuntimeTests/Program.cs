@@ -796,6 +796,7 @@ TournamentMessageTests.Run(Start, id => Add(id), Check);
 PlayTagControlsTests.Run(Start, id => Add(id), Check);
 ZombieSurvivalRuntimeTests.Run(Start, id => Add(id), Check);
 ZombieSurvivalControlsTests.Run(Start, Check);
+ZombieDynamicBalanceTests.Run(Start, id => Add(id), Check);
 ZombieStartingCountTests.Run(Start, id => Add(id), Check);
 ZombieAnnouncementTests.Run(Start, id => Add(id), Check);
 PlayTagRuntimeTests.Run(Start, id => Add(id), Check);
