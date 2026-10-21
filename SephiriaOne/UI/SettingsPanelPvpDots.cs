@@ -22,14 +22,14 @@ namespace SephiriaOne
 
         private void BuildPvpDotEditor()
         {
-            widgets.Text(pageRoot, "DotHeading", "Debuffs / Dark Cloud", 312, 0, 272, 24, 13);
+            widgets.Text(pageRoot, "DotHeading", "Artifacts / Debuffs", 312, 0, 272, 24, 13);
             const float height = PageHeight - 32;
             var container = PanelWidgets.Rect(pageRoot, "DotIntervals", 312, 32, 272, height);
             container.gameObject.AddComponent<Image>().color = new Color32(17, 27, 40, 255);
             var scroll = container.gameObject.AddComponent<ScrollRect>();
             var viewport = PanelWidgets.Rect(container, "Viewport", 0, 0, 258, height);
             viewport.gameObject.AddComponent<RectMask2D>();
-            const int durationHeight = 80;
+            const int durationHeight = ArtifactRateEditorHeight + 80;
             var content = PanelWidgets.Rect(viewport, "Effects", 0, 0, 258, durationHeight + PvpDotSettings.Count * 62);
             scroll.viewport = viewport; scroll.content = content; scroll.horizontal = false;
             scroll.movementType = ScrollRect.MovementType.Clamped; scroll.scrollSensitivity = 30;
@@ -43,11 +43,12 @@ namespace SephiriaOne
             bar.handleRect = handle; bar.targetGraphic = image; bar.direction = Scrollbar.Direction.BottomToTop;
             bar.navigation = new Navigation { mode = Navigation.Mode.None };
             scroll.verticalScrollbar = bar;
-            widgets.Text(content, "DotDurationLabel", "Burn-family max duration (s)", 4, 0, 250, 20, 12);
-            pvpDotDuration = widgets.Input(content, 4, 24, 56, _ => pvpDotDurationDraft = true);
-            changeButtons.Add(widgets.Button(content, "Apply", 66, 24, 62, 25, ApplyPvpDotDuration));
-            pvpDotDurationReset = widgets.Button(content, "Reset", 134, 24, 120, 25, ResetPvpDotDuration);
-            widgets.Text(content, "DotDurationHint", "Burn / Plasma Burn / Blue Flame", 4, 54, 250, 18, 10);
+            BuildPvpArtifactRate(content);
+            widgets.Text(content, "DotDurationLabel", "Burn-family max duration (s)", 4, ArtifactRateEditorHeight, 250, 20, 12);
+            pvpDotDuration = widgets.Input(content, 4, ArtifactRateEditorHeight + 24, 56, _ => pvpDotDurationDraft = true);
+            changeButtons.Add(widgets.Button(content, "Apply", 66, ArtifactRateEditorHeight + 24, 62, 25, ApplyPvpDotDuration));
+            pvpDotDurationReset = widgets.Button(content, "Reset", 134, ArtifactRateEditorHeight + 24, 120, 25, ResetPvpDotDuration);
+            widgets.Text(content, "DotDurationHint", "Burn / Plasma Burn / Blue Flame", 4, ArtifactRateEditorHeight + 54, 250, 18, 10);
             for (int i = 0; i < PvpDotSettings.Count; i++)
             {
                 var row = new DotIntervalEditor { Effect = (PvpDotEffect)i };
@@ -65,6 +66,7 @@ namespace SephiriaOne
 
         private void RefreshPvpDots(SettingsSnapshot snapshot)
         {
+            RefreshPvpArtifactRate(snapshot);
             if (pvpDotDuration)
             {
                 pvpDotDuration.interactable = snapshot.CanMutate && snapshot.FriendlyFireAvailable;
@@ -104,6 +106,6 @@ namespace SephiriaOne
             pvpDotDurationDraft = false; pvpDotDurationLast = -1;
             if (pvpDotDuration) pvpDotDuration.SetTextWithoutNotify("");
         }
-        private void ClearPvpDots() { ClearPvpDotDuration(); foreach (var row in pvpDotEditors) ClearPvpDot(row); }
+        private void ClearPvpDots() { ClearPvpArtifactRate(); ClearPvpDotDuration(); foreach (var row in pvpDotEditors) ClearPvpDot(row); }
     }
 }

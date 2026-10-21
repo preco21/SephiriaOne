@@ -1,5 +1,12 @@
 # Sephiria domain findings
 
+Autonomous artifact cadence (`0.86.0`): serialized damage IDs distinguish seven
+automatic emitters from weapons, books, planets and armaments. Fire/ice Guillotine
+share one ID; `FROST` (Frost Relic / 얼음 무구) differs from `GLACIER` (빙하).
+A zero resolved damage result still runs native callbacks, so early absolute
+rejection plus late shared-ledger reservation is required. Chakram/Echo statuses
+are independent of direct-hit return values. See [audit and boundaries](pvp-autonomous-artifacts.md).
+
 Burn-family cap (`0.85.0`): the existing effect-origin receipt stores the last
 native application/refresh time. Live duration configuration must read that age,
 not reset clocks on a settings edit or mutate native timers. Compare the float

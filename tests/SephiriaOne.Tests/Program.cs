@@ -70,6 +70,7 @@ Console.WriteLine($"Passed {PvpRapidSettingsTests.Run()} PvP rapid-hit setting c
 Console.WriteLine($"Passed {PvpPerfectGuardSettingsTests.Run()} PvP Perfect Guard setting checks.");
 Console.WriteLine($"Passed {PvpDotSettingsTests.Run()} PvP DoT interval checks.");
 Console.WriteLine($"Passed {PvpDotDurationTests.Run()} PvP DoT duration checks.");
+Console.WriteLine($"Passed {PvpArtifactRateTests.Run()} autonomous artifact policy checks.");
 Console.WriteLine($"Passed {PvpDotScheduleTests.Run()} PvP debuff schedule checks.");
 Console.WriteLine($"Passed {PvpInfinitePotionSettingsTests.Run()} PvP infinite potion setting checks.");
 Console.WriteLine($"Passed {RequitalSettingsTests.Run()} Requital setting checks.");

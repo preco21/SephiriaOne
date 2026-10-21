@@ -197,6 +197,20 @@ internal static class DarkCloudTests
         check(FriendlyFireRuntime.BeforeDarkCloudStrike(pair.Cloud, pair.Target), "Strike can be admitted before native damage is emitted");
         pair.Target.IsDead = true; pair.Target.Revive(100); Time.time += 1;
         check(FriendlyFireRuntime.BeforeDarkCloudStrike(pair.Cloud, pair.Target), "A strike without a damage budget still retires on revival");
+        pair = Fresh(); pair.Cloud.OnAttackUnit += t => t.ApplyDebuff(new(), pair.Source);
+        pair.Cloud.FireLightning(pair.Target);
+        SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, artifactRate: new(true, 2)));
+        Time.time = 10.7f; pair.Cloud.FireLightning(pair.Target);
+        check(pair.Cloud.Strikes == 1 && pair.Target.DebuffApplications == 1, "Autonomous limit composes before cloud strike and burn callback");
+        Time.time = 12; pair.Cloud.FireLightning(pair.Target);
+        check(pair.Cloud.Strikes == 2, "Longer autonomous interval admits cloud at its boundary");
+        SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, artifactRate: new(seconds: 0.1m)));
+        Time.time = 12.1f; pair.Cloud.FireLightning(pair.Target); check(pair.Cloud.Strikes == 2, "Short artifact interval cannot weaken existing Dark Cloud limit");
+        Time.time = 12.7f; pair.Cloud.FireLightning(pair.Target); check(pair.Cloud.Strikes == 3, "Own cloud interval still applies");
+        SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, artifactRate: new(true, 2)));
+        Time.time = 13.4f; pair.Cloud.FireLightning(pair.Target); check(pair.Cloud.Strikes == 3, "Live edits keep the cloud timestamp");
+        SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, artifactRate: new(enabled: false)));
+        pair.Cloud.FireLightning(pair.Target); check(pair.Cloud.Strikes == 4, "Off immediately returns to the own cloud interval");
         CombatMatchRuntime.PairRule = null; FriendlyFireParticipants.Clear(); Time.time = 0;
     }
 

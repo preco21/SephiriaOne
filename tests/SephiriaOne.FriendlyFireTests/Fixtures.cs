@@ -90,6 +90,7 @@ public enum EApplyDamageResult { Success, Fail_Absolute, Fail_Block }
 public enum EDamageFailType { None, Deny, Block }
 public enum EDamageFromType { None, BasicAttack, Magic, DirectAttack }
 public enum EDamageType { Slice, Projectile, ElementalEffectDamage, Fall }
+public enum EDamageElementalType { None, IceAndLightning, FireAndLightning }
 public enum EMonsterType { Normal, Dummy }
 public enum EPersonality { Aggressive }
 public enum ERelationBehaviour { Neutral, Friendly, Hostile }
@@ -107,6 +108,7 @@ public class BoolFlag
 }
 public class DamageInstance
 {
+    public EDamageElementalType elementalType;
     public CombatBehaviour origin;
     public long targetFactionLayers;
     public bool isSystemDamage;

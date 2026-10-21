@@ -1,5 +1,10 @@
 # Development knowledge index
 
+[Autonomous artifact PvP cadence](pvp-autonomous-artifacts.md): optional hard hit
+interval, default off / 2s, for seven audited automatic artifact sources and
+Dark Cloud. Shared pair/life/session clocks, explicit weapon/book/companion/planet
+exclusions, native guest damage sync, EN/KO controls and v47 presets.
+
 Maintained: 2026-10-22 (Asia/Seoul), addon `0.85.0`.
 
 [Configurable PvP DoT duration](pvp-dot-intervals.md#configurable-duration-cap-0850-2026-10-22):

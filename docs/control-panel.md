@@ -1,5 +1,14 @@
 # Host settings panel
 
+## Autonomous artifact cadence (`0.86.0`, 2026-10-22)
+
+PvP Balance now starts its right scroll pane with an **Autonomous artifact hit
+limit** toggle, exact seconds input, Apply and family Reset. The pane is titled
+**Artifacts / Debuffs**; existing DoT controls follow below. Content grows from
+700 to 812 pixels; window and viewport sizes remain unchanged. Values use shared
+host commands, cached formatting, isolated drafts and ordinary scope cleanup.
+See [settings and coverage](pvp-autonomous-artifacts.md).
+
 ## DoT duration control (`0.85.0`, 2026-10-22)
 
 The top row of **PvP Balance → Debuffs / Dark Cloud** now sets the shared

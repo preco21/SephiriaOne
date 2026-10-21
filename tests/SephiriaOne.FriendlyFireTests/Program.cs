@@ -11,6 +11,7 @@ ActiveDefenseTests.Run(Check);
 ResponsiveBudgetTests.Run(Check);
 ConfigurableRapidTests.Run(Check);
 PerfectGuardTests.Run(Check);
+ArtifactRateTests.Run(Check);
 MinimumDamageTests.Run(Check);
 SessionSettings.FriendlyFireForHit = default;
 var attacker = new PlayerAvatar { Name = "Alice" };

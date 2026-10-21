@@ -57,7 +57,7 @@ namespace SephiriaOne
             if (window.Started && window.CombatEpoch == combatEpoch && window.ParticipantEpoch == participantEpoch && window.BalanceRevision == balanceRevision &&
                 window.SourceLife == sourceLife && window.TargetLife == targetLife &&
                 window.SourceFloor == source.currentFloorGuid && window.TargetFloor == victim.currentFloorGuid &&
-                !window.Strike.Ready(now, settings.DotIntervals.Interval(PvpDotEffect.DarkCloud))) return false;
+                !window.Strike.Ready(now, DarkCloudInterval(settings))) return false;
 
             // Reserve before native callbacks: recursive strikes and another
             // cloud object owned by this player share the same pair's window.

@@ -48,6 +48,7 @@
     <PackageReference Include="Lib.Harmony" Version="2.4.2" />
     <Compile Include="../../SephiriaOne/Features/Combat/FriendlyFireSettings.cs" Link="FriendlyFireSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/PvpRapidSettings.cs" Link="PvpRapidSettings.cs" />
+    <Compile Include="../../SephiriaOne/Features/Combat/PvpArtifactRateSettings.cs" Link="PvpArtifactRateSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/PvpPerfectGuardSettings.cs" Link="PvpPerfectGuardSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/PvpAmplificationSettings.cs" Link="PvpAmplificationSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/PvpDotSettings.cs" Link="PvpDotSettings.cs" />

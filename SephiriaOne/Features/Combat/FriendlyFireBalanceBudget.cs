@@ -21,6 +21,17 @@ namespace SephiriaOne
             internal FriendlyFireDamageBudget Budget;
             internal FriendlyFireHitFrequency Frequency, IncidentalFrequency;
             internal long FrequencyRevision;
+            // Fixed catalog-sized storage, allocated only for a pair that lands
+            // an audited artifact hit. Re-equipping cannot reset source identity.
+            private DebuffPulse[] artifacts;
+            internal bool ArtifactReady(int source, float now, float interval) =>
+                artifacts == null || artifacts[source].Ready(now, interval);
+            internal void ReserveArtifact(int source, float now)
+            {
+                if (artifacts == null) artifacts = new DebuffPulse[AutonomousArtifactCatalog.Count];
+                artifacts[source].Reserve(now);
+            }
+            internal void ResetArtifacts() { if (artifacts != null) System.Array.Clear(artifacts, 0, artifacts.Length); }
             private DebuffPulse burn, plasma, frostbite, poison, wound, shock, freeze, chim, plasmaShock;
             internal ref DebuffPulse Pulse(PvpDotEffect effect)
             {
@@ -65,11 +76,11 @@ namespace SephiriaOne
             if (receipt != null && balanceActors.TryGetValue(receipt, out BalanceActor actor)) actor.Life++;
         }
 
-        private static double LimitBalancedDamage(double damage, double maxHp, double refillPerSecond, double baseRefill, double incomingScale, bool hitFrequency, PvpDotSettings intervals, PvpRapidSettings rapid)
+        private static BalanceWindow CurrentBalanceWindow()
         {
             var attacker = current.AttackerReceipt;
             var victim = current.VictimReceipt;
-            if (attacker == null || victim == null) return 0;
+            if (attacker == null || victim == null) return null;
             var source = balanceActors.GetValue(attacker, createBalanceActor);
             var target = balanceActors.GetValue(victim, createBalanceActor);
             var window = source.Targets.GetValue(victim, createBalanceWindow);
@@ -81,15 +92,26 @@ namespace SephiriaOne
                 window.SourceFloor != sourceFloor || window.TargetFloor != targetFloor)
             {
                 window.Started = true; window.Budget = default; window.Generation++;
-                window.ResetPulses();
+                window.ResetPulses(); window.ResetArtifacts();
                 window.Frequency = window.IncidentalFrequency = default;
                 window.CombatEpoch = epoch; window.ParticipantEpoch = participants; window.Revision = revision;
                 window.SourceLife = source.Life; window.TargetLife = target.Life;
                 window.SourceFloor = sourceFloor; window.TargetFloor = targetFloor;
             }
+            return window;
+        }
+
+        private static double LimitBalancedDamage(double damage, double maxHp, double refillPerSecond, double baseRefill, double incomingScale, bool hitFrequency, PvpDotSettings intervals, PvpRapidSettings rapid, PvpArtifactRateSettings artifactRate)
+        {
+            var window = CurrentBalanceWindow();
+            if (window == null) return 0;
             // Reserve before later native callbacks; nested procs and companions
             // consume the owner's same directed budget, regardless of damage ID.
             float now = Time.time;
+            int artifact = CurrentAutonomousArtifact();
+            // A native callback can land a nested hit after our early read-only
+            // admission. Recheck here before rate histories or damage credit.
+            if (artifact >= 0 && artifactRate.Enabled && !window.ArtifactReady(artifact, now, artifactRate.Interval)) return 0;
             int pulse = DebuffPulseKind(current.Damage);
             var effect = (PvpDotEffect)pulse;
             if (pulse >= 0 && intervals.PreserveSchedule(effect) &&
@@ -119,6 +141,7 @@ namespace SephiriaOne
                 // Keep history even when protection is off; enabling it live
                 // must not award an extra immediate hit or reset the budget.
                 if (pulse >= 0) window.Pulse(effect).Reserve(now);
+                if (artifact >= 0) window.ReserveArtifact(artifact, now);
                 current.BudgetWindow = window; current.BudgetGeneration = window.Generation;
                 current.BudgetCharged = charged; current.BudgetMaxHp = maxHp;
                 current.BudgetIncomingScale = incomingScale;

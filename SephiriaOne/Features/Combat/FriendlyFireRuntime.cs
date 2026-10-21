@@ -95,6 +95,8 @@ namespace SephiriaOne
                     InArtifactDamage = __state.InArtifactDamage || ReferenceEquals(damage, artifactDamage),
                     AttackerReceipt = FriendlyFireParticipants.Capture(attacker), VictimReceipt = FriendlyFireParticipants.Capture(TeamOwner(__instance)),
                     ParticipantEpoch = FriendlyFireParticipants.Epoch };
+                if (settings.Balance && !AutonomousArtifactReady(settings.ArtifactRate))
+                { __result = EApplyDamageResult.Fail_Absolute; return false; }
             }
             catch (Exception error) { Warn(error); }
             return true;
@@ -209,7 +211,7 @@ namespace SephiriaOne
                 {
                     double maxHp = victim.MaxHp;
                     double refill = settings.RefillScale * CombatMatchRuntime.RefillRoleScale(current.Attacker);
-                    scaled = LimitBalancedDamage(FriendlyFireBalance.Soften(scaled, maxHp), maxHp, refill, settings.RefillScale, incoming, settings.HitFrequency, settings.DotIntervals, settings.Rapid);
+                    scaled = LimitBalancedDamage(FriendlyFireBalance.Soften(scaled, maxHp), maxHp, refill, settings.RefillScale, incoming, settings.HitFrequency, settings.DotIntervals, settings.Rapid, settings.ArtifactRate);
                 }
                 // Reduce the damage native code can actually accept, including
                 // extreme unbalanced hits that would otherwise reach this cap.

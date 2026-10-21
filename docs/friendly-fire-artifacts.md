@@ -1,5 +1,12 @@
 # Offensive artifact hostility audit
 
+## Autonomous damage cadence (`0.86.0`, 2026-10-22)
+
+The new optional [autonomous artifact limit](pvp-autonomous-artifacts.md) applies
+a per-source/opponent hard interval to seven audited emitters and composes with
+Dark Cloud's existing strike clock. It retains the targeting and native PvE
+paths documented below; secondary DoT controls remain separate.
+
 Updated: 2026-10-16, addon `0.59.1`. This extends [friendly fire](friendly-fire.md)
 using its existing host toggle and damage percentage; no additional setting,
 preset field, asset or guest addon is introduced.

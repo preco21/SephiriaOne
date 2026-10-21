@@ -91,7 +91,7 @@ internal static class GamePvpBurnDurationTests
         var panel = addon.GetType("SephiriaOne.SettingsPanel", true)!;
         var build = Code(panel, "BuildPvpDotEditor");
         Require(build.Any(i => i.LoadsConstant("Burn-family max duration (s)")) &&
-            build.Any(i => i.LoadsConstant("Burn / Plasma Burn / Blue Flame")) && build.Any(i => i.LoadsConstant(700f)),
+            build.Any(i => i.LoadsConstant("Burn / Plasma Burn / Blue Flame")) && build.Any(i => i.LoadsConstant(812f)),
             "Duration row labels exact coverage and extends existing scroll content without shrinking the viewport");
         var applyDuration = Code(panel, "ApplyPvpDotDuration"); var resetDuration = Code(panel, "ResetPvpDotDuration");
         Require(applyDuration.Any(i => i.LoadsConstant("/one friendlyfire dot-duration ")) &&

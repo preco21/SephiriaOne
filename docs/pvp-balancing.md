@@ -1,5 +1,13 @@
 # Optional PvP balancing
 
+## Autonomous artifact hit limit (`0.86.0`, 2026-10-22)
+
+[Optional per-source cadence](pvp-autonomous-artifacts.md): off / 2s by default,
+configurable in PvP Balance or `/one friendlyfire artifact-rate`. Uses shared
+connection/life/session state; no native stat writes or per-frame work. Valid
+hits retain the existing damage-budget minimum, while this explicitly enabled
+hard-rate control rejects extra artifact impacts inside its interval.
+
 Added in `0.52.0`, 2026-10-13. Host-only installation; the existing native damage
 and FX replication continues to serve stock guests. Default: **off**.
 

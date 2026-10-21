@@ -1,4 +1,10 @@
 {
+  "Autonomous artifacts: /one friendlyfire artifact-rate on|off|reset; artifact-rate interval 0.05..60|reset (seconds, up to 2 decimals). Default off, 2s. Hard interval per attacker/artifact/opponent; requires PvP balancing. Dark Cloud uses the longer of this and its own interval. Weapons, books, companions, planets and other Ice Armaments are excluded.": "자동 공격 아티팩트: /one friendlyfire artifact-rate on|off|reset; artifact-rate interval 0.05..60|reset (초, 소수점 둘째 자리까지). 기본 꺼짐, 2초. PvP 밸런싱 중 공격자·아티팩트·상대별 최소 피해 간격을 강제합니다. 먹구름은 자체 간격과 이 값 중 긴 간격을 사용합니다. 무기 공격, 마법서, 동료, 행성, 길로틴 외 얼음 무구는 제외됩니다.",
+  "Autonomous artifact hit limit: {0}; {1}s per artifact/opponent (requires PvP balancing; Dark Cloud uses the longer interval).": "자동 공격 아티팩트 피해 제한: {0}; 아티팩트·상대별 {1}초 (PvP 밸런싱 필요, 먹구름은 더 긴 간격 적용).",
+  "Autonomous artifact hit limit": "자동 공격 아티팩트 피해 제한",
+  "Minimum hit interval (s)": "최소 피해 간격 (초)",
+  "Per artifact/opponent; Dark Cloud uses longer limit.": "아티팩트·상대별 적용. 먹구름은 더 긴 간격 적용.",
+  "Artifacts / Debuffs": "아티팩트 / 디버프",
   "Burn-family max duration (s)": "화상 계열 최대 지속 시간 (초)",
   "Burn / Plasma Burn / Blue Flame": "화상 / 플라즈마 화상 / 푸른 불꽃",
   "PvP DoT duration: /one friendlyfire dot-duration 0.05..10|reset (seconds, up to 2 decimals). Default 1.2; caps Burn, Plasma Burn and blue/evolved variants while balancing is on. Native reapplications may refresh this duration; other debuffs and tick intervals stay unchanged.": "PvP 지속 피해 시간: /one friendlyfire dot-duration 0.05..10|reset (초, 소수 둘째 자리까지). 기본 1.2초. 밸런스 조정이 켜져 있을 때 화상, 플라즈마 화상과 푸른 불꽃·진화형의 지속 시간을 제한합니다. 재적용 시 지속 시간은 갱신할 수 있으며, 다른 디버프와 피해 간격은 바뀌지 않습니다.",

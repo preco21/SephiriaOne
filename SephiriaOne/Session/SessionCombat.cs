@@ -56,6 +56,8 @@ namespace SephiriaOne
             { message = FriendlyFireCommand.Usage; return false; }
             if (command.Rapid.HasValue && !command.Rapid.Value.IsValid)
             { message = FriendlyFireCommand.Usage; return false; }
+            if (command.ArtifactRate.HasValue && !command.ArtifactRate.Value.IsValid)
+            { message = FriendlyFireCommand.Usage; return false; }
             if (command.PerfectGuard.HasValue && !command.PerfectGuard.Value.IsValid)
             { message = FriendlyFireCommand.Usage; return false; }
             if (command.DotMaxDurationSeconds.HasValue && !PvpDotSettings.ValidSeconds(command.DotMaxDurationSeconds.Value))
@@ -115,6 +117,8 @@ namespace SephiriaOne
                 settings.DotIntervals.Number(PvpDotEffect.Freeze), settings.DotIntervals.Number(PvpDotEffect.Chim),
                 settings.DotIntervals.Number(PvpDotEffect.DarkCloud)) + " " +
             L.F("Plasma shock interval: {0}s.", settings.DotIntervals.Number(PvpDotEffect.PlasmaShock)) + " " +
+            L.F("Autonomous artifact hit limit: {0}; {1}s per artifact/opponent (requires PvP balancing; Dark Cloud uses the longer interval).",
+                L.T(settings.ArtifactRate.Enabled ? "on" : "off"), settings.ArtifactRate.Number) + " " +
             L.F("PvP Burn-family duration cap: {0}s (Burn, Plasma Burn and blue/evolved variants; requires balancing).", settings.DotMaxDurationNumber) + " " +
             DescribeDebuffSchedules(settings.DotIntervals) + " " +
             L.F("Block lobby HP/MP recovery: {0}.", L.T(settings.BlockLobbyRegen ? "on" : "off")) +
