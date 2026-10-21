@@ -12,7 +12,13 @@ move it. The title bar has a **Close** button; the Center button was removed
 on 2026-10-10. The window clamps to the current canvas and
 scales down for smaller screens. Its position lasts for the current UI instance.
 
-The 2026-10-10 compact pass reduces the window from 800×480 to 760×420. The
+Version `0.82.0` uses a **760×560** window and three rows of seven wider tab
+buttons. **PvP Balance / PvP 밸런스** is a dedicated tab beside Combat, with
+general controls left and a taller debuff/Dark Cloud list right. Combat shows
+its own controls and supplies together. See the [current layout](control-panel.md#dedicated-pvp-balance-tab-0820-2026-10-21).
+The page requests base settings only, without participant detail or new polling.
+
+Historically, the 2026-10-10 compact pass reduced the window from 800×480 to 760×420. The
 14 tabs remain in two rows; forms use a 1.25 scale instead of 4/3. The title bar
 contains a short scope/update notice. Action feedback starts blank and retains
 autosizing for longer validation results. Add, Subtract and Close use `+`, `−`
@@ -24,9 +30,10 @@ This pass passed Debug/Release builds, existing window fixtures and the full
 portable/installed-game contract suite, including 3,066 catalog checks. No new
 input or gameplay hooks were added. Actual EN/KO rendering remains a manual check.
 
-All existing pages are tabs: **Stats, Fountain, Choices, Resources, Presets,
-Status, Rabbit, Merchant, Items, Combat, Spawns, Costumes, Updates and Deathmatch**. Stats
-also has a scrollable selector for the 27 supported visible stats. Boolean
+Current tabs are **Stats, Fountain, Choices, Resources, Presets, Status, Rabbit,
+Merchant, Items, Combat, PvP Balance, Spawns, Costumes, Updates, Deathmatch,
+Tournament, Play Tag, Zombie and Progression**. Stats
+also has a scrollable selector for supported visible stats. Boolean
 settings use checkboxes. Text and slider edits remain drafts until their action
 button is pressed. Failed checkbox actions restore the observed state.
 

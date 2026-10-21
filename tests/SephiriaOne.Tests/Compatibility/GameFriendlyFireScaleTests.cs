@@ -12,9 +12,10 @@ internal static class GameFriendlyFireScaleTests
         void Require(bool condition, string why) { if (!condition) throw new Exception("Fractional combat UI: " + why); }
         var build = Code("BuildFriendlyDamageEditor");
         var balance = Code("BuildPvpBalanceEditor");
-        Require(Code("BuildCombatEditor").Any(i => Call(i, "SettingsPanel", "BuildPvpBalanceEditor")) &&
+        Require(Code("BuildPage").Any(i => Call(i, "SettingsPanel", "BuildPvpBalanceEditor")) &&
+            !Code("BuildCombatEditor").Any(i => Call(i, "SettingsPanel", "BuildPvpBalanceEditor")) &&
             balance.Any(i => i.LoadsConstant("PvP balancing")) && balance.Any(i => i.LoadsConstant("/one friendlyfire balance")),
-            "Combat exposes a balancing checkbox through the same shared command");
+            "Dedicated page exposes balancing through the same shared command without rebuilding it inside Combat");
         var runtime = addon.GetType("SephiriaOne.FriendlyFireRuntime", true)!;
         var scale = PatchProcessor.GetOriginalInstructions(AccessTools.Method(runtime, "Scale")).ToList();
         Require(scale.Any(i => Call(i, "FriendlyFireSettings", "get_Balance")) && scale.Any(i => Call(i, "UnitAvatar", "get_MaxHp")) &&

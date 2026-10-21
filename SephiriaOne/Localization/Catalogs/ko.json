@@ -1,4 +1,7 @@
 {
+  "PvP Balance": "PvP 밸런스",
+  "Debuffs / Dark Cloud": "디버프 / 먹구름",
+  "Bonus %, not C-menu total.": "C 메뉴 합계가 아닌 추가 증폭(%)입니다.",
   "Balanced PvP: Elastic Band restores dash charges at most once every 2s per defender; extended weapon-counter protection is capped at 0.35s. PvE stays native.": "PvP 밸런스 보정: 탄성 밴드의 회피 횟수 회복은 방어자마다 2초에 한 번, 연장된 무기 반격 무적은 최대 0.35초로 제한됩니다. PvE에는 적용되지 않습니다.",
   "All Damage Amplified limit": "모든 피해 증폭 제한",
   "Soft bonus (%)": "완화 시작 (%)",

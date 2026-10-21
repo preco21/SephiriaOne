@@ -10,7 +10,8 @@ namespace SephiriaOne
 {
     public sealed partial class SettingsPanel : UIBase
     {
-        private const float WindowWidth = 760, WindowHeight = 420;
+        private const float WindowWidth = 760, WindowHeight = 560, PageHeight = 250;
+        private const int PvpBalancePage = 18;
         private readonly PanelWindowGeometry geometry = new PanelWindowGeometry(WindowWidth, WindowHeight);
         private readonly List<Button> tabs = new List<Button>();
         private readonly List<PanelCheckbox> checkboxes = new List<PanelCheckbox>();
@@ -52,15 +53,17 @@ namespace SephiriaOne
             scopeLabel = widgets.Text(title, "Scope", "Host · All players", 220, 8, 464, 26, 11);
             scopeLabel.color = PanelWidgets.Muted;
             availability = widgets.Text(window, "Availability", "", 16, 44, 728, 28, 12);
-            string[] pages = { "Stats", "Fountain", "Choices", "Resources", "Presets", "Status", "Rabbit", "Merchant", "Items", "Combat", "Spawns", "Costumes", "Updates", "Deathmatch", "Tournament", "Play Tag", "Zombie", "Progression" };
+            string[] pages = { "Stats", "Fountain", "Choices", "Resources", "Presets", "Status", "Rabbit", "Merchant", "Items", "Combat", "Spawns", "Costumes", "Updates", "Deathmatch", "Tournament", "Play Tag", "Zombie", "Progression", "PvP Balance" };
             for (int i = 0; i < pages.Length; i++)
             {
                 int target = i;
-                var tab = widgets.Button(window, pages[i], 16 + 81 * (i % 9), 78 + 32 * (i / 9), 75, 28, () => SelectPage(target));
+                // Keep stable page IDs while placing balancing beside Combat.
+                int slot = i == PvpBalancePage ? 10 : i >= 10 ? i + 1 : i;
+                var tab = widgets.Button(window, pages[i], 16 + 105 * (slot % 7), 78 + 32 * (slot / 7), 99, 28, () => SelectPage(target));
                 tabs.Add(tab);
                 if (i == 12) updateLabel = tab.GetComponentInChildren<TMP_Text>();
             }
-            feedback = widgets.Text(window, "Feedback", "", 16, 365, 728, 46, 12);
+            feedback = widgets.Text(window, "Feedback", "", 16, 510, 728, 46, 12);
             feedback.enableAutoSizing = true;
             SelectPage(0);
         }
@@ -92,6 +95,7 @@ namespace SephiriaOne
             15 => SnapshotContent.Participants,
             16 => SnapshotContent.Participants,
             17 => SnapshotContent.None,
+            PvpBalancePage => SnapshotContent.None,
             _ when target >= 6 && target <= 14 => SnapshotContent.None,
             _ => SnapshotContent.All // Status, and safe defaults for future tabs.
         };
@@ -134,13 +138,14 @@ namespace SephiriaOne
             if (page == 14) { RefreshTournament(snapshot); return; }
             if (page == 15) { RefreshPlayTag(snapshot); return; }
             if (page == 16) { RefreshZombie(snapshot); return; }
-            bool choicesReady = page == 17 ? snapshot.ExperienceAvailable : page == 11 ? snapshot.BatAvailable && snapshot.CollinAvailable : page == 10 ? SpawnAvailable(snapshot) : page == 9 ? snapshot.FriendlyFireAvailable : page == 8 ? snapshot.ItemRestrictionsAvailable : page == 7 ? snapshot.MerchantsAvailable : page == 6 ? snapshot.RabbitPotionsAvailable : page == 2 ? snapshot.ChoicesAvailable : page != 3 || ResourceFeature.IsAvailable(ResourceCatalog.All[resourceIndex].Kind);
+            bool combatSettings = page == 9 || page == PvpBalancePage;
+            bool choicesReady = page == 17 ? snapshot.ExperienceAvailable : page == 11 ? snapshot.BatAvailable && snapshot.CollinAvailable : page == 10 ? SpawnAvailable(snapshot) : combatSettings ? snapshot.FriendlyFireAvailable : page == 8 ? snapshot.ItemRestrictionsAvailable : page == 7 ? snapshot.MerchantsAvailable : page == 6 ? snapshot.RabbitPotionsAvailable : page == 2 ? snapshot.ChoicesAvailable : page != 3 || ResourceFeature.IsAvailable(ResourceCatalog.All[resourceIndex].Kind);
             bool levelUpReady = page != 6 || snapshot.RabbitLevelUpPotionsAvailable;
             availability.text = !snapshot.CanMutate ? snapshot.AvailabilityReason : !choicesReady ?
                 (page == 17 ? L.T("XP compatibility checks failed. Off/reset remain available; see Player.log.") :
                 page == 11 ? L.T("Some costume controls are unavailable. See the details on the right and Player.log.") :
                 page == 10 ? SpawnUnavailableMessage() :
-                page == 9 ? L.T("Friendly-fire compatibility checks failed. Off/reset remain available; see Player.log.") :
+                combatSettings ? L.T("Friendly-fire compatibility checks failed. Off/reset remain available; see Player.log.") :
                 page == 8 ? L.T("Item restriction compatibility checks failed. Off/reset remain available; see Player.log.") :
                 page == 7 ? L.T("Merchant compatibility checks failed. Off/reset remain available; see Player.log.") :
                 page == 6 ? L.T("Rabbit potion compatibility checks failed. Off/reset remain available; see Player.log.") :
@@ -151,6 +156,12 @@ namespace SephiriaOne
             availability.color = snapshot.CanMutate && choicesReady && levelUpReady ? PanelWidgets.Muted : (Color)new Color32(255, 200, 122, 255);
             foreach (var button in changeButtons) button.interactable = snapshot.CanMutate && choicesReady;
             RefreshCombat(snapshot);
+            if (page == PvpBalancePage)
+            {
+                RefreshPvpBalance(snapshot);
+                RefreshPvpDots(snapshot);
+                return;
+            }
             RefreshRequital(snapshot);
             if (collinReset) collinReset.interactable = snapshot.CanMutate || (snapshot.HostActive && snapshot.SessionIdentity != null &&
                 (snapshot.FaultedFeature == "collin" || snapshot.FaultedFeature == "inheritance"));
@@ -214,7 +225,7 @@ namespace SephiriaOne
             zombieDurationDraft = zombieCountDraft = zombieRefillDraft = zombieIncomingDraft = false;
             participantRows.Clear(); participantContent = null; participantSummary = null;
             if (pageRoot) { widgets.Forget(pageRoot); pageRoot.gameObject.SetActive(false); Destroy(pageRoot.gameObject); }
-            pageRoot = PanelWidgets.Rect(window, "Page", 4, 152, 600, 162);
+            pageRoot = PanelWidgets.Rect(window, "Page", 4, 184, 600, PageHeight);
             pageRoot.localScale = Vector3.one * 1.25f;
             if (page < 4) BuildEditor();
             else if (page == 6) BuildRabbitEditor();
@@ -229,6 +240,7 @@ namespace SephiriaOne
             else if (page == 15) BuildPlayTagEditor();
             else if (page == 16) BuildZombieEditor();
             else if (page == 17) BuildExperienceEditor();
+            else if (page == PvpBalancePage) BuildPvpBalanceEditor();
             else
             {
                 if (page == 4)

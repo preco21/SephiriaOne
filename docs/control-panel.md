@@ -1,5 +1,33 @@
 # Host settings panel
 
+## Dedicated PvP Balance tab (`0.82.0`, 2026-10-21)
+
+Open `/one ui` and choose **PvP Balance / PvP 밸런스**, directly beside Combat.
+General balancing occupies the left column without an inner scrollbar:
+balancing toggle, hit-frequency scaling, refill, shield MP minimum and the
+All Damage Amplified soft/hard limits. The right column contains all ten
+**Debuffs / Dark Cloud** intervals and applicable **Keep schedule** switches.
+Each effect has a full-width label; its list is 218 units tall rather than 82.
+
+Combat keeps friendly fire, damage scale, lobby recovery, K/D/A reset, Revive
+All, potion supplies and participant selection. These controls now appear
+together without nested subsection tabs. Participant lists are taller across
+Combat and the match modes.
+
+The draggable window is now 760x560, with three rows of wider tab buttons and
+a 600x250 logical content area at the existing 1.25 scale. Canvas fitting and
+drag limits still accommodate smaller screens. No extra window, polling loop,
+gameplay change or preset migration was introduced. The balance page requests
+only base settings (`SnapshotContent.None`), avoiding participant-detail work.
+
+Edits still use the shared commands. Apply commits only its own numeric draft;
+routine refresh preserves unfinished edits, while page, language, close and
+session transitions clear them. Existing host/compatibility and recovery rules
+remain. EN/KO labels, build, panel geometry/lifetime, localization and installed
+game contracts were checked; actual in-game rendering remains unverified.
+
+## Earlier UI changes
+
 Version `0.59.0` adds **DoT intervals / 지속 피해 간격** beside the Combat and
 PvP balancing subsections. Four independent fields for Burn, Plasma Burn,
 Frostbite and Poison fit in a 2x2 layout within the existing panel area. Each
@@ -12,7 +40,7 @@ See [interval semantics](pvp-dot-intervals.md).
 
 Version `0.58.0` groups Combat settings into **Combat** and **PvP balancing**
 subsections within the existing tab. The latter contains balancing, refill and
-**Guard MP (%) / 방어 MP (%)** (current default 8% of maximum MP before native reductions).
+**Guard MP (%) / 방어 MP (%)** (see the current [strict shield floor](pvp-shield-mp.md)).
 The guard input uses `/one friendlyfire guard-mp N` and applies live without
 stopping a match or clearing scores. K/D/A reset, Revive All, master/reset and
 participant controls stay accessible in both sections. Input drafts remain

@@ -130,12 +130,13 @@ internal static class GameFriendlyFireDebuffTests
         Require(cloud.Any(i => Call(i, "PvpDotSettings", "Interval")), "Dark Cloud reads its own live interval");
         var panel = addon.GetType("SephiriaOne.SettingsPanel", true)!;
         List<CodeInstruction> Panel(string name) => PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(panel, name)).ToList();
-        Require(Panel("BuildCombatEditor").Any(i => Call(i, "SettingsPanel", "BuildPvpDotEditor")) &&
-            Panel("BuildCombatEditor").Any(i => Call(i, "SettingsPanel", "BuildParticipantsEditor")), "DoT controls coexist with shared participant controls");
+        Require(Panel("BuildPvpBalanceEditor").Any(i => Call(i, "SettingsPanel", "BuildPvpDotEditor")) &&
+            !Panel("BuildCombatEditor").Any(i => Call(i, "SettingsPanel", "BuildPvpDotEditor")) &&
+            Panel("BuildCombatEditor").Any(i => Call(i, "SettingsPanel", "BuildParticipantsEditor")), "DoT moves to PvP Balance while Combat retains participant controls");
         Require(Panel("ApplyPvpDot").Any(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "/one friendlyfire dot ")) &&
             Panel("ApplyPvpDot").Any(i => Call(i, "SettingsPanel", "Execute")), "DoT Apply uses the shared host command");
         Require(Panel("ClearInput").Any(i => Call(i, "SettingsPanel", "ClearPvpDots")) &&
-            Panel("RefreshCombat").Any(i => Call(i, "SettingsPanel", "RefreshPvpDots")), "DoT drafts follow normal refresh and scope cleanup");
+            Panel("Refresh").Any(i => Call(i, "SettingsPanel", "RefreshPvpDots")), "DoT drafts follow normal refresh and scope cleanup");
         var editor = Panel("BuildPvpDotEditor");
         Require(editor.Any(i => Call(i, "PvpDotSettings", "SupportsSchedule")) && editor.Any(i => Call(i, "SettingsPanel", "AddCheckbox")),
             "Debuff rows expose shared checkbox bindings while Dark Cloud keeps only its strike interval");

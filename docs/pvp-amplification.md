@@ -7,7 +7,7 @@ damage and participant infrastructure; it adds no guest assets or network state.
 
 ## Controls and meaning
 
-Combat → Balancing contains a scrollable **All Damage Amplified limit** checkbox
+The **PvP Balance** tab contains an always-visible **All Damage Amplified limit** checkbox
 and paired soft/hard inputs. Defaults: off, soft **50%**, hard **100%**.
 English and Korean catalogs cover controls, help and status.
 

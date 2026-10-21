@@ -1,6 +1,11 @@
 # Development knowledge index
 
-Maintained: 2026-10-21 (Asia/Seoul), addon `0.81.0`.
+Maintained: 2026-10-21 (Asia/Seoul), addon `0.82.0`.
+
+[Dedicated PvP Balance tab](control-panel.md#dedicated-pvp-balance-tab-0820-2026-10-21):
+general balancing left, taller debuff/Dark Cloud list right; Combat retains
+supplies and participants. Wider tabs, more vertical space, no new polling or
+gameplay changes; the new page skips participant-detail snapshots.
 
 [Additional PvP defensive effects](pvp-defensive-effects.md): Elastic Band
 refunds at most once per defender every 2s; extended katana/dagger counter windows
@@ -14,7 +19,7 @@ Layered shields pay once; automatic shields preserve native absorption with
 depleted MP. Includes the Iron Wall audit and replaces guard-only semantics.
 
 [PvP All Damage Amplified limit](pvp-amplification.md): optional smooth bonus
-curve, default off with soft 50%/hard 100%, in Combat → Balancing or
+curve, default off with soft 50%/hard 100%, in PvP Balance or
 `/one friendlyfire amplification`. Limits the native combined attacker/companion
 owner contribution only for eligible balanced PvP hits; no stat writes or PvE
 changes. Includes v43 presets and English/Korean controls.

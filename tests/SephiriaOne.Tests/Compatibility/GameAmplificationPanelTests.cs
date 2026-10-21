@@ -14,10 +14,11 @@ internal static class GameAmplificationPanelTests
         Require(build.Any(i => i.LoadsConstant("All Damage Amplified limit")) &&
             build.Any(i => i.LoadsConstant("/one friendlyfire amplification")) &&
             build.Any(i => i.LoadsConstant("Soft bonus (%)")) && build.Any(i => i.LoadsConstant("Hard bonus (%)")) &&
-            build.Any(i => i.LoadsConstant("Bonus 100% = +100%, not C-menu total. Requires PvP balancing.")),
+            build.Any(i => i.LoadsConstant("Bonus %, not C-menu total.")),
             "Controls identify bonus units and the required balancing toggle");
-        Require(build.Any(i => Call(i, "ScrollRect", "set_content")) && build.Any(i => Call(i, "ScrollRect", "set_verticalScrollbar")),
-            "Added limits stay inside the existing compact scrolling editor");
+        Require(!build.Any(i => Call(i, "ScrollRect", "set_content")) &&
+            build.Any(i => Call(i, "SettingsPanel", "BuildPvpDotEditor")),
+            "General balancing stays visible without an inner scroll beside the dedicated debuff editor");
         var apply = Code("ApplyFriendlyAmplification");
         Require(apply.Any(i => i.LoadsConstant("/one friendlyfire amplification limits ")) &&
             apply.Count(i => Call(i, "TMP_InputField", "get_text")) == 2 && apply.Any(i => Call(i, "SettingsPanel", "Execute")) &&
@@ -32,6 +33,6 @@ internal static class GameAmplificationPanelTests
             Code("BuildPage").Any(i => i.operand is FieldInfo f && f.Name == "friendlyAmplificationSoft") &&
             Code("BuildPage").Any(i => i.operand is FieldInfo f && f.Name == "friendlyAmplificationHard"),
             "Page, language and scope transitions retire both numeric drafts");
-        Console.WriteLine("Verified amplification checkbox, paired Apply, draft isolation and compact scrolling controls (not live Unity).");
+        Console.WriteLine("Verified amplification checkbox, paired Apply, draft isolation and dedicated balancing controls (not live Unity).");
     }
 }

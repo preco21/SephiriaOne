@@ -18,7 +18,7 @@ namespace SephiriaOne
         private TMP_Text participantSummary;
         private Button selectAllPlayers, resetPlayerSelection;
 
-        // Combat, Deathmatch and Tournament share this list. Rows are pooled for
+        // Combat and all PvP match modes share this list. Rows are pooled for
         // the page's lifetime; refresh replaces data, never listeners or objects.
         private void BuildParticipantsEditor()
         {
@@ -27,12 +27,12 @@ namespace SephiriaOne
                 () => Execute("/one friendlyfire players all", true));
             resetPlayerSelection = widgets.Button(pageRoot, "Reset selection", 452, 26, 132, 25,
                 () => Execute("/one friendlyfire players reset", true));
-            var container = PanelWidgets.Rect(pageRoot, "PlayerSelection", 312, 57, 272, 105);
+            var container = PanelWidgets.Rect(pageRoot, "PlayerSelection", 312, 57, 272, PageHeight - 57);
             container.gameObject.AddComponent<Image>().color = new Color32(17, 27, 40, 255);
             var scroll = container.gameObject.AddComponent<ScrollRect>();
-            var viewport = PanelWidgets.Rect(container, "Viewport", 3, 3, 266, 99);
+            var viewport = PanelWidgets.Rect(container, "Viewport", 3, 3, 266, PageHeight - 63);
             viewport.gameObject.AddComponent<RectMask2D>();
-            participantContent = PanelWidgets.Rect(viewport, "Players", 0, 0, 266, 99);
+            participantContent = PanelWidgets.Rect(viewport, "Players", 0, 0, 266, PageHeight - 63);
             scroll.viewport = viewport; scroll.content = participantContent; scroll.horizontal = false;
             scroll.movementType = ScrollRect.MovementType.Clamped; scroll.scrollSensitivity = 26;
         }
@@ -67,7 +67,7 @@ namespace SephiriaOne
             }
             for (int i = snapshot.FriendlyFirePlayers.Count; i < participantRows.Count; i++)
             { participantRows[i].Player = null; participantRows[i].Toggle.gameObject.SetActive(false); }
-            participantContent.sizeDelta = new Vector2(266, Mathf.Max(99, snapshot.FriendlyFirePlayers.Count * 28));
+            participantContent.sizeDelta = new Vector2(266, Mathf.Max(PageHeight - 63, snapshot.FriendlyFirePlayers.Count * 28));
         }
     }
 }

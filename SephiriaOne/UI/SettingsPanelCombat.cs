@@ -1,6 +1,5 @@
 using System;
 using System.Globalization;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,9 +9,6 @@ namespace SephiriaOne
     {
         private Slider friendlyDamage;
         private bool friendlyDraft;
-        private TMP_InputField friendlyRefill;
-        private bool friendlyRefillDraft;
-        private int combatSettingsSection;
         private Button reviveAll, combatResetKda, giveLargePotions;
 
         private void BuildCombatEditor()
@@ -23,39 +19,29 @@ namespace SephiriaOne
             AddCheckbox("Friendly fire", 16, 25, 174, 21, s => s.FriendlyFire.Enabled, s => s.FriendlyFireAvailable, "/one friendlyfire",
                 s => s.CanMutate || CombatMatchRuntime.IsRunning && s.HostActive && s.SessionIdentity != null);
             resetAll = widgets.Button(pageRoot, "Reset", 200, 25, 89, 21, () => Execute("/one friendlyfire reset", true));
-            var combatTab = widgets.Button(pageRoot, "Combat", 16, 52, 60, 22, () => SelectCombatSettings(0));
-            var balanceTab = widgets.Button(pageRoot, "Balancing", 82, 52, 74, 22, () => SelectCombatSettings(1));
-            var dotTab = widgets.Button(pageRoot, "DoT", 162, 52, 48, 22, () => SelectCombatSettings(2));
-            var supplyTab = widgets.Button(pageRoot, "Supplies", 216, 52, 73, 22, () => SelectCombatSettings(3));
-            var selectedTab = combatSettingsSection == 3 ? supplyTab : combatSettingsSection == 2 ? dotTab : combatSettingsSection == 1 ? balanceTab : combatTab;
-            var colors = selectedTab.colors; colors.normalColor = PanelWidgets.Accent; colors.selectedColor = colors.normalColor; selectedTab.colors = colors;
-            if (combatSettingsSection == 3) BuildPvpSuppliesEditor();
-            else if (combatSettingsSection == 2) BuildPvpDotEditor();
-            else if (combatSettingsSection == 1) BuildPvpBalanceEditor();
-            else BuildFriendlyDamageEditor();
+            BuildFriendlyDamageEditor();
+            BuildPvpSuppliesEditor();
             BuildParticipantsEditor();
         }
 
         private void BuildPvpSuppliesEditor()
         {
-            giveLargePotions = widgets.Button(pageRoot, "Give Large Potion to all", 16, 80, 273, 25,
+            giveLargePotions = widgets.Button(pageRoot, "Give Large Potion to all", 16, 154, 273, 25,
                 () => Execute("/one friendlyfire potion", true));
-            AddCheckbox("Auto Large Potion", 16, 112, 273, 21, s => s.FriendlyFire.AutoPotion,
+            AddCheckbox("Auto Large Potion", 16, 188, 273, 23, s => s.FriendlyFire.AutoPotion,
                 s => s.FriendlyFireAvailable && LargePotionGrant.Available, "/one friendlyfire auto-potion");
-            AddCheckbox("Infinite PvP HP potions", 16, 140, 273, 21, s => s.FriendlyFire.InfiniteHpPotions,
+            AddCheckbox("Infinite PvP HP potions", 16, 220, 273, 23, s => s.FriendlyFire.InfiniteHpPotions,
                 s => s.FriendlyFireAvailable && RabbitPotionFeature.Available, "/one friendlyfire infinite-hp");
         }
 
-        private void SelectCombatSettings(int section) { combatSettingsSection = section; SelectPage(9); }
-
         private void BuildFriendlyDamageEditor()
         {
-            AddCheckbox("Block lobby HP/MP recovery", 16, 80, 273, 21, s => s.FriendlyFire.BlockLobbyRegen,
+            AddCheckbox("Block lobby HP/MP recovery", 16, 58, 273, 21, s => s.FriendlyFire.BlockLobbyRegen,
                 s => s.FriendlyFireAvailable && LobbyRegenFeature.Available, "/one friendlyfire block-lobby-regen");
-            widgets.Text(pageRoot, "FriendlyPercent", "Allied damage (%)", 16, 106, 116, 25, 11);
-            amount = widgets.Input(pageRoot, 136, 106, 62, EditFriendlyDamage);
-            changeButtons.Add(widgets.Button(pageRoot, "Apply damage", 204, 106, 85, 25, ApplyFriendlyDamage));
-            var track = PanelWidgets.Rect(pageRoot, "AlliedDamageSlider", 24, 140, 255, 14);
+            widgets.Text(pageRoot, "FriendlyPercent", "Allied damage (%)", 16, 86, 116, 25, 11);
+            amount = widgets.Input(pageRoot, 136, 86, 62, EditFriendlyDamage);
+            changeButtons.Add(widgets.Button(pageRoot, "Apply damage", 204, 86, 85, 25, ApplyFriendlyDamage));
+            var track = PanelWidgets.Rect(pageRoot, "AlliedDamageSlider", 24, 124, 255, 14);
             track.gameObject.AddComponent<Image>().color = new Color32(48, 66, 88, 255);
             friendlyDamage = track.gameObject.AddComponent<Slider>();
             friendlyDamage.minValue = 0; friendlyDamage.maxValue = 300; friendlyDamage.wholeNumbers = false;
@@ -75,8 +61,6 @@ namespace SephiriaOne
             if (giveLargePotions) giveLargePotions.interactable = LargePotionGrant.CanExecute;
             if (reviveAll) reviveAll.interactable = ReviveAllAction.CanExecute;
             if (combatResetKda) combatResetKda.interactable = snapshot.HostActive && snapshot.SessionIdentity != null && SessionSettings.CanResetFriendlyFireScores;
-            RefreshPvpBalance(snapshot);
-            RefreshPvpDots(snapshot);
             if (!friendlyDamage) return;
             amount.interactable = friendlyDamage.interactable = snapshot.CanMutate && snapshot.FriendlyFireAvailable;
             if (!friendlyDraft)
@@ -99,10 +83,6 @@ namespace SephiriaOne
         }
         private void ApplyFriendlyDamage() => Execute("/one friendlyfire damage " + amount.text.Trim(), true,
             clearInputOnSuccess: ClearFriendlyDamage);
-        private void EditFriendlyRefill(string text) => friendlyRefillDraft = true;
-        private void ApplyFriendlyRefill() => Execute("/one friendlyfire refill " + friendlyRefill.text.Trim(), true,
-            clearInputOnSuccess: ClearFriendlyRefill);
         private void ClearFriendlyDamage() { friendlyDraft = false; if (amount) amount.SetTextWithoutNotify(""); }
-        private void ClearFriendlyRefill() { friendlyRefillDraft = false; if (friendlyRefill) friendlyRefill.SetTextWithoutNotify(""); }
     }
 }

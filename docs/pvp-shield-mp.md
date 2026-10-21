@@ -11,7 +11,7 @@ MP**, rounded up. The user explicitly chose a strict minimum after Guard
 Efficiency, perfect-guard and artifact reductions, and then lowered the default
 from 8% to 5%. Existing explicit custom preset values remain unchanged.
 
-Use **Combat → PvP balancing → Shield MP min (%)**
+Use **PvP Balance → Shield MP min (%)**
 (`보호막 최소 MP (%)`) or `/one friendlyfire guard-mp 5`.
 `/one friendlyfire guard-mp reset` restores 5%; `/one save` persists a custom
 value. Range remains 0..100 with two decimal places. Zero waives the additional

@@ -2,8 +2,8 @@
 
 Expanded in `0.68.0`; schedule protection added in `0.69.0` and separate Plasma
 shock in `0.71.0`, 2026-10-20.
-Use **Combat → DoT intervals**
-(`전투 → 지속 피해 간격`), with the scrollbar or mouse wheel to reach all ten
+Use **PvP Balance → Debuffs / Dark Cloud**
+(`PvP 밸런스 → 디버프 / 먹구름`), with the scrollbar or mouse wheel to reach all ten
 controls. Each setting accepts **0.05..10 seconds**, up to two decimals, and has
 its own command/reset. These controls apply only to permitted player pairs while
 friendly fire **and PvP balancing** are active, across casual combat, Deathmatch,

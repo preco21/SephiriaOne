@@ -3,6 +3,10 @@
 Added in `0.52.0`, 2026-10-13. Host-only installation; the existing native damage
 and FX replication continues to serve stock guests. Default: **off**.
 
+Since `0.82.0`, the dedicated **PvP Balance** tab contains the general balancing
+controls and debuff/Dark Cloud intervals. Combat retains friendly fire, supplies
+and participants. See the [current panel guide](control-panel.md).
+
 ## Additional defensive effects (`0.81.0`, 2026-10-21)
 
 [Defensive audit](pvp-defensive-effects.md): Elastic Band refunds dash charges
@@ -14,7 +18,7 @@ Finite dodge barriers and consumed lethal saves remain native.
 ## All Damage Amplified limit (`0.80.0`, 2026-10-21)
 
 [Optional amplification curve](pvp-amplification.md): soft 50% / hard 100%
-bonus defaults, initially off. Combat → Balancing and
+bonus defaults, initially off. PvP Balance and
 `/one friendlyfire amplification` control the native combined attacker/leader
 contribution before defenses and the existing PvP budget. Character stats,
 native penalties and PvE stay unchanged; v43 presets save nondefault settings.
@@ -152,7 +156,7 @@ so rapid attacks cannot bypass it. Role/configuration changes retain credit and
 conservatively limit elapsed refill until the next stable interval. Outside an
 active living/armed Tag carrier, both modifiers are inactive.
 
-Enable **Combat → PvP balancing** (`PvP 밸런스 보정`) or use:
+Enable **PvP Balance → PvP balancing** (`PvP 밸런스 → PvP 밸런스 보정`) or use:
 
 ```text
 /one friendlyfire balance on

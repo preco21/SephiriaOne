@@ -110,10 +110,10 @@ internal static class GameGuardTests
         Require(Panel("ClearInput").Any(i => Call(i, "SettingsPanel", "ClearFriendlyGuardMp")) &&
             Panel("BuildPage").Any(i => i.opcode == OpCodes.Stfld && i.operand is FieldInfo f && f.Name == "friendlyGuardMp"),
             "scope/page/language transitions clear old guard field state");
-        Require(Panel("RefreshCombat").Any(i => Call(i, "SettingsPanel", "RefreshPvpBalance")) &&
+        Require(Panel("Refresh").Any(i => Call(i, "SettingsPanel", "RefreshPvpBalance")) &&
             Panel("BuildCombatEditor").Any(i => Call(i, "SettingsPanel", "BuildParticipantsEditor")), "balancing refresh and shared participant controls remain wired");
         GameAmplificationPanelTests.Run(addon);
         GameActiveDefenseTests.Run(game, addon);
-        Console.WriteLine("Verified strict guard floor/spend/exemption boundaries, native callbacks/break/replication, drift rejection and compact shared-command balancing controls (not live Unity).");
+        Console.WriteLine("Verified strict guard floor/spend/exemption boundaries, native callbacks/break/replication, drift rejection and dedicated shared-command balancing controls (not live Unity).");
     }
 }
