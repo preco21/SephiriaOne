@@ -11,7 +11,7 @@ namespace SephiriaOne
         private readonly int damageOffset;
         private readonly int refillOffset;
         private readonly int guardMpOffset;
-        public const decimal DefaultGuardMpPercent = 8m;
+        public const decimal DefaultGuardMpPercent = 5m;
         private const int DefaultGuardMpHundredths = (int)(DefaultGuardMpPercent * 100);
         public const decimal DefaultRefillPercent = 70m;
         private const int DefaultRefillHundredths = (int)(DefaultRefillPercent * 100);
@@ -120,7 +120,7 @@ namespace SephiriaOne
             L.T("PvP DoT: /one friendlyfire dot burn|plasma-burn|frostbite|poison|wound|lightning|plasma-shock|freeze|chim|dark-cloud 0.05..10|reset (seconds, up to 2 decimals). Lightning and Plasma shock have separate clocks; Freeze controls damage, not stun. Only with PvP balancing on.") + " " +
             L.T("Keep debuff schedule: /one friendlyfire dot <effect> preserve on|off|reset. Default on; keeps the first native hit, then requires one interval between hits, even on reapplication. Does not change stacks or duration refreshes. Dark Cloud always uses its separate strike clock. Only with PvP balancing on.") + " " +
             L.T("PvP refill: /one friendlyfire refill 1..300|reset (percent of max HP per second, up to 2 decimals). Default 70; applies only with PvP balancing on.") + " " +
-            L.T("PvP guard: /one friendlyfire guard-mp 0..100|reset (percent of max MP, up to 2 decimals). Default 8; native guard reductions apply. Positive costs round up. Only with PvP balancing on.") + " " +
+            L.T("PvP shield minimum: /one friendlyfire guard-mp 0..100|reset (percent of max MP, up to 2 decimals). Default 5; guards, parries and automatic shields share the floor after reductions. Costs round up and spend available MP. Only with PvP balancing on.") + " " +
             L.T("All Damage Amplified limit: /one friendlyfire amplification on|off|reset; amplification limits <soft> <hard>. Default off, soft 50%, hard 100%. Bonus percentages, not C-menu totals: 100% means +100%. Use 0..10000 with up to 2 decimals and soft <= hard. Only with PvP balancing on.") + " " +
             L.T("Lobby recovery: /one friendlyfire block-lobby-regen on|off. Default off; blocks automatic HP/MP recovery for active lobby participants. Potions and skill healing remain available.");
         internal static bool TryPercent(string text, out decimal percent)

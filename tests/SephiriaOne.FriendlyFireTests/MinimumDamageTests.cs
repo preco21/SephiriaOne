@@ -19,7 +19,7 @@ internal static class MinimumDamageTests
             var target = new PlayerAvatar(); target.ApplyDamage(Hit());
             check(target.Hp == 99, "Positive sub-one PvP damage has a one-point floor; balanced=" + balance);
             target = new PlayerAvatar { IsMpShield = true }; target.ApplyDamage(Hit());
-            check(target.Hp == 100 && target.Mp == 99, "Minimum hit reaches native MP shield integer conversion");
+            check(target.Hp == 100 && target.Mp == (balance ? 95 : 99), "Minimum hit reaches MP absorption and the optional PvP shield floor");
             target = new PlayerAvatar { Shield = 0.5f }; target.ApplyDamage(Hit());
             check(target.Shield == 0 && target.Hp == 99.5f, "Shield absorption is never rounded back up to another minimum hit");
             foreach (float invalid in new[] { 0f, -1, float.NaN, float.PositiveInfinity, float.NegativeInfinity })

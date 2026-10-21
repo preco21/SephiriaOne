@@ -6,7 +6,7 @@ internal static class RapidHitTests
     internal static void Run(Action<bool, string> check)
     {
         FriendlyFireParticipants.Clear();
-        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true);
+        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, guardMpPercent: 0);
         Time.time = 10;
         var source = new PlayerAvatar(); var target = new PlayerAvatar();
         var hit = new DamageInstance { origin = source, damage = 20 };
@@ -27,7 +27,7 @@ internal static class RapidHitTests
         void Fresh()
         {
             FriendlyFireParticipants.Clear();
-            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true);
+            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, guardMpPercent: 0);
             Time.time = 10; source = new(); target = new();
             hit = new() { origin = source, damage = float.MaxValue };
         }
@@ -81,7 +81,7 @@ internal static class RapidHitTests
         {
             target.OnHit = null;
             SessionSettings.FriendlyFireForHit = new(true, 100, balance: false);
-            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true);
+            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, guardMpPercent: 0);
             target.ApplyDamage(new() { origin = source, damage = float.MaxValue });
         };
         Strike(); Time.time += 0.02f; hit.damage = float.MaxValue; Strike();
@@ -98,11 +98,11 @@ internal static class RapidHitTests
         check(target.IsDead, "Balance off restores unrestricted native friendly-fire damage immediately");
         Fresh(); Strike();
         SessionSettings.FriendlyFireForHit = new(true, 100, balance: false);
-        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true); Strike();
+        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, guardMpPercent: 0); Strike();
         check(target.Hp == 60, "Off/on without intervening impacts starts a fresh budget");
-        Fresh(); Strike(); SessionSettings.FriendlyFireForHit = new(true, 50, balance: true); Strike();
+        Fresh(); Strike(); SessionSettings.FriendlyFireForHit = new(true, 50, balance: true, guardMpPercent: 0); Strike();
         check(target.Hp == 79, "Editing damage percentage does not refill a depleted budget");
-        SessionSettings.FriendlyFireForHit = new(true, 50, balance: true, refillPercent: 200); Strike();
+        SessionSettings.FriendlyFireForHit = new(true, 50, balance: true, guardMpPercent: 0, refillPercent: 200); Strike();
         check(target.Hp == 78, "Editing refill percentage does not grant a new burst");
         FriendlyFireKda.ResetScores(); Strike();
         check(target.Hp == 58, "KDA reset clears previous combat allowance state");
@@ -147,10 +147,10 @@ internal static class RapidHitTests
         check(!target.IsDead, "Default 70% refill keeps a full-health opponent alive after 0.9 seconds");
         for (int i = 19; i <= 24; i++) { Time.time = 10 + i * 0.05f; Strike(); }
         check(target.IsDead, "Default 70% refill admits a full-health kill by 1.2 seconds with enough hits");
-        Fresh(); SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, refillPercent: 100); Strike();
+        Fresh(); SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, guardMpPercent: 0, refillPercent: 100); Strike();
         for (int i = 1; i <= 18; i++) { Time.time = 10 + i * 0.05f; Strike(); }
         check(target.IsDead, "Explicit 100% refill still allows subsecond kills");
-        Fresh(); SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, refillPercent: 40); Strike();
+        Fresh(); SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, guardMpPercent: 0, refillPercent: 40); Strike();
         Time.time += 0.1f; Strike();
         check(Near(target.Hp, 76), "Configured 40% refill reaches the actual damage pipeline");
 

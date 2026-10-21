@@ -1,6 +1,11 @@
 # Development knowledge index
 
-Maintained: 2026-10-21 (Asia/Seoul), addon `0.80.0`.
+Maintained: 2026-10-21 (Asia/Seoul), addon `0.80.1`.
+
+[PvP shield MP minimum](pvp-shield-mp.md): strict default 5% after native
+reductions, covering guards, parries, MP shields and automatic/dash shields.
+Layered shields pay once; automatic shields preserve native absorption with
+depleted MP. Includes the Iron Wall audit and replaces guard-only semantics.
 
 [PvP All Damage Amplified limit](pvp-amplification.md): optional smooth bonus
 curve, default off with soft 50%/hard 100%, in Combat → Balancing or
@@ -17,7 +22,8 @@ Includes v42 presets, EN/KO, lifecycle accounting and explicit coverage boundari
 [Large-MP guard correction](pvp-balancing.md#large-mp-guard-correction-0782):
 balanced PvP guard costs widen the native Final MP multiplication and addition,
 so extreme pools cannot wrap into a smaller or zero percentage cost. Ordinary
-rounding, guard reductions and PvE behavior remain. The exact reported
+rounding and PvE behavior remain. Guard reductions are now bounded by the floor
+described above. The exact reported
 nine-Aquamarine scenario still needs live confirmation.
 
 [Minority-side Zombie balancing](zombie-survival.md#dynamic-balancing-0760):

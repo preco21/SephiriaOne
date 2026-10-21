@@ -39,7 +39,7 @@ namespace SephiriaOne
             widgets.Text(content, "FriendlyRefill", "PvP refill (%/s)", 0, 26, 116, 25, 11);
             friendlyRefill = widgets.Input(content, 120, 26, 58, EditFriendlyRefill);
             changeButtons.Add(widgets.Button(content, "Apply", 184, 26, 75, 25, ApplyFriendlyRefill));
-            widgets.Text(content, "GuardMp", "Guard MP (%)", 0, 57, 116, 25, 11);
+            widgets.Text(content, "GuardMp", "Shield MP min (%)", 0, 57, 116, 25, 11);
             friendlyGuardMp = widgets.Input(content, 120, 57, 58, EditFriendlyGuardMp);
             changeButtons.Add(widgets.Button(content, "Apply", 184, 57, 75, 25, ApplyFriendlyGuardMp));
             AddCheckbox("All Damage Amplified limit", 0, 88, 259, 21, s => s.FriendlyFire.Amplification.Enabled,

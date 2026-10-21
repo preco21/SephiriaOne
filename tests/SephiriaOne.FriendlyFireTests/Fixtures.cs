@@ -144,7 +144,9 @@ public partial class UnitAvatar : CombatBehaviour
     public bool IsInBattle { [MethodImpl(MethodImplOptions.NoInlining)] get; set; }
     public BoolFlag canBeTarget = new();
     public bool IsGuarding;
-    public bool IsParrying;
+    public sbyte parryInvincibleApplied;
+    public bool IsParrying { get => parryInvincibleApplied > 0; set => parryInvincibleApplied = (sbyte)(value ? 1 : 0); }
+    public Timer parrySuccessBonusTimer = new(0.35f);
     public Action<DamageInstance> OnParry;
     public Action<DamageInstance> OnGuardSucceeded;
     public int GuardHits;
@@ -160,7 +162,7 @@ public partial class UnitAvatar : CombatBehaviour
     public float TrueDamage, Defense;
     public int AllDamageBonus;
     public float ObservedAmplificationDamage;
-    public int Mp = 100;
+    public int mp = 100;
     public bool IsMpShield;
     public bool SuperArmor, ClampHpDamage;
     public Action<DamageInstance> OnCalculateDamage;
@@ -206,7 +208,7 @@ public partial class UnitAvatar : CombatBehaviour
             if (attacker && attacker.NetworkLeader)
                 attacker.NetworkLeader.OnAttackUnitBeforeOperation_AsLeader?.Invoke(attacker, this, damage);
             // Native parry and guard callbacks run before ordinary damage/veto.
-            if (IsParrying) { OnParry?.Invoke(damage); return EApplyDamageResult.Fail_Block; }
+            if (parryInvincibleApplied > 0) { OnParry?.Invoke(damage); parrySuccessBonusTimer.SetTimer(0f); return EApplyDamageResult.Fail_Block; }
             if (isHitInvincibleEnabled) return EApplyDamageResult.Fail_Absolute;
             if (IsGuarding)
             {
@@ -220,7 +222,7 @@ public partial class UnitAvatar : CombatBehaviour
                     foreach (CalculateDurabilityDamage callback in OnCalculateDurabilityDamage.GetInvocationList())
                         guardCost = callback(guardCost);
                 UseMp((int)guardCost);
-                if (!InfiniteMp && Mp <= 0) { GuardBroken = true; IsGuarding = false; }
+                if (GetCustomStatUnsafe("INFINITYMP") <= 0 && Mp <= 0) { GuardBroken = true; IsGuarding = false; }
                 return EApplyDamageResult.Fail_Block;
             }
             OnCalculateDamage?.Invoke(damage);
@@ -265,13 +267,13 @@ public partial class UnitAvatar : CombatBehaviour
             {
             resolved -= GetCustomStatUnsafe("TOUGHNESS");
             if (resolved < 1) resolved = 1;
-            if (Shield > 0) { float absorbed = Math.Min(resolved,Shield); Shield -= absorbed; resolved -= absorbed; shieldDamage = absorbed; }
+            if (Shield > 0) { float beforeShield = Shield; resolved = UseShield(resolved); shieldDamage = beforeShield - Shield; }
             }
             if (GetCustomStatUnsafe("MPSHIELD") > 0)
             {
                 int oldMp = Mp;
-                if ((float)Mp < resolved) { resolved -= Mp; Mp = 0; }
-                else { Mp -= (int)resolved; resolved = 0; }
+                if ((float)Mp < resolved) { resolved -= Mp; UseMp(mp); }
+                else { UseMp((int)resolved); resolved = 0; }
                 mpDamage = oldMp - Mp;
             }
             if (shieldDamage > 0 && !damage.isSystemDamage) AddReceivedDamage(shieldDamage);

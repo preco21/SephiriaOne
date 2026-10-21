@@ -1,5 +1,11 @@
 # Sephiria domain findings
 
+Shield MP floors (`0.80.1`): Iron Wall is a `GuardResist` bonus, not an MP-shield
+replacement. The shared guard, parry, ordinary shield-point, MP absorption and
+`UnitSubShield` paths are distinct. Enforce once per hit, after native reductions,
+using overflow-safe maximum MP; preserve native shield absorption and partial
+HP spill. See [audit and extension boundaries](pvp-shield-mp.md).
+
 All Damage Amplified (`0.80.0`): `UnitAvatar.ApplyDamage` sums attacker and
 optional leader `AllDamageBonus`, then adds `damage.damage * bonus/100` alongside
 other bonuses. Limit this one combined float contribution for balanced PvP;

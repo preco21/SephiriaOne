@@ -9,8 +9,8 @@ internal static class FriendlyFireGuardSettingsTests
         Check(FriendlyFireCommand.Parse("/one friendlyfire guard-mp 10", out var command) == FriendlyFireParseResult.Valid &&
             !command.TouchesMasterToggle && !command.IsReset, "Guard MP edit is accepted without touching the master toggle");
         var policy = new SessionPolicy();
-        Check(policy.FriendlyFire.GuardMpPercent == 8 && !policy.HasChanges,
-            "Default-zero policy inherits 8 percent maximum MP");
+        Check(policy.FriendlyFire.GuardMpPercent == 5 && !policy.HasChanges,
+            "Default-zero policy inherits 5 percent maximum MP");
         foreach (string value in new[] { "0", "0.01", "0.1", "5", "8", "10", "12.5", "99.99", "100" })
             foreach (string suffix in new[] { "", "%" })
             {
@@ -21,7 +21,7 @@ internal static class FriendlyFireGuardSettingsTests
                     "Guard cost edit preserves disabled combat and balancing");
                 Check(SessionPolicy.TryReadPreset(policy.ToPresetText(), out var saved, out _) && saved.FriendlyFire.Equals(policy.FriendlyFire),
                     "Guard setting round trips exactly");
-                Check(value == "8" || policy.ToPresetText().StartsWith("SephiriaOne preset v27\n"), "Nondefault guard cost requires v27");
+                Check(value == "5" || policy.ToPresetText().StartsWith("SephiriaOne preset v27\n"), "Nondefault guard cost requires v27");
             }
         foreach (string bad in new[] { "", "-1", "+1", "100.01", "100.001", "10.000", "1e1", "1,5", "NaN", "Infinity", "x2", "10 extra" })
             Check(FriendlyFireCommand.Parse("/one friendlyfire guard-mp " + bad, out _) == FriendlyFireParseResult.Invalid, "Reject bad guard input: " + bad);
@@ -36,7 +36,7 @@ internal static class FriendlyFireGuardSettingsTests
                 "Invalid guard preset is atomic: " + row);
         for (int version = 1; version <= 26; version++)
         {
-            Check(SessionPolicy.TryReadPreset($"SephiriaOne preset v{version}\n", out var old, out _) && old.FriendlyFire.GuardMpPercent == 8,
+            Check(SessionPolicy.TryReadPreset($"SephiriaOne preset v{version}\n", out var old, out _) && old.FriendlyFire.GuardMpPercent == 5,
                 "Old preset inherits guard default: " + version);
             Check(!SessionPolicy.TryReadPreset($"SephiriaOne preset v{version}\nfriendlyfire guard-mp 15\n", out _, out _),
                 "Older schema rejects new guard field: " + version);
@@ -55,12 +55,12 @@ internal static class FriendlyFireGuardSettingsTests
         Check(FriendlyFireCommand.Parse("/ONE FRIENDLYFIRE GUARD-MP RESET", out var reset) == FriendlyFireParseResult.Valid && !reset.TouchesMasterToggle,
             "Guard-only reset is case insensitive and does not stop combat");
         policy.Record(reset);
-        Check(policy.FriendlyFire.GuardMpPercent == 8 && policy.FriendlyFire.Enabled && policy.FriendlyFire.Balance &&
+        Check(policy.FriendlyFire.GuardMpPercent == 5 && policy.FriendlyFire.Enabled && policy.FriendlyFire.Balance &&
             policy.FriendlyFire.BlockLobbyRegen && policy.FriendlyFire.RefillPercent == 99.99m && policy.FriendlyFire.DamagePercent == 0.1m,
             "Guard reset preserves all sibling settings");
         policy.Record(new FriendlyFireCommand(false, guardMpPercent: 20));
         policy.Record(new FriendlyFireCommand(false, reset: true));
-        Check(!policy.FriendlyFire.HasChanges && policy.FriendlyFire.GuardMpPercent == 8, "Full combat reset restores native policy defaults");
+        Check(!policy.FriendlyFire.HasChanges && policy.FriendlyFire.GuardMpPercent == 5, "Full combat reset restores native policy defaults");
         return checks;
     }
 }

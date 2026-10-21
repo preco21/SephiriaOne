@@ -69,9 +69,9 @@ internal static class DebuffPulseTests
         check(victim.Hp == 77, "The next due shock uses refilled credit without replaying suppressed pulses");
         Fresh(); victim.IsMpShield = true; SessionSettings.FriendlyFireForHit = new(true, 25, balance: true);
         Hit("Debuff_Electric", 2); Hit("Debuff_Electric", 8);
-        check(victim.Mp == 99, "A minimum pulse damages MP shields and still consumes its cadence interval");
+        check(victim.Mp == 95, "A minimum pulse pays the shield floor and still consumes its cadence interval");
         Time.time += 0.5f; Hit("Debuff_Electric", 8);
-        check(victim.Mp == 97, "The next timed pulse still receives its full scaled damage");
+        check(victim.Mp == 90, "The next timed pulse pays the shield floor once");
         Fresh(); Hit("Debuff_Electric");
         var freeze = new CharacterDebuff_Freeze(); freeze.InitializeAndSpawn(source, victim); freeze.ApplyDamage();
         check(victim.StunRemaining == 2, "Freeze still immobilizes a player for its native positive duration");

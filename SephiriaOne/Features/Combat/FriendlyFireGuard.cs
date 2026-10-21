@@ -15,26 +15,55 @@ namespace SephiriaOne
                 return (int)nativeCost;
             var settings = SessionSettings.FriendlyFireForHit;
             if (!settings.Balance || !CurrentHitPermitted()) return (int)nativeCost;
-            if (!(nativeCost > 0) || float.IsInfinity(nativeCost)) return 0;
-            // Native cost starts at 10, then applies guard/perfect-guard/item
-            // modifiers. Scale that result, preserving the native callbacks.
-            // Integer Guard Efficiency and perfect guard produce multiples of
-            // 0.05. Recognize exact native float results on that grid: at 99%
-            // efficiency the game produces 0.10000038 instead of 0.1. Without
-            // this, ceiling can charge 2 MP instead of 1. Preserve off-grid
-            // callbacks and positive tiny costs; do not use a broad epsilon
-            // that would absorb genuine nearby callback adjustments.
+            int minimum = ActiveDefenseMinimum(victim);
+            if (!(nativeCost > 10) || float.IsInfinity(nativeCost)) return minimum;
+            // Retain proportional cost increases above native's 10 MP base;
+            // cost reductions cannot undercut the guaranteed minimum. Keep
+            // exact twentieths for callbacks without a broad rounding epsilon.
             double units = nativeCost * 20d;
             double roundedUnits = Math.Round(units);
-            if (roundedUnits > 0 && (nativeCost == (float)(roundedUnits / 20d) ||
-                roundedUnits <= 200 && roundedUnits % 2 == 0 && nativeCost == 10f - 10f * (100 - (int)roundedUnits / 2) / 100f ||
-                roundedUnits <= 100 && nativeCost == (10f - 10f * (100 - (int)roundedUnits) / 100f) * 0.5f))
+            if (nativeCost == (float)(roundedUnits / 20d))
                 units = roundedUnits;
             // Integer twentieths/percentage units also avoid intermediate
             // rounding before ceiling. No cached max MP or mutable stat state.
             double cost = units * GuardMaximumMp(victim) * settings.GuardMpHundredths / 2000000d;
-            return (int)Math.Min(int.MaxValue, Math.Ceiling(cost));
+            return Math.Max(minimum, (int)Math.Min(int.MaxValue, Math.Ceiling(cost)));
         }
+
+        private static int ActiveDefenseMinimum(PlayerAvatar victim) =>
+            (int)Math.Min(int.MaxValue, Math.Ceiling(GuardMaximumMp(victim) *
+                (double)SessionSettings.FriendlyFireForHit.GuardMpHundredths / 10000d));
+
+        private static bool BalancedDefense(UnitAvatar victim) => NetworkServer.active &&
+            current.Friendly && victim is PlayerAvatar && ReferenceEquals(current.Victim, victim) &&
+            SessionSettings.FriendlyFireForHit.Balance && CurrentHitPermitted();
+
+        internal static void SpendGuardMp(UnitAvatar victim, int amount)
+        {
+            bool balanced = BalancedDefense(victim);
+            bool enforce = balanced && amount > 0 && SessionSettings.FriendlyFireForHit.GuardMpHundredths > 0;
+            if (balanced) current.DefenseMpSpent = true;
+            int before = Math.Max(0, victim.mp);
+            if (enforce)
+            {
+                // Native MP-use artifacts count the callback argument, not
+                // the actual debit. Empty/insufficient MP must not manufacture
+                // shield or buff rewards from an unpaid floor.
+                amount = Math.Min(amount, before);
+                if (amount == 0) return;
+            }
+            victim.UseMp(amount);
+            // Native INFINITYMP and synchronous MP-use refunds cannot waive
+            // the PvP floor. Revalidate after arbitrary native callbacks.
+            if (enforce && BalancedDefense(victim) && SessionSettings.FriendlyFireForHit.GuardMpHundredths > 0)
+            {
+                int ceiling = Math.Max(0, before - amount);
+                if (victim.mp > ceiling) victim.Networkmp = ceiling;
+            }
+        }
+
+        internal static int GuardInfiniteMp(int nativeValue) => BalancedDefense(current.Victim) &&
+            SessionSettings.FriendlyFireForHit.GuardMpHundredths > 0 ? 0 : nativeValue;
 
         private static int GuardMaximumMp(PlayerAvatar victim)
         {
@@ -73,11 +102,21 @@ namespace SephiriaOne
                 code.Skip(modifiers).Take(cost - modifiers).Count(i => i.LoadsField(durability)) != 2 ||
                 code[cost - 3].opcode != OpCodes.Ldarg_0 || !code[cost - 2].IsLdloc() || code[cost - 1].opcode != OpCodes.Conv_I4)
                 throw new InvalidOperationException("Native guard cost/modifier boundary changed.");
-            // Replace only the final integer conversion. MP shields, parries,
-            // native UseMp/infinite-MP and subsequent guard break stay intact.
+            // Adapt the final cost/spend and the native guard-break exemption.
+            // Other MP uses are covered only at their audited defense sites.
             var scale = CodeInstruction.Call(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.GuardMpCost));
             scale.MoveLabelsFrom(code[cost - 1]); scale.MoveBlocksFrom(code[cost - 1]);
             code[cost - 1] = scale;
+            var wrappedSpend = CodeInstruction.Call(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.SpendGuardMp));
+            wrappedSpend.MoveLabelsFrom(code[cost]); wrappedSpend.MoveBlocksFrom(code[cost]);
+            code[cost] = wrappedSpend;
+            var unsafeStat = AccessTools.DeclaredMethod(typeof(UnitAvatar), "GetCustomStatUnsafe", new[] { typeof(string) });
+            int infinity = code.FindIndex(cost + 1, i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "INFINITYMP"));
+            if (infinity < 0 || infinity + 1 >= code.Count || !code[infinity + 1].Calls(unsafeStat))
+                throw new InvalidOperationException("Native guard-break MP exemption changed.");
+            var guardBreak = CodeInstruction.Call(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.GuardInfiniteMp));
+            guardBreak.MoveLabelsFrom(code[infinity + 2]); guardBreak.MoveBlocksFrom(code[infinity + 2]);
+            code.Insert(infinity + 2, guardBreak);
             return code;
         }
     }

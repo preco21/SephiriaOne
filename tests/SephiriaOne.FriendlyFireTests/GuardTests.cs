@@ -11,19 +11,19 @@ internal static class GuardTests
         {
             FriendlyFireParticipants.Clear(); CombatMatchRuntime.PairRule = null; CombatMatchRuntime.Chaser = null;
             Mirror.NetworkServer.active = true;
-            // Keep precision/reduction regressions at an explicit 10%; test the default below.
+            // Keep precision/floor regressions at an explicit 10%; test the default below.
             SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, guardMpPercent: 10);
             source = new(); target = new() { IsGuarding = true, MaxMp = max, Mp = max };
             hit = new() { origin = source, damage = 20 };
         }
         Fresh(); SessionSettings.FriendlyFireForHit = new(true, 100, balance: true); target.ApplyDamage(hit);
-        check(target.Mp == 920 && target.Hp == 100 && target.GuardHits == 1,
-            "Default balanced guard spends 8 percent maximum MP and retains native block");
+        check(target.Mp == 950 && target.Hp == 100 && target.GuardHits == 1,
+            "Default balanced guard spends 5 percent maximum MP and retains native block");
         Fresh(10_000_000); target.FinalMp = 9 * 33; target.Mp = 39_700_000;
         check(target.MaxMp < 0, "Fixture reproduces native Final MP multiplication overflow");
         SessionSettings.FriendlyFireForHit = new(true, 100, balance: true); target.ApplyDamage(hit);
-        check(target.LastMpCost == 3_176_000 && target.Mp == 36_524_000,
-            "Large Final MP stacks still pay eight percent of full maximum MP");
+        check(target.LastMpCost == 1_985_000 && target.Mp == 37_715_000,
+            "Large Final MP stacks still pay five percent of full maximum MP");
         foreach (var sample in new[] {
             (Base: 1000, Final: 9 * 33, Maximum: 3970),
             (Base: 5_000_000, Final: 9 * 60, Maximum: 32_000_000),
@@ -36,16 +36,16 @@ internal static class GuardTests
             Fresh(sample.Base); target.FinalMp = sample.Final; target.Mp = int.MaxValue;
             SessionSettings.FriendlyFireForHit = new(true, 100, balance: true);
             target.ApplyDamage(hit);
-            check(target.LastMpCost == (int)Math.Ceiling(sample.Maximum * 0.08d),
+            check(target.LastMpCost == (int)Math.Ceiling(sample.Maximum * 0.05d),
                 "Effective guard maximum is safe for Final MP product/addition overflow: " + sample);
         }
         Fresh(10_000_000); target.FinalMp = 297; target.Mp = 39_700_000;
         target.GuardResistance = 40; target.PerfectGuard = true;
         SessionSettings.FriendlyFireForHit = new(true, 100, balance: true); target.ApplyDamage(hit);
-        check(target.LastMpCost == 952_800, "Large-pool guard retains Guard Efficiency and perfect-guard reductions");
+        check(target.LastMpCost == 1_985_000, "Large-pool Guard Efficiency and perfect guard cannot reduce the five percent floor");
         Fresh(1000); target.OnGuardSucceeded = _ => { target.maxMp = 10_000_000; target.FinalMp = 297; target.Mp = 39_700_000; };
         SessionSettings.FriendlyFireForHit = new(true, 100, balance: true); target.ApplyDamage(hit);
-        check(target.LastMpCost == 3_176_000, "Final MP and base MP are read after native guard callbacks");
+        check(target.LastMpCost == 1_985_000, "Final MP and base MP are read after native guard callbacks");
         Fresh(10_000_000); target.FinalMp = 297; target.Mp = 39_700_000;
         SessionSettings.FriendlyFireForHit = new(true, 100); target.ApplyDamage(hit);
         check(target.LastMpCost == 10, "Balancing off restores native cost even for overflowing maximum MP");
@@ -62,32 +62,40 @@ internal static class GuardTests
         Fresh(); target.MaxMp = 2000; target.ApplyDamage(hit);
         check(target.Mp == 800, "Live maximum MP changes apply immediately");
         Fresh(); target.PerfectGuard = true; target.ApplyDamage(hit);
-        check(target.Mp == 950, "Perfect guard retains native half cost");
+        check(target.Mp == 900, "Perfect guard's native half cost cannot reduce the configured floor");
         Fresh(); target.GuardResistance = 40; target.ApplyDamage(hit);
-        check(target.Mp == 940, "Guard Efficiency retains its native reduction");
+        check(target.Mp == 900, "Guard Efficiency cannot reduce the configured floor");
         Fresh(); target.GuardResistance = 40; target.PerfectGuard = true; target.ApplyDamage(hit);
-        check(target.Mp == 970, "Guard Efficiency and perfect guard stack before percentage scaling");
+        check(target.Mp == 900, "Stacked Guard Efficiency and perfect guard cannot bypass the configured floor");
         Fresh(); target.GuardResistance = 100; target.ApplyDamage(hit);
-        check(target.Mp == 1000, "Genuinely zero native cost stays zero");
+        check(target.Mp == 900, "Zero native guard cost still pays the configured positive floor");
         for (int efficiency = 0; efficiency <= 100; efficiency++)
         {
             Fresh(); target.GuardResistance = efficiency; target.ApplyDamage(hit);
-            check(target.LastMpCost == 100 - efficiency, "Native float rounding must not charge an extra MP at Guard Efficiency " + efficiency);
+            check(target.LastMpCost == 100, "Native float rounding neither reduces nor inflates the floor at Guard Efficiency " + efficiency);
             Fresh(2000); target.GuardResistance = efficiency; target.PerfectGuard = true; target.ApplyDamage(hit);
-            check(target.LastMpCost == 100 - efficiency, "Perfect guard float rounding must not charge an extra MP at Guard Efficiency " + efficiency);
+            check(target.LastMpCost == 200, "Perfect guard keeps the exact larger-pool floor at Guard Efficiency " + efficiency);
         }
         Fresh(int.MaxValue); SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, guardMpPercent: 0.01m); target.ApplyDamage(hit);
         check(target.LastMpCost == 214749, "Large MP pools retain a real fractional charge at the smallest percentage");
         Fresh(); target.OnCalculateDurabilityDamage = _ => 9.601f; target.ApplyDamage(hit);
-        check(target.LastMpCost == 97, "Genuinely fractional callback costs still round up");
+        check(target.LastMpCost == 100, "Fractional callback reductions stop at the configured floor");
         Fresh(); target.OnCalculateDurabilityDamage = _ => 0.10001f; target.ApplyDamage(hit);
-        check(target.LastMpCost == 2, "A real callback amount just above the native grid still rounds up");
+        check(target.LastMpCost == 100, "A callback just above the native reduction grid still pays the floor");
         Fresh(); target.OnCalculateDurabilityDamage = _ => 0.1000005f; target.ApplyDamage(hit);
-        check(target.LastMpCost == 2, "A nearby callback float distinct from the native reduction is preserved");
+        check(target.LastMpCost == 100, "A nearby distinct callback float below the floor cannot make a cheap guard");
         Fresh(); target.OnCalculateDurabilityDamage = _ => float.Epsilon; target.ApplyDamage(hit);
-        check(target.LastMpCost == 1, "Positive tiny callback amounts never become free guards");
-        Fresh(); target.OnCalculateDurabilityDamage = cost => cost * 0.75f; target.ApplyDamage(hit);
-        check(target.Mp == 925, "Native durability-cost callback still adjusts the cost once");
+        check(target.LastMpCost == 100, "Positive tiny callback amounts still pay the full configured floor");
+        Fresh(); int callbackCount = 0; target.OnCalculateDurabilityDamage = cost => { callbackCount++; return cost * 0.75f; }; target.ApplyDamage(hit);
+        check(target.Mp == 900 && callbackCount == 1, "Native durability callback still runs once while its reduction respects the floor");
+        Fresh(); target.OnCalculateDurabilityDamage = _ => 10.001f; target.ApplyDamage(hit);
+        check(target.LastMpCost == 101, "A genuine fractional callback surcharge above the floor rounds upward");
+        Fresh(); target.OnCalculateDurabilityDamage = _ => 10.1f; target.ApplyDamage(hit);
+        check(target.LastMpCost == 101, "An exact native callback grid surcharge avoids an extra rounding unit");
+        Fresh(); target.OnCalculateDurabilityDamage = _ => 10.100001f; target.ApplyDamage(hit);
+        check(target.LastMpCost == 102, "A distinct callback float above the surcharge grid is not absorbed by tolerance");
+        Fresh(); target.OnCalculateDurabilityDamage = cost => cost * 1.25f; target.ApplyDamage(hit);
+        check(target.Mp == 875, "Native cost increases above ten still scale proportionally beyond the floor");
         Fresh(); SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, guardMpPercent: 12.5m); target.ApplyDamage(hit);
         check(target.Mp == 875, "Fractional live guard percentage is exact");
         SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, guardMpPercent: 20); target.ApplyDamage(hit);
@@ -97,11 +105,16 @@ internal static class GuardTests
         Fresh(1); SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, guardMpPercent: 0.01m); target.ApplyDamage(hit);
         check(target.LastMpCost == 1 && target.GuardBroken, "Positive fractional MP costs round up instead of creating free blocks");
         Fresh(); target.InfiniteMp = true; target.ApplyDamage(hit);
-        check(target.LastMpCost == 100 && target.Mp == 1000 && !target.GuardBroken, "Native infinite-MP behavior remains in UseMp");
+        check(target.LastMpCost == 100 && target.Mp == 900 && !target.GuardBroken, "Native infinite MP cannot waive an admitted PvP defense floor");
+        Fresh(); target.InfiniteMp = true; target.Mp = 100; target.ApplyDamage(hit);
+        check(target.Mp == 0 && target.GuardBroken, "Infinite MP cannot suppress native guard break after the floor drains available MP");
         Fresh(); target.IsParrying = true; target.ApplyDamage(hit);
-        check(target.Mp == 1000 && target.GuardHits == 0, "Separate parry path is not charged as a guard");
+        check(target.Mp == 900 && target.GuardHits == 0, "Separate successful parry pays one floor without entering ordinary guard");
         Fresh(); target.IsGuarding = false; target.IsMpShield = true; target.ApplyDamage(hit);
-        check(target.Mp == 988 && target.LastMpCost == 0, "MP shield consumption still follows resolved damage, not guard percentage");
+        check(target.Mp == 900 && target.LastMpCost == 100 && target.Hp == 100, "Passive MP shield pays the floor while preserving native full absorption");
+        Fresh(); target.IsGuarding = false; target.IsMpShield = true;
+        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, guardMpPercent: 0); target.ApplyDamage(hit);
+        check(target.Mp == 988 && target.Hp == 100, "Zero defense percentage preserves native MP-shield damage spending rather than waiving it");
         Fresh(); SessionSettings.FriendlyFireForHit = new(true, 100); target.ApplyDamage(hit);
         check(target.Mp == 990, "Balance off restores native fixed cost immediately");
         Fresh(); SessionSettings.FriendlyFireForHit = new(false, 100, balance: true); target.ApplyDamage(hit);
@@ -126,7 +139,7 @@ internal static class GuardTests
         Fresh(); target.OnCalculateDurabilityDamage = cost => { SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, guardMpPercent: 25); return cost; };
         target.ApplyDamage(hit); check(target.Mp == 750, "Cost callbacks can edit policy at the final spend boundary");
         Fresh(); SessionSettings.FriendlyFireForHit = new(true, 100); target.OnGuardSucceeded = _ => SessionSettings.FriendlyFireForHit = new(true, 100, balance: true);
-        target.ApplyDamage(hit); check(target.Mp == 920, "Enabling balancing inside a guard callback immediately applies current default cost");
+        target.ApplyDamage(hit); check(target.Mp == 950, "Enabling balancing inside a guard callback immediately applies current default cost");
         Fresh(); target.OnGuardSucceeded = _ => target.MaxMp = 2000; target.ApplyDamage(hit);
         check(target.Mp == 800, "Cost reads maximum MP after native guard callbacks");
         Fresh(); npc = new UnitAvatar { faction = "enemy", IsGuarding = true, MaxMp = 1000, Mp = 1000 };
@@ -160,7 +173,7 @@ internal static class GuardTests
         foreach (float bad in new[] { float.NaN, float.PositiveInfinity, float.NegativeInfinity, -1 })
         {
             Fresh(); target.OnCalculateDurabilityDamage = _ => bad; target.ApplyDamage(hit);
-            check(target.LastMpCost == 0 && target.Mp == 1000, "Invalid cost cannot poison MP: " + bad);
+            check(target.LastMpCost == 100 && target.Mp == 900, "Invalid cost falls back to the configured floor without poisoning MP: " + bad);
         }
         Fresh();
         for (int i = 0; i < 1000; i++) { target.Mp = 1000; target.ApplyDamage(hit); }

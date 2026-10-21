@@ -342,6 +342,10 @@ was deployed or launched.
 
 ## Guard MP cost (`0.58.0`, 2026-10-16)
 
+**Historical behavior below.** `0.80.1` replaces this guard-only implementation
+with a strict default **5% minimum after reductions**, including parries and
+automatic shields. See [current shield MP rules and audit](pvp-shield-mp.md).
+
 Default raised from 5% to 8% in `0.78.1` (2026-10-21).
 
 While balancing is enabled, blocking an admitted PvP hit costs **8% of the

@@ -7,28 +7,59 @@ internal static class GameGuardTests
     internal static void Run(Assembly game, Assembly addon)
     {
         var avatar = game.GetType("UnitAvatar", true)!;
-        var native = PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(avatar, "ApplyDamage")).ToList();
+        var native = PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(avatar, "ApplyDamage"), out var generator).ToList();
         var useMp = AccessTools.DeclaredMethod(avatar, "UseMp", new[] { typeof(int) });
         var rewrite = AccessTools.DeclaredMethod(addon.GetType("SephiriaOne.FriendlyFireGuardHooks", true)!, "Rewrite");
         List<CodeInstruction> Rewrite(IEnumerable<CodeInstruction> code) =>
             ((IEnumerable<CodeInstruction>)rewrite.Invoke(null, new object[] { code })!).ToList();
         void Require(bool value, string why) { if (!value) throw new Exception("Guard MP contract: " + why); }
         bool Call(CodeInstruction i, string owner, string name) => i.operand is MethodInfo m && m.DeclaringType?.Name == owner && m.Name == name;
-        var patched = Rewrite(native);
-        Require(patched.Count == native.Count, "guard conversion rewrite adds no calls or branches outside its one replacement");
-        int converted = 0;
-        for (int i = 0; i < native.Count; i++)
+        int guardSpend = native.FindIndex(i => i.Calls(useMp));
+        int infiniteStat = native.FindIndex(guardSpend + 1, i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "INFINITYMP"));
+        int infinityInsertion = infiniteStat + 2;
+        Require(guardSpend > 0 && infiniteStat > guardSpend && Call(native[infiniteStat + 1], "UnitAvatar", "GetCustomStatUnsafe"),
+            "guard spend and its native infinite-MP guard-break exemption are identified independently");
+        void CheckRewrite(List<CodeInstruction> original)
         {
-            bool helper = Call(patched[i], "FriendlyFireRuntime", "GuardMpCost");
-            if (helper)
+            var patched = Rewrite(original);
+            foreach (string name in new[] { "GuardMpCost", "SpendGuardMp", "GuardInfiniteMp" })
+                Require(patched.Count(i => Call(i, "FriendlyFireRuntime", name)) == 1, "exactly one " + name + " guard boundary is installed");
+            int exemption = patched.FindIndex(i => Call(i, "FriendlyFireRuntime", "GuardInfiniteMp"));
+            Require(Call(patched[exemption - 1], "UnitAvatar", "GetCustomStatUnsafe") &&
+                patched[exemption - 2].opcode == OpCodes.Ldstr && Equals(patched[exemption - 2].operand, "INFINITYMP"),
+                "guard-break exemption reads the native stat before applying the eligible PvP override");
+            int cursor = 0;
+            for (int i = 0; i < original.Count; i++)
             {
-                converted++;
-                Require(native[i].opcode == OpCodes.Conv_I4 && native[i + 1].Calls(useMp), "only conversion immediately before native guard UseMp changes");
+                int entry = cursor;
+                if (cursor < patched.Count && Call(patched[cursor], "FriendlyFireRuntime", "GuardInfiniteMp")) cursor++;
+                Require(cursor < patched.Count, "guard rewrite retains the entire native instruction stream");
+                if (i == guardSpend - 1)
+                    Require(original[i].opcode == OpCodes.Conv_I4 && Call(patched[cursor], "FriendlyFireRuntime", "GuardMpCost"),
+                        "only the final native guard conversion is scaled");
+                else if (i == guardSpend)
+                    Require(Call(patched[cursor], "FriendlyFireRuntime", "SpendGuardMp"), "only native guard spending is wrapped in this rewrite");
+                else Require(patched[cursor].opcode == original[i].opcode && Equals(patched[cursor].operand, original[i].operand),
+                    "native callbacks, modifiers, guard break and all MP-shield instructions remain intact");
+                var entries = patched.Skip(entry).Take(cursor - entry + 1).ToArray();
+                Require(entries.SelectMany(n => n.labels).SequenceEqual(original[i].labels) &&
+                    entries.SelectMany(n => n.blocks).SequenceEqual(original[i].blocks),
+                    "branch and exception metadata is preserved without duplication");
+                cursor++;
             }
-            else Require(patched[i].opcode == native[i].opcode && Equals(patched[i].operand, native[i].operand), "native guard callbacks/modifiers/break and MP shield instructions preserved");
-            Require(patched[i].labels.SequenceEqual(native[i].labels) && patched[i].blocks.SequenceEqual(native[i].blocks), "branch and exception entry points preserved");
+            Require(cursor == patched.Count, "no unrelated guard rewrite operation is introduced");
+            Require(patched[exemption].labels.SequenceEqual(original[infinityInsertion].labels) &&
+                patched[exemption].blocks.SequenceEqual(original[infinityInsertion].blocks),
+                "every entry into the native guard-break comparison first receives the PvP infinite-MP adjustment");
         }
-        Require(converted == 1, "exactly one guard cost replaced");
+        CheckRewrite(native);
+        var labeled = native.Select(i => new CodeInstruction(i)).ToList();
+        foreach (int boundary in new[] { guardSpend - 1, guardSpend, infinityInsertion })
+        {
+            labeled[boundary].labels.Add(generator.DefineLabel());
+            labeled[boundary].blocks.Add(new ExceptionBlock(ExceptionBlockType.BeginExceptionBlock));
+        }
+        CheckRewrite(labeled);
         void Reject(IEnumerable<CodeInstruction> changed, string why)
         {
             bool rejected = false;
@@ -37,7 +68,6 @@ internal static class GameGuardTests
             catch (TargetInvocationException e) when (e.InnerException is InvalidOperationException) { rejected = true; }
             Require(rejected, why);
         }
-        int guardSpend = native.FindIndex(i => i.Calls(useMp));
         Reject(native.Where((_, index) => index != guardSpend), "missing guard spend cannot wrap a later MP shield spend");
         Reject(native.Where(i => i.operand is not FieldInfo f || f.Name != "OnCalculateDurabilityDamage"), "changed cost callback contract rejects installation");
         var changed = native.Select(i => new CodeInstruction(i)).ToList();
@@ -45,6 +75,8 @@ internal static class GameGuardTests
         Reject(changed, "changed integer conversion is rejected");
         Reject(native.Select(i => i.opcode == OpCodes.Ldc_R4 && Equals(i.operand, 10f) ? new CodeInstruction(OpCodes.Ldc_R4, 11f) : i), "native base-cost change requires reaudit");
         Reject(native.Select(i => i.opcode == OpCodes.Ldc_R4 && Equals(i.operand, 0.5f) ? new CodeInstruction(OpCodes.Ldc_R4, 0.25f) : i), "native perfect-guard change requires reaudit");
+        Reject(native.Where((_, index) => index != infiniteStat), "missing guard-break infinite-MP read requires reaudit");
+        Reject(Rewrite(native), "guard minimum cannot be inserted twice into the same hit stream");
         Require(native.Skip(guardSpend).Take(25).Any(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "INFINITYMP")) &&
             native.Skip(guardSpend).Any(i => Call(i, "UnitAvatar", "InactivateGuard")), "native infinite-MP and guard-break tail remains in use");
         var spendCode = PatchProcessor.GetOriginalInstructions(useMp).ToList();
@@ -67,7 +99,7 @@ internal static class GameGuardTests
         var panel = addon.GetType("SephiriaOne.SettingsPanel", true)!;
         List<CodeInstruction> Panel(string name) => PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(panel, name)).ToList();
         var build = Panel("BuildPvpBalanceEditor"); var refresh = Panel("RefreshPvpBalance"); var apply = Panel("ApplyFriendlyGuardMp");
-        Require(build.Any(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "Guard MP (%)")) &&
+        Require(build.Any(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "Shield MP min (%)")) &&
             build.Count(i => Call(i, "PanelWidgets", "Input")) == 4, "dedicated balancing section includes guard, refill and paired amplification inputs");
         Require(apply.Any(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "/one friendlyfire guard-mp ")) &&
             apply.Any(i => Call(i, "SettingsPanel", "Execute")) && apply.Any(i => Call(i, "SettingsPanel", "ClearFriendlyGuardMp")),
@@ -81,6 +113,7 @@ internal static class GameGuardTests
         Require(Panel("RefreshCombat").Any(i => Call(i, "SettingsPanel", "RefreshPvpBalance")) &&
             Panel("BuildCombatEditor").Any(i => Call(i, "SettingsPanel", "BuildParticipantsEditor")), "balancing refresh and shared participant controls remain wired");
         GameAmplificationPanelTests.Run(addon);
-        Console.WriteLine("Verified guard-only final MP conversion, native modifiers/break/replication, drift rejection and compact shared-command balancing controls (not live Unity).");
+        GameActiveDefenseTests.Run(game, addon);
+        Console.WriteLine("Verified strict guard floor/spend/exemption boundaries, native callbacks/break/replication, drift rejection and compact shared-command balancing controls (not live Unity).");
     }
 }

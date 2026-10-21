@@ -7,6 +7,9 @@ public partial class UnitAvatar
     public int GuardResistance;
     public bool PerfectGuard, InfiniteMp, GuardBroken;
     public int LastMpCost;
+    public int Mp { get => mp; set => mp = value; }
+    public int Networkmp { get => Mp; set => Mp = value; }
+    public Action<int> OnMpUsedServerside;
     public int maxMp = 100, FinalMp, InfinityMaxMp = 1000;
     public int MaxMp
     {
@@ -18,6 +21,21 @@ public partial class UnitAvatar
     [MethodImpl(MethodImplOptions.NoInlining)] public void UseMp(int amount)
     {
         LastMpCost = amount;
+        OnMpUsedServerside?.Invoke(amount);
         if (!InfiniteMp) Mp = Math.Max(0, Mp - amount);
+    }
+    [MethodImpl(MethodImplOptions.NoInlining)] public float UseShield(float amount)
+    {
+        float used = Math.Min(amount, Shield); Shield -= used; return amount - used;
+    }
+}
+
+public class UnitSubShield
+{
+    public UnitAvatar owner;
+    public bool Block = true;
+    [MethodImpl(MethodImplOptions.NoInlining)] public void OnCalculateDamage(DamageInstance damage)
+    {
+        if (Block && damage.failed == EDamageFailType.None) damage.failed = EDamageFailType.Block;
     }
 }

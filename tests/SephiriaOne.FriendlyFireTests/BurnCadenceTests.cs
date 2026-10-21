@@ -8,6 +8,7 @@ public sealed class Timer
 {
     public float time, Elapsed;
     public Timer(float duration) { time = duration; }
+    [MethodImpl(MethodImplOptions.NoInlining)] public void SetTimer(float elapsed) { Elapsed = elapsed; }
     [MethodImpl(MethodImplOptions.NoInlining)] public void AddTimerNoLimit(float delta) { Elapsed += delta; }
     [MethodImpl(MethodImplOptions.NoInlining)] public bool Update(float delta)
     {

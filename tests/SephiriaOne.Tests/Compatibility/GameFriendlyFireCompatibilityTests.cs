@@ -59,8 +59,12 @@ internal static class GameFriendlyFireCompatibilityTests
         Require(search.Any(i => i.operand is FieldInfo f && f.Name == "IsDead") && Calls(search, "UnitAvatar", "get_IsInvulnerable") &&
             search.Any(i => i.operand is FieldInfo f && f.Name == "sightRadius"), "native target validity and sight range stay in force");
         var rewritten = ((IEnumerable<CodeInstruction>)AccessTools.Method(transpiler,"Rewrite").Invoke(null,new object[] { apply, generator })!).ToList();
-        Require(rewritten.Count(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "FriendlyFireRuntime") == 11,
-            "three faction/leader helpers, one permission check, one scale, one numeric check, one HP Harvest wrapper, one MP Harvest amount, one guard cost, one Evasion chance and one amplification limit");
+        Require(rewritten.Count(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "FriendlyFireRuntime") == 20,
+            "existing eleven combat adapters, two guard spending/exemption adapters and seven parry/MP/ordinary-shield adapters compose once");
+        foreach (string helper in new[] { "GuardMpCost", "SpendGuardMp", "GuardInfiniteMp", "ParryAllowed", "BeginParryMp", "AfterParryMp",
+            "ActiveMpShieldCost", "SpendActiveShieldMp", "SpendPartialShieldMp", "AbsorbShield" })
+            Require(rewritten.Count(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "FriendlyFireRuntime" && m.Name == helper) == 1,
+                "combined native damage rewrite contains one " + helper + " defense boundary");
         int recheck = rewritten.FindIndex(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "FriendlyFireRuntime" && m.Name == "ContinueHit");
         int leaderCallback = rewritten.FindIndex(i => i.operand is FieldInfo f && f.Name == "OnAttackUnitBeforeOperation_AsLeader");
         int rewrittenGuard = rewritten.FindIndex(i => i.operand is FieldInfo f && f.Name == "isGuardEnabled");

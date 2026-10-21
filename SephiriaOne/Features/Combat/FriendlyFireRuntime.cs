@@ -21,6 +21,8 @@ namespace SephiriaOne
             internal BalanceWindow BudgetWindow;
             internal long BudgetGeneration;
             internal double BudgetCharged, BudgetMaxHp, BudgetAccounted, BudgetIncomingScale;
+            internal int ParryMpBefore;
+            internal bool ActiveShieldSpend, ShieldAbsorbed, DefenseMpSpent;
         }
         [ThreadStatic] private static HitContext current;
         private static bool warned;
@@ -112,7 +114,7 @@ namespace SephiriaOne
 
         internal static Exception AfterHit(Exception __exception, HitContext __state)
         {
-            try { if (__exception == null) FinishBalancedDamage(); }
+            try { if (__exception == null) { FinishDefenseMp(); FinishBalancedDamage(); } }
             finally { current = __state; }
             return __exception;
         }

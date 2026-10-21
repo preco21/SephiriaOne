@@ -75,7 +75,7 @@ internal static class ResponsiveBudgetTests
         check(before - target.Hp == 1, "Unfunded armor losses cannot manufacture refunded allowance");
         target.IsMpShield = true; target.Mp = 100;
         for (int i = 0; i < 10; i++) target.ApplyDamage(hit);
-        check(target.Mp == 90 && target.Hp == before - 1, "Minimum-only hits spend MP without free absorption or token refunds");
+        check(target.Mp == 50 && target.Hp == before - 1, "Minimum-only hits pay the shield MP floor without free absorption or token refunds");
         target.IsMpShield = false;
         var nested = new Charm_FrostiumRing { NetworkAvatar = source, Target = target, Damage = hit };
         target.OnHit = (_, _) => { target.OnHit = null; nested.HandleAttackUnit(); };
