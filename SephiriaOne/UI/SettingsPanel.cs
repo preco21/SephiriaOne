@@ -220,6 +220,7 @@ namespace SephiriaOne
             updateInstall = updateCheck = null; updateAutomatic = null;
             friendlyDamage = null; friendlyDraft = false; friendlyRefill = null; friendlyRefillDraft = false;
             friendlyGuardMp = null; friendlyGuardMpDraft = false;
+            friendlyPerfectGuard = null; friendlyPerfectGuardDraft = false;
             friendlyAmplificationSoft = friendlyAmplificationHard = null; friendlyAmplificationDraft = false;
             pvpRapidEditors.Clear(); pvpRapidRecovery = pvpRapidExample = null; pvpRapidReset = null;
             pvpRapidLastBurst = pvpRapidLastRefill = pvpRapidLastExponent = -1;
@@ -392,6 +393,7 @@ namespace SephiriaOne
         {
             ClearPvpDots(); ClearRequitalCount(); ClearProjectileInputs();
             ClearFriendlyDamage(); ClearFriendlyRefill(); ClearFriendlyGuardMp();
+            ClearFriendlyPerfectGuard();
             ClearFriendlyAmplification();
             ClearPvpRapid();
             ClearZombieDuration(); ClearZombieCount(); ClearZombieRefill(); ClearZombieIncoming();

@@ -1,5 +1,14 @@
 # Sephiria domain findings
 
+Perfect Guard (`0.84.0`): native `UnitAvatar.ApplyDamage` computes 10 MP →
+GuardResist → conditional Perfect Guard x0.5 → OnCalculateDurabilityDamage →
+integer truncation → UseMp. Record the actual half-cost branch, not a later
+timer read or a guessed cost (artifacts can modify both). Validate the same cost
+local across the branch and final spend. The current-hit scope safely carries
+classification across callbacks/nesting. The optional native-cost multiplier
+is explicitly exempt from the general shield floor. See
+[semantics and evidence](pvp-shield-mp.md#perfect-guard-multiplier-0840).
+
 Additional defensive effects (`0.81.0`): Elastic Band restores dash charges on
 every evade, including Battle Bracelet's dash-invulnerability evade event.
 Limit that specific refund callback, never the shared evade event (which also

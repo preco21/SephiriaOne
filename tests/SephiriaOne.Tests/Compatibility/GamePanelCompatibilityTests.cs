@@ -10,6 +10,7 @@ internal static class GamePanelCompatibilityTests
         GameZombieVisualTests.Run(game, addon);
         GameHotkeyCompatibilityTests.Run(game, addon);
         GameRapidPanelTests.Run(addon);
+        GamePerfectGuardPanelTests.Run(addon);
         var ui = game.GetType("UIBase", true)!;
         var root = game.GetType("UIRoot", true)!;
         var open = Required(ui, "Open");

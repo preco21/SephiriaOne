@@ -1,5 +1,13 @@
 # Active settings and saved preset
 
+Schema v45 saves nondefault Perfect Guard settings as `friendlyfire perfect-guard
+1` and `friendlyfire perfect-guard-multiplier N`. The multiplier is a canonical
+decimal from 1 to 100 with up to two places. Missing rows/older files inherit
+off/x2; disabled custom multipliers still persist. Invalid, duplicate and
+out-of-version rows reject the entire file. Only configured intent is saved;
+native guard-branch flags and per-hit MP costs never persist. See
+[Perfect Guard behavior](pvp-shield-mp.md#perfect-guard-multiplier-0840).
+
 Schema v44 saves nondefault rapid-hit controls as `friendlyfire rapid-window N`,
 `rapid-rate N`, `rapid-exponent N` and `rapid-burst N` (each with the same
 `friendlyfire` prefix). Values are canonical decimals with at most two places;

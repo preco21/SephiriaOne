@@ -45,12 +45,14 @@ internal static class GameFriendlyFireScaleTests
         var refill = Code("ApplyFriendlyRefill");
         Require(apply.Any(i => Call(i, "SettingsPanel", "ClearFriendlyDamage")) && refill.Any(i => Call(i, "SettingsPanel", "ClearFriendlyRefill")),
             "Each successful Apply clears only its own draft, preserving the other pending field");
-        Require(balance.Count(i => Call(i, "PanelWidgets", "Input")) == 4 && balance.Any(i => i.LoadsConstant("PvP refill (%/s)")), "Independent refill, guard and paired amplification inputs exist in balancing section");
+        Require(balance.Count(i => Call(i, "PanelWidgets", "Input")) == 4 && !balance.Any(i => i.LoadsConstant("PvP refill (%/s)")) &&
+            Code("BuildPvpRapidEditor").Any(i => i.LoadsConstant("PvP refill (%/s)")),
+            "Balance holds guard, Perfect Guard and paired amplification inputs; refill is exclusively on Rapid Hits");
         Require(refill.Any(i => i.LoadsConstant("/one friendlyfire refill ")) && refill.Any(i => Call(i, "TMP_InputField", "get_text")) &&
             refill.Any(i => Call(i, "SettingsPanel", "Execute")), "Refill Apply uses exact text through the shared command");
         Require(!Code("EditFriendlyRefill").Any(i => Call(i, "SettingsPanel", "Execute")) &&
-            Code("RefreshPvpBalance").Any(i => i.operand is FieldInfo field && field.Name == "friendlyRefillDraft") &&
-            Code("RefreshPvpBalance").Any(i => Call(i, "FriendlyFireSettings", "get_RefillNumber")), "Refill typing stays local and refresh preserves the draft");
+            Code("RefreshPvpRapid").Any(i => i.operand is FieldInfo field && field.Name == "friendlyRefillDraft") &&
+            Code("RefreshPvpRapid").Any(i => Call(i, "FriendlyFireSettings", "get_RefillNumber")), "Refill typing stays local and Rapid Hits refresh preserves the draft");
         Require(Code("ClearInput").Any(i => Call(i, "SettingsPanel", "ClearFriendlyRefill")), "Scope resets clear refill drafts too");
         Require(!Code("ClearFriendlyDamage").Any(i => i.operand is FieldInfo field && field.Name == "friendlyRefillDraft") &&
             !Code("ClearFriendlyRefill").Any(i => i.operand is FieldInfo field && field.Name == "friendlyDraft"), "Per-field resets do not touch the sibling draft");

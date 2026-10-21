@@ -56,6 +56,8 @@ namespace SephiriaOne
             { message = FriendlyFireCommand.Usage; return false; }
             if (command.Rapid.HasValue && !command.Rapid.Value.IsValid)
             { message = FriendlyFireCommand.Usage; return false; }
+            if (command.PerfectGuard.HasValue && !command.PerfectGuard.Value.IsValid)
+            { message = FriendlyFireCommand.Usage; return false; }
             bool interrupted = CombatMatchRuntime.IsRunning && command.TouchesMasterToggle;
             var previousDungeon = DungeonManager.Instance; var previousRun = SaveManager.CurrentRun; long previousGeneration = ResourceGeneration;
             if (command.TouchesMasterToggle) CombatMatchRuntime.Stop(true, true);
@@ -98,7 +100,9 @@ namespace SephiriaOne
             L.F("PvP refill: {0}% max HP/s.", settings.RefillNumber) + " " +
             L.F("Allowance refills continuously; base empty-to-full recovery: {0}s. Per-hit softening, native defenses, role modifiers and debuff schedules remain separate; minimum hits can exceed the allowance.",
                 (settings.Rapid.BurstPercent / settings.RefillPercent).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)) + " " +
-            L.F("PvP guard: {0}% max MP before native reductions.", settings.GuardMpNumber) + " " +
+            L.F("PvP shield minimum: {0}% max MP after native reductions.", settings.GuardMpNumber) + " " +
+            L.F("Perfect Guard MP multiplier: {0}; x{1} native MP cost (requires PvP balancing; when on, ignores shield minimum).",
+                L.T(settings.PerfectGuard.Enabled ? "on" : "off"), settings.PerfectGuard.Number) + " " +
             L.F("All Damage Amplified limit: {0}; soft {1}%, hard {2}% bonus (100% = +100%; requires PvP balancing).",
                 L.T(settings.Amplification.Enabled ? "on" : "off"), settings.Amplification.SoftNumber, settings.Amplification.HardNumber) + " " +
             L.F("PvP DoT intervals (s): Burn {0}; Plasma Burn {1}; Frostbite {2}; Poison {3}.",

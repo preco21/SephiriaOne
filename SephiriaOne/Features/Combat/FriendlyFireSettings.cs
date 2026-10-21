@@ -26,6 +26,7 @@ namespace SephiriaOne
         public PvpDotSettings DotIntervals { get; }
         public PvpAmplificationSettings Amplification { get; }
         public PvpRapidSettings Rapid { get; }
+        public PvpPerfectGuardSettings PerfectGuard { get; }
         public decimal DamagePercent => (damageOffset + 10000) / 100m;
         public double DamageScale => (damageOffset + 10000) / 10000d;
         public bool HasDamage => damageOffset > -10000;
@@ -37,11 +38,11 @@ namespace SephiriaOne
         public decimal GuardMpPercent => (guardMpOffset + DefaultGuardMpHundredths) / 100m;
         internal int GuardMpHundredths => guardMpOffset + DefaultGuardMpHundredths;
         public string GuardMpNumber => GuardMpPercent.ToString("0.##", CultureInfo.InvariantCulture);
-        public bool HasChanges => Enabled || Balance || HitFrequency || AutoPotion || !InfiniteHpPotions || BlockLobbyRegen || damageOffset != 0 || refillOffset != 0 || guardMpOffset != 0 || DotIntervals.HasChanges || Amplification.HasChanges || Rapid.HasChanges;
+        public bool HasChanges => Enabled || Balance || HitFrequency || AutoPotion || !InfiniteHpPotions || BlockLobbyRegen || damageOffset != 0 || refillOffset != 0 || guardMpOffset != 0 || DotIntervals.HasChanges || Amplification.HasChanges || Rapid.HasChanges || PerfectGuard.HasChanges;
         public FriendlyFireSettings(bool enabled, decimal damagePercent, bool balance = false, bool blockLobbyRegen = false,
             decimal refillPercent = DefaultRefillPercent, decimal guardMpPercent = DefaultGuardMpPercent, PvpDotSettings dotIntervals = default,
             bool hitFrequency = false, bool autoPotion = false, bool infiniteHpPotions = true, PvpAmplificationSettings amplification = default,
-            PvpRapidSettings rapid = default)
+            PvpRapidSettings rapid = default, PvpPerfectGuardSettings perfectGuard = default)
         {
             if (!ValidPercent(damagePercent)) throw new ArgumentOutOfRangeException(nameof(damagePercent));
             if (!ValidRefillPercent(refillPercent)) throw new ArgumentOutOfRangeException(nameof(refillPercent));
@@ -52,13 +53,14 @@ namespace SephiriaOne
             DotIntervals = dotIntervals;
             Amplification = amplification;
             Rapid = rapid;
+            PerfectGuard = perfectGuard;
             HitFrequency = hitFrequency; AutoPotion = autoPotion; finiteHpPotions = !infiniteHpPotions;
         }
         public static bool ValidPercent(decimal percent) => percent >= 0 && percent <= 300 && percent * 100 == decimal.Truncate(percent * 100);
         public static bool ValidRefillPercent(decimal percent) => percent >= 1 && ValidPercent(percent);
         public static bool ValidGuardMpPercent(decimal percent) => percent <= 100 && ValidPercent(percent);
         private FriendlyFireSettings(FriendlyFireSettings source, bool enabled)
-        { Enabled = enabled; Balance = source.Balance; HitFrequency = source.HitFrequency; AutoPotion = source.AutoPotion; finiteHpPotions = source.finiteHpPotions; BlockLobbyRegen = source.BlockLobbyRegen; damageOffset = source.damageOffset; refillOffset = source.refillOffset; guardMpOffset = source.guardMpOffset; DotIntervals = source.DotIntervals; Amplification = source.Amplification; Rapid = source.Rapid; }
+        { Enabled = enabled; Balance = source.Balance; HitFrequency = source.HitFrequency; AutoPotion = source.AutoPotion; finiteHpPotions = source.finiteHpPotions; BlockLobbyRegen = source.BlockLobbyRegen; damageOffset = source.damageOffset; refillOffset = source.refillOffset; guardMpOffset = source.guardMpOffset; DotIntervals = source.DotIntervals; Amplification = source.Amplification; Rapid = source.Rapid; PerfectGuard = source.PerfectGuard; }
         // Deathmatch reads this at hit time; keep toggle overlays in integer space.
         public FriendlyFireSettings WithEnabled(bool enabled) => new FriendlyFireSettings(this, enabled);
         public FriendlyFireSettings Apply(FriendlyFireCommand command) => command.Reset ? default :
@@ -68,7 +70,8 @@ namespace SephiriaOne
                     command.DotSchedule.HasValue ? DotIntervals.ApplySchedule(command.DotSchedule.Value) : DotIntervals,
                 command.HitFrequency ?? HitFrequency, command.AutoPotion ?? AutoPotion, command.InfiniteHpPotions ?? InfiniteHpPotions,
                 command.Amplification.HasValue ? command.Amplification.Value.Apply(Amplification) : Amplification,
-                command.Rapid.HasValue ? command.Rapid.Value.Apply(Rapid) : Rapid);
+                command.Rapid.HasValue ? command.Rapid.Value.Apply(Rapid) : Rapid,
+                command.PerfectGuard.HasValue ? command.PerfectGuard.Value.Apply(PerfectGuard) : PerfectGuard);
     }
 
     internal readonly struct PvpAmplificationChange
@@ -107,14 +110,15 @@ namespace SephiriaOne
         public bool? BlockLobbyRegen { get; }
         public PvpAmplificationChange? Amplification { get; }
         public PvpRapidChange? Rapid { get; }
+        public PvpPerfectGuardChange? PerfectGuard { get; }
         public FriendlyFireCommand(bool enabled, decimal? percent = null, bool reset = false, bool? balance = null, bool? blockLobbyRegen = null,
             decimal? refillPercent = null, decimal? guardMpPercent = null, PvpDotChange? dot = null, bool? hitFrequency = null,
             PvpDotScheduleChange? dotSchedule = null, bool? autoPotion = null, bool? infiniteHpPotions = null,
-            PvpAmplificationChange? amplification = null, PvpRapidChange? rapid = null)
-        { Enabled = enabled; Percent = percent; Reset = reset; Balance = balance; HitFrequency = hitFrequency; AutoPotion = autoPotion; InfiniteHpPotions = infiniteHpPotions; BlockLobbyRegen = blockLobbyRegen; RefillPercent = refillPercent; GuardMpPercent = guardMpPercent; Dot = dot; DotSchedule = dotSchedule; Amplification = amplification; Rapid = rapid; }
+            PvpAmplificationChange? amplification = null, PvpRapidChange? rapid = null, PvpPerfectGuardChange? perfectGuard = null)
+        { Enabled = enabled; Percent = percent; Reset = reset; Balance = balance; HitFrequency = hitFrequency; AutoPotion = autoPotion; InfiniteHpPotions = infiniteHpPotions; BlockLobbyRegen = blockLobbyRegen; RefillPercent = refillPercent; GuardMpPercent = guardMpPercent; Dot = dot; DotSchedule = dotSchedule; Amplification = amplification; Rapid = rapid; PerfectGuard = perfectGuard; }
         public bool IsReset => Reset || !Dot.HasValue && !GuardMpPercent.HasValue && !RefillPercent.HasValue &&
-            (Rapid.HasValue ? Rapid.Value.IsReset : Amplification.HasValue ? Amplification.Value.IsReset : InfiniteHpPotions.HasValue ? !InfiniteHpPotions.Value : AutoPotion.HasValue ? !AutoPotion.Value : DotSchedule.HasValue ? !DotSchedule.Value.Enabled : HitFrequency.HasValue ? !HitFrequency.Value : BlockLobbyRegen.HasValue ? !BlockLobbyRegen.Value : Balance.HasValue ? !Balance.Value : !Percent.HasValue && !Enabled);
-        public bool TouchesMasterToggle => Reset || !Rapid.HasValue && !Amplification.HasValue && !InfiniteHpPotions.HasValue && !AutoPotion.HasValue && !Percent.HasValue && !Balance.HasValue && !HitFrequency.HasValue && !BlockLobbyRegen.HasValue && !RefillPercent.HasValue && !GuardMpPercent.HasValue && !Dot.HasValue && !DotSchedule.HasValue;
+            (PerfectGuard.HasValue ? PerfectGuard.Value.IsReset : Rapid.HasValue ? Rapid.Value.IsReset : Amplification.HasValue ? Amplification.Value.IsReset : InfiniteHpPotions.HasValue ? !InfiniteHpPotions.Value : AutoPotion.HasValue ? !AutoPotion.Value : DotSchedule.HasValue ? !DotSchedule.Value.Enabled : HitFrequency.HasValue ? !HitFrequency.Value : BlockLobbyRegen.HasValue ? !BlockLobbyRegen.Value : Balance.HasValue ? !Balance.Value : !Percent.HasValue && !Enabled);
+        public bool TouchesMasterToggle => Reset || !PerfectGuard.HasValue && !Rapid.HasValue && !Amplification.HasValue && !InfiniteHpPotions.HasValue && !AutoPotion.HasValue && !Percent.HasValue && !Balance.HasValue && !HitFrequency.HasValue && !BlockLobbyRegen.HasValue && !RefillPercent.HasValue && !GuardMpPercent.HasValue && !Dot.HasValue && !DotSchedule.HasValue;
         public static string Usage => L.T("Infinite PvP HP potions: /one friendlyfire infinite-hp on|off|reset. Default on; active participants keep Small/Large HP potions, pay no MP and gain no Survival random stat. Sample and other potions are excluded.") + " " + L.T("Large Potion: /one friendlyfire potion gives one to each player who lacks it. /one friendlyfire auto-potion on|off|reset grants one on PvP entry or match start, only to participants. Default off; /one save persists it.") + " " + L.T("Friendly fire: /one friendlyfire on|off|status|reset|resetkda; /one friendlyfire damage 0..300 (percent, up to 2 decimals; e.g. 0.1). Default 100. /one save persists settings.") + " " +
             L.T("PvP balancing: /one friendlyfire balance on|off. Default off; softens hits, limits rapid damage and Dark Cloud repeats, and uses configurable DoT intervals. Lightning/Shock, Freeze, Chim and Dark Cloud have separate configurable damage intervals; Freeze stun is preserved.") + " " +
             L.T("PvP Evasion: stat-based dodge chance is capped at 50% before anti-Evasion; guaranteed item dodges are unchanged.") + " " +
@@ -127,7 +131,8 @@ namespace SephiriaOne
             L.T("PvP DoT: /one friendlyfire dot burn|plasma-burn|frostbite|poison|wound|lightning|plasma-shock|freeze|chim|dark-cloud 0.05..10|reset (seconds, up to 2 decimals). Lightning and Plasma shock have separate clocks; Freeze controls damage, not stun. Only with PvP balancing on.") + " " +
             L.T("Keep debuff schedule: /one friendlyfire dot <effect> preserve on|off|reset. Default on; keeps the first native hit, then requires one interval between hits, even on reapplication. Does not change stacks or duration refreshes. Dark Cloud always uses its separate strike clock. Only with PvP balancing on.") + " " +
             L.T("PvP refill: /one friendlyfire refill 1..300|reset (percent of max HP per second, up to 2 decimals). Default 70; applies only with PvP balancing on.") + " " +
-            L.T("PvP shield minimum: /one friendlyfire guard-mp 0..100|reset (percent of max MP, up to 2 decimals). Default 5; guards, parries and automatic shields share the floor after reductions. Costs round up and spend available MP. Only with PvP balancing on.") + " " +
+            L.T("PvP shield minimum: /one friendlyfire guard-mp 0..100|reset (percent of max MP, up to 2 decimals). Default 5; guards, parries and automatic shields share the floor after reductions. Costs round up and spend available MP. Enabled Perfect Guard multiplier is exempt. Only with PvP balancing on.") + " " +
+            L.T("Perfect Guard: /one friendlyfire perfect-guard on|off|reset; perfect-guard multiplier x1..x100|reset (up to 2 decimals). Default off, x2. Multiplies native Perfect Guard MP cost and rounds up, ignoring the PvP shield minimum. x1 keeps native cost; off keeps normal PvP guard costs. Only with PvP balancing on.") + " " +
             L.T("All Damage Amplified limit: /one friendlyfire amplification on|off|reset; amplification limits <soft> <hard>. Default off, soft 50%, hard 100%. Bonus percentages, not C-menu totals: 100% means +100%. Use 0..10000 with up to 2 decimals and soft <= hard. Only with PvP balancing on.") + " " +
             L.T("Lobby recovery: /one friendlyfire block-lobby-regen on|off. Default off; blocks automatic HP/MP recovery for active lobby participants. Potions and skill healing remain available.");
         internal static bool TryPercent(string text, out decimal percent)
@@ -171,6 +176,19 @@ namespace SephiriaOne
             { command = new FriendlyFireCommand(false, rapid: new PvpRapidChange(reset: true)); return FriendlyFireParseResult.Valid; }
             if (parts.Length == 5 && op == "rapid" && PvpRapidChange.TryParse(parts[3], parts[4], out var rapid))
             { command = new FriendlyFireCommand(false, rapid: rapid); return FriendlyFireParseResult.Valid; }
+            if (parts.Length == 4 && op == "perfect-guard" && (parts[3].Equals("on", StringComparison.OrdinalIgnoreCase) ||
+                parts[3].Equals("off", StringComparison.OrdinalIgnoreCase) || parts[3].Equals("reset", StringComparison.OrdinalIgnoreCase)))
+            {
+                command = new FriendlyFireCommand(false, perfectGuard: new PvpPerfectGuardChange(
+                    enabled: parts[3].Equals("on", StringComparison.OrdinalIgnoreCase), reset: parts[3].Equals("reset", StringComparison.OrdinalIgnoreCase)));
+                return FriendlyFireParseResult.Valid;
+            }
+            if (parts.Length == 5 && op == "perfect-guard" && parts[3].Equals("multiplier", StringComparison.OrdinalIgnoreCase))
+            {
+                decimal multiplier = PvpPerfectGuardSettings.DefaultMultiplier;
+                if (parts[4].Equals("reset", StringComparison.OrdinalIgnoreCase) || PvpPerfectGuardSettings.TryMultiplier(parts[4], out multiplier))
+                { command = new FriendlyFireCommand(false, perfectGuard: new PvpPerfectGuardChange(multiplier: multiplier)); return FriendlyFireParseResult.Valid; }
+            }
             if (parts.Length == 4 && op == "amplification" && (parts[3].Equals("on", StringComparison.OrdinalIgnoreCase) ||
                 parts[3].Equals("off", StringComparison.OrdinalIgnoreCase) || parts[3].Equals("reset", StringComparison.OrdinalIgnoreCase)))
             {

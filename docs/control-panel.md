@@ -1,5 +1,16 @@
 # Host settings panel
 
+## Perfect Guard controls (`0.84.0`, 2026-10-22)
+
+**PvP Balance** has a Perfect Guard MP multiplier toggle and native-cost input
+between the shield minimum and amplification controls. Default off/x2; the input
+accepts `2` or `x2` and applies through the same host command as chat. When on,
+Perfect Guard is exempt from the shield minimum; the EN/KO footnote makes this
+explicit. Refill now appears only in **Rapid Hits**, accessible from the top-row
+button. No new page, refresh loop or participant-detail snapshot is added.
+Draft, host/compatibility availability and session cleanup use existing helpers.
+See [cost semantics and commands](pvp-shield-mp.md#perfect-guard-multiplier-0840).
+
 ## Rapid-hit controls (`0.83.0`, 2026-10-22)
 
 The **Rapid Hits / 연속 타격** tab beside PvP Balance separates hit detection
@@ -9,8 +20,9 @@ curve and base empty-to-full recovery time. There is no periodic reset timer.
 Large-hit softening, native defenses and DoT schedules remain separate; the
 budget also remains active when frequency scaling is off.
 
-PvP Balance links to this page and retains general balancing, refill, shield
-minimum and amplification controls. Twenty tabs use the same three-row layout;
+PvP Balance links to this page and retains general balancing, shield
+minimum and amplification controls (the duplicate refill control was removed
+in `0.84.0`). Twenty tabs use the same three-row layout;
 the new page requests no participant details and uses existing refresh/draft
 lifetimes. See [controls, defaults and commands](pvp-hit-frequency.md#controls).
 
@@ -18,7 +30,7 @@ lifetimes. See [controls, defaults and commands](pvp-hit-frequency.md#controls).
 
 Open `/one ui` and choose **PvP Balance / PvP 밸런스**, directly beside Combat.
 General balancing occupies the left column without an inner scrollbar:
-balancing toggle, rapid-hit page link, refill, shield MP minimum and the
+balancing toggle, rapid-hit page link, shield MP minimum, Perfect Guard multiplier and the
 All Damage Amplified soft/hard limits. The right column contains all ten
 **Debuffs / Dark Cloud** intervals and applicable **Keep schedule** switches.
 Each effect has a full-width label; its list is 218 units tall rather than 82.

@@ -67,6 +67,7 @@ Console.WriteLine($"Passed {FriendlyFireRefillTests.Run()} configurable PvP refi
 Console.WriteLine($"Passed {FriendlyFireGuardSettingsTests.Run()} PvP guard setting checks.");
 Console.WriteLine($"Passed {PvpAmplificationSettingsTests.Run()} PvP amplification setting checks.");
 Console.WriteLine($"Passed {PvpRapidSettingsTests.Run()} PvP rapid-hit setting checks.");
+Console.WriteLine($"Passed {PvpPerfectGuardSettingsTests.Run()} PvP Perfect Guard setting checks.");
 Console.WriteLine($"Passed {PvpDotSettingsTests.Run()} PvP DoT interval checks.");
 Console.WriteLine($"Passed {PvpDotScheduleTests.Run()} PvP debuff schedule checks.");
 Console.WriteLine($"Passed {PvpInfinitePotionSettingsTests.Run()} PvP infinite potion setting checks.");

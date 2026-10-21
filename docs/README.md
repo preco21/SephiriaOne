@@ -1,6 +1,12 @@
 # Development knowledge index
 
-Maintained: 2026-10-22 (Asia/Seoul), addon `0.83.0`.
+Maintained: 2026-10-22 (Asia/Seoul), addon `0.84.0`.
+
+[Perfect Guard MP multiplier](pvp-shield-mp.md#perfect-guard-multiplier-0840):
+optional native-cost x1..x100, default off/x2, in PvP Balance and chat commands.
+When enabled it is exempt from the shield minimum, while other shields retain
+their rules. Shared PvP mode/connection lifetime, v45 presets and EN/KO controls;
+no stat writes or per-hit allocations. Refill remains in Rapid Hits.
 
 [Configurable rapid-hit balancing](pvp-hit-frequency.md#controls): dedicated
 Rapid Hits tab, separate detection window/rate/strength and continuous

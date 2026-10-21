@@ -1,7 +1,62 @@
 # PvP shield MP minimum
 
-Updated 2026-10-21, addon `0.80.1`. Supersedes the original guard-only,
+Updated 2026-10-22, addon `0.84.0`. Supersedes the original guard-only,
 reduction-preserving behavior in [PvP balancing](pvp-balancing.md).
+
+## Perfect Guard multiplier (`0.84.0`)
+
+**PvP Balance → Perfect Guard MP multiplier** adds an independent toggle
+(default off) and a native-cost multiplier (default x2, range x1..x100 with up
+to two decimals). This applies to permitted PvP hits only while balancing is
+enabled, across normal friendly fire and all modes using the shared policy.
+
+```text
+/one friendlyfire perfect-guard on
+/one friendlyfire perfect-guard multiplier x3
+/one friendlyfire perfect-guard off
+/one friendlyfire perfect-guard multiplier reset
+/one friendlyfire perfect-guard reset
+/one save
+```
+
+When enabled, a successful native Perfect Guard costs
+`ceil(native integer MP cost × multiplier)`, **exempt from the shield MP
+minimum**. The user explicitly allowed Perfect Guard to cost less than other
+shields. Native cost includes Guard Efficiency, the Perfect Guard half-cost
+and artifact cost callbacks, followed by the game's integer truncation. For
+example, native 5 MP becomes 15 MP at x3 even if the shield minimum is 50 MP;
+native 3 MP becomes 8 MP at x2.5. x1 keeps native cost and native zero remains
+zero. Invalid costs cannot produce negative spending; overflow clamps safely.
+
+Turning this option off restores existing balanced guard costs, including the
+shield minimum. Turning balancing/PvP off restores native behavior. Ordinary
+guards, parries, MP shields and automatic shields keep their existing rules.
+Only available MP is spent; native guard-break logic remains. Positive multiplied
+costs reuse the existing enforcement against synchronous refunds and INFINITYMP.
+
+The native Perfect Guard branch is marked before callbacks can alter guard
+timers. The flag and calculated amount live in the existing nested hit context,
+with exception cleanup and connection/mode revalidation. There are no live stat
+writes, new RPCs, actor scans or frame loops. Stock MP replication covers guests.
+The multiplication uses bounded integer hundredths and adds no per-hit allocation.
+
+Commands/UI edits apply on the next guard without stopping matches, resetting
+K/D/A or clearing damage budgets. Value reset restores x2; family reset restores
+off/x2. `/one save` stores configured intent in v45, including a custom multiplier
+while disabled; older presets inherit off/x2. See [preset rules](session-preset.md).
+The UI and status have EN/KO translations and explain the minimum exemption.
+
+Executable and installed-IL tests cover native branch identity, cost modifiers,
+floor exemption, nested hits, zero/huge/insufficient MP, live changes and stale
+receipts. Live host/guest weapon-animation and MP-display verification remains
+necessary; no game files are deployed by this change.
+
+Verification for `0.84.0`: non-deploying Release build, zero warnings/errors;
+9,001 executable combat checks, 13,931 session/runtime checks, 212 Perfect Guard
+policy checks, 4,448 catalog checks, panel/localization suites and full
+installed-game contracts passed. The warmed multiplier allocated zero bytes
+over 1,000 hits. Independent review found no actionable issues after the
+minimum exemption; invalid/sub-integer native-cost cases were also added.
 
 ## Current behavior
 
@@ -9,7 +64,8 @@ With PvP balancing enabled, a permitted hostile player's successful defensive
 block or shield absorption costs at least **5% of the defender's current maximum
 MP**, rounded up. The user explicitly chose a strict minimum after Guard
 Efficiency, perfect-guard and artifact reductions, and then lowered the default
-from 8% to 5%. Existing explicit custom preset values remain unchanged.
+from 8% to 5%. Existing explicit custom preset values remain unchanged. The
+enabled Perfect Guard multiplier above is the explicit exception to this floor.
 
 Use **PvP Balance → Shield MP min (%)**
 (`보호막 최소 MP (%)`) or `/one friendlyfire guard-mp 5`.
@@ -20,7 +76,8 @@ guards at zero, while MP shields retain their native damage-to-MP consumption.
 
 - Standard guards, staff special/dash guards and weapon-generated guard windows
   use the common native guard branch. Native cost increases above its 10-MP base
-  still scale proportionally; reductions cannot undercut the floor.
+  still scale proportionally; reductions cannot undercut the floor, except for
+  an enabled Perfect Guard multiplier.
 - Dagger and katana parries use the common successful-parry branch. Existing
   activation costs remain separate. A synchronous dagger refund cannot erase
   the minimum. An empty MP pool cannot initiate another successful parry through

@@ -17,14 +17,23 @@ internal static class GameGuardTests
         int guardSpend = native.FindIndex(i => i.Calls(useMp));
         int infiniteStat = native.FindIndex(guardSpend + 1, i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "INFINITYMP"));
         int infinityInsertion = infiniteStat + 2;
+        int perfectScale = Enumerable.Range(1, guardSpend - 3).Single(i =>
+            native[i].opcode == OpCodes.Ldc_R4 && Equals(native[i].operand, 0.5f) && native[i - 1].IsLdloc() &&
+            native[i + 1].opcode == OpCodes.Mul && native[i + 2].IsStloc());
+        Require(perfectScale > 0 && perfectScale < guardSpend && native[perfectScale - 1].IsLdloc() &&
+            native[perfectScale + 1].opcode == OpCodes.Mul && native[perfectScale + 2].IsStloc(),
+            "native Perfect Guard halves a local cost before its final modifiers/spend");
         Require(guardSpend > 0 && infiniteStat > guardSpend && Call(native[infiniteStat + 1], "UnitAvatar", "GetCustomStatUnsafe"),
             "guard spend and its native infinite-MP guard-break exemption are identified independently");
         void CheckRewrite(List<CodeInstruction> original)
         {
             var patched = Rewrite(original);
-            foreach (string name in new[] { "GuardMpCost", "SpendGuardMp", "GuardInfiniteMp" })
+            foreach (string name in new[] { "GuardMpCost", "SpendGuardMp", "GuardInfiniteMp", "MarkPerfectGuard" })
                 Require(patched.Count(i => Call(i, "FriendlyFireRuntime", name)) == 1, "exactly one " + name + " guard boundary is installed");
             int exemption = patched.FindIndex(i => Call(i, "FriendlyFireRuntime", "GuardInfiniteMp"));
+            int perfect = patched.FindIndex(i => Call(i, "FriendlyFireRuntime", "MarkPerfectGuard"));
+            Require(patched[perfect - 1].IsLdloc() && patched[perfect + 1].opcode == OpCodes.Ldc_R4 &&
+                Equals(patched[perfect + 1].operand, 0.5f), "Perfect Guard marker stays inside the native conditional half-cost path");
             Require(Call(patched[exemption - 1], "UnitAvatar", "GetCustomStatUnsafe") &&
                 patched[exemption - 2].opcode == OpCodes.Ldstr && Equals(patched[exemption - 2].operand, "INFINITYMP"),
                 "guard-break exemption reads the native stat before applying the eligible PvP override");
@@ -32,7 +41,8 @@ internal static class GameGuardTests
             for (int i = 0; i < original.Count; i++)
             {
                 int entry = cursor;
-                if (cursor < patched.Count && Call(patched[cursor], "FriendlyFireRuntime", "GuardInfiniteMp")) cursor++;
+                if (cursor < patched.Count && (Call(patched[cursor], "FriendlyFireRuntime", "GuardInfiniteMp") ||
+                    Call(patched[cursor], "FriendlyFireRuntime", "MarkPerfectGuard"))) cursor++;
                 Require(cursor < patched.Count, "guard rewrite retains the entire native instruction stream");
                 if (i == guardSpend - 1)
                     Require(original[i].opcode == OpCodes.Conv_I4 && Call(patched[cursor], "FriendlyFireRuntime", "GuardMpCost"),
@@ -54,7 +64,7 @@ internal static class GameGuardTests
         }
         CheckRewrite(native);
         var labeled = native.Select(i => new CodeInstruction(i)).ToList();
-        foreach (int boundary in new[] { guardSpend - 1, guardSpend, infinityInsertion })
+        foreach (int boundary in new[] { guardSpend - 1, guardSpend, infinityInsertion, perfectScale })
         {
             labeled[boundary].labels.Add(generator.DefineLabel());
             labeled[boundary].blocks.Add(new ExceptionBlock(ExceptionBlockType.BeginExceptionBlock));
@@ -75,6 +85,12 @@ internal static class GameGuardTests
         Reject(changed, "changed integer conversion is rejected");
         Reject(native.Select(i => i.opcode == OpCodes.Ldc_R4 && Equals(i.operand, 10f) ? new CodeInstruction(OpCodes.Ldc_R4, 11f) : i), "native base-cost change requires reaudit");
         Reject(native.Select(i => i.opcode == OpCodes.Ldc_R4 && Equals(i.operand, 0.5f) ? new CodeInstruction(OpCodes.Ldc_R4, 0.25f) : i), "native perfect-guard change requires reaudit");
+        var wrongPerfect = native.Select(i => new CodeInstruction(i)).ToList();
+        wrongPerfect[perfectScale + 1].opcode = OpCodes.Add;
+        Reject(wrongPerfect, "changed Perfect Guard arithmetic cannot tag an unrelated branch");
+        wrongPerfect = native.Select(i => new CodeInstruction(i)).ToList();
+        wrongPerfect[perfectScale + 2] = new CodeInstruction(OpCodes.Stloc, 65535);
+        Reject(wrongPerfect, "Perfect Guard must update the exact local passed to final native MP spending");
         Reject(native.Where((_, index) => index != infiniteStat), "missing guard-break infinite-MP read requires reaudit");
         Reject(Rewrite(native), "guard minimum cannot be inserted twice into the same hit stream");
         Require(native.Skip(guardSpend).Take(25).Any(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "INFINITYMP")) &&
@@ -100,7 +116,7 @@ internal static class GameGuardTests
         List<CodeInstruction> Panel(string name) => PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(panel, name)).ToList();
         var build = Panel("BuildPvpBalanceEditor"); var refresh = Panel("RefreshPvpBalance"); var apply = Panel("ApplyFriendlyGuardMp");
         Require(build.Any(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "Shield MP min (%)")) &&
-            build.Count(i => Call(i, "PanelWidgets", "Input")) == 4, "dedicated balancing section includes guard, refill and paired amplification inputs");
+            build.Count(i => Call(i, "PanelWidgets", "Input")) == 4, "dedicated balancing section includes shield minimum, Perfect Guard and paired amplification inputs");
         Require(apply.Any(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "/one friendlyfire guard-mp ")) &&
             apply.Any(i => Call(i, "SettingsPanel", "Execute")) && apply.Any(i => Call(i, "SettingsPanel", "ClearFriendlyGuardMp")),
             "guard Apply uses shared command and clears only its own draft");

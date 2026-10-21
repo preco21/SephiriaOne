@@ -56,6 +56,8 @@ internal static class LocalizationCatalogTests
             foreach (string label in new[] { "Rapid Hits", "History window (s)", "Full-damage hits/s", "Reduction exponent",
                 "Stored burst (% HP)", "Reset four rapid values" })
                 Check(korean.ContainsKey(label), "Missing Rapid Hits control translation: " + label);
+            foreach (string label in new[] { "Perfect Guard MP multiplier", "Native MP cost (x)", "When on, shield MP minimum does not apply." })
+                Check(korean.ContainsKey(label), "Missing Perfect Guard control translation: " + label);
 
             // Catch new explicit literal lookup sites that omitted their catalog entry.
             // Dynamic widget label arrays have separate installed-UI and feature checks.

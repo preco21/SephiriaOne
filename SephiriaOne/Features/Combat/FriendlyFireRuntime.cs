@@ -23,6 +23,8 @@ namespace SephiriaOne
             internal double BudgetCharged, BudgetMaxHp, BudgetAccounted, BudgetIncomingScale;
             internal int ParryMpBefore;
             internal bool ActiveShieldSpend, ShieldAbsorbed, DefenseMpSpent;
+            internal bool PerfectGuard;
+            internal int PerfectGuardMpCost;
         }
         [ThreadStatic] private static HitContext current;
         private static bool warned;
