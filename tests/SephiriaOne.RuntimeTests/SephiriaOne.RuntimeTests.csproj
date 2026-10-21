@@ -6,6 +6,7 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../SephiriaOne/Features/Travel/TeleportAllAction.cs" Link="TeleportAllAction.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionProjectiles.cs" Link="SessionProjectiles.cs" />
     <Compile Include="../../SephiriaOne/Features/ProjectileLimits/ProjectileLimitSettings.cs" Link="ProjectileLimitSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/ProjectileLimits/ProjectileLimitCatalog.cs" Link="ProjectileLimitCatalog.cs" />

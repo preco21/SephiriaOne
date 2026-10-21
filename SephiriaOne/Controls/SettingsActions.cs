@@ -57,6 +57,14 @@ namespace SephiriaOne
                 if (PlayTagCommand.Execute(parts, out bool playTagSuccess, out string playTagMessage))
                     return Reply(playTagSuccess, playTagMessage);
                 if (parts.Length >= 2 && parts[0].Equals("/one", StringComparison.OrdinalIgnoreCase) &&
+                    parts[1].Equals("teleportall", StringComparison.OrdinalIgnoreCase))
+                {
+                    recognized = true;
+                    if (parts.Length == 3 && parts[2].Equals("help", StringComparison.OrdinalIgnoreCase)) return Reply(true, TeleportAllAction.Usage);
+                    if (parts.Length != 2) return Reply(false, TeleportAllAction.Usage);
+                    return Reply(TeleportAllAction.TryExecute(out string teleportMessage), teleportMessage);
+                }
+                if (parts.Length >= 2 && parts[0].Equals("/one", StringComparison.OrdinalIgnoreCase) &&
                     parts[1].Equals("reviveall", StringComparison.OrdinalIgnoreCase))
                 {
                     recognized = true;
@@ -295,7 +303,7 @@ namespace SephiriaOne
                 if (isPreset)
                 {
                     if (preset == PresetAction.Help)
-                        return Reply(true, presetError + " " + ReviveAllAction.Usage + " " + DeathmatchCommand.Usage + " " + TournamentCommand.Usage + " " + PlayTagCommand.Usage + " " + ZombieSurvivalCommand.Usage + L.T(" /one ui opens the host settings panel. /one rabbit help lists potion options. /one merchant help lists extra merchant options.") +
+                        return Reply(true, presetError + " " + ReviveAllAction.Usage + " " + TeleportAllAction.Usage + " " + DeathmatchCommand.Usage + " " + TournamentCommand.Usage + " " + PlayTagCommand.Usage + " " + ZombieSurvivalCommand.Usage + L.T(" /one ui opens the host settings panel. /one rabbit help lists potion options. /one merchant help lists extra merchant options.") +
                             L.T(" /one slates help lists Slate options.") + L.T(" /one xp help lists XP options.") + L.T(" /one items help lists given-item options.") + L.T(" /one friendlyfire help lists allied-damage options.") + L.T(" /one jars help lists Mystic Jar spawn options.") + L.T(" /one events help lists random event options.") + L.T(" /one projectiles help lists secondary projectile limits.") + L.T(" /one bat help lists Wingless Bat options.") + L.T(" /one collin help lists costume starting-artifact options.") + L.T(" Language: /one language en|ko|reload|status.") + " " + UpdateCommand.Usage);
                     if (preset == PresetAction.Invalid) return Reply(false, presetError);
                     bool success = SessionSettings.TryExecutePreset(preset, out string[] messages);

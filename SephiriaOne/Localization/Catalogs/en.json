@@ -954,5 +954,11 @@
   " /one projectiles help lists secondary projectile limits.": " /one projectiles help lists secondary projectile limits.",
   "lobby / future starts": "lobby / future starts",
   "Updated lobby dice allowance and balance by the grant difference. Spent dice were not refilled.": "Updated lobby dice allowance and balance by the grant difference. Spent dice were not refilled.",
-  "The dice decrease would reclaim dice already spent. Use a smaller decrease or apply it on a fresh run. Nobody was changed.": "The dice decrease would reclaim dice already spent. Use a smaller decrease or apply it on a fresh run. Nobody was changed."
+  "The dice decrease would reclaim dice already spent. Use a smaller decrease or apply it on a fresh run. Nobody was changed.": "The dice decrease would reclaim dice already spent. Use a smaller decrease or apply it on a fresh run. Nobody was changed.",
+  "Host only: /one teleportall moves ready, living players on your current floor to your position. Loading players are skipped; it does not revive players or change floors.": "Host only: /one teleportall moves ready, living players on your current floor to your position. Loading players are skipped; it does not revive players or change floors.",
+  "Only the host can teleport all players.": "Only the host can teleport all players.",
+  "Teleport all is already running.": "Teleport all is already running.",
+  "The host must be alive and ready on a loaded floor to teleport the party.": "The host must be alive and ready on a loaded floor to teleport the party.",
+  "The host's position is invalid. No teleport requests were sent.": "The host's position is invalid. No teleport requests were sent.",
+  "Teleport requested for {0} player(s); {1} skipped; {2} failed. Destination: host position.": "Teleport requested for {0} player(s); {1} skipped; {2} failed. Destination: host position."
 }

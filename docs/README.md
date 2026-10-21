@@ -1,5 +1,9 @@
 # Development knowledge index
 
+[Teleport all](teleport-all.md): `/one teleportall` requests native party movement
+to the host for ready, living players on the same floor, with connection/run guards
+and stock guest RPCs. No polling or PvP dependency.
+
 [Lobby dice grants](lobby-dice.md): dice settings now adjust an already-created
 pre-run lobby through shared commands, inheritance and maintenance. Spent balances,
 reconnect checkpoints and future-only mid-run edits remain protected.
@@ -9,7 +13,7 @@ interval, default off / 2s, for seven audited automatic artifact sources and
 Dark Cloud. Shared pair/life/session clocks, explicit weapon/book/companion/planet
 exclusions, native guest damage sync, EN/KO controls and v47 presets.
 
-Maintained: 2026-10-22 (Asia/Seoul), addon `0.86.1`.
+Maintained: 2026-10-22 (Asia/Seoul), addon `0.87.0`.
 
 [Configurable PvP DoT duration](pvp-dot-intervals.md#configurable-duration-cap-0850-2026-10-22):
 Burn/Plasma/blue/evolved lifetime cap now defaults to 1.2s, adjustable 0.05..10s

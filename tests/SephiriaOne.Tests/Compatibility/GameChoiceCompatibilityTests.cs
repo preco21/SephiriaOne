@@ -21,6 +21,7 @@ internal static class GameChoiceCompatibilityTests
         GamePanelLocalizationTests.Run(game, addon);
         GameUpdateCompatibilityTests.Run(game, addon);
         GameStartingResourceCompatibilityTests.Run(game, addon);
+        GameTeleportCompatibilityTests.Run(game, addon);
         GameResourceBudgetCompatibilityTests.Run(game, addon);
         GameDisconnectCompatibilityTests.Run(game, addon);
         GameRabbitCompatibilityTests.Run(game, addon);

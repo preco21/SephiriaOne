@@ -77,6 +77,7 @@ PotionSupplyTests.Run(Start, id => Add(id), Check);
 }
 
 var host = Start();
+TeleportAllTests.Run(Check, Start, Add);
 UpdateRuntimeTests.Run(Start, Check);
 host = Start();
 Check(Fountain("+10") && Stats("luck +10") && Choices("all 5"), "Host commands succeed before first LateUpdate");
