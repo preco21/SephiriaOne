@@ -1,5 +1,12 @@
 # Sephiria domain findings
 
+All Damage Amplified (`0.80.0`): `UnitAvatar.ApplyDamage` sums attacker and
+optional leader `AllDamageBonus`, then adds `damage.damage * bonus/100` alongside
+other bonuses. Limit this one combined float contribution for balanced PvP;
+globally patching the stat reader would affect PvE and double-limit companion
+bonuses. C-menu `FINAL_DAMAGE` is the bonus plus native 100%. See
+[amplification boundaries and curve](pvp-amplification.md).
+
 Secondary instance accounting (0.79.0): the native `ProjectileSpawner<T>.Pool`
 name does not imply reuse; it instantiates and network-spawns fresh objects.
 Guard audited emitter call sites, because Pallas/FuryMP/Yearning dereference

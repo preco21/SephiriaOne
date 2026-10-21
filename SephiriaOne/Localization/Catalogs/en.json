@@ -1,4 +1,10 @@
 {
+  "All Damage Amplified limit": "All Damage Amplified limit",
+  "Soft bonus (%)": "Soft bonus (%)",
+  "Hard bonus (%)": "Hard bonus (%)",
+  "Bonus 100% = +100%, not C-menu total. Requires PvP balancing.": "Bonus 100% = +100%, not C-menu total. Requires PvP balancing.",
+  "All Damage Amplified limit: {0}; soft {1}%, hard {2}% bonus (100% = +100%; requires PvP balancing).": "All Damage Amplified limit: {0}; soft {1}%, hard {2}% bonus (100% = +100%; requires PvP balancing).",
+  "All Damage Amplified limit: /one friendlyfire amplification on|off|reset; amplification limits <soft> <hard>. Default off, soft 50%, hard 100%. Bonus percentages, not C-menu totals: 100% means +100%. Use 0..10000 with up to 2 decimals and soft <= hard. Only with PvP balancing on.": "All Damage Amplified limit: /one friendlyfire amplification on|off|reset; amplification limits <soft> <hard>. Default off, soft 50%, hard 100%. Bonus percentages, not C-menu totals: 100% means +100%. Use 0..10000 with up to 2 decimals and soft <= hard. Only with PvP balancing on.",
   "Dynamic Balancing": "Dynamic Balancing",
   "Dynamic Balancing: {0}.": "Dynamic Balancing: {0}.",
   "Dynamic Balancing: /one zombie dynamic on|off|reset (default off). Favors the minority, neutral at equal teams. Zombie refill x0.6..1.5; Zombie incoming damage 80..160%; Human incoming damage 60..100%. Changes ease over about 3s. Incoming switch controls both teams; manual values return when disabled.": "Dynamic Balancing: /one zombie dynamic on|off|reset (default off). Favors the minority, neutral at equal teams. Zombie refill x0.6..1.5; Zombie incoming damage 80..160%; Human incoming damage 60..100%. Changes ease over about 3s. Incoming switch controls both teams; manual values return when disabled.",

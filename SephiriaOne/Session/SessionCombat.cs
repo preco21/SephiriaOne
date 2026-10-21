@@ -52,6 +52,8 @@ namespace SephiriaOne
         {
             message = L.T("Only the host can change friendly fire.");
             if (!NetworkServer.active) return false;
+            if (command.Amplification.HasValue && !command.Amplification.Value.IsValid)
+            { message = FriendlyFireCommand.Usage; return false; }
             bool interrupted = CombatMatchRuntime.IsRunning && command.TouchesMasterToggle;
             var previousDungeon = DungeonManager.Instance; var previousRun = SaveManager.CurrentRun; long previousGeneration = ResourceGeneration;
             if (command.TouchesMasterToggle) CombatMatchRuntime.Stop(true, true);
@@ -91,6 +93,8 @@ namespace SephiriaOne
             L.F("Hit-frequency scaling: {0} (requires PvP balancing).", L.T(settings.HitFrequency ? "on" : "off")) + " " +
             L.F("PvP refill: {0}% max HP/s.", settings.RefillNumber) + " " +
             L.F("PvP guard: {0}% max MP before native reductions.", settings.GuardMpNumber) + " " +
+            L.F("All Damage Amplified limit: {0}; soft {1}%, hard {2}% bonus (100% = +100%; requires PvP balancing).",
+                L.T(settings.Amplification.Enabled ? "on" : "off"), settings.Amplification.SoftNumber, settings.Amplification.HardNumber) + " " +
             L.F("PvP DoT intervals (s): Burn {0}; Plasma Burn {1}; Frostbite {2}; Poison {3}.",
                 settings.DotIntervals.Number(PvpDotEffect.Burn), settings.DotIntervals.Number(PvpDotEffect.PlasmaBurn),
                 settings.DotIntervals.Number(PvpDotEffect.Frostbite), settings.DotIntervals.Number(PvpDotEffect.Poison)) + " " +

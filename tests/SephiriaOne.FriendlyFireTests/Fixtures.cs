@@ -158,6 +158,8 @@ public partial class UnitAvatar : CombatBehaviour
     public float MaxHp { get; set; } = 100;
     public float Shield { [MethodImpl(MethodImplOptions.NoInlining)] get; set; }
     public float TrueDamage, Defense;
+    public int AllDamageBonus;
+    public float ObservedAmplificationDamage;
     public int Mp = 100;
     public bool IsMpShield;
     public bool SuperArmor, ClampHpDamage;
@@ -250,6 +252,14 @@ public partial class UnitAvatar : CombatBehaviour
                 }
             }
             float resolved = damage.damage - Defense + TrueDamage;
+            if (attacker)
+            {
+                int bonus = attacker.GetCustomStat(ECustomStat.AllDamageBonus);
+                if (attacker.NetworkLeader) bonus += attacker.NetworkLeader.GetCustomStat(ECustomStat.AllDamageBonus);
+                float amplified = damage.damage * ((float)bonus / 100f);
+                ObservedAmplificationDamage = amplified;
+                resolved += amplified;
+            }
             float shieldDamage = 0, mpDamage = 0;
             if (resolved > 0)
             {

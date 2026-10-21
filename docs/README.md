@@ -1,6 +1,12 @@
 # Development knowledge index
 
-Maintained: 2026-10-21 (Asia/Seoul), addon `0.79.0`.
+Maintained: 2026-10-21 (Asia/Seoul), addon `0.80.0`.
+
+[PvP All Damage Amplified limit](pvp-amplification.md): optional smooth bonus
+curve, default off with soft 50%/hard 100%, in Combat → Balancing or
+`/one friendlyfire amplification`. Limits the native combined attacker/companion
+owner contribution only for eligible balanced PvP hits; no stat writes or PvE
+changes. Includes v43 presets and English/Korean controls.
 
 [Secondary projectile limits](projectile-limits.md): optional host-side PvE/PvP
 caps for Pallas, Liberation and audited secondary sources. Spawns → Secondary

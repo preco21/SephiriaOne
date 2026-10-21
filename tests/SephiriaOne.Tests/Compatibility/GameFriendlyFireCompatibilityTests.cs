@@ -59,8 +59,8 @@ internal static class GameFriendlyFireCompatibilityTests
         Require(search.Any(i => i.operand is FieldInfo f && f.Name == "IsDead") && Calls(search, "UnitAvatar", "get_IsInvulnerable") &&
             search.Any(i => i.operand is FieldInfo f && f.Name == "sightRadius"), "native target validity and sight range stay in force");
         var rewritten = ((IEnumerable<CodeInstruction>)AccessTools.Method(transpiler,"Rewrite").Invoke(null,new object[] { apply, generator })!).ToList();
-        Require(rewritten.Count(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "FriendlyFireRuntime") == 10,
-            "three faction/leader helpers, one permission check, one scale, one numeric check, one HP Harvest wrapper, one MP Harvest amount, one guard cost and one Evasion chance");
+        Require(rewritten.Count(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "FriendlyFireRuntime") == 11,
+            "three faction/leader helpers, one permission check, one scale, one numeric check, one HP Harvest wrapper, one MP Harvest amount, one guard cost, one Evasion chance and one amplification limit");
         int recheck = rewritten.FindIndex(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "FriendlyFireRuntime" && m.Name == "ContinueHit");
         int leaderCallback = rewritten.FindIndex(i => i.operand is FieldInfo f && f.Name == "OnAttackUnitBeforeOperation_AsLeader");
         int rewrittenGuard = rewritten.FindIndex(i => i.operand is FieldInfo f && f.Name == "isGuardEnabled");

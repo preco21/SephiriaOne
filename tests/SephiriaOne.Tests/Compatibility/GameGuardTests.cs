@@ -68,7 +68,7 @@ internal static class GameGuardTests
         List<CodeInstruction> Panel(string name) => PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(panel, name)).ToList();
         var build = Panel("BuildPvpBalanceEditor"); var refresh = Panel("RefreshPvpBalance"); var apply = Panel("ApplyFriendlyGuardMp");
         Require(build.Any(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "Guard MP (%)")) &&
-            build.Count(i => Call(i, "PanelWidgets", "Input")) == 2, "dedicated balancing section includes guard and refill inputs");
+            build.Count(i => Call(i, "PanelWidgets", "Input")) == 4, "dedicated balancing section includes guard, refill and paired amplification inputs");
         Require(apply.Any(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "/one friendlyfire guard-mp ")) &&
             apply.Any(i => Call(i, "SettingsPanel", "Execute")) && apply.Any(i => Call(i, "SettingsPanel", "ClearFriendlyGuardMp")),
             "guard Apply uses shared command and clears only its own draft");
@@ -80,6 +80,7 @@ internal static class GameGuardTests
             "scope/page/language transitions clear old guard field state");
         Require(Panel("RefreshCombat").Any(i => Call(i, "SettingsPanel", "RefreshPvpBalance")) &&
             Panel("BuildCombatEditor").Any(i => Call(i, "SettingsPanel", "BuildParticipantsEditor")), "balancing refresh and shared participant controls remain wired");
+        GameAmplificationPanelTests.Run(addon);
         Console.WriteLine("Verified guard-only final MP conversion, native modifiers/break/replication, drift rejection and compact shared-command balancing controls (not live Unity).");
     }
 }

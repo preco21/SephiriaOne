@@ -5,6 +5,7 @@ internal static class FriendlyFireRuntimeTests
 {
     internal static void CheckMatchIntervals(Action<bool, string> check)
     {
+        CheckMatchAmplification(check);
         var prior = SessionSettings.FriendlyFireForHit.DotIntervals;
         long token = CombatMatchRuntime.MatchToken, scores = FriendlyFireKda.Epoch,
             balance = SessionSettings.CombatBalanceRevision, roles = CombatMatchRuntime.RoleRevision;
@@ -27,6 +28,21 @@ internal static class FriendlyFireRuntimeTests
             check(SettingsActions.Execute(command + "preserve " + (prior.PreserveSchedule(effect) ? "on" : "off")).Success,
                 "Restore prior schedule toggle: " + effect);
         }
+    }
+
+    private static void CheckMatchAmplification(Action<bool, string> check)
+    {
+        var prior = SessionSettings.FriendlyFireForHit.Amplification;
+        long token = CombatMatchRuntime.MatchToken, scores = FriendlyFireKda.Epoch,
+            balance = SessionSettings.CombatBalanceRevision, frequency = SessionSettings.CombatFrequencyRevision,
+            roles = CombatMatchRuntime.RoleRevision;
+        foreach (string operation in new[] { "limits 200 300", "on", "off", "reset" })
+            check(SettingsActions.Execute("/one friendlyfire amplification " + operation).Success &&
+                CombatMatchRuntime.IsRunning && CombatMatchRuntime.MatchToken == token && FriendlyFireKda.Epoch == scores &&
+                SessionSettings.CombatBalanceRevision == balance && SessionSettings.CombatFrequencyRevision == frequency &&
+                CombatMatchRuntime.RoleRevision == roles, "Amplification edits preserve live match, scores, budgets, frequency and roles: " + operation);
+        check(SessionSettings.TryExecuteFriendlyFire(new FriendlyFireCommand(false, amplification:
+            new PvpAmplificationChange(prior.Enabled, prior.SoftPercent, prior.HardPercent)), out _), "Restore match amplification settings");
     }
 
     public static void Run(Func<PlayerSpawner> start, Func<uint, PlayerSpawner> add, Action<bool, string> check)
@@ -63,6 +79,23 @@ internal static class FriendlyFireRuntimeTests
             "Off/on between hits invalidates frequency only");
         check(SessionSettings.ReadSnapshot().FriendlyFire.HitFrequency && SettingsActions.Execute("/one friendlyfire status").Messages.Any(m => m.Contains("Hit-frequency scaling: on")),
             "Frequency checkbox snapshot and status report the same setting");
+        frequencyRevision = SessionSettings.CombatFrequencyRevision;
+        nativeStats = host.customStats.ToArray(); nativeHp = host.hp;
+        check(SettingsActions.Execute("/one friendlyfire amplification limits 70.25 125.5").Success &&
+            SettingsActions.Execute("/one friendlyfire amplification on").Success &&
+            SessionSettings.FriendlyFireForHit.Amplification.Enabled && SessionSettings.FriendlyFireForHit.Amplification.SoftPercent == 70.25m &&
+            SessionSettings.FriendlyFireForHit.Amplification.HardPercent == 125.5m &&
+            SessionSettings.CombatFrequencyRevision == frequencyRevision && SessionSettings.CombatBalanceRevision == balanceRevision && Score(host) == "P(1/0/0)",
+            "Amplification applies immediately without resetting scores or budget/frequency revisions");
+        var amplification = SessionSettings.FriendlyFireForHit.Amplification;
+        check(host.hp == nativeHp && host.customStats.OrderBy(p => p.Key).SequenceEqual(nativeStats.OrderBy(p => p.Key)),
+            "Amplification settings never write native player stats or health");
+        check(SessionSettings.ReadSnapshot().FriendlyFire.Amplification.Equals(amplification) &&
+            SettingsActions.Execute("/one friendlyfire status").Messages.Any(m => m.Contains("soft 70.25%, hard 125.5% bonus")),
+            "Snapshot and status report the exact paired bonus limits");
+        check(!SessionSettings.TryExecuteFriendlyFire(new FriendlyFireCommand(false, amplification: new PvpAmplificationChange(softPercent: 200)), out _) &&
+            !SettingsActions.Execute("/one friendlyfire amplification limits 200 100").Success &&
+            SessionSettings.FriendlyFireForHit.Amplification.Equals(amplification), "Invalid direct and parsed commands never partially apply");
         check(SettingsActions.Execute("/one friendlyfire refill 125.5").Success &&
             SessionSettings.FriendlyFireForHit.RefillPercent == 125.5m && SessionSettings.CombatBalanceRevision == balanceRevision && Score(host) == "P(1/0/0)",
             "Refill edits reach hits immediately without resetting KDA or budget revision");
@@ -100,6 +133,7 @@ internal static class FriendlyFireRuntimeTests
         check(SessionSettings.FriendlyFireForHit.Enabled, "Run restart retains current combat policy");
         check(SessionSettings.FriendlyFireForHit.RefillPercent == 125.5m, "Run restart retains configured refill");
         check(SessionSettings.FriendlyFireForHit.DotIntervals.Equals(dotSettings), "Run restart retains all nine current effect intervals");
+        check(SessionSettings.FriendlyFireForHit.Amplification.Equals(amplification), "Run restart retains exact amplification limits");
         check(Score(host) == "P(1/0/0)", "Run restart preserves totals");
         Damage(); HorayModAPI.StartSession(); Kill();
         check(Score(host) == "P(2/0/0)" && Score(helper) == "P(0/0/1)", "Run restart clears previous pending assists");
@@ -122,6 +156,7 @@ internal static class FriendlyFireRuntimeTests
         check(SessionSettings.FriendlyFireForHit.Balance, "Rejoined players immediately receive current balancing policy");
         check(SessionSettings.FriendlyFireForHit.HitFrequency, "Rejoined players immediately use current hit-frequency preference");
         check(SessionSettings.FriendlyFireForHit.DotIntervals.Equals(dotSettings), "Replacement connection gets all current DoT intervals, not stale per-player values");
+        check(SessionSettings.FriendlyFireForHit.Amplification.Equals(amplification), "Replacement connection reads current amplification limits");
         HorayModAPI.StartSession();
         check(SessionSettings.FriendlyFireForHit.DamagePercent == 0.1m, "Run restart retains fractional combat policy");
         foreach (string bad in new[] { "-1", "301", "NaN", "0.001", "x2" })
@@ -134,6 +169,7 @@ internal static class FriendlyFireRuntimeTests
         check(SessionSettings.FriendlyFireForHit.HitFrequency, "Saved frequency preference restores after full controller restart");
         check(SessionSettings.FriendlyFireForHit.RefillPercent == 125.5m, "Saved refill restores after full controller restart");
         check(SessionSettings.FriendlyFireForHit.DotIntervals.Equals(dotSettings), "Saved intervals restore after full controller restart");
+        check(SessionSettings.FriendlyFireForHit.Amplification.Equals(amplification), "Saved amplification limits restore alongside every other combat setting");
         check(Score(host) == "P(0/0/0)", "Saved settings never persist KDA");
         Damage(); Kill();
         check(Score(host) == "P(1/0/0)", "Restored enabled preset activates fresh accounting");
@@ -143,7 +179,12 @@ internal static class FriendlyFireRuntimeTests
         check(SessionSettings.FriendlyFireForHit.RefillPercent == 70, "Full reset restores default refill");
         check(!SessionSettings.FriendlyFireForHit.HitFrequency, "Full reset restores hit-frequency default off");
         check(!SessionSettings.FriendlyFireForHit.DotIntervals.HasChanges, "Full reset restores all nine current per-effect defaults");
+        check(!SessionSettings.FriendlyFireForHit.Amplification.HasChanges, "Full reset restores amplification off/50/100");
         FriendlyFireFeature.Available = false;
+        check(!SettingsActions.Execute("/one friendlyfire amplification on").Success &&
+            !SettingsActions.Execute("/one friendlyfire amplification limits 10 20").Success &&
+            SettingsActions.Execute("/one friendlyfire amplification off").Success && SettingsActions.Execute("/one friendlyfire amplification reset").Success,
+            "Unavailable hooks reject amplification enable/limits but preserve off/reset recovery");
         check(!SettingsActions.Execute("/one friendlyfire hit-frequency on").Success &&
             SettingsActions.Execute("/one friendlyfire hit-frequency off").Success && SettingsActions.Execute("/one friendlyfire hit-frequency reset").Success,
             "Unavailable hooks reject frequency enable but retain off/reset recovery");
@@ -163,5 +204,7 @@ internal static class FriendlyFireRuntimeTests
         check(!SettingsActions.Execute("/one friendlyfire refill 200").Success, "Guests cannot change host refill policy");
         check(!SettingsActions.Execute("/one friendlyfire dot burn 2").Success, "Guests cannot change host interval policy");
         check(!SettingsActions.Execute("/one friendlyfire hit-frequency on").Success, "Guests cannot change host frequency policy");
+        check(!SettingsActions.Execute("/one friendlyfire amplification on").Success &&
+            !SettingsActions.Execute("/one friendlyfire amplification limits 10 20").Success, "Guests cannot change amplification policy");
     }
 }

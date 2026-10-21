@@ -4,6 +4,7 @@ using SephiriaOne;
 
 int checks = 0;
 void Check(bool value, string name) { if (!value) throw new Exception(name); checks++; }
+AmplificationCurveTests.Run(Check);
 typeof(FriendlyFireSettings).Assembly.GetType("SephiriaOne.FriendlyFireHooks")?.GetMethod("Install", BindingFlags.Static | BindingFlags.NonPublic)?.Invoke(null,null);
 WhiteBreadTests.Run(Check);
 ResponsiveBudgetTests.Run(Check);
@@ -202,6 +203,7 @@ BalanceTests.Run(Check);
 HarvestTests.Run(Check);
 GuardTests.Run(Check);
 EvasionTests.Run(Check);
+AmplificationTests.Run(Check);
 SpellTests.Run(Check);
 WeaponTargetingTests.Run(Check);
 FractionalDamageTests.Run(Check);

@@ -1,4 +1,10 @@
 {
+  "All Damage Amplified limit": "모든 피해 증폭 제한",
+  "Soft bonus (%)": "완화 시작 (%)",
+  "Hard bonus (%)": "최대 증폭 (%)",
+  "Bonus 100% = +100%, not C-menu total. Requires PvP balancing.": "증폭 100%는 +100%입니다(C 메뉴 합계 아님). PvP 밸런싱 필요.",
+  "All Damage Amplified limit: {0}; soft {1}%, hard {2}% bonus (100% = +100%; requires PvP balancing).": "모든 피해 증폭 제한: {0}; 완화 시작 {1}%, 최대 증폭 {2}% (100% = +100%; PvP 밸런싱 필요).",
+  "All Damage Amplified limit: /one friendlyfire amplification on|off|reset; amplification limits <soft> <hard>. Default off, soft 50%, hard 100%. Bonus percentages, not C-menu totals: 100% means +100%. Use 0..10000 with up to 2 decimals and soft <= hard. Only with PvP balancing on.": "모든 피해 증폭 제한: /one friendlyfire amplification on|off|reset; amplification limits <시작> <최대>. 기본 꺼짐, 완화 시작 50%, 최대 100%. C 메뉴 합계가 아닌 추가 증폭률로 100%는 +100%입니다. 0..10000, 소수 둘째 자리까지, 시작 <= 최대. PvP 밸런싱을 켠 경우에만 적용됩니다.",
   "Dynamic Balancing": "동적 밸런싱",
   "Dynamic Balancing: {0}.": "동적 밸런싱: {0}.",
   "Dynamic Balancing: /one zombie dynamic on|off|reset (default off). Favors the minority, neutral at equal teams. Zombie refill x0.6..1.5; Zombie incoming damage 80..160%; Human incoming damage 60..100%. Changes ease over about 3s. Incoming switch controls both teams; manual values return when disabled.": "동적 밸런싱: /one zombie dynamic on|off|reset (기본 꺼짐). 소수 진영을 보정하며 같은 인원에서는 중립입니다. 좀비 회복률 ×0.6~1.5, 좀비 받는 피해 80~160%, 인간 받는 피해 60~100%. 약 3초에 걸쳐 부드럽게 바뀝니다. 받는 피해 스위치는 양 진영에 적용되며, 동적 보정을 끄면 수동 설정으로 돌아갑니다.",

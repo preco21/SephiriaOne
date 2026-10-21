@@ -206,6 +206,7 @@ namespace SephiriaOne
             updateInstall = updateCheck = null; updateAutomatic = null;
             friendlyDamage = null; friendlyDraft = false; friendlyRefill = null; friendlyRefillDraft = false;
             friendlyGuardMp = null; friendlyGuardMpDraft = false;
+            friendlyAmplificationSoft = friendlyAmplificationHard = null; friendlyAmplificationDraft = false;
             pvpDotEditors.Clear();
             playTagRounds = playTagRefill = playTagIncoming = null;
             playTagDurationDraft = playTagRoundsDraft = playTagRefillDraft = playTagIncomingDraft = false;
@@ -373,6 +374,7 @@ namespace SephiriaOne
         {
             ClearPvpDots(); ClearRequitalCount(); ClearProjectileInputs();
             ClearFriendlyDamage(); ClearFriendlyRefill(); ClearFriendlyGuardMp();
+            ClearFriendlyAmplification();
             ClearZombieDuration(); ClearZombieCount(); ClearZombieRefill(); ClearZombieIncoming();
             ClearPlayTagDuration(); ClearPlayTagRounds(); ClearPlayTagRefill(); ClearPlayTagIncoming();
         }

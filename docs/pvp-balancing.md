@@ -3,6 +3,14 @@
 Added in `0.52.0`, 2026-10-13. Host-only installation; the existing native damage
 and FX replication continues to serve stock guests. Default: **off**.
 
+## All Damage Amplified limit (`0.80.0`, 2026-10-21)
+
+[Optional amplification curve](pvp-amplification.md): soft 50% / hard 100%
+bonus defaults, initially off. Combat → Balancing and
+`/one friendlyfire amplification` control the native combined attacker/leader
+contribution before defenses and the existing PvP budget. Character stats,
+native penalties and PvE stay unchanged; v43 presets save nondefault settings.
+
 ## Responsive damage allowance (`0.77.0`, 2026-10-21)
 
 [Hit-frequency scaling](pvp-hit-frequency.md) now separates direct attack cadence
