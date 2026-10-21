@@ -83,7 +83,7 @@ namespace SephiriaOne
         internal static long CombatBalanceRevision;
         internal static long CombatFrequencyRevision;
         internal static FriendlyFireSettings FriendlyFireForHit
-        { get => settings; set { if (settings.Balance != value.Balance) CombatBalanceRevision++; if (settings.HitFrequency != value.HitFrequency) CombatFrequencyRevision++; settings = value; FriendlyFireKda.SetEnabled(value.Enabled); } }
+        { get => settings; set { if (settings.Balance != value.Balance) CombatBalanceRevision++; if (settings.HitFrequency != value.HitFrequency || !settings.Rapid.SameFrequency(value.Rapid)) CombatFrequencyRevision++; settings = value; FriendlyFireKda.SetEnabled(value.Enabled); } }
     }
 }
 public enum EApplyDamageResult { Success, Fail_Absolute, Fail_Block }

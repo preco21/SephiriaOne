@@ -1,5 +1,13 @@
 # Active settings and saved preset
 
+Schema v44 saves nondefault rapid-hit controls as `friendlyfire rapid-window N`,
+`rapid-rate N`, `rapid-exponent N` and `rapid-burst N` (each with the same
+`friendlyfire` prefix). Values are canonical decimals with at most two places;
+see [ranges and reset semantics](pvp-hit-frequency.md#controls). Older presets
+inherit 1s / 4 hits per second / exponent 0.5 / 20% burst capacity. Hit histories
+and remaining allowance never persist. Invalid or duplicate rows reject the
+whole preset. `/one save` stores numeric edits even while their toggles are off.
+
 Schema v42 saves optional secondary-projectile limits. Nondefault rows are
 `projectiles enabled 1`, `projectiles total N`, `projectiles default N`, and
 `projectiles source <id> N`. Limits are whole numbers from 1 to 4096; defaults

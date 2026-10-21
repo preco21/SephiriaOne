@@ -12,6 +12,7 @@ namespace SephiriaOne
     {
         private const float WindowWidth = 760, WindowHeight = 560, PageHeight = 250;
         private const int PvpBalancePage = 18;
+        private const int PvpRapidPage = 19;
         private readonly PanelWindowGeometry geometry = new PanelWindowGeometry(WindowWidth, WindowHeight);
         private readonly List<Button> tabs = new List<Button>();
         private readonly List<PanelCheckbox> checkboxes = new List<PanelCheckbox>();
@@ -53,12 +54,12 @@ namespace SephiriaOne
             scopeLabel = widgets.Text(title, "Scope", "Host · All players", 220, 8, 464, 26, 11);
             scopeLabel.color = PanelWidgets.Muted;
             availability = widgets.Text(window, "Availability", "", 16, 44, 728, 28, 12);
-            string[] pages = { "Stats", "Fountain", "Choices", "Resources", "Presets", "Status", "Rabbit", "Merchant", "Items", "Combat", "Spawns", "Costumes", "Updates", "Deathmatch", "Tournament", "Play Tag", "Zombie", "Progression", "PvP Balance" };
+            string[] pages = { "Stats", "Fountain", "Choices", "Resources", "Presets", "Status", "Rabbit", "Merchant", "Items", "Combat", "Spawns", "Costumes", "Updates", "Deathmatch", "Tournament", "Play Tag", "Zombie", "Progression", "PvP Balance", "Rapid Hits" };
             for (int i = 0; i < pages.Length; i++)
             {
                 int target = i;
-                // Keep stable page IDs while placing balancing beside Combat.
-                int slot = i == PvpBalancePage ? 10 : i >= 10 ? i + 1 : i;
+                // Keep stable page IDs while placing both balancing pages beside Combat.
+                int slot = i == PvpBalancePage ? 10 : i == PvpRapidPage ? 11 : i >= 10 ? i + 2 : i;
                 var tab = widgets.Button(window, pages[i], 16 + 105 * (slot % 7), 78 + 32 * (slot / 7), 99, 28, () => SelectPage(target));
                 tabs.Add(tab);
                 if (i == 12) updateLabel = tab.GetComponentInChildren<TMP_Text>();
@@ -96,6 +97,7 @@ namespace SephiriaOne
             16 => SnapshotContent.Participants,
             17 => SnapshotContent.None,
             PvpBalancePage => SnapshotContent.None,
+            PvpRapidPage => SnapshotContent.None,
             _ when target >= 6 && target <= 14 => SnapshotContent.None,
             _ => SnapshotContent.All // Status, and safe defaults for future tabs.
         };
@@ -138,7 +140,7 @@ namespace SephiriaOne
             if (page == 14) { RefreshTournament(snapshot); return; }
             if (page == 15) { RefreshPlayTag(snapshot); return; }
             if (page == 16) { RefreshZombie(snapshot); return; }
-            bool combatSettings = page == 9 || page == PvpBalancePage;
+            bool combatSettings = page == 9 || page == PvpBalancePage || page == PvpRapidPage;
             bool choicesReady = page == 17 ? snapshot.ExperienceAvailable : page == 11 ? snapshot.BatAvailable && snapshot.CollinAvailable : page == 10 ? SpawnAvailable(snapshot) : combatSettings ? snapshot.FriendlyFireAvailable : page == 8 ? snapshot.ItemRestrictionsAvailable : page == 7 ? snapshot.MerchantsAvailable : page == 6 ? snapshot.RabbitPotionsAvailable : page == 2 ? snapshot.ChoicesAvailable : page != 3 || ResourceFeature.IsAvailable(ResourceCatalog.All[resourceIndex].Kind);
             bool levelUpReady = page != 6 || snapshot.RabbitLevelUpPotionsAvailable;
             availability.text = !snapshot.CanMutate ? snapshot.AvailabilityReason : !choicesReady ?
@@ -162,6 +164,7 @@ namespace SephiriaOne
                 RefreshPvpDots(snapshot);
                 return;
             }
+            if (page == PvpRapidPage) { RefreshPvpRapid(snapshot); return; }
             RefreshRequital(snapshot);
             if (collinReset) collinReset.interactable = snapshot.CanMutate || (snapshot.HostActive && snapshot.SessionIdentity != null &&
                 (snapshot.FaultedFeature == "collin" || snapshot.FaultedFeature == "inheritance"));
@@ -218,6 +221,8 @@ namespace SephiriaOne
             friendlyDamage = null; friendlyDraft = false; friendlyRefill = null; friendlyRefillDraft = false;
             friendlyGuardMp = null; friendlyGuardMpDraft = false;
             friendlyAmplificationSoft = friendlyAmplificationHard = null; friendlyAmplificationDraft = false;
+            pvpRapidEditors.Clear(); pvpRapidRecovery = pvpRapidExample = null; pvpRapidReset = null;
+            pvpRapidLastBurst = pvpRapidLastRefill = pvpRapidLastExponent = -1;
             pvpDotEditors.Clear();
             playTagRounds = playTagRefill = playTagIncoming = null;
             playTagDurationDraft = playTagRoundsDraft = playTagRefillDraft = playTagIncomingDraft = false;
@@ -241,6 +246,7 @@ namespace SephiriaOne
             else if (page == 16) BuildZombieEditor();
             else if (page == 17) BuildExperienceEditor();
             else if (page == PvpBalancePage) BuildPvpBalanceEditor();
+            else if (page == PvpRapidPage) BuildPvpRapidEditor();
             else
             {
                 if (page == 4)
@@ -387,6 +393,7 @@ namespace SephiriaOne
             ClearPvpDots(); ClearRequitalCount(); ClearProjectileInputs();
             ClearFriendlyDamage(); ClearFriendlyRefill(); ClearFriendlyGuardMp();
             ClearFriendlyAmplification();
+            ClearPvpRapid();
             ClearZombieDuration(); ClearZombieCount(); ClearZombieRefill(); ClearZombieIncoming();
             ClearPlayTagDuration(); ClearPlayTagRounds(); ClearPlayTagRefill(); ClearPlayTagIncoming();
         }

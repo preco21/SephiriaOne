@@ -9,6 +9,7 @@ internal static class GamePanelCompatibilityTests
         GameZombieTests.Run(addon);
         GameZombieVisualTests.Run(game, addon);
         GameHotkeyCompatibilityTests.Run(game, addon);
+        GameRapidPanelTests.Run(addon);
         var ui = game.GetType("UIBase", true)!;
         var root = game.GetType("UIRoot", true)!;
         var open = Required(ui, "Open");
@@ -40,7 +41,7 @@ internal static class GamePanelCompatibilityTests
 
         var panel = addon.GetType("SephiriaOne.SettingsPanel", true)!;
         var contentForPage = Required(panel, "ContentForPage");
-        string[] expected = { "Stats", "None", "Choices", "Resources", "Presets", "All", "None", "None", "None", "Participants", "None", "None", "None", "Participants", "Participants", "Participants", "Participants", "None", "None", "All" };
+        string[] expected = { "Stats", "None", "Choices", "Resources", "Presets", "All", "None", "None", "None", "Participants", "None", "None", "None", "Participants", "Participants", "Participants", "Participants", "None", "None", "None", "All" };
         for (int page = 0; page < expected.Length; page++)
             if (contentForPage.Invoke(null, new object[] { page })?.ToString() != expected[page])
                 throw new Exception("Panel snapshot must include every displayed section: page " + page);

@@ -7,6 +7,12 @@ Since `0.82.0`, the dedicated **PvP Balance** tab contains the general balancing
 controls and debuff/Dark Cloud intervals. Combat retains friendly fire, supplies
 and participants. See the [current panel guide](control-panel.md).
 
+Since `0.83.0`, [Rapid Hits](pvp-hit-frequency.md#controls) exposes the rolling
+detection window, full-damage rate, reduction exponent and stored burst capacity,
+alongside continuous refill. Defaults remain 1s, 4 hits/s, 0.5, 20% and 70%/s.
+There is no periodic budget reset. Live parameter edits preserve match/KDA state
+and existing credit; larger capacities do not create an immediate burst.
+
 ## Additional defensive effects (`0.81.0`, 2026-10-21)
 
 [Defensive audit](pvp-defensive-effects.md): Elastic Band refunds dash charges

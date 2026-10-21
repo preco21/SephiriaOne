@@ -11,23 +11,58 @@ also replaces zero-budget rejection with a positive pre-shield minimum.
 
 ## Controls
 
-In **Combat → PvP balancing**, enable **Hit-frequency scaling** (`연타 피해 보정`).
-The checkbox uses the same host command as chat:
+Since `0.83.0` (2026-10-22), use **Rapid Hits / 연속 타격** beside **PvP Balance**.
+Enable PvP balancing on the latter page for these controls to affect combat.
+The frequency toggle remains default **off**; numerical defaults are unchanged.
+
+| Control | Default | Range | Effect |
+| --- | --- | --- | --- |
+| Detection window | 1 second | 0.1–10 seconds | How long recent hits remain in the rolling estimate. |
+| Full-damage rate | 4 hits/second | 0.1–100 | Full damage up to `max(1, rate × window)` recent hits. |
+| Reduction exponent | 0.5 | 0–2 | Above threshold, multiply by `(threshold / count)^exponent`; higher reduces more, zero removes frequency reduction. |
+| Stored burst allowance | 20% of victim max HP | 1–100% | Maximum credit stored for this attacker/opponent pair. |
+| Continuous refill | 70% of victim max HP/second | 1–300%/second | Adds allowance over elapsed game time, up to capacity. |
+
+All values accept two decimal places. **There is no periodic reset interval or
+fixed-window damage cap.** Hit history ages out; damage credit refills
+continuously. Base empty-to-full recovery is `burst / refill` seconds (about
+0.29 seconds by default). Play Tag/Zombie refill modifiers can change that time.
+The UI shows applied values and an example of reduction above the expected rate.
+
+The shared budget still applies when the frequency toggle is off. Existing
+per-hit softening remains separate: it starts above 5% of victim max HP and
+approaches 20% per hit. Raising burst allowance above 20% permits more hits from
+stored credit, not a larger single-hit limit. Native defenses, role modifiers
+and separate DoT schedules also still apply.
+
+The page uses the same host commands as chat:
 
 ```text
 /one friendlyfire hit-frequency on
 /one friendlyfire hit-frequency off
 /one friendlyfire hit-frequency reset
+/one friendlyfire rapid window 1
+/one friendlyfire rapid rate 4
+/one friendlyfire rapid exponent 0.5
+/one friendlyfire rapid burst 20
+/one friendlyfire refill 70
+/one friendlyfire rapid window reset
+/one friendlyfire rapid reset
 /one friendlyfire status
 /one save
 ```
 
-`reset` switches only this preference off. The preference can be configured while
+`hit-frequency reset` switches only the toggle off. `rapid reset` restores the
+four new numbers without changing the toggle, refill or other settings. Each
+numeric key also accepts `reset`; `refill reset` restores refill separately.
+The preference can be configured while
 balancing is off, and takes effect when its prerequisites are enabled. Toggle
 edits preserve the current match, K/D/A, damage-budget credit, refill rate, guard
 cost and DoT intervals. Repeating `on` does not reset history. Save stores only
 the preference, never runtime hit history. Enabled settings use preset v29;
 earlier schemas inherit off, and off adds no new row or version requirement.
+Nondefault rapid parameters require preset v44; older schemas inherit these
+defaults. Runtime counters and credit are never saved.
 
 ## Damage model
 
@@ -36,14 +71,14 @@ run first. The sequence within PvP balancing is:
 
 1. Existing per-hit damage softening.
 2. Existing Shock/Freeze damage-pulse admission.
-3. Optional frequency multiplier: `min(1, sqrt(4 / recentHitCount))`, using the
-   hit's direct or incidental history.
-4. Shared per-opponent damage budget (20% maximum-HP burst, configured refill),
+3. Optional frequency multiplier: `min(1, (max(1, rate × window) / recentHitCount)^exponent)`,
+   using the hit's direct or incidental history. Defaults retain `sqrt(4 / count)`.
+4. Shared per-opponent damage budget (configured capacity and refill),
    clipped continuously to available credit with a positive minimum at exhaustion.
 5. Current role incoming modifier, positive damage minimum (since `0.67.1`),
    native shields/HP and unused-budget refund.
 
-| Recent hits against this opponent | Per-hit frequency multiplier |
+| Recent hits against this opponent (default settings) | Per-hit frequency multiplier |
 | --- | --- |
 | 1–4 | 100% |
 | 8 | about 71% |
@@ -91,9 +126,10 @@ PvE, self hits, non-player victims and disallowed participants bypass this scale
 
 ## Implementation and lifetimes
 
-`FriendlyFireHitFrequency` stores eight counters at 125 ms resolution. A rolling
+`FriendlyFireHitFrequency` stores eight counters at `window / 8` resolution
+(125 ms at the default). A rolling
 sum avoids scanning prior hits; time advancement touches at most eight buckets.
-This approximates the last second: a hit ages out after 0.875–1 seconds depending
+This approximates the selected window: a hit ages out after 0.875–1 windows depending
 on its position within a bucket. It has no polling or per-hit collection growth.
 There are two such histories; each eight-counter array is allocated only on its
 first eligible hit in a pair's lifetime. A hit advances only its chosen history;
@@ -108,19 +144,39 @@ therefore cannot inherit an old pair's hit-rate penalty. Match start/end and
 selection continue through the existing shared runtime for casual combat,
 Deathmatch, Tournament, Play Tag and Zombie Survival.
 
-`SessionSettings.CombatFrequencyRevision` advances only when this preference
-changes or full combat reset occurs. A pair lazily discards its old frequency
+`SessionSettings.CombatFrequencyRevision` advances only when the frequency toggle,
+window, full-damage rate or exponent effectively changes, or full combat reset
+occurs. A pair lazily discards its old frequency
 history on the next enabled hit. This revision is deliberately separate from
 `CombatBalanceRevision`: toggling frequency must not refill the damage budget,
 clear Shock/Freeze/Dark Cloud clocks, reset K/D/A or interrupt a match. Settings
 application is centralized so sibling edits and temporary mode overlays retain
 the preference.
 
+Capacity/refill edits preserve frequency history and existing budget credit.
+On the next hit, a decreased capacity clamps credit; an increased capacity does
+not grant credit retroactively above the previously observed cap. It refills
+normally thereafter. Refunds obey both the last observed cap and current policy,
+including edits inside a native damage callback. Unfunded minimum hits remain
+unrefundable. No per-frame worker or per-hit collection is introduced; the
+default retains the square-root fast path, with simple fast paths for exponents
+0, 1 and 2 and `Math.Pow` only for other strengths above threshold.
+
 All policy, hit counts, scaling and accounting run on the host. Native damage,
 shield and death replication continues unchanged; no guest addon, asset or new
 network message is required by this implementation.
 
 ## Verification and limits
+
+`0.83.0`: non-deploying Release build passed without warnings/errors; 8,914
+executable combat checks, 13,868 command/session checks plus 69 Bat checks,
+373 rapid-policy checks, 4,423 bundled-catalog checks, 50 localization checks
+and panel/native contracts passed. Configured warmed rapid hits allocate zero
+bytes. Tests cover new ranges, numeric resets, v1–43 compatibility, atomic v44
+loading, saved settings, live match edits, capacity changes/refunds and positive
+minimums. Independent review found no actionable issue. The expanded session
+test establishes the native participant scope before comparing epoch changes;
+initial lazy scope creation is not a command-driven K/D/A reset.
 
 Command/preset tests cover default-off behavior, strict parsing, older schemas,
 atomic malformed-preset rejection, sibling-setting preservation and mode overlays.

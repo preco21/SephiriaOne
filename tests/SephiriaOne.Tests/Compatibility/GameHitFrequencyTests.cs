@@ -17,7 +17,7 @@ internal static class GameHitFrequencyTests
             "pulse admission precedes frequency scaling, which precedes the shared damage budget");
         Require(Code("FriendlyFireRuntime", "Scale").Any(i => Call(i, "FriendlyFireSettings", "get_HitFrequency")),
             "runtime reads the effective current policy");
-        var panel = Code("SettingsPanel", "BuildPvpBalanceEditor");
+        var panel = Code("SettingsPanel", "BuildPvpRapidEditor");
         Require(panel.Any(i => i.LoadsConstant("Hit-frequency scaling")) && panel.Any(i => i.LoadsConstant("/one friendlyfire hit-frequency")) &&
             panel.Any(i => Call(i, "SettingsPanel", "AddCheckbox")), "new checkbox uses the shared host command and checkbox refresh lifecycle");
         var record = Code("SessionSettings", "RecordFriendlyFire");

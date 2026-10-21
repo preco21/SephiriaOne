@@ -1,6 +1,12 @@
 # Development knowledge index
 
-Maintained: 2026-10-21 (Asia/Seoul), addon `0.82.0`.
+Maintained: 2026-10-22 (Asia/Seoul), addon `0.83.0`.
+
+[Configurable rapid-hit balancing](pvp-hit-frequency.md#controls): dedicated
+Rapid Hits tab, separate detection window/rate/strength and continuous
+capacity/refill controls, EN/KO explanations and v44 presets. Current defaults
+remain; live edits preserve matches, K/D/A and damage credit. No periodic reset,
+per-hit allocation or polling is added.
 
 [Dedicated PvP Balance tab](control-panel.md#dedicated-pvp-balance-tab-0820-2026-10-21):
 general balancing left, taller debuff/Dark Cloud list right; Combat retains

@@ -16,8 +16,7 @@ namespace SephiriaOne
             var content = PanelWidgets.Rect(pageRoot, "BalanceControls", 16, 0, 273, PageHeight);
             AddCheckbox("PvP balancing", 0, 0, 273, 25, s => s.FriendlyFire.Balance,
                 s => s.FriendlyFireAvailable, "/one friendlyfire balance", parent: content);
-            AddCheckbox("Hit-frequency scaling", 0, 34, 273, 25, s => s.FriendlyFire.HitFrequency,
-                s => s.FriendlyFireAvailable, "/one friendlyfire hit-frequency", parent: content);
+            widgets.Button(content, "Rapid Hits", 0, 34, 273, 25, () => SelectPage(PvpRapidPage));
             widgets.Text(content, "FriendlyRefill", "PvP refill (%/s)", 0, 70, 116, 25, 12);
             friendlyRefill = widgets.Input(content, 120, 70, 68, EditFriendlyRefill);
             changeButtons.Add(widgets.Button(content, "Apply", 196, 70, 77, 25, ApplyFriendlyRefill));

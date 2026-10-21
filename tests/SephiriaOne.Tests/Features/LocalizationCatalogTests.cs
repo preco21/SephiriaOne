@@ -53,6 +53,9 @@ internal static class LocalizationCatalogTests
                 Check(korean.ContainsKey(merchant.Name), "Missing merchant label translation: " + merchant.Name);
             foreach (var effect in Enum.GetValues<PvpDotEffect>())
                 Check(korean.ContainsKey(PvpDotSettings.Label(effect)), "Missing DoT label translation: " + effect);
+            foreach (string label in new[] { "Rapid Hits", "History window (s)", "Full-damage hits/s", "Reduction exponent",
+                "Stored burst (% HP)", "Reset four rapid values" })
+                Check(korean.ContainsKey(label), "Missing Rapid Hits control translation: " + label);
 
             // Catch new explicit literal lookup sites that omitted their catalog entry.
             // Dynamic widget label arrays have separate installed-UI and feature checks.

@@ -1,10 +1,24 @@
 # Host settings panel
 
+## Rapid-hit controls (`0.83.0`, 2026-10-22)
+
+The **Rapid Hits / 연속 타격** tab beside PvP Balance separates hit detection
+(window, full-damage rate, reduction exponent) from the shared damage allowance
+(stored burst, continuous refill). Applied-value examples show the reduction
+curve and base empty-to-full recovery time. There is no periodic reset timer.
+Large-hit softening, native defenses and DoT schedules remain separate; the
+budget also remains active when frequency scaling is off.
+
+PvP Balance links to this page and retains general balancing, refill, shield
+minimum and amplification controls. Twenty tabs use the same three-row layout;
+the new page requests no participant details and uses existing refresh/draft
+lifetimes. See [controls, defaults and commands](pvp-hit-frequency.md#controls).
+
 ## Dedicated PvP Balance tab (`0.82.0`, 2026-10-21)
 
 Open `/one ui` and choose **PvP Balance / PvP 밸런스**, directly beside Combat.
 General balancing occupies the left column without an inner scrollbar:
-balancing toggle, hit-frequency scaling, refill, shield MP minimum and the
+balancing toggle, rapid-hit page link, refill, shield MP minimum and the
 All Damage Amplified soft/hard limits. The right column contains all ten
 **Debuffs / Dark Cloud** intervals and applicable **Keep schedule** switches.
 Each effect has a full-width label; its list is 218 units tall rather than 82.

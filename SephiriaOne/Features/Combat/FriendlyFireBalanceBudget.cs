@@ -65,7 +65,7 @@ namespace SephiriaOne
             if (receipt != null && balanceActors.TryGetValue(receipt, out BalanceActor actor)) actor.Life++;
         }
 
-        private static double LimitBalancedDamage(double damage, double maxHp, double refillPerSecond, double baseRefill, double incomingScale, bool hitFrequency, PvpDotSettings intervals)
+        private static double LimitBalancedDamage(double damage, double maxHp, double refillPerSecond, double baseRefill, double incomingScale, bool hitFrequency, PvpDotSettings intervals, PvpRapidSettings rapid)
         {
             var attacker = current.AttackerReceipt;
             var victim = current.VictimReceipt;
@@ -102,7 +102,7 @@ namespace SephiriaOne
                 // Two fixed histories, one allowance. Procs/companions/DoT cannot
                 // inflate direct hit counts or acquire their own damage budget.
                 ref var frequency = ref (IsIncidentalHit() ? ref window.IncidentalFrequency : ref window.Frequency);
-                damage *= frequency.Next(now);
+                damage *= frequency.Next(now, rapid);
             }
             long chaserRevision = CombatMatchRuntime.RoleRevision;
             // A carrier can change away and back between two hits. Preserve tokens,
@@ -110,7 +110,7 @@ namespace SephiriaOne
             double elapsedCeiling = window.RoleRevision == chaserRevision ? double.PositiveInfinity : baseRefill;
             // Reserve funded credit before callbacks. The minimum survives an
             // empty pool; role reduction still uses pre-reduction ledger units.
-            double allowed = window.Budget.Take(damage, maxHp, now, out double charged, refillPerSecond, elapsedCeiling, 1d / incomingScale);
+            double allowed = window.Budget.Take(damage, maxHp, now, out double charged, refillPerSecond, elapsedCeiling, 1d / incomingScale, rapid.BurstScale);
             window.RoleRevision = chaserRevision;
             if (allowed > 0)
             {
@@ -150,7 +150,7 @@ namespace SephiriaOne
             // Native shields and HP report their own applied amounts. Preserve
             // fractional credit lost to MP integer rounding or a later veto.
             // Never refund an exceptional hit: it may already have written HP.
-            window.Budget.Refund(unused / current.BudgetMaxHp);
+            window.Budget.Refund(unused / current.BudgetMaxHp, SessionSettings.FriendlyFireForHit.Rapid.BurstScale);
         }
     }
 }

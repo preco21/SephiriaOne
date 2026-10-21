@@ -18,6 +18,12 @@ general controls left and a taller debuff/Dark Cloud list right. Combat shows
 its own controls and supplies together. See the [current layout](control-panel.md#dedicated-pvp-balance-tab-0820-2026-10-21).
 The page requests base settings only, without participant detail or new polling.
 
+Version `0.83.0` adds **Rapid Hits / 연속 타격** beside PvP Balance, keeping the
+same window and three-row geometry. It separates hit-history controls from
+stored damage allowance and continuous refill, with cached applied-value
+examples. It also requests no participant detail. See the
+[rapid controls](control-panel.md#rapid-hit-controls-0830-2026-10-22).
+
 Historically, the 2026-10-10 compact pass reduced the window from 800×480 to 760×420. The
 14 tabs remain in two rows; forms use a 1.25 scale instead of 4/3. The title bar
 contains a short scope/update notice. Action feedback starts blank and retains

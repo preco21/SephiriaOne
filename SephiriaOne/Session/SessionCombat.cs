@@ -20,7 +20,7 @@ namespace SephiriaOne
             if (before.Enabled != policy.FriendlyFire.Enabled || before.AutoPotion != policy.FriendlyFire.AutoPotion)
                 PvpPotionSupplies.SettingsChanged();
             if (previous != policy.FriendlyFire.Balance || command.Reset) CombatBalanceRevision++;
-            if (previousFrequency != policy.FriendlyFire.HitFrequency || command.Reset) CombatFrequencyRevision++;
+            if (previousFrequency != policy.FriendlyFire.HitFrequency || !before.Rapid.SameFrequency(policy.FriendlyFire.Rapid) || command.Reset) CombatFrequencyRevision++;
             if (command.Reset) FriendlyFireParticipants.ResetSelection();
         }
 
@@ -53,6 +53,8 @@ namespace SephiriaOne
             message = L.T("Only the host can change friendly fire.");
             if (!NetworkServer.active) return false;
             if (command.Amplification.HasValue && !command.Amplification.Value.IsValid)
+            { message = FriendlyFireCommand.Usage; return false; }
+            if (command.Rapid.HasValue && !command.Rapid.Value.IsValid)
             { message = FriendlyFireCommand.Usage; return false; }
             bool interrupted = CombatMatchRuntime.IsRunning && command.TouchesMasterToggle;
             var previousDungeon = DungeonManager.Instance; var previousRun = SaveManager.CurrentRun; long previousGeneration = ResourceGeneration;
@@ -91,7 +93,11 @@ namespace SephiriaOne
             L.F("Automatic Large Potion: {0}.", L.T(settings.AutoPotion ? "on" : "off")) + " " +
             L.F("PvP balancing: {0}.", L.T(settings.Balance ? "on" : "off")) + " " +
             L.F("Hit-frequency scaling: {0} (requires PvP balancing).", L.T(settings.HitFrequency ? "on" : "off")) + " " +
+            L.F("Rapid history: {0}s; full-damage threshold: {1} hits/s; reduction exponent: {2}; burst allowance: {3}% max HP.",
+                settings.Rapid.WindowNumber, settings.Rapid.RateNumber, settings.Rapid.ExponentNumber, settings.Rapid.BurstNumber) + " " +
             L.F("PvP refill: {0}% max HP/s.", settings.RefillNumber) + " " +
+            L.F("Allowance refills continuously; base empty-to-full recovery: {0}s. Per-hit softening, native defenses, role modifiers and debuff schedules remain separate; minimum hits can exceed the allowance.",
+                (settings.Rapid.BurstPercent / settings.RefillPercent).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)) + " " +
             L.F("PvP guard: {0}% max MP before native reductions.", settings.GuardMpNumber) + " " +
             L.F("All Damage Amplified limit: {0}; soft {1}%, hard {2}% bonus (100% = +100%; requires PvP balancing).",
                 L.T(settings.Amplification.Enabled ? "on" : "off"), settings.Amplification.SoftNumber, settings.Amplification.HardNumber) + " " +

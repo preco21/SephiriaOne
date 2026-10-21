@@ -47,6 +47,7 @@
     <Compile Include="../../SephiriaOne/Features/Choices/ChoiceTranspilers.cs" Link="Source/Features/Choices/ChoiceTranspilers.cs" />
     <PackageReference Include="Lib.Harmony" Version="2.4.2" />
     <Compile Include="../../SephiriaOne/Features/Combat/FriendlyFireSettings.cs" Link="FriendlyFireSettings.cs" />
+    <Compile Include="../../SephiriaOne/Features/Combat/PvpRapidSettings.cs" Link="PvpRapidSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/PvpAmplificationSettings.cs" Link="PvpAmplificationSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/PvpDotSettings.cs" Link="PvpDotSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/DeathmatchSettings.cs" Link="DeathmatchSettings.cs" />

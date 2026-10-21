@@ -9,6 +9,7 @@ typeof(FriendlyFireSettings).Assembly.GetType("SephiriaOne.FriendlyFireHooks")?.
 WhiteBreadTests.Run(Check);
 ActiveDefenseTests.Run(Check);
 ResponsiveBudgetTests.Run(Check);
+ConfigurableRapidTests.Run(Check);
 MinimumDamageTests.Run(Check);
 SessionSettings.FriendlyFireForHit = default;
 var attacker = new PlayerAvatar { Name = "Alice" };

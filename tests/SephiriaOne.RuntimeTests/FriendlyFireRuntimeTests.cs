@@ -6,6 +6,7 @@ internal static class FriendlyFireRuntimeTests
     internal static void CheckMatchIntervals(Action<bool, string> check)
     {
         CheckMatchAmplification(check);
+        CheckRapidEdits(check, true);
         var prior = SessionSettings.FriendlyFireForHit.DotIntervals;
         long token = CombatMatchRuntime.MatchToken, scores = FriendlyFireKda.Epoch,
             balance = SessionSettings.CombatBalanceRevision, roles = CombatMatchRuntime.RoleRevision;
@@ -45,6 +46,50 @@ internal static class FriendlyFireRuntimeTests
             new PvpAmplificationChange(prior.Enabled, prior.SoftPercent, prior.HardPercent)), out _), "Restore match amplification settings");
     }
 
+    private static void CheckRapidEdits(Action<bool, string> check, bool matchRunning)
+    {
+        var prior = SessionSettings.FriendlyFireForHit;
+        // First participant inspection establishes the run scope and retires old lives.
+        // Establish it before measuring whether numeric edits preserve that scope.
+        _ = FriendlyFireParticipants.Epoch;
+        long token = CombatMatchRuntime.MatchToken, scores = FriendlyFireKda.Epoch,
+            balance = SessionSettings.CombatBalanceRevision, frequency = SessionSettings.CombatFrequencyRevision,
+            roles = CombatMatchRuntime.RoleRevision;
+        foreach (string edit in new[] { "window 2.25", "rate 8.75", "exponent 1.25" })
+        {
+            check(SettingsActions.Execute("/one friendlyfire rapid " + edit).Success &&
+                SessionSettings.CombatFrequencyRevision == ++frequency, "Effective rapid history edit advances only frequency revision: " + edit);
+            check(SettingsActions.Execute("/one friendlyfire rapid " + edit).Success &&
+                SessionSettings.CombatFrequencyRevision == frequency, "Unchanged rapid edit retains frequency history: " + edit);
+        }
+        check(SettingsActions.Execute("/one friendlyfire rapid burst 35.25").Success &&
+            SettingsActions.Execute("/one friendlyfire refill 90").Success && SessionSettings.CombatFrequencyRevision == frequency,
+            "Capacity and continuous refill edits preserve frequency history");
+        check(SessionSettings.CombatBalanceRevision == balance && FriendlyFireKda.Epoch == scores && CombatMatchRuntime.MatchToken == token &&
+            CombatMatchRuntime.RoleRevision == roles && CombatMatchRuntime.IsRunning == matchRunning &&
+            SessionSettings.FriendlyFireForHit.Enabled == prior.Enabled && SessionSettings.FriendlyFireForHit.Balance == prior.Balance &&
+            SessionSettings.FriendlyFireForHit.HitFrequency == prior.HitFrequency, "All rapid edits preserve active mode, switches, scores, roles and budget revision");
+        var configured = SessionSettings.FriendlyFireForHit.Rapid;
+        check(SessionSettings.ReadSnapshot().FriendlyFire.Rapid.Equals(configured) &&
+            SettingsActions.Execute("/one friendlyfire status").Messages.Any(m => m.Contains("Rapid history: 2.25s;") &&
+                m.Contains("8.75 hits/s") && m.Contains("exponent: 1.25") && m.Contains("35.25% max HP") &&
+                m.Contains("base empty-to-full recovery: 0.392s")), "Snapshot and status expose exact rapid settings and base recovery time");
+        check(!SessionSettings.TryExecuteFriendlyFire(new FriendlyFireCommand(false, rapid: new PvpRapidChange(windowSeconds: 0)), out _) &&
+            SessionSettings.FriendlyFireForHit.Rapid.Equals(configured) && SessionSettings.CombatFrequencyRevision == frequency,
+            "Invalid typed rapid changes fail atomically before reconciliation");
+        var rapidReset = SettingsActions.Execute("/one friendlyfire rapid reset");
+        frequency++;
+        check(rapidReset.Success && !SessionSettings.FriendlyFireForHit.Rapid.HasChanges &&
+            SessionSettings.CombatFrequencyRevision == frequency && SessionSettings.FriendlyFireForHit.RefillPercent == 90 &&
+            SessionSettings.CombatBalanceRevision == balance && FriendlyFireKda.Epoch == scores && CombatMatchRuntime.MatchToken == token,
+            "Rapid reset restores only its four numbers and advances history revision once");
+        check(SettingsActions.Execute("/one friendlyfire rapid reset").Success && SessionSettings.CombatFrequencyRevision == frequency,
+            "Repeated numeric reset never clears history again");
+        check(SessionSettings.TryExecuteFriendlyFire(new FriendlyFireCommand(false, rapid: new PvpRapidChange(prior.Rapid.WindowSeconds,
+            prior.Rapid.HitsPerSecond, prior.Rapid.Exponent, prior.Rapid.BurstPercent), refillPercent: prior.RefillPercent), out _),
+            "Restore prior rapid and refill controls");
+    }
+
     public static void Run(Func<PlayerSpawner> start, Func<uint, PlayerSpawner> add, Action<bool, string> check)
     {
         var host = start().PlayerAvatar;
@@ -66,6 +111,8 @@ internal static class FriendlyFireRuntimeTests
         string Score(PlayerAvatar player) => FriendlyFireKda.Label(player, "P");
         Damage(); Kill();
         check(Score(host) == "P(1/0/0)" && Score(helper) == "P(0/0/1)", "Enabled command starts host KDA accounting");
+        CheckRapidEdits(check, false);
+        check(Score(host) == "P(1/0/0)" && Score(helper) == "P(0/0/1)", "Rapid number edits retain exact K/D/A scores");
         balanceRevision = SessionSettings.CombatBalanceRevision;
         long frequencyRevision = SessionSettings.CombatFrequencyRevision;
         check(SettingsActions.Execute("/one friendlyfire hit-frequency on").Success && SessionSettings.FriendlyFireForHit.HitFrequency &&
@@ -129,11 +176,15 @@ internal static class FriendlyFireRuntimeTests
         check(SettingsActions.Execute("/one friendlyfire damage 25").Success, "Host can reduce allied damage");
         check(SessionSettings.ReadSnapshot().ActiveSettings.Contains("friendlyfire damage 25"), "Snapshot includes allied damage scale");
         check(SessionSettings.FriendlyFireForHit.Enabled && SessionSettings.FriendlyFireForHit.DamagePercent == 25, "Hit observes commands without waiting for another frame");
+        var rapidSettings = new PvpRapidSettings(1.25m, 8.75m, 0.25m, 35.25m);
+        check(SessionSettings.TryExecuteFriendlyFire(new FriendlyFireCommand(false, rapid: new PvpRapidChange(1.25m, 8.75m, 0.25m, 35.25m)), out _),
+            "Host can configure exact rapid values for session persistence");
         HorayModAPI.StartSession();
         check(SessionSettings.FriendlyFireForHit.Enabled, "Run restart retains current combat policy");
         check(SessionSettings.FriendlyFireForHit.RefillPercent == 125.5m, "Run restart retains configured refill");
         check(SessionSettings.FriendlyFireForHit.DotIntervals.Equals(dotSettings), "Run restart retains all nine current effect intervals");
         check(SessionSettings.FriendlyFireForHit.Amplification.Equals(amplification), "Run restart retains exact amplification limits");
+        check(SessionSettings.FriendlyFireForHit.Rapid.Equals(rapidSettings), "Run restart retains all configured rapid numbers");
         check(Score(host) == "P(1/0/0)", "Run restart preserves totals");
         Damage(); HorayModAPI.StartSession(); Kill();
         check(Score(host) == "P(2/0/0)" && Score(helper) == "P(0/0/1)", "Run restart clears previous pending assists");
@@ -157,6 +208,7 @@ internal static class FriendlyFireRuntimeTests
         check(SessionSettings.FriendlyFireForHit.HitFrequency, "Rejoined players immediately use current hit-frequency preference");
         check(SessionSettings.FriendlyFireForHit.DotIntervals.Equals(dotSettings), "Replacement connection gets all current DoT intervals, not stale per-player values");
         check(SessionSettings.FriendlyFireForHit.Amplification.Equals(amplification), "Replacement connection reads current amplification limits");
+        check(SessionSettings.FriendlyFireForHit.Rapid.Equals(rapidSettings), "Replacement connection uses current rapid numbers");
         HorayModAPI.StartSession();
         check(SessionSettings.FriendlyFireForHit.DamagePercent == 0.1m, "Run restart retains fractional combat policy");
         foreach (string bad in new[] { "-1", "301", "NaN", "0.001", "x2" })
@@ -170,6 +222,7 @@ internal static class FriendlyFireRuntimeTests
         check(SessionSettings.FriendlyFireForHit.RefillPercent == 125.5m, "Saved refill restores after full controller restart");
         check(SessionSettings.FriendlyFireForHit.DotIntervals.Equals(dotSettings), "Saved intervals restore after full controller restart");
         check(SessionSettings.FriendlyFireForHit.Amplification.Equals(amplification), "Saved amplification limits restore alongside every other combat setting");
+        check(SessionSettings.FriendlyFireForHit.Rapid.Equals(rapidSettings), "Saved rapid numbers restore exactly after controller restart");
         check(Score(host) == "P(0/0/0)", "Saved settings never persist KDA");
         Damage(); Kill();
         check(Score(host) == "P(1/0/0)", "Restored enabled preset activates fresh accounting");
@@ -180,7 +233,11 @@ internal static class FriendlyFireRuntimeTests
         check(!SessionSettings.FriendlyFireForHit.HitFrequency, "Full reset restores hit-frequency default off");
         check(!SessionSettings.FriendlyFireForHit.DotIntervals.HasChanges, "Full reset restores all nine current per-effect defaults");
         check(!SessionSettings.FriendlyFireForHit.Amplification.HasChanges, "Full reset restores amplification off/50/100");
+        check(!SessionSettings.FriendlyFireForHit.Rapid.HasChanges, "Full reset restores all rapid defaults");
         FriendlyFireFeature.Available = false;
+        check(!SettingsActions.Execute("/one friendlyfire rapid window 2").Success &&
+            SettingsActions.Execute("/one friendlyfire rapid window reset").Success && SettingsActions.Execute("/one friendlyfire rapid reset").Success,
+            "Unavailable combat hooks retain per-field and all-rapid reset recovery");
         check(!SettingsActions.Execute("/one friendlyfire amplification on").Success &&
             !SettingsActions.Execute("/one friendlyfire amplification limits 10 20").Success &&
             SettingsActions.Execute("/one friendlyfire amplification off").Success && SettingsActions.Execute("/one friendlyfire amplification reset").Success,
