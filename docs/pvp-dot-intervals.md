@@ -1,5 +1,56 @@
 # Independent PvP damage intervals
 
+## Configurable duration cap (`0.85.0`, 2026-10-22)
+
+**PvP Balance → Debuffs / Dark Cloud → Burn-family max duration (s)** controls
+the existing shared lifetime cap. Default/reset is now **1.2 seconds**, replacing
+the former hardcoded 2 seconds. Accepts **0.05..10 seconds**, up to two decimals.
+The row has its own Apply and Reset buttons and EN/KO labels.
+
+```text
+/one friendlyfire dot-duration 1.2
+/one friendlyfire dot-duration 2
+/one friendlyfire dot-duration reset
+/one save
+```
+
+Coverage remains **Burn, Plasma Burn and their blue/evolved forms**. These use
+the same existing native Burn/Plasma lifetime handling, including Plasma's
+normal expiry attack. Poison, Frostbite, Wound, Lightning, Freeze, Chim and
+Dark Cloud gain no new duration limit. Their interval settings remain independent.
+This cap applies only to permitted hostile player pairs with PvP balancing on,
+in normal friendly fire and every shared match mode. PvE stays native.
+
+A live value change uses elapsed time since the last application/refresh. Lower
+limits retire overdue effects before their next server tick; larger limits let
+still-active effects continue, but cannot revive an ended effect. Native
+reapplications can refresh the capped lifetime, and native durations shorter
+than the cap remain shorter. Turning balancing/PvP off leaves unexpired native
+timers intact; no stat/timer restoration pass is needed. An interval equal to
+or longer than the cap may produce no periodic tick unless the effect refreshes.
+
+`FriendlyFireSettings` stores exact hundredths with a default-safe offset;
+all commands, snapshots, modes and reconnects read that same live policy.
+Preset **v46** saves nondefault `friendlyfire dot-duration N`, including while
+balancing is off. Older/omitted rows inherit 1.2; invalid/duplicate/out-of-version
+rows reject atomically. Duration edits do not reset scores, participants, modes,
+damage allowance, pulse clocks or interval drafts.
+
+The existing debuff update compares `Time.time` against application time plus
+the configured duration, avoiding subtraction rounding at decimal boundaries.
+No new polling, effect scans, stat writes or RPCs are introduced; native Destroy
+and replication still retire effects for unmodified guests. Existing connection,
+ownership, nested-callback and delayed-despawn guards remain in force.
+
+Verification: non-deploying Release build passed with zero warnings/errors;
+9,013 combat-hook checks, 13,973 runtime/session checks, 156 duration-policy
+checks, 4,466 catalog checks and the panel/localization/installed-game suites
+passed. Existing warmed Burn/Plasma update checks still allocate zero bytes.
+Independent review found no actionable issues. Native live host/guest visuals
+and gameplay were not exercised; nothing was deployed.
+
+## Tick intervals
+
 Expanded in `0.68.0`; schedule protection added in `0.69.0` and separate Plasma
 shock in `0.71.0`, 2026-10-20.
 Use **PvP Balance → Debuffs / Dark Cloud**
@@ -36,9 +87,9 @@ The original four defaults are unchanged. `reset` restores only the named effect
 full friendly-fire reset restores all ten. Lower intervals admit more frequent
 hits, but do not invent additional native attacks: pulse/Dark Cloud controls are
 minimum gaps, and remain limited by native triggers and the shared damage budget.
-The [two-second Burn-family lifetime cap](pvp-balancing.md#burn-duration-cap-0592-2026-10-16)
-still includes both Burn and Plasma and their variants. Without a refresh, an
-interval of two seconds or longer may never tick before expiry.
+The [configurable Burn-family lifetime cap](#configurable-duration-cap-0850-2026-10-22)
+includes both Burn and Plasma and their variants. Without a refresh, an
+interval at least as long as the configured cap may never tick before expiry.
 
 ## Preserve schedules (`0.69.0`)
 
@@ -63,7 +114,7 @@ credit. Different effects, attackers and victims retain independent clocks;
 all admitted damage still uses the common PvP budget.
 
 Periodic effects such as Burn keep their normal first-tick delay; the option
-does not introduce a new immediate hit. Stacks, duration refreshes, the two-second
+does not introduce a new immediate hit. Stacks, duration refreshes, the configurable
 Burn-family duration cap and Freeze's stun are unchanged. Suppressed damage is
 not queued for later, and native shock charge/expiry handling still runs.
 

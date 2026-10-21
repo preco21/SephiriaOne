@@ -8,6 +8,7 @@ internal static class FriendlyFireRuntimeTests
         CheckMatchAmplification(check);
         CheckRapidEdits(check, true);
         CheckPerfectGuardEdits(check, true);
+        CheckDotDurationEdits(check, true);
         var prior = SessionSettings.FriendlyFireForHit.DotIntervals;
         long token = CombatMatchRuntime.MatchToken, scores = FriendlyFireKda.Epoch,
             balance = SessionSettings.CombatBalanceRevision, roles = CombatMatchRuntime.RoleRevision;
@@ -120,6 +121,27 @@ internal static class FriendlyFireRuntimeTests
             new PvpPerfectGuardChange(prior.PerfectGuard.Enabled, prior.PerfectGuard.Multiplier)), out _), "Restore prior Perfect Guard policy");
     }
 
+    private static void CheckDotDurationEdits(Action<bool, string> check, bool matchRunning)
+    {
+        var prior = SessionSettings.FriendlyFireForHit;
+        long participants = FriendlyFireParticipants.Epoch, token = CombatMatchRuntime.MatchToken, scores = FriendlyFireKda.Epoch,
+            balance = SessionSettings.CombatBalanceRevision, frequency = SessionSettings.CombatFrequencyRevision, roles = CombatMatchRuntime.RoleRevision;
+        foreach (string value in new[] { "0.05", "3.33", "10", "reset" })
+            check(SettingsActions.Execute("/one friendlyfire dot-duration " + value).Success &&
+                CombatMatchRuntime.IsRunning == matchRunning && CombatMatchRuntime.MatchToken == token && FriendlyFireKda.Epoch == scores &&
+                FriendlyFireParticipants.Epoch == participants && SessionSettings.CombatBalanceRevision == balance &&
+                SessionSettings.CombatFrequencyRevision == frequency && CombatMatchRuntime.RoleRevision == roles &&
+                SessionSettings.FriendlyFireForHit.DotIntervals.Equals(prior.DotIntervals),
+                "Duration edits preserve mode, KDA, interval/schedule settings, participants and all combat revisions: " + value);
+        check(!SessionSettings.TryExecuteFriendlyFire(new FriendlyFireCommand(false, dotMaxDurationSeconds: 0), out _) &&
+            !SettingsActions.Execute("/one friendlyfire dot-duration 1.201").Success && SessionSettings.FriendlyFireForHit.DotMaxDurationSeconds == 1.2m,
+            "Invalid duration commands reject atomically");
+        check(SettingsActions.Execute("/one friendlyfire status").Messages.Any(m => m.Contains("PvP Burn-family duration cap: 1.2s")) &&
+            SessionSettings.ReadSnapshot().FriendlyFire.DotMaxDurationSeconds == 1.2m, "Status and UI snapshot expose current duration");
+        check(SessionSettings.TryExecuteFriendlyFire(new FriendlyFireCommand(false, dotMaxDurationSeconds: prior.DotMaxDurationSeconds), out _),
+            "Restore prior duration after mode checks");
+    }
+
     public static void Run(Func<PlayerSpawner> start, Func<uint, PlayerSpawner> add, Action<bool, string> check)
     {
         var host = start().PlayerAvatar;
@@ -143,6 +165,7 @@ internal static class FriendlyFireRuntimeTests
         check(Score(host) == "P(1/0/0)" && Score(helper) == "P(0/0/1)", "Enabled command starts host KDA accounting");
         CheckRapidEdits(check, false);
         CheckPerfectGuardEdits(check, false);
+        CheckDotDurationEdits(check, false);
         check(Score(host) == "P(1/0/0)" && Score(helper) == "P(0/0/1)", "Perfect Guard edits retain exact K/D/A totals");
         check(Score(host) == "P(1/0/0)" && Score(helper) == "P(0/0/1)", "Rapid number edits retain exact K/D/A scores");
         balanceRevision = SessionSettings.CombatBalanceRevision;
@@ -210,6 +233,7 @@ internal static class FriendlyFireRuntimeTests
         check(SessionSettings.FriendlyFireForHit.Enabled && SessionSettings.FriendlyFireForHit.DamagePercent == 25, "Hit observes commands without waiting for another frame");
         var rapidSettings = new PvpRapidSettings(1.25m, 8.75m, 0.25m, 35.25m);
         var perfectGuardSettings = new PvpPerfectGuardSettings(false, 3.25m);
+        check(SettingsActions.Execute("/one friendlyfire dot-duration 3.33").Success, "Configure duration for persistence");
         check(SettingsActions.Execute("/one friendlyfire perfect-guard multiplier 3.25").Success,
             "Configure inactive Perfect Guard multiplier for persistence");
         check(SessionSettings.TryExecuteFriendlyFire(new FriendlyFireCommand(false, rapid: new PvpRapidChange(1.25m, 8.75m, 0.25m, 35.25m)), out _),
@@ -221,6 +245,7 @@ internal static class FriendlyFireRuntimeTests
         check(SessionSettings.FriendlyFireForHit.Amplification.Equals(amplification), "Run restart retains exact amplification limits");
         check(SessionSettings.FriendlyFireForHit.Rapid.Equals(rapidSettings), "Run restart retains all configured rapid numbers");
         check(SessionSettings.FriendlyFireForHit.PerfectGuard.Equals(perfectGuardSettings), "Run restart retains inactive Perfect Guard multiplier");
+        check(SessionSettings.FriendlyFireForHit.DotMaxDurationSeconds == 3.33m, "Run restart retains current duration");
         check(Score(host) == "P(1/0/0)", "Run restart preserves totals");
         Damage(); HorayModAPI.StartSession(); Kill();
         check(Score(host) == "P(2/0/0)" && Score(helper) == "P(0/0/1)", "Run restart clears previous pending assists");
@@ -246,6 +271,7 @@ internal static class FriendlyFireRuntimeTests
         check(SessionSettings.FriendlyFireForHit.Amplification.Equals(amplification), "Replacement connection reads current amplification limits");
         check(SessionSettings.FriendlyFireForHit.Rapid.Equals(rapidSettings), "Replacement connection uses current rapid numbers");
         check(SessionSettings.FriendlyFireForHit.PerfectGuard.Equals(perfectGuardSettings), "Replacement connection uses current Perfect Guard policy");
+        check(SessionSettings.FriendlyFireForHit.DotMaxDurationSeconds == 3.33m, "Replacement connection uses current duration, not stale settings");
         HorayModAPI.StartSession();
         check(SessionSettings.FriendlyFireForHit.DamagePercent == 0.1m, "Run restart retains fractional combat policy");
         foreach (string bad in new[] { "-1", "301", "NaN", "0.001", "x2" })
@@ -261,6 +287,7 @@ internal static class FriendlyFireRuntimeTests
         check(SessionSettings.FriendlyFireForHit.Amplification.Equals(amplification), "Saved amplification limits restore alongside every other combat setting");
         check(SessionSettings.FriendlyFireForHit.Rapid.Equals(rapidSettings), "Saved rapid numbers restore exactly after controller restart");
         check(SessionSettings.FriendlyFireForHit.PerfectGuard.Equals(perfectGuardSettings), "Saved inactive Perfect Guard multiplier restores after controller restart");
+        check(SessionSettings.FriendlyFireForHit.DotMaxDurationSeconds == 3.33m, "Saved duration restores after controller restart");
         check(Score(host) == "P(0/0/0)", "Saved settings never persist KDA");
         Damage(); Kill();
         check(Score(host) == "P(1/0/0)", "Restored enabled preset activates fresh accounting");
@@ -273,7 +300,10 @@ internal static class FriendlyFireRuntimeTests
         check(!SessionSettings.FriendlyFireForHit.Amplification.HasChanges, "Full reset restores amplification off/50/100");
         check(!SessionSettings.FriendlyFireForHit.Rapid.HasChanges, "Full reset restores all rapid defaults");
         check(!SessionSettings.FriendlyFireForHit.PerfectGuard.HasChanges, "Full reset restores Perfect Guard off/x2");
+        check(SessionSettings.FriendlyFireForHit.DotMaxDurationSeconds == 1.2m, "Full reset restores 1.2-second duration");
         FriendlyFireFeature.Available = false;
+        check(!SettingsActions.Execute("/one friendlyfire dot-duration 3").Success &&
+            SettingsActions.Execute("/one friendlyfire dot-duration reset").Success, "Unavailable hooks retain duration reset recovery");
         check(!SettingsActions.Execute("/one friendlyfire perfect-guard on").Success &&
             !SettingsActions.Execute("/one friendlyfire perfect-guard multiplier 3").Success &&
             SettingsActions.Execute("/one friendlyfire perfect-guard off").Success &&
@@ -301,6 +331,7 @@ internal static class FriendlyFireRuntimeTests
             "Replacement session resolves native defaults immediately");
         check(!SessionSettings.FriendlyFireForHit.Balance, "An unsaved new session starts with balancing off");
         NetworkServer.active = false;
+        check(!SettingsActions.Execute("/one friendlyfire dot-duration 3").Success, "Guests cannot edit authoritative duration");
         check(!SettingsActions.Execute("/one friendlyfire perfect-guard on").Success &&
             !SettingsActions.Execute("/one friendlyfire perfect-guard multiplier 3").Success, "Guests cannot change Perfect Guard host policy");
         check(!SettingsActions.Execute("/one friendlyfire on").Success, "Guests cannot enable friendly fire");

@@ -80,7 +80,7 @@ internal static class GamePvpBurnDurationTests
         Require(before.FindIndex(i => Call(i, "DebuffOrigin", "get_Valid")) <
             before.FindIndex(i => Call(i, "FriendlyFireRuntime", "UpdateWithinBurnLifetime")), "connection validation precedes the duration cap");
         var cap = Code(runtime, "UpdateWithinBurnLifetime");
-        Require(Calls(cap, "FriendlyFireRuntime", "IsBurnFamily") && cap.Any(i => i.LoadsConstant(2f)) &&
+        Require(Calls(cap, "FriendlyFireRuntime", "IsBurnFamily") && Calls(cap, "FriendlyFireSettings", "get_DotMaxDuration") &&
             Calls(cap, "FriendlyFireRuntime", "CanAffectTeam") && Calls(cap, "CharacterDebuff", "Destroy") &&
             cap.Any(i => i.StoresField(AccessTools.Field(origin, "BurnEnded"))) &&
             !cap.Any(i => i.opcode == OpCodes.Stfld && i.operand is FieldInfo f && f.DeclaringType?.Name == "Timer"),
@@ -88,6 +88,28 @@ internal static class GamePvpBurnDurationTests
         Require(cap.FindIndex(i => i.StoresField(AccessTools.Field(origin, "BurnEnded"))) <
             cap.FindIndex(i => Call(i, "CharacterDebuff", "Destroy")), "retire before native callbacks to prevent duplicate expiry");
         Require(Calls(Code(runtime, "Clear"), "FriendlyFireRuntime", "ClearDebuffOrigins"), "unload clears the shared lifetime storage");
-        Console.WriteLine("Verified Burn/Plasma/Blue Flame duration and refresh contracts, native Plasma expiry attack, shared two-second cap and guest despawn (not live multiplayer).");
+        var panel = addon.GetType("SephiriaOne.SettingsPanel", true)!;
+        var build = Code(panel, "BuildPvpDotEditor");
+        Require(build.Any(i => i.LoadsConstant("Burn-family max duration (s)")) &&
+            build.Any(i => i.LoadsConstant("Burn / Plasma Burn / Blue Flame")) && build.Any(i => i.LoadsConstant(700f)),
+            "Duration row labels exact coverage and extends existing scroll content without shrinking the viewport");
+        var applyDuration = Code(panel, "ApplyPvpDotDuration"); var resetDuration = Code(panel, "ResetPvpDotDuration");
+        Require(applyDuration.Any(i => i.LoadsConstant("/one friendlyfire dot-duration ")) &&
+            Calls(applyDuration, "SettingsPanel", "Execute") && Calls(applyDuration, "SettingsPanel", "ClearPvpDotDuration") &&
+            resetDuration.Any(i => i.LoadsConstant("/one friendlyfire dot-duration reset")) &&
+            Calls(resetDuration, "SettingsPanel", "Execute") && Calls(resetDuration, "SettingsPanel", "ClearPvpDotDuration"),
+            "Duration Apply/reset use shared host commands and clear their own draft");
+        var panelRefresh = Code(panel, "RefreshPvpDots");
+        Require(Calls(panelRefresh, "FriendlyFireSettings", "get_DotMaxDuration") &&
+            Calls(panelRefresh, "FriendlyFireSettings", "get_DotMaxDurationNumber") &&
+            Calls(panelRefresh, "SettingsSnapshot", "get_CanMutate") && Calls(panelRefresh, "SettingsSnapshot", "get_FriendlyFireAvailable") &&
+            panelRefresh.Any(i => i.LoadsField(AccessTools.Field(panel, "pvpDotDurationDraft"))) &&
+            panelRefresh.Any(i => i.LoadsField(AccessTools.Field(panel, "pvpDotDurationLast"))),
+            "Refresh preserves typed drafts and avoids repeated formatting of unchanged duration");
+        Require(Calls(Code(panel, "ClearPvpDots"), "SettingsPanel", "ClearPvpDotDuration") &&
+            Code(panel, "BuildPage").Any(i => i.StoresField(AccessTools.Field(panel, "pvpDotDuration"))) &&
+            !Code(panel, "ClearPvpDotDuration").Any(i => i.LoadsField(AccessTools.Field(panel, "pvpDotEditors"))),
+            "Duration draft follows page/session lifetime and does not clear sibling interval drafts");
+        Console.WriteLine("Verified Burn/Plasma/Blue Flame duration and refresh contracts, native Plasma expiry attack, live shared duration cap and guest despawn (not live multiplayer).");
     }
 }

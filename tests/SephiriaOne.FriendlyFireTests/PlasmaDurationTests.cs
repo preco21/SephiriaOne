@@ -13,7 +13,7 @@ internal static class PlasmaDurationTests
         {
             FriendlyFireParticipants.Clear(); CombatMatchRuntime.PairRule = null;
             Mirror.NetworkServer.active = true; Time.time = 100; Time.deltaTime = 0;
-            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true);
+            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, dotMaxDurationSeconds: 2);
         }
         foreach (var create in new Func<CharacterDebuff_Plasma>[] { () => new(), () => new DerivedPlasma() })
         {
@@ -61,11 +61,11 @@ internal static class PlasmaDurationTests
             SessionSettings.FriendlyFireForHit = new(true, 100); plasma.Step(2);
             check(!plasma.IsEndBuff, "Disabling balancing immediately restores Plasma's native lifetime");
             plasma.RefreshDurationTimer(999, 999);
-            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true); plasma.Step(1.999f);
+            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, dotMaxDurationSeconds: 2); plasma.Step(1.999f);
             check(!plasma.IsEndBuff, "Plasma refresh while disabled is respected when balancing resumes");
             plasma.Step(0.01f); check(plasma.IsEndBuff, "Reenabled balancing still caps refreshed Plasma at two seconds");
             Fresh(); plasma = Plasma(); SessionSettings.FriendlyFireForHit = new(true, 100); plasma.Step(3);
-            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true); plasma.Step(0);
+            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, dotMaxDurationSeconds: 2); plasma.Step(0);
             check(plasma.IsEndBuff && plasma.Ticks == 1, "Enabling balancing retires old Plasma before another tick");
 
             foreach (var pair in new[] {

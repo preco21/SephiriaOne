@@ -58,6 +58,8 @@ namespace SephiriaOne
             { message = FriendlyFireCommand.Usage; return false; }
             if (command.PerfectGuard.HasValue && !command.PerfectGuard.Value.IsValid)
             { message = FriendlyFireCommand.Usage; return false; }
+            if (command.DotMaxDurationSeconds.HasValue && !PvpDotSettings.ValidSeconds(command.DotMaxDurationSeconds.Value))
+            { message = FriendlyFireCommand.Usage; return false; }
             bool interrupted = CombatMatchRuntime.IsRunning && command.TouchesMasterToggle;
             var previousDungeon = DungeonManager.Instance; var previousRun = SaveManager.CurrentRun; long previousGeneration = ResourceGeneration;
             if (command.TouchesMasterToggle) CombatMatchRuntime.Stop(true, true);
@@ -113,6 +115,7 @@ namespace SephiriaOne
                 settings.DotIntervals.Number(PvpDotEffect.Freeze), settings.DotIntervals.Number(PvpDotEffect.Chim),
                 settings.DotIntervals.Number(PvpDotEffect.DarkCloud)) + " " +
             L.F("Plasma shock interval: {0}s.", settings.DotIntervals.Number(PvpDotEffect.PlasmaShock)) + " " +
+            L.F("PvP Burn-family duration cap: {0}s (Burn, Plasma Burn and blue/evolved variants; requires balancing).", settings.DotMaxDurationNumber) + " " +
             DescribeDebuffSchedules(settings.DotIntervals) + " " +
             L.F("Block lobby HP/MP recovery: {0}.", L.T(settings.BlockLobbyRegen ? "on" : "off")) +
             (settings.BlockLobbyRegen && !LobbyRegenFeature.Available ? " " + L.T("Lobby recovery hooks unavailable; off/reset remain available. See Player.log.") : "");

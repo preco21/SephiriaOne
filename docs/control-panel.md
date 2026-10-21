@@ -1,5 +1,16 @@
 # Host settings panel
 
+## DoT duration control (`0.85.0`, 2026-10-22)
+
+The top row of **PvP Balance → Debuffs / Dark Cloud** now sets the shared
+Burn-family maximum duration (default 1.2s, range 0.05..10). Apply/Reset use
+`/one friendlyfire dot-duration`; the hint names Burn, Plasma Burn and Blue Flame
+so this lifetime control is not confused with the independent tick intervals.
+Only the scroll content grows; the viewport/window stays the same size. Refresh
+preserves unfinished input and avoids formatting unchanged values. Page, locale,
+close and session transitions clear the draft; Apply clears only this field.
+See [runtime semantics](pvp-dot-intervals.md#configurable-duration-cap-0850-2026-10-22).
+
 ## Perfect Guard controls (`0.84.0`, 2026-10-22)
 
 **PvP Balance** has a Perfect Guard MP multiplier toggle and native-cost input

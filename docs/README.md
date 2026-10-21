@@ -1,6 +1,11 @@
 # Development knowledge index
 
-Maintained: 2026-10-22 (Asia/Seoul), addon `0.84.0`.
+Maintained: 2026-10-22 (Asia/Seoul), addon `0.85.0`.
+
+[Configurable PvP DoT duration](pvp-dot-intervals.md#configurable-duration-cap-0850-2026-10-22):
+Burn/Plasma/blue/evolved lifetime cap now defaults to 1.2s, adjustable 0.05..10s
+in PvP Balance or `/one friendlyfire dot-duration`. Shared live age/refresh
+semantics, native PvE, v46 presets and EN/KO controls; interval coverage is unchanged.
 
 [Perfect Guard MP multiplier](pvp-shield-mp.md#perfect-guard-multiplier-0840):
 optional native-cost x1..x100, default off/x2, in PvP Balance and chat commands.

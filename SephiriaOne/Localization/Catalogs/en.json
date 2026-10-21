@@ -1,4 +1,8 @@
 {
+  "Burn-family max duration (s)": "Burn-family max duration (s)",
+  "Burn / Plasma Burn / Blue Flame": "Burn / Plasma Burn / Blue Flame",
+  "PvP DoT duration: /one friendlyfire dot-duration 0.05..10|reset (seconds, up to 2 decimals). Default 1.2; caps Burn, Plasma Burn and blue/evolved variants while balancing is on. Native reapplications may refresh this duration; other debuffs and tick intervals stay unchanged.": "PvP DoT duration: /one friendlyfire dot-duration 0.05..10|reset (seconds, up to 2 decimals). Default 1.2; caps Burn, Plasma Burn and blue/evolved variants while balancing is on. Native reapplications may refresh this duration; other debuffs and tick intervals stay unchanged.",
+  "PvP Burn-family duration cap: {0}s (Burn, Plasma Burn and blue/evolved variants; requires balancing).": "PvP Burn-family duration cap: {0}s (Burn, Plasma Burn and blue/evolved variants; requires balancing).",
   "Perfect Guard MP multiplier": "Perfect Guard MP multiplier",
   "Native MP cost (x)": "Native MP cost (x)",
   "When on, shield MP minimum does not apply.": "When on, shield MP minimum does not apply.",

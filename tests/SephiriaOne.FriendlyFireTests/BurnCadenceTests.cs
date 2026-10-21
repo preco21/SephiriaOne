@@ -44,7 +44,7 @@ internal static class BurnCadenceTests
     internal static void Run(Action<bool, string> check)
     {
         FriendlyFireParticipants.Clear();
-        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true);
+        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, dotMaxDurationSeconds: 2);
         CharacterDebuff_Burn Burn(UnitAvatar source = null, UnitAvatar target = null)
         {
             var effect = new CharacterDebuff_Burn();
@@ -66,7 +66,7 @@ internal static class BurnCadenceTests
         burn = Burn(); burn.Step(0.25f);
         SessionSettings.FriendlyFireForHit = new(true, 100, balance: false);
         burn.Step(0.362f); check(burn.Ticks == 1, "Balance off immediately restores native timer advance without resetting elapsed time");
-        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true);
+        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, dotMaxDurationSeconds: 2);
         burn.Step(0.5f); check(burn.Ticks == 1, "Reenabling balancing affects an existing burn without rewriting its state");
         burn.Step(0.401f); check(burn.Ticks == 2, "Existing burn continues naturally after balancing is restored");
 
@@ -84,7 +84,7 @@ internal static class BurnCadenceTests
         check(burn.Ticks == 1, "Client-side execution never scales the burn timer"); Mirror.NetworkServer.active = true;
         burn = Burn(); SessionSettings.FriendlyFireForHit = new(false, 100, balance: true); burn.Step(0.5f);
         check(burn.Ticks == 1 && burn.NetworkTarget.Hp == 100, "FF off keeps native time while shared impact policy blocks allied damage");
-        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true);
+        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, dotMaxDurationSeconds: 2);
         burn = Burn(); FriendlyFireParticipants.Select((PlayerAvatar)burn.NetworkAttacker); burn.Step(0.5f);
         check(burn.Ticks == 1 && burn.NetworkTarget.Hp == 100, "Unselected players are not slowed or damaged");
         FriendlyFireParticipants.Clear();

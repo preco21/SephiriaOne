@@ -5,11 +5,11 @@ internal static class BurnDurationTests
 {
     internal static void Run(Action<bool, string> check)
     {
-        void Fresh()
+        void Fresh(decimal cap = 2m)
         {
             FriendlyFireParticipants.Clear(); CombatMatchRuntime.PairRule = null;
             Mirror.NetworkServer.active = true; Time.time = 100; Time.deltaTime = 0;
-            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true);
+            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, dotMaxDurationSeconds: cap);
         }
         CharacterDebuff_Burn Burn(UnitAvatar source = null, UnitAvatar target = null, float duration = 30)
         {
@@ -18,6 +18,31 @@ internal static class BurnDurationTests
             burn.OnTick = burn.OnUpdate_Server;
             return burn;
         }
+        Fresh(FriendlyFireSettings.DefaultDotMaxDurationSeconds); var defaultBurn = Burn(); defaultBurn.Step(0.9f);
+        Time.time = 101.2f; defaultBurn.Update();
+        check(defaultBurn.IsEndBuff && defaultBurn.Ticks == 1, "Default PvP Burn cap expires at the 1.2-second decimal boundary");
+        foreach (bool plasmaFamily in new[] { false, true })
+        {
+            Fresh(3.33m);
+            CharacterDebuff effect = plasmaFamily ? new CharacterDebuff_Plasma { NativeDuration = 100 } : Burn();
+            if (plasmaFamily) effect.InitializeAndSpawn(new PlayerAvatar(), new PlayerAvatar());
+            Time.time = 103.329f; effect.Update();
+            check(!effect.IsEndBuff, "Configured lifetime holds before boundary in each Burn family");
+            Time.time = 103.33f; effect.Update();
+            check(effect.IsEndBuff, "Configured lifetime expires at decimal boundary in each Burn family");
+            SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, dotMaxDurationSeconds: 10));
+            effect.Update(); check(effect.IsEndBuff, "Raising a cap never resurrects ended effects");
+        }
+        Fresh(3); var live = Burn(); live.Step(1.5f);
+        SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, dotMaxDurationSeconds: 1.2m));
+        live.Step(0); check(live.IsEndBuff, "Lowering cap uses the original age and expires immediately on next update");
+        Fresh(1.2m); live = Burn(); live.Step(1);
+        SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, dotMaxDurationSeconds: 3));
+        live.Step(1); check(!live.IsEndBuff, "Raising cap gives a live effect its remaining allowance without resetting its age");
+        live.Step(1); check(live.IsEndBuff, "Raised cap still uses original application time");
+        Fresh(1.2m); live = Burn(); live.Step(1); live.RefreshDurationTimer(999, 999);
+        Time.time = 102.199f; live.Update(); check(!live.IsEndBuff, "Refresh permits another configured lifetime");
+        Time.time = 102.2f; live.Update(); check(live.IsEndBuff, "Refreshed decimal cap also expires exactly at deadline");
         Fresh(); var burn = Burn(); burn.Step(0.9f); burn.Step(0.9f); burn.Step(0.199f);
         check(!burn.IsEndBuff && burn.Ticks == 2, "Balanced Burn retains ticks before its two-second lifetime");
         Time.time = 102; Time.deltaTime = 0.001f; burn.Update();

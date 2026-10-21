@@ -1,4 +1,8 @@
 {
+  "Burn-family max duration (s)": "화상 계열 최대 지속 시간 (초)",
+  "Burn / Plasma Burn / Blue Flame": "화상 / 플라즈마 화상 / 푸른 불꽃",
+  "PvP DoT duration: /one friendlyfire dot-duration 0.05..10|reset (seconds, up to 2 decimals). Default 1.2; caps Burn, Plasma Burn and blue/evolved variants while balancing is on. Native reapplications may refresh this duration; other debuffs and tick intervals stay unchanged.": "PvP 지속 피해 시간: /one friendlyfire dot-duration 0.05..10|reset (초, 소수 둘째 자리까지). 기본 1.2초. 밸런스 조정이 켜져 있을 때 화상, 플라즈마 화상과 푸른 불꽃·진화형의 지속 시간을 제한합니다. 재적용 시 지속 시간은 갱신할 수 있으며, 다른 디버프와 피해 간격은 바뀌지 않습니다.",
+  "PvP Burn-family duration cap: {0}s (Burn, Plasma Burn and blue/evolved variants; requires balancing).": "PvP 화상 계열 지속 시간 상한: {0}초 (화상, 플라즈마 화상과 푸른 불꽃·진화형; 밸런스 조정 필요).",
   "Perfect Guard MP multiplier": "퍼펙트 가드 MP 배율",
   "Native MP cost (x)": "원래 MP 비용 (배율)",
   "When on, shield MP minimum does not apply.": "켜면 퍼펙트 가드에는 MP 하한을 적용하지 않습니다.",

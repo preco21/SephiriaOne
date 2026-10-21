@@ -5,8 +5,6 @@ namespace SephiriaOne
 {
     internal static partial class FriendlyFireRuntime
     {
-        private const float PvpBurnMaximumSeconds = 2f;
-
         // Plasma is a sibling, not a Burn subclass. Blue/evolved forms use
         // properties on these same native types, so they share this lifetime.
         private static bool IsBurnFamily(CharacterDebuff effect) =>
@@ -30,9 +28,12 @@ namespace SephiriaOne
         {
             if (!IsBurnFamily(effect)) return true;
             if (origin.BurnEnded) return false;
-            if (!SessionSettings.FriendlyFireForHit.Balance || !(origin.Target is PlayerAvatar) ||
+            var settings = SessionSettings.FriendlyFireForHit;
+            if (!settings.Balance || !(origin.Target is PlayerAvatar) ||
                 !CanAffectTeam(origin.Source, origin.Target)) return true;
-            if (!effect.IsEndBuff && Time.time - origin.BurnAppliedAt < PvpBurnMaximumSeconds) return true;
+            // Compare deadlines in the same float clock; subtracting absolute
+            // times can round an exact decimal-duration boundary below the cap.
+            if (!effect.IsEndBuff && Time.time < origin.BurnAppliedAt + settings.DotMaxDuration) return true;
 
             // Destroy retains Plasma's expiry attack, removes native status and
             // replicates despawn. Native Update still runs during that delay:

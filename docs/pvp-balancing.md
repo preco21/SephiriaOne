@@ -258,6 +258,12 @@ No build was deployed and the game was not launched.
 
 ## Burn duration cap (`0.59.2`, 2026-10-16)
 
+Current behavior since `0.85.0`: this shared Burn/Plasma/variant cap is
+[configurable](pvp-dot-intervals.md#configurable-duration-cap-0850-2026-10-22),
+with a 1.2-second default. The two-second values below describe its original
+implementation; coverage, refresh, ownership and native-expiry handling remain.
+
+
 Scope expanded in `0.60.1` (2026-10-16): the original cap covered only
 `CharacterDebuff_Burn`. Plasma is a sibling class and previously escaped it.
 

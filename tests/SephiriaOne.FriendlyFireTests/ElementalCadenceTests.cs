@@ -86,7 +86,7 @@ internal static class ElementalCadenceTests
         foreach (var kind in Enum.GetValues<PvpDotEffect>()) settings = settings.Apply(new(kind, (int)kind + 1));
         foreach (var kind in new[] { PvpDotEffect.Burn, PvpDotEffect.PlasmaBurn, PvpDotEffect.Frostbite, PvpDotEffect.Poison, PvpDotEffect.Wound })
         {
-            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, dotIntervals: settings);
+            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, dotIntervals: settings, dotMaxDurationSeconds: 10);
             CharacterDebuff effect = kind switch
             {
                 PvpDotEffect.Burn => new CharacterDebuff_Burn { Speed = 100 },
@@ -116,8 +116,8 @@ internal static class ElementalCadenceTests
             timer.time = 2.5f;
             float seconds = settings.Interval(kind);
             Step(seconds - 0.01f); check(Ticks() == 0, kind + " uses its own interval, regardless of native length/speed");
-            // A refreshed Plasma can reach a two-second tick interval without
-            // expiring first. Lifetime/late-tick behavior is tested separately.
+            // A longer configured lifetime isolates cadence from the duration
+            // cap. Lifetime/late-tick behavior is tested separately.
             if (effect is CharacterDebuff_Plasma) effect.RefreshDurationTimer(999, 999);
             Step(0.011f);
             check(Ticks() == 1 && timer.time == 2.5f, kind + " ticks without mutating native timer length");

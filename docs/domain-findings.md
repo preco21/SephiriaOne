@@ -1,5 +1,12 @@
 # Sephiria domain findings
 
+Burn-family cap (`0.85.0`): the existing effect-origin receipt stores the last
+native application/refresh time. Live duration configuration must read that age,
+not reset clocks on a settings edit or mutate native timers. Compare the float
+clock to `appliedAt + duration` to avoid subtraction keeping a decimal boundary
+alive. Shared native Burn/Plasma types cover blue/evolved forms; other effects'
+tick controls do not imply duration caps. See [duration semantics](pvp-dot-intervals.md#configurable-duration-cap-0850-2026-10-22).
+
 Perfect Guard (`0.84.0`): native `UnitAvatar.ApplyDamage` computes 10 MP →
 GuardResist → conditional Perfect Guard x0.5 → OnCalculateDurabilityDamage →
 integer truncation → UseMp. Record the actual half-cost branch, not a later

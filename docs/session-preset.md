@@ -1,5 +1,14 @@
 # Active settings and saved preset
 
+Schema v46 saves a nondefault shared Burn-family duration cap as
+`friendlyfire dot-duration N`. Valid canonical values are 0.05..10 seconds with
+up to two decimals; default/reset is 1.2 seconds. Older presets and missing rows
+inherit the new default because the old 2-second cap was never a saved setting.
+Explicit custom values persist even while PvP/balancing is off. Invalid,
+duplicate and out-of-version rows reject atomically; application timestamps,
+expired flags and runtime debuff instances are never saved. See
+[duration control](pvp-dot-intervals.md#configurable-duration-cap-0850-2026-10-22).
+
 Schema v45 saves nondefault Perfect Guard settings as `friendlyfire perfect-guard
 1` and `friendlyfire perfect-guard-multiplier N`. The multiplier is a canonical
 decimal from 1 to 100 with up to two places. Missing rows/older files inherit

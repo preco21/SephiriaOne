@@ -15,6 +15,10 @@ namespace SephiriaOne
             internal int LastHundredths = -1;
         }
         private readonly List<DotIntervalEditor> pvpDotEditors = new List<DotIntervalEditor>(PvpDotSettings.Count);
+        private TMP_InputField pvpDotDuration;
+        private Button pvpDotDurationReset;
+        private bool pvpDotDurationDraft;
+        private float pvpDotDurationLast = -1;
 
         private void BuildPvpDotEditor()
         {
@@ -25,7 +29,8 @@ namespace SephiriaOne
             var scroll = container.gameObject.AddComponent<ScrollRect>();
             var viewport = PanelWidgets.Rect(container, "Viewport", 0, 0, 258, height);
             viewport.gameObject.AddComponent<RectMask2D>();
-            var content = PanelWidgets.Rect(viewport, "Effects", 0, 0, 258, PvpDotSettings.Count * 62);
+            const int durationHeight = 80;
+            var content = PanelWidgets.Rect(viewport, "Effects", 0, 0, 258, durationHeight + PvpDotSettings.Count * 62);
             scroll.viewport = viewport; scroll.content = content; scroll.horizontal = false;
             scroll.movementType = ScrollRect.MovementType.Clamped; scroll.scrollSensitivity = 30;
             var track = PanelWidgets.Rect(container, "Scrollbar", 264, 0, 8, height);
@@ -38,10 +43,15 @@ namespace SephiriaOne
             bar.handleRect = handle; bar.targetGraphic = image; bar.direction = Scrollbar.Direction.BottomToTop;
             bar.navigation = new Navigation { mode = Navigation.Mode.None };
             scroll.verticalScrollbar = bar;
+            widgets.Text(content, "DotDurationLabel", "Burn-family max duration (s)", 4, 0, 250, 20, 12);
+            pvpDotDuration = widgets.Input(content, 4, 24, 56, _ => pvpDotDurationDraft = true);
+            changeButtons.Add(widgets.Button(content, "Apply", 66, 24, 62, 25, ApplyPvpDotDuration));
+            pvpDotDurationReset = widgets.Button(content, "Reset", 134, 24, 120, 25, ResetPvpDotDuration);
+            widgets.Text(content, "DotDurationHint", "Burn / Plasma Burn / Blue Flame", 4, 54, 250, 18, 10);
             for (int i = 0; i < PvpDotSettings.Count; i++)
             {
                 var row = new DotIntervalEditor { Effect = (PvpDotEffect)i };
-                int y = i * 62;
+                int y = durationHeight + i * 62;
                 widgets.Text(content, "DotLabel" + i, PvpDotSettings.Label(row.Effect), 4, y, 250, 20, 12);
                 row.Input = widgets.Input(content, 4, y + 24, 56, _ => row.Draft = true);
                 changeButtons.Add(widgets.Button(content, "Apply", 66, y + 24, 62, 25, () => ApplyPvpDot(row)));
@@ -55,6 +65,18 @@ namespace SephiriaOne
 
         private void RefreshPvpDots(SettingsSnapshot snapshot)
         {
+            if (pvpDotDuration)
+            {
+                pvpDotDuration.interactable = snapshot.CanMutate && snapshot.FriendlyFireAvailable;
+                pvpDotDurationReset.interactable = snapshot.CanMutate || (snapshot.HostActive && snapshot.SessionIdentity != null &&
+                    (snapshot.FaultedFeature == "combat" || snapshot.FaultedFeature == "inheritance"));
+                float duration = snapshot.FriendlyFire.DotMaxDuration;
+                if (!pvpDotDurationDraft && pvpDotDurationLast != duration)
+                {
+                    pvpDotDuration.SetTextWithoutNotify(snapshot.FriendlyFire.DotMaxDurationNumber);
+                    pvpDotDurationLast = duration;
+                }
+            }
             foreach (var row in pvpDotEditors)
             {
                 if (!row.Input) continue;
@@ -73,6 +95,15 @@ namespace SephiriaOne
             row.Draft = false; row.LastHundredths = -1;
             if (row.Input) row.Input.SetTextWithoutNotify("");
         }
-        private void ClearPvpDots() { foreach (var row in pvpDotEditors) ClearPvpDot(row); }
+        private void ApplyPvpDotDuration() => Execute("/one friendlyfire dot-duration " + pvpDotDuration.text.Trim(), true,
+            clearInputOnSuccess: ClearPvpDotDuration);
+        private void ResetPvpDotDuration() => Execute("/one friendlyfire dot-duration reset", true,
+            clearInputOnSuccess: ClearPvpDotDuration);
+        private void ClearPvpDotDuration()
+        {
+            pvpDotDurationDraft = false; pvpDotDurationLast = -1;
+            if (pvpDotDuration) pvpDotDuration.SetTextWithoutNotify("");
+        }
+        private void ClearPvpDots() { ClearPvpDotDuration(); foreach (var row in pvpDotEditors) ClearPvpDot(row); }
     }
 }
