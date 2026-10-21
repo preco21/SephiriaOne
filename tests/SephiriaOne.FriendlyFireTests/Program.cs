@@ -204,6 +204,7 @@ BalanceTests.Run(Check);
 HarvestTests.Run(Check);
 GuardTests.Run(Check);
 EvasionTests.Run(Check);
+DefensiveEffectTests.Run(Check);
 AmplificationTests.Run(Check);
 SpellTests.Run(Check);
 WeaponTargetingTests.Run(Check);

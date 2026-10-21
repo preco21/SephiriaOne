@@ -208,6 +208,7 @@ public partial class UnitAvatar : CombatBehaviour
             if (attacker && attacker.NetworkLeader)
                 attacker.NetworkLeader.OnAttackUnitBeforeOperation_AsLeader?.Invoke(attacker, this, damage);
             // Native parry and guard callbacks run before ordinary damage/veto.
+            if (isCounterInvincibleApplied > 0) { OnCounter?.Invoke(damage); return EApplyDamageResult.Fail_Block; }
             if (parryInvincibleApplied > 0) { OnParry?.Invoke(damage); parrySuccessBonusTimer.SetTimer(0f); return EApplyDamageResult.Fail_Block; }
             if (isHitInvincibleEnabled) return EApplyDamageResult.Fail_Absolute;
             if (IsGuarding)
@@ -321,11 +322,13 @@ public partial class UnitAvatar : CombatBehaviour
 }
 public class PlayerAvatar : UnitAvatar
 {
+    private WeaponControllerSimple weaponController = new();
+    public WeaponControllerSimple CounterController { get => weaponController; set => weaponController = value; }
     public string currentFloorGuid = "floor-1";
     public string playerNameSource = "";
     public PlayerSpawner spawner;
     public bool safeMode;
-    public PlayerAvatar() { OnAttackUnitBeforeOperation += HandleBeforeAttack; }
+    public PlayerAvatar() { OnAttackUnitBeforeOperation += HandleBeforeAttack; weaponController.unitAvatar = this; }
     [MethodImpl(MethodImplOptions.NoInlining)] private void HandleBeforeAttack(UnitAvatar target, DamageInstance damage)
     {
         if (RuntimeFactionManager.Instance.GetRelationBehaviour(target.faction, faction, target.attackableTargetSelector) == ERelationBehaviour.Hostile) return;

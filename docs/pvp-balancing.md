@@ -3,6 +3,14 @@
 Added in `0.52.0`, 2026-10-13. Host-only installation; the existing native damage
 and FX replication continues to serve stock guests. Default: **off**.
 
+## Additional defensive effects (`0.81.0`, 2026-10-21)
+
+[Defensive audit](pvp-defensive-effects.md): Elastic Band refunds dash charges
+at most once every 2s per defender against players. Extended weapon-counter
+immunity is limited to 0.35s per activation plus native latency allowance.
+Existing balancing toggle; no new preset fields or PvE stat/timer changes.
+Finite dodge barriers and consumed lethal saves remain native.
+
 ## All Damage Amplified limit (`0.80.0`, 2026-10-21)
 
 [Optional amplification curve](pvp-amplification.md): soft 50% / hard 100%

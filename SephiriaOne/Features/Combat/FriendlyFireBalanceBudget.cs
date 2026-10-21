@@ -8,6 +8,7 @@ namespace SephiriaOne
         private sealed class BalanceActor
         {
             internal long Life;
+            internal EvadeRefundWindow EvadeRefund;
             internal readonly ConditionalWeakTable<FriendlyFireParticipants.Receipt, BalanceWindow> Targets =
                 new ConditionalWeakTable<FriendlyFireParticipants.Receipt, BalanceWindow>();
         }

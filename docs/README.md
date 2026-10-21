@@ -1,6 +1,12 @@
 # Development knowledge index
 
-Maintained: 2026-10-21 (Asia/Seoul), addon `0.80.1`.
+Maintained: 2026-10-21 (Asia/Seoul), addon `0.81.0`.
+
+[Additional PvP defensive effects](pvp-defensive-effects.md): Elastic Band
+refunds at most once per defender every 2s; extended katana/dagger counter windows
+cap at 0.35s per activation against players while balancing is enabled. Native
+PvE protection stays intact. Includes retained finite defenses, disabled content,
+asset evidence, shared lifecycle and live-verification limits.
 
 [PvP shield MP minimum](pvp-shield-mp.md): strict default 5% after native
 reductions, covering guards, parries, MP shields and automatic/dash shields.
@@ -80,8 +86,9 @@ each player who lacks it. Optional automatic supply follows the shared PvP
 participant roster on entry/match start; default off, saved in v36 presets.
 Consumption and loading do not automatically refill supplies.
 
-PvP guard: the default and reset value are now **8% of maximum MP**, before
-native guard reductions. Explicit saved overrides remain unchanged.
+PvP guard: the default/reset is a strict **5% of maximum MP** after reductions,
+including automatic shields. Explicit saved overrides remain unchanged; see
+[current shield MP semantics](pvp-shield-mp.md).
 
 PvP reapplication: [Keep schedule / 주기 유지](pvp-dot-intervals.md#preserve-schedules-0690)
 is independently configurable for nine debuff families, enabled by default.

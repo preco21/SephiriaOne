@@ -1,5 +1,13 @@
 # Sephiria domain findings
 
+Additional defensive effects (`0.81.0`): Elastic Band restores dash charges on
+every evade, including Battle Bracelet's dash-invulnerability evade event.
+Limit that specific refund callback, never the shared evade event (which also
+consumes defensive charges). Extended katana/dagger counter immunity uses a
+separate signed-byte counter and a resettable weapon-controller timer; adapt
+the PvP consumer without mutating the native PvE window. See the
+[artifact/asset audit and bounded limits](pvp-defensive-effects.md).
+
 Shield MP floors (`0.80.1`): Iron Wall is a `GuardResist` bonus, not an MP-shield
 replacement. The shared guard, parry, ordinary shield-point, MP absorption and
 `UnitSubShield` paths are distinct. Enforce once per hit, after native reductions,

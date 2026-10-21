@@ -12,6 +12,7 @@ internal static class GameFriendlyFireCompatibilityTests
         GameGuardTests.Run(game, addon);
         GameEvasionTests.Run(game, addon);
         GameWhiteBreadTests.Run(game, addon);
+        GameDefensiveEffectTests.Run(game, addon);
         GameLobbyRegenTests.Run(game, addon);
         Type Type(string name) => game.GetType(name, true)!;
         List<CodeInstruction> Code(string type, string method) => PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(Type(type), method)).ToList();
@@ -59,10 +60,10 @@ internal static class GameFriendlyFireCompatibilityTests
         Require(search.Any(i => i.operand is FieldInfo f && f.Name == "IsDead") && Calls(search, "UnitAvatar", "get_IsInvulnerable") &&
             search.Any(i => i.operand is FieldInfo f && f.Name == "sightRadius"), "native target validity and sight range stay in force");
         var rewritten = ((IEnumerable<CodeInstruction>)AccessTools.Method(transpiler,"Rewrite").Invoke(null,new object[] { apply, generator })!).ToList();
-        Require(rewritten.Count(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "FriendlyFireRuntime") == 20,
-            "existing eleven combat adapters, two guard spending/exemption adapters and seven parry/MP/ordinary-shield adapters compose once");
+        Require(rewritten.Count(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "FriendlyFireRuntime") == 21,
+            "existing eleven combat adapters, two guard spending/exemption adapters, seven parry/MP/ordinary-shield adapters and one counter adapter compose once");
         foreach (string helper in new[] { "GuardMpCost", "SpendGuardMp", "GuardInfiniteMp", "ParryAllowed", "BeginParryMp", "AfterParryMp",
-            "ActiveMpShieldCost", "SpendActiveShieldMp", "SpendPartialShieldMp", "AbsorbShield" })
+            "ActiveMpShieldCost", "SpendActiveShieldMp", "SpendPartialShieldMp", "AbsorbShield", "CounterAllowed" })
             Require(rewritten.Count(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "FriendlyFireRuntime" && m.Name == helper) == 1,
                 "combined native damage rewrite contains one " + helper + " defense boundary");
         int recheck = rewritten.FindIndex(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "FriendlyFireRuntime" && m.Name == "ContinueHit");

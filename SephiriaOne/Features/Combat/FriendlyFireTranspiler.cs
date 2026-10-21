@@ -68,8 +68,8 @@ namespace SephiriaOne
             code.Insert(faction + 1, CodeInstruction.Call(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.AllowFaction)));
             code.Insert(contains + 1, CodeInstruction.Call(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.ProtectLeader)));
             code.Insert(equality + 1, CodeInstruction.Call(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.ProtectLeader)));
-            return FriendlyFireWhiteBreadHooks.Rewrite(FriendlyFireAmplificationHooks.Rewrite(
-                FriendlyFireEvasionHooks.Rewrite(FriendlyFireHarvestHooks.Rewrite(FriendlyFireGuardHooks.Rewrite(FriendlyFireActiveDefenseHooks.Rewrite(code))))));
+            return FriendlyFireDefensiveEffectHooks.Rewrite(FriendlyFireWhiteBreadHooks.Rewrite(FriendlyFireAmplificationHooks.Rewrite(
+                FriendlyFireEvasionHooks.Rewrite(FriendlyFireHarvestHooks.Rewrite(FriendlyFireGuardHooks.Rewrite(FriendlyFireActiveDefenseHooks.Rewrite(code)))))));
         }
         private static int BeforeAttackInvoke(List<CodeInstruction> code, string name, Type signature)
         {
