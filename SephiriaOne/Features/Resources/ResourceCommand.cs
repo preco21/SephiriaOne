@@ -47,7 +47,7 @@ namespace SephiriaOne
         public ResourceOperation Operation { get; }
         public decimal Amount { get; }
         public bool IsReset => Operation == ResourceOperation.Reset || (Operation == ResourceOperation.Multiply && Amount == 1);
-        public static string Usage => L.T("Host only: /resources dice|slots|talents|fruit|leaves set|add|sub N, +N, -N, or xN. Set means total; deltas accumulate from native. Dice affect future initialization grants; leaves can be changed until first departure. Existing balances are not refilled. Reset: /resources <name> reset or /resources reset. Status/save: /one status, /one save.");
+        public static string Usage => L.T("Host only: /resources dice|slots|talents|fruit|leaves set|add|sub N, +N, -N, or xN. Set means total; deltas accumulate from native. Dice changes adjust the pre-run lobby allowance and balance by the difference; spent dice are not refilled. After departure, dice changes affect future starts. Leaves can be changed until first departure. Reset: /resources <name> reset or /resources reset. Status/save: /one status, /one save.");
         public ResourceCommand(ResourceDefinition? definition, ResourceOperation operation, decimal amount)
         { Definition = definition; Operation = operation; Amount = amount; }
         public static ResourceParseResult Parse(string? text, out ResourceCommand command, out string error)

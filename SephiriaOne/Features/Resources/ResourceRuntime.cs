@@ -94,7 +94,7 @@ namespace SephiriaOne
                 {
                     ResourceSnapshot snapshot = ResourceNative.Capture(player, definition.Kind);
                     if (!ResourcePlanner.TryPlan(next, snapshot, command.IsReset, out ResourceUpdate update, out message)) return false;
-                    if (!definition.StartingOnly) ResourceNative.AddWrites(batch, player, update);
+                    if (!definition.StartingOnly || definition.Kind == ResourceKind.Dice) ResourceNative.AddWrites(batch, player, update);
                 }
             }
             if (!SessionSettings.Commit("resources", batch, () =>
@@ -109,6 +109,8 @@ namespace SephiriaOne
             }, out message)) return false;
             message = command.Definition?.Kind == ResourceKind.Leaves ?
                 L.T("Updated starting leaves, including a pending first departure. Current balances stay unchanged; completed grants are not repeated.") :
+                command.Definition?.Kind == ResourceKind.Dice && StartingResourceHooks.CanEditLobbyDice ?
+                L.T("Updated lobby dice allowance and balance by the grant difference. Spent dice were not refilled.") :
                 command.Definition?.StartingOnly == true ?
                 L.F("Updated future fresh-run {0}. Current balances and grants already begun are unchanged.", L.T(command.Definition.Label.ToLowerInvariant())) :
                 L.F("Updated resource settings for {0} player(s). Occupied slots and native selections were preserved.", context.Players.Count);
@@ -123,7 +125,8 @@ namespace SephiriaOne
             error = "";
             foreach (var definition in ResourceCatalog.All)
             {
-                if (definition.StartingOnly || !SessionSettings.ResourcePolicy.TryGetIntent(definition.Kind, out ResourceSetting setting)) continue;
+                if (definition.Kind == ResourceKind.Leaves || definition.Kind == ResourceKind.Dice && !StartingResourceHooks.CanEditLobbyDice ||
+                    !SessionSettings.ResourcePolicy.TryGetIntent(definition.Kind, out ResourceSetting setting)) continue;
                 // A rejected or partially written inheritance cannot opt a player
                 // into maintenance. Explicit commands enroll only their own kind.
                 if (enrolledOnly && (!applied.TryGetValue(player, out var existing) || !existing.ContainsKey(definition.Kind))) continue;
@@ -141,8 +144,9 @@ namespace SephiriaOne
         }
 
         public static ((string, bool, ResourceSnapshot) Slots, (string, bool, ResourceSnapshot) Talents,
-            (string, bool, ResourceSnapshot) Fruit) Observe(PlayerAvatar player) =>
-            (Observe(player, ResourceKind.Slots), Observe(player, ResourceKind.Talents), Observe(player, ResourceKind.Fruit));
+            (string, bool, ResourceSnapshot) Fruit, (string, bool, ResourceSnapshot) Dice) Observe(PlayerAvatar player) =>
+            (Observe(player, ResourceKind.Slots), Observe(player, ResourceKind.Talents), Observe(player, ResourceKind.Fruit),
+                StartingResourceHooks.CanEditLobbyDice ? Observe(player, ResourceKind.Dice) : default);
 
         private static (string, bool, ResourceSnapshot) Observe(PlayerAvatar player, ResourceKind kind)
         {

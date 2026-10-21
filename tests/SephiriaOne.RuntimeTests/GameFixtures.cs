@@ -154,6 +154,8 @@ public sealed class SaveData
 {
     public bool enableSave = true;
     public readonly Dictionary<string, object> Values = new();
+    public bool GetBool(string key, bool fallback = false) => Values.TryGetValue(key, out var value) ? (bool)value : fallback;
+    public void SetBool(string key, bool value) => Values[key] = value;
     public bool ContainsKey(string key) => Values.ContainsKey(key);
     public int GetInt(string key, int fallback) => Values.TryGetValue(key, out var value) ? (int)value : fallback;
     public string GetString(string key, string fallback) => Values.TryGetValue(key, out var value) ? (string)value : fallback;
@@ -168,6 +170,7 @@ public sealed partial class DungeonManager : UnityEngine.Object
     public Action ChatCallback;
     public void Chat(PlayerAvatar player, string name, string message)
     { ChatMessages.Add((player, message)); ChatCallback?.Invoke(); }
+    public bool isRunStarted;
     public bool requestLeaveOnHost;
     public int victoryType;
     public static DungeonManager Instance;
@@ -203,6 +206,19 @@ namespace SephiriaOne
     {
         public static int NativeDice(PlayerAvatar player) => player.maxRerollDice - player.customStats.GetValueOrDefault(ResourceCatalog.Get(ResourceKind.Dice).Marker);
         public static int NativeLeaves(PlayerAvatar player) => player.StartingLeaves;
+        public static bool CanEditLobbyDice => Mirror.NetworkServer.active && DungeonManager.Instance &&
+            !DungeonManager.Instance.isRunStarted && !SaveManager.CurrentRun.GetBool("RunStarted");
+        public static void AppendLobbyDice(StateWriteBatch batch, PlayerAvatar player, int target, int owned)
+        {
+            if (!CanEditLobbyDice) return;
+            int balance = checked(player.rerollDice + target - player.maxRerollDice);
+            if (balance < 0) throw new InvalidOperationException("Dice decrease reclaims spent dice.");
+            batch.Add("dice max", () => player.maxRerollDice, value => player.maxRerollDice = value, target);
+            batch.Add("dice balance", () => player.rerollDice, value => player.rerollDice = value, balance);
+            string marker = ResourceCatalog.Get(ResourceKind.Dice).Marker;
+            batch.Add("dice ownership", () => player.customStats.GetValueOrDefault(marker),
+                value => player.customStats[marker] = value, owned);
+        }
     }
     internal static class MultiplayerNameController { public static string Diagnostics => "fixture: rendering unverified"; }
 }

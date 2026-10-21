@@ -82,8 +82,10 @@ internal static class ResourceRuntimeTests
         check(Command("leaves x3") && Command("dice +10"), "Future grant policies accepted");
         check(ResourceRuntime.TryGetIntent(ResourceKind.Leaves, out var startingIntent) && startingIntent.Amount == 3 &&
             startingIntent.Mode == ResourceMode.Multiplier, "Grant boundary can read the current leaves command intent");
-        check(host.PlayerAvatar.currentMoney == 123 && host.PlayerAvatar.rerollDice == 1 && host.PlayerAvatar.maxRerollDice == 3,
-            "Starting commands never refill live balances or change live dice maximum");
+        check(host.PlayerAvatar.currentMoney == 123 && host.PlayerAvatar.rerollDice == 11 && host.PlayerAvatar.maxRerollDice == 13,
+            "Late lobby dice command adjusts allowance and balance while leaves remain pending");
+        check(Command("dice set 13") && host.PlayerAvatar.rerollDice == 11,
+            "Repeated lobby target preserves spent dice");
         var snapshot = SessionSettings.ReadSnapshot();
         check(snapshot.Players[0].Resources["leaves"].Contains("starting allowance 300") && snapshot.Players[1].Resources["leaves"].Contains("starting allowance 600"),
             "Read-only status shows separate character-specific next grants");
@@ -91,7 +93,7 @@ internal static class ResourceRuntimeTests
             !ResourceRuntime.TryGetSetting(ResourceKind.Leaves, out _) && host.PlayerAvatar.currentMoney == 123,
             "Explicit leaves reset overrides a pending checkpoint without changing the wallet");
         check(Command("leaves x3"), "Restore factor for saved-preset coverage");
-        check(Command("dice reset") && host.PlayerAvatar.rerollDice == 1, "Future dice reset does not alter current spendable dice");
+        check(Command("dice reset") && host.PlayerAvatar.rerollDice == 1, "Lobby dice reset returns original balance without refunding spending");
         check(SettingsActions.Execute("/one save").Success, "Resource intent explicitly saves");
         check(SessionSettings.ReadSnapshot(true).SavedSettings.Any(x => x == "resources leaves multiplier 3"), "Saved resource policy visible in shared snapshot");
         var before = SessionSettings.ReadSnapshot().ActiveSettings.ToArray();
@@ -175,6 +177,7 @@ internal static class ResourceRuntimeTests
         check(!Command("slots reset") && host.PlayerAvatar.Inventory.CurrentInventoryStorage == 30 &&
             guest.PlayerAvatar.Inventory.inventoryMatrix.Count == 1, "Occupied trailing slot blocks whole-party reduction before native resize");
 
+        LobbyDice(check, start, add);
         start();
         check(Command("talents +5"), "Prepare early resource ownership before tracking");
         WeakReference abandoned = AbandonBeforeSynchronization(add, false);
@@ -183,6 +186,50 @@ internal static class ResourceRuntimeTests
         abandoned = AbandonBeforeSynchronization(add, true);
         GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
         check(!abandoned.IsAlive, "Aborted restored join is not retained by resource checkpoint cache");
+    }
+
+    private static void LobbyDice(Action<bool, string> check, Func<PlayerSpawner> start, Func<uint, int, int, int, PlayerSpawner> add)
+    {
+        bool Command(string text) => SettingsActions.Execute("/resources dice " + text).Success;
+        var host = start();
+        var guest = add(2, 7, 2, 0);
+        guest.PlayerAvatar.maxRerollDice = 5;
+        guest.PlayerAvatar.rerollDice = 2;
+        check(Command("x3") && host.PlayerAvatar.rerollDice == 9 && guest.PlayerAvatar.rerollDice == 12,
+            "Lobby dice multiplier uses separate native baselines and spending");
+        host.PlayerAvatar.rerollDice -= 2;
+        SessionSettings.Synchronize(); SessionSettings.Synchronize();
+        check(host.PlayerAvatar.rerollDice == 7 && Command("x3") && host.PlayerAvatar.rerollDice == 7,
+            "Maintenance and repeated commands never refill spent lobby dice");
+        host.PlayerAvatar.maxRerollDice++; host.PlayerAvatar.rerollDice++;
+        SessionSettings.Synchronize();
+        check(host.PlayerAvatar.maxRerollDice == 12 && host.PlayerAvatar.rerollDice == 10,
+            "Lobby multiplier follows a native dice-maximum gain without replaying the grant");
+        var late = add(3, 7, 2, 0);
+        late.connectionToClient.isReady = false;
+        late.PlayerAvatar.maxRerollDice = 7; late.PlayerAvatar.rerollDice = 4;
+        SessionSettings.Synchronize();
+        check(late.PlayerAvatar.rerollDice == 4, "Loading guest is not granted dice before ready enrollment");
+        late.connectionToClient.isReady = true;
+        SessionSettings.Synchronize(); SessionSettings.Synchronize();
+        check(late.PlayerAvatar.maxRerollDice == 21 && late.PlayerAvatar.rerollDice == 18,
+            "Ready late guest receives current lobby dice policy once");
+        check(SettingsActions.Execute("/one save").Success && Command("reset"), "Save lobby dice multiplier then reset live grant");
+        SessionSettings.Stop(); SessionSettings.Start(); SessionSettings.Synchronize();
+        check(host.PlayerAvatar.rerollDice == 10 && guest.PlayerAvatar.rerollDice == 12 && late.PlayerAvatar.rerollDice == 18,
+            "Preset loaded into an already-created lobby reconciles each allowance once");
+        late.PlayerAvatar.rerollDice = 0;
+        check(!Command("reset") && host.PlayerAvatar.rerollDice == 10 && guest.PlayerAvatar.rerollDice == 12,
+            "A guest's spent dice blocks unsafe party decrease before any player changes");
+        DungeonManager.Instance.isRunStarted = true;
+        check(Command("set 30") && host.PlayerAvatar.rerollDice == 10 && host.PlayerAvatar.maxRerollDice == 12,
+            "Running-game dice command saves future grant without editing current balance");
+        SessionSettings.Synchronize();
+        check(late.PlayerAvatar.rerollDice == 0, "Mid-run maintenance leaves spent dice at zero");
+        DungeonManager.Instance.isRunStarted = false;
+        SaveManager.CurrentRun.SetBool("RunStarted", true);
+        check(Command("reset") && host.PlayerAvatar.rerollDice == 10,
+            "Saved started-run flag prevents a later town visit from becoming a lobby grant");
     }
 
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]

@@ -1,5 +1,11 @@
 # Sephiria domain findings
 
+Lobby dice (`0.86.1`): initialization is not the only time starting-dice intent
+must apply. Pre-run live changes reconcile maximum and balance by the allowance
+difference, checkpoint ownership and preserve spending. Observe maximum/ownership,
+not spendable balance; gate by both live and saved run-start flags to exclude later
+town visits. See [lobby dice findings](lobby-dice.md).
+
 Autonomous artifact cadence (`0.86.0`): serialized damage IDs distinguish seven
 automatic emitters from weapons, books, planets and armaments. Fire/ice Guillotine
 share one ID; `FROST` (Frost Relic / 얼음 무구) differs from `GLACIER` (빙하).

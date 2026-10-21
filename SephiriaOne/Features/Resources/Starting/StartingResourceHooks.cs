@@ -8,7 +8,7 @@ using Mirror;
 
 namespace SephiriaOne
 {
-    internal static class StartingResourceHooks
+    internal static partial class StartingResourceHooks
     {
         private const string Owner = "preco21.SephiriaOne.StartingResources";
         private const string Prefix = "SephiriaOne.Starting.v1.";

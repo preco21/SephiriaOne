@@ -17,7 +17,7 @@ manual verification step.
 
 | Name | Set means | Configurable total |
 | --- | --- | --- |
-| `dice` | Initial reroll dice on a future fresh start | 0–1,000 |
+| `dice` | Initial reroll dice, including the current pre-run lobby | 0–1,000 |
 | `slots` | Main inventory grid slots, excluding potion belt and side bag | 6–96 |
 | `talents` | Total talent budget, including allocated points | 0–1,000 |
 | `fruit` | Total fruit-skewer budget, including adaptive selection | 0–100 |
@@ -48,8 +48,15 @@ contribution retained, rather than discarding items or allocated points.
 
 ## Starting grants and saved runs
 
-Dice/leaf commands never refill or subtract from current spendable balances.
-Dice policy is fixed when a fresh initialization grant begins. Starting leaves
+As of **0.86.1**, dice changes also apply after lobby creation. Before a run
+starts, the difference between the new allowance and the current maximum is
+added to the current balance. Spending and earnings are preserved; repeating a
+setting does not refill dice. Decreases that would make anyone's balance negative
+reject before any player is changed. After the run starts, dice edits affect only
+future fresh starts, including when visiting a town later in that run.
+See [the lobby dice fix](lobby-dice.md) for checkpoints and lifecycle details.
+
+Starting-leaf commands leave current spendable balances unchanged. Leaves
 can be changed in the lobby until the first departure: as of **0.15.4**, that
 pending grant reads the latest host setting, including reset. Save the settings
 before exiting to retain them for future hosted sessions.
@@ -73,7 +80,9 @@ balance and uses the current host intent for the still-unpaid remainder. A saved
 pending allocation remains the fallback if a new host scope has no leaves intent.
 
 Saved zero dice/leaves means spent resources. Restoring a saved run or reconnecting
-restores the saved balance, without multiplying it or granting it again. Separate
+restores the saved balance, without multiplying it or granting it again. Before
+first departure, lobby dice inheritance then applies any changed host allowance
+by its difference, preserving spending. Separate
 run checkpoints preserve applied ownership and once-only grant state. Initial
 dice also update the native maximum for that run. Lobby generation that occurs
 before avatar initialization can still inspect the prior native maximum; the

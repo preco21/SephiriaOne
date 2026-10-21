@@ -10,6 +10,7 @@
     <Compile Include="../../SephiriaOne/Features/Resources/ResourceCommand.cs" Link="Source/ResourceCommand.cs" />
     <Compile Include="../../SephiriaOne/Features/Resources/ResourcePolicy.cs" Link="Source/ResourcePolicy.cs" />
     <Compile Include="../../SephiriaOne/Controls/RelativeMultiplier.cs" Link="Source/RelativeMultiplier.cs" />
+    <Compile Include="../../SephiriaOne/Synchronization/Core/StateWriteBatch.cs" Link="Source/StateWriteBatch.cs" />
     <PackageReference Include="Lib.Harmony" Version="2.4.2" />
   </ItemGroup>
 </Project>

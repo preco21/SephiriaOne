@@ -339,7 +339,7 @@ namespace SephiriaOne
                 var definition = ResourceCatalog.All[resourceIndex];
                 selection.text = L.T(definition.Label);
                 units.text = L.F("{0}..{1} whole numbers | {2}", definition.Minimum, definition.Maximum,
-                    L.T(definition.Kind == ResourceKind.Leaves ? "pending starting grant" : definition.StartingOnly ? "future starts" : "all players"));
+                    L.T(definition.Kind == ResourceKind.Leaves ? "pending starting grant" : definition.StartingOnly ? "lobby / future starts" : "all players"));
             }
             else
             {

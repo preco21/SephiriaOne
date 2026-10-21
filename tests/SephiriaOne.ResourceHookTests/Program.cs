@@ -5,7 +5,7 @@ void Check(bool value,string message){if(!value)throw new Exception(message);che
 object Call(string method,params object[] args)=>typeof(StartingResourceHooks).GetMethod(method,BindingFlags.Static|BindingFlags.NonPublic)!.Invoke(null,args);
 void Enable()=>typeof(StartingResourceHooks).GetProperty("Available")!.SetValue(null,true);
 void Reload()=>((System.Collections.IDictionary)typeof(StartingResourceHooks).GetField("states",BindingFlags.Static|BindingFlags.NonPublic)!.GetValue(null)!).Clear();
-void NewRun(){SaveManager.CurrentRun=new();SaveManager.CurrentRun.SetInt("SaveVersion",1);DungeonManager.Instance.dungeonEnvironment.Clear();Enable();}
+void NewRun(){SaveManager.CurrentRun=new();SaveManager.CurrentRun.SetInt("SaveVersion",1);DungeonManager.Instance.dungeonEnvironment.Clear();DungeonManager.Instance.isRunStarted=false;Enable();}
 PlayerAvatar NewPlayer(){var p=new PlayerAvatar();var s=new PlayerSpawner{PlayerAvatar=p};p.spawner=s;PlayerSpawner.MultiplayerList.Add(s);return p;}
 void Reset(){Reload();NewRun();PlayerSpawner.MultiplayerList.Clear();ResourceRuntime.Policy.Clear();ResourceRuntime.Warnings.Clear();}
 void Seed(PlayerAvatar p,int amount)=>Call("InitializeMoney",p,amount);
@@ -304,4 +304,5 @@ for (int cycle = 0; cycle < 3; cycle++)
     }
 }
 
+LobbyDiceTests.Run(Check);
 Console.WriteLine($"Passed {checks} real starting-hook lifecycle fixture checks.");
