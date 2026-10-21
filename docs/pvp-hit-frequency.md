@@ -1,5 +1,8 @@
 # Optional PvP hit-frequency scaling
 
+Latest: [slow-burst audit](pvp-burst-audit.md) isolates the separate per-hit curve
+as a cause of heavy-hit suppression even with this toggle off and refill at 300%.
+
 Added in `0.60.0`, 2026-10-16. Default **off**, host-controlled, using the existing
 damage path for unmodified guests. Requires friendly fire **and** PvP balancing.
 The user's selected starting threshold is **4 hits per second per opponent**.

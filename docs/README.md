@@ -1,5 +1,10 @@
 # Development knowledge index
 
+[PvP slow-burst audit](pvp-burst-audit.md): reproduced 100→25.60 and 130→26.51
+with rapid-hit scaling off and 300% refill. Separates unconditional per-hit
+softening from stored capacity, amplification and later native defenses. Includes
+an executable diagnostic and shared-burst alternatives; combat tuning is unchanged.
+
 [Teleport all](teleport-all.md): `/one teleportall` requests native party movement
 to the host for ready, living players on the same floor, with connection/run guards
 and stock guest RPCs. No polling or PvP dependency.
