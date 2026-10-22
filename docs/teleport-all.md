@@ -2,6 +2,16 @@
 
 Added in 0.87.0, 2026-10-22.
 
+Since **0.89.4** (2026-10-23), **Combat → Teleport all players**
+(**전투 → 모든 플레이어 소환**) provides the same one-click action below the
+potion controls. The button dispatches `/one teleportall` through the existing
+panel session guard and shared command service. The standard feedback area reports
+requests, skips and failures. No additional confirmation or queued work is added.
+Availability requires an active host session, independently of the friendly-fire
+toggle, compatibility and participant list; the command revalidates the host,
+destination and each player when clicked. Existing page/locale cleanup owns the
+button and its listener. No new roster polling or snapshot data is needed.
+
 `/one teleportall` immediately sends native teleport requests to ready, living
 players on the host's current floor. `/one teleportall help` describes eligibility.
 The host is already at the destination and is not moved. All session players are

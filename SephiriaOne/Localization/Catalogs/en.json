@@ -206,6 +206,7 @@
   "Revived {0} player(s) at full HP.": "Revived {0} player(s) at full HP.",
   "Revived {0} player(s); {1} could not be restored. Retry once they are ready; inspect Player.log if this persists.": "Revived {0} player(s); {1} could not be restored. Retry once they are ready; inspect Player.log if this persists.",
   "Revive all players": "Revive all players",
+  "Teleport all players": "Teleport all players",
   "Revive all restores dead players at full HP, including the host. It also works with friendly fire off. Living players and KDA totals are unchanged.": "Revive all restores dead players at full HP, including the host. It also works with friendly fire off. Living players and KDA totals are unchanged.",
   "Player #{0}": "Player #{0}",
   "Companion of {0}": "Companion of {0}",

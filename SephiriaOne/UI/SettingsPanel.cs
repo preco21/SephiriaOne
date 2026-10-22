@@ -224,6 +224,7 @@ namespace SephiriaOne
             requitalCount = null; slatePicker = null; requitalCountDraft = false; requitalApply = requitalGive = requitalReset = null;
             updateInstall = updateCheck = null; updateAutomatic = null;
             friendlyDamage = null; friendlyDraft = false; friendlyRefill = null; friendlyRefillDraft = false;
+            reviveAll = combatResetKda = giveLargePotions = teleportAll = null;
             friendlyGuardMp = null; friendlyGuardMpDraft = false;
             friendlyPerfectGuard = null; friendlyPerfectGuardDraft = false;
             friendlyAmplificationSoft = friendlyAmplificationHard = null; friendlyAmplificationDraft = false;

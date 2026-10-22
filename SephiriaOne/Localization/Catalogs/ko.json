@@ -206,6 +206,7 @@
   "Revived {0} player(s) at full HP.": "플레이어 {0}명을 최대 HP로 부활시켰습니다.",
   "Revived {0} player(s); {1} could not be restored. Retry once they are ready; inspect Player.log if this persists.": "플레이어 {0}명을 부활시켰으며 {1}명은 복구하지 못했습니다. 준비가 완료되면 다시 시도하세요. 문제가 계속되면 Player.log를 확인하세요.",
   "Revive all players": "모든 플레이어 부활",
+  "Teleport all players": "모든 플레이어 소환",
   "Revive all restores dead players at full HP, including the host. It also works with friendly fire off. Living players and KDA totals are unchanged.": "전체 부활은 호스트를 포함한 사망한 플레이어를 최대 HP로 부활시킵니다. 아군 피해가 꺼져 있어도 사용할 수 있으며, 살아 있는 플레이어와 KDA 기록은 변경하지 않습니다.",
   "Player #{0}": "플레이어 #{0}",
   "Companion of {0}": "{0}의 동료",

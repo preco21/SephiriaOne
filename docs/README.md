@@ -23,7 +23,8 @@ raises default stored reserve to 75% max HP. Slow heavy hits and rapid packets
 share one recoverable allowance; refill remains independently configurable.
 Includes before/after diagnostics, saved-setting behavior and validation limits.
 
-[Teleport all](teleport-all.md): `/one teleportall` requests native party movement
+[Teleport all](teleport-all.md): Combat's **Teleport all players** button and
+`/one teleportall` request native party movement
 to the host for ready, living players on the same floor, with connection/run guards
 and stock guest RPCs. No polling or PvP dependency.
 
@@ -36,7 +37,7 @@ interval, default off / 2s, for seven audited automatic artifact sources.
 Dark Cloud uses its own interval. Shared pair/life/session clocks, explicit weapon/book/companion/planet
 exclusions, native guest damage sync, EN/KO controls and v47 presets.
 
-Maintained: 2026-10-23 (Asia/Seoul), addon `0.89.3`.
+Maintained: 2026-10-23 (Asia/Seoul), addon `0.89.4`.
 
 [Configurable PvP DoT duration](pvp-dot-intervals.md#configurable-duration-cap-0850-2026-10-22):
 Burn/Plasma/blue/evolved lifetime cap now defaults to 1.2s, adjustable 0.05..10s

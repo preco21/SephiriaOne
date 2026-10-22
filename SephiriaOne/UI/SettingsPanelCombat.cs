@@ -9,7 +9,7 @@ namespace SephiriaOne
     {
         private Slider friendlyDamage;
         private bool friendlyDraft;
-        private Button reviveAll, combatResetKda, giveLargePotions;
+        private Button reviveAll, combatResetKda, giveLargePotions, teleportAll;
 
         private void BuildCombatEditor()
         {
@@ -21,16 +21,18 @@ namespace SephiriaOne
             resetAll = widgets.Button(pageRoot, "Reset", 200, 25, 89, 21, () => Execute("/one friendlyfire reset", true));
             BuildFriendlyDamageEditor();
             BuildPvpSuppliesEditor();
+            teleportAll = widgets.Button(pageRoot, "Teleport all players", 16, 228, 273, 22,
+                () => Execute("/one teleportall", true));
             BuildParticipantsEditor();
         }
 
         private void BuildPvpSuppliesEditor()
         {
-            giveLargePotions = widgets.Button(pageRoot, "Give Large Potion to all", 16, 154, 273, 25,
+            giveLargePotions = widgets.Button(pageRoot, "Give Large Potion to all", 16, 145, 273, 25,
                 () => Execute("/one friendlyfire potion", true));
-            AddCheckbox("Auto Large Potion", 16, 188, 273, 23, s => s.FriendlyFire.AutoPotion,
+            AddCheckbox("Auto Large Potion", 16, 176, 273, 21, s => s.FriendlyFire.AutoPotion,
                 s => s.FriendlyFireAvailable && LargePotionGrant.Available, "/one friendlyfire auto-potion");
-            AddCheckbox("Infinite PvP HP potions", 16, 220, 273, 23, s => s.FriendlyFire.InfiniteHpPotions,
+            AddCheckbox("Infinite PvP HP potions", 16, 202, 273, 21, s => s.FriendlyFire.InfiniteHpPotions,
                 s => s.FriendlyFireAvailable && RabbitPotionFeature.Available, "/one friendlyfire infinite-hp");
         }
 
@@ -60,6 +62,9 @@ namespace SephiriaOne
             if (page != 9) return;
             if (giveLargePotions) giveLargePotions.interactable = LargePotionGrant.CanExecute;
             if (reviveAll) reviveAll.interactable = ReviveAllAction.CanExecute;
+            // Travel is session-wide and does not depend on PvP compatibility
+            // or selection. The shared command rechecks readiness on click.
+            if (teleportAll) teleportAll.interactable = snapshot.HostActive && snapshot.SessionIdentity != null;
             if (combatResetKda) combatResetKda.interactable = snapshot.HostActive && snapshot.SessionIdentity != null && SessionSettings.CanResetFriendlyFireScores;
             if (!friendlyDamage) return;
             amount.interactable = friendlyDamage.interactable = snapshot.CanMutate && snapshot.FriendlyFireAvailable;

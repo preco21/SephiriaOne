@@ -1,5 +1,13 @@
 # Host settings panel
 
+## Teleport all button (`0.89.4`, 2026-10-23)
+
+Combat's left column includes **Teleport all players / 모든 플레이어 소환** below
+the potion controls. Small spacing adjustments keep all controls inside the
+existing 250-unit page. The action uses the shared `/one teleportall` command,
+session guard and feedback area; it is independent of PvP participation and
+availability. See [eligibility and native transport](teleport-all.md).
+
 ## Dedicated Projectiles tab (`0.88.1`, 2026-10-22)
 
 **Projectiles / 투사체**, beside Spawns, groups the limiter enable toggle,
