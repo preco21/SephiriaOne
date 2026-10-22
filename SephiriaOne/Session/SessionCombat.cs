@@ -98,6 +98,7 @@ namespace SephiriaOne
             L.F("Infinite PvP HP potions: {0}.", L.T(settings.InfiniteHpPotions ? "on" : "off")) + " " +
             L.F("Automatic Large Potion: {0}.", L.T(settings.AutoPotion ? "on" : "off")) + " " +
             L.F("PvP balancing: {0}.", L.T(settings.Balance ? "on" : "off")) + " " +
+            L.F("Suppress PvP Thorns: {0} (requires PvP balancing).", L.T(settings.SuppressThorns ? "on" : "off")) + " " +
             L.F("Hit-frequency scaling: {0} (requires PvP balancing).", L.T(settings.HitFrequency ? "on" : "off")) + " " +
             L.F("Rapid history: {0}s; full-damage threshold: {1} hits/s; reduction exponent: {2}; burst allowance: {3}% max HP.",
                 settings.Rapid.WindowNumber, settings.Rapid.RateNumber, settings.Rapid.ExponentNumber, settings.Rapid.BurstNumber) + " " +

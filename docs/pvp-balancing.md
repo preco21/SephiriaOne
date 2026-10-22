@@ -1,5 +1,41 @@
 # Optional PvP balancing
 
+## Optional Thorns suppression (`0.89.0`, 2026-10-22)
+
+**PvP Balance → Artifacts / Debuffs → Suppress Thorns** (Korean: **가시 반격 차단**)
+defaults off. `/one friendlyfire suppress-thorns on|off|reset` edits the same
+host policy; `reset` restores off. It requires PvP balancing and a currently
+hostile player pair. Normal friendly fire, Deathmatch, Tournament, Play Tag and
+Zombie Survival share this damage path and participant/team rules.
+
+Only native `Ability_Thorns` with `EDamageFromType.None` targeting a player is
+suppressed. `UnitAvatar.ApplyDamage` constructs that return from the damaged
+avatar and immediately applies it to the incoming damage source. The existing
+installed-game reflection contract verifies the ID, origin, metadata and target.
+Rejecting at the shared hit prefix avoids native damage callbacks, guard MP
+costs, budget reservations and kill attribution. Shared late permission checks
+also observe a setting change inside a native callback. Weapon reflection,
+Venom Spore Pouch, enemy-origin Thorns and outgoing Thorns against NPCs keep
+their existing behavior. Player-owned companions cannot bypass the restriction
+when retaliating against a hostile player.
+
+No native Thorns stats are rewritten. Disabling balancing/the option restores
+normal retaliation immediately. Live edits retain matches, K/D/A, selection and
+damage credit. Event-time policy lookup covers replacement connections; no
+per-player suppression cache, polling or allocation is introduced. `/one save`
+stores the enabled preference in v48 presets; older files default off.
+
+Regression coverage includes nested/independent returns, sibling reflections,
+PvE in both directions, guard costs, live edits inside callbacks, match overlays,
+reconnect/run/preset lifetime and off/reset recovery. The existing native damage
+replication serves unmodified guests; live multiplayer/UI verification remains
+an in-game check rather than a fixture guarantee.
+
+Verification: Release build (zero warnings/errors), 9,241 executable combat
+checks, 14,084 runtime checks, 125 Thorns policy checks, localization/catalog
+checks and installed-game compatibility contracts passed. The warmed suppressed
+return path allocated 0 bytes across 1,000 hits. No deployment or game launch.
+
 ## Shared recoverable burst (`0.88.0`, 2026-10-22)
 
 The [slow-burst fix](pvp-burst-audit.md) removes the old unconditional per-hit

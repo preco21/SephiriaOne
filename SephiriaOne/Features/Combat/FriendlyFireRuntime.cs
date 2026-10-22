@@ -74,6 +74,8 @@ namespace SephiriaOne
                 if (!settings.Enabled || !Allied(attacker, __instance)) return true;
                 if (!CanAffectTeam(source, __instance))
                 { __result = EApplyDamageResult.Fail_Absolute; return false; }
+                if (ThornsSuppressed(damage, __instance))
+                { __result = EApplyDamageResult.Fail_Absolute; return false; }
                 if (__state.InFriendlyChain && !HitPermitted(__state))
                 { __result = EApplyDamageResult.Fail_Absolute; return false; }
                 // Admit a recognized return only along the exact reverse of the
@@ -107,6 +109,15 @@ namespace SephiriaOne
         private static bool IsNativeReflection(DamageInstance damage) => damage.fromType == EDamageFromType.None &&
             (damage.id == "Ability_Thorns" || damage.id == "Weapon_Reflect" || damage.id == "Charm_VenomSporePouch");
 
+        // Call only for an admitted player-team pair. Native enemy retaliation
+        // and other return effects never borrow this optional PvP restriction.
+        private static bool ThornsSuppressed(DamageInstance damage, UnitAvatar victim)
+        {
+            if (damage.fromType != EDamageFromType.None || damage.id != "Ability_Thorns" || !(victim is PlayerAvatar)) return false;
+            var settings = SessionSettings.FriendlyFireForHit;
+            return settings.Balance && settings.SuppressThorns;
+        }
+
         private static bool Allied(PlayerAvatar attacker, UnitAvatar victim)
         {
             if (victim is PlayerAvatar || victim.NetworkLeader is PlayerAvatar || attacker.NetworkLeader == victim) return true;
@@ -131,7 +142,8 @@ namespace SephiriaOne
         private static bool HitPermitted(HitContext hit) => hit.Friendly &&
             FriendlyFireParticipants.IsCurrent(hit.AttackerReceipt) &&
             (hit.VictimReceipt == null || FriendlyFireParticipants.IsCurrent(hit.VictimReceipt)) &&
-            CanAffectTeam(hit.Source, hit.Victim) && hit.ParticipantEpoch == FriendlyFireParticipants.Epoch;
+            CanAffectTeam(hit.Source, hit.Victim) && hit.ParticipantEpoch == FriendlyFireParticipants.Epoch &&
+            !ThornsSuppressed(hit.Damage, hit.Victim);
 
         // The native all-dead callback emits an irreversible game-over RPC.
         // Keep only this exact friendly-fire death recoverable; no global

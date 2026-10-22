@@ -10,6 +10,7 @@ internal static class FriendlyFireRuntimeTests
         CheckPerfectGuardEdits(check, true);
         CheckDotDurationEdits(check, true);
         CheckArtifactRateEdits(check, true);
+        CheckThornsEdits(check, true);
         var prior = SessionSettings.FriendlyFireForHit.DotIntervals;
         long token = CombatMatchRuntime.MatchToken, scores = FriendlyFireKda.Epoch,
             balance = SessionSettings.CombatBalanceRevision, roles = CombatMatchRuntime.RoleRevision;
@@ -122,6 +123,23 @@ internal static class FriendlyFireRuntimeTests
             new PvpPerfectGuardChange(prior.PerfectGuard.Enabled, prior.PerfectGuard.Multiplier)), out _), "Restore prior Perfect Guard policy");
     }
 
+    private static void CheckThornsEdits(Action<bool, string> check, bool matchRunning)
+    {
+        var prior = SessionSettings.FriendlyFireForHit;
+        long participants = FriendlyFireParticipants.Epoch, token = CombatMatchRuntime.MatchToken, scores = FriendlyFireKda.Epoch,
+            balance = SessionSettings.CombatBalanceRevision, frequency = SessionSettings.CombatFrequencyRevision, roles = CombatMatchRuntime.RoleRevision;
+        foreach (string value in new[] { "on", "off", "on", "reset" })
+            check(SettingsActions.Execute("/one friendlyfire suppress-thorns " + value).Success &&
+                SessionSettings.FriendlyFireForHit.SuppressThorns == (value == "on") &&
+                SessionSettings.ReadSnapshot().FriendlyFire.SuppressThorns == (value == "on") &&
+                CombatMatchRuntime.IsRunning == matchRunning && CombatMatchRuntime.MatchToken == token && FriendlyFireKda.Epoch == scores &&
+                FriendlyFireParticipants.Epoch == participants && SessionSettings.CombatBalanceRevision == balance &&
+                SessionSettings.CombatFrequencyRevision == frequency && CombatMatchRuntime.RoleRevision == roles,
+                "Thorns edits preserve match, scores, participants, budgets and roles: " + value);
+        check(SettingsActions.Execute("/one friendlyfire status").Messages.Any(m => m.Contains("Suppress PvP Thorns: off")), "Status exposes Thorns preference");
+        check(SessionSettings.TryExecuteFriendlyFire(new FriendlyFireCommand(false, suppressThorns: prior.SuppressThorns), out _), "Restore prior Thorns preference");
+    }
+
     private static void CheckArtifactRateEdits(Action<bool, string> check, bool matchRunning)
     {
         var prior = SessionSettings.FriendlyFireForHit;
@@ -188,6 +206,7 @@ internal static class FriendlyFireRuntimeTests
         CheckPerfectGuardEdits(check, false);
         CheckDotDurationEdits(check, false);
         CheckArtifactRateEdits(check, false);
+        CheckThornsEdits(check, false);
         check(Score(host) == "P(1/0/0)" && Score(helper) == "P(0/0/1)", "Perfect Guard edits retain exact K/D/A totals");
         check(Score(host) == "P(1/0/0)" && Score(helper) == "P(0/0/1)", "Rapid number edits retain exact K/D/A scores");
         balanceRevision = SessionSettings.CombatBalanceRevision;
@@ -254,6 +273,7 @@ internal static class FriendlyFireRuntimeTests
         check(SessionSettings.ReadSnapshot().ActiveSettings.Contains("friendlyfire damage 25"), "Snapshot includes allied damage scale");
         check(SessionSettings.FriendlyFireForHit.Enabled && SessionSettings.FriendlyFireForHit.DamagePercent == 25, "Hit observes commands without waiting for another frame");
         var rapidSettings = new PvpRapidSettings(1.25m, 8.75m, 0.25m, 35.25m);
+        check(SettingsActions.Execute("/one friendlyfire suppress-thorns on").Success, "Configure Thorns suppression for persistence");
         check(SettingsActions.Execute("/one friendlyfire artifact-rate interval 3.25").Success, "Configure inactive artifact interval for persistence");
         var perfectGuardSettings = new PvpPerfectGuardSettings(false, 3.25m);
         check(SettingsActions.Execute("/one friendlyfire dot-duration 3.33").Success, "Configure duration for persistence");
@@ -270,6 +290,7 @@ internal static class FriendlyFireRuntimeTests
         check(SessionSettings.FriendlyFireForHit.PerfectGuard.Equals(perfectGuardSettings), "Run restart retains inactive Perfect Guard multiplier");
         check(SessionSettings.FriendlyFireForHit.DotMaxDurationSeconds == 3.33m, "Run restart retains current duration");
         check(SessionSettings.FriendlyFireForHit.ArtifactRate.Equals(new PvpArtifactRateSettings(false, 3.25m)), "Current artifact interval follows run, connection and preset lifetime");
+        check(SessionSettings.FriendlyFireForHit.SuppressThorns, "Thorns suppression follows run, reconnect and saved preset lifetime");
         check(Score(host) == "P(1/0/0)", "Run restart preserves totals");
         Damage(); HorayModAPI.StartSession(); Kill();
         check(Score(host) == "P(2/0/0)" && Score(helper) == "P(0/0/1)", "Run restart clears previous pending assists");
@@ -297,6 +318,7 @@ internal static class FriendlyFireRuntimeTests
         check(SessionSettings.FriendlyFireForHit.PerfectGuard.Equals(perfectGuardSettings), "Replacement connection uses current Perfect Guard policy");
         check(SessionSettings.FriendlyFireForHit.DotMaxDurationSeconds == 3.33m, "Replacement connection uses current duration, not stale settings");
         check(SessionSettings.FriendlyFireForHit.ArtifactRate.Equals(new PvpArtifactRateSettings(false, 3.25m)), "Current artifact interval follows run, connection and preset lifetime");
+        check(SessionSettings.FriendlyFireForHit.SuppressThorns, "Thorns suppression follows run, reconnect and saved preset lifetime");
         HorayModAPI.StartSession();
         check(SessionSettings.FriendlyFireForHit.DamagePercent == 0.1m, "Run restart retains fractional combat policy");
         foreach (string bad in new[] { "-1", "301", "NaN", "0.001", "x2" })
@@ -314,6 +336,7 @@ internal static class FriendlyFireRuntimeTests
         check(SessionSettings.FriendlyFireForHit.PerfectGuard.Equals(perfectGuardSettings), "Saved inactive Perfect Guard multiplier restores after controller restart");
         check(SessionSettings.FriendlyFireForHit.DotMaxDurationSeconds == 3.33m, "Saved duration restores after controller restart");
         check(SessionSettings.FriendlyFireForHit.ArtifactRate.Equals(new PvpArtifactRateSettings(false, 3.25m)), "Current artifact interval follows run, connection and preset lifetime");
+        check(SessionSettings.FriendlyFireForHit.SuppressThorns, "Thorns suppression follows run, reconnect and saved preset lifetime");
         check(Score(host) == "P(0/0/0)", "Saved settings never persist KDA");
         Damage(); Kill();
         check(Score(host) == "P(1/0/0)", "Restored enabled preset activates fresh accounting");
@@ -325,10 +348,14 @@ internal static class FriendlyFireRuntimeTests
         check(!SessionSettings.FriendlyFireForHit.DotIntervals.HasChanges, "Full reset restores all nine current per-effect defaults");
         check(!SessionSettings.FriendlyFireForHit.Amplification.HasChanges, "Full reset restores amplification off/50/100");
         check(!SessionSettings.FriendlyFireForHit.Rapid.HasChanges, "Full reset restores all rapid defaults");
+        check(!SessionSettings.FriendlyFireForHit.SuppressThorns, "Combat reset restores native Thorns");
         check(!SessionSettings.FriendlyFireForHit.ArtifactRate.HasChanges, "Combat reset restores artifact defaults");
         check(!SessionSettings.FriendlyFireForHit.PerfectGuard.HasChanges, "Full reset restores Perfect Guard off/x2");
         check(SessionSettings.FriendlyFireForHit.DotMaxDurationSeconds == 1.2m, "Full reset restores 1.2-second duration");
         FriendlyFireFeature.Available = false;
+        check(!SettingsActions.Execute("/one friendlyfire suppress-thorns on").Success &&
+            SettingsActions.Execute("/one friendlyfire suppress-thorns off").Success &&
+            SettingsActions.Execute("/one friendlyfire suppress-thorns reset").Success, "Thorns off/reset remain available during compatibility failure");
         check(!SettingsActions.Execute("/one friendlyfire artifact-rate on").Success &&
             !SettingsActions.Execute("/one friendlyfire artifact-rate interval 3").Success &&
             SettingsActions.Execute("/one friendlyfire artifact-rate off").Success &&
@@ -362,6 +389,8 @@ internal static class FriendlyFireRuntimeTests
             "Replacement session resolves native defaults immediately");
         check(!SessionSettings.FriendlyFireForHit.Balance, "An unsaved new session starts with balancing off");
         NetworkServer.active = false;
+        check(!SettingsActions.Execute("/one friendlyfire suppress-thorns on").Success &&
+            !SettingsActions.Execute("/one friendlyfire suppress-thorns off").Success, "Guests cannot mutate host Thorns policy");
         check(!SettingsActions.Execute("/one friendlyfire artifact-rate on").Success, "Guests cannot mutate artifact rate policy");
         check(!SettingsActions.Execute("/one friendlyfire dot-duration 3").Success, "Guests cannot edit authoritative duration");
         check(!SettingsActions.Execute("/one friendlyfire perfect-guard on").Success &&

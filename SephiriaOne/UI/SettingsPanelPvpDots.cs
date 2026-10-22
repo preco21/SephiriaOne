@@ -29,7 +29,9 @@ namespace SephiriaOne
             var scroll = container.gameObject.AddComponent<ScrollRect>();
             var viewport = PanelWidgets.Rect(container, "Viewport", 0, 0, 258, height);
             viewport.gameObject.AddComponent<RectMask2D>();
-            const int durationHeight = ArtifactRateEditorHeight + 80;
+            const int thornsHeight = 34;
+            const int durationOffset = thornsHeight + ArtifactRateEditorHeight;
+            const int durationHeight = durationOffset + 80;
             var content = PanelWidgets.Rect(viewport, "Effects", 0, 0, 258, durationHeight + PvpDotSettings.Count * 62);
             scroll.viewport = viewport; scroll.content = content; scroll.horizontal = false;
             scroll.movementType = ScrollRect.MovementType.Clamped; scroll.scrollSensitivity = 30;
@@ -43,12 +45,14 @@ namespace SephiriaOne
             bar.handleRect = handle; bar.targetGraphic = image; bar.direction = Scrollbar.Direction.BottomToTop;
             bar.navigation = new Navigation { mode = Navigation.Mode.None };
             scroll.verticalScrollbar = bar;
-            BuildPvpArtifactRate(content);
-            widgets.Text(content, "DotDurationLabel", "Burn-family max duration (s)", 4, ArtifactRateEditorHeight, 250, 20, 12);
-            pvpDotDuration = widgets.Input(content, 4, ArtifactRateEditorHeight + 24, 56, _ => pvpDotDurationDraft = true);
-            changeButtons.Add(widgets.Button(content, "Apply", 66, ArtifactRateEditorHeight + 24, 62, 25, ApplyPvpDotDuration));
-            pvpDotDurationReset = widgets.Button(content, "Reset", 134, ArtifactRateEditorHeight + 24, 120, 25, ResetPvpDotDuration);
-            widgets.Text(content, "DotDurationHint", "Burn / Plasma Burn / Blue Flame", 4, ArtifactRateEditorHeight + 54, 250, 18, 10);
+            AddCheckbox("Suppress Thorns", 4, 0, 250, 25, s => s.FriendlyFire.SuppressThorns,
+                s => s.FriendlyFireAvailable, "/one friendlyfire suppress-thorns", parent: content);
+            BuildPvpArtifactRate(PanelWidgets.Rect(content, "ArtifactControls", 0, thornsHeight, 258, ArtifactRateEditorHeight));
+            widgets.Text(content, "DotDurationLabel", "Burn-family max duration (s)", 4, durationOffset, 250, 20, 12);
+            pvpDotDuration = widgets.Input(content, 4, durationOffset + 24, 56, _ => pvpDotDurationDraft = true);
+            changeButtons.Add(widgets.Button(content, "Apply", 66, durationOffset + 24, 62, 25, ApplyPvpDotDuration));
+            pvpDotDurationReset = widgets.Button(content, "Reset", 134, durationOffset + 24, 120, 25, ResetPvpDotDuration);
+            widgets.Text(content, "DotDurationHint", "Burn / Plasma Burn / Blue Flame", 4, durationOffset + 54, 250, 18, 10);
             for (int i = 0; i < PvpDotSettings.Count; i++)
             {
                 var row = new DotIntervalEditor { Effect = (PvpDotEffect)i };

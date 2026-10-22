@@ -21,6 +21,7 @@ namespace SephiriaOne
         public const double DefaultRefillScale = DefaultRefillHundredths / 10000d;
         public bool Enabled { get; }
         public bool Balance { get; }
+        public bool SuppressThorns { get; }
         public bool HitFrequency { get; }
         public bool AutoPotion { get; }
         private readonly bool finiteHpPotions;
@@ -46,12 +47,12 @@ namespace SephiriaOne
         public float DotMaxDuration => (dotDurationOffset + DefaultDotDurationHundredths) / 100f;
         public string DotMaxDurationNumber => DotMaxDurationSeconds.ToString("0.##", CultureInfo.InvariantCulture);
         public bool HasDotDurationChanges => dotDurationOffset != 0;
-        public bool HasChanges => Enabled || Balance || HitFrequency || AutoPotion || !InfiniteHpPotions || BlockLobbyRegen || damageOffset != 0 || refillOffset != 0 || guardMpOffset != 0 || DotIntervals.HasChanges || Amplification.HasChanges || Rapid.HasChanges || PerfectGuard.HasChanges || HasDotDurationChanges || ArtifactRate.HasChanges;
+        public bool HasChanges => Enabled || Balance || SuppressThorns || HitFrequency || AutoPotion || !InfiniteHpPotions || BlockLobbyRegen || damageOffset != 0 || refillOffset != 0 || guardMpOffset != 0 || DotIntervals.HasChanges || Amplification.HasChanges || Rapid.HasChanges || PerfectGuard.HasChanges || HasDotDurationChanges || ArtifactRate.HasChanges;
         public FriendlyFireSettings(bool enabled, decimal damagePercent, bool balance = false, bool blockLobbyRegen = false,
             decimal refillPercent = DefaultRefillPercent, decimal guardMpPercent = DefaultGuardMpPercent, PvpDotSettings dotIntervals = default,
             bool hitFrequency = false, bool autoPotion = false, bool infiniteHpPotions = true, PvpAmplificationSettings amplification = default,
             PvpRapidSettings rapid = default, PvpPerfectGuardSettings perfectGuard = default,
-            decimal dotMaxDurationSeconds = DefaultDotMaxDurationSeconds, PvpArtifactRateSettings artifactRate = default)
+            decimal dotMaxDurationSeconds = DefaultDotMaxDurationSeconds, PvpArtifactRateSettings artifactRate = default, bool suppressThorns = false)
         {
             if (!ValidPercent(damagePercent)) throw new ArgumentOutOfRangeException(nameof(damagePercent));
             if (!ValidRefillPercent(refillPercent)) throw new ArgumentOutOfRangeException(nameof(refillPercent));
@@ -66,13 +67,14 @@ namespace SephiriaOne
             Rapid = rapid;
             PerfectGuard = perfectGuard;
             ArtifactRate = artifactRate;
+            SuppressThorns = suppressThorns;
             HitFrequency = hitFrequency; AutoPotion = autoPotion; finiteHpPotions = !infiniteHpPotions;
         }
         public static bool ValidPercent(decimal percent) => percent >= 0 && percent <= 300 && percent * 100 == decimal.Truncate(percent * 100);
         public static bool ValidRefillPercent(decimal percent) => percent >= 1 && ValidPercent(percent);
         public static bool ValidGuardMpPercent(decimal percent) => percent <= 100 && ValidPercent(percent);
         private FriendlyFireSettings(FriendlyFireSettings source, bool enabled)
-        { Enabled = enabled; Balance = source.Balance; HitFrequency = source.HitFrequency; AutoPotion = source.AutoPotion; finiteHpPotions = source.finiteHpPotions; BlockLobbyRegen = source.BlockLobbyRegen; damageOffset = source.damageOffset; refillOffset = source.refillOffset; guardMpOffset = source.guardMpOffset; DotIntervals = source.DotIntervals; Amplification = source.Amplification; Rapid = source.Rapid; PerfectGuard = source.PerfectGuard; dotDurationOffset = source.dotDurationOffset; ArtifactRate = source.ArtifactRate; }
+        { Enabled = enabled; Balance = source.Balance; HitFrequency = source.HitFrequency; AutoPotion = source.AutoPotion; finiteHpPotions = source.finiteHpPotions; BlockLobbyRegen = source.BlockLobbyRegen; damageOffset = source.damageOffset; refillOffset = source.refillOffset; guardMpOffset = source.guardMpOffset; DotIntervals = source.DotIntervals; Amplification = source.Amplification; Rapid = source.Rapid; PerfectGuard = source.PerfectGuard; dotDurationOffset = source.dotDurationOffset; ArtifactRate = source.ArtifactRate; SuppressThorns = source.SuppressThorns; }
         // Deathmatch reads this at hit time; keep toggle overlays in integer space.
         public FriendlyFireSettings WithEnabled(bool enabled) => new FriendlyFireSettings(this, enabled);
         public FriendlyFireSettings Apply(FriendlyFireCommand command) => command.Reset ? default :
@@ -85,7 +87,7 @@ namespace SephiriaOne
                 command.Rapid.HasValue ? command.Rapid.Value.Apply(Rapid) : Rapid,
                 command.PerfectGuard.HasValue ? command.PerfectGuard.Value.Apply(PerfectGuard) : PerfectGuard,
                 command.DotMaxDurationSeconds ?? DotMaxDurationSeconds,
-                command.ArtifactRate.HasValue ? command.ArtifactRate.Value.Apply(ArtifactRate) : ArtifactRate);
+                command.ArtifactRate.HasValue ? command.ArtifactRate.Value.Apply(ArtifactRate) : ArtifactRate, command.SuppressThorns ?? SuppressThorns);
     }
 
     internal readonly struct PvpAmplificationChange
@@ -119,6 +121,7 @@ namespace SephiriaOne
         public PvpDotChange? Dot { get; }
         public PvpDotScheduleChange? DotSchedule { get; }
         public bool? Balance { get; }
+        public bool? SuppressThorns { get; }
         public bool? HitFrequency { get; }
         public bool? AutoPotion { get; }
         public bool? InfiniteHpPotions { get; }
@@ -131,13 +134,14 @@ namespace SephiriaOne
             decimal? refillPercent = null, decimal? guardMpPercent = null, PvpDotChange? dot = null, bool? hitFrequency = null,
             PvpDotScheduleChange? dotSchedule = null, bool? autoPotion = null, bool? infiniteHpPotions = null,
             PvpAmplificationChange? amplification = null, PvpRapidChange? rapid = null, PvpPerfectGuardChange? perfectGuard = null,
-            decimal? dotMaxDurationSeconds = null, PvpArtifactRateChange? artifactRate = null)
-        { Enabled = enabled; Percent = percent; Reset = reset; Balance = balance; HitFrequency = hitFrequency; AutoPotion = autoPotion; InfiniteHpPotions = infiniteHpPotions; BlockLobbyRegen = blockLobbyRegen; RefillPercent = refillPercent; GuardMpPercent = guardMpPercent; Dot = dot; DotSchedule = dotSchedule; Amplification = amplification; Rapid = rapid; PerfectGuard = perfectGuard; DotMaxDurationSeconds = dotMaxDurationSeconds; ArtifactRate = artifactRate; }
+            decimal? dotMaxDurationSeconds = null, PvpArtifactRateChange? artifactRate = null, bool? suppressThorns = null)
+        { Enabled = enabled; Percent = percent; Reset = reset; Balance = balance; HitFrequency = hitFrequency; AutoPotion = autoPotion; InfiniteHpPotions = infiniteHpPotions; BlockLobbyRegen = blockLobbyRegen; RefillPercent = refillPercent; GuardMpPercent = guardMpPercent; Dot = dot; DotSchedule = dotSchedule; Amplification = amplification; Rapid = rapid; PerfectGuard = perfectGuard; DotMaxDurationSeconds = dotMaxDurationSeconds; ArtifactRate = artifactRate; SuppressThorns = suppressThorns; }
         public bool IsReset => Reset || !Dot.HasValue && !GuardMpPercent.HasValue && !RefillPercent.HasValue &&
-            (ArtifactRate.HasValue ? ArtifactRate.Value.IsReset : DotMaxDurationSeconds.HasValue ? DotMaxDurationSeconds.Value == FriendlyFireSettings.DefaultDotMaxDurationSeconds : PerfectGuard.HasValue ? PerfectGuard.Value.IsReset : Rapid.HasValue ? Rapid.Value.IsReset : Amplification.HasValue ? Amplification.Value.IsReset : InfiniteHpPotions.HasValue ? !InfiniteHpPotions.Value : AutoPotion.HasValue ? !AutoPotion.Value : DotSchedule.HasValue ? !DotSchedule.Value.Enabled : HitFrequency.HasValue ? !HitFrequency.Value : BlockLobbyRegen.HasValue ? !BlockLobbyRegen.Value : Balance.HasValue ? !Balance.Value : !Percent.HasValue && !Enabled);
-        public bool TouchesMasterToggle => Reset || !ArtifactRate.HasValue && !DotMaxDurationSeconds.HasValue && !PerfectGuard.HasValue && !Rapid.HasValue && !Amplification.HasValue && !InfiniteHpPotions.HasValue && !AutoPotion.HasValue && !Percent.HasValue && !Balance.HasValue && !HitFrequency.HasValue && !BlockLobbyRegen.HasValue && !RefillPercent.HasValue && !GuardMpPercent.HasValue && !Dot.HasValue && !DotSchedule.HasValue;
+            (SuppressThorns.HasValue ? !SuppressThorns.Value : ArtifactRate.HasValue ? ArtifactRate.Value.IsReset : DotMaxDurationSeconds.HasValue ? DotMaxDurationSeconds.Value == FriendlyFireSettings.DefaultDotMaxDurationSeconds : PerfectGuard.HasValue ? PerfectGuard.Value.IsReset : Rapid.HasValue ? Rapid.Value.IsReset : Amplification.HasValue ? Amplification.Value.IsReset : InfiniteHpPotions.HasValue ? !InfiniteHpPotions.Value : AutoPotion.HasValue ? !AutoPotion.Value : DotSchedule.HasValue ? !DotSchedule.Value.Enabled : HitFrequency.HasValue ? !HitFrequency.Value : BlockLobbyRegen.HasValue ? !BlockLobbyRegen.Value : Balance.HasValue ? !Balance.Value : !Percent.HasValue && !Enabled);
+        public bool TouchesMasterToggle => Reset || !SuppressThorns.HasValue && !ArtifactRate.HasValue && !DotMaxDurationSeconds.HasValue && !PerfectGuard.HasValue && !Rapid.HasValue && !Amplification.HasValue && !InfiniteHpPotions.HasValue && !AutoPotion.HasValue && !Percent.HasValue && !Balance.HasValue && !HitFrequency.HasValue && !BlockLobbyRegen.HasValue && !RefillPercent.HasValue && !GuardMpPercent.HasValue && !Dot.HasValue && !DotSchedule.HasValue;
         public static string Usage => L.T("Infinite PvP HP potions: /one friendlyfire infinite-hp on|off|reset. Default on; active participants keep Small/Large HP potions, pay no MP and gain no Survival random stat. Sample and other potions are excluded.") + " " + L.T("Large Potion: /one friendlyfire potion gives one to each player who lacks it. /one friendlyfire auto-potion on|off|reset grants one on PvP entry or match start, only to participants. Default off; /one save persists it.") + " " + L.T("Friendly fire: /one friendlyfire on|off|status|reset|resetkda; /one friendlyfire damage 0..300 (percent, up to 2 decimals; e.g. 0.1). Default 100. /one save persists settings.") + " " +
             L.T("PvP balancing: /one friendlyfire balance on|off. Default off; heavy hits and barrages share a recoverable burst allowance. Debuff and Dark Cloud damage intervals remain configurable; Freeze stun is preserved.") + " " +
+            L.T("Suppress PvP Thorns: /one friendlyfire suppress-thorns on|off|reset. Default off; blocks Thorns retaliation against hostile players only while PvP balancing is on. PvE and other reflection effects stay unchanged.") + " " +
             L.T("PvP Evasion: stat-based dodge chance is capped at 50% before anti-Evasion; guaranteed item dodges are unchanged.") + " " +
             L.T("Balanced PvP: Elastic Band restores dash charges at most once every 2s per defender; extended weapon-counter protection is capped at 0.35s. PvE stays native.") + " " +
             L.T("PvP recovery: HP Steal is disabled on friendly-fire hits.") + " " +
@@ -277,6 +281,9 @@ namespace SephiriaOne
             }
             if (parts.Length == 4 && op == "balance" && (parts[3].Equals("on", StringComparison.OrdinalIgnoreCase) || parts[3].Equals("off", StringComparison.OrdinalIgnoreCase)))
             { command = new FriendlyFireCommand(false, balance: parts[3].Equals("on", StringComparison.OrdinalIgnoreCase)); return FriendlyFireParseResult.Valid; }
+            if (parts.Length == 4 && op == "suppress-thorns" && (parts[3].Equals("on", StringComparison.OrdinalIgnoreCase) ||
+                parts[3].Equals("off", StringComparison.OrdinalIgnoreCase) || parts[3].Equals("reset", StringComparison.OrdinalIgnoreCase)))
+            { command = new FriendlyFireCommand(false, suppressThorns: parts[3].Equals("on", StringComparison.OrdinalIgnoreCase)); return FriendlyFireParseResult.Valid; }
             if (parts.Length == 4 && op == "hit-frequency" && (parts[3].Equals("on", StringComparison.OrdinalIgnoreCase) ||
                 parts[3].Equals("off", StringComparison.OrdinalIgnoreCase) || parts[3].Equals("reset", StringComparison.OrdinalIgnoreCase)))
             { command = new FriendlyFireCommand(false, hitFrequency: parts[3].Equals("on", StringComparison.OrdinalIgnoreCase)); return FriendlyFireParseResult.Valid; }

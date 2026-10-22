@@ -1,5 +1,12 @@
 # Active settings and saved preset
 
+Schema v48 adds `friendlyfire suppress-thorns 1` for the optional PvP Thorns
+restriction. Missing rows/older presets default off; the preference is saved
+even when friendly fire or balancing is inactive. Canonical `0`/`1` rows are
+accepted, with duplicates, malformed and out-of-version rows rejected atomically.
+Only the preference persists; no per-hit state is saved. See
+[Thorns behavior](pvp-balancing.md#optional-thorns-suppression-0890-2026-10-22).
+
 Schema v46 saves a nondefault shared Burn-family duration cap as
 `friendlyfire dot-duration N`. Valid canonical values are 0.05..10 seconds with
 up to two decimals; default/reset is 1.2 seconds. Older presets and missing rows
