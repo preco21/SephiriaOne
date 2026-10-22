@@ -9,16 +9,17 @@ namespace SephiriaOne
         public const decimal DefaultWindowSeconds = 1m;
         public const decimal DefaultHitsPerSecond = 4m;
         public const decimal DefaultExponent = 0.5m;
-        public const decimal DefaultBurstPercent = 20m;
+        public const decimal DefaultBurstPercent = 75m;
+        private const int DefaultBurstHundredths = (int)(DefaultBurstPercent * 100);
         private readonly int windowOffset, rateOffset, exponentOffset, burstOffset;
         public decimal WindowSeconds => (windowOffset + 100) / 100m;
         public decimal HitsPerSecond => (rateOffset + 400) / 100m;
         public decimal Exponent => (exponentOffset + 50) / 100m;
-        public decimal BurstPercent => (burstOffset + 2000) / 100m;
+        public decimal BurstPercent => (burstOffset + DefaultBurstHundredths) / 100m;
         public double WindowScale => (windowOffset + 100) / 100d;
         public double RateScale => (rateOffset + 400) / 100d;
         public double ExponentScale => (exponentOffset + 50) / 100d;
-        public double BurstScale => (burstOffset + 2000) / 10000d;
+        public double BurstScale => (burstOffset + DefaultBurstHundredths) / 10000d;
         public string WindowNumber => WindowSeconds.ToString("0.##", CultureInfo.InvariantCulture);
         public string RateNumber => HitsPerSecond.ToString("0.##", CultureInfo.InvariantCulture);
         public string ExponentNumber => Exponent.ToString("0.##", CultureInfo.InvariantCulture);
@@ -35,7 +36,7 @@ namespace SephiriaOne
             windowOffset = (int)(windowSeconds * 100) - 100;
             rateOffset = (int)(hitsPerSecond * 100) - 400;
             exponentOffset = (int)(exponent * 100) - 50;
-            burstOffset = (int)(burstPercent * 100) - 2000;
+            burstOffset = (int)(burstPercent * 100) - DefaultBurstHundredths;
         }
 
         public static bool ValidWindow(decimal value) => Valid(value, 0.1m, 10m);

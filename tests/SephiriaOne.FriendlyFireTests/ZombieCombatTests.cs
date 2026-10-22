@@ -1,6 +1,7 @@
 using SephiriaOne;
 using UnityEngine;
 
+// Explicit 20% reserve below tests legacy configured capacity, independent of shipped defaults.
 internal static class ZombieCombatTests
 {
     internal static void Run(Action<bool, string> check)
@@ -47,7 +48,7 @@ internal static class ZombieCombatTests
             check(human.Hp == 45 && enemy.Hp == 80, "Zombie modifiers preserve incoming and outgoing PvE");
 
             FriendlyFireRuntime.Clear(); FriendlyFireParticipants.Clear();
-            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, refillPercent: 10);
+            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, rapid: new PvpRapidSettings(burstPercent: 20), refillPercent: 10);
             other.Hp = 100; Time.time = 0;
             other.ApplyDamage(Hit(human, float.MaxValue)); Time.time = .1f; other.ApplyDamage(Hit(human, float.MaxValue));
             check(Math.Abs(other.Hp - 78) < .001, "Zombie x2 multiplies global DPS refill, preserving shared initial burst");
@@ -96,7 +97,7 @@ internal static class ZombieCombatTests
             float priorHumanHp = other.Hp;
             other.ApplyDamage(Hit(enemy));
             check(other.Hp == priorHumanHp - 20, "Minority-Human protection never applies to incoming PvE");
-            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, refillPercent: 10);
+            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, rapid: new PvpRapidSettings(burstPercent: 20), refillPercent: 10);
             human.Hp = other.Hp = 100;
             human.ApplyDamage(Hit(other, float.MaxValue)); other.ApplyDamage(Hit(human, float.MaxValue));
             check(Math.Abs(human.Hp - (100 - 20 * 13d / 9)) < .001 &&

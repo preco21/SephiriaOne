@@ -1,5 +1,14 @@
 # Optional PvP balancing
 
+## Shared recoverable burst (`0.88.0`, 2026-10-22)
+
+The [slow-burst fix](pvp-burst-audit.md) removes the old unconditional per-hit
+curve. Heavy hits and rapid packets share one reserve, now defaulting to 75%
+of victim maximum HP. Continuous refill remains 70%/s; saved values are retained.
+The minimum positive hit, native defenses, optional cadence controls, role
+modifiers and shared lifecycle cleanup stay intact. No new per-hit allocations
+or per-frame work; PvE remains native.
+
 ## Autonomous artifact hit limit (`0.86.0`, 2026-10-22)
 
 [Optional per-source cadence](pvp-autonomous-artifacts.md): off / 2s by default,
@@ -17,7 +26,7 @@ and participants. See the [current panel guide](control-panel.md).
 
 Since `0.83.0`, [Rapid Hits](pvp-hit-frequency.md#controls) exposes the rolling
 detection window, full-damage rate, reduction exponent and stored burst capacity,
-alongside continuous refill. Defaults remain 1s, 4 hits/s, 0.5, 20% and 70%/s.
+alongside continuous refill. Current defaults are 1s, 4 hits/s, 0.5, 75% and 70%/s.
 There is no periodic budget reset. Live parameter edits preserve match/KDA state
 and existing credit; larger capacities do not create an immediate burst.
 
@@ -518,7 +527,10 @@ settings checks, 3,519 catalog checks and 32 compiled Harmony references against
 co-installed HarmonyX 2.9. Independent review caught the float ceiling issue;
 regressions now cover native cancellation and distinct nearby callback amounts.
 
-## Model and trade-offs
+## Historical single-hit model and trade-offs
+
+The following records the original per-hit curve, removed in `0.88.0`. Current
+combat uses the shared recoverable burst described at the top of this document.
 
 The initial `0.52.0` design used per-hit softening only. After observing rapid
 attacks such as Piola Gavel and Pallas' Cards, the user requested the earlier
@@ -569,6 +581,10 @@ sub-one hits use the minimum described above. The setting never changes the
 host damage slider automatically.
 
 ## Rapid-hit budget (`0.53.0`, configurable in `0.55.0`)
+
+Historical introduction below: since `0.88.0`, default capacity is 75% and there
+is no separate per-hit curve. Continuous refill and the existing ledger remain;
+current controls and minimum-one behavior are described above.
 
 Each directed attacker/player-victim pair has a token budget with **20% of actual
 victim maximum HP capacity** and **70% of maximum HP per game second refill by default**.

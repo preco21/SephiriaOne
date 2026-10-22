@@ -1,19 +1,20 @@
 using SephiriaOne;
 using UnityEngine;
 
+// Explicit 20% reserve below tests legacy configured capacity, independent of shipped defaults.
 internal static class RapidHitTests
 {
     internal static void Run(Action<bool, string> check)
     {
         FriendlyFireParticipants.Clear();
-        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, guardMpPercent: 0);
+        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, rapid: new PvpRapidSettings(burstPercent: 20), guardMpPercent: 0);
         Time.time = 10;
         var source = new PlayerAvatar(); var target = new PlayerAvatar();
         var hit = new DamageInstance { origin = source, damage = 20 };
         int callbacks = 0;
         target.OnHit = (_, _) => callbacks++;
         for (int i = 0; i < 20; i++) target.ApplyDamage(hit);
-        check(target.Hp == 62, "Rapid impacts share the initial burst, then retain only minimum damage");
+        check(target.Hp == 61, "Rapid impacts share the initial burst, then retain only minimum damage");
         check(target.Hits == 20 && callbacks == 20 && hit.damage == 20,
             "Budget preserves native attack callbacks and pooled source damage");
         target = new PlayerAvatar { IsMpShield = true, Mp = 200 };
@@ -27,7 +28,7 @@ internal static class RapidHitTests
         void Fresh()
         {
             FriendlyFireParticipants.Clear();
-            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, guardMpPercent: 0);
+            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, rapid: new PvpRapidSettings(burstPercent: 20), guardMpPercent: 0);
             Time.time = 10; source = new(); target = new();
             hit = new() { origin = source, damage = float.MaxValue };
         }
@@ -76,16 +77,16 @@ internal static class RapidHitTests
         Strike();
         check(target.Hp == 45, "Native HP cap refunds overkill, while additional life does not reset the pair's damage budget");
 
-        Fresh(); target.IsMpShield = true; hit.damage = 20;
+        Fresh(); target.IsMpShield = true; hit.damage = 12.5f;
         target.OnHit = (_, _) =>
         {
             target.OnHit = null;
             SessionSettings.FriendlyFireForHit = new(true, 100, balance: false);
-            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, guardMpPercent: 0);
+            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, rapid: new PvpRapidSettings(burstPercent: 20), guardMpPercent: 0);
             target.ApplyDamage(new() { origin = source, damage = float.MaxValue });
         };
         Strike(); Time.time += 0.02f; hit.damage = float.MaxValue; Strike();
-        check(target.Mp == 68, "An outer hit's fractional refund cannot replenish a nested replacement budget generation");
+        check(target.Mp == 68, "An outer hit's fractional refund cannot replenish a nested replacement budget generation: " + target.Mp);
         Fresh(); target.IsInvulnerable = true; Strike(); target.IsInvulnerable = false; Strike();
         check(target.Hp == 80, "Native rejected hits never consume the first damaging allowance");
         Fresh(); target.OnHit = (_, _) => throw new InvalidOperationException("budget fixture");
@@ -98,11 +99,11 @@ internal static class RapidHitTests
         check(target.IsDead, "Balance off restores unrestricted native friendly-fire damage immediately");
         Fresh(); Strike();
         SessionSettings.FriendlyFireForHit = new(true, 100, balance: false);
-        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, guardMpPercent: 0); Strike();
+        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, rapid: new PvpRapidSettings(burstPercent: 20), guardMpPercent: 0); Strike();
         check(target.Hp == 60, "Off/on without intervening impacts starts a fresh budget");
-        Fresh(); Strike(); SessionSettings.FriendlyFireForHit = new(true, 50, balance: true, guardMpPercent: 0); Strike();
+        Fresh(); Strike(); SessionSettings.FriendlyFireForHit = new(true, 50, balance: true, rapid: new PvpRapidSettings(burstPercent: 20), guardMpPercent: 0); Strike();
         check(target.Hp == 79, "Editing damage percentage does not refill a depleted budget");
-        SessionSettings.FriendlyFireForHit = new(true, 50, balance: true, guardMpPercent: 0, refillPercent: 200); Strike();
+        SessionSettings.FriendlyFireForHit = new(true, 50, balance: true, rapid: new PvpRapidSettings(burstPercent: 20), guardMpPercent: 0, refillPercent: 200); Strike();
         check(target.Hp == 78, "Editing refill percentage does not grant a new burst");
         FriendlyFireKda.ResetScores(); Strike();
         check(target.Hp == 58, "KDA reset clears previous combat allowance state");
@@ -144,13 +145,13 @@ internal static class RapidHitTests
 
         Fresh(); Strike();
         for (int i = 1; i <= 18; i++) { Time.time = 10 + i * 0.05f; Strike(); }
-        check(!target.IsDead, "Default 70% refill keeps a full-health opponent alive after 0.9 seconds");
+        check(!target.IsDead, "Configured 20% burst and 70% refill keep a full-health opponent alive after 0.9 seconds");
         for (int i = 19; i <= 24; i++) { Time.time = 10 + i * 0.05f; Strike(); }
-        check(target.IsDead, "Default 70% refill admits a full-health kill by 1.2 seconds with enough hits");
-        Fresh(); SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, guardMpPercent: 0, refillPercent: 100); Strike();
+        check(target.IsDead, "Configured 20% burst and 70% refill admit a full-health kill by 1.2 seconds with enough hits");
+        Fresh(); SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, rapid: new PvpRapidSettings(burstPercent: 20), guardMpPercent: 0, refillPercent: 100); Strike();
         for (int i = 1; i <= 18; i++) { Time.time = 10 + i * 0.05f; Strike(); }
         check(target.IsDead, "Explicit 100% refill still allows subsecond kills");
-        Fresh(); SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, guardMpPercent: 0, refillPercent: 40); Strike();
+        Fresh(); SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, rapid: new PvpRapidSettings(burstPercent: 20), guardMpPercent: 0, refillPercent: 40); Strike();
         Time.time += 0.1f; Strike();
         check(Near(target.Hp, 76), "Configured 40% refill reaches the actual damage pipeline");
 
@@ -170,15 +171,15 @@ internal static class RapidHitTests
             var budget = new FriendlyFireDamageBudget();
             double sum = 0;
             for (int i = 0; i < 100; i++) sum += budget.Take(hp, hp, 10);
-            check(Near(sum, 0.2 * hp), "Same-time storm respects maximum-HP-relative burst at " + hp);
+            check(Near(sum, 0.75 * hp), "Same-time storm respects maximum-HP-relative burst at " + hp);
             for (int i = 1; i <= 100; i++) sum += budget.Take(hp, hp, 10 + i / 100d);
-            check(Near(sum, 0.9 * hp), "One second of continuous attacks admits burst plus refill at " + hp);
-            check(Near(budget.Take(hp, hp, 100), 0.2 * hp), "Long inactivity cannot accumulate extra capacity");
+            check(Near(sum, 1.45 * hp), "One second of continuous attacks admits burst plus refill at " + hp);
+            check(Near(budget.Take(hp, hp, 100), 0.75 * hp), "Long inactivity cannot accumulate extra capacity");
             budget = default;
             for (int i = 0; i < 10; i++)
                 check(Near(budget.Take(hp * 0.1, hp, i), hp * 0.1), "Ordinary spaced hits remain unchanged");
             budget = default;
-            check(Near(budget.Take(hp, hp, 0.999), hp * 0.2) && budget.Take(hp, hp, 1.001) < hp * 0.003,
+            check(Near(budget.Take(hp, hp, 0.999), hp * 0.75) && budget.Take(hp, hp, 1.001) < hp * 0.003,
                 "No fixed-second boundary permits a double burst");
         }
         var invalidBudget = new FriendlyFireDamageBudget();
@@ -189,16 +190,16 @@ internal static class RapidHitTests
         }
         check(invalidBudget.Take(100, 100, double.NaN) == 0 && invalidBudget.Take(100, 100, double.PositiveInfinity) == 0,
             "Invalid clocks never manufacture damage");
-        check(invalidBudget.Take(100, 100, 0) == 20, "Invalid inputs consume no credit before a valid hit");
+        check(invalidBudget.Take(100, 100, 0) == 75, "Invalid inputs consume no credit before a valid hit");
         var huge = new FriendlyFireDamageBudget();
         double enormous = huge.Take(double.MaxValue, double.MaxValue, 0);
-        check(double.IsFinite(enormous) && enormous <= double.MaxValue * 0.2, "Finite extreme arithmetic remains bounded");
+        check(double.IsFinite(enormous) && enormous <= double.MaxValue * 0.75, "Finite extreme arithmetic remains bounded");
         foreach (double rate in new[] { 0.01, 0.4, 1, 1.255, 3 })
         {
             var budget = new FriendlyFireDamageBudget();
             double sum = budget.Take(100, 100, 0, rate);
             for (int i = 1; i <= 100; i++) sum += budget.Take(100, 100, i / 100d, rate);
-            check(Near(sum, 20 + 100 * rate), "Continuous allowance follows configured refill " + rate);
+            check(Near(sum, 75 + 100 * rate), "Continuous allowance follows configured refill " + rate);
         }
         var edited = new FriendlyFireDamageBudget();
         edited.Take(100, 100, 0, 0.4);

@@ -7,6 +7,7 @@ void Check(bool value, string name) { if (!value) throw new Exception(name); che
 AmplificationCurveTests.Run(Check);
 typeof(FriendlyFireSettings).Assembly.GetType("SephiriaOne.FriendlyFireHooks")?.GetMethod("Install", BindingFlags.Static | BindingFlags.NonPublic)?.Invoke(null,null);
 if (args.Length == 1 && args[0] == "--burst-audit") { DamagePipelineAudit.Run(); return; }
+SharedBurstTests.Run(Check);
 WhiteBreadTests.Run(Check);
 ActiveDefenseTests.Run(Check);
 ResponsiveBudgetTests.Run(Check);

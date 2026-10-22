@@ -1,7 +1,8 @@
 # Optional PvP hit-frequency scaling
 
-Latest: [slow-burst audit](pvp-burst-audit.md) isolates the separate per-hit curve
-as a cause of heavy-hit suppression even with this toggle off and refill at 300%.
+Latest (`0.88.0`): [shared-burst fix](pvp-burst-audit.md) removes the separate
+per-hit curve and raises default stored capacity to 75% max HP, preserving
+infrequent heavy attacks while all hit types continue sharing one reserve.
 
 Added in `0.60.0`, 2026-10-16. Default **off**, host-controlled, using the existing
 damage path for unmodified guests. Requires friendly fire **and** PvP balancing.
@@ -16,27 +17,29 @@ also replaces zero-budget rejection with a positive pre-shield minimum.
 
 Since `0.83.0` (2026-10-22), use **Rapid Hits / 연속 타격** beside **PvP Balance**.
 Enable PvP balancing on the latter page for these controls to affect combat.
-The frequency toggle remains default **off**; numerical defaults are unchanged.
+The frequency toggle remains default **off**. Stored capacity changed to 75% in
+`0.88.0`; other defaults remain unchanged.
 
 | Control | Default | Range | Effect |
 | --- | --- | --- | --- |
 | Detection window | 1 second | 0.1–10 seconds | How long recent hits remain in the rolling estimate. |
 | Full-damage rate | 4 hits/second | 0.1–100 | Full damage up to `max(1, rate × window)` recent hits. |
 | Reduction exponent | 0.5 | 0–2 | Above threshold, multiply by `(threshold / count)^exponent`; higher reduces more, zero removes frequency reduction. |
-| Stored burst allowance | 20% of victim max HP | 1–100% | Maximum credit stored for this attacker/opponent pair. |
+| Stored burst allowance | 75% of victim max HP | 1–100% | Maximum credit stored for this attacker/opponent pair. |
 | Continuous refill | 70% of victim max HP/second | 1–300%/second | Adds allowance over elapsed game time, up to capacity. |
 
 All values accept two decimal places. **There is no periodic reset interval or
 fixed-window damage cap.** Hit history ages out; damage credit refills
 continuously. Base empty-to-full recovery is `burst / refill` seconds (about
-0.29 seconds by default). Play Tag/Zombie refill modifiers can change that time.
+1.071 seconds by default). Play Tag/Zombie refill modifiers can change that time.
 The UI shows applied values and an example of reduction above the expected rate.
 
-The shared budget still applies when the frequency toggle is off. Existing
-per-hit softening remains separate: it starts above 5% of victim max HP and
-approaches 20% per hit. Raising burst allowance above 20% permits more hits from
-stored credit, not a larger single-hit limit. Native defenses, role modifiers
-and separate DoT schedules also still apply.
+The shared budget still applies when the frequency toggle is off. A heavy hit
+can use the entire stored reserve; smaller packets spend that same reserve.
+There is no separate low per-hit ceiling. Native defenses, role modifiers and
+separate DoT schedules still apply. Explicit saved capacity/refill settings are
+preserved; omitted capacity inherits 75%. Use `rapid burst reset` if a saved
+20% setting is still limiting heavy hits.
 
 The page uses the same host commands as chat:
 
@@ -47,7 +50,7 @@ The page uses the same host commands as chat:
 /one friendlyfire rapid window 1
 /one friendlyfire rapid rate 4
 /one friendlyfire rapid exponent 0.5
-/one friendlyfire rapid burst 20
+/one friendlyfire rapid burst 75
 /one friendlyfire refill 70
 /one friendlyfire rapid window reset
 /one friendlyfire rapid reset
@@ -72,13 +75,12 @@ defaults. Runtime counters and credit are never saved.
 The existing native defenses and ordinary friendly-fire damage percentage still
 run first. The sequence within PvP balancing is:
 
-1. Existing per-hit damage softening.
-2. Existing Shock/Freeze damage-pulse admission.
-3. Optional frequency multiplier: `min(1, (max(1, rate × window) / recentHitCount)^exponent)`,
+1. Existing debuff/autonomous-artifact damage admission.
+2. Optional frequency multiplier: `min(1, (max(1, rate × window) / recentHitCount)^exponent)`,
    using the hit's direct or incidental history. Defaults retain `sqrt(4 / count)`.
-4. Shared per-opponent damage budget (configured capacity and refill),
+3. Shared per-opponent damage budget (configured capacity and refill),
    clipped continuously to available credit with a positive minimum at exhaustion.
-5. Current role incoming modifier, positive damage minimum (since `0.67.1`),
+4. Current role incoming modifier, positive damage minimum (since `0.67.1`),
    native shields/HP and unused-budget refund.
 
 | Recent hits against this opponent (default settings) | Per-hit frequency multiplier |
@@ -204,6 +206,8 @@ and host/stock-guest gameplay still need testing. Nothing was deployed or launch
 
 This section records **historical 0.73.0 behavior**, before the `0.77.0` changes
 above; zero-budget rejection and a single cadence history no longer apply.
+The per-hit curve and 20% default below were also replaced in `0.88.0`; see
+the current damage model and shared-burst findings above.
 The user
 reported 0–4 displayed damage and suspected skipped rapid hits at `0.05%`, tested
 before the minimum-one patch. The current percentage means multiplication by

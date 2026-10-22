@@ -1,6 +1,7 @@
 using SephiriaOne;
 using UnityEngine;
 
+// Explicit 20% reserve below tests legacy configured capacity, independent of shipped defaults.
 internal static class ResponsiveBudgetTests
 {
     internal static void Run(Action<bool, string> check)
@@ -8,7 +9,7 @@ internal static class ResponsiveBudgetTests
         void Fresh(bool frequency = false)
         {
             FriendlyFireParticipants.Clear(); FriendlyFireRuntime.Clear();
-            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, hitFrequency: frequency);
+            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, rapid: new PvpRapidSettings(burstPercent: 20), hitFrequency: frequency);
             Time.time = 10;
         }
         Fresh();
@@ -97,7 +98,7 @@ internal static class ResponsiveBudgetTests
         check(before - target.Hp == 2, "Partial refund restores only paid credit, with no floor debt or free burst");
 
         var budget = new FriendlyFireDamageBudget();
-        check(budget.Take(100, 100, 0, out double paid, minimumDamage: 1) == 20 && paid == 20,
+        check(budget.Take(100, 100, 0, out double paid, minimumDamage: 1) == 75 && paid == 75,
             "Initial full allowance is funded exactly");
         check(budget.Take(100, 100, 0, out paid, minimumDamage: 1) == 1 && paid == 0,
             "Exhausted floor has zero refundable charge");

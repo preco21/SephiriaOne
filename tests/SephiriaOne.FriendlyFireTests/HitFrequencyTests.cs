@@ -1,6 +1,7 @@
 using SephiriaOne;
 using UnityEngine;
 
+// Explicit 20% reserve below tests legacy configured capacity, independent of shipped defaults.
 internal static class HitFrequencyTests
 {
     internal static void Run(Action<bool, string> check)
@@ -11,7 +12,7 @@ internal static class HitFrequencyTests
         {
             FriendlyFireParticipants.Clear(); FriendlyFireRuntime.Clear(); CombatMatchRuntime.PairRule = null;
             Mirror.NetworkServer.active = true; Time.time = 10;
-            SessionSettings.FriendlyFireForHit = new(true, 100, balance: balance, hitFrequency: frequency);
+            SessionSettings.FriendlyFireForHit = new(true, 100, balance: balance, rapid: new PvpRapidSettings(burstPercent: 20), hitFrequency: frequency);
             source = new(); target = new(); hit = new() { origin = source, damage = 2, fromType = EDamageFromType.DirectAttack };
         }
         void Strike(int count = 1) { for (int i = 0; i < count; i++) target.ApplyDamage(hit); }
@@ -41,12 +42,12 @@ internal static class HitFrequencyTests
         before = target.Hp; Strike(); check(Near(before - target.Hp, 2 * Math.Sqrt(4d / 5)), "PvE also leaves PvP hit history unchanged");
         Fresh(); hit.damage = float.MaxValue; Strike(10);
         check(target.Hp == 71, "Exhausted frequency-scaled barrage retains the one-point floor");
-        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, guardMpPercent: 0); Strike();
-        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, guardMpPercent: 0, hitFrequency: true); Strike();
+        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, rapid: new PvpRapidSettings(burstPercent: 20), guardMpPercent: 0); Strike();
+        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, rapid: new PvpRapidSettings(burstPercent: 20), guardMpPercent: 0, hitFrequency: true); Strike();
         check(target.Hp == 69, "Frequency toggles grant only minimum hits, not a new burst");
         Fresh(); Strike(8);
-        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, guardMpPercent: 0);
-        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, guardMpPercent: 0, hitFrequency: true);
+        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, rapid: new PvpRapidSettings(burstPercent: 20), guardMpPercent: 0);
+        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, rapid: new PvpRapidSettings(burstPercent: 20), guardMpPercent: 0, hitFrequency: true);
         before = target.Hp; Strike(); check(before - target.Hp == 2, "Off/on between hits resets only hit history");
         Fresh(); Strike(4); FriendlyFireKda.ResetScores(); before = target.Hp; Strike();
         check(before - target.Hp == 2, "Score reset retires both hit history and budget through the shared epoch");
@@ -80,7 +81,7 @@ internal static class HitFrequencyTests
         Fresh(); Strike(4); Mirror.NetworkServer.active = false; Strike(20); Mirror.NetworkServer.active = true;
         before = target.Hp; Strike(); check(Near(before - target.Hp, 2 * Math.Sqrt(4d / 5)), "Guests never update host hit history");
         Fresh(); target.IsMpShield = true; Strike(8); int beforeMp = target.Mp;
-        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, guardMpPercent: 0); hit.damage = 16; Strike();
+        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, rapid: new PvpRapidSettings(burstPercent: 20), guardMpPercent: 0); hit.damage = 16; Strike();
         check(target.Hp == 100 && target.Mp < beforeMp, "MP-shield rounding refunds unused budget without mutating hit scaling input");
         Fresh(); Strike(4); FriendlyFireRuntime.Clear(); before = target.Hp; Strike();
         check(before - target.Hp == 2, "Runtime cleanup releases hit history with the existing budget storage");

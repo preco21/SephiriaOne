@@ -9,48 +9,42 @@ internal static class BalanceTests
         var source = new PlayerAvatar(); var target = new PlayerAvatar();
         var damage = new DamageInstance { origin = source, damage = 20 };
         target.ApplyDamage(damage);
-        check(target.Hp == 87.5f, "Balancing softens a 20% native hit to 12.5% of actual maximum HP");
+        check(target.Hp == 80, "Balancing preserves a native hit below the shared reserve");
         check(damage.damage == 20 && target.MaxHp == 100, "Balancing never rewrites pooled damage or maximum HP");
         bool Near(double left, double right) => Math.Abs(left - right) <= Math.Max(0.000001, Math.Abs(right) * 0.000001);
         foreach (double hp in new[] { 0.01, 10, 100, 150, 200, 1000, 10000000 })
         {
-            foreach (double fraction in new[] { 0.0001, 0.01, 0.05 })
-                check(Near(FriendlyFireBalance.Soften(hp * fraction, hp), hp * fraction), "Small hit preserved at HP " + hp);
-            double previous = 0;
-            foreach (double fraction in new[] { 0.01, 0.05, 0.1, 0.2, 0.4, 1, 100, 10000000 })
+            foreach (double fraction in new[] { 0.0001, 0.01, 0.05, 0.2, 0.75, 1, 100, 10000000 })
             {
-                double hit = FriendlyFireBalance.Soften(hp * fraction, hp);
-                check(hit > previous && hit <= hp * 0.2 && hit <= hp * fraction,
-                    "Soft curve is monotonic, only reduces damage, and respects dynamic ceiling at HP " + hp);
-                check(Near(hit / hp, FriendlyFireBalance.Soften(fraction, 1)), "Curve is independent of absolute HP scale");
-                previous = hit;
+                var budget = new FriendlyFireDamageBudget();
+                check(Near(budget.Take(hp * fraction, hp, 0), hp * Math.Min(fraction, .75)),
+                    "Fresh burst preserves funded damage and bounds extremes at HP " + hp);
             }
-            double giant = FriendlyFireBalance.Soften(float.MaxValue * 3d, hp);
-            check(giant >= hp * 0.19 && giant <= hp * 0.2, "Extreme builds still inflict meaningful bounded damage");
         }
-        check(FriendlyFireBalance.Soften(double.MaxValue, double.MaxValue) > double.MaxValue * 0.15,
-            "Even finite double extremes retain monotonic softening without intermediate overflow");
         foreach (double invalid in new[] { 0d, -1, double.NaN, double.PositiveInfinity, double.NegativeInfinity })
         {
-            check(FriendlyFireBalance.Soften(20, invalid) == 0, "Invalid max HP never produces invalid damage");
-            check(FriendlyFireBalance.Soften(invalid, 100) == 0, "Invalid damage never produces invalid damage");
+            var budget = new FriendlyFireDamageBudget();
+            check(budget.Take(20, invalid, 0) == 0, "Invalid max HP never produces invalid damage");
+            check(budget.Take(invalid, 100, 0) == 0, "Invalid damage never produces invalid damage");
         }
 
-        // The follow-up budget bounds rapid hits after their individual curves.
+        // The shared budget funds damage once, before native shields and HP accounting.
         target = new PlayerAvatar(); target.ApplyDamage(damage); target.ApplyDamage(damage);
-        check(target.Hp == 80 && target.Hits == 2, "Repeated attacks retain native impacts but share the balanced burst budget");
+        check(target.Hp == 60 && target.Hits == 2, "Repeated attacks retain native impacts but share the balanced burst budget");
         target = new PlayerAvatar { Hp = 30, MaxHp = 200 }; target.ApplyDamage(damage);
-        check(Near(target.Hp, 12.5), "Near-death hits use maximum HP, never shrinking current HP");
-        target = new PlayerAvatar(); target.ApplyDamage(damage); target.MaxHp = 200; target.ApplyDamage(damage);
-        check(Near(target.Hp, 72.5), "Maximum-HP changes use live HP while preserving the remaining fractional budget");
+        check(Near(target.Hp, 10), "Near-death hits use maximum HP, never shrinking current HP");
+        target = new PlayerAvatar(); target.ApplyDamage(new() { origin = source, damage = 50 });
+        target.MaxHp = 200; target.Hp = 100;
+        target.ApplyDamage(new() { origin = source, damage = float.MaxValue });
+        check(Near(target.Hp, 50), "Maximum-HP doubling turns the remaining 25% reserve into 50 HP, without resetting credit");
         target = new PlayerAvatar { Shield = 10 }; target.ApplyDamage(damage);
-        check(target.Shield == 0 && target.Hp == 97.5f, "Shields absorb softened damage with native HP overflow");
+        check(target.Shield == 0 && target.Hp == 90, "Shields absorb funded damage with native HP overflow");
         target = new PlayerAvatar { IsMpShield = true, Mp = 10 }; target.ApplyDamage(damage);
-        check(target.Mp == 0 && target.Hp == 97.5f, "MP shields retain native spending and overflow after softening");
+        check(target.Mp == 0 && target.Hp == 90, "MP shields retain native spending and overflow after budgeting");
         target = new PlayerAvatar { Defense = 10, TrueDamage = 10 }; target.ApplyDamage(damage);
-        check(target.Hp == 87.5f, "Curve acts on resolved defense/true damage exactly once");
+        check(target.Hp == 80, "Shared reserve accounts for resolved defense/true damage exactly once");
         target = new PlayerAvatar { Defense = 15 }; target.ApplyDamage(damage);
-        check(target.Hp == 95, "A defensive build retains its native reduction below the soft knee");
+        check(target.Hp == 95, "A defensive build retains its native reduction before the shared reserve");
         target = new PlayerAvatar { IsInvulnerable = true }; target.ApplyDamage(damage);
         check(target.Hp == 100, "Balancing cannot create damage through native invulnerability");
         target = new PlayerAvatar { MaxHp = float.NaN }; target.ApplyDamage(damage);
@@ -59,17 +53,17 @@ internal static class BalanceTests
         target = new PlayerAvatar();
         target.OnHit = (_, _) => source.ApplyDamage(new() { origin = target, id = "Ability_Thorns", damage = 20 });
         target.ApplyDamage(damage);
-        check(source.Hp == 87.5f && target.Hp == 87.5f, "Native reflected player damage uses the same soft curve once");
+        check(source.Hp == 80 && target.Hp == 80, "Native reflected player damage uses the same shared reserve once");
         var companion = new UnitAvatar { NetworkLeader = source };
         target = new PlayerAvatar(); target.ApplyDamage(new() { origin = companion, damage = 20 });
-        check(target.Hp == 87.5f, "Owned companions receive the same player-victim balancing");
+        check(target.Hp == 80, "Owned companions receive the same player-victim balancing");
         target = new PlayerAvatar();
         target.ApplyDebuff(new() { OnApply = (caster, receiver) => receiver.ApplyDamage(EffectTests.Tick(caster, "Debuff_Electric")) }, source);
-        check(target.Hp == 87.5f && target.DebuffApplications == 1, "Debuffs retain application and have their damage softened once");
+        check(target.Hp == 80 && target.DebuffApplications == 1, "Debuffs retain application and have their damage budgeted once");
         var other = new PlayerAvatar(); target = new PlayerAvatar();
         var proc = new Charm_FrostiumRing { NetworkAvatar = source, Target = other, Damage = damage };
         target.OnHit = (_, _) => proc.HandleAttackUnit(); target.ApplyDamage(damage);
-        check(target.Hp == 87.5f && other.Hp == 87.5f, "Nested offensive artifact keeps its proc and separate victim calculation");
+        check(target.Hp == 80 && other.Hp == 80, "Nested offensive artifact keeps its proc and separate victim calculation");
 
         var enemy = new UnitAvatar { faction = "enemy" }; enemy.ApplyDamage(damage);
         check(enemy.Hp == 80, "Balance enabled leaves outgoing PvE damage untouched");
@@ -81,12 +75,12 @@ internal static class BalanceTests
         {
             SessionSettings.FriendlyFireForHit = new(true, percent, balance: true);
             target = new PlayerAvatar(); target.ApplyDamage(damage);
-            check(Near(target.Hp, 100 - (percent == 0 ? 0 : Math.Max(1, FriendlyFireBalance.Soften(20 * (double)percent / 100, 100)))),
+            check(Near(target.Hp, 100 - (percent == 0 ? 0 : Math.Max(1, Math.Min(20 * (double)percent / 100, 75)))),
                 "Existing percentage is applied once with a positive-only final minimum: " + percent);
         }
         SessionSettings.FriendlyFireForHit = new(true, 100, balance: true);
         target = new PlayerAvatar(); target.ApplyDamage(new() { origin = source, damage = float.MaxValue });
-        check(target.Hp == 80, "Float-scale extreme hit reaches 20% ceiling instead of one-shot damage");
+        check(target.Hp == 25, "Float-scale extreme hit reaches the shared 75% reserve instead of one-shot damage");
         target = new PlayerAvatar();
         // Before-attack callbacks belong to the attacking avatar.
         source.OnAttackUnitBeforeOperation = (_, _) => SessionSettings.FriendlyFireForHit = new(true, 100, balance: false);
@@ -114,7 +108,8 @@ internal static class BalanceTests
     {
         long allocated = GC.GetAllocatedBytesForCurrentThread();
         double sum = 0;
-        for (int i = 0; i < 1000; i++) sum += FriendlyFireBalance.Soften(1000000 + i, 150);
+        var budget = new FriendlyFireDamageBudget();
+        for (int i = 0; i < 1000; i++) sum += budget.Take(1000000 + i, 150, i);
         return sum > 0 ? GC.GetAllocatedBytesForCurrentThread() - allocated : -1;
     }
 }

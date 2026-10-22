@@ -55,7 +55,7 @@ internal static class PerfectGuardTests
         Fresh(); target.PerfectGuard = false; target.ApplyDamage(hit);
         check(target.LastMpCost == 5, "Ordinary guard does not receive the Perfect Guard multiplier");
         Fresh(); target.IsGuarding = false; target.IsMpShield = true; target.ApplyDamage(hit);
-        check(target.LastMpCost == 12, "MP shields retain their existing damage-derived charge");
+        check(target.LastMpCost == 20, "MP shields retain their existing damage-derived charge");
         Fresh(); target.IsGuarding = false; target.Shield = 100; target.ApplyDamage(hit);
         check(target.LastMpCost == 5, "Automatic shield retains only its existing floor");
         Fresh(); target.parryInvincibleApplied = 1; target.ApplyDamage(hit);

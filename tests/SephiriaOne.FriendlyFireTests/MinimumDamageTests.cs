@@ -1,6 +1,7 @@
 using SephiriaOne;
 using UnityEngine;
 
+// Explicit 20% reserve below tests legacy configured capacity, independent of shipped defaults.
 internal static class MinimumDamageTests
 {
     internal static void Run(Action<bool, string> check)
@@ -9,7 +10,7 @@ internal static class MinimumDamageTests
         {
             FriendlyFireParticipants.Clear(); FriendlyFireRuntime.Clear();
             CombatMatchRuntime.PairRule = null; Mirror.NetworkServer.active = true; Time.time = 10;
-            SessionSettings.FriendlyFireForHit = new(true, 0.05m, balance: balance);
+            SessionSettings.FriendlyFireForHit = new(true, 0.05m, balance: balance, rapid: new PvpRapidSettings(burstPercent: 20));
         }
         foreach (bool balance in new[] { false, true })
         {
@@ -35,7 +36,7 @@ internal static class MinimumDamageTests
             check(target.Hp == 100, "Minimum damage never bypasses a native guard");
             var enemy = new UnitAvatar { faction = "enemy" }; enemy.ApplyDamage(Hit());
             check(enemy.Hp == 90, "PvE never receives the PvP floor or scale");
-            SessionSettings.FriendlyFireForHit = new(true, 0, balance: balance);
+            SessionSettings.FriendlyFireForHit = new(true, 0, balance: balance, rapid: new PvpRapidSettings(burstPercent: 20));
             target = new PlayerAvatar(); target.ApplyDamage(Hit());
             check(target.Hp == 100 && target.Hits == 0, "Explicit zero percent still blocks all damage");
         }
@@ -61,7 +62,7 @@ internal static class MinimumDamageTests
         check(victim.Hp == 45, "Nested damage retains only its minimum after outer credit is spent");
 
         Fresh(true);
-        SessionSettings.FriendlyFireForHit = new(true, 0.05m, balance: true, hitFrequency: true);
+        SessionSettings.FriendlyFireForHit = new(true, 0.05m, balance: true, rapid: new PvpRapidSettings(burstPercent: 20), hitFrequency: true);
         attacker = new(); victim = new(); tiny = new() { origin = attacker, damage = 10 };
         for (int i = 0; i < 25; i++) victim.ApplyDamage(tiny);
         check(victim.Hp == 75, "Hit-frequency reductions cannot discard positive minimum hits");
@@ -100,14 +101,14 @@ internal static class MinimumDamageTests
             check(total == 3000, "Every minimum hit survives independently of pool size: " + maxHp);
         }
         var budget = new FriendlyFireDamageBudget();
-        check(budget.Take(0.1, 2, 0, minimumDamage: 1) == 1 && budget.Take(0.1, 2, 0, minimumDamage: 1) == 1,
+        check(budget.Take(0.1, 2, 0, minimumDamage: 1, capacity: .2) == 1 && budget.Take(0.1, 2, 0, minimumDamage: 1, capacity: .2) == 1,
             "A sub-one capacity cannot discard later positive hits");
-        check(budget.Take(0.1, 2, 0.25, minimumDamage: 1) == 1 && budget.Take(0.1, 2, 0.5, minimumDamage: 1) == 1,
+        check(budget.Take(0.1, 2, 0.25, minimumDamage: 1, capacity: .2) == 1 && budget.Take(0.1, 2, 0.5, minimumDamage: 1, capacity: .2) == 1,
             "Small HP and fractional refill preserve responsive hits");
         foreach (double invalid in new[] { -1, double.NaN, double.PositiveInfinity })
         {
             budget = default;
-            check(budget.Take(10, 100, 0, minimumDamage: invalid) == 0 && budget.Take(100, 100, 0) == 20,
+            check(budget.Take(10, 100, 0, minimumDamage: invalid) == 0 && budget.Take(100, 100, 0) == 75,
                 "Invalid minimum cannot poison future budget state");
         }
         SessionSettings.FriendlyFireForHit = default;

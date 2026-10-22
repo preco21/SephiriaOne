@@ -1,6 +1,7 @@
 using SephiriaOne;
 using UnityEngine;
 
+// Explicit 20% reserve below tests legacy configured capacity, independent of shipped defaults.
 internal static class ChaserBalanceTests
 {
     internal static void Run(Action<bool, string> check)
@@ -10,7 +11,7 @@ internal static class ChaserBalanceTests
         void Fresh(bool balance = false, bool attackerChases = false)
         {
             FriendlyFireRuntime.Clear(); FriendlyFireParticipants.Clear();
-            SessionSettings.FriendlyFireForHit = new(true, 100, balance: balance, refillPercent: 10);
+            SessionSettings.FriendlyFireForHit = new(true, 100, balance: balance, rapid: new PvpRapidSettings(burstPercent: 20), refillPercent: 10);
             SessionSettings.PlayTagChaser = default;
             source = new(); target = new(); Time.time = 0;
             CombatMatchRuntime.Chaser = attackerChases ? source : target;
@@ -61,7 +62,7 @@ internal static class ChaserBalanceTests
 
             Fresh(); target.Shield = 10; Strike();
             check(target.Shield == 0 && target.Hp == 95, "Incoming reduction precedes native shield and HP overflow");
-            Fresh(true); target.IsMpShield = true; Strike(); Strike(float.MaxValue);
+            Fresh(true); target.IsMpShield = true; Strike(12.5f); Strike(float.MaxValue);
             check(target.Mp == 85 && target.Hp == 100, "MP integer rounding refunds only undelivered reduced damage");
             Fresh(true); target.SuperArmor = true; Strike(float.MaxValue);
             check(Near(target.Hp, 90.25), "Native armor stacks after chaser reduction on an individual hit");
@@ -76,13 +77,13 @@ internal static class ChaserBalanceTests
                 CombatMatchRuntime.RoleSettingsChanged();
             };
             Strike(); Strike(float.MaxValue);
-            check(Near(target.Hp, 83.125), "Refund uses the hit's captured factor despite a callback editing settings");
+            check(Near(target.Hp, 84), "Refund uses the hit's captured factor despite a callback editing settings");
             Fresh(true); SessionSettings.PlayTagChaser = SessionSettings.PlayTagChaser.WithIncoming(percent: 0);
             target.ApplyDebuff(new() { OnApply = (caster, receiver) => receiver.ApplyDamage(EffectTests.Tick(caster, "Debuff_Electric")) }, source);
             check(target.Hp == 100 && target.DebuffApplications == 1, "Zero incoming scale preserves native effect application without damage");
             SessionSettings.PlayTagChaser = SessionSettings.PlayTagChaser.WithIncoming(percent: 100); CombatMatchRuntime.RoleSettingsChanged();
             target.ApplyDebuff(new() { OnApply = (caster, receiver) => receiver.ApplyDamage(EffectTests.Tick(caster, "Debuff_Electric")) }, source);
-            check(Near(target.Hp, 87.5), "Zero-damage protection never consumes the next Shock pulse or budget");
+            check(Near(target.Hp, 80), "Zero-damage protection never consumes the next Shock pulse or budget");
 
             Fresh(); target.OnHit = (_, _) => source.ApplyDamage(new() { origin = target, id = "Ability_Thorns", damage = 20 }); Strike();
             check(source.Hp == 80 && target.Hp == 85, "Reflection reduces only damage received by the actual chaser");

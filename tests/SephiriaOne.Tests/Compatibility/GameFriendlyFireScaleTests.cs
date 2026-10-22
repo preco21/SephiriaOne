@@ -19,7 +19,7 @@ internal static class GameFriendlyFireScaleTests
         var runtime = addon.GetType("SephiriaOne.FriendlyFireRuntime", true)!;
         var scale = PatchProcessor.GetOriginalInstructions(AccessTools.Method(runtime, "Scale")).ToList();
         Require(scale.Any(i => Call(i, "FriendlyFireSettings", "get_Balance")) && scale.Any(i => Call(i, "UnitAvatar", "get_MaxHp")) &&
-            scale.Count(i => Call(i, "FriendlyFireBalance", "Soften")) == 1, "Player softening reads current balancing and native maximum HP once per resolved hit");
+            !scale.Any(i => Call(i, "FriendlyFireBalance", "Soften")), "Shared burst reads current balancing and native maximum HP without per-packet compression");
         Require(scale.Count(i => Call(i, "FriendlyFireRuntime", "LimitBalancedDamage")) == 1,
             "Rapid-hit budget shares the verified pre-shield balance boundary");
         Require(scale.Any(i => Call(i, "FriendlyFireSettings", "get_RefillScale")), "Damage pipeline reads the configured refill");

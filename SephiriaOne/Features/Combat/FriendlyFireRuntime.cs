@@ -211,7 +211,9 @@ namespace SephiriaOne
                 {
                     double maxHp = victim.MaxHp;
                     double refill = settings.RefillScale * CombatMatchRuntime.RefillRoleScale(current.Attacker);
-                    scaled = LimitBalancedDamage(FriendlyFireBalance.Soften(scaled, maxHp), maxHp, refill, settings.RefillScale, incoming, settings.HitFrequency, settings.DotIntervals, settings.Rapid, settings.ArtifactRate);
+                    // A single pool funds heavy hits and split barrages alike. A per-hit
+                    // compression curve here would reward splitting damage into packets.
+                    scaled = LimitBalancedDamage(scaled, maxHp, refill, settings.RefillScale, incoming, settings.HitFrequency, settings.DotIntervals, settings.Rapid, settings.ArtifactRate);
                 }
                 // Reduce the damage native code can actually accept, including
                 // extreme unbalanced hits that would otherwise reach this cap.

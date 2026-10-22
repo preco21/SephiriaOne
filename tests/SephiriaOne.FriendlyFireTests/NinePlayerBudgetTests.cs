@@ -1,6 +1,7 @@
 using SephiriaOne;
 using UnityEngine;
 
+// Explicit 20% reserve below tests legacy configured capacity, independent of shipped defaults.
 internal static class NinePlayerBudgetTests
 {
     internal static void Run(Action<bool, string> check)
@@ -8,7 +9,7 @@ internal static class NinePlayerBudgetTests
         PlayerAvatar[] Fresh()
         {
             FriendlyFireParticipants.Clear(); FriendlyFireRuntime.Clear();
-            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true);
+            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, rapid: new PvpRapidSettings(burstPercent: 20));
             Time.time = 10;
             var players = Enumerable.Range(0, 9).Select(_ => new PlayerAvatar()).ToArray();
             FriendlyFireParticipants.Select(players);
@@ -33,7 +34,7 @@ internal static class NinePlayerBudgetTests
         var target = players[0];
         // Healing between passes keeps this same target alive without revival,
         // clock advancement or a fresh receipt that could reset any pair budget.
-        foreach (float expected in new[] { 8.75f, 8.75f, 2.5f, 1f })
+        foreach (float expected in new[] { 10f, 10f, 1f, 1f })
         {
             for (int i = 1; i < players.Length; i++)
             {
@@ -47,14 +48,14 @@ internal static class NinePlayerBudgetTests
 
         players = Fresh(); target = players[1]; hit = Hit(players[0], 20);
         target.ApplyDamage(hit);
-        check(target.Hp == 87.5f, "Nine-player first balanced hit uses per-hit softening");
+        check(target.Hp == 80, "Nine-player first balanced hit uses the configured shared reserve");
         target.ApplyDamage(hit);
-        check(target.Hp == 80, "Nine-player second same-frame hit spends the remaining burst");
+        check(target.Hp == 79, "Nine-player second same-frame hit retains the minimum after depletion");
         target.ApplyDamage(hit);
-        check(target.Hp == 79 && target.Hits == 3, "Exhausted allowance retains a positive native impact");
+        check(target.Hp == 78 && target.Hits == 3, "Exhausted allowance retains a positive native impact");
         Time.time += 0.1f;
         target.ApplyDamage(hit);
-        check(Near(target.Hp, 72), "Elapsed game time restores seven HP of the default allowance after one tenth second");
+        check(Near(target.Hp, 71), "Elapsed game time restores seven HP of the default allowance after one tenth second");
         float depletedHp = target.Hp;
         target.ApplyDamage(hit);
         check(target.Hp == depletedHp - 1, "The next same-frame hit remains positive after spending new credit");

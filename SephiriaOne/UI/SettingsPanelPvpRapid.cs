@@ -34,14 +34,14 @@ namespace SephiriaOne
             pvpRapidExample.enableAutoSizing = true;
 
             BuildPvpRapidValue("burst", "Stored burst (% HP)", 312, 0);
-            widgets.Text(pageRoot, "RapidBurstHint", "Default 20% · 1..100% of victim max HP.\nMore burst funds more hits; large hits still soften.", 312, 29, 272, 31, 10);
+            widgets.Text(pageRoot, "RapidBurstHint", "Default 75% · 1..100% of victim max HP.\nOne shared reserve for heavy hits and barrages.", 312, 29, 272, 31, 10);
             widgets.Text(pageRoot, "RapidRefill", "PvP refill (%/s)", 312, 66, 116, 25, 12);
             friendlyRefill = widgets.Input(pageRoot, 432, 66, 68, EditFriendlyRefill);
             changeButtons.Add(widgets.Button(pageRoot, "Apply", 508, 66, 76, 25, ApplyFriendlyRefill));
             widgets.Text(pageRoot, "RapidRefillHint", "Default 70%/s · 1..300%/s of victim max HP.\nContinuous refill; no periodic reset.", 312, 95, 272, 31, 10);
             pvpRapidRecovery = widgets.Text(pageRoot, "RapidRecovery", "", 312, 130, 272, 26, 10);
             pvpRapidRecovery.enableAutoSizing = true;
-            widgets.Text(pageRoot, "RapidScope", "Requires PvP balancing. Shared budget stays active with frequency off. Native defenses, role modifiers and DoT intervals still apply. Minimum hits can exceed it.", 312, 160, 272, 54, 10);
+            widgets.Text(pageRoot, "RapidScope", "Requires PvP balancing. All hit types share one reserve, even with frequency off. Defenses, roles and DoT intervals still apply. Minimum hits can exceed it.", 312, 160, 272, 54, 10);
             pvpRapidReset = widgets.Button(pageRoot, "Reset four rapid values", 312, 224, 272, 25, ResetPvpRapid);
         }
 

@@ -88,7 +88,7 @@ internal static class ArtifactRateTests
         check(target.Hp == 98, "Late recheck prevents nested callback double admission");
         // Budget depletion keeps minimum hits, but cannot bypass this explicitly requested hard rate.
         FriendlyFireRuntime.Clear(); target = new PlayerAvatar();
-        for (int i = 0; i < 30; i++) target.ApplyDamage(new() { origin = attacker, damage = 2 });
+        for (int i = 0; i < 40; i++) target.ApplyDamage(new() { origin = attacker, damage = 2 });
         float before = target.Hp; target.ApplyDamage(artifact); float after = target.Hp;
         target.ApplyDamage(artifact);
         check(after < before && target.Hp == after, "Empty budget retains first minimum artifact hit and rate-rejects its repeat");

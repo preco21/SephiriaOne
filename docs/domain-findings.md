@@ -1,5 +1,11 @@
 # Sephiria domain findings
 
+PvP burst (`0.88.0`): a nonlinear per-packet curve rewards splitting damage even
+with hit-frequency scaling disabled. Use one attacker/opponent recoverable
+reserve for heavy hits and barrages; stored capacity and sustained refill are
+different controls. Native shields/armor and role factors remain after the
+reserve, so refund only unused funded credit. See [damage-path findings](pvp-burst-audit.md).
+
 Lobby dice (`0.86.1`): initialization is not the only time starting-dice intent
 must apply. Pre-run live changes reconcile maximum and balance by the allowance
 difference, checkpoint ownership and preserve spending. Observe maximum/ownership,

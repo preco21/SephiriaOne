@@ -42,7 +42,7 @@ internal static class ActiveDefenseTests
             Fresh(mode); defender.ApplyDamage(damage);
             check(defender.Mp == 950 && defender.Hp == 100, mode + " successful defense pays default five percent");
             Fresh(mode); defender.Mp = 13; defender.ApplyDamage(damage);
-            check(defender.Mp == 0 && defender.Hp == 100, mode + " spends only available MP without inventing HP spill");
+            check(defender.Mp == 0 && defender.Hp == (mode == "mp" ? 93 : 100), mode + " spends available MP and preserves native absorption overflow");
             Fresh(mode); defender.Mp = 13; int reported = 0;
             defender.OnMpUsedServerside = amount => reported += amount; defender.ApplyDamage(damage);
             check(reported == 13, mode + " MP-spend rewards receive only the available debit");
@@ -85,9 +85,9 @@ internal static class ActiveDefenseTests
         Fresh("sub"); defender.Mp = 0; defender.ApplyDamage(damage);
         check(defender.Hp == 100 && defender.Mp == 0, "Empty MP preserves native subshield blocking");
         Fresh("mp"); defender.Mp = 3; defender.ApplyDamage(damage);
-        check(defender.Mp == 0 && defender.Hp == 90.5f, "Partial MP absorption retains native HP spill from fractional balanced damage");
+        check(defender.Mp == 0 && defender.Hp == 83, "Partial MP absorption retains native HP spill from funded balanced damage");
         Fresh("mp"); defender.Mp = 3; defender.InfiniteMp = true; defender.ApplyDamage(damage);
-        check(defender.Mp == 0 && defender.Hp == 90.5f, "Partial absorption spends remaining MP even with infinite-MP artifact");
+        check(defender.Mp == 0 && defender.Hp == 83, "Partial absorption spends remaining MP even with infinite-MP artifact");
         Fresh("mp"); defender.Shield = 5; defender.ApplyDamage(damage);
         check(defender.Mp == 950 && defender.Hp == 100 && defender.Shield == 0, "Ordinary and MP shield layers pay one floor total");
         Fresh("mp"); defender.Shield = 100; int layeredCallbacks = 0;
@@ -101,7 +101,7 @@ internal static class ActiveDefenseTests
         Fresh("dash"); defender.Shield = 0; defender.ApplyDamage(damage);
         check(defender.Mp == 1000, "Plain HP damage has no defensive MP charge");
         Fresh("mp"); SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, guardMpPercent: 0); defender.ApplyDamage(damage);
-        check(defender.Mp == 988, "Zero minimum leaves native MP-shield absorption cost");
+        check(defender.Mp == 980, "Zero minimum leaves native MP-shield absorption cost");
         foreach (string mode in new[] { "dash", "sub" })
         {
             Fresh(mode); SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, guardMpPercent: 0);

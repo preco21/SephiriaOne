@@ -1,5 +1,92 @@
 # Slow burst versus split damage audit
 
+## Implemented shared burst (`0.88.0`, 2026-10-22)
+
+The low per-hit curve is removed for **all player-victim PvP damage**, including
+weapons, magic, artifacts, owned companions, reflection and admitted debuff ticks.
+Retaining it on selected categories would leave packet-size bias between weapons
+and effects. All sources spend the same attacker/opponent pool, with no extra
+allowance per weapon, spell, projectile or artifact.
+
+Stored capacity now defaults to **75% of victim maximum HP**. Continuous refill
+stays **70% max HP/second** by default. Optional hit-frequency scaling, its
+1s / 4 hits/s / 0.5 defaults, direct/incidental history separation and independent
+effect clocks remain in place. Native stats and PvE damage are unchanged.
+
+After native resolution and the friendly-fire percentage, the current order is:
+
+1. Existing effect-specific admission checks.
+2. Optional direct/incidental frequency reduction.
+3. Shared recoverable reserve, preserving the positive-hit floor.
+4. Incoming role modifier, final positive minimum, native shields/HP/armor and
+   refund of genuinely unused funded credit.
+
+The former `FriendlyFireBalance.Soften` helper is deleted. No new histories,
+per-frame work, allocations or network messages are needed. Existing connection,
+life, floor, session and revision ownership remains the sole reset mechanism.
+Live capacity/refill edits preserve credit: larger capacity must refill after
+it is observed, and grants no immediate or retroactive free burst.
+
+### Verified comparison
+
+Fixture: 150 max HP, 0.3% damage scale, frequency **off**, full reserve, no shield,
+role modifier or amplification limit. Inputs below are already native-resolved
+and PvP-scaled, not raw weapon coefficients.
+
+| Input damage | Old curve / 20% reserve | New / 75% reserve | New / explicit 20% reserve |
+| --- | --- | --- | --- |
+| 100 | 25.598 | 100 | 30 |
+| 130 | 26.509 | 112.5 | 30 |
+
+A 2.5-second pause restores the new reserve at either 70%/s or 300%/s.
+Splitting 100 into 16 simultaneous hits still deals 100. Splitting 130 into 16
+simultaneous hits deals 114.5: 112.5 funded damage plus two minimum-one hits after
+exhaustion. The same total spread over a second can deal 130 because refill is
+allowed during that time. There is no additional per-packet compression advantage.
+
+Mandatory minimum-one damage means arbitrarily many hits cannot obey a strict
+DPS ceiling. Existing cadence controls remain available for runaway sources.
+Role modifiers and independent attackers also change final damage.
+
+**300%/s remains a high sustained damage setting.** At 75% reserve, it refills in
+0.25s; 70%/s refills in about 1.071s. This fix preserves larger isolated hits; it
+does not impose a slow TTK or override the host's saved refill choice.
+
+### Settings and upgrade behavior
+
+Use **Rapid Hits / 연속 타격**. Stored burst determines how much a fresh heavy hit
+or barrage can use; refill determines recovery over time. Commands:
+
+```text
+/one friendlyfire rapid burst 75
+/one friendlyfire rapid burst reset
+/one friendlyfire refill 70
+/one save
+```
+
+The single-field reset changes only burst capacity, retaining cadence, refill,
+K/D/A and the match. Explicit saved values are preserved, including 20% / 300%.
+Change burst to 75 (or reset that field) if it still shows 20. Presets that omitted
+the old default inherit 75. No new preset field/schema is required. Bundled EN/KO
+controls, help and status explain the new shared reserve. Custom translations
+can add the changed keys; missing keys retain normal English fallback.
+
+### Validation and limits
+
+The new regression failed on heavy-hit suppression before the change and passed
+after removing the curve. Release build: zero warnings/errors. Combat fixtures,
+runtime/session, localization, policy/preset and installed-game contract tests
+pass. Warm cadence/guard/Harvest probes allocate zero bytes. `--burst-audit` now
+compares current results with historical math kept only inside the diagnostic
+(26 checks). Legacy 20% lifecycle fixtures remain explicit; new tests cover 75%,
+equal-total packets, shared sources, shields, recovery, partially spent reserve
+across max-HP changes and saved-value/reset behavior.
+
+These are fixtures and installed-game static contracts, not a live Black Halberd
+or Arrow Rain multiplayer test. Nothing was deployed.
+
+## Historical investigation before the fix
+
 2026-10-22, current runtime 0.87.0. Investigation only: no production PvP tuning
 was changed. The user's follow-up confirms reproduction with rapid-hit balancing
 off, continuous refill 300%/s, stored allowance 20%.

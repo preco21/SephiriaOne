@@ -7,7 +7,7 @@ namespace SephiriaOne
     // responsive at exhaustion; only funded damage can later be refunded.
     internal struct FriendlyFireDamageBudget
     {
-        internal const double Capacity = 0.20d;
+        internal const double Capacity = (double)PvpRapidSettings.DefaultBurstPercent / 100d;
         private bool started;
         private double remaining, lastTime, lastRefill, lastCapacity;
 

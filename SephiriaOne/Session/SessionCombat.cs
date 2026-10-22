@@ -102,7 +102,7 @@ namespace SephiriaOne
             L.F("Rapid history: {0}s; full-damage threshold: {1} hits/s; reduction exponent: {2}; burst allowance: {3}% max HP.",
                 settings.Rapid.WindowNumber, settings.Rapid.RateNumber, settings.Rapid.ExponentNumber, settings.Rapid.BurstNumber) + " " +
             L.F("PvP refill: {0}% max HP/s.", settings.RefillNumber) + " " +
-            L.F("Allowance refills continuously; base empty-to-full recovery: {0}s. Per-hit softening, native defenses, role modifiers and debuff schedules remain separate; minimum hits can exceed the allowance.",
+            L.F("Allowance refills continuously; base empty-to-full recovery: {0}s. All hit types share one reserve; native defenses, role modifiers and debuff schedules still apply. Minimum hits can exceed the allowance.",
                 (settings.Rapid.BurstPercent / settings.RefillPercent).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)) + " " +
             L.F("PvP shield minimum: {0}% max MP after native reductions.", settings.GuardMpNumber) + " " +
             L.F("Perfect Guard MP multiplier: {0}; x{1} native MP cost (requires PvP balancing; when on, ignores shield minimum).",

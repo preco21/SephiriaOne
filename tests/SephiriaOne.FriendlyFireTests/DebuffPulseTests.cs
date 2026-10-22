@@ -19,7 +19,7 @@ internal static class DebuffPulseTests
         void Fresh()
         {
             FriendlyFireParticipants.Clear(); Time.time = 100;
-            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true);
+            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, rapid: new PvpRapidSettings(burstPercent: 20));
             source = new(); victim = new();
         }
         void Hit(string id, float amount = 2) => victim.ApplyDamage(EffectTests.Tick(source, id, amount));
@@ -39,7 +39,7 @@ internal static class DebuffPulseTests
             check(victim.Hp == 94, "Direct Bolt/magic damage does not share the debuff pulse cooldown");
             SessionSettings.FriendlyFireForHit = new(true, 100, balance: false); Hit(id); Hit(id);
             check(victim.Hp == 90, id + " restores all pulses immediately when balancing is disabled");
-            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true); Hit(id);
+            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, rapid: new PvpRapidSettings(burstPercent: 20)); Hit(id);
             check(victim.Hp == 88, id + " reenable discards old pulse timing");
             FriendlyFireKda.ResetScores(); Hit(id); check(victim.Hp == 86, "KDA reset retires pulse timing");
             FriendlyFireParticipants.Select(source, victim); Hit(id); check(victim.Hp == 84, "Selection/match epoch resets pulse timing");
@@ -67,7 +67,7 @@ internal static class DebuffPulseTests
         check(victim.Hp == 79, "Budget-exhausted shock deals its minimum and reserves its normal pulse interval");
         Time.time += .4f; Hit("Debuff_Electric");
         check(victim.Hp == 77, "The next due shock uses refilled credit without replaying suppressed pulses");
-        Fresh(); victim.IsMpShield = true; SessionSettings.FriendlyFireForHit = new(true, 25, balance: true);
+        Fresh(); victim.IsMpShield = true; SessionSettings.FriendlyFireForHit = new(true, 25, balance: true, rapid: new PvpRapidSettings(burstPercent: 20));
         Hit("Debuff_Electric", 2); Hit("Debuff_Electric", 8);
         check(victim.Mp == 95, "A minimum pulse pays the shield floor and still consumes its cadence interval");
         Time.time += 0.5f; Hit("Debuff_Electric", 8);

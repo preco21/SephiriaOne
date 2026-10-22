@@ -114,7 +114,7 @@ internal static class GuardTests
         check(target.Mp == 900 && target.LastMpCost == 100 && target.Hp == 100, "Passive MP shield pays the floor while preserving native full absorption");
         Fresh(); target.IsGuarding = false; target.IsMpShield = true;
         SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, guardMpPercent: 0); target.ApplyDamage(hit);
-        check(target.Mp == 988 && target.Hp == 100, "Zero defense percentage preserves native MP-shield damage spending rather than waiving it");
+        check(target.Mp == 980 && target.Hp == 100, "Zero defense percentage preserves native MP-shield damage spending rather than waiving it");
         Fresh(); SessionSettings.FriendlyFireForHit = new(true, 100); target.ApplyDamage(hit);
         check(target.Mp == 990, "Balance off restores native fixed cost immediately");
         Fresh(); SessionSettings.FriendlyFireForHit = new(false, 100, balance: true); target.ApplyDamage(hit);

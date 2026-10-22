@@ -1,9 +1,9 @@
 # Development knowledge index
 
-[PvP slow-burst audit](pvp-burst-audit.md): reproduced 100→25.60 and 130→26.51
-with rapid-hit scaling off and 300% refill. Separates unconditional per-hit
-softening from stored capacity, amplification and later native defenses. Includes
-an executable diagnostic and shared-burst alternatives; combat tuning is unchanged.
+[PvP shared-burst fix](pvp-burst-audit.md): removes the low per-hit curve and
+raises default stored reserve to 75% max HP. Slow heavy hits and rapid packets
+share one recoverable allowance; refill remains independently configurable.
+Includes before/after diagnostics, saved-setting behavior and validation limits.
 
 [Teleport all](teleport-all.md): `/one teleportall` requests native party movement
 to the host for ready, living players on the same floor, with connection/run guards
@@ -18,7 +18,7 @@ interval, default off / 2s, for seven audited automatic artifact sources and
 Dark Cloud. Shared pair/life/session clocks, explicit weapon/book/companion/planet
 exclusions, native guest damage sync, EN/KO controls and v47 presets.
 
-Maintained: 2026-10-22 (Asia/Seoul), addon `0.87.0`.
+Maintained: 2026-10-22 (Asia/Seoul), addon `0.88.0`.
 
 [Configurable PvP DoT duration](pvp-dot-intervals.md#configurable-duration-cap-0850-2026-10-22):
 Burn/Plasma/blue/evolved lifetime cap now defaults to 1.2s, adjustable 0.05..10s
@@ -33,8 +33,8 @@ no stat writes or per-hit allocations. Refill remains in Rapid Hits.
 
 [Configurable rapid-hit balancing](pvp-hit-frequency.md#controls): dedicated
 Rapid Hits tab, separate detection window/rate/strength and continuous
-capacity/refill controls, EN/KO explanations and v44 presets. Current defaults
-remain; live edits preserve matches, K/D/A and damage credit. No periodic reset,
+capacity/refill controls, EN/KO explanations and v44 presets. Live edits
+preserve matches, K/D/A and damage credit. No periodic reset,
 per-hit allocation or polling is added.
 
 [Dedicated PvP Balance tab](control-panel.md#dedicated-pvp-balance-tab-0820-2026-10-21):
