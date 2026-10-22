@@ -31,7 +31,7 @@ interval, default off / 2s, for seven audited automatic artifact sources.
 Dark Cloud uses its own interval. Shared pair/life/session clocks, explicit weapon/book/companion/planet
 exclusions, native guest damage sync, EN/KO controls and v47 presets.
 
-Maintained: 2026-10-22 (Asia/Seoul), addon `0.89.1`.
+Maintained: 2026-10-23 (Asia/Seoul), addon `0.89.2`.
 
 [Configurable PvP DoT duration](pvp-dot-intervals.md#configurable-duration-cap-0850-2026-10-22):
 Burn/Plasma/blue/evolved lifetime cap now defaults to 1.2s, adjustable 0.05..10s
@@ -74,7 +74,7 @@ changes. Includes v43 presets and English/Korean controls.
 
 [Secondary projectile limits](projectile-limits.md): optional host-side PvE/PvP
 caps for Pallas, Liberation and audited secondary sources. Spawns → Secondary
-projectiles or `/one projectiles`; default off, 64/player and 16/source with
+projectiles or `/one projectiles`; default off, 64/player and 12/source with
 overrides. Existing instances finish; ordinary attacks and Minigun remain native.
 Includes v42 presets, EN/KO, lifecycle accounting and explicit coverage boundaries.
 

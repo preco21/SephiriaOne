@@ -24,7 +24,7 @@ namespace SephiriaOne
             ProjectileLimitOperation.ResetSource => settings.WithoutSourceLimit(Source!),
             _ => default
         };
-        public static string Usage => L.T("Host only: /one projectiles on|off|reset|status; total N; source default N; source <id> N|reset. Limits: 1–4096; default off, 64 total/player, 16/source. /one save persists settings.");
+        public static string Usage => L.T("Host only: /one projectiles on|off|reset|status; total N; source default N; source <id> N|reset. Limits: 1–4096; default off, 64 total/player, 12/source. /one save persists settings.");
         public static ProjectileLimitParseResult Parse(string? text, out ProjectileLimitCommand command)
         {
             command = default;

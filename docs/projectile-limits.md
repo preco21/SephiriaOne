@@ -2,6 +2,10 @@
 
 Implemented in 0.79.0, 2026-10-21.
 
+Since `0.89.2` (2026-10-23), the default per-source cap is **12**, down from 16.
+Default/reset and presets with no explicit source-default row use 12. Saved
+explicit values (including 16) and individual source overrides are preserved.
+
 The host can limit active secondary weapon/artifact missiles in PvE and PvP.
 This does not depend on friendly-fire settings, teams or participant selection.
 Guests receive native network spawns and do not need the addon. Live multiplayer
@@ -12,13 +16,13 @@ and performance still need testing; fixtures do not establish frame-time gains.
 Since `0.88.1`, open the dedicated **Projectiles / 투사체** tab beside Spawns.
 The enable toggle, total/default caps, source overrides and resets are grouped
 there. Spawns contains only spawn-related controls; limiter behavior is unchanged.
-Defaults: **off**, **64 per player**, **16 per source**. Both caps apply together;
+Defaults: **off**, **64 per player**, **12 per source**. Both caps apply together;
 each source can override its limit. Integer range: 1–4096.
 
 ```text
 /one projectiles on
 /one projectiles total 64
-/one projectiles source default 16
+/one projectiles source default 12
 /one projectiles source pallas-card 8
 /one projectiles source liberation 12
 /one projectiles source pallas-card reset
@@ -28,7 +32,7 @@ each source can override its limit. Integer range: 1–4096.
 /one save
 ```
 
-Source reset removes that override. Full reset restores off/64/16 and removes
+Source reset removes that override. Full reset restores off/64/12 and removes
 all overrides. `/one save` preserves configuration in preset v42, never instances
 or counters. Older presets retain default-off behavior. EN/KO labels are included.
 

@@ -35,7 +35,7 @@ whole preset. `/one save` stores numeric edits even while their toggles are off.
 Schema v42 saves optional secondary-projectile limits. Nondefault rows are
 `projectiles enabled 1`, `projectiles total N`, `projectiles default N`, and
 `projectiles source <id> N`. Limits are whole numbers from 1 to 4096; defaults
-are off, 64 total per player and 16 per source. An explicit source override
+are off, 64 total per player and 12 per source. An explicit source override
 remains independent of later default changes, including when its number equals
 the current default. Missing rows and older presets preserve safe defaults.
 Invalid, duplicate, noncanonical or unknown-source rows reject the whole file.

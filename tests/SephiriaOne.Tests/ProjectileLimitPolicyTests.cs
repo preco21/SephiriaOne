@@ -8,11 +8,11 @@ internal static class ProjectileLimitPolicyTests
         void Check(bool value, string message) { if (!value) throw new Exception(message); checks++; }
         const string preset = "SephiriaOne preset v42\nprojectiles enabled 1\nprojectiles total 64\nprojectiles default 16\nprojectiles source liberation 8\n";
         Check(SessionPolicy.TryReadPreset(preset, out var policy, out _), "Projectile limits load as v42");
-        Check(policy.ToPresetText() == "SephiriaOne preset v42\nprojectiles enabled 1\nprojectiles source liberation 8\n",
-            "Default limits normalize away while source overrides survive");
+        Check(policy.ToPresetText() == "SephiriaOne preset v42\nprojectiles enabled 1\nprojectiles default 16\nprojectiles source liberation 8\n",
+            "Explicit saved 16 and source overrides survive the lower default");
         var defaults = default(ProjectileLimitSettings);
-        Check(!defaults.Enabled && defaults.PlayerLimit == 64 && defaults.DefaultSourceLimit == 16 &&
-            !defaults.HasChanges && defaults.GetSourceLimit("liberation") == 16, "Safe default settings");
+        Check(!defaults.Enabled && defaults.PlayerLimit == 64 && defaults.DefaultSourceLimit == 12 &&
+            !defaults.HasChanges && defaults.GetSourceLimit("liberation") == 12, "Safe default settings");
         var input = new Dictionary<string, int> { ["liberation"] = 8 };
         var settings = new ProjectileLimitSettings(true, 48, 12, input);
         input["liberation"] = 999;

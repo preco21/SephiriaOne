@@ -7,7 +7,7 @@ namespace SephiriaOne
 {
     internal readonly struct ProjectileLimitSettings : IEquatable<ProjectileLimitSettings>
     {
-        public const int DefaultPlayerLimit = 64, DefaultPerSourceLimit = 16;
+        public const int DefaultPlayerLimit = 64, DefaultPerSourceLimit = 12;
         public const int MinimumLimit = 1, MaximumLimit = 4096;
         private static readonly IReadOnlyDictionary<string, int> Empty =
             new ReadOnlyDictionary<string, int>(new Dictionary<string, int>(StringComparer.Ordinal));
