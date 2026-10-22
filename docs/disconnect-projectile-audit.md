@@ -41,6 +41,64 @@ RaidRaid was also present; co-installation alone is not evidence of causality.
 
 Private logs, settings, game binaries and decompiled source remain outside Git.
 
+## Follow-up: reported v0.89.0 final-boss entry
+
+The user subsequently identified the running version as **0.89.0** and the
+incident as entering the endgame/final-boss room while running, without attacking
+or an apparent error. Treat this as the user's runtime report; the later on-disk
+version inspection above does not override it. An exact wall-clock time and the
+affected guest's log are still unavailable, so the timeout is a matching candidate
+incident rather than a recipient-confirmed identification.
+
+Focused checks against `33930f2` (project version `0.89.0`) found:
+
+- The projectile runtime/hooks, shared scope/run-generation handling, and
+  starting-resource/budget departure hooks are unchanged through the pre-audit
+  `0.90.0` source. Later projectile changes affected default limits/commands,
+  not room-entry destruction or ownership. Independent Planet cadence and
+  lower-bound damage assistance were added after the reported version and
+  should not be blamed for a `0.89.0` incident.
+- Of the 2,089 failed sends, **419 precede the first `QTemple_Boss3(Clone)`
+  initialization log and 1,670 follow it**. Failures therefore were already being
+  reported before that boss initialization was logged. The lines lack recipient
+  IDs and event timestamps; they cannot establish the duration/rate of pressure,
+  or prove every failure affected the disconnected player.
+- The same log records both final-boss entities being initialized, native party
+  movement, and RaidRaid detecting the final boss/preparing additional patterns.
+  This is relevant reproduction context, not evidence that RaidRaid emitted
+  excessive traffic or caused the disconnect.
+- `ProjectileLimitRuntime.Active/Refresh` keys reseeding to the DungeonManager
+  instance and shared run generation, **not each player's room/floor GUID**.
+  `SessionSettings.OnStartSession` advances that generation; ordinary room entry
+  does not invoke a custom projectile sweep or reset. Existing release callbacks
+  observe native teardown without initiating it.
+- Native `DungeonManager.LocalMoveFloor` queues travel, applies loading state,
+  and calls `FloorAlloc`. `Update` waits for generation/travel readiness, moves
+  the avatar, updates floor SyncVars and invokes `ReleaseUnusedFloors`. The native
+  release path uses `NetworkServer.Destroy` for floor-related objects and floors.
+  No limiter patch replaces those travel/allocation/release methods. The native
+  send-to-own-session path is separately gated by `requestLeaveOnHost` and leave
+  preferences; no addon write/call to that path was found in this audit.
+- Starting fruit/leaves departure work is gated to the first run departure;
+  ordinary endgame entry does not replay those grants. Merchant placement rejects
+  boss floors. Boss-owned projectiles are outside the per-player limiter scope.
+
+Running without attacking narrows the player's direct-action triggers, but does
+not imply an idle network: automatic artifacts, other participants, native boss
+objects, movement and floor synchronization can still send messages. A preexisting
+send backlog followed by transition load or a stalled receiver is consistent with
+the evidence, but remains a hypothesis. Nothing here establishes invalid IDs,
+missing host authority, or a new room-entry bug. The `0.90.1` diagnostics remain
+the next way to identify which recipient failed before/during a transition; no
+additional speculative gameplay/transport changes were made for this follow-up.
+
+Native DungeonManager methods were inspected read-only against the same assembly
+fingerprint, REA parent
+`ev_0fce45c558348e40928baa5112018d285a177ce8992e2af1c1e4bee4a7e9e4d4`,
+with focused local ILSpy decompilation. Source comparison and log counts were
+rechecked; this follow-up changes documentation only, so no build or gameplay
+test was repeated and nothing was deployed.
+
 ## Projectile limiter findings
 
 See [coverage and native contracts](projectile-limits.md). The active saved

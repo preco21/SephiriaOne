@@ -4,6 +4,9 @@
 after failed sends, projectile lifetime/ownership review, separate stale FrostTouch
 FX fix, and throttled per-recipient transport diagnostics. Distinguishes evidence
 from unproven congestion/client-stall causes; host/guest reproduction remains open.
+The v0.89.0 final-boss-entry follow-up finds failed sends already logged before
+boss initialization and no room-entry projectile reset; later combat changes
+are excluded from that reported version.
 
 [PvP lower-bound assistance](pvp-lower-bound.md): optional opponent-HP-relative
 uplift for weak hits, default off / 4% reference / 8% bonus refill per second.
