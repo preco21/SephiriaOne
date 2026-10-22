@@ -25,6 +25,7 @@ namespace SephiriaOne
                 Patch(instance, typeof(NextServer), "Disconnect", new[] { typeof(int) }, nameof(BeforeServerClose));
                 Patch(instance, typeof(HorayNetworkManager), "OnServerDisconnect", new[] { typeof(NetworkConnectionToClient) }, nameof(BeforePlayerRemoval));
                 harmony = instance;
+                TransportSendDiagnostics.Install();
             }
             catch { instance.UnpatchAll(Owner); throw; }
         }
@@ -39,12 +40,14 @@ namespace SephiriaOne
 
         public static void Uninstall()
         {
+            TransportSendDiagnostics.Uninstall();
             harmony?.UnpatchAll(Owner);
             harmony = null;
         }
 
         private static void BeforeSocketClose(int connId, HSteamNetConnection socket)
         {
+            TransportSendDiagnostics.BeforeClose(connId);
             try
             {
                 // Read before InternalDisconnect overwrites the native reason with
@@ -57,10 +60,15 @@ namespace SephiriaOne
             catch (Exception error) { Write("transport-close conn=" + connId + "; diagnostic unavailable: " + OneLine(error.Message)); }
         }
 
-        private static void BeforeServerClose(int connectionId) => Write("server-requested close conn=" + connectionId);
+        private static void BeforeServerClose(int connectionId)
+        {
+            TransportSendDiagnostics.BeforeClose(connectionId);
+            Write("server-requested close conn=" + connectionId);
+        }
 
         private static void BeforePlayerRemoval(NetworkConnectionToClient conn)
         {
+            TransportSendDiagnostics.BeforeRemoval(conn);
             try
             {
                 uint id = conn != null && conn.identity ? conn.identity.netId : 0;
@@ -72,7 +80,7 @@ namespace SephiriaOne
             catch (Exception error) { Write("disconnect state unavailable: " + OneLine(error.Message)); }
         }
 
-        private static void Write(string text)
+        internal static void Write(string text)
         {
             // Even a failing log sink must not stop native connection cleanup.
             try { Debug.LogWarning("[SephiriaOne] [disconnect " + DateTime.UtcNow.ToString("O") + "] " + text); }

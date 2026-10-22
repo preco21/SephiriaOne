@@ -532,6 +532,18 @@ when a native comparison is inclusive. See [jars](mystic-jar.md) and
 
 ## Combat and disconnect interpretation
 
+Native transport/lifetime audit (`0.90.1`): `NextCommon.SendSocket` appends one
+channel byte and returns `EResult`; `NextServer.Send` closes on `NoConnection` or
+`InvalidParam`, but only logs `LimitExceeded` without retry. Mirror's
+`OnTransportDisconnected(int)` runs `Cleanup` and `RemoveConnection` before
+`OnDisconnectedEvent`; the game-manager disconnect callback is too late for live
+projectile ledger counts. Capture those at transport close entry, read-only.
+Native FrostTouch calls its base HUD update before dereferencing
+`NetworkTarget.transform` for an FX RPC; a destroyed target can survive into that
+derived tail. The optional guard preserves base/caller expiry and gates only the
+derived FX work. These errors followed, rather than preceded, the observed drop.
+Evidence, limits and verification: [disconnect/projectile audit](disconnect-projectile-audit.md).
+
 PvP cadence classification (`0.77.0`) uses existing source/context and native
 metadata, with two fixed histories per directed pair and one shared allowance.
 Native `DamageInstance` defaults to `Magic`; `EDamageFromType.None` identifies

@@ -14,6 +14,12 @@ the later feature documents; dated historical entries remain as evidence.
 
 ## Current status
 
+- `0.90.1`: [October disconnect audit](disconnect-projectile-audit.md) distinguishes
+  transport timeout after failed Steam sends from later stale FrostTouch errors.
+  Adds an isolated FX lifetime guard and throttled read-only transport diagnostics,
+  with pre-cleanup projectile counts, actual assembly-version logging and aligned
+  metadata. Projectile admission/caps and network protocol remain unchanged.
+
 - `0.63.0`: [Floating countdown prototype](overhead-message-transport.md#floating-countdown-prototype-0630)
   adds native cyan respawn/bomb text alongside all existing chat/bubbles. Shared
   match/connection and specific countdown checks prevent stale output after

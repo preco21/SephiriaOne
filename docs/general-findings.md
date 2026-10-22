@@ -150,6 +150,15 @@ write journals and native fallback outcomes are different evidence. A peer close
 does not prove a voluntary quit; a post-disconnect warning does not establish
 the initiating failure. Collect guest evidence before attributing a disconnect.
 
+For send failures, distinguish concurrent entity caps from network throughput.
+`k_EResultLimitExceeded` means a native send attempt failed; paired `Send issue`
+and `Could not send` lines describe one attempt. Current diagnostics count failures
+per connection object, sample at most every five seconds, and snapshot limiter
+counts before native removal retires the ledgers. Byte counts include the appended
+channel byte, not protocol overhead or proof of delivery. Record actual loaded
+assembly version separately from addon metadata; metadata can be stale. See the
+[October audit](disconnect-projectile-audit.md).
+
 Keep exact observations, skip unchanged writes, and use event-driven hooks for
 one-time effects. Avoid per-frame scene scans, repeated dictionary/list copies,
 formatting, boxing and logging in unchanged paths. Use bounded or object-lifetime

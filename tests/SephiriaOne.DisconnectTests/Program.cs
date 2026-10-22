@@ -8,6 +8,7 @@ int checks = 0;
 void Check(bool ok, string reason) { if (!ok) throw new Exception(reason); checks++; }
 DisconnectDiagnostics.Install();
 DisconnectDiagnostics.Install();
+SendDiagnosticsTests.Run(Check);
 var server = new NextServer();
 server.Lose(1);
 Check(server.NativeCloses == 1, "Diagnostics changed native close count");
@@ -42,5 +43,8 @@ DisconnectDiagnostics.Uninstall();
 int lines = Debug.Lines.Count;
 server.Lose(1);
 manager.OnServerDisconnect(new());
+NextCommon.Result = EResult.k_EResultLimitExceeded;
+server.Map(22, new(101)); NetworkServer.connections[22] = new() { connectionId = 22 };
+server.SendFixture(new(101), new byte[3], 0);
 Check(Debug.Lines.Count == lines && server.NativeCloses == 6 && manager.NativeRemovals == 5, "Hooks survived uninstall");
 Console.WriteLine($"Passed {checks} disconnect-diagnostic boundary checks (fixtures, no live transport).");

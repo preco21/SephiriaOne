@@ -169,3 +169,15 @@ Live checks still needed:
    counts in equivalent endgame builds.
 
 Low caps intentionally reduce covered secondary attack output in PvE and PvP.
+
+## Multiplayer disconnect audit (0.90.1, 2026-10-23)
+
+The [October audit](disconnect-projectile-audit.md) rechecked admission before
+native instantiation, NULL continuations, lease release, descendants, reused
+connections, ownership and run reseeding. No live-network deletion or authority
+mutation was found in the limiter. Runtime/ledger/native-contract checks passed.
+This is a simultaneous-instance cap, not a bandwidth/spawn-rate limiter. Short
+lived instances, direct attacks and RPC/client-only effects can still create
+substantial traffic. Diagnostic snapshots now read cached per-connection counts
+without refreshing/reseeding; transport-close entry captures them before Mirror
+retires the ledger. No admission or cap behavior changed in this audit.

@@ -52,6 +52,19 @@ namespace SephiriaOne
         private static Provenance child, liberation;
         private static bool enabled, refreshing;
 
+        // Failure/teardown diagnostics must not call Refresh/Active/Capture: those
+        // can reseed or retire live receipts while a native callback is in progress.
+        internal static string DescribeDiagnostics(NetworkConnectionToClient connection)
+        {
+            int playerBullets = 0, playerEmitters = 0;
+            foreach (Owner owner in owners.Values)
+                if (!owner.Retired && ReferenceEquals(owner.Connection, connection))
+                { playerBullets += bullets.Count(owner); playerEmitters += emitters.Count(owner); }
+            return "projectile-limits enabled=" + enabled + "; playerBullets=" + playerBullets +
+                "; playerEmitters=" + playerEmitters + "; totalCapPerPool=" + settings.PlayerLimit +
+                "; sourceDefault=" + settings.DefaultSourceLimit + "; tracked=" + tracked.Count;
+        }
+
         internal static void Clear()
         {
             enabled = false; scope++;

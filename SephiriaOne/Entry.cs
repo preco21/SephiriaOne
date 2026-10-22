@@ -44,6 +44,7 @@ namespace SephiriaOne
                 RequitalRuntime.Initialize();
                 ExperienceFeature.Initialize();
                 ProjectileLimitFeature.Initialize();
+                NativeEffectLifetimeGuard.Initialize();
                 DisconnectDiagnosticsFeature.Initialize();
                 if (!nameColor)
                 {
@@ -57,7 +58,7 @@ namespace SephiriaOne
                     chatCommands = controller.AddComponent<ModChatCommands>();
                 }
 
-                Debug.Log($"[SephiriaOne] Loaded v{metadata.modVersion}");
+                Debug.Log($"[SephiriaOne] Loaded v{typeof(Entry).Assembly.GetName().Version} (metadata v{metadata.modVersion})");
                 lifetime.CompleteLoad();
             }
             catch { lifetime.Failed(); throw; }
@@ -86,6 +87,7 @@ namespace SephiriaOne
                 CollinFeature.Shutdown();
                 ExperienceFeature.Shutdown();
                 ProjectileLimitFeature.Shutdown();
+                NativeEffectLifetimeGuard.Shutdown();
                 RequitalRuntime.Shutdown();
                 ChoiceFeature.Shutdown();
                 EventSpawnFeature.Shutdown();

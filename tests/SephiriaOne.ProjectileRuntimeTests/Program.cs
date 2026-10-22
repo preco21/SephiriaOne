@@ -99,6 +99,25 @@ Test("Caps reject before native instantiation, separately by source and player",
     Check(!Spawn("ice-vine", damageId: "Charm_IcicleVine"), "Total also caps a fresh source");
     Check(Spawn(owner: Connect(2)), "A second connection has its own budget");
 });
+Test("Transport diagnostics read cached counts without reconciling live state", () =>
+{
+    Configure(total: 1, source: 1);
+    var connection = player.spawner.connectionToClient;
+    var bullet = Spawn();
+    Scheduler();
+    int calls = pool.NativeCalls;
+    SessionSettings.ResourceGeneration++;
+    string snapshot = ProjectileLimitRuntime.DescribeDiagnostics(connection);
+    Check(snapshot.Contains("playerBullets=1;") && snapshot.Contains("playerEmitters=1;"), "Snapshot separates both limiter pools");
+    Check(pool.NativeCalls == calls && bullet, "Reading does not spawn, despawn or destroy objects");
+    var replacement = new NetworkConnectionToClient { connectionId = connection.connectionId };
+    Check(ProjectileLimitRuntime.DescribeDiagnostics(replacement).Contains("playerBullets=0;"), "Snapshot cannot attribute an old receipt to a reused ID");
+    ProjectileLimitRuntime.RetireConnection(connection);
+    Check(ProjectileLimitRuntime.DescribeDiagnostics(connection).Contains("playerBullets=0;"), "Retired receipts are not live counts");
+    ProjectileLimitRuntime.Clear();
+    Check(ProjectileLimitRuntime.DescribeDiagnostics(connection).Contains("enabled=False;"), "Reading cannot re-enable or reseed cleared state");
+    Check(bullet && pool.NativeCalls == calls, "Teardown diagnostics preserve existing native objects");
+});
 Test("Lower limits retain live instances and wait for actual releases", () =>
 {
     var first = Spawn();

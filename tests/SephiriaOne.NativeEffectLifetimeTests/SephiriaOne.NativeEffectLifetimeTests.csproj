@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings><Nullable>disable</Nullable><Optimize>true</Optimize>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../SephiriaOne/Infrastructure/NativeEffectLifetimeGuard*.cs" Link="Production/%(Filename)%(Extension)" />
+    <PackageReference Include="Lib.Harmony" Version="2.4.2" />
+  </ItemGroup>
+</Project>
