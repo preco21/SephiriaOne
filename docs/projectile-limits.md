@@ -9,7 +9,9 @@ and performance still need testing; fixtures do not establish frame-time gains.
 
 ## Controls
 
-Open **Spawns** and use its arrows to select **Secondary projectiles**.
+Since `0.88.1`, open the dedicated **Projectiles / 투사체** tab beside Spawns.
+The enable toggle, total/default caps, source overrides and resets are grouped
+there. Spawns contains only spawn-related controls; limiter behavior is unchanged.
 Defaults: **off**, **64 per player**, **16 per source**. Both caps apply together;
 each source can override its limit. Integer range: 1–4096.
 

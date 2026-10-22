@@ -701,6 +701,7 @@
   " Random event hooks unavailable; see Player.log.": " 무작위 이벤트 기능을 사용할 수 없습니다. Player.log를 확인하세요.",
   " /one events help lists random event options.": " /one events help로 무작위 이벤트 옵션을 확인하세요.",
   "Spawns": "등장 확률",
+  "Projectiles": "투사체",
   "Random event rooms": "무작위 이벤트 방",
   "xN (native chance × N); x1 restores native": "xN (기본 확률 × N); x1은 기본값",
   "New chapters only. Existing floor data is not rerolled. x0 disables optional event rooms; x2 doubles their native probabilities.": "새 챕터에만 적용됩니다. 기존 층은 다시 추첨하지 않습니다. x0은 추가 이벤트 방을 끄고, x2는 기본 확률을 두 배로 합니다.",

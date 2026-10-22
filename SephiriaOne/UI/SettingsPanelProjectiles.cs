@@ -13,6 +13,7 @@ namespace SephiriaOne
 
         private void BuildProjectileEditor()
         {
+            widgets.Text(pageRoot, "ProjectileTitle", "Secondary projectiles", 16, 0, 273, 24, 12);
             AddCheckbox("Limit secondary projectiles", 16, 29, 273, 25, s => s.Projectiles.Enabled,
                 s => s.ProjectilesAvailable, "/one projectiles");
             widgets.Text(pageRoot, "ProjectileTotal", "Total / player", 16, 61, 126, 25, 11);

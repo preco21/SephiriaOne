@@ -42,7 +42,7 @@ internal static class GamePanelCompatibilityTests
 
         var panel = addon.GetType("SephiriaOne.SettingsPanel", true)!;
         var contentForPage = Required(panel, "ContentForPage");
-        string[] expected = { "Stats", "None", "Choices", "Resources", "Presets", "All", "None", "None", "None", "Participants", "None", "None", "None", "Participants", "Participants", "Participants", "Participants", "None", "None", "None", "All" };
+        string[] expected = { "Stats", "None", "Choices", "Resources", "Presets", "All", "None", "None", "None", "Participants", "None", "None", "None", "Participants", "Participants", "Participants", "Participants", "None", "None", "None", "None", "All" };
         for (int page = 0; page < expected.Length; page++)
             if (contentForPage.Invoke(null, new object[] { page })?.ToString() != expected[page])
                 throw new Exception("Panel snapshot must include every displayed section: page " + page);

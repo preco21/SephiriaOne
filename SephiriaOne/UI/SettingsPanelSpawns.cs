@@ -4,14 +4,12 @@ namespace SephiriaOne
     {
         private int spawnPage;
         private bool eventSpawnsSelected => spawnPage == 1;
-        private bool projectilesSelected => spawnPage == 2;
         private void BuildSpawnEditor()
         {
-            void Select(int delta) { spawnPage = (spawnPage + delta + 3) % 3; SelectPage(10); }
+            void Select(int delta) { spawnPage = (spawnPage + delta + 2) % 2; SelectPage(10); }
             widgets.Button(pageRoot, "<", 16, 0, 24, 24, () => Select(-1));
-            widgets.Text(pageRoot, "SpawnTitle", projectilesSelected ? "Secondary projectiles" : eventSpawnsSelected ? "Random event rooms" : "Mystic Jar spawn chance", 44, 0, 217, 24, 12);
+            widgets.Text(pageRoot, "SpawnTitle", eventSpawnsSelected ? "Random event rooms" : "Mystic Jar spawn chance", 44, 0, 217, 24, 12);
             widgets.Button(pageRoot, ">", 265, 0, 24, 24, () => Select(1));
-            if (projectilesSelected) { BuildProjectileEditor(); return; }
             widgets.Text(pageRoot, "SpawnUnits", eventSpawnsSelected ? "xN (native chance × N); x1 restores native" : "0–100% or xN (native chance × N)", 16, 29, 273, 21, 10);
             amount = widgets.Input(pageRoot, 16, 56, 97, draft.Edit);
             string command = eventSpawnsSelected ? "/one events" : "/one jars";
@@ -23,13 +21,11 @@ namespace SephiriaOne
             readout = widgets.Scroll(pageRoot, 312, 0, 272, 162);
         }
 
-        private bool SpawnAvailable(SettingsSnapshot snapshot) => projectilesSelected ? snapshot.ProjectilesAvailable :
-            eventSpawnsSelected ? snapshot.EventSpawnsAvailable : snapshot.JarSpawnsAvailable;
-        private string SpawnUnavailableMessage() => projectilesSelected ?
-            L.T("Projectile compatibility checks failed. Off/reset remain available; see Player.log.") : eventSpawnsSelected ?
+        private bool SpawnAvailable(SettingsSnapshot snapshot) => eventSpawnsSelected ? snapshot.EventSpawnsAvailable : snapshot.JarSpawnsAvailable;
+        private string SpawnUnavailableMessage() => eventSpawnsSelected ?
             L.T("Random event compatibility checks failed. Reset remains available; see Player.log.") :
             L.T("Mystic Jar compatibility checks failed. Reset remains available; see Player.log.");
-        private string SpawnCommandFamily => projectilesSelected ? "projectiles" : eventSpawnsSelected ? "events" : "jars";
+        private string SpawnCommandFamily => eventSpawnsSelected ? "events" : "jars";
 
         private static string EventValues(SettingsSnapshot snapshot) => SessionSettings.DescribeEventSpawns(snapshot.EventSpawns) +
             "\n\n" + L.T("Blood donation, obelisks, fountains and other optional event rooms. Up to 2 rooms per chapter.") +

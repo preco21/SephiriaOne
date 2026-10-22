@@ -701,6 +701,7 @@
   " Random event hooks unavailable; see Player.log.": " Random event hooks unavailable; see Player.log.",
   " /one events help lists random event options.": " /one events help lists random event options.",
   "Spawns": "Spawns",
+  "Projectiles": "Projectiles",
   "Random event rooms": "Random event rooms",
   "xN (native chance × N); x1 restores native": "xN (native chance × N); x1 restores native",
   "New chapters only. Existing floor data is not rerolled. x0 disables optional event rooms; x2 doubles their native probabilities.": "New chapters only. Existing floor data is not rerolled. x0 disables optional event rooms; x2 doubles their native probabilities.",

@@ -1,5 +1,9 @@
 # Development knowledge index
 
+[Dedicated Projectiles tab](control-panel.md#dedicated-projectiles-tab-0881-2026-10-22):
+all limiter controls now live beside Spawns in their own EN/KO tab. Spawn controls,
+projectile policies, saved values and shared command/lifecycle behavior remain unchanged.
+
 [PvP shared-burst fix](pvp-burst-audit.md): removes the low per-hit curve and
 raises default stored reserve to 75% max HP. Slow heavy hits and rapid packets
 share one recoverable allowance; refill remains independently configurable.
@@ -18,7 +22,7 @@ interval, default off / 2s, for seven audited automatic artifact sources and
 Dark Cloud. Shared pair/life/session clocks, explicit weapon/book/companion/planet
 exclusions, native guest damage sync, EN/KO controls and v47 presets.
 
-Maintained: 2026-10-22 (Asia/Seoul), addon `0.88.0`.
+Maintained: 2026-10-22 (Asia/Seoul), addon `0.88.1`.
 
 [Configurable PvP DoT duration](pvp-dot-intervals.md#configurable-duration-cap-0850-2026-10-22):
 Burn/Plasma/blue/evolved lifetime cap now defaults to 1.2s, adjustable 0.05..10s

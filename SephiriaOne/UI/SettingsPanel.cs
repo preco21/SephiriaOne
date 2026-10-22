@@ -13,6 +13,7 @@ namespace SephiriaOne
         private const float WindowWidth = 760, WindowHeight = 560, PageHeight = 250;
         private const int PvpBalancePage = 18;
         private const int PvpRapidPage = 19;
+        private const int ProjectilesPage = 20;
         private readonly PanelWindowGeometry geometry = new PanelWindowGeometry(WindowWidth, WindowHeight);
         private readonly List<Button> tabs = new List<Button>();
         private readonly List<PanelCheckbox> checkboxes = new List<PanelCheckbox>();
@@ -54,12 +55,13 @@ namespace SephiriaOne
             scopeLabel = widgets.Text(title, "Scope", "Host · All players", 220, 8, 464, 26, 11);
             scopeLabel.color = PanelWidgets.Muted;
             availability = widgets.Text(window, "Availability", "", 16, 44, 728, 28, 12);
-            string[] pages = { "Stats", "Fountain", "Choices", "Resources", "Presets", "Status", "Rabbit", "Merchant", "Items", "Combat", "Spawns", "Costumes", "Updates", "Deathmatch", "Tournament", "Play Tag", "Zombie", "Progression", "PvP Balance", "Rapid Hits" };
+            string[] pages = { "Stats", "Fountain", "Choices", "Resources", "Presets", "Status", "Rabbit", "Merchant", "Items", "Combat", "Spawns", "Costumes", "Updates", "Deathmatch", "Tournament", "Play Tag", "Zombie", "Progression", "PvP Balance", "Rapid Hits", "Projectiles" };
             for (int i = 0; i < pages.Length; i++)
             {
                 int target = i;
-                // Keep stable page IDs while placing both balancing pages beside Combat.
-                int slot = i == PvpBalancePage ? 10 : i == PvpRapidPage ? 11 : i >= 10 ? i + 2 : i;
+                // Stable page IDs; balancing beside Combat, projectiles beside Spawns.
+                int slot = i == PvpBalancePage ? 10 : i == PvpRapidPage ? 11 :
+                    i == ProjectilesPage ? 13 : i >= 11 ? i + 3 : i == 10 ? 12 : i;
                 var tab = widgets.Button(window, pages[i], 16 + 105 * (slot % 7), 78 + 32 * (slot / 7), 99, 28, () => SelectPage(target));
                 tabs.Add(tab);
                 if (i == 12) updateLabel = tab.GetComponentInChildren<TMP_Text>();
@@ -98,6 +100,7 @@ namespace SephiriaOne
             17 => SnapshotContent.None,
             PvpBalancePage => SnapshotContent.None,
             PvpRapidPage => SnapshotContent.None,
+            ProjectilesPage => SnapshotContent.None,
             _ when target >= 6 && target <= 14 => SnapshotContent.None,
             _ => SnapshotContent.All // Status, and safe defaults for future tabs.
         };
@@ -141,10 +144,11 @@ namespace SephiriaOne
             if (page == 15) { RefreshPlayTag(snapshot); return; }
             if (page == 16) { RefreshZombie(snapshot); return; }
             bool combatSettings = page == 9 || page == PvpBalancePage || page == PvpRapidPage;
-            bool choicesReady = page == 17 ? snapshot.ExperienceAvailable : page == 11 ? snapshot.BatAvailable && snapshot.CollinAvailable : page == 10 ? SpawnAvailable(snapshot) : combatSettings ? snapshot.FriendlyFireAvailable : page == 8 ? snapshot.ItemRestrictionsAvailable : page == 7 ? snapshot.MerchantsAvailable : page == 6 ? snapshot.RabbitPotionsAvailable : page == 2 ? snapshot.ChoicesAvailable : page != 3 || ResourceFeature.IsAvailable(ResourceCatalog.All[resourceIndex].Kind);
+            bool choicesReady = page == ProjectilesPage ? snapshot.ProjectilesAvailable : page == 17 ? snapshot.ExperienceAvailable : page == 11 ? snapshot.BatAvailable && snapshot.CollinAvailable : page == 10 ? SpawnAvailable(snapshot) : combatSettings ? snapshot.FriendlyFireAvailable : page == 8 ? snapshot.ItemRestrictionsAvailable : page == 7 ? snapshot.MerchantsAvailable : page == 6 ? snapshot.RabbitPotionsAvailable : page == 2 ? snapshot.ChoicesAvailable : page != 3 || ResourceFeature.IsAvailable(ResourceCatalog.All[resourceIndex].Kind);
             bool levelUpReady = page != 6 || snapshot.RabbitLevelUpPotionsAvailable;
             availability.text = !snapshot.CanMutate ? snapshot.AvailabilityReason : !choicesReady ?
-                (page == 17 ? L.T("XP compatibility checks failed. Off/reset remain available; see Player.log.") :
+                (page == ProjectilesPage ? L.T("Projectile compatibility checks failed. Off/reset remain available; see Player.log.") :
+                page == 17 ? L.T("XP compatibility checks failed. Off/reset remain available; see Player.log.") :
                 page == 11 ? L.T("Some costume controls are unavailable. See the details on the right and Player.log.") :
                 page == 10 ? SpawnUnavailableMessage() :
                 combatSettings ? L.T("Friendly-fire compatibility checks failed. Off/reset remain available; see Player.log.") :
@@ -170,22 +174,23 @@ namespace SephiriaOne
                 (snapshot.FaultedFeature == "collin" || snapshot.FaultedFeature == "inheritance"));
             if (amount) amount.interactable = snapshot.CanMutate && choicesReady;
             // Full-family reset is intentionally available for the existing recovery path.
-            string family = page == 17 ? "xp" : page == 0 ? "stats" : page == 1 ? "fountain" : page == 3 ? "resources" : page == 6 ? "rabbit" : page == 7 ? "merchant" : page == 8 ? "items" : page == 9 ? "combat" : page == 10 ? SpawnCommandFamily : page == 11 ? "bat" : "choices";
+            string family = page == ProjectilesPage ? "projectiles" : page == 17 ? "xp" : page == 0 ? "stats" : page == 1 ? "fountain" : page == 3 ? "resources" : page == 6 ? "rabbit" : page == 7 ? "merchant" : page == 8 ? "items" : page == 9 ? "combat" : page == 10 ? SpawnCommandFamily : page == 11 ? "bat" : "choices";
             bool recovery = snapshot.HostActive && snapshot.SessionIdentity != null &&
                 (snapshot.FaultedFeature == family || snapshot.FaultedFeature == "inheritance");
             if (resetAll) resetAll.interactable = snapshot.CanMutate || recovery;
             if (page == 9 && resetAll && CombatMatchRuntime.IsRunning && snapshot.HostActive && snapshot.SessionIdentity != null) resetAll.interactable = true;
             if (resetOne) resetOne.interactable = snapshot.CanMutate;
-            RefreshProjectileEditor(snapshot);
+            if (page == ProjectilesPage) RefreshProjectileEditor(snapshot);
             if (save) save.interactable = snapshot.CanSave;
             if (forget) forget.interactable = snapshot.CanForget;
-            if (page == 17) readout.SetText(SessionSettings.DescribeExperience(snapshot.Experience));
+            if (page == ProjectilesPage) readout.SetText(ProjectileValues(snapshot));
+            else if (page == 17) readout.SetText(SessionSettings.DescribeExperience(snapshot.Experience));
             else if (page < 4) readout.SetText(PlayerValues(snapshot));
             else if (page == 6) readout.SetText(RabbitValues(snapshot));
             else if (page == 7) readout.SetText(MerchantValues(snapshot));
             else if (page == 8) readout.SetText(ItemValues(snapshot));
             else if (page == 9) RefreshParticipants(snapshot);
-            else if (page == 10) readout.SetText(projectilesSelected ? ProjectileValues(snapshot) : eventSpawnsSelected ? EventValues(snapshot) : JarValues(snapshot));
+            else if (page == 10) readout.SetText(eventSpawnsSelected ? EventValues(snapshot) : JarValues(snapshot));
             else if (page == 11) readout.SetText(CostumeValues(snapshot));
             else if (page == 4) readout.SetText(PresetValues(snapshot));
             else readout.SetText(L.T("Name gradient: #408af1 → #a8d7fa") +
@@ -250,6 +255,7 @@ namespace SephiriaOne
             else if (page == 17) BuildExperienceEditor();
             else if (page == PvpBalancePage) BuildPvpBalanceEditor();
             else if (page == PvpRapidPage) BuildPvpRapidEditor();
+            else if (page == ProjectilesPage) BuildProjectileEditor();
             else
             {
                 if (page == 4)

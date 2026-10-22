@@ -1,5 +1,15 @@
 # Host settings panel
 
+## Dedicated Projectiles tab (`0.88.1`, 2026-10-22)
+
+**Projectiles / 투사체**, beside Spawns, groups the limiter enable toggle,
+total per-player cap, default per-source cap, source picker/overrides and resets.
+Spawns now cycles only between Mystic Jars and random event rooms. All 21 tabs
+fit the existing three-row layout; page IDs and window size remain stable.
+The new page requests `SnapshotContent.None`, uses the existing projectile
+compatibility/recovery checks, and keeps the same commands and draft lifetimes.
+No gameplay, saved-value or limiter-counting changes. See [limits](projectile-limits.md).
+
 ## Autonomous artifact cadence (`0.86.0`, 2026-10-22)
 
 PvP Balance now starts its right scroll pane with an **Autonomous artifact hit
