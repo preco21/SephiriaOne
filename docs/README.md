@@ -1,5 +1,10 @@
 # Development knowledge index
 
+[Planet PvP damage audit](pvp-planet-damage.md): each audited Planet type now has
+independent rapid-hit history while all sources retain one shared damage budget.
+Includes native Planet/Ice Weapon/Fire Arrow formulas, Zombie-role damage trace,
+serialized IDs, lifecycle/performance checks and live verification limits.
+
 [Independent Dark Cloud interval](pvp-autonomous-artifacts.md): the general
 autonomous-artifact minimum no longer overrides Dark Cloud's dedicated interval.
 Live general-setting edits preserve its strike clock; saved values are retained.
@@ -31,7 +36,7 @@ interval, default off / 2s, for seven audited automatic artifact sources.
 Dark Cloud uses its own interval. Shared pair/life/session clocks, explicit weapon/book/companion/planet
 exclusions, native guest damage sync, EN/KO controls and v47 presets.
 
-Maintained: 2026-10-23 (Asia/Seoul), addon `0.89.2`.
+Maintained: 2026-10-23 (Asia/Seoul), addon `0.89.3`.
 
 [Configurable PvP DoT duration](pvp-dot-intervals.md#configurable-duration-cap-0850-2026-10-22):
 Burn/Plasma/blue/evolved lifetime cap now defaults to 1.2s, adjustable 0.05..10s

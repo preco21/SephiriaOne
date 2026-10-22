@@ -25,7 +25,7 @@ namespace SephiriaOne
             AddCheckbox("Hit-frequency scaling", 16, 0, 273, 25, s => s.FriendlyFire.HitFrequency,
                 s => s.FriendlyFireAvailable, "/one friendlyfire hit-frequency");
             BuildPvpRapidValue("window", "History window (s)", 16, 34);
-            widgets.Text(pageRoot, "RapidWindowHint", "Default 1 s · 0.1..10 s\nDirect/incidental histories stay separate.", 16, 63, 273, 31, 10);
+            widgets.Text(pageRoot, "RapidWindowHint", "Default 1 s · 0.1..10 s\nSeparate direct / incidental / each Planet.", 16, 63, 273, 31, 10);
             BuildPvpRapidValue("rate", "Full-damage hits/s", 16, 100);
             widgets.Text(pageRoot, "RapidRateHint", "Default 4/s · 0.1..100/s\nFirst hit: no frequency reduction. Threshold = max(1, rate × window).", 16, 129, 273, 34, 10);
             BuildPvpRapidValue("exponent", "Reduction exponent", 16, 166);

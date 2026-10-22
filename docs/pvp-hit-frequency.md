@@ -1,6 +1,10 @@
 # Optional PvP hit-frequency scaling
 
-Latest (`0.88.0`): [shared-burst fix](pvp-burst-audit.md) removes the separate
+Latest (`0.89.3`): [Planet damage audit](pvp-planet-damage.md) separates each audited
+Planet type's cadence from other Planets and incidental damage. Copies of the
+same type still share history; all sources still share one damage allowance.
+
+Since `0.88.0`, the [shared-burst fix](pvp-burst-audit.md) removes the separate
 per-hit curve and raises default stored capacity to 75% max HP, preserving
 infrequent heavy attacks while all hit types continue sharing one reserve.
 
@@ -77,7 +81,8 @@ run first. The sequence within PvP balancing is:
 
 1. Existing debuff/autonomous-artifact damage admission.
 2. Optional frequency multiplier: `min(1, (max(1, rate × window) / recentHitCount)^exponent)`,
-   using the hit's direct or incidental history. Defaults retain `sqrt(4 / count)`.
+   using the hit's direct, other-incidental or audited Planet-type history.
+   Defaults retain `sqrt(4 / count)`.
 3. Shared per-opponent damage budget (configured capacity and refill),
    clipped continuously to available credit with a positive minimum at exhaustion.
 4. Current role incoming modifier, positive damage minimum (since `0.67.1`),

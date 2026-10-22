@@ -11,6 +11,7 @@ SharedBurstTests.Run(Check);
 WhiteBreadTests.Run(Check);
 ActiveDefenseTests.Run(Check);
 ResponsiveBudgetTests.Run(Check);
+PlanetCadenceTests.Run(Check);
 ConfigurableRapidTests.Run(Check);
 PerfectGuardTests.Run(Check);
 ArtifactRateTests.Run(Check);

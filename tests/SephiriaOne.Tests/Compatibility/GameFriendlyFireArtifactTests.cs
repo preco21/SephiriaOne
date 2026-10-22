@@ -83,6 +83,25 @@ internal static class GameFriendlyFireArtifactTests
         var battle = PatchProcessor.GetOriginalInstructions(Method("PlayerBattleChecker", "Update"));
         Require(battle.Any(i => i.operand is MethodInfo m && m.Name == "OverlapCircle"), "native combat checker remains separately owned");
         GameFriendlyFireSwordTests.Run(game, addon);
+        // Planet damage uses the owning player and the ordinary Bullet impact
+        // path. Its native flat base differs from MP-scaled armaments/books.
+        var planets = PatchProcessor.GetOriginalInstructions(Method("GreenBat", "CreateBullet")).ToList();
+        Require(planets.Count(i => Calls(i, "ProjectileSpawner`1", "Spawn")) == 4 &&
+            planets.Any(i => Calls(i, "Charm_SummonGreenBat", "GetBatDamage")) &&
+            planets.Any(i => i.LoadsConstant("PLANETDAMAGE")) &&
+            planets.Count(i => i.operand is FieldInfo f && f.DeclaringType == Native("GreenBat") && f.Name == "damageId") == 4,
+            "normal/enhanced Planet bullets retain four native source-ID and damage spawn sites");
+        var planetBase = PatchProcessor.GetOriginalInstructions(Method("Charm_SummonGreenBat", "GetDamage")).ToList();
+        Require(planetBase.Any(i => i.operand is FieldInfo f && f.Name == "damageByLevel") &&
+            planetBase.Any(i => i.LoadsConstant("PLANETIGNITEDAMAGE")) &&
+            planetBase.Any(i => Calls(i, "CharacterDebuff_Burn", "CalculateTickDamage")) &&
+            planetBase.Any(i => Calls(i, "CharacterDebuff_Plasma", "CalculateTickDamage")),
+            "Planet base damage remains item-level plus optional native ignite synergy");
+        var iceBase = PatchProcessor.GetOriginalInstructions(Method("Charm_IceSword", "GetDamage")).ToList();
+        Require(iceBase.Any(i => Calls(i, "UnitAvatar", "get_MaxMp")) && iceBase.Any(i => i.LoadsConstant("PLAYERDEFAULTMP")),
+            "Ice Weapon native comparison retains excess-MP scaling");
+        Require(PatchProcessor.GetOriginalInstructions(Method("ActiveSkill_Arrow", "OnStartMagic"))
+            .Any(i => i.operand is FieldInfo f && f.Name == "damagePercentByLevel"), "Fire Arrow native comparison retains elemental scaling");
         Console.WriteLine("Verified 16 artifact selectors, Plitvice collision mask, six offense-only combat gates, scoped native aim, artifact homing/loss, bounded proc callsites and owned-frostbite/RPC contracts (not live multiplayer).");
     }
 }

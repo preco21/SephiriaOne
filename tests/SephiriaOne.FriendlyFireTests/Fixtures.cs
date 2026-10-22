@@ -44,6 +44,7 @@ namespace SephiriaOne
         internal static readonly HashSet<PlayerAvatar> Humans = new();
         internal static void DynamicZombieRatio(int zombies, int humans) =>
             zombieBalance.Retarget(zombies, humans, UnityEngine.Time.unscaledTime);
+        internal static void ResetDynamicZombieBalance() => zombieBalance = default;
         internal static bool IsActiveZombie(PlayerAvatar player) => player && !player.IsDead && Zombies.Contains(player);
         private static bool TryActiveZombieRole(PlayerAvatar player, out bool zombie)
         {

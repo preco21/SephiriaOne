@@ -146,7 +146,7 @@ namespace SephiriaOne
             L.T("Balanced PvP: Elastic Band restores dash charges at most once every 2s per defender; extended weapon-counter protection is capped at 0.35s. PvE stays native.") + " " +
             L.T("PvP recovery: HP Steal is disabled on friendly-fire hits.") + " " +
             L.T("Rabbit shared healing is blocked in PvP by default. /one rabbit block-pvp-share off permits it when Share HP healing is enabled.") + " " +
-            L.T("Hit-frequency scaling: /one friendlyfire hit-frequency on|off|reset. Default off; direct and incidental hits have separate rate histories, with one shared damage allowance. Requires PvP balancing.") + " " +
+            L.T("Hit-frequency scaling: /one friendlyfire hit-frequency on|off|reset. Default off; direct hits, other incidental hits and each Planet type have separate rate histories, with one shared damage allowance. Requires PvP balancing.") + " " +
             L.T("Rapid hits: /one friendlyfire rapid window 0.1..10; rate 0.1..100; exponent 0..2; burst 1..100 (up to 2 decimals). Each accepts reset; rapid reset restores only these four numbers to 1s, 4 hits/s, 0.5 and 75%.") + " " +
             L.T("PvP damage allowance: valid positive hits retain at least 1 damage before shields when credit runs out. Native defenses and debuff intervals still apply; extreme hit rates can exceed the refill limit.") + " " +
             L.T("PvP DoT: /one friendlyfire dot burn|plasma-burn|frostbite|poison|wound|lightning|plasma-shock|freeze|chim|dark-cloud 0.05..10|reset (seconds, up to 2 decimals). Lightning and Plasma shock have separate clocks; Freeze controls damage, not stun. Only with PvP balancing on.") + " " +

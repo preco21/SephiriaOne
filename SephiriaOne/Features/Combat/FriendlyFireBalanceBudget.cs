@@ -20,7 +20,18 @@ namespace SephiriaOne
             internal string SourceFloor, TargetFloor;
             internal FriendlyFireDamageBudget Budget;
             internal FriendlyFireHitFrequency Frequency, IncidentalFrequency;
+            private FriendlyFireHitFrequency[] planets;
             internal long FrequencyRevision;
+            internal ref FriendlyFireHitFrequency PlanetFrequency(int source)
+            {
+                if (planets == null) planets = new FriendlyFireHitFrequency[PlanetHitCadence.Count];
+                return ref planets[source];
+            }
+            internal void ResetFrequencies()
+            {
+                Frequency = IncidentalFrequency = default;
+                if (planets != null) System.Array.Clear(planets, 0, planets.Length);
+            }
             // Fixed catalog-sized storage, allocated only for a pair that lands
             // an audited artifact hit. Re-equipping cannot reset source identity.
             private DebuffPulse[] artifacts;
@@ -93,7 +104,7 @@ namespace SephiriaOne
             {
                 window.Started = true; window.Budget = default; window.Generation++;
                 window.ResetPulses(); window.ResetArtifacts();
-                window.Frequency = window.IncidentalFrequency = default;
+                window.ResetFrequencies();
                 window.CombatEpoch = epoch; window.ParticipantEpoch = participants; window.Revision = revision;
                 window.SourceLife = source.Life; window.TargetLife = target.Life;
                 window.SourceFloor = sourceFloor; window.TargetFloor = targetFloor;
@@ -120,10 +131,16 @@ namespace SephiriaOne
             {
                 long frequencyRevision = SessionSettings.CombatFrequencyRevision;
                 if (window.FrequencyRevision != frequencyRevision)
-                { window.Frequency = window.IncidentalFrequency = default; window.FrequencyRevision = frequencyRevision; }
-                // Two fixed histories, one allowance. Procs/companions/DoT cannot
-                // inflate direct hit counts or acquire their own damage budget.
-                ref var frequency = ref (IsIncidentalHit() ? ref window.IncidentalFrequency : ref window.Frequency);
+                { window.ResetFrequencies(); window.FrequencyRevision = frequencyRevision; }
+                // Each audited Planet type has its own cadence: independent
+                // orbiters and their procs must not slow one another. All copies
+                // of that type still share history, and every hit pays the same
+                // owner/opponent budget below. Other incidental policy is unchanged.
+                int planet = ReferenceEquals(current.Source, current.Attacker) && !current.Reflection &&
+                    !current.InDebuffDamage && !current.InBurnExplosion && !current.InArtifactDamage
+                    ? PlanetHitCadence.Source(current.Damage) : -1;
+                ref var frequency = ref (planet >= 0 ? ref window.PlanetFrequency(planet) :
+                    ref (IsIncidentalHit() ? ref window.IncidentalFrequency : ref window.Frequency));
                 damage *= frequency.Next(now, rapid);
             }
             long chaserRevision = CombatMatchRuntime.RoleRevision;
