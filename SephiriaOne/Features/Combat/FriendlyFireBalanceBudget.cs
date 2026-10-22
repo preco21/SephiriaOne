@@ -19,6 +19,7 @@ namespace SephiriaOne
             internal long CombatEpoch, ParticipantEpoch, Revision, SourceLife, TargetLife, Generation, RoleRevision;
             internal string SourceFloor, TargetFloor;
             internal FriendlyFireDamageBudget Budget;
+            internal FriendlyFireDamageBudget Assistance;
             internal FriendlyFireHitFrequency Frequency, IncidentalFrequency;
             private FriendlyFireHitFrequency[] planets;
             internal long FrequencyRevision;
@@ -102,7 +103,7 @@ namespace SephiriaOne
                 window.Revision != revision || window.SourceLife != source.Life || window.TargetLife != target.Life ||
                 window.SourceFloor != sourceFloor || window.TargetFloor != targetFloor)
             {
-                window.Started = true; window.Budget = default; window.Generation++;
+                window.Started = true; window.Budget = window.Assistance = default; window.Generation++;
                 window.ResetPulses(); window.ResetArtifacts();
                 window.ResetFrequencies();
                 window.CombatEpoch = epoch; window.ParticipantEpoch = participants; window.Revision = revision;
@@ -112,7 +113,7 @@ namespace SephiriaOne
             return window;
         }
 
-        private static double LimitBalancedDamage(double damage, double maxHp, double refillPerSecond, double baseRefill, double incomingScale, bool hitFrequency, PvpDotSettings intervals, PvpRapidSettings rapid, PvpArtifactRateSettings artifactRate)
+        private static double LimitBalancedDamage(double damage, double maxHp, double refillPerSecond, double baseRefill, double incomingScale, bool hitFrequency, PvpDotSettings intervals, PvpRapidSettings rapid, PvpArtifactRateSettings artifactRate, PvpLowerBoundSettings lowerBound)
         {
             var window = CurrentBalanceWindow();
             if (window == null) return 0;
@@ -127,6 +128,7 @@ namespace SephiriaOne
             var effect = (PvpDotEffect)pulse;
             if (pulse >= 0 && intervals.PreserveSchedule(effect) &&
                 !window.Pulse(effect).Ready(now, intervals.Interval(effect))) return 0;
+            double requestedBonus = lowerBound.Enabled ? FriendlyFireLowerBound.RequestedBonus(damage, maxHp, lowerBound.ReferenceScale) : 0;
             if (hitFrequency && damage > 0)
             {
                 long frequencyRevision = SessionSettings.CombatFrequencyRevision;
@@ -141,15 +143,25 @@ namespace SephiriaOne
                     ? PlanetHitCadence.Source(current.Damage) : -1;
                 ref var frequency = ref (planet >= 0 ? ref window.PlanetFrequency(planet) :
                     ref (IsIncidentalHit() ? ref window.IncidentalFrequency : ref window.Frequency));
-                damage *= frequency.Next(now, rapid);
+                double factor = frequency.Next(now, rapid);
+                damage *= factor;
+                requestedBonus *= factor;
             }
+            // One bonus reserve for the whole owner/opponent, not per source or
+            // cadence category. Charge in post-frequency, pre-role damage units.
+            double bonus = requestedBonus > 0 ? window.Assistance.Take(requestedBonus, maxHp, now,
+                refillPerSecond: lowerBound.RefillScale, capacity: lowerBound.ReferenceScale) : 0;
             long chaserRevision = CombatMatchRuntime.RoleRevision;
             // A carrier can change away and back between two hits. Preserve tokens,
             // but do not award boosted credit across an unobserved role/config edit.
             double elapsedCeiling = window.RoleRevision == chaserRevision ? double.PositiveInfinity : baseRefill;
             // Reserve funded credit before callbacks. The minimum survives an
             // empty pool; role reduction still uses pre-reduction ledger units.
-            double allowed = window.Budget.Take(damage, maxHp, now, out double charged, refillPerSecond, elapsedCeiling, 1d / incomingScale, rapid.BurstScale);
+            double allowed = window.Budget.Take(damage + bonus, maxHp, now, out double charged, refillPerSecond, elapsedCeiling, 1d / incomingScale, rapid.BurstScale);
+            // Original damage spends the upper allowance first. Do not burn
+            // bonus credit that the upper budget could not actually fund.
+            double fundedBonus = System.Math.Min(bonus, System.Math.Max(0, charged - damage));
+            if (bonus > fundedBonus) window.Assistance.Refund((bonus - fundedBonus) / maxHp, lowerBound.ReferenceScale);
             window.RoleRevision = chaserRevision;
             if (allowed > 0)
             {
@@ -162,6 +174,7 @@ namespace SephiriaOne
                 current.BudgetWindow = window; current.BudgetGeneration = window.Generation;
                 current.BudgetCharged = charged; current.BudgetMaxHp = maxHp;
                 current.BudgetIncomingScale = incomingScale;
+                current.BudgetBonusCharged = fundedBonus;
             }
             return allowed;
         }
@@ -191,6 +204,11 @@ namespace SephiriaOne
             // fractional credit lost to MP integer rounding or a later veto.
             // Never refund an exceptional hit: it may already have written HP.
             window.Budget.Refund(unused / current.BudgetMaxHp, SessionSettings.FriendlyFireForHit.Rapid.BurstScale);
+            // Native veto/overkill losses return the bonus portion first, once.
+            // Shield absorption is already accounted as delivered damage above.
+            double unusedBonus = System.Math.Min(unused, current.BudgetBonusCharged);
+            if (unusedBonus > 0) window.Assistance.Refund(unusedBonus / current.BudgetMaxHp,
+                SessionSettings.FriendlyFireForHit.LowerBound.ReferenceScale);
         }
     }
 }

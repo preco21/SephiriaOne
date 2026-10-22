@@ -1,5 +1,13 @@
 # Host settings panel
 
+## Weak-hit assistance (`0.90.0`, 2026-10-23)
+
+The left **PvP Balance** pane now scrolls to expose the lower-bound toggle,
+opponent-HP reference and bonus refill controls without compressing the existing
+guard/amplification rows or the independent right DoT list. EN/KO labels, Apply,
+per-number reset and family reset use the shared host command path. Defaults:
+off, 4% reference, 8% HP/s refill. See [model and limits](pvp-lower-bound.md).
+
 ## Teleport all button (`0.89.4`, 2026-10-23)
 
 Combat's left column includes **Teleport all players / 모든 플레이어 소환** below

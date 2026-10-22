@@ -1,4 +1,6 @@
 using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace SephiriaOne
 {
@@ -15,7 +17,24 @@ namespace SephiriaOne
 
         private void BuildPvpBalanceEditor()
         {
-            var content = PanelWidgets.Rect(pageRoot, "BalanceControls", 16, 0, 273, PageHeight);
+            var container = PanelWidgets.Rect(pageRoot, "BalanceScroll", 16, 0, 286, PageHeight);
+            container.gameObject.AddComponent<Image>().color = new Color32(17, 27, 40, 255);
+            var scroll = container.gameObject.AddComponent<ScrollRect>();
+            var viewport = PanelWidgets.Rect(container, "Viewport", 0, 0, 273, PageHeight);
+            viewport.gameObject.AddComponent<RectMask2D>();
+            var content = PanelWidgets.Rect(viewport, "BalanceControls", 0, 0, 273, 510);
+            scroll.viewport = viewport; scroll.content = content; scroll.horizontal = false;
+            scroll.movementType = ScrollRect.MovementType.Clamped; scroll.scrollSensitivity = 30;
+            var track = PanelWidgets.Rect(container, "Scrollbar", 278, 0, 8, PageHeight);
+            track.gameObject.AddComponent<Image>().color = new Color32(39, 59, 82, 255);
+            var bar = track.gameObject.AddComponent<Scrollbar>();
+            var handle = PanelWidgets.Rect(track, "Handle", 0, 0, 0, 0);
+            handle.anchorMin = Vector2.zero; handle.anchorMax = Vector2.one;
+            handle.pivot = new Vector2(0.5f, 0.5f);
+            var image = handle.gameObject.AddComponent<Image>(); image.color = PanelWidgets.Accent;
+            bar.handleRect = handle; bar.targetGraphic = image; bar.direction = Scrollbar.Direction.BottomToTop;
+            bar.navigation = new Navigation { mode = Navigation.Mode.None };
+            scroll.verticalScrollbar = bar;
             AddCheckbox("PvP balancing", 0, 0, 170, 25, s => s.FriendlyFire.Balance,
                 s => s.FriendlyFireAvailable, "/one friendlyfire balance", parent: content);
             widgets.Button(content, "Rapid Hits", 178, 0, 95, 25, () => SelectPage(PvpRapidPage));
@@ -36,11 +55,13 @@ namespace SephiriaOne
             friendlyAmplificationHard = widgets.Input(content, 98, 201, 90, EditFriendlyAmplification);
             changeButtons.Add(widgets.Button(content, "Apply", 196, 201, 77, 25, ApplyFriendlyAmplification));
             widgets.Text(content, "AmplificationHint", "Bonus %, not C-menu total.", 0, 232, 273, 18, 11);
+            BuildPvpLowerBound(PanelWidgets.Rect(content, "LowerBoundControls", 0, 264, 273, 238));
             BuildPvpDotEditor();
         }
 
         private void RefreshPvpBalance(SettingsSnapshot snapshot)
         {
+            RefreshPvpLowerBound(snapshot);
             if (!friendlyGuardMp || !friendlyPerfectGuard) return;
             friendlyGuardMp.interactable = friendlyPerfectGuard.interactable = snapshot.CanMutate && snapshot.FriendlyFireAvailable;
             if (!friendlyGuardMpDraft) friendlyGuardMp.SetTextWithoutNotify(snapshot.FriendlyFire.GuardMpNumber);

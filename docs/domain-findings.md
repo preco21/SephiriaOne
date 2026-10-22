@@ -1,5 +1,12 @@
 # Sephiria domain findings
 
+PvP lower-bound assistance (`0.90.0`): post-percentage hit damage relative to
+victim maximum HP is a practical runtime measure of offensive pressure across
+different native formulas. A shared bonus pool prevents each tiny packet or
+Planet source from receiving a fresh percentage floor. Apply frequency to both
+base and bonus; reserve/refund only funded credit before callbacks, then retain
+role and shield reductions. See [model and limits](pvp-lower-bound.md).
+
 PvP burst (`0.88.0`): a nonlinear per-packet curve rewards splitting damage even
 with hit-frequency scaling disabled. Use one attacker/opponent recoverable
 reserve for heavy hits and barrages; stored capacity and sustained refill are

@@ -1,5 +1,11 @@
 # Slow burst versus split damage audit
 
+`0.90.0` adds optional [lower-bound assistance](pvp-lower-bound.md) before this
+shared reserve. It supplies a small separate allowance for weak hits, applies
+rapid-hit scaling to original and bonus damage together, and still funds their
+combined amount through the upper reserve below. Default off; the unassisted
+comparisons in this document remain valid.
+
 ## Implemented shared burst (`0.88.0`, 2026-10-22)
 
 The low per-hit curve is removed for **all player-victim PvP damage**, including

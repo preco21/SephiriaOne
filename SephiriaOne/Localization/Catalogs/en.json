@@ -1,4 +1,11 @@
 {
+  "Weak-hit assistance": "Weak-hit assistance",
+  "Reference (% opponent max HP)": "Reference (% opponent max HP)",
+  "Bonus refill (% max HP/s)": "Bonus refill (% max HP/s)",
+  "Reset assistance": "Reset assistance",
+  "Weak hits use one small bonus pool per opponent across all sources. Role reductions, shields and the main allowance still apply.": "Weak hits use one small bonus pool per opponent across all sources. Role reductions, shields and the main allowance still apply.",
+  "PvP lower-bound assistance: {0}; reference {1}% opponent max HP; shared bonus refill {2}% max HP/s (requires PvP balancing).": "PvP lower-bound assistance: {0}; reference {1}% opponent max HP; shared bonus refill {2}% max HP/s (requires PvP balancing).",
+  "PvP lower-bound assistance: /one friendlyfire lower-bound on|off|reset; lower-bound reference 0.1..25|reset; lower-bound refill 0.1..100|reset (percent, up to 2 decimals). Default off, 4% reference and 8% max HP/s refill. Weak positive hits are lifted relative to opponent max HP using one small bonus pool shared by all sources per opponent, not a fresh minimum for every hit. Role reductions, shields and the main damage allowance can reduce the result. Requires PvP balancing.": "PvP lower-bound assistance: /one friendlyfire lower-bound on|off|reset; lower-bound reference 0.1..25|reset; lower-bound refill 0.1..100|reset (percent, up to 2 decimals). Default off, 4% reference and 8% max HP/s refill. Weak positive hits are lifted relative to opponent max HP using one small bonus pool shared by all sources per opponent, not a fresh minimum for every hit. Role reductions, shields and the main damage allowance can reduce the result. Requires PvP balancing.",
   "Suppress Thorns": "Suppress Thorns",
   "Suppress PvP Thorns: {0} (requires PvP balancing).": "Suppress PvP Thorns: {0} (requires PvP balancing).",
   "Suppress PvP Thorns: /one friendlyfire suppress-thorns on|off|reset. Default off; blocks Thorns retaliation against hostile players only while PvP balancing is on. PvE and other reflection effects stay unchanged.": "Suppress PvP Thorns: /one friendlyfire suppress-thorns on|off|reset. Default off; blocks Thorns retaliation against hostile players only while PvP balancing is on. PvE and other reflection effects stay unchanged.",

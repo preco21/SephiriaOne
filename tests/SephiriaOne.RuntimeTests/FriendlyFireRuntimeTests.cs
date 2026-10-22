@@ -11,6 +11,7 @@ internal static class FriendlyFireRuntimeTests
         CheckDotDurationEdits(check, true);
         CheckArtifactRateEdits(check, true);
         CheckThornsEdits(check, true);
+        CheckLowerBoundEdits(check, true);
         var prior = SessionSettings.FriendlyFireForHit.DotIntervals;
         long token = CombatMatchRuntime.MatchToken, scores = FriendlyFireKda.Epoch,
             balance = SessionSettings.CombatBalanceRevision, roles = CombatMatchRuntime.RoleRevision;
@@ -123,6 +124,33 @@ internal static class FriendlyFireRuntimeTests
             new PvpPerfectGuardChange(prior.PerfectGuard.Enabled, prior.PerfectGuard.Multiplier)), out _), "Restore prior Perfect Guard policy");
     }
 
+    private static void CheckLowerBoundEdits(Action<bool, string> check, bool matchRunning)
+    {
+        var prior = SessionSettings.FriendlyFireForHit;
+        long participants = FriendlyFireParticipants.Epoch, token = CombatMatchRuntime.MatchToken, scores = FriendlyFireKda.Epoch,
+            balance = SessionSettings.CombatBalanceRevision, frequency = SessionSettings.CombatFrequencyRevision, roles = CombatMatchRuntime.RoleRevision;
+        foreach (string operation in new[] { "reference 5.25", "refill 10.5", "on", "off", "on", "reference reset", "refill reset", "reset" })
+            check(SettingsActions.Execute("/one friendlyfire lower-bound " + operation).Success &&
+                CombatMatchRuntime.IsRunning == matchRunning && CombatMatchRuntime.MatchToken == token && FriendlyFireKda.Epoch == scores &&
+                FriendlyFireParticipants.Epoch == participants && SessionSettings.CombatBalanceRevision == balance &&
+                SessionSettings.CombatFrequencyRevision == frequency && CombatMatchRuntime.RoleRevision == roles &&
+                SessionSettings.FriendlyFireForHit.Enabled == prior.Enabled && SessionSettings.FriendlyFireForHit.Balance == prior.Balance,
+                "Lower-bound edits preserve match, participants, switches, scores and all combat revisions: " + operation);
+        check(!SessionSettings.TryExecuteFriendlyFire(new FriendlyFireCommand(false, lowerBound: new(referencePercent: 0)), out _) &&
+            !SettingsActions.Execute("/one friendlyfire lower-bound refill 8.001").Success &&
+            !SessionSettings.FriendlyFireForHit.LowerBound.HasChanges && SessionSettings.CombatBalanceRevision == balance,
+            "Invalid assistance settings fail atomically");
+        check(SettingsActions.Execute("/one friendlyfire lower-bound reference 5.25").Success &&
+            SettingsActions.Execute("/one friendlyfire lower-bound refill 10.5").Success &&
+            SettingsActions.Execute("/one friendlyfire lower-bound on").Success, "Configure assistance snapshot and status");
+        var configured = SessionSettings.ReadSnapshot().FriendlyFire.LowerBound;
+        check(configured.Enabled && configured.ReferencePercent == 5.25m && configured.RefillPercent == 10.5m &&
+            SettingsActions.Execute("/one friendlyfire status").Messages.Any(m => m.Contains("lower-bound assistance: on; reference 5.25%") &&
+                m.Contains("shared bonus refill 10.5%")), "Snapshot and status expose current assistance settings");
+        check(SessionSettings.TryExecuteFriendlyFire(new FriendlyFireCommand(false, lowerBound:
+            new(prior.LowerBound.Enabled, prior.LowerBound.ReferencePercent, prior.LowerBound.RefillPercent)), out _), "Restore assistance settings");
+    }
+
     private static void CheckThornsEdits(Action<bool, string> check, bool matchRunning)
     {
         var prior = SessionSettings.FriendlyFireForHit;
@@ -207,6 +235,7 @@ internal static class FriendlyFireRuntimeTests
         CheckDotDurationEdits(check, false);
         CheckArtifactRateEdits(check, false);
         CheckThornsEdits(check, false);
+        CheckLowerBoundEdits(check, false);
         check(Score(host) == "P(1/0/0)" && Score(helper) == "P(0/0/1)", "Perfect Guard edits retain exact K/D/A totals");
         check(Score(host) == "P(1/0/0)" && Score(helper) == "P(0/0/1)", "Rapid number edits retain exact K/D/A scores");
         balanceRevision = SessionSettings.CombatBalanceRevision;

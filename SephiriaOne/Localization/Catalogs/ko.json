@@ -1,4 +1,11 @@
 {
+  "Weak-hit assistance": "약한 타격 보조",
+  "Reference (% opponent max HP)": "기준 (상대 최대 HP %)",
+  "Bonus refill (% max HP/s)": "보너스 회복 (최대 HP %/초)",
+  "Reset assistance": "타격 보조 초기화",
+  "Weak hits use one small bonus pool per opponent across all sources. Role reductions, shields and the main allowance still apply.": "약한 타격은 모든 피해원이 상대별 작은 보너스 풀을 공유합니다. 역할 피해 감소, 보호막, 주 피해 예산이 적용됩니다.",
+  "PvP lower-bound assistance: {0}; reference {1}% opponent max HP; shared bonus refill {2}% max HP/s (requires PvP balancing).": "PvP 약한 타격 보조: {0}; 기준 상대 최대 HP {1}%; 공유 보너스 초당 최대 HP {2}% 회복 (PvP 밸런싱 필요).",
+  "PvP lower-bound assistance: /one friendlyfire lower-bound on|off|reset; lower-bound reference 0.1..25|reset; lower-bound refill 0.1..100|reset (percent, up to 2 decimals). Default off, 4% reference and 8% max HP/s refill. Weak positive hits are lifted relative to opponent max HP using one small bonus pool shared by all sources per opponent, not a fresh minimum for every hit. Role reductions, shields and the main damage allowance can reduce the result. Requires PvP balancing.": "PvP 약한 타격 보조: /one friendlyfire lower-bound on|off|reset; lower-bound reference 0.1..25|reset; lower-bound refill 0.1..100|reset (%, 소수 둘째 자리까지). 기본 꺼짐, 기준 4%, 초당 최대 HP 8% 회복. 양수인 약한 타격을 상대 최대 HP에 비례해 보조하며, 모든 피해원이 상대별 작은 보너스 풀 하나를 공유합니다. 타격마다 최소 피해를 새로 지급하지 않습니다. 역할 피해 감소, 보호막, 주 피해 예산으로 결과가 줄어들 수 있습니다. PvP 밸런싱이 필요합니다.",
   "Suppress Thorns": "가시 반격 차단",
   "Suppress PvP Thorns: {0} (requires PvP balancing).": "PvP 가시 반격 차단: {0} (PvP 밸런스 보정 필요).",
   "Suppress PvP Thorns: /one friendlyfire suppress-thorns on|off|reset. Default off; blocks Thorns retaliation against hostile players only while PvP balancing is on. PvE and other reflection effects stay unchanged.": "PvP 가시 반격 차단: /one friendlyfire suppress-thorns on|off|reset. 기본 꺼짐. PvP 밸런스 보정 중 적대 플레이어를 향한 가시 반격만 차단합니다. PvE와 다른 반사 효과는 유지됩니다.",

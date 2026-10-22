@@ -16,9 +16,10 @@ internal static class GameAmplificationPanelTests
             build.Any(i => i.LoadsConstant("Soft bonus (%)")) && build.Any(i => i.LoadsConstant("Hard bonus (%)")) &&
             build.Any(i => i.LoadsConstant("Bonus %, not C-menu total.")),
             "Controls identify bonus units and the required balancing toggle");
-        Require(!build.Any(i => Call(i, "ScrollRect", "set_content")) &&
+        Require(build.Any(i => Call(i, "ScrollRect", "set_content")) &&
+            build.Any(i => Call(i, "SettingsPanel", "BuildPvpLowerBound")) &&
             build.Any(i => Call(i, "SettingsPanel", "BuildPvpDotEditor")),
-            "General balancing stays visible without an inner scroll beside the dedicated debuff editor");
+            "General balancing scrolls through assistance controls beside the full dedicated debuff editor");
         var apply = Code("ApplyFriendlyAmplification");
         Require(apply.Any(i => i.LoadsConstant("/one friendlyfire amplification limits ")) &&
             apply.Count(i => Call(i, "TMP_InputField", "get_text")) == 2 && apply.Any(i => Call(i, "SettingsPanel", "Execute")) &&

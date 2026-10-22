@@ -21,6 +21,7 @@ namespace SephiriaOne
             internal BalanceWindow BudgetWindow;
             internal long BudgetGeneration;
             internal double BudgetCharged, BudgetMaxHp, BudgetAccounted, BudgetIncomingScale;
+            internal double BudgetBonusCharged;
             internal int ParryMpBefore;
             internal bool ActiveShieldSpend, ShieldAbsorbed, DefenseMpSpent;
             internal bool PerfectGuard;
@@ -225,7 +226,7 @@ namespace SephiriaOne
                     double refill = settings.RefillScale * CombatMatchRuntime.RefillRoleScale(current.Attacker);
                     // A single pool funds heavy hits and split barrages alike. A per-hit
                     // compression curve here would reward splitting damage into packets.
-                    scaled = LimitBalancedDamage(scaled, maxHp, refill, settings.RefillScale, incoming, settings.HitFrequency, settings.DotIntervals, settings.Rapid, settings.ArtifactRate);
+                    scaled = LimitBalancedDamage(scaled, maxHp, refill, settings.RefillScale, incoming, settings.HitFrequency, settings.DotIntervals, settings.Rapid, settings.ArtifactRate, settings.LowerBound);
                 }
                 // Reduce the damage native code can actually accept, including
                 // extreme unbalanced hits that would otherwise reach this cap.

@@ -56,6 +56,8 @@ namespace SephiriaOne
             { message = FriendlyFireCommand.Usage; return false; }
             if (command.Rapid.HasValue && !command.Rapid.Value.IsValid)
             { message = FriendlyFireCommand.Usage; return false; }
+            if (command.LowerBound.HasValue && !command.LowerBound.Value.IsValid)
+            { message = FriendlyFireCommand.Usage; return false; }
             if (command.ArtifactRate.HasValue && !command.ArtifactRate.Value.IsValid)
             { message = FriendlyFireCommand.Usage; return false; }
             if (command.PerfectGuard.HasValue && !command.PerfectGuard.Value.IsValid)
@@ -98,6 +100,8 @@ namespace SephiriaOne
             L.F("Infinite PvP HP potions: {0}.", L.T(settings.InfiniteHpPotions ? "on" : "off")) + " " +
             L.F("Automatic Large Potion: {0}.", L.T(settings.AutoPotion ? "on" : "off")) + " " +
             L.F("PvP balancing: {0}.", L.T(settings.Balance ? "on" : "off")) + " " +
+            L.F("PvP lower-bound assistance: {0}; reference {1}% opponent max HP; shared bonus refill {2}% max HP/s (requires PvP balancing).",
+                L.T(settings.LowerBound.Enabled ? "on" : "off"), settings.LowerBound.ReferenceNumber, settings.LowerBound.RefillNumber) + " " +
             L.F("Suppress PvP Thorns: {0} (requires PvP balancing).", L.T(settings.SuppressThorns ? "on" : "off")) + " " +
             L.F("Hit-frequency scaling: {0} (requires PvP balancing).", L.T(settings.HitFrequency ? "on" : "off")) + " " +
             L.F("Rapid history: {0}s; full-damage threshold: {1} hits/s; reduction exponent: {2}; burst allowance: {3}% max HP.",
