@@ -118,7 +118,7 @@ namespace SephiriaOne
                 settings.DotIntervals.Number(PvpDotEffect.Freeze), settings.DotIntervals.Number(PvpDotEffect.Chim),
                 settings.DotIntervals.Number(PvpDotEffect.DarkCloud)) + " " +
             L.F("Plasma shock interval: {0}s.", settings.DotIntervals.Number(PvpDotEffect.PlasmaShock)) + " " +
-            L.F("Autonomous artifact hit limit: {0}; {1}s per artifact/opponent (requires PvP balancing; Dark Cloud uses the longer interval).",
+            L.F("Autonomous artifact hit limit: {0}; {1}s per artifact/opponent (requires PvP balancing; excludes Dark Cloud).",
                 L.T(settings.ArtifactRate.Enabled ? "on" : "off"), settings.ArtifactRate.Number) + " " +
             L.F("PvP Burn-family duration cap: {0}s (Burn, Plasma Burn and blue/evolved variants; requires balancing).", settings.DotMaxDurationNumber) + " " +
             DescribeDebuffSchedules(settings.DotIntervals) + " " +

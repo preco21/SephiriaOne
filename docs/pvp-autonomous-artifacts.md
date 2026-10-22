@@ -3,6 +3,16 @@
 Added in **0.86.0**, 2026-10-22. Host-only; uses existing native damage and
 replication paths for unmodified guests. No custom client assets or messages.
 
+**`0.89.1` correction:** Dark Cloud is excluded from this limiter. The earlier
+implementation treated it as another autonomous attack and used the longer of
+the two intervals. That made the general setting override its dedicated control.
+Dark Cloud now uses only `/one friendlyfire dot dark-cloud N` (default 0.7s).
+Changing the artifact interval/toggle does not reset or modify its strike clock.
+Saved settings retain both existing values; no migration or new runtime state.
+Release build, combat/runtime regressions, localization and installed-game
+compatibility checks passed. The decoupling adds no polling or allocations;
+existing Dark Cloud allocation checks still pass. Not deployed or live-tested.
+
 ## Controls
 
 **PvP Balance → Artifacts / Debuffs → Autonomous artifact hit limit** has a
@@ -42,14 +52,13 @@ can emit more attacks but cannot shorten the PvP damage interval.
 | Electro Chakram / 전격 차크람 (1013) | `Charm_Chakram` | Orbiting proximity collisions. |
 | Echo of the Glacier / 빙하의 메아리 (1178) | `Charm_EchoOfTheGlacier` | Upgraded direct damage on periodic pulses; shared parry-triggered pulse also uses this source. |
 | Snow Mountain Long-eared Bat / 설산 큰귀박쥐 (1293) | `Charm_IceBat` | Automatic owned-Frostbite target search, then two half-damage projectiles. |
-| Dark Cloud / 먹구름 category effect | `Ability_DarkCloud` | Existing whole-strike gate uses **max(artifact interval, Dark Cloud interval)** when this toggle is on. |
 
 Ice Bat is an artifact visual/projectile, not a hired/summoned companion
 `UnitAvatar`. With a 2-second limit, its two quick impacts share the same clock:
 the second half-hit is rejected; damage is not combined into the first hit.
 The same applies to multiple blades or overlapping copies from one source.
 
-Exclusions: planets, companion-origin damage, ordinary/direct/special weapon
+Exclusions: Dark Cloud (its own interval), planets, companion-origin damage, ordinary/direct/special weapon
 attacks, books, weapon/magic-trigger-only procs (Pallas, Kunai, Ice Vine,
 Flame Herb Root, Frostium Ring variants, Tuning Forks), manual active artifacts,
 and retaliation/dash/kill-trigger-only effects. Frost Relic (`FROST`, 얼음 무구)
@@ -86,7 +95,8 @@ direct damage call; their status applications, durations and stacks are not
 suppressed by this damage control. Base Echo only applies Frostbite and has no
 direct damage to limit. This is not a per-artifact cap on all subsequent DoT.
 Dark Cloud already gates its whole strike upstream because its independent
-callback applies Blazing Stormcloud Burn; composing there preserves that safety.
+callback applies Blazing Stormcloud Burn. Its dedicated interval continues to
+gate the whole strike, including callbacks/FX, independently of this limiter.
 Other native visual emissions remain, even when an impact is rejected.
 
 ## Shared lifecycle and performance
@@ -139,7 +149,7 @@ Non-deploying Release build passes with zero warnings/errors. Tests cover policy
 and preset round trips, host-only commands, all match modes and live edits,
 connection/run transitions, exact cadence, independent sources/players,
 exclusions, guard/callback rejection, nested damage, budget exhaustion, and
-Dark Cloud composition. Installed-game IL contracts validate emitter IDs,
+Dark Cloud interval independence. Installed-game IL contracts validate emitter IDs,
 shared impact routes, lifecycle and UI wiring; EN/KO catalogs pass validation.
 
 Live host/guest gameplay and UI rendering remain unverified. Check boosted

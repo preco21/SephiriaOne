@@ -41,10 +41,9 @@ internal static class GameAutonomousArtifactTests
         foreach (string field in new[] { "CombatEpoch", "ParticipantEpoch", "Revision", "SourceLife", "TargetLife", "SourceFloor", "TargetFloor" })
             Require(scope.Any(i => i.operand is FieldInfo f && f.Name == field), "Artifact clocks share lifecycle boundary " + field);
         Require(Calls(scope, "BalanceWindow", "ResetArtifacts"), "Reset retires artifact clocks with budget and debuffs");
-        var cloud = Code(runtime, "DarkCloudInterval");
-        Require(Calls(Code(runtime, "BeforeDarkCloudStrike"), "FriendlyFireRuntime", "DarkCloudInterval") &&
-            Calls(cloud, "Math", "Max") && Calls(cloud, "PvpDotSettings", "Interval") && Calls(cloud, "PvpArtifactRateSettings", "get_Enabled"),
-            "Cloud composes max interval at its whole-strike boundary");
+        var cloud = Code(runtime, "BeforeDarkCloudStrike");
+        Require(Calls(cloud, "PvpDotSettings", "Interval") && !Calls(cloud, "FriendlyFireSettings", "get_ArtifactRate"),
+            "Cloud uses its own interval at the whole-strike boundary independently of the artifact limiter");
         var panel = addon.GetType("SephiriaOne.SettingsPanel", true)!;
         var build = Code(panel, "BuildPvpArtifactRate");
         Require(build.Any(i => i.LoadsConstant("Autonomous artifact hit limit")) && build.Any(i => i.LoadsConstant("Minimum hit interval (s)")) &&

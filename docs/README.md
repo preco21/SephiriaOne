@@ -1,5 +1,9 @@
 # Development knowledge index
 
+[Independent Dark Cloud interval](pvp-autonomous-artifacts.md): the general
+autonomous-artifact minimum no longer overrides Dark Cloud's dedicated interval.
+Live general-setting edits preserve its strike clock; saved values are retained.
+
 [Optional PvP Thorns suppression](pvp-balancing.md#optional-thorns-suppression-0890-2026-10-22):
 off by default, with an EN/KO PvP Balance checkbox, shared host command and v48
 presets. Blocks the exact native Thorns return against hostile players before
@@ -23,11 +27,11 @@ pre-run lobby through shared commands, inheritance and maintenance. Spent balanc
 reconnect checkpoints and future-only mid-run edits remain protected.
 
 [Autonomous artifact PvP cadence](pvp-autonomous-artifacts.md): optional hard hit
-interval, default off / 2s, for seven audited automatic artifact sources and
-Dark Cloud. Shared pair/life/session clocks, explicit weapon/book/companion/planet
+interval, default off / 2s, for seven audited automatic artifact sources.
+Dark Cloud uses its own interval. Shared pair/life/session clocks, explicit weapon/book/companion/planet
 exclusions, native guest damage sync, EN/KO controls and v47 presets.
 
-Maintained: 2026-10-22 (Asia/Seoul), addon `0.89.0`.
+Maintained: 2026-10-22 (Asia/Seoul), addon `0.89.1`.
 
 [Configurable PvP DoT duration](pvp-dot-intervals.md#configurable-duration-cap-0850-2026-10-22):
 Burn/Plasma/blue/evolved lifetime cap now defaults to 1.2s, adjustable 0.05..10s

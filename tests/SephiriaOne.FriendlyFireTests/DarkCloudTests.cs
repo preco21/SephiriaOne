@@ -201,16 +201,23 @@ internal static class DarkCloudTests
         pair.Cloud.FireLightning(pair.Target);
         SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, artifactRate: new(true, 2)));
         Time.time = 10.7f; pair.Cloud.FireLightning(pair.Target);
-        check(pair.Cloud.Strikes == 1 && pair.Target.DebuffApplications == 1, "Autonomous limit composes before cloud strike and burn callback");
-        Time.time = 12; pair.Cloud.FireLightning(pair.Target);
-        check(pair.Cloud.Strikes == 2, "Longer autonomous interval admits cloud at its boundary");
-        SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, artifactRate: new(seconds: 0.1m)));
-        Time.time = 12.1f; pair.Cloud.FireLightning(pair.Target); check(pair.Cloud.Strikes == 2, "Short artifact interval cannot weaken existing Dark Cloud limit");
-        Time.time = 12.7f; pair.Cloud.FireLightning(pair.Target); check(pair.Cloud.Strikes == 3, "Own cloud interval still applies");
-        SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, artifactRate: new(true, 2)));
-        Time.time = 13.4f; pair.Cloud.FireLightning(pair.Target); check(pair.Cloud.Strikes == 3, "Live edits keep the cloud timestamp");
+        check(pair.Cloud.Strikes == 2 && pair.Cloud.Effects == 2 && pair.Target.DebuffApplications == 2,
+            "General artifact limit does not extend the independent 0.7s Dark Cloud interval");
+        SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, artifactRate: new(seconds: 60)));
+        Time.time = 10.8f; pair.Cloud.FireLightning(pair.Target);
+        check(pair.Cloud.Strikes == 2, "Editing general artifact interval cannot reset the Dark Cloud clock");
+        Time.time = 11.4f; pair.Cloud.FireLightning(pair.Target);
+        check(pair.Cloud.Strikes == 3, "Even a 60s artifact interval leaves Dark Cloud on its own cadence");
         SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, artifactRate: new(enabled: false)));
-        pair.Cloud.FireLightning(pair.Target); check(pair.Cloud.Strikes == 4, "Off immediately returns to the own cloud interval");
+        Time.time = 11.5f; pair.Cloud.FireLightning(pair.Target);
+        check(pair.Cloud.Strikes == 3, "Disabling general artifact limiter cannot grant an early Cloud strike");
+        SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, artifactRate: new(true, 0.05m),
+            dot: new(PvpDotEffect.DarkCloud, 2)));
+        Time.time = 12.1f; pair.Cloud.FireLightning(pair.Target);
+        check(pair.Cloud.Strikes == 3, "Own live Dark Cloud edit retains previous strike timestamp");
+        Time.time = 13.4f; pair.Cloud.FireLightning(pair.Target);
+        check(pair.Cloud.Strikes == 4 && pair.Cloud.Effects == 4 && pair.Target.DebuffApplications == 4,
+            "Short general artifact interval cannot weaken Dark Cloud's whole-strike limit");
         CombatMatchRuntime.PairRule = null; FriendlyFireParticipants.Clear(); Time.time = 0;
     }
 

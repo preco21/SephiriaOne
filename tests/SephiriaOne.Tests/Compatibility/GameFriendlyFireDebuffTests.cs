@@ -127,9 +127,9 @@ internal static class GameFriendlyFireDebuffTests
             "Debuff_Electric", "DEBUFF_ELECTRIC", "Debuff_Freeze", "Debuff_Chim" })
             Require(classify.Any(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, id)), "Shared clock recognizes " + id);
         var cloud = PatchProcessor.GetOriginalInstructions(AccessTools.Method(combat, "BeforeDarkCloudStrike"));
-        Require(cloud.Any(i => Call(i, "FriendlyFireRuntime", "DarkCloudInterval")) &&
-            PatchProcessor.GetOriginalInstructions(AccessTools.Method(combat, "DarkCloudInterval")).Any(i => Call(i, "PvpDotSettings", "Interval")),
-            "Dark Cloud reads its own live interval through the shared artifact interval composition");
+        Require(cloud.Any(i => Call(i, "PvpDotSettings", "Interval")) &&
+            !cloud.Any(i => Call(i, "FriendlyFireSettings", "get_ArtifactRate")),
+            "Dark Cloud reads its own live interval without general artifact coupling");
         var panel = addon.GetType("SephiriaOne.SettingsPanel", true)!;
         List<CodeInstruction> Panel(string name) => PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(panel, name)).ToList();
         Require(Panel("BuildPvpBalanceEditor").Any(i => Call(i, "SettingsPanel", "BuildPvpDotEditor")) &&

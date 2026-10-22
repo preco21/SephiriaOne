@@ -39,8 +39,5 @@ namespace SephiriaOne
             var window = CurrentBalanceWindow();
             return window == null || window.ArtifactReady(source, UnityEngine.Time.time, settings.Interval);
         }
-
-        private static float DarkCloudInterval(FriendlyFireSettings settings) => settings.ArtifactRate.Enabled ?
-            System.Math.Max(settings.ArtifactRate.Interval, settings.DotIntervals.Interval(PvpDotEffect.DarkCloud)) : settings.DotIntervals.Interval(PvpDotEffect.DarkCloud);
     }
 }

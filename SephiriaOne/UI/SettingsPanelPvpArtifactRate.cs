@@ -20,7 +20,7 @@ namespace SephiriaOne
             pvpArtifactInterval = widgets.Input(content, 4, 50, 56, _ => pvpArtifactDraft = true);
             changeButtons.Add(widgets.Button(content, "Apply", 66, 50, 62, 25, ApplyPvpArtifactRate));
             pvpArtifactReset = widgets.Button(content, "Reset", 134, 50, 120, 25, ResetPvpArtifactRate);
-            widgets.Text(content, "ArtifactIntervalHint", "Per artifact/opponent; Dark Cloud uses longer limit.", 4, 80, 250, 26, 10);
+            widgets.Text(content, "ArtifactIntervalHint", "Per artifact/opponent; excludes Dark Cloud.", 4, 80, 250, 26, 10);
         }
 
         private void RefreshPvpArtifactRate(SettingsSnapshot snapshot)
