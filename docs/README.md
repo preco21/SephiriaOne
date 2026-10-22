@@ -1,5 +1,10 @@
 # Development knowledge index
 
+[Respawn countdown emphasis](overhead-message-transport.md#respawn-countdown-emphasis-0902-2026-10-23):
+native cyan floating respawn text uses 125% size and bold markup. Chat/bubbles
+remain for comparison; the bitmap-font limitation and stock-guest evidence are
+documented. Bomb notices and countdown frequency are unchanged.
+
 [October disconnect audit](disconnect-projectile-audit.md): observed Steam timeout
 after failed sends, projectile lifetime/ownership review, separate stale FrostTouch
 FX fix, and throttled per-recipient transport diagnostics. Distinguishes evidence
@@ -50,7 +55,7 @@ interval, default off / 2s, for seven audited automatic artifact sources.
 Dark Cloud uses its own interval. Shared pair/life/session clocks, explicit weapon/book/companion/planet
 exclusions, native guest damage sync, EN/KO controls and v47 presets.
 
-Maintained: 2026-10-23 (Asia/Seoul), addon `0.90.1`.
+Maintained: 2026-10-23 (Asia/Seoul), addon `0.90.2`.
 
 [Configurable PvP DoT duration](pvp-dot-intervals.md#configurable-duration-cap-0850-2026-10-22):
 Burn/Plasma/blue/evolved lifetime cap now defaults to 1.2s, adjustable 0.05..10s

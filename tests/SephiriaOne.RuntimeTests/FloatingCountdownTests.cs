@@ -19,6 +19,7 @@ internal static class FloatingCountdownTests
         {
             var players = new[] { start().PlayerAvatar, add(2).PlayerAvatar, add(3).PlayerAvatar };
             NativePlayerFloatingText.Messages.Clear(); NativePlayerFloatingText.Fail = false;
+            NativePlayerFloatingText.Styles.Clear();
             At(0); check(SettingsActions.Execute("/one " + mode + " start").Success, "Start floating countdown: " + mode);
             At(3); return players;
         }
@@ -37,6 +38,8 @@ internal static class FloatingCountdownTests
                 var expected = new[] { "Respawn in: 3s", "Respawn in: 2s", "Respawn in: 1s" };
                 check(NativePlayerFloatingText.Messages.Select(m => m.Message).SequenceEqual(expected) &&
                     NativePlayerFloatingText.Messages.All(m => m.Player == victim), mode + " sends one particle per displayed respawn second");
+                check(NativePlayerFloatingText.Styles.Count == 3 && NativePlayerFloatingText.Styles.All(bold => bold),
+                    mode + " respawn particles use emphasized styling");
                 check(DungeonManager.Instance.ChatMessages.Where(m => m.Player == victim && m.Message.StartsWith("Respawn in:"))
                     .Select(m => m.Message).SequenceEqual(expected), mode + " retains every original chat/bubble countdown");
                 At(6); At(6.2f);
@@ -69,6 +72,7 @@ internal static class FloatingCountdownTests
             var tagPlayers = Begin("tag");
             var first = NativePlayerFloatingText.Messages.Single();
             check(first.Message == "Bomb: 30s", "Tag emits only short localized bomb text, not its long instruction");
+            check(NativePlayerFloatingText.Styles.Single() == false, "Bomb timer keeps its normal floating style");
             check(DungeonManager.Instance.ChatMessages.Any(m => m.Player == first.Player && m.Message.Contains("Pass the bomb")),
                 "Tag still sends the full bomb instruction through chat/bubble");
             At(3.2f); At(4); At(4.2f);
@@ -77,6 +81,7 @@ internal static class FloatingCountdownTests
             var recipient = tagPlayers.First(p => p != first.Player);
             Kill(first.Player, recipient);
             check(NativePlayerFloatingText.Messages.Last() == (recipient, "Respawn in: 1s"), "Tag retains its one-second respawn countdown");
+            check(NativePlayerFloatingText.Styles.Last(), "Tag's one-second respawn also uses emphasized styling");
             int count = NativePlayerFloatingText.Messages.Count; At(4.5f);
             check(NativePlayerFloatingText.Messages.Count == count, "Transferred bomb emits no timer while victim awaits revival");
             At(5.3f); // Death occurred at 4.2; wait the full native one-second delay.
@@ -126,11 +131,13 @@ namespace SephiriaOne
     internal static class NativePlayerFloatingText
     {
         internal static readonly List<(PlayerAvatar Player, string Message)> Messages = new();
+        internal static readonly List<bool> Styles = new();
         internal static bool Fail;
-        internal static void Show(PlayerAvatar player, string message)
+        internal static void Show(PlayerAvatar player, string message, bool emphasize = false)
         {
             if (Fail) throw new InvalidOperationException("optional floating text unavailable");
             Messages.Add((player, message));
+            Styles.Add(emphasize);
         }
     }
 }

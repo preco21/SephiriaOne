@@ -414,7 +414,7 @@ namespace SephiriaOne
             }
             else if (!IsPlayTag || player.IsDead || bomb == null || !ReferenceEquals(bomb, tagBomb) || chaser != RoleRevision ||
                 bomb.Resolved || bomb.AwaitingRespawn || bomb.IsDue(Now) || !ReferenceEquals(tagPlayers[bomb.Carrier].Subject.Player, player)) return;
-            try { NativePlayerFloatingText.Show(player, floating); }
+            try { NativePlayerFloatingText.Show(player, floating, emphasize: respawn != null); }
             catch (Exception error) { Debug.LogWarning("[SephiriaOne] Optional countdown presentation failed: " + error); }
         }
 

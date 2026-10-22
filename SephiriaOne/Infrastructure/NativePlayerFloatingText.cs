@@ -18,7 +18,7 @@ namespace SephiriaOne
 
         internal static void Reset() { checkedTransport = warned = false; send = null; }
 
-        internal static void Show(PlayerAvatar player, string message)
+        internal static void Show(PlayerAvatar player, string message, bool emphasize = false)
         {
             try
             {
@@ -34,6 +34,11 @@ namespace SephiriaOne
                 if (!Finite(position.x) || !Finite(position.y) || !Finite(position.z) || !Finite(height) || !Finite(position.y + height)) return;
                 string text = ChatTextSanitizer.Sanitize(message, 120);
                 if (string.IsNullOrWhiteSpace(text)) return;
+                // The stock prefab enables TMP rich text but uses a bitmap font.
+                // Modest enlargement makes emphasis visible even when synthetic
+                // bold weight has little effect. Add only trusted tags AFTER
+                // sanitizing the localized text; do not mutate the shared font.
+                if (emphasize) text = "<b><size=125%>" + text + "</size></b>";
                 if (!checkedTransport)
                 {
                     checkedTransport = true;
@@ -43,7 +48,8 @@ namespace SephiriaOne
                         AccessTools.DeclaredMethod(typeof(UnitAvatar), "RpcShowDamageParticle"));
                 }
                 // Keep the stock unreliable broadcast and owner inclusion. Normal
-                // text style preserves cyan; isPrivate=false bypasses damage-display
+                // prefab preserves cyan (the large native variant forces red).
+                // isPrivate=false bypasses damage-display
                 // preferences, not network audience selection. Dead avatars are valid.
                 send?.Invoke(player, new Vector2(position.x, position.y + height), text, Color.cyan, 0, false, null, null);
             }

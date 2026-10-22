@@ -19,8 +19,56 @@ An addon on each viewing client could separate these outputs. That does not meet
 this project's requirement to support unmodified guests, so no local-only filter
 or new toggle was added. A host-only floating-text alternative exists in native
 code, but it is a different presentation with significant limitations. Version
-`0.63.0` implements the limited prototype below; live multiplayer presentation
-remains unverified.
+`0.63.0` implements the limited prototype below. On 2026-10-23 the user reported
+that the respawn countdown works; the revised emphasis in `0.90.2` still needs
+an in-game readability comparison before removing chat/bubbles.
+
+## Respawn countdown emphasis (0.90.2, 2026-10-23)
+
+The floating respawn countdown now wraps its sanitized localized text in trusted
+`<b><size=125%>...</size></b>` markup. The shared match runtime selects emphasis
+using the pending respawn receipt, so Deathmatch, Tournament, Play Tag and other
+ordinary shared respawns get the same style. Chat and player-following bubbles
+remain, as requested for the trial. Play Tag bomb timers keep their previous
+style; Zombie conversion notices retain their single combined bubble and are
+not duplicated into generic floating countdowns.
+
+The user asked for bolder text. The shipped font is already a bold bitmap face,
+so synthetic bold may not visibly thicken its strokes. The 25% enlargement is
+intended to improve readability even in that case. This does not promise a true
+outline or heavier glyph rendering. We do not mutate shared fonts/materials or
+add duplicate particles to imitate weight.
+
+Native/asset findings, inspected read-only against the assembly identified below:
+
+- `UI_DamageParticle.SetDamage` forwards the string directly to TMP `text`, then
+  sets `color`; no sanitizer, gameplay, or chat write runs in that method.
+- `resources.assets` GameObject `17050` (`DamageParticle`) has TMP component
+  `33578`, `m_isRichText=1`, font size 16, and font reference `28707` (`PIXEL_BOLD`).
+  The font's material uses `TextMeshPro/Sol/Bitmap`, without SDF weight properties.
+  The requested size is therefore 20 relative to the normal 16.
+- The big prefab (`17051`, TMP `35083`) uses size 24, but choosing a nonzero
+  native RPC size parameter also forces red in the receiver. We retain size
+  parameter zero and cyan, using markup within the normal prefab instead.
+- REA member evidence: `ev_bab67fd9dd463bf23adf166944210dd5986b870534286c329c701c2cd124bc84`.
+  Prefab/font fields were read separately with UnityPy 1.25.3 and managed type
+  metadata, outside the repository. No game assets or decompiled code are saved
+  here. Asset IDs and rendering assumptions are specific to this installation.
+
+The native sanitizer still runs before formatting. Existing readiness, receipt,
+callback-revalidation and failure isolation checks are unchanged. There is still
+one native observer broadcast per displayed countdown change, on the same
+unreliable channel with owner inclusion; no extra per-frame work, networked
+entities or packets are introduced. Existing particles keep their native drift
+and fade and cannot be recalled from stock guests.
+
+Verification: the new runtime style assertion failed before the caller change,
+then passed with the implementation. Release build passes with zero warnings and
+errors; runtime integration passes 14,148 checks, and the full installed-game
+contract suite passes. Coverage includes emphasized respawns, unchanged bomb
+style, retained chat, sanitizer/markup ordering and direct native TMP forwarding.
+These checks do not verify Unity glyph rendering. No deployment was performed;
+compare host/guest readability in both languages before removing any fallback.
 
 ## Floating countdown prototype (0.63.0)
 

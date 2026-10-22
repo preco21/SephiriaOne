@@ -353,6 +353,14 @@ floating countdown prototype alongside existing chat/bubbles, sharing payload
 validation with Rabbit's private low-MP alert. Cosmetic failure does not disable
 chat or gameplay. See [transport evidence and live-test limits](overhead-message-transport.md).
 
+Floating-text emphasis (`0.90.2`): the stock `DamageParticle` prefab enables TMP
+rich text, but its `PIXEL_BOLD` font uses a bitmap shader. A bold tag alone may not
+increase stroke weight; respawn notices therefore also use 125% size. Sanitize
+the message first, then append only trusted balanced formatting tags. Keep the
+normal native prefab because the alternate size argument forces red. This changes
+one existing cosmetic payload, not shared font assets or observer dispatch. Chat
+remains until the revised presentation is verified. See [asset findings](overhead-message-transport.md#respawn-countdown-emphasis-0902-2026-10-23).
+
 Downed-player visuals (`0.48.0`): the native red single-player crash is a local
 world-space SpriteFx, not screen-space UI. Stock casting RPCs can select it but
 introduce transparency/material side effects. Use the separate native impact

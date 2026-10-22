@@ -42,6 +42,13 @@ internal static class GameFloatingTextTests
         Require(!Code(body).Any(i => i.operand is MethodInfo m && new[] { "WriteLog", "ApplyDamage", "SetHp", "Die" }.Contains(m.Name)),
             "native receiver has no chat/damage/death side effects");
         var show = Code(AccessTools.DeclaredMethod(adapter, "Show"));
+        int sanitize = show.FindIndex(i => i.operand is MethodInfo m && m.Name == "Sanitize");
+        int emphasis = show.FindIndex(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "<b><size=125%>"));
+        Require(sanitize >= 0 && emphasis > sanitize && show.Any(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "</size></b>")),
+            "trusted balanced emphasis tags are added after plain-text sanitization");
+        var setText = Code(AccessTools.DeclaredMethod(game.GetType("UI_DamageParticle", true), "SetDamage"));
+        Require(setText.Where(i => i.operand is MethodInfo).Select(i => ((MethodInfo)i.operand).Name)
+            .SequenceEqual(new[] { "set_text", "set_color" }), "native particle forwards rich text directly to TMP without gameplay or chat");
         int invoke = show.FindLastIndex(i => i.operand is MethodInfo m && m.Name == "Invoke");
         Require(invoke >= 4 && show[invoke - 4].LoadsConstant(0) && show[invoke - 3].LoadsConstant(0) &&
             show[invoke - 2].opcode == OpCodes.Ldnull && show[invoke - 1].opcode == OpCodes.Ldnull,
