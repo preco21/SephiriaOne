@@ -5,6 +5,7 @@ internal static class GameAmplificationPanelTests
 {
     internal static void Run(Assembly addon)
     {
+        GameElementalPanelTests.Run(addon);
         var panel = addon.GetType("SephiriaOne.SettingsPanel", true)!;
         List<CodeInstruction> Code(string name) => PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(panel, name)).ToList();
         bool Call(CodeInstruction instruction, string type, string name) => instruction.operand is MethodInfo method &&

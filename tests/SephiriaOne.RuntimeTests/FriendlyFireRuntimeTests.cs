@@ -6,6 +6,7 @@ internal static class FriendlyFireRuntimeTests
     internal static void CheckMatchIntervals(Action<bool, string> check)
     {
         CheckMatchAmplification(check);
+        CheckMatchElements(check);
         CheckRapidEdits(check, true);
         CheckPerfectGuardEdits(check, true);
         CheckDotDurationEdits(check, true);
@@ -34,6 +35,33 @@ internal static class FriendlyFireRuntimeTests
             check(SettingsActions.Execute(command + "preserve " + (prior.PreserveSchedule(effect) ? "on" : "off")).Success,
                 "Restore prior schedule toggle: " + effect);
         }
+    }
+
+    private static void CheckMatchElements(Action<bool, string> check)
+    {
+        var prior = SessionSettings.FriendlyFireForHit.Elements;
+        long token = CombatMatchRuntime.MatchToken, scores = FriendlyFireKda.Epoch,
+            balance = SessionSettings.CombatBalanceRevision, frequency = SessionSettings.CombatFrequencyRevision,
+            roles = CombatMatchRuntime.RoleRevision;
+        foreach (string operation in new[] { "physical limits 20 40", "flame limits 30 60", "ice limits 40 80", "lightning limits 50 90", "off", "on", "ice reset", "reset" })
+            check(SettingsActions.Execute("/one friendlyfire elements " + operation).Success &&
+                CombatMatchRuntime.IsRunning && CombatMatchRuntime.MatchToken == token && FriendlyFireKda.Epoch == scores &&
+                SessionSettings.CombatBalanceRevision == balance && SessionSettings.CombatFrequencyRevision == frequency &&
+                CombatMatchRuntime.RoleRevision == roles,
+                "Live elemental edit preserves match, scores, damage allowance and roles: " + operation);
+        for (int i = 0; i < 4; i++)
+        {
+            var element = (PvpElement)i;
+            var limit = prior.GetLimit(element);
+            check(SettingsActions.Execute("/one friendlyfire elements " + element.ToString().ToLowerInvariant() + " limits " +
+                limit.SoftNumber + " " + limit.HardNumber).Success, "Restore prior element limits: " + element);
+        }
+        check(SettingsActions.Execute("/one friendlyfire elements " + (prior.Enabled ? "on" : "off")).Success,
+            "Restore prior elemental toggle");
+        var stable = SessionSettings.FriendlyFireForHit;
+        check(!SessionSettings.TryExecuteFriendlyFire(new FriendlyFireCommand(false,
+            elements: new PvpElementalChange(element: PvpElement.Ice, soft: 90, hard: 80)), out _) &&
+            SessionSettings.FriendlyFireForHit.Equals(stable), "Invalid direct elemental pair is rejected atomically");
     }
 
     private static void CheckMatchAmplification(Action<bool, string> check)

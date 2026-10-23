@@ -6,6 +6,7 @@ internal static class GameAmplificationTests
 {
     internal static void Run(Assembly game, Assembly addon)
     {
+        GameElementalStatTests.Run(game, addon);
         var avatar = game.GetType("UnitAvatar", true)!;
         var damage = game.GetType("DamageInstance", true)!;
         var stat = game.GetType("ECustomStat", true)!;

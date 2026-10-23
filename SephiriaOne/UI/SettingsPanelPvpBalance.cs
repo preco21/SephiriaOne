@@ -14,6 +14,9 @@ namespace SephiriaOne
         private bool friendlyPerfectGuardDraft;
         private TMP_InputField friendlyAmplificationSoft, friendlyAmplificationHard;
         private bool friendlyAmplificationDraft;
+        private readonly TMP_InputField[] friendlyElementSoft = new TMP_InputField[4];
+        private readonly TMP_InputField[] friendlyElementHard = new TMP_InputField[4];
+        private readonly bool[] friendlyElementDraft = new bool[4];
 
         private void BuildPvpBalanceEditor()
         {
@@ -22,7 +25,7 @@ namespace SephiriaOne
             var scroll = container.gameObject.AddComponent<ScrollRect>();
             var viewport = PanelWidgets.Rect(container, "Viewport", 0, 0, 273, PageHeight);
             viewport.gameObject.AddComponent<RectMask2D>();
-            var content = PanelWidgets.Rect(viewport, "BalanceControls", 0, 0, 273, 510);
+            var content = PanelWidgets.Rect(viewport, "BalanceControls", 0, 0, 273, 900);
             scroll.viewport = viewport; scroll.content = content; scroll.horizontal = false;
             scroll.movementType = ScrollRect.MovementType.Clamped; scroll.scrollSensitivity = 30;
             var track = PanelWidgets.Rect(container, "Scrollbar", 278, 0, 8, PageHeight);
@@ -56,12 +59,14 @@ namespace SephiriaOne
             changeButtons.Add(widgets.Button(content, "Apply", 196, 201, 77, 25, ApplyFriendlyAmplification));
             widgets.Text(content, "AmplificationHint", "Bonus %, not C-menu total.", 0, 232, 273, 18, 11);
             BuildPvpLowerBound(PanelWidgets.Rect(content, "LowerBoundControls", 0, 264, 273, 238));
+            BuildPvpElementalEditor(content);
             BuildPvpDotEditor();
         }
 
         private void RefreshPvpBalance(SettingsSnapshot snapshot)
         {
             RefreshPvpLowerBound(snapshot);
+            RefreshPvpElements(snapshot);
             if (!friendlyGuardMp || !friendlyPerfectGuard) return;
             friendlyGuardMp.interactable = friendlyPerfectGuard.interactable = snapshot.CanMutate && snapshot.FriendlyFireAvailable;
             if (!friendlyGuardMpDraft) friendlyGuardMp.SetTextWithoutNotify(snapshot.FriendlyFire.GuardMpNumber);
@@ -72,6 +77,57 @@ namespace SephiriaOne
                 friendlyAmplificationSoft.SetTextWithoutNotify(snapshot.FriendlyFire.Amplification.SoftNumber);
                 friendlyAmplificationHard.SetTextWithoutNotify(snapshot.FriendlyFire.Amplification.HardNumber);
             }
+        }
+
+        private void BuildPvpElementalEditor(RectTransform content)
+        {
+            AddCheckbox("Elemental stat limits", 0, 510, 273, 25, s => s.FriendlyFire.Elements.Enabled,
+                s => s.FriendlyFireAvailable, "/one friendlyfire elements", parent: content);
+            widgets.Text(content, "ElementSoft", "Soft limit", 0, 541, 88, 18, 11);
+            widgets.Text(content, "ElementHard", "Hard limit", 94, 541, 88, 18, 11);
+            string[] labels = { "Physical", "Flame", "Ice", "Lightning" };
+            for (int i = 0; i < 4; i++)
+            {
+                int index = i;
+                float y = 565 + i * 63;
+                widgets.Text(content, "Element" + i, labels[i], 0, y, 273, 18, 11);
+                friendlyElementSoft[i] = widgets.Input(content, 0, y + 20, 88, text => friendlyElementDraft[index] = true);
+                friendlyElementHard[i] = widgets.Input(content, 94, y + 20, 88, text => friendlyElementDraft[index] = true);
+                changeButtons.Add(widgets.Button(content, "Apply", 188, y + 20, 40, 25, () => ApplyFriendlyElement(index)));
+                changeButtons.Add(widgets.Button(content, "Reset", 233, y + 20, 40, 25,
+                    () => Execute("/one friendlyfire elements " + ((PvpElement)index).ToString().ToLowerInvariant() + " reset", true,
+                        clearInputOnSuccess: () => ClearFriendlyElement(index))));
+            }
+            widgets.Text(content, "ElementsHint", "Effective participant stats during balanced PvP; also affects their PvE damage. Saved stats unchanged.", 0, 821, 273, 48, 10);
+        }
+
+        private void RefreshPvpElements(SettingsSnapshot snapshot)
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                if (!friendlyElementSoft[i] || !friendlyElementHard[i]) continue;
+                friendlyElementSoft[i].interactable = friendlyElementHard[i].interactable = snapshot.CanMutate && snapshot.FriendlyFireAvailable;
+                if (friendlyElementDraft[i]) continue;
+                var limit = snapshot.FriendlyFire.Elements.GetLimit((PvpElement)i);
+                friendlyElementSoft[i].SetTextWithoutNotify(limit.SoftNumber);
+                friendlyElementHard[i].SetTextWithoutNotify(limit.HardNumber);
+            }
+        }
+
+        private void ApplyFriendlyElement(int index) => Execute("/one friendlyfire elements " +
+            ((PvpElement)index).ToString().ToLowerInvariant() + " limits " + friendlyElementSoft[index].text.Trim() + " " +
+            friendlyElementHard[index].text.Trim(), true, clearInputOnSuccess: () => ClearFriendlyElement(index));
+
+        private void ClearFriendlyElement(int index)
+        {
+            friendlyElementDraft[index] = false;
+            if (friendlyElementSoft[index]) friendlyElementSoft[index].SetTextWithoutNotify("");
+            if (friendlyElementHard[index]) friendlyElementHard[index].SetTextWithoutNotify("");
+        }
+
+        private void ClearFriendlyElements()
+        {
+            for (int i = 0; i < 4; i++) ClearFriendlyElement(i);
         }
 
         private void EditFriendlyGuardMp(string text) => friendlyGuardMpDraft = true;

@@ -34,6 +34,11 @@ PvP hit. This is not a cap on total damage or on other amplification sources.
 
 ## Curve
 
+As of `0.93.0`, the curve lives in `PvpStatLimit` and is also used by
+[elemental stat limits](pvp-elemental-limits.md). Amplification defaults, units
+and target-specific application remain unchanged; elemental limits use a
+different, explicitly documented participant-wide scope.
+
 For native bonus `x`, soft limit `S`, hard limit `H`, and `W = H - S`:
 
 - `x <= S`: use `x` unchanged, including native negative costume penalties.

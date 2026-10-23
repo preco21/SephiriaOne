@@ -1,5 +1,13 @@
 # Sephiria domain findings
 
+PvP elemental limits (`0.93.0`, 2026-10-24): Physical/Flame/Ice/Lightning inputs
+are baked into source damage before the victim is known. The approved fallback
+caps active participants' effective `GetConvertedElementalDamage` result, also
+affecting their simultaneous PvE attacks. Preserve native highest-element,
+potion, stat-derivation, unlock/script and C-menu reads to avoid permanent
+side effects. No raw stat writes or restoration ledger; existing attacks retain
+native creation-time snapshots. See [elemental scope and evidence](pvp-elemental-limits.md).
+
 Ice Weapon targeting (2026-10-24, `0.92.0`): audit activation, prefab homing flags
 and movement consumers separately. Frozen Bow auto-acquires; Hammer's scythe
 follows synchronized owner aim; Plitvice deliberately orbits. A stationary

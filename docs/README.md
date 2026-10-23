@@ -1,5 +1,11 @@
 # Development knowledge index
 
+[PvP elemental stat limits](pvp-elemental-limits.md): default-on independent
+50/100 caps share the amplification curve. Effective participant-stat fallback
+also affects their simultaneous PvE damage; saved/derived stats and C-menu reads
+stay native. Includes creation-time attack snapshots, preservation hooks, EN/KO
+controls, v52 presets and allocation/native compatibility checks.
+
 [Ice Weapon targeting recheck](ice-weapon-targeting-audit.md): Deathmatch report,
 native activation versus homing/manual steering, shared participant/lifecycle
 coverage and limiter admission as an unconfirmed explanation. Added regression
@@ -86,7 +92,7 @@ interval, default off / 2s, for seven audited automatic artifact sources.
 Dark Cloud uses its own interval. Shared pair/life/session clocks, explicit weapon/book/companion/planet
 exclusions, native guest damage sync, EN/KO controls and v47 presets.
 
-Maintained: 2026-10-23 (Asia/Seoul), addon `0.91.0`.
+Maintained: 2026-10-24 (Asia/Seoul), addon `0.93.0`.
 
 [Configurable PvP DoT duration](pvp-dot-intervals.md#configurable-duration-cap-0850-2026-10-22):
 Burn/Plasma/blue/evolved lifetime cap now defaults to 1.2s, adjustable 0.05..10s

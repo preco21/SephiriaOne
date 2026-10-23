@@ -9,5 +9,5 @@
     <Compile Include="../../SephiriaOne/Features/Combat/*.cs" Exclude="../../SephiriaOne/Features/Combat/FriendlyFireFeature.cs;../../SephiriaOne/Features/Combat/FriendlyFireParticipants.cs;../../SephiriaOne/Features/Combat/FriendlyFireParticipantHooks.cs;../../SephiriaOne/Features/Combat/ReviveAll*.cs;../../SephiriaOne/Features/Combat/Deathmatch*.cs;../../SephiriaOne/Features/Combat/CombatMatch*.cs;../../SephiriaOne/Features/Combat/Tournament*.cs" Link="%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Remove="../../SephiriaOne/Features/Combat/FriendlyFireDeathVisuals.cs;../../SephiriaOne/Features/Combat/FriendlyFireDeathAudio.cs" /></ItemGroup>
+    <Compile Remove="../../SephiriaOne/Features/Combat/FriendlyFireDeathVisuals.cs;../../SephiriaOne/Features/Combat/FriendlyFireDeathAudio.cs;../../SephiriaOne/Features/Combat/FriendlyFireElementalHooks.cs" /></ItemGroup>
 </Project>

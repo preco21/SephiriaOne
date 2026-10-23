@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-public enum ECustomStat { HPSteal, MPSteal, GuardResist, Evasion, FinalMP, AllDamageBonus }
+public enum ECustomStat { HPSteal, MPSteal, GuardResist, Evasion, FinalMP, AllDamageBonus, PhysicalDamage, FireDamage, IceDamage, LightningDamage }
 
 public partial class UnitAvatar
 {
@@ -8,7 +8,7 @@ public partial class UnitAvatar
     public float MpStack;
     public Action OnHeal;
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public int GetCustomStat(ECustomStat stat) => stat == ECustomStat.HPSteal ? HpHarvest : stat == ECustomStat.MPSteal ? MpHarvest : stat == ECustomStat.Evasion ? Evasion : stat == ECustomStat.FinalMP ? FinalMp : stat == ECustomStat.AllDamageBonus ? AllDamageBonus : GuardResistance;
+    public int GetCustomStat(ECustomStat stat) => (int)stat >= (int)ECustomStat.PhysicalDamage ? ConvertedElementForTest((int)stat - (int)ECustomStat.PhysicalDamage) : stat == ECustomStat.HPSteal ? HpHarvest : stat == ECustomStat.MPSteal ? MpHarvest : stat == ECustomStat.Evasion ? Evasion : stat == ECustomStat.FinalMP ? FinalMp : stat == ECustomStat.AllDamageBonus ? AllDamageBonus : GuardResistance;
     [MethodImpl(MethodImplOptions.NoInlining)]
     public void Heal(float amount)
     {

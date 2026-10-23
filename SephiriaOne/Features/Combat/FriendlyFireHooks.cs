@@ -40,6 +40,7 @@ namespace SephiriaOne
             try
             {
                 FriendlyFireParticipantHooks.Install(harmony);
+                FriendlyFireElementalHooks.Install(harmony);
                 FriendlyFireActiveDefenseHooks.Install(harmony);
                 FriendlyFireDefensiveEffectHooks.Install(harmony);
                 harmony.Patch(apply, prefix: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.BeforeHit)),

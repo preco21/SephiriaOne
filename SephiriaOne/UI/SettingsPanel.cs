@@ -230,6 +230,11 @@ namespace SephiriaOne
             friendlyGuardMp = null; friendlyGuardMpDraft = false;
             friendlyPerfectGuard = null; friendlyPerfectGuardDraft = false;
             friendlyAmplificationSoft = friendlyAmplificationHard = null; friendlyAmplificationDraft = false;
+            for (int i = 0; i < 4; i++)
+            {
+                friendlyElementSoft[i] = friendlyElementHard[i] = null;
+                friendlyElementDraft[i] = false;
+            }
             friendlyLowerReference = friendlyLowerRefill = null; friendlyLowerReferenceDraft = friendlyLowerRefillDraft = false;
             friendlyLowerReferenceReset = friendlyLowerRefillReset = friendlyLowerReset = null;
             pvpRapidEditors.Clear(); pvpRapidRecovery = pvpRapidExample = null; pvpRapidReset = null;
@@ -408,6 +413,7 @@ namespace SephiriaOne
             ClearFriendlyDamage(); ClearFriendlyRefill(); ClearFriendlyGuardMp();
             ClearFriendlyPerfectGuard();
             ClearFriendlyAmplification();
+            ClearFriendlyElements();
             ClearFriendlyLowerBound();
             ClearPvpRapid();
             ClearZombieDuration(); ClearZombieCount(); ClearZombieRefill(); ClearZombieIncoming();

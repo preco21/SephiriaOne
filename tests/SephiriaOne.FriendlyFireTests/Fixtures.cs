@@ -188,6 +188,10 @@ public partial class UnitAvatar : CombatBehaviour
     }
     [MethodImpl(MethodImplOptions.NoInlining)] public int GetCustomStatUnsafe(string key) => key switch
     {
+        "PHYSICALDAMAGE" => ConvertedElementForTest(0),
+        "FIREDAMAGE" => ConvertedElementForTest(1),
+        "ICEDAMAGE" => ConvertedElementForTest(2),
+        "LIGHTNINGDAMAGE" => ConvertedElementForTest(3),
         "MPSHIELD" => IsMpShield ? 1 : 0,
         "IGNOREEVASION" => IgnoreEvasion,
         "ABSOLUTEEVASION" => AbsoluteEvasion,

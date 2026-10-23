@@ -108,5 +108,7 @@
     <Compile Include="../../SephiriaOne/Features/Spawns/EventSpawnCommand.cs" Link="EventSpawnCommand.cs" />
     <Compile Include="../../SephiriaOne/Features/Spawns/JarSpawnSettings.cs" Link="JarSpawnSettings.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionSpawns.cs" Link="SessionSpawns.cs" />
+    <Compile Include="../../SephiriaOne/Features/Combat/PvpStatLimit.cs" Link="PvpStatLimit.cs" />
+    <Compile Include="../../SephiriaOne/Features/Combat/PvpElementalSettings.cs" Link="PvpElementalSettings.cs" />
   </ItemGroup>
 </Project>

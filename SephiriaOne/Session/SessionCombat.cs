@@ -54,6 +54,8 @@ namespace SephiriaOne
         {
             message = L.T("Only the host can change friendly fire.");
             if (!NetworkServer.active) return false;
+            if (command.Elements.HasValue && !command.Elements.Value.IsValid)
+            { message = FriendlyFireCommand.Usage; return false; }
             if (command.Amplification.HasValue && !command.Amplification.Value.IsValid)
             { message = FriendlyFireCommand.Usage; return false; }
             if (command.Rapid.HasValue && !command.Rapid.Value.IsValid)
@@ -116,6 +118,12 @@ namespace SephiriaOne
             L.F("PvP shield minimum: {0}% max MP after native reductions.", settings.GuardMpNumber) + " " +
             L.F("Perfect Guard MP multiplier: {0}; x{1} native MP cost (requires PvP balancing; when on, ignores shield minimum).",
                 L.T(settings.PerfectGuard.Enabled ? "on" : "off"), settings.PerfectGuard.Number) + " " +
+            L.F("Elemental stat limits: {0}; Physical {1}/{2}, Flame {3}/{4}, Ice {5}/{6}, Lightning {7}/{8} (soft/hard). Effective participant stats while PvP balancing is on; participant PvE damage is also affected. Saved stats stay unchanged.",
+                L.T(settings.Elements.Enabled ? "on" : "off"),
+                settings.Elements.GetLimit(PvpElement.Physical).SoftNumber, settings.Elements.GetLimit(PvpElement.Physical).HardNumber,
+                settings.Elements.GetLimit(PvpElement.Flame).SoftNumber, settings.Elements.GetLimit(PvpElement.Flame).HardNumber,
+                settings.Elements.GetLimit(PvpElement.Ice).SoftNumber, settings.Elements.GetLimit(PvpElement.Ice).HardNumber,
+                settings.Elements.GetLimit(PvpElement.Lightning).SoftNumber, settings.Elements.GetLimit(PvpElement.Lightning).HardNumber) + " " +
             L.F("All Damage Amplified limit: {0}; soft {1}%, hard {2}% bonus (100% = +100%; requires PvP balancing).",
                 L.T(settings.Amplification.Enabled ? "on" : "off"), settings.Amplification.SoftNumber, settings.Amplification.HardNumber) + " " +
             L.F("PvP DoT intervals (s): Burn {0}; Plasma Burn {1}; Frostbite {2}; Poison {3}.",
