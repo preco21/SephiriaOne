@@ -25,6 +25,7 @@ namespace SephiriaOne
         {
             internal FriendlyFireParticipants.Receipt PlayerReceipt;
             internal long MatchToken;
+            internal long SupplyAttempt;
         }
 
         internal static void BeforeDeath(UnitAvatar __instance, DamageInstance diedFrom, out DeathNotice __state)
@@ -144,6 +145,7 @@ namespace SephiriaOne
                 // outer call's eventual RPC completion or its match identity.
                 __state.PlayerReceipt = FriendlyFireParticipants.Capture(player);
                 __state.MatchToken = CombatMatchRuntime.MatchToken;
+                __state.SupplyAttempt = PvpPotionSupplies.BeginRevive(__state.PlayerReceipt);
                 ResetBalanceLife(player); FriendlyFireKda.ForgetLife(player); CombatMatchRuntime.Reviving(player);
             }
         }
@@ -157,6 +159,9 @@ namespace SephiriaOne
 
         internal static Exception FinishRevive(Exception __exception, UnitAvatar __instance, ReviveNotice __state)
         {
+            if (__exception == null && NetworkServer.active && __instance is PlayerAvatar revived &&
+                ReferenceEquals(__state.PlayerReceipt?.Player, revived))
+                PvpPotionSupplies.Revived(__state.PlayerReceipt, __state.SupplyAttempt, __state.MatchToken);
             if (__exception != null && NetworkServer.active && __instance is PlayerAvatar player &&
                 ReferenceEquals(__state.PlayerReceipt?.Player, player))
                 CombatMatchRuntime.ReviveFailed(__state.PlayerReceipt, __state.MatchToken);

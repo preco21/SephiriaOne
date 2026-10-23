@@ -17,7 +17,7 @@ internal static class PotionSupplyTests
         bool Has(PlayerAvatar player) => LargePotionGrant.Owns(player.Inventory);
 
         var players = New(9);
-        check(!SessionSettings.FriendlyFireSupplies.AutoPotion, "Automatic potion default off");
+        check(SessionSettings.FriendlyFireSupplies.AutoPotion, "Automatic potion default on");
         FriendlyFireParticipants.Set(FriendlyFireParticipants.Capture(players[0]), true);
         players[1].Inventory.inventoryMatrix[new ItemPosition { y = 100 }] = new() { EntityID = 1, Quantity = 3 };
         players[2].Inventory.inventoryMatrix[new ItemPosition { y = 2 }] = new() { EntityID = 1, Quantity = 1 };
@@ -37,6 +37,7 @@ internal static class PotionSupplyTests
         Mirror.NetworkServer.active = true;
 
         players = New();
+        Command("auto-potion off");
         Command("on"); PvpPotionSupplies.Tick(); check(players.All(p => !Has(p)), "Off option does not grant on FF entry");
         FriendlyFireParticipants.Set(FriendlyFireParticipants.Capture(players[0]), true);
         FriendlyFireParticipants.Set(FriendlyFireParticipants.Capture(players[1]), true);
@@ -53,16 +54,22 @@ internal static class PotionSupplyTests
         check(Has(players[2]) && !Has(players[0]), "New participant gets supply without refilling existing members");
         Command("off"); Command("on"); PvpPotionSupplies.Tick();
         check(Has(players[0]) && players[0].Inventory.PotionWrites == 2, "Off/on within one frame starts new supply eligibility");
-        var preset = new SessionPolicy(); preset.Record(new FriendlyFireCommand(false, autoPotion: true));
+        var preset = new SessionPolicy(); preset.Record(new FriendlyFireCommand(false, autoPotion: false));
         string text = preset.ToPresetText();
-        check(text.StartsWith("SephiriaOne preset v36") && SessionPolicy.TryReadPreset(text, out var loaded, out _) && loaded.FriendlyFire.AutoPotion,
+        check(text.StartsWith("SephiriaOne preset v36") && text.Contains("auto-potion 0") && SessionPolicy.TryReadPreset(text, out var loaded, out _) && !loaded.FriendlyFire.AutoPotion,
             "Automatic supply persists in versioned preset");
         check(!SessionPolicy.TryReadPreset(text.Replace("v36", "v35"), out _, out _), "Old preset cannot claim new setting");
-        check(SessionPolicy.TryReadPreset("SephiriaOne preset v35\nfriendlyfire enabled 1\n", out loaded, out _) && !loaded.FriendlyFire.AutoPotion,
-            "Old presets default automatic supply off");
+        check(SessionPolicy.TryReadPreset("SephiriaOne preset v35\nfriendlyfire enabled 1\n", out loaded, out _) && loaded.FriendlyFire.AutoPotion,
+            "Omitted automatic supply uses the current on default");
+        check(SessionPolicy.TryReadPreset("SephiriaOne preset v36\nfriendlyfire auto-potion 1\n", out loaded, out _) && loaded.FriendlyFire.AutoPotion,
+            "Legacy explicitly enabled automatic supply stays on");
+        check(!default(FriendlyFireSettings).HasChanges && !new SessionPolicy().ToPresetText().Contains("auto-potion"),
+            "Default automatic supply keeps presets sparse");
+        check(new FriendlyFireSettings(true, 100).AutoPotion && !new FriendlyFireSettings(true, 100, autoPotion: false).WithEnabled(false).AutoPotion,
+            "Construction and match overlays retain the automatic supply preference");
         check(default(FriendlyFireSettings).Apply(new FriendlyFireCommand(false, autoPotion: true)).WithEnabled(true).AutoPotion,
             "Match overlays preserve supply setting");
-        Command("auto-potion reset"); check(!SessionSettings.FriendlyFireSupplies.AutoPotion && SessionSettings.FriendlyFireSupplies.Enabled, "Supply reset leaves master alone");
+        Command("auto-potion off"); Command("auto-potion reset"); check(SessionSettings.FriendlyFireSupplies.AutoPotion && SessionSettings.FriendlyFireSupplies.Enabled, "Supply reset restores on and leaves master alone");
 
         foreach (string mode in new[] { "deathmatch", "tournament", "tag", "zombie" })
         {
@@ -128,6 +135,8 @@ internal static class PotionSupplyTests
             check(SettingsActions.Execute("/one " + mode + " stop").Success, mode + ": stops after casual FF"); PvpPotionSupplies.Tick();
             check(players.All(p => !Has(p)) && !SessionSettings.FriendlyFireSupplies.Enabled, mode + ": stop disables master without refilling");
         }
+
+        PotionRespawnTests.Run(start, add, check);
 
         players = New(9); Command("auto-potion on"); Command("on");
         for (int i = 0; i < 100; i++) PvpPotionSupplies.Tick();

@@ -131,7 +131,7 @@ zero-MP Rabbit, callback revocation and nested-event regressions; the dated
 implementation plan records current results. Live host/stock-guest
 drinking and belt-count rendering remain unverified; nothing was deployed.
 
-## Large Potion supplies (0.70.0)
+## Large Potion supplies (updated 0.94.1)
 
 Host controls under **Combat → Supplies**:
 
@@ -139,7 +139,10 @@ Host controls under **Combat → Supplies**:
   Potion per current player who lacks one, including spectators. Works with
   friendly fire off. Reports granted, already owned, loading and failed counts.
 - **Auto Large Potion** / `/one friendlyfire auto-potion on|off|reset`: default
-  **off**, independent of PvP balancing. `/one save` persists it (preset v36).
+  **on**, independent of PvP balancing. `/one save` persists an explicit opt-out
+  as `friendlyfire auto-potion 0` (existing preset v36 schema). Reset restores on.
+  Older presets with an omitted row inherit the new default; explicit 0/1 rows
+  keep their saved value.
 
 Automatic supply checks happen on casual PvP entry, joining the active selection,
 new connections, and each new shared match. Deathmatch, Tournament, Play Tag and
@@ -149,9 +152,13 @@ Tournament includes its waiting roster, not just the current pair. Late entrants
 must satisfy the mode's existing roster rules. Run/session initialization gets a
 fresh receipt and ownership check.
 
-This is an entry grant, not an infinite-potion policy. Consumption, death/respawn,
-floor loading, K/D/A resets, unrelated tuning and later rounds of the same match
-do not refill it. Turning the option on during active PvP checks the current
+Each successful native respawn also requests one ownership check for that
+participant. If they still have a Large Potion in any carried store, nothing is
+added. If it was consumed, grant one replacement through the same native path.
+This includes automatic countdown revivals, native revivals and Revive All during
+casual PvP, independently of the infinite-potion option. Death alone, failed or
+no-op revivals, consumption while alive, floor loading, K/D/A resets and unrelated
+tuning do not refill it. Turning the option on during active PvP checks the current
 participants once. Turning it off or ending PvP stops future grants; already
 granted potions remain ordinary native items.
 
@@ -197,7 +204,23 @@ The common session controller drives it after match lifecycle processing. Match
 roster eligibility is centralized in `CombatMatchRuntime.IsSupplyParticipant`.
 
 Keys observe activation revision, shared match token and eligibility, never
-inventory quantities. First delivery can wait for native readiness. Readiness is
+inventory quantities. The shared `UnitAvatar.Revive` prefix captures connection,
+supply revision and match token; its finalizer invalidates the existing supply
+cursor only after successful revival. The regular supply tick performs the
+inventory work after native revival callbacks. Beginning a newer revival
+acknowledges/cancels any previous life's pending supply check, including a waiting
+entry check. Native revival can clear IsDead before throwing, so that partial
+state must not release the previous request. Failed/nested no-op revivals,
+retired connections, expired matches and disabled options cannot request supplies.
+If the player dies again before delivery, another successful revival must trigger
+the check. Mode cleanup disables eligibility before recovering pending players.
+Each revival also has a receipt-scoped attempt ID. Older outer callbacks cannot
+complete a newer nested attempt, and inventory permission callbacks cannot carry
+an in-flight grant into a replacement life. Cancelled attempts are acknowledged
+instead of retried as readiness failures. Attempt records are pruned with the
+connection and cleared with session supply state; stable ticks do not query them.
+
+First delivery can wait for native readiness. Readiness is
 deliberately checked inside delivery, not as the coordinator rule's readiness
 predicate: otherwise a later loading frame would turn an Applied/Faulted cursor
 back into Waiting and replay a consumed or ambiguous grant. Departed receipts and
@@ -207,6 +230,22 @@ nine-player fixture ticks allocate zero bytes and never scan inventories.
 Manual batch snapshots and per-write identity/run/inventory guards reject stale
 targets, nested actions and connection replacement. Existing stat planning and
 match damage/respawn behavior are unchanged.
+
+### 0.94.1 verification
+
+Runtime regressions exercise consumed and retained potions, all three stores,
+manual Revive All, all four timed modes, native callback exceptions, nested
+no-op revival, a second death before delivery, waiting inventories, ambiguous
+grant failures, option changes and rejoining connections. Default-on/reset and
+explicit-off preset round-trips are covered. Stable nine-player supply checks
+still allocate zero bytes over 1,000 warmed fixture ticks, with no additional
+inventory writes. Live host/guest respawn rendering remains unverified; do not
+infer a live multiplayer test from fixtures or installed-game IL contracts.
+
+Release validation: zero build warnings/errors, 14,419 runtime checks, 15,728
+combat hook checks, 392 potion-hook cases, 50 localization checks, 28 panel
+checks, pure policy/catalog suites and installed-game native contracts passed.
+Independent review verified the nested/in-flight lifetime guards. Nothing deployed.
 
 ## Verification / remaining live check
 

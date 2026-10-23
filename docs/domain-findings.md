@@ -780,6 +780,15 @@ them. See [event-audio evidence and send-failure handling](remote-event-audio.md
 
 ## Native Large Potion supplies (2026-10-20)
 
+`0.94.1` extends supplies to successful native revival completion. Capture the
+exact receipt, activation revision and match token before `UnitAvatar.Revive`,
+then invalidate only that participant's shared supply cursor in the successful
+finalizer. A per-receipt attempt ID also rejects older nested completions and
+life changes during inventory callbacks. Defer inventory work until the ordinary reconciliation tick; this
+reuses native duplicate checks after revival's own inventory processing and
+avoids per-mode grant code or per-frame inventory scans. Entry and respawn grants
+default on; explicit saved opt-outs remain valid. See [current supply semantics](pvp-potions.md#large-potion-supplies-updated-0941).
+
 `0.77.1` ties PvP HP retention to the existing controller completion scope and
 Survival callback guard. Native Survival runs before the regeneration heal;
 temporarily invalid scope/policy can let it run before state becomes valid again.

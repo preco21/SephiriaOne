@@ -11,8 +11,9 @@ internal static class PvpInfinitePotionSettingsTests
         Check(FriendlyFireCommand.Parse("/ONE FRIENDLYFIRE INFINITE-HP ON", out var command) == FriendlyFireParseResult.Valid &&
             !command.IsReset && !command.TouchesMasterToggle, "Enable is an independent option, not a master toggle");
         policy.Record(command);
-        Check(policy.FriendlyFire.InfiniteHpPotions && !policy.FriendlyFire.Enabled && !policy.FriendlyFire.AutoPotion &&
-            !policy.RabbitPotions.HasChanges, "PvP retention does not enable combat, supply or Rabbit behavior");
+        Check(policy.FriendlyFire.InfiniteHpPotions && !policy.FriendlyFire.Enabled &&
+            policy.FriendlyFire.AutoPotion == default(FriendlyFireSettings).AutoPotion &&
+            !policy.RabbitPotions.HasChanges, "PvP retention leaves combat, supply and Rabbit settings unchanged");
         policy.Record(new FriendlyFireCommand(false, infiniteHpPotions: false));
         Check(policy.ToPresetText() == "SephiriaOne preset v37\nfriendlyfire infinite-hp 0\n" &&
             SessionPolicy.TryReadPreset(policy.ToPresetText(), out var saved, out _) && saved.FriendlyFire.Equals(policy.FriendlyFire),

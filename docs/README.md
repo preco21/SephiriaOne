@@ -212,8 +212,9 @@ receipt and guarded drink infrastructure cover every current mode; v37 saves it.
 
 [PvP Large Potion supplies](pvp-potions.md): host command/button grants one to
 each player who lacks it. Optional automatic supply follows the shared PvP
-participant roster on entry/match start; default off, saved in v36 presets.
-Consumption and loading do not automatically refill supplies.
+participant roster on entry/match start and successful respawn; default on.
+Only missing potions are replaced. Consumption while alive and loading do not
+refill supplies. Explicit opt-out is saved in v36 presets.
 
 PvP guard: the default/reset is a strict **5% of maximum MP** after reductions,
 including automatic shields. Explicit saved overrides remain unchanged; see
