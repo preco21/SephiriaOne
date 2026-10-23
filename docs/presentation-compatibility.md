@@ -1,5 +1,11 @@
 # Host-only multiplayer compatibility
 
+For the current 2026-10-23 capability survey, see
+[host-only gameplay and presentation](host-only-capabilities.md). It covers
+player scale, stock skins, FX/audio, markers and weather, including what is
+automatically replicated versus an explicit transient event. The scope decision
+and name-surface findings below describe the earlier `0.12.2` change.
+
 As of `0.12.2`, the addon retains features whose effects can reach unmodified
 guests through Sephiria's native multiplayer state. The user explicitly removed
 the requirement for extra UI styling that only a modded viewing client could see.

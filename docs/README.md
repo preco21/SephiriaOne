@@ -1,5 +1,11 @@
 # Development knowledge index
 
+[Host-only capabilities](host-only-capabilities.md): guest-visible gameplay and
+presentation survey, including initial versus live player scaling, native skins,
+FX/audio selectors, pings, persistent markers and weather. Distinguishes replicated
+state, transient RPCs, host decisions and local-only edits; new candidates are
+research, not implemented or live-tested features.
+
 [Projectile/effect performance audit](projectile-performance-audit.md): full Ice
 Weapons category and variant coverage gaps, RPC/local effects, client trails,
 child provenance and spawn-throughput limits. Includes a measured counter-storage

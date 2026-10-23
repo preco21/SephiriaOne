@@ -1,5 +1,13 @@
 # Sephiria domain findings
 
+Host-only presentation (2026-10-23): a native spawn envelope carries root scale,
+but the shipped player transform has scale synchronization disabled. Initial
+scale and live resizing are different capabilities; changing serialization flags
+only on the host is incompatible. Native FX messages can select stock assets,
+while host asset/material edits cannot distribute new appearance. Weather has a
+retained SyncVar but renders only on supported floors. See the
+[capability matrix, exact contracts and candidate features](host-only-capabilities.md).
+
 PvP lower-bound assistance (`0.90.0`): post-percentage hit damage relative to
 victim maximum HP is a practical runtime measure of offensive pressure across
 different native formulas. A shared bonus pool prevents each tiny packet or
