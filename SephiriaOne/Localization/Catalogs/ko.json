@@ -1,4 +1,10 @@
 {
+  "Block Rabbit infinite HP in PvP": "PvP 토끼 HP 포션 무한 사용 차단",
+  "Block Rabbit infinite HP in PvP: {0}; general PvP infinite HP takes priority.": "PvP 토끼 HP 포션 무한 사용 차단: {0}. 일반 PvP HP 포션 무제한 설정이 우선합니다.",
+  "Block Rabbit infinite HP in PvP: /one friendlyfire block-rabbit-infinite on|off|reset. Default on; Rabbit consumes HP potions when Infinite PvP HP potions is off. General PvP infinite HP takes priority. PvE is unchanged; potion counts are not restored.": "PvP 토끼 HP 포션 무한 사용 차단: /one friendlyfire block-rabbit-infinite on|off|reset. 기본 켜짐. PvP HP 포션 무제한이 꺼져 있으면 토끼도 HP 포션을 소모합니다. 일반 PvP 무제한 설정이 우선합니다. PvE는 그대로이며, 소모한 포션 수량은 복원하지 않습니다.",
+  "- <indent=10>Outside PvP, HP potions except Potion of Regeneration (Sample) are not consumed and bypass Tension (requires one potion). In PvP, unlimited use requires the general Infinite PvP HP potions option.</indent>": "- <indent=10>PvP 외에는 재생의 물약 (견본)을 제외한 HP 포션을 소모하지 않고 긴장을 무시합니다(포션 1개 필요). PvP에서 무한 사용하려면 일반 PvP HP 포션 무제한 옵션을 켜야 합니다.</indent>",
+  "Unlimited HP outside PvP; PvP uses its own option": "PvP 외 HP 포션 무한 사용; PvP는 별도 설정 적용",
+  "Rabbit potion hooks unavailable; on/reset restore the PvP restriction. See Player.log.": "토끼 포션 기능을 사용할 수 없습니다. on/reset으로 PvP 제한을 복구할 수 있습니다. Player.log를 확인하세요.",
   "Rapid hits: /one friendlyfire rapid window 0.1..10; rate 0.1..100; exponent 0..2; burst 1..100; recovery on|off|reset; interval 0.1..60 (up to 2 decimals). Periodic recovery defaults on / 3s. Each number accepts reset; rapid reset restores all rapid settings, leaving continuous refill unchanged.": "연속 타격: /one friendlyfire rapid window 0.1..10; rate 0.1..100; exponent 0..2; burst 1..100; recovery on|off|reset; interval 0.1..60 (소수 둘째 자리까지). 주기적 회복 기본 켜짐 / 3초. 각 수치는 reset으로 초기화합니다. rapid reset은 연속 회복률을 유지하고 연속 타격 설정 전체를 초기화합니다.",
   "Periodic recovery": "주기적 피해량 회복",
   "Recovery interval (s)": "회복 주기 (초)",

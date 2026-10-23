@@ -70,7 +70,8 @@ namespace SephiriaOne
                 if (!SessionSettings.RabbitPotionsForUse.Infinite || item == null || item.Quantity <= 0 ||
                     !CanRetainPotion(item.EntityID)) return blocked;
                 PlayerAvatar player = controller?.Avatar as PlayerAvatar;
-                if (!player || player.currentCostume != "HolyRabbit" || !PlayerReady(controller, player, player.spawner)) return blocked;
+                if (!player || player.currentCostume != "HolyRabbit" || !PlayerReady(controller, player, player.spawner) ||
+                    PvpPotionPolicy.BlocksRabbitInfinite(player)) return blocked;
                 int selected = controller.SelectedQuickSlotIdx;
                 if (selected < 0 || selected >= controller.quickSlotTable.Count ||
                     !ReferenceEquals(item, player.Inventory.FindItem(player.Inventory.IdxToPos(controller.quickSlotTable[selected].idx)))) return blocked;

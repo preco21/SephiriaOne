@@ -33,6 +33,7 @@ namespace SephiriaOne
             public DungeonManager Dungeon;
             public string Floor;
             public RabbitPotionSettings Settings;
+            public bool RabbitInfiniteAllowed;
             public string Costume;
             public FriendlyFireParticipants.Receipt PvpReceipt;
             public float HealStrength;
@@ -196,7 +197,8 @@ namespace SephiriaOne
             return new DrinkContext { Potion = potion, Effect = potion.effect, Controller = controller,
                 Player = player, Spawner = spawner, Connection = spawner.connectionToClient, Inventory = inventory, Item = item,
                 InstanceId = instanceId, EntityId = potion.entityID, Slot = slot, Run = SaveManager.CurrentRun,
-                Dungeon = DungeonManager.Instance, Floor = player.currentFloorGuid, Settings = settings, Costume = player.currentCostume, PvpReceipt = pvpReceipt };
+                Dungeon = DungeonManager.Instance, Floor = player.currentFloorGuid, Settings = settings, Costume = player.currentCostume, PvpReceipt = pvpReceipt,
+                RabbitInfiniteAllowed = settings.Infinite && !PvpPotionPolicy.BlocksRabbitInfinite(player) };
         }
 
         private static bool SourceReady(WieldingPotion potion, ItemController controller, PlayerAvatar player, PlayerSpawner spawner,
@@ -252,7 +254,8 @@ namespace SephiriaOne
             {
                 if (!Current(__state, retainDeath: true) || __state.HealCalls != 1) return;
                 RabbitPotionSettings now = SessionSettings.RabbitPotionsForUse;
-                bool rabbitInfinite = __state.Settings.Infinite && now.Infinite;
+                // A finite drink cannot gain retention if PvP ends during its callbacks.
+                bool rabbitInfinite = __state.RabbitInfiniteAllowed && now.Infinite && !PvpPotionPolicy.BlocksRabbitInfinite(__state.Player);
                 bool pvpInfinite = IsNativeCompletion(__state) && CurrentPvpPolicy(__state);
                 if (CanRetainPotion(__state.EntityId) && (rabbitInfinite || pvpInfinite) && itemDecreased) itemDecreased = false;
                 if (__state.Settings.Share && now.Share && IsFinitePositive(__state.HealStrength) && Current(__state)) Share(__state);

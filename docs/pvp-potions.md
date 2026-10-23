@@ -1,5 +1,69 @@
 # PvP potion supplies and consumption
 
+## Rabbit costume override (0.94.0)
+
+**Combat → Block Rabbit infinite HP in PvP** (Korean: **PvP 토끼 HP 포션 무한 사용 차단**)
+is enabled by default. Command:
+
+```text
+/one friendlyfire block-rabbit-infinite on|off|reset
+```
+
+The original bug was an independent OR in `CompleteDrink`: Rabbit's costume
+infinite option retained the potion even with general PvP infinite HP off.
+The new control restricts that costume branch for active participants:
+
+| General PvP infinite | Block Rabbit infinite in PvP | Rabbit infinite | Result |
+| --- | --- | --- | --- |
+| On | Either | Either | Small/Large HP retained, no addon MP fee, Survival suppressed |
+| Off | On (default) | Either | Native HP potion consumption |
+| Off | Off | On | Costume infinite behavior |
+| Off | Off | Off | Native HP potion consumption |
+
+This does not require PvP balancing. Casual friendly fire, Deathmatch,
+Tournament, Play Tag and Zombie Survival share the same live participant rule;
+selection exclusions, countdowns and Tournament spectators stay outside combat
+admission. Rejoining avatars get fresh connection admission without stored
+potion eligibility. Setting changes are immediate and do not stop a match,
+reset K/D/A or grant supplies.
+
+The native guarded drink captures whether Rabbit retention was allowed, then
+rechecks the live restriction at completion. Ending PvP or disabling the
+restriction during callbacks cannot retroactively make a finite drink free;
+enabling the restriction before completion blocks retention. The existing exact
+connection/run/floor/item/slot and admitted death-transition checks still apply.
+The associated costume-infinite Tension exception is also blocked in PvP.
+General PvP infinite HP does not itself add a Tension exemption.
+
+Other Rabbit settings (MP fee, Survival suppression, sharing) remain independent.
+Sample ID 37 remains excluded from all HP-potion overrides. No extra network
+message, spawned state, per-frame work or inventory scan is introduced.
+
+**No count restoration:** intentionally use the user's permitted fallback.
+Native consumption synchronizes the remaining inventory to stock clients.
+Restoring a pre-match snapshot could duplicate or erase potions picked up,
+granted, traded or used during the match. On exit, only the costume ability
+resumes; spent potions stay spent. The existing grant button remains available.
+
+`/one save` persists an opt-out in preset v53 as
+`friendlyfire block-rabbit-infinite 0`. Older/omitted settings inherit on;
+option reset and full friendly-fire reset restore on. EN/KO help, status,
+open costume tooltip and private role notices disclose the restriction.
+
+Verification includes native-drink host/guest fixtures for Small/Large/Sample,
+general/costume precedence, balancing on/off, death and mid-drink policy changes;
+real shared-mode runtime/selection/rejoin tests; v1–v52 migration and v53 roundtrip;
+description/localization and installed-game contracts. Live multiplayer remains
+unverified; no deployment was performed.
+
+Verified Release build (zero warnings/errors), 392 potion-hook cases, 14,344
+runtime checks, 15,728 friendly-fire hook checks, 53 description checks plus
+12 translated description cases, 50 localization checks and 28 panel checks.
+The full installed-game contract suite passes against the current game and
+41 compiled Harmony API references. Independent review found and resolved
+footer overlap and default-on checkbox recovery direction.
+
+
 ## Infinite HP potions (0.71.0; default changed in 0.72.0)
 
 Corrected in `0.77.1` (2026-10-21): PvP retention, zero MP cost and suppression
@@ -27,13 +91,13 @@ take effect without a separate potion roster/cache. Countdowns and spectators,
 including Tournament players outside the current pair, keep normal consumption.
 The supply grant deliberately uses the broader entry roster described below.
 
-Turning the option off or ending active PvP immediately restores native consumption
-for subsequent drinks. Rabbit's original costume option remains independent and
+Turning the general option off restores native consumption for participants when
+the default Rabbit override above is on. Rabbit's original costume option
 can still retain HP potions outside PvP. With the PvP option active, the MP fee
 is waived and Survival is suppressed regardless of the Rabbit-specific fee and
 suppression toggles. When PvP ends or the option is disabled, subsequent drinks
-use the costume's configured behavior again. Sharing and Tension remain separate
-Rabbit mechanics; other costumes do not acquire them through this option.
+use the costume's configured behavior, subject to the PvP override above. Sharing
+and Tension remain separate Rabbit mechanics; other costumes do not acquire them through this option.
 
 ### Native boundary and lifecycle
 

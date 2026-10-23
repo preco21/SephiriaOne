@@ -12,7 +12,7 @@ internal static class PvpSharedHealTests
             {
                 var source = setup(); var recipient = new PlayerAvatar(); _ = new PlayerSpawner(recipient);
                 SessionSettings.RabbitPotionsForUse = new(true, true, true, true, blockPvpShare: false);
-                SessionSettings.FriendlyFireForHit = new() { Enabled = true, Balance = balance };
+                SessionSettings.FriendlyFireForHit = new() { Enabled = true, Balance = balance, BlockRabbitInfinite = false };
                 if (active != "recipient") FriendlyFireParticipants.Selected.Add(source.player);
                 if (active != "source") FriendlyFireParticipants.Selected.Add(recipient);
                 install(); source.controller.RunDrink();
@@ -52,7 +52,7 @@ internal static class PvpSharedHealTests
                 var source = setup();
                 var recipient = new PlayerAvatar(); _ = new PlayerSpawner(recipient);
                 SessionSettings.RabbitPotionsForUse = new(true, true, true, true);
-                SessionSettings.FriendlyFireForHit = new() { Enabled = true, Balance = balance };
+                SessionSettings.FriendlyFireForHit = new() { Enabled = true, Balance = balance, BlockRabbitInfinite = false };
                 if (active != "recipient") FriendlyFireParticipants.Selected.Add(source.player);
                 if (active != "source") FriendlyFireParticipants.Selected.Add(recipient);
                 install(); source.controller.RunDrink();

@@ -26,6 +26,8 @@ namespace SephiriaOne
         public bool AutoPotion { get; }
         private readonly bool finiteHpPotions;
         public bool InfiniteHpPotions => !finiteHpPotions;
+        private readonly bool allowRabbitInfinite;
+        public bool BlockRabbitInfinite => !allowRabbitInfinite;
         public bool BlockLobbyRegen { get; }
         public PvpDotSettings DotIntervals { get; }
         public PvpElementalSettings Elements { get; }
@@ -49,12 +51,12 @@ namespace SephiriaOne
         public float DotMaxDuration => (dotDurationOffset + DefaultDotDurationHundredths) / 100f;
         public string DotMaxDurationNumber => DotMaxDurationSeconds.ToString("0.##", CultureInfo.InvariantCulture);
         public bool HasDotDurationChanges => dotDurationOffset != 0;
-        public bool HasChanges => Enabled || Balance || SuppressThorns || HitFrequency || AutoPotion || !InfiniteHpPotions || BlockLobbyRegen || damageOffset != 0 || refillOffset != 0 || guardMpOffset != 0 || DotIntervals.HasChanges || Elements.HasChanges || Amplification.HasChanges || Rapid.HasChanges || PerfectGuard.HasChanges || HasDotDurationChanges || ArtifactRate.HasChanges || LowerBound.HasChanges;
+        public bool HasChanges => Enabled || Balance || SuppressThorns || HitFrequency || AutoPotion || !InfiniteHpPotions || !BlockRabbitInfinite || BlockLobbyRegen || damageOffset != 0 || refillOffset != 0 || guardMpOffset != 0 || DotIntervals.HasChanges || Elements.HasChanges || Amplification.HasChanges || Rapid.HasChanges || PerfectGuard.HasChanges || HasDotDurationChanges || ArtifactRate.HasChanges || LowerBound.HasChanges;
         public FriendlyFireSettings(bool enabled, decimal damagePercent, bool balance = false, bool blockLobbyRegen = false,
             decimal refillPercent = DefaultRefillPercent, decimal guardMpPercent = DefaultGuardMpPercent, PvpDotSettings dotIntervals = default,
             bool hitFrequency = false, bool autoPotion = false, bool infiniteHpPotions = true, PvpAmplificationSettings amplification = default,
             PvpRapidSettings rapid = default, PvpPerfectGuardSettings perfectGuard = default,
-            decimal dotMaxDurationSeconds = DefaultDotMaxDurationSeconds, PvpArtifactRateSettings artifactRate = default, bool suppressThorns = false, PvpLowerBoundSettings lowerBound = default, PvpElementalSettings elements = default)
+            decimal dotMaxDurationSeconds = DefaultDotMaxDurationSeconds, PvpArtifactRateSettings artifactRate = default, bool suppressThorns = false, PvpLowerBoundSettings lowerBound = default, PvpElementalSettings elements = default, bool blockRabbitInfinite = true)
         {
             if (!ValidPercent(damagePercent)) throw new ArgumentOutOfRangeException(nameof(damagePercent));
             if (!ValidRefillPercent(refillPercent)) throw new ArgumentOutOfRangeException(nameof(refillPercent));
@@ -70,13 +72,13 @@ namespace SephiriaOne
             PerfectGuard = perfectGuard;
             ArtifactRate = artifactRate; LowerBound = lowerBound;
             SuppressThorns = suppressThorns;
-            HitFrequency = hitFrequency; AutoPotion = autoPotion; finiteHpPotions = !infiniteHpPotions;
+            HitFrequency = hitFrequency; AutoPotion = autoPotion; finiteHpPotions = !infiniteHpPotions; allowRabbitInfinite = !blockRabbitInfinite;
         }
         public static bool ValidPercent(decimal percent) => percent >= 0 && percent <= 300 && percent * 100 == decimal.Truncate(percent * 100);
         public static bool ValidRefillPercent(decimal percent) => percent >= 1 && ValidPercent(percent);
         public static bool ValidGuardMpPercent(decimal percent) => percent <= 100 && ValidPercent(percent);
         private FriendlyFireSettings(FriendlyFireSettings source, bool enabled)
-        { Enabled = enabled; Balance = source.Balance; HitFrequency = source.HitFrequency; AutoPotion = source.AutoPotion; finiteHpPotions = source.finiteHpPotions; BlockLobbyRegen = source.BlockLobbyRegen; damageOffset = source.damageOffset; refillOffset = source.refillOffset; guardMpOffset = source.guardMpOffset; DotIntervals = source.DotIntervals; Elements = source.Elements; Amplification = source.Amplification; Rapid = source.Rapid; PerfectGuard = source.PerfectGuard; dotDurationOffset = source.dotDurationOffset; ArtifactRate = source.ArtifactRate; SuppressThorns = source.SuppressThorns; LowerBound = source.LowerBound; }
+        { Enabled = enabled; Balance = source.Balance; HitFrequency = source.HitFrequency; AutoPotion = source.AutoPotion; finiteHpPotions = source.finiteHpPotions; allowRabbitInfinite = source.allowRabbitInfinite; BlockLobbyRegen = source.BlockLobbyRegen; damageOffset = source.damageOffset; refillOffset = source.refillOffset; guardMpOffset = source.guardMpOffset; DotIntervals = source.DotIntervals; Elements = source.Elements; Amplification = source.Amplification; Rapid = source.Rapid; PerfectGuard = source.PerfectGuard; dotDurationOffset = source.dotDurationOffset; ArtifactRate = source.ArtifactRate; SuppressThorns = source.SuppressThorns; LowerBound = source.LowerBound; }
         // Deathmatch reads this at hit time; keep toggle overlays in integer space.
         public FriendlyFireSettings WithEnabled(bool enabled) => new FriendlyFireSettings(this, enabled);
         public FriendlyFireSettings Apply(FriendlyFireCommand command) => command.Reset ? default :
@@ -90,7 +92,7 @@ namespace SephiriaOne
                 command.PerfectGuard.HasValue ? command.PerfectGuard.Value.Apply(PerfectGuard) : PerfectGuard,
                 command.DotMaxDurationSeconds ?? DotMaxDurationSeconds,
                 command.ArtifactRate.HasValue ? command.ArtifactRate.Value.Apply(ArtifactRate) : ArtifactRate, command.SuppressThorns ?? SuppressThorns,
-                command.LowerBound.HasValue ? command.LowerBound.Value.Apply(LowerBound) : LowerBound, command.Elements.HasValue ? command.Elements.Value.Apply(Elements) : Elements);
+                command.LowerBound.HasValue ? command.LowerBound.Value.Apply(LowerBound) : LowerBound, command.Elements.HasValue ? command.Elements.Value.Apply(Elements) : Elements, command.BlockRabbitInfinite ?? BlockRabbitInfinite);
     }
 
     internal readonly struct PvpAmplificationChange
@@ -128,6 +130,7 @@ namespace SephiriaOne
         public bool? HitFrequency { get; }
         public bool? AutoPotion { get; }
         public bool? InfiniteHpPotions { get; }
+        public bool? BlockRabbitInfinite { get; }
         public bool? BlockLobbyRegen { get; }
         public PvpElementalChange? Elements { get; }
         public PvpAmplificationChange? Amplification { get; }
@@ -139,12 +142,12 @@ namespace SephiriaOne
             decimal? refillPercent = null, decimal? guardMpPercent = null, PvpDotChange? dot = null, bool? hitFrequency = null,
             PvpDotScheduleChange? dotSchedule = null, bool? autoPotion = null, bool? infiniteHpPotions = null,
             PvpAmplificationChange? amplification = null, PvpRapidChange? rapid = null, PvpPerfectGuardChange? perfectGuard = null,
-            decimal? dotMaxDurationSeconds = null, PvpArtifactRateChange? artifactRate = null, bool? suppressThorns = null, PvpLowerBoundChange? lowerBound = null, PvpElementalChange? elements = null)
-        { Enabled = enabled; Percent = percent; Reset = reset; Balance = balance; HitFrequency = hitFrequency; AutoPotion = autoPotion; InfiniteHpPotions = infiniteHpPotions; BlockLobbyRegen = blockLobbyRegen; RefillPercent = refillPercent; GuardMpPercent = guardMpPercent; Dot = dot; DotSchedule = dotSchedule; Elements = elements; Amplification = amplification; Rapid = rapid; PerfectGuard = perfectGuard; DotMaxDurationSeconds = dotMaxDurationSeconds; ArtifactRate = artifactRate; SuppressThorns = suppressThorns; LowerBound = lowerBound; }
+            decimal? dotMaxDurationSeconds = null, PvpArtifactRateChange? artifactRate = null, bool? suppressThorns = null, PvpLowerBoundChange? lowerBound = null, PvpElementalChange? elements = null, bool? blockRabbitInfinite = null)
+        { Enabled = enabled; Percent = percent; Reset = reset; Balance = balance; HitFrequency = hitFrequency; AutoPotion = autoPotion; InfiniteHpPotions = infiniteHpPotions; BlockRabbitInfinite = blockRabbitInfinite; BlockLobbyRegen = blockLobbyRegen; RefillPercent = refillPercent; GuardMpPercent = guardMpPercent; Dot = dot; DotSchedule = dotSchedule; Elements = elements; Amplification = amplification; Rapid = rapid; PerfectGuard = perfectGuard; DotMaxDurationSeconds = dotMaxDurationSeconds; ArtifactRate = artifactRate; SuppressThorns = suppressThorns; LowerBound = lowerBound; }
         public bool IsReset => Reset || !Dot.HasValue && !GuardMpPercent.HasValue && !RefillPercent.HasValue &&
-            (Elements.HasValue ? Elements.Value.IsReset : LowerBound.HasValue ? LowerBound.Value.IsReset : SuppressThorns.HasValue ? !SuppressThorns.Value : ArtifactRate.HasValue ? ArtifactRate.Value.IsReset : DotMaxDurationSeconds.HasValue ? DotMaxDurationSeconds.Value == FriendlyFireSettings.DefaultDotMaxDurationSeconds : PerfectGuard.HasValue ? PerfectGuard.Value.IsReset : Rapid.HasValue ? Rapid.Value.IsReset : Amplification.HasValue ? Amplification.Value.IsReset : InfiniteHpPotions.HasValue ? !InfiniteHpPotions.Value : AutoPotion.HasValue ? !AutoPotion.Value : DotSchedule.HasValue ? !DotSchedule.Value.Enabled : HitFrequency.HasValue ? !HitFrequency.Value : BlockLobbyRegen.HasValue ? !BlockLobbyRegen.Value : Balance.HasValue ? !Balance.Value : !Percent.HasValue && !Enabled);
-        public bool TouchesMasterToggle => Reset || !Elements.HasValue && !LowerBound.HasValue && !SuppressThorns.HasValue && !ArtifactRate.HasValue && !DotMaxDurationSeconds.HasValue && !PerfectGuard.HasValue && !Rapid.HasValue && !Amplification.HasValue && !InfiniteHpPotions.HasValue && !AutoPotion.HasValue && !Percent.HasValue && !Balance.HasValue && !HitFrequency.HasValue && !BlockLobbyRegen.HasValue && !RefillPercent.HasValue && !GuardMpPercent.HasValue && !Dot.HasValue && !DotSchedule.HasValue;
-        public static string Usage => L.T("Elemental stat limits: /one friendlyfire elements on|off|reset; elements physical|flame|ice|lightning limits <soft> <hard>; elements <element> reset. Default on, soft 50, hard 100 per element. Use 0..10000 with up to 2 decimals and soft <= hard. Effective participant stats while PvP balancing is on; participant PvE damage is also affected. Saved stats stay unchanged.") + " " + L.T("Infinite PvP HP potions: /one friendlyfire infinite-hp on|off|reset. Default on; active participants keep Small/Large HP potions, pay no MP and gain no Survival random stat. Sample and other potions are excluded.") + " " + L.T("Large Potion: /one friendlyfire potion gives one to each player who lacks it. /one friendlyfire auto-potion on|off|reset grants one on PvP entry or match start, only to participants. Default off; /one save persists it.") + " " + L.T("Friendly fire: /one friendlyfire on|off|status|reset|resetkda; /one friendlyfire damage 0..300 (percent, up to 2 decimals; e.g. 0.1). Default 100. /one save persists settings.") + " " +
+            (BlockRabbitInfinite.HasValue ? BlockRabbitInfinite.Value : Elements.HasValue ? Elements.Value.IsReset : LowerBound.HasValue ? LowerBound.Value.IsReset : SuppressThorns.HasValue ? !SuppressThorns.Value : ArtifactRate.HasValue ? ArtifactRate.Value.IsReset : DotMaxDurationSeconds.HasValue ? DotMaxDurationSeconds.Value == FriendlyFireSettings.DefaultDotMaxDurationSeconds : PerfectGuard.HasValue ? PerfectGuard.Value.IsReset : Rapid.HasValue ? Rapid.Value.IsReset : Amplification.HasValue ? Amplification.Value.IsReset : InfiniteHpPotions.HasValue ? !InfiniteHpPotions.Value : AutoPotion.HasValue ? !AutoPotion.Value : DotSchedule.HasValue ? !DotSchedule.Value.Enabled : HitFrequency.HasValue ? !HitFrequency.Value : BlockLobbyRegen.HasValue ? !BlockLobbyRegen.Value : Balance.HasValue ? !Balance.Value : !Percent.HasValue && !Enabled);
+        public bool TouchesMasterToggle => Reset || !BlockRabbitInfinite.HasValue && !Elements.HasValue && !LowerBound.HasValue && !SuppressThorns.HasValue && !ArtifactRate.HasValue && !DotMaxDurationSeconds.HasValue && !PerfectGuard.HasValue && !Rapid.HasValue && !Amplification.HasValue && !InfiniteHpPotions.HasValue && !AutoPotion.HasValue && !Percent.HasValue && !Balance.HasValue && !HitFrequency.HasValue && !BlockLobbyRegen.HasValue && !RefillPercent.HasValue && !GuardMpPercent.HasValue && !Dot.HasValue && !DotSchedule.HasValue;
+        public static string Usage => L.T("Block Rabbit infinite HP in PvP: /one friendlyfire block-rabbit-infinite on|off|reset. Default on; Rabbit consumes HP potions when Infinite PvP HP potions is off. General PvP infinite HP takes priority. PvE is unchanged; potion counts are not restored.") + " " + L.T("Elemental stat limits: /one friendlyfire elements on|off|reset; elements physical|flame|ice|lightning limits <soft> <hard>; elements <element> reset. Default on, soft 50, hard 100 per element. Use 0..10000 with up to 2 decimals and soft <= hard. Effective participant stats while PvP balancing is on; participant PvE damage is also affected. Saved stats stay unchanged.") + " " + L.T("Infinite PvP HP potions: /one friendlyfire infinite-hp on|off|reset. Default on; active participants keep Small/Large HP potions, pay no MP and gain no Survival random stat. Sample and other potions are excluded.") + " " + L.T("Large Potion: /one friendlyfire potion gives one to each player who lacks it. /one friendlyfire auto-potion on|off|reset grants one on PvP entry or match start, only to participants. Default off; /one save persists it.") + " " + L.T("Friendly fire: /one friendlyfire on|off|status|reset|resetkda; /one friendlyfire damage 0..300 (percent, up to 2 decimals; e.g. 0.1). Default 100. /one save persists settings.") + " " +
             L.T("PvP balancing: /one friendlyfire balance on|off. Default off; heavy hits and barrages share a recoverable burst allowance. Debuff and Dark Cloud damage intervals remain configurable; Freeze stun is preserved.") + " " +
             L.T("Suppress PvP Thorns: /one friendlyfire suppress-thorns on|off|reset. Default off; blocks Thorns retaliation against hostile players only while PvP balancing is on. PvE and other reflection effects stay unchanged.") + " " +
             L.T("PvP lower-bound assistance: /one friendlyfire lower-bound on|off|reset; lower-bound reference 0.1..25|reset; lower-bound refill 0.1..100|reset (percent, up to 2 decimals). Default off, 4% reference and 8% max HP/s refill. Weak positive hits are lifted relative to opponent max HP using one small bonus pool shared by all sources per opponent, not a fresh minimum for every hit. Role reductions, shields and the main damage allowance can reduce the result. Requires PvP balancing.") + " " +
@@ -198,6 +201,9 @@ namespace SephiriaOne
                 if (op == "on" || op == "off" || op == "reset")
                 { command = new FriendlyFireCommand(op == "on", reset: op == "reset"); return FriendlyFireParseResult.Valid; }
             }
+            if (parts.Length == 4 && op == "block-rabbit-infinite" && (parts[3].Equals("on", StringComparison.OrdinalIgnoreCase) ||
+                parts[3].Equals("off", StringComparison.OrdinalIgnoreCase) || parts[3].Equals("reset", StringComparison.OrdinalIgnoreCase)))
+            { command = new FriendlyFireCommand(false, blockRabbitInfinite: !parts[3].Equals("off", StringComparison.OrdinalIgnoreCase)); return FriendlyFireParseResult.Valid; }
             if (parts.Length == 4 && op == "infinite-hp" && (parts[3].Equals("on", StringComparison.OrdinalIgnoreCase) ||
                 parts[3].Equals("off", StringComparison.OrdinalIgnoreCase) || parts[3].Equals("reset", StringComparison.OrdinalIgnoreCase)))
             { command = new FriendlyFireCommand(false, infiniteHpPotions: !parts[3].Equals("off", StringComparison.OrdinalIgnoreCase)); return FriendlyFireParseResult.Valid; }

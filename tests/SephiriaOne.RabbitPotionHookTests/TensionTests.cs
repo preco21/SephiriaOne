@@ -12,6 +12,19 @@ internal static class TensionTests
             DungeonManager.Instance.hardModeEnvironment["HOSTILITY"] = 1;
             FloorGenerator.All["floor"] = new FloorGenerator { BossBattle = true };
         }
+        foreach (bool general in new[] { false, true })
+            check("PvP Rabbit restriction controls its Tension exemption, general=" + general, () =>
+            {
+                var s = setup(0, false); Boss();
+                s.controller.currentWieldingItem = null;
+                SessionSettings.RabbitPotionsForUse = new(true, false);
+                SessionSettings.FriendlyFireForHit = new() { Enabled = true, InfiniteHpPotions = general };
+                install(); s.controller.GuestUseItemKeyDown();
+                assert(s.controller.StartedDrinks == 0 && s.controller.BlockedNotices == 1, "Restricted costume ability does not bypass Tension");
+                SessionSettings.FriendlyFireForHit = new() { Enabled = true, InfiniteHpPotions = general, BlockRabbitInfinite = false };
+                s.controller.GuestUseItemKeyDown();
+                assert(s.controller.StartedDrinks == 1, "Opt-out restores costume Tension exemption");
+            });
         foreach (bool local in new[] { true, false })
         foreach (int id in new[] { 0, 1 })
             check($"Tension admits infinite Rabbit HP potion {id}, local {local}", () =>

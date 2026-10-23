@@ -21,19 +21,21 @@ namespace SephiriaOne
             resetAll = widgets.Button(pageRoot, "Reset", 200, 25, 89, 21, () => Execute("/one friendlyfire reset", true));
             BuildFriendlyDamageEditor();
             BuildPvpSuppliesEditor();
-            teleportAll = widgets.Button(pageRoot, "Teleport all players", 16, 228, 273, 22,
+            teleportAll = widgets.Button(pageRoot, "Teleport all players", 156, 145, 133, 25,
                 () => Execute("/one teleportall", true));
             BuildParticipantsEditor();
         }
 
         private void BuildPvpSuppliesEditor()
         {
-            giveLargePotions = widgets.Button(pageRoot, "Give Large Potion to all", 16, 145, 273, 25,
+            giveLargePotions = widgets.Button(pageRoot, "Give Large Potion to all", 16, 145, 133, 25,
                 () => Execute("/one friendlyfire potion", true));
             AddCheckbox("Auto Large Potion", 16, 176, 273, 21, s => s.FriendlyFire.AutoPotion,
                 s => s.FriendlyFireAvailable && LargePotionGrant.Available, "/one friendlyfire auto-potion");
             AddCheckbox("Infinite PvP HP potions", 16, 202, 273, 21, s => s.FriendlyFire.InfiniteHpPotions,
                 s => s.FriendlyFireAvailable && RabbitPotionFeature.Available, "/one friendlyfire infinite-hp");
+            AddCheckbox("Block Rabbit infinite HP in PvP", 16, 228, 273, 21, s => s.FriendlyFire.BlockRabbitInfinite,
+                s => s.FriendlyFireAvailable && RabbitPotionFeature.Available, "/one friendlyfire block-rabbit-infinite", recoveryValue: true);
         }
 
         private void BuildFriendlyDamageEditor()

@@ -35,7 +35,11 @@ internal static class CostumeRoleTests
         { check(SettingsActions.Execute(command).Success, "Role setting: " + command); NativePlayerChat.Messages.Clear(); }
         Take(host.PlayerAvatar);
         Command("/one rabbit infinite on");
-        check(Take(host.PlayerAvatar).Contains("Unlimited HP potions"), "Enabled infinite HP potion shown");
+        check(Take(host.PlayerAvatar).Contains("Unlimited HP outside PvP"), "Enabled infinite HP potion shown");
+        Command("/one friendlyfire block-rabbit-infinite off");
+        check(Take(host.PlayerAvatar).Contains("Unlimited HP potions (requires one)"), "Role notice immediately reflects restriction opt-out");
+        Command("/one friendlyfire block-rabbit-infinite on");
+        check(Take(host.PlayerAvatar).Contains("Unlimited HP outside PvP"), "Role notice restores default PvP condition");
         Command("/one rabbit mp-cost 37");
         check(Take(host.PlayerAvatar).Contains("37 MP"), "Live configured MP fee replaces default");
         Command("/one rabbit share on");

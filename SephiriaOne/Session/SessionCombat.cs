@@ -8,6 +8,8 @@ namespace SephiriaOne
         // policy or rely on the joining connection's prior incarnation.
         internal static FriendlyFireSettings FriendlyFireForHit => EnsureResourceScope() ? CombatMatchRuntime.Effective(policy.FriendlyFire) : default;
         internal static FriendlyFireSettings FriendlyFireSupplies => EnsureResourceScope() ? policy.FriendlyFire : default;
+        internal static FriendlyFireSettings FriendlyFireForDisplay => enabled && NetworkServer.active &&
+            dungeon && dungeon.isServer && dungeon.netId != 0 && ReferenceEquals(dungeon, DungeonManager.Instance) ? policy.FriendlyFire : default;
         internal static long CombatBalanceRevision { get; private set; }
         internal static long CombatFrequencyRevision { get; private set; }
         internal static long CombatRecoveryRevision { get; private set; }
@@ -73,6 +75,8 @@ namespace SephiriaOne
             if (command.TouchesMasterToggle) CombatMatchRuntime.Stop(true, true);
             if (!command.IsReset && !FriendlyFireFeature.Available)
             { message = L.T("Friendly-fire compatibility checks failed. Off/reset remain available; see Player.log."); return false; }
+            if (command.BlockRabbitInfinite == false && !RabbitPotionFeature.Available)
+            { message = L.T("Rabbit potion hooks unavailable; on/reset restore the PvP restriction. See Player.log."); return false; }
             if (command.InfiniteHpPotions == true && !RabbitPotionFeature.Available)
             { message = L.T("HP potion hooks unavailable; off/reset remain available. See Player.log."); return false; }
             if (command.AutoPotion == true && !LargePotionGrant.Available)
@@ -102,6 +106,7 @@ namespace SephiriaOne
             L.F("Friendly fire: {0}; allied damage: {1}%.", L.T(settings.Enabled ? "on" : "off"), settings.Number) + " " +
             (settings.Enabled ? L.T("PvP recovery: HP Steal is disabled on friendly-fire hits.") + " " + DescribeRabbitPvpSharing(RabbitPotionsForDisplay) + " " : "") +
             L.F("Infinite PvP HP potions: {0}.", L.T(settings.InfiniteHpPotions ? "on" : "off")) + " " +
+            L.F("Block Rabbit infinite HP in PvP: {0}; general PvP infinite HP takes priority.", L.T(settings.BlockRabbitInfinite ? "on" : "off")) + " " +
             L.F("Automatic Large Potion: {0}.", L.T(settings.AutoPotion ? "on" : "off")) + " " +
             L.F("PvP balancing: {0}.", L.T(settings.Balance ? "on" : "off")) + " " +
             L.F("PvP lower-bound assistance: {0}; reference {1}% opponent max HP; shared bonus refill {2}% max HP/s (requires PvP balancing).",

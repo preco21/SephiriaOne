@@ -1,5 +1,13 @@
 # Sephiria domain findings
 
+Rabbit/PvP potion precedence (`0.94.0`): independent costume retention previously
+bypassed the general PvP infinite-off setting. Gate the costume branch at both
+drink admission and completion using shared `PvpParticipation`; do not implement
+refunds or alternate inventory writes. A finite admitted drink must stay finite
+if a callback ends PvP. The default-on override also gates the costume-specific
+Tension exception; general PvP infinite still grants retention, free MP and
+Survival suppression independently. See [potion policy](pvp-potions.md#rabbit-costume-override-0940).
+
 Zombie movement (`0.93.1`): `UnitAvatar.NetworkmoveSpeed` synchronizes the base
 used by both walk/run consumers, separately from additive equipment/status,
 frostbite and weapon speed modifiers. A role-owned ×0.8 base adjustment reaches

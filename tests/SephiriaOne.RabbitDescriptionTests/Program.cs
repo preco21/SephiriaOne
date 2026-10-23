@@ -83,6 +83,13 @@ SessionSettings.Change(false, false);
 Check(panel.tooltipEffectText.text == native, "disabling level-up potion restores the native tooltip");
 SessionSettings.Change(true, false);
 Check(panel.tooltipEffectText.text.Contains("not consumed"), "policy event refreshes current tooltip");
+SessionSettings.FriendlyFireForDisplay = new() { BlockRabbitInfinite = true };
+SessionSettings.Change(true, false);
+Check(panel.tooltipEffectText.text.Contains("Outside PvP") && panel.tooltipEffectText.text.Contains("general Infinite PvP HP potions"),
+    "Default restriction describes PvP precedence");
+SessionSettings.FriendlyFireForDisplay = new() { BlockRabbitInfinite = false };
+SessionSettings.Change(true, false);
+Check(!panel.tooltipEffectText.text.Contains("Outside PvP"), "Live restriction opt-out removes conditional text");
 SessionSettings.Change(true, true);
 Check(panel.tooltipEffectText.text.Contains("Nearby allies"), "second option refreshes current tooltip");
 Check(panel.tooltipEffectText.text.Split("Nearby allies").Length == 2, "refresh does not duplicate line");

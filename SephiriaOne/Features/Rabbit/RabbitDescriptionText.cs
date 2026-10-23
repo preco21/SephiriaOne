@@ -9,13 +9,13 @@ namespace SephiriaOne
 
         internal static string Decorate(string original, string costumeId, bool infinite, bool share, bool compatible,
             bool consumeMp = false, bool suppressSurvival = false, int mpCost = RabbitPotionSettings.DefaultMpCostPerDrink,
-            bool levelUpPotion = false, bool levelUpCompatible = false, bool blockPvpShare = true)
+            bool levelUpPotion = false, bool levelUpCompatible = false, bool blockPvpShare = true, bool blockPvpInfinite = false)
         {
             string native = original ?? "";
             if (native.Length == 0 || costumeId != "HolyRabbit") return native;
             if (compatible)
             {
-                if (infinite) native = Append(native, L.T(Infinite));
+                if (infinite) native = Append(native, L.T(blockPvpInfinite ? "- <indent=10>Outside PvP, HP potions except Potion of Regeneration (Sample) are not consumed and bypass Tension (requires one potion). In PvP, unlimited use requires the general Infinite PvP HP potions option.</indent>" : Infinite));
                 if (share) native = Append(native, L.F(blockPvpShare ? Share : ShareUnrestricted, RabbitPotionSettings.ShareRadiusTiles));
                 if (consumeMp) native = Append(native, L.F("- <indent=10>Each Wing-Eared Rabbit HP potion drink, except Potion of Regeneration (Sample), costs {0} MP; insufficient MP blocks the drink.</indent>", mpCost));
                 if (suppressSurvival) native = Append(native, L.T(Survival));

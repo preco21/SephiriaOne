@@ -76,6 +76,7 @@ Console.WriteLine($"Passed {PvpThornsTests.Run()} PvP Thorns policy checks.");
 Console.WriteLine($"Passed {PvpLowerBoundTests.Run()} PvP lower-bound policy checks.");
 Console.WriteLine($"Passed {PvpDotScheduleTests.Run()} PvP debuff schedule checks.");
 Console.WriteLine($"Passed {PvpInfinitePotionSettingsTests.Run()} PvP infinite potion setting checks.");
+Console.WriteLine($"Passed {PvpRabbitPotionSettingsTests.Run()} PvP Rabbit override setting checks.");
 Console.WriteLine($"Passed {RequitalSettingsTests.Run()} Requital setting checks.");
 Console.WriteLine($"Passed {HitFrequencySettingsTests.Run()} PvP hit-frequency setting checks.");
 Console.WriteLine($"Passed {EventSpawnPolicyTests.Run()} event spawn policy/preset checks.");

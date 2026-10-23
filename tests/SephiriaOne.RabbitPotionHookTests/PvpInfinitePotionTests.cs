@@ -5,6 +5,16 @@ internal static class PvpInfinitePotionTests
     internal static void Run(Action<string, Action> check, Action<bool, string> assert,
         Func<int, bool, (PlayerAvatar player, ItemController controller, WieldingPotion potion, NewItemOwnInstance item)> setup, Action install)
     {
+        check("Rabbit infinite cannot bypass finite PvP potions by default", () =>
+        {
+            var s = setup(0, false);
+            SessionSettings.RabbitPotionsForUse = new(true, false);
+            SessionSettings.FriendlyFireForHit = new() { Enabled = true };
+            install(); s.controller.RunDrink();
+            assert(s.item.Quantity == 2 && s.player.Heals.Count == 1,
+                "Active Rabbit must consume one HP potion when general PvP infinite is off");
+        });
+        PvpRabbitInfiniteTests.Run(check, assert, setup, install);
         foreach (string costume in new[] { "HolyRabbit", "Mole", "PinkRabbit" })
         foreach (int id in new[] { 0, 1 })
         foreach (bool local in new[] { false, true })
