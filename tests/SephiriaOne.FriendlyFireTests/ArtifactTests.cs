@@ -17,6 +17,7 @@ internal static class ArtifactTests
         Nearest(check);
         Procs(check);
         WarmAllocations(check);
+        IceWeaponTargetingTests.Run(check);
         PlayerSpawner.MultiplayerList.Clear();
         PlayerInputController.Candidates.Clear();
         CombatManager.Instance.PeaceMode = false;

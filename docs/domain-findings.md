@@ -1,5 +1,12 @@
 # Sephiria domain findings
 
+Ice Weapon targeting (2026-10-24, `0.92.0`): audit activation, prefab homing flags
+and movement consumers separately. Frozen Bow auto-acquires; Hammer's scythe
+follows synchronized owner aim; Plitvice deliberately orbits. A stationary
+owner-following artifact body does not prove a failed projectile search. Emission
+admission can also suppress launch without changing that body. See the
+[family audit and remaining live uncertainty](ice-weapon-targeting-audit.md).
+
 PvP periodic recovery (`0.92.0`): rolling cadence history and stored damage
 capacity serve different purposes. Recover both through one directed-pair clock,
 not separate weapon timers. Reuse history arrays, keep effect cooldowns intact,

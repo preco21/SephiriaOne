@@ -83,6 +83,7 @@ internal static class GameFriendlyFireArtifactTests
         var battle = PatchProcessor.GetOriginalInstructions(Method("PlayerBattleChecker", "Update"));
         Require(battle.Any(i => i.operand is MethodInfo m && m.Name == "OverlapCircle"), "native combat checker remains separately owned");
         GameFriendlyFireSwordTests.Run(game, addon);
+        GameIceWeaponTargetingTests.Run(game, addon);
         // Planet damage uses the owning player and the ordinary Bullet impact
         // path. Its native flat base differs from MP-scaled armaments/books.
         var planets = PatchProcessor.GetOriginalInstructions(Method("GreenBat", "CreateBullet")).ToList();
