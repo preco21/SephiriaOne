@@ -691,8 +691,8 @@ all tables. No new per-frame scans, custom guest state or network messages exist
 
 ## Dark Cloud
 
-The attacker/player-pair strike limit defaults to **0.5 seconds** since `0.62.1`
-(2026-10-18), increased from the 0.25-second setting in `0.55.2`. It remains
+The attacker/player-pair strike limit defaults to **2 seconds** since `0.94.2`
+(2026-10-24), increased from 0.7 seconds. Explicit saved overrides are preserved. It remains
 separate from the shared
 70% HP/s default budget and is part of the balancing toggle. Since `0.68.0`, edit
 it independently with `/one friendlyfire dot dark-cloud N|reset` or the interval

@@ -228,7 +228,7 @@ Commands, UI and presets use the existing shared combat policy.
 
 PvP intervals: [all audited debuff damage families and Dark Cloud](pvp-dot-intervals.md)
 have independent controls. Defaults: Lightning/Shock 0.5s, separate Plasma shock
-0.9s, Dark Cloud 0.7s, Wound 1.33s, Freeze damage 0.25s and Chim damage 0.25s.
+0.9s, Dark Cloud 2s, Wound 1.33s, Freeze damage 0.25s and Chim damage 0.25s.
 Scroll within Combat → DoT. v37 separates shock overrides while migrating explicit
 older shared values to both effects; custom saved intervals are preserved.
 
@@ -297,7 +297,7 @@ retaining every existing chat/bubble notice. Native transport and fixture checks
 pass; live host/guest readability and delivery remain unverified.
 
 PvP tuning: [Dark Cloud](pvp-balancing.md#dark-cloud) now admits one strike per
-attacker/opponent every 0.5 seconds while balancing is enabled. Other effect
+attacker/opponent every 2 seconds by default while balancing is enabled. Other effect
 intervals, the shared damage budget and native enemy behavior are unchanged.
 
 Costumes: [current role summaries](costume-role-notices.md) privately describe

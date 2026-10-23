@@ -11,7 +11,7 @@ internal static class PvpDotSettingsTests
         foreach (string key in new[] { "wound", "lightning", "plasma-shock", "freeze", "chim", "dark-cloud" })
             Check(FriendlyFireCommand.Parse("/one friendlyfire dot " + key + " 1.5", out _) == FriendlyFireParseResult.Valid,
                 "Missing effect control is exposed: " + key);
-        decimal ExpectedDefault(PvpDotEffect effect) => effect switch { PvpDotEffect.Burn or PvpDotEffect.PlasmaShock => 0.9m, PvpDotEffect.Wound => 1.33m, PvpDotEffect.Lightning => 0.5m, PvpDotEffect.Freeze or PvpDotEffect.Chim => 0.25m, PvpDotEffect.DarkCloud => 0.7m, _ => 0.75m };
+        decimal ExpectedDefault(PvpDotEffect effect) => effect switch { PvpDotEffect.Burn or PvpDotEffect.PlasmaShock => 0.9m, PvpDotEffect.Wound => 1.33m, PvpDotEffect.Lightning => 0.5m, PvpDotEffect.Freeze or PvpDotEffect.Chim => 0.25m, PvpDotEffect.DarkCloud => 2m, _ => 0.75m };
         Check(FriendlyFireCommand.Parse("/one friendlyfire dot burn 0.75", out var command) == FriendlyFireParseResult.Valid &&
             !command.TouchesMasterToggle && !command.IsReset, "Independent DoT interval command is accepted without toggling combat");
         var policy = new SessionPolicy();

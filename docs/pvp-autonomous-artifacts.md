@@ -6,7 +6,7 @@ replication paths for unmodified guests. No custom client assets or messages.
 **`0.89.1` correction:** Dark Cloud is excluded from this limiter. The earlier
 implementation treated it as another autonomous attack and used the longer of
 the two intervals. That made the general setting override its dedicated control.
-Dark Cloud now uses only `/one friendlyfire dot dark-cloud N` (default 0.7s).
+Dark Cloud now uses only `/one friendlyfire dot dark-cloud N` (default 2s since `0.94.2`).
 Changing the artifact interval/toggle does not reset or modify its strike clock.
 Saved settings retain both existing values; no migration or new runtime state.
 Release build, combat/runtime regressions, localization and installed-game

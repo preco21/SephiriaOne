@@ -23,11 +23,11 @@ internal static class DarkCloudTests
         Time.time = 10.25f; cloud.FireLightning(target);
         check(target.Hp == 90 && target.DebuffApplications == 1 && cloud.Effects == 1,
             "Dark Cloud rejects the former quarter-second interval including its callback and FX");
-        Time.time = 10.699f; cloud.FireLightning(target);
-        check(target.Hp == 90, "Dark Cloud remains limited just before the 0.7-second boundary");
-        Time.time = 10.7f; cloud.FireLightning(target);
+        Time.time = 11.999f; cloud.FireLightning(target);
+        check(target.Hp == 90, "Dark Cloud remains limited just before the default 2-second boundary");
+        Time.time = 12f; cloud.FireLightning(target);
         check(target.Hp == 80 && target.DebuffApplications == 2 && cloud.Effects == 2,
-            "Dark Cloud admits the exact 0.7-second boundary without extending cooldown on rejected strikes");
+            "Dark Cloud admits the exact default 2-second boundary without extending cooldown on rejected strikes");
         cloud.FireLightning(target);
         check(target.Hp == 80 && target.DebuffApplications == 2 && cloud.Effects == 2,
             "Dark Cloud rejects a second strike on the same boundary frame");
@@ -226,7 +226,10 @@ internal static class DarkCloudTests
     private static (PlayerAvatar Source, PlayerAvatar Target, ComboEffect_DarkCloud Cloud) Fresh()
     {
         FriendlyFireParticipants.Clear(); CombatMatchRuntime.PairRule = null;
-        SessionSettings.FriendlyFireForHit = new(true, 50, balance: true); Time.time = 10;
+        // Lifecycle/live-edit cases retain an explicit custom interval; the
+        // opening boundary checks above exercise the shipped 2-second default.
+        SessionSettings.FriendlyFireForHit = new(true, 50, balance: true,
+            dotIntervals: default(PvpDotSettings).Apply(new(PvpDotEffect.DarkCloud, 0.7m))); Time.time = 10;
         var source = new PlayerAvatar(); var target = new PlayerAvatar { MaxHp = 400 };
         return (source, target, Cloud(source));
     }

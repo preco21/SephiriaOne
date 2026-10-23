@@ -1,5 +1,11 @@
 # Independent PvP damage intervals
 
+`0.94.2` (2026-10-24): Dark Cloud's default/reset interval is **2 seconds**,
+formerly 0.7 seconds. The independent per-attacker/opponent strike gate is
+unchanged. Saved explicit intervals keep their values; omitted settings inherit
+2 seconds. Use `/one friendlyfire dot dark-cloud reset` to reset an existing
+override, then `/one save` to persist it. PvE and other effect intervals are unchanged.
+
 ## Configurable duration cap (`0.85.0`, 2026-10-22)
 
 **PvP Balance → Debuffs / Dark Cloud → Burn-family max duration (s)** controls
@@ -71,7 +77,7 @@ Tournament, Play Tag and Zombie Survival. Native PvE timing is unchanged.
 | Plasma shock / `plasma-shock` | 0.9s | Plasma's `Debuff_Plasma` damage marked `DEBUFF_ELECTRIC`, separate from its burn ticks. |
 | Freeze damage / `freeze` | 0.25s | `Debuff_Freeze` application/stack damage. Native stun is preserved. |
 | Chim damage / `chim` | 0.25s | `Debuff_Chim` delayed expiry hit. No new periodic damage or change to its charge/lifetime. |
-| Dark Cloud / `dark-cloud` | 0.7s | Native `ComboEffect_DarkCloud.FireLightning`, including ice variants and attached burn callbacks. |
+| Dark Cloud / `dark-cloud` | 2s | Native `ComboEffect_DarkCloud.FireLightning`, including ice variants and attached burn callbacks. |
 
 ```text
 /one friendlyfire dot lightning 0.75
