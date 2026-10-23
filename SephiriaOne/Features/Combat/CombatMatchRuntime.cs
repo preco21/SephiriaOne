@@ -24,6 +24,7 @@ namespace SephiriaOne
         {
             internal HostPlayer Subject;
             internal FriendlyFireParticipants.Receipt Receipt;
+            internal ZombieMovementSpeed Movement;
         }
         private sealed class Participant
         {

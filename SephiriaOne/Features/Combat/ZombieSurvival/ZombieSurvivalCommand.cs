@@ -24,7 +24,8 @@ namespace SephiriaOne
                 L.T(settings.RefillEnabled ? "ON" : "OFF"), refill,
                 L.T(settings.IncomingEnabled ? "ON" : "OFF"), incoming) + " " +
                 (SessionSettings.ZombieDynamicBalance ? DescribeHumanModifier() + " " : "") +
-                L.F("Convert on any Human death: {0}.", L.T(SessionSettings.ZombieAnyDeath ? "ON" : "OFF"));
+                L.F("Convert on any Human death: {0}.", L.T(SessionSettings.ZombieAnyDeath ? "ON" : "OFF")) + " " +
+                L.T("[Z] Movement speed: 80%.");
         }
         internal static bool Execute(string[] parts, out bool success, out string message)
         {

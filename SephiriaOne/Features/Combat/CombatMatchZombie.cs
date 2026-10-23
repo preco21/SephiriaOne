@@ -89,7 +89,11 @@ namespace SephiriaOne
             }
             long current = token;
             for (int i = 0; i < initialPlayers.Count && IsZombieSurvival && current == token; i++)
+            {
+                UpdateZombieMovement(initialPlayers[i]);
+                if (!IsZombieSurvival || current != token) return;
                 ZombieRoleVisuals.Update(initialPlayers[i].Subject.Player);
+            }
             if (!IsZombieSurvival || current != token) return;
             foreach (string message in ZombieSurvivalMessages.Starting(initialNames))
             {
@@ -140,7 +144,11 @@ namespace SephiriaOne
             int remaining = (int)Math.Ceiling(endsAt - now);
             long current = token;
             for (int i = 0; i < zombiePlayers.Count && IsZombieSurvival && current == token; i++)
+            {
+                UpdateZombieMovement(zombiePlayers[i]);
+                if (!IsZombieSurvival || current != token) return;
                 if (zombieRound.IsZombie(i)) ZombieRoleVisuals.Update(zombiePlayers[i].Subject.Player);
+            }
             if (!IsZombieSurvival || current != token) return;
             if (remaining != zombieTimeShown && (remaining <= 5 || remaining % 5 == 0))
             {
@@ -179,6 +187,8 @@ namespace SephiriaOne
             { respawn.ZombieConversion = true; respawn.ZombieInfector = infector; }
             FriendlyFireKda.ForgetContributions(zombiePlayers[index].Subject.Player);
             RoleRevision++;
+            UpdateZombieMovement(zombiePlayers[index]);
+            if (!IsZombieSurvival || zombieRound == null) return;
             ZombieRoleVisuals.Update(zombiePlayers[index].Subject.Player);
             // The shared death finalizer now sends the combined conversion and
             // respawn message once attribution/any-death policy is complete.
@@ -189,6 +199,7 @@ namespace SephiriaOne
             if (!CurrentZombieReceipt(receipt, match, out int index) || zombieRound == null || receipt.Player.IsDead ||
                 !zombieRound.Revived(index)) return;
             RoleRevision++;
+            UpdateZombieMovement(zombiePlayers[index]);
         }
 
         private static List<string> ZombieResults()
@@ -207,11 +218,15 @@ namespace SephiriaOne
 
         private static void ClearZombie()
         {
+            foreach (var entry in zombiePlayers) entry.Movement.Update(entry.Subject.Player, false);
             ZombieRoleVisuals.Clear();
             zombieBalance = default;
             zombieRound = null; zombieScores = null; zombieNames = null; zombieOutcome = null; zombieTimeShown = -1; zombieStartingCount = 0;
             zombiePlayers.Clear(); zombieRoster.Clear(); RoleRevision++;
         }
+
+        private static void UpdateZombieMovement(RosterEntry entry) => entry.Movement.Update(entry.Subject.Player,
+            IsZombieVisualCurrent(entry.Subject.Player, entry.Receipt, token));
 
         private static void RetargetZombieBalance(double now) =>
             zombieBalance.Retarget(zombiePlayers.Count - zombieRound.Humans, zombieRound.Humans, now);

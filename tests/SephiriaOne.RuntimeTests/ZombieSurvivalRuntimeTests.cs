@@ -43,14 +43,22 @@ internal static class ZombieSurvivalRuntimeTests
         FriendlyFireRuntimeTests.CheckMatchIntervals(check);
         var zombie = all.Single(CombatMatchRuntime.IsActiveZombie);
         var humans = all.Where(p => p != zombie).ToArray();
+        bool NormalSpeed(PlayerAvatar p) => Math.Abs(p.moveSpeed - 4.4f) < .00001f;
+        bool ZombieSpeed(PlayerAvatar p) => Math.Abs(p.moveSpeed - 4.4f * .8f) < .00001f;
+        check(ZombieSpeed(zombie) && humans.All(NormalSpeed), "Only the initial Zombie has 20% slower synchronized base movement");
+        int speedWrites = zombie.MovementWrites;
+        for (int i = 0; i < 50; i++) CombatMatchRuntime.Tick();
+        check(zombie.MovementWrites == speedWrites && ZombieSpeed(zombie), "Stable ticks do not stack the penalty or send more speed updates");
         check(ZombieRoleVisuals.Visible.SetEquals(new[] { zombie }), "Only the initial Zombie owns a sustained role visual");
         check(CombatMatchRuntime.AllowsPair(zombie, humans[0]) && CombatMatchRuntime.AllowsPair(humans[0], zombie) &&
             !CombatMatchRuntime.AllowsPair(humans[0], humans[1]) && !CombatMatchRuntime.AllowsPair(zombie, zombie), "Only opposite teams are hostile");
         var late = add(20).PlayerAvatar;
+        check(NormalSpeed(late), "Late spectators keep normal movement");
         check(!CombatMatchRuntime.AllowsPair(zombie, late) && !CombatMatchRuntime.AllowsParticipant(late), "Late joiner is a spectator");
         check(CombatMatchRuntime.RefillRoleScale(zombie) == 3 && CombatMatchRuntime.IncomingRoleScale(zombie) == .3 &&
             CombatMatchRuntime.RefillRoleScale(humans[0]) == 1, "Zombie modifiers are independent active-role values");
         Kill(zombie, humans[0]);
+        check(ZombieSpeed(humans[0]), "Conversion owns the speed penalty before the native respawn");
         check(ZombieRoleVisuals.Visible.Contains(humans[0]), "Infection indicator starts during pending conversion and follows the corpse");
         check(humans[0].IsDead && !CombatMatchRuntime.IsActiveZombie(humans[0]) &&
             !CombatMatchRuntime.AllowsPair(humans[0], humans[1]), "Infected Human is not combat active before revival");
@@ -60,6 +68,7 @@ internal static class ZombieSurvivalRuntimeTests
         check(!humans[0].IsDead && CombatMatchRuntime.IsActiveZombie(humans[0]) &&
             CombatMatchRuntime.AllowsPair(humans[0], humans[1]) && !CombatMatchRuntime.AllowsPair(humans[0], zombie), "Successful revive applies Zombie role to every pair query");
         check(CombatMatchRuntime.IncomingRoleScale(humans[0]) == .3, "Converted Zombie immediately inherits balancing");
+        check(ZombieSpeed(humans[0]), "Automatic revival retains Zombie speed without compounding it");
         Kill(humans[1], humans[0]); At(5);
         check(CombatMatchRuntime.IsActiveZombie(humans[0]), "Killed Zombie respawns on its existing team");
         humans[1].Die(0, null); At(6);
@@ -80,6 +89,7 @@ internal static class ZombieSurvivalRuntimeTests
             Messages("Zombies win!") && all.All(p => Messages(p.Name + " - [Z] Zombie (")), "Last infection ends match, restores pending players and reports every final team");
         check(all.All(p => CombatMatchRuntime.IncomingRoleScale(p) == 1 && CombatMatchRuntime.RefillRoleScale(p) == 1), "End removes every role bonus immediately");
         check(ZombieRoleVisuals.Visible.Count == 0, "Natural conclusion removes every Zombie visual");
+        check(all.All(NormalSpeed), "Natural conclusion immediately restores every original movement speed");
 
         all = New(2); Begin(); zombie = all.Single(CombatMatchRuntime.IsActiveZombie); var reflectedHuman = all.Single(p => p != zombie);
         // Native OnHit reflection can finish the Human death before the outer
@@ -113,17 +123,21 @@ internal static class ZombieSurvivalRuntimeTests
         var old = FriendlyFireParticipants.Capture(human); long oldToken = CombatMatchRuntime.MatchToken;
         Kill(zombie, human); human.Revive(100);
         check(CombatMatchRuntime.IsActiveZombie(human), "Successful manual revival activates pending Zombie");
+        check(ZombieSpeed(human), "Manual revival retains the converted speed penalty");
         FriendlyFireParticipants.Retire(human.spawner);
         PlayerSpawner.MultiplayerList.Remove(human.spawner); var replacement = add(human.netId).PlayerAvatar;
         CombatMatchRuntime.Revived(old, oldToken); At(4);
         check(!CombatMatchRuntime.IsRunning && !CombatMatchRuntime.IsActiveZombie(replacement) && !Messages("Zombies win!"), "Reconnect cancels without inheriting team or declaring victory");
         check(ZombieRoleVisuals.Visible.Count == 0, "Reconnected participant never inherits a stale visual");
+        check(all.All(NormalSpeed) && NormalSpeed(replacement), "Reconnect restores old objects and cannot transfer a speed penalty to replacements");
 
         all = New(); Begin(); zombie = all.Single(CombatMatchRuntime.IsActiveZombie);
         zombie.spawner.connectionToClient.isReady = false; At(4);
         check(CombatMatchRuntime.IsRunning && !ZombieRoleVisuals.Visible.Contains(zombie), "Loading removes a temporarily unavailable target's indicator");
+        check(NormalSpeed(zombie), "Unavailable players temporarily regain native movement");
         zombie.spawner.connectionToClient.isReady = true; At(5);
         check(ZombieRoleVisuals.Visible.SetEquals(new[] { zombie }), "Readiness restores only the current Zombie indicator");
+        check(ZombieSpeed(zombie), "Ready Zombie resumes exactly one speed penalty");
 
         foreach (string interrupt in new[] { "selection", "toggle", "stop", "run", "authority" })
         {
@@ -137,6 +151,7 @@ internal static class ZombieSurvivalRuntimeTests
             At(4);
             check(!CombatMatchRuntime.IsRunning && CombatMatchRuntime.IncomingRoleScale(zombie) == 1, "Zombie cleanup on " + interrupt);
             check(ZombieRoleVisuals.Visible.Count == 0, "Zombie visual cleanup on " + interrupt);
+            check(all.All(NormalSpeed), "Speed restores on " + interrupt);
             if (interrupt is "selection" or "toggle" or "stop") check(!human.IsDead, "Stop recovers pending Human on " + interrupt);
         }
         all = New(); Begin(); zombie = all.Single(CombatMatchRuntime.IsActiveZombie); human = all.First(p => p != zombie);
@@ -144,6 +159,32 @@ internal static class ZombieSurvivalRuntimeTests
         human.ReviveCallback = () => { human.Revive(100); throw new InvalidOperationException("revival failure"); };
         try { human.Revive(100); } catch (InvalidOperationException) { }
         check(!CombatMatchRuntime.IsRunning && !CombatMatchRuntime.IsActiveZombie(human), "Exceptional outer revival cannot activate Zombie through nested no-op");
+
+        all = New();
+        foreach (var player in all) player.NetworkmoveSpeed = 7.25f;
+        Begin(); zombie = all.Single(CombatMatchRuntime.IsActiveZombie);
+        check(Math.Abs(zombie.moveSpeed - 5.8f) < .00001f, "Penalty uses the actual baseline, not a hardcoded native speed");
+        zombie.NetworkmoveSpeed = 10f; At(4);
+        check(zombie.moveSpeed == 8f, "External base-speed replacement is scaled once from its new value");
+        CombatMatchRuntime.Stop(true, false);
+        check(zombie.moveSpeed == 10f && all.Where(p => p != zombie).All(p => p.moveSpeed == 7.25f),
+            "Cleanup restores the latest baseline and leaves other players alone");
+        all = New(); Begin(); zombie = all.Single(CombatMatchRuntime.IsActiveZombie);
+        zombie.NetworkmoveSpeed = 12f;
+        CombatMatchRuntime.Stop(true, false);
+        check(zombie.moveSpeed == 12f, "Stop does not overwrite an external replacement made before reconciliation");
+
+        var speedState = default(ZombieMovementSpeed);
+        speedState.Update(zombie, true);
+        speedState.Update(zombie, false);
+        check(zombie.moveSpeed == 12f, "Zombie-to-Human state removes the owned multiplier immediately");
+        foreach (float native in new[] { 0f, -1f, float.NaN, float.PositiveInfinity })
+        {
+            zombie.moveSpeed = native;
+            int writes = zombie.MovementWrites;
+            speedState.Update(zombie, true); speedState.Update(zombie, false);
+            check(zombie.moveSpeed.Equals(native) && zombie.MovementWrites == writes, "Nonpositive/invalid native speed remains untouched");
+        }
 
         all = New();
         check(SettingsActions.Execute("/one zombie start").Success, "Activation readiness regression starts");

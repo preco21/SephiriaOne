@@ -1,4 +1,52 @@
-# Zombie Survival (0.91.1, 2026-10-23)
+# Zombie Survival (0.93.1, 2026-10-24)
+
+## Zombie movement penalty (0.93.1)
+
+Current Zombies walk/run at **80% of normal speed**. This fixed role rule is
+independent of dynamic balancing and the general PvP-balancing toggle. Humans,
+spectators, countdown entrants and other modes keep native movement. The Zombie
+panel and `/one zombie status` describe the rule in English/Korean; there is no
+new setting or preset field.
+
+The host writes `UnitAvatar.NetworkmoveSpeed`, the native base-speed SyncVar,
+instead of changing the equipment/status `moveSpeedMultiplier` or patching a
+host-only movement getter. Both `MoveUpdate` and `RunUpdate` multiply this base
+by their native speed modifiers. Equipment buffs, potion slows, frostbite and
+weapon movement adjustments continue to compose normally. Separate dash and
+knockback mechanics are not changed. Native move animation lambdas read the same
+base field. Stock guests receive initial/incremental state; no addon is needed.
+
+`ZombieMovementSpeed` keeps original/applied floats and ownership in the existing
+captured roster entry. Initial assignment, infection and completed conversion
+revival apply it, including the pending corpse so revival cannot miss it. The
+existing Zombie roster loop reconciles readiness and role state. Unchanged
+values cause no writes, new allocations or repeated scaling. No extra controller,
+global scan, timer or custom packet is added.
+
+Role loss and shared match cleanup restore the exact original value when it is
+still addon-owned. This covers stop, normal victory/timeout, selection or master
+toggle changes, run replacement, disconnect/reconnect, authority loss and unload.
+A new avatar cannot inherit another object's ownership. Temporarily unready
+players regain native speed; the penalty resumes when their current Zombie
+receipt becomes ready. A newer external base-speed replacement becomes the next
+baseline, and cleanup does not overwrite an unreconciled replacement. The audited
+native PlayerAvatar tree does not itself write base speed; other mods that compute
+relative edits from the temporarily scaled base are outside this ownership model.
+
+Native evidence: same Assembly-CSharp SHA-256
+`C57A0DAEAB8E8D0AF7066A344133EEC4C57D8F303FD9E25DA9410FBFC4CF1510`,
+REA inventory `ev_c3733c62f61d0c4e651bfc15807d5dc53d2140cdbe2e223042a8a4df533a43a1`.
+Matched local source and installed IL confirm `NetworkmoveSpeed` calls
+`GeneratedSyncVarSetter<float>` with dirty bit `8589934592` and no hook;
+`SerializeSyncVars`/`DeserializeSyncVars` carry it in both initial and delta state.
+Installed contract tests also check the native walking/running consumers.
+
+Executable tests cover initial Zombies, conversion, automatic/manual revival,
+Humans/spectators, no compounding or repeated writes, non-default/replaced base
+values, invalid inputs, readiness, repeat matches and all shared interruption
+paths. The existing stable-match allocation check still passes. Live host/guest
+movement was not tested; changes reach guests on normal network delivery, not
+instantaneously across the network. No game launch or deployment was performed.
 
 ## Dynamic Balancing (0.76.0)
 

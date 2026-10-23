@@ -39,6 +39,7 @@ namespace SephiriaOne
                 "/one zombie damage", s => s.HostActive && s.SessionIdentity != null);
             zombieIncoming = widgets.Input(pageRoot, 174, 135, 56, EditZombieIncoming);
             zombieIncomingApply = widgets.Button(pageRoot, "Apply", 238, 135, 51, 25, ApplyZombieIncoming);
+            widgets.Text(pageRoot, "ZombieMovement", "[Z] Movement speed: 80%.", 16, 169, 273, 22, 11);
             BuildParticipantsEditor();
         }
         private void RefreshZombie(SettingsSnapshot snapshot)

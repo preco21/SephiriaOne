@@ -1,5 +1,12 @@
 # Sephiria domain findings
 
+Zombie movement (`0.93.1`): `UnitAvatar.NetworkmoveSpeed` synchronizes the base
+used by both walk/run consumers, separately from additive equipment/status,
+frostbite and weapon speed modifiers. A role-owned ×0.8 base adjustment reaches
+stock guests, whereas a host-only movement getter patch would miss client-owned
+movement. Keep exact original/applied values on the captured roster and restore
+only owned values; unchanged match ticks need no writes. See [movement evidence](zombie-survival.md#zombie-movement-penalty-0931).
+
 PvP elemental limits (`0.93.0`, 2026-10-24): Physical/Flame/Ice/Lightning inputs
 are baked into source damage before the victim is known. The approved fallback
 caps active participants' effective `GetConvertedElementalDamage` result, also

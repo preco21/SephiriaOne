@@ -1,5 +1,10 @@
 # Development knowledge index
 
+[Zombie movement penalty](zombie-survival.md#zombie-movement-penalty-0931): Zombies
+walk/run at 80% through the native base-speed SyncVar, with role-owned restoration,
+existing roster lifecycle and no repeat writes. Other movement modifiers remain
+native; includes EN/KO status and stock-client contract checks.
+
 [PvP elemental stat limits](pvp-elemental-limits.md): default-on independent
 50/100 caps share the amplification curve. Effective participant-stat fallback
 also affects their simultaneous PvE damage; saved/derived stats and C-menu reads
@@ -92,7 +97,7 @@ interval, default off / 2s, for seven audited automatic artifact sources.
 Dark Cloud uses its own interval. Shared pair/life/session clocks, explicit weapon/book/companion/planet
 exclusions, native guest damage sync, EN/KO controls and v47 presets.
 
-Maintained: 2026-10-24 (Asia/Seoul), addon `0.93.0`.
+Maintained: 2026-10-24 (Asia/Seoul), addon `0.93.1`.
 
 [Configurable PvP DoT duration](pvp-dot-intervals.md#configurable-duration-cap-0850-2026-10-22):
 Burn/Plasma/blue/evolved lifetime cap now defaults to 1.2s, adjustable 0.05..10s

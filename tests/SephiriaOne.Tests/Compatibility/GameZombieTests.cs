@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Reflection.Emit;
 using HarmonyLib;
 
 internal static class GameZombieTests
@@ -34,6 +35,29 @@ internal static class GameZombieTests
         Require(Calls("CombatMatchRuntime", "BroadcastRespawnCountdown", "ZombieSurvivalMessages", "Conversion") &&
             !Calls("CombatMatchRuntime", "InfectZombie", "CombatMatchRuntime", "Broadcast") &&
             !Calls("CombatMatchRuntime", "ZombieRevived", "CombatMatchRuntime", "Broadcast"), "Shared countdown owns the single conversion notice");
+        var speedUpdate = AccessTools.DeclaredMethod(addon.GetType("SephiriaOne.ZombieMovementSpeed", true)!, "Update");
+        var avatar = speedUpdate.GetParameters()[0].ParameterType.Assembly.GetType("UnitAvatar", true)!;
+        var speed = AccessTools.DeclaredField(avatar, "moveSpeed");
+        var setter = AccessTools.PropertySetter(avatar, "NetworkmoveSpeed");
+        List<CodeInstruction> Native(string name) => PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(avatar, name)).ToList();
+        var set = PatchProcessor.GetOriginalInstructions(setter).ToList();
+        Require(speed.FieldType == typeof(float) && set.Any(i => i.opcode == OpCodes.Ldflda && Equals(i.operand, speed)) &&
+            set.Any(i => i.LoadsConstant(8589934592L)) && set.Any(i => i.opcode == OpCodes.Ldnull) &&
+            set.Count(i => i.operand is MethodInfo m && m.Name == "GeneratedSyncVarSetter") == 1,
+            "Base movement uses a native float SyncVar setter with no callbacks");
+        Require(Native("SerializeSyncVars").Count(i => i.opcode == OpCodes.Ldfld && Equals(i.operand, speed)) == 2 &&
+            Native("DeserializeSyncVars").Count(i => i.opcode == OpCodes.Ldflda && Equals(i.operand, speed)) == 2,
+            "Both initial and incremental stock guest state carry base speed");
+        foreach (string method in new[] { "MoveUpdate", "RunUpdate" })
+            Require(Native(method).Any(i => i.opcode == OpCodes.Ldfld && Equals(i.operand, speed)) &&
+                Native(method).Any(i => i.operand is MethodInfo m && m.Name == "GetMoveSpeedMultiplier"),
+                "Native movement composes base speed with existing modifiers: " + method);
+        Require(Code("ZombieMovementSpeed", "Update").Any(i => i.Calls(setter)) &&
+            Calls("CombatMatchRuntime", "UpdateZombieMovement", "CombatMatchRuntime", "IsZombieVisualCurrent") &&
+            Calls("CombatMatchRuntime", "ClearZombie", "ZombieMovementSpeed", "Update"),
+            "Movement uses replicated values, existing role/receipt gating and common cleanup");
+        Require(panel.Any(i => Equals(i.operand, "[Z] Movement speed: 80%.")), "Zombie panel discloses the fixed movement rule");
+        Console.WriteLine("Verified Zombie base movement replication, native walk/run composition and owned role cleanup (not live movement).");
         Console.WriteLine("Verified Zombie shared hostility, role modifiers, native callback and panel wiring (not live multiplayer).");
     }
 }
