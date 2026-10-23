@@ -11,7 +11,7 @@ internal static class PvpDotSettingsTests
         foreach (string key in new[] { "wound", "lightning", "plasma-shock", "freeze", "chim", "dark-cloud" })
             Check(FriendlyFireCommand.Parse("/one friendlyfire dot " + key + " 1.5", out _) == FriendlyFireParseResult.Valid,
                 "Missing effect control is exposed: " + key);
-        decimal ExpectedDefault(PvpDotEffect effect) => effect switch { PvpDotEffect.Burn or PvpDotEffect.PlasmaShock => 0.9m, PvpDotEffect.Wound => 1.33m, PvpDotEffect.Lightning => 0.5m, PvpDotEffect.Freeze or PvpDotEffect.Chim => 0.25m, PvpDotEffect.DarkCloud => 2m, _ => 0.75m };
+        decimal ExpectedDefault(PvpDotEffect effect) => effect switch { PvpDotEffect.Burn => 0.9m, PvpDotEffect.PlasmaBurn or PvpDotEffect.PlasmaShock => 3m, PvpDotEffect.Wound => 1.33m, PvpDotEffect.Lightning => 0.5m, PvpDotEffect.Freeze or PvpDotEffect.Chim => 0.25m, PvpDotEffect.DarkCloud => 2m, _ => 0.75m };
         Check(FriendlyFireCommand.Parse("/one friendlyfire dot burn 0.75", out var command) == FriendlyFireParseResult.Valid &&
             !command.TouchesMasterToggle && !command.IsReset, "Independent DoT interval command is accepted without toggling combat");
         var policy = new SessionPolicy();
@@ -52,7 +52,7 @@ internal static class PvpDotSettingsTests
         {
             Check(SessionPolicy.TryReadPreset($"SephiriaOne preset v{version}\nfriendlyfire dot-lightning 1.25\nfriendlyfire dot-dark-cloud 0.5\n", out var migrated, out _) &&
                 migrated.FriendlyFire.DotIntervals.Seconds(PvpDotEffect.Lightning) == 1.25m &&
-                migrated.FriendlyFire.DotIntervals.Seconds(PvpDotEffect.PlasmaShock) == (version < 37 ? 1.25m : 0.9m) &&
+                migrated.FriendlyFire.DotIntervals.Seconds(PvpDotEffect.PlasmaShock) == (version < 37 ? 1.25m : 3m) &&
                 migrated.FriendlyFire.DotIntervals.Seconds(PvpDotEffect.DarkCloud) == 0.5m,
                 "Legacy explicit shared shock override migrates to both clocks; v37 separates them");
             Check(SessionPolicy.TryReadPreset(migrated.ToPresetText(), out var reloaded, out _) && reloaded.FriendlyFire.Equals(migrated.FriendlyFire),

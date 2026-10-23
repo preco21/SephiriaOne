@@ -1,5 +1,13 @@
 # Independent PvP damage intervals
 
+`0.94.3` (2026-10-24): **Plasma Burn and Plasma shock both default/reset to
+3 seconds** (previously 0.75s and 0.9s). Their independent clocks, first-hit and
+refresh rules are unchanged. Explicit saved overrides remain intact. Reset with
+`/one friendlyfire dot plasma-burn reset` and
+`/one friendlyfire dot plasma-shock reset`, then `/one save`.
+The Burn-family duration cap remains 1.2s by default; an unrefreshed Plasma Burn
+can therefore expire before its first periodic tick. PvE timing remains native.
+
 `0.94.2` (2026-10-24): Dark Cloud's default/reset interval is **2 seconds**,
 formerly 0.7 seconds. The independent per-attacker/opponent strike gate is
 unchanged. Saved explicit intervals keep their values; omitted settings inherit
@@ -69,19 +77,19 @@ Tournament, Play Tag and Zombie Survival. Native PvE timing is unchanged.
 | Control / command key | Default | Native coverage |
 | --- | --- | --- |
 | Burn / `burn` | 0.9s | `CharacterDebuff_Burn.tickTimer`, including blue/evolved variants. |
-| Plasma Burn / `plasma-burn` | 0.75s | `CharacterDebuff_Plasma.tickTimer`, including blue/evolved variants. Separate from Plasma shock. |
+| Plasma Burn / `plasma-burn` | 3s | `CharacterDebuff_Plasma.tickTimer`, including blue/evolved variants. Separate from Plasma shock. |
 | Frostbite / `frostbite` | 0.75s | `CharacterDebuff_Frostbite.frostDamageTimer`; still requires native `FROSTBITEDAMAGE`. |
 | Poison / `poison` | 0.75s | `CharacterDebuff_Poison.poisonTickTimer`; system poison excluded. |
 | Wound / `wound` | 1.33s | `CharacterDebuff_Wound.tickTimer`; approximately the previous 1/0.75 cadence. |
 | Lightning / Shock / `lightning` | 0.5s | Electric's `Debuff_Electric` damage. `shock` is a command alias. |
-| Plasma shock / `plasma-shock` | 0.9s | Plasma's `Debuff_Plasma` damage marked `DEBUFF_ELECTRIC`, separate from its burn ticks. |
+| Plasma shock / `plasma-shock` | 3s | Plasma's `Debuff_Plasma` damage marked `DEBUFF_ELECTRIC`, separate from its burn ticks. |
 | Freeze damage / `freeze` | 0.25s | `Debuff_Freeze` application/stack damage. Native stun is preserved. |
 | Chim damage / `chim` | 0.25s | `Debuff_Chim` delayed expiry hit. No new periodic damage or change to its charge/lifetime. |
 | Dark Cloud / `dark-cloud` | 2s | Native `ComboEffect_DarkCloud.FireLightning`, including ice variants and attached burn callbacks. |
 
 ```text
 /one friendlyfire dot lightning 0.75
-/one friendlyfire dot plasma-shock 0.9
+/one friendlyfire dot plasma-shock 3
 /one friendlyfire dot dark-cloud 1
 /one friendlyfire dot wound 1.5
 /one friendlyfire dot lightning reset
@@ -161,7 +169,7 @@ These are local asset observations, not assets shipped with the addon.
 
 ### Separate Plasma shock and updated defaults (0.71.0)
 
-Current defaults are Lightning 0.5s, Plasma shock 0.9s and Dark Cloud 0.7s. Wound
+Current defaults are Lightning 0.5s, Plasma Burn/shock 3s and Dark Cloud 2s. Wound
 1.33s, Freeze damage 0.25s and Chim damage 0.25s are retained as requested.
 Other defaults are unchanged. Explicit saved custom values remain intact.
 

@@ -227,8 +227,8 @@ configured interval. Native stacks, duration refreshes and Freeze stun remain.
 Commands, UI and presets use the existing shared combat policy.
 
 PvP intervals: [all audited debuff damage families and Dark Cloud](pvp-dot-intervals.md)
-have independent controls. Defaults: Lightning/Shock 0.5s, separate Plasma shock
-0.9s, Dark Cloud 2s, Wound 1.33s, Freeze damage 0.25s and Chim damage 0.25s.
+have independent controls. Defaults: Lightning/Shock 0.5s, Plasma Burn and Plasma
+shock 3s each, Dark Cloud 2s, Wound 1.33s, Freeze damage 0.25s and Chim damage 0.25s.
 Scroll within Combat → DoT. v37 separates shock overrides while migrating explicit
 older shared values to both effects; custom saved intervals are preserved.
 
@@ -358,7 +358,7 @@ investigation. Repository workflow and deployment rules are in [AGENTS.md](../AG
 ## Start here
 
 Combat balancing: [independent DoT intervals](pvp-dot-intervals.md) give Burn,
-Plasma Burn, Frostbite and Poison separate 0.75-second defaults, live controls/
+Plasma Burn, Frostbite and Poison independent defaults and live controls/
 commands and v28 saved settings. Native PvE, Wound and separate Shock/Freeze/
 Dark Cloud limits are preserved.
 

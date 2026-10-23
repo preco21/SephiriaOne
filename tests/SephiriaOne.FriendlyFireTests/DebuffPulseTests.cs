@@ -113,7 +113,7 @@ internal static class DebuffPulseTests
         Time.time += 0.5f; plasma.Destroy();
         check(victim.Hp == 96, "Plasma expiry uses the same interval without delaying its native destruction");
         Fresh();
-        SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, dot: new(PvpDotEffect.Lightning, 1)));
+        SessionSettings.FriendlyFireForHit = SessionSettings.FriendlyFireForHit.Apply(new(false, dot: new(PvpDotEffect.Lightning, 4)));
         void PlasmaShock()
         {
             var damage = EffectTests.Tick(source, "Debuff_Plasma", 2); damage.flag = "DEBUFF_ELECTRIC";
@@ -124,13 +124,13 @@ internal static class DebuffPulseTests
         Hit("Debuff_Electric"); PlasmaShock(); PlasmaShock();
         check(victim.Hp == 96, "Serialized Plasma shock has its own first hit and repeat gate, separate from Lightning");
         Time.time += 0.5f; plasma.RefreshDurationTimer(1, 0);
-        check(victim.Hp == 96, "Plasma shock refresh waits for its 0.9-second default");
+        check(victim.Hp == 96, "Plasma shock refresh waits for its 3-second default");
         Hit("Debuff_Plasma"); Hit("Debuff_Plasma");
         check(victim.Hp == 94, "Plasma burn has its own schedule, independent of both shock clocks");
-        Time.time = 100.9f; plasma.Destroy();
+        Time.time = 103f; plasma.Destroy();
         check(victim.Hp == 92, "Serialized Plasma expiry shock resumes at its own default boundary");
-        Hit("Debuff_Electric"); check(victim.Hp == 92, "Plasma shock does not shorten Lightning's configured 1-second interval");
-        Time.time = 101; Hit("Debuff_Electric"); check(victim.Hp == 90, "Lightning retains its independent boundary");
+        Hit("Debuff_Electric"); check(victim.Hp == 92, "Plasma shock does not shorten Lightning's configured 4-second interval");
+        Time.time = 104; Hit("Debuff_Electric"); check(victim.Hp == 90, "Lightning retains its independent boundary");
         var spell = EffectTests.Tick(source, "Debuff_Plasma", 2); spell.flag = "DEBUFF_ELECTRIC"; spell.fromType = EDamageFromType.Magic;
         victim.ApplyDamage(spell); victim.ApplyDamage(spell);
         check(victim.Hp == 86, "Shock-like metadata on direct magic still cannot borrow the debuff pulse clock");

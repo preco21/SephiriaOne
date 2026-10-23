@@ -54,7 +54,8 @@ internal static class ElementalCadenceTests
     internal static void Run(Action<bool, string> check)
     {
         FriendlyFireParticipants.Clear();
-        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true);
+        // Isolate interval defaults from the shorter Burn-family lifetime cap.
+        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, dotMaxDurationSeconds: 10);
         foreach (var create in new Func<PeriodicDebuffFixture>[] {
             () => new CharacterDebuff_Frostbite(), () => new CharacterDebuff_Poison(),
             () => new CharacterDebuff_Wound(), () => new CharacterDebuff_Plasma() })
@@ -65,7 +66,7 @@ internal static class ElementalCadenceTests
                 effect.OnTick = effect.OnUpdate_Server; return effect;
             }
             var effect = New(); float interval = effect is CharacterDebuff_Plasma ? 0.5f : 1;
-            float balancedInterval = effect is CharacterDebuff_Wound ? 1.33f : 0.75f;
+            float balancedInterval = effect is CharacterDebuff_Plasma ? 3f : effect is CharacterDebuff_Wound ? 1.33f : 0.75f;
             effect.Step(balancedInterval - 0.01f);
             check(effect.Ticks == 0, effect.GetType().Name + " waits for its balanced periodic interval");
             effect.Step(0.011f);
@@ -77,7 +78,7 @@ internal static class ElementalCadenceTests
             check(effect.Ticks == 1, effect.GetType().Name + " preserves PvE cadence");
             effect = New(); SessionSettings.FriendlyFireForHit = new(true, 100, balance: false); effect.Step(interval);
             check(effect.Ticks == 1, effect.GetType().Name + " preserves native cadence with balancing off");
-            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true);
+            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, dotMaxDurationSeconds: 10);
         }
         var system = new CharacterDebuff_Poison { isSystemDamage = true };
         system.InitializeAndSpawn(new PlayerAvatar(), new PlayerAvatar()); system.OnTick = system.OnUpdate_Server;

@@ -37,9 +37,9 @@ namespace SephiriaOne
         private static int DefaultHundredths(PvpDotEffect effect) => effect switch
         {
             PvpDotEffect.Burn => 90,
-            PvpDotEffect.PlasmaBurn => 75, PvpDotEffect.Frostbite => 75, PvpDotEffect.Poison => 75,
+            PvpDotEffect.PlasmaBurn => 300, PvpDotEffect.Frostbite => 75, PvpDotEffect.Poison => 75,
             PvpDotEffect.Wound => 133, PvpDotEffect.Lightning => 50, PvpDotEffect.Freeze => 25,
-            PvpDotEffect.Chim => 25, PvpDotEffect.DarkCloud => 200, PvpDotEffect.PlasmaShock => 90,
+            PvpDotEffect.Chim => 25, PvpDotEffect.DarkCloud => 200, PvpDotEffect.PlasmaShock => 300,
             _ => throw new ArgumentOutOfRangeException(nameof(effect))
         };
         private readonly int burn, plasma, frostbite, poison, wound, lightning, freeze, chim, darkCloud, plasmaShock;

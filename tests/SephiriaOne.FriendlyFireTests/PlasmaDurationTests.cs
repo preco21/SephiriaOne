@@ -13,7 +13,9 @@ internal static class PlasmaDurationTests
         {
             FriendlyFireParticipants.Clear(); CombatMatchRuntime.PairRule = null;
             Mirror.NetworkServer.active = true; Time.time = 100; Time.deltaTime = 0;
-            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, dotMaxDurationSeconds: 2);
+            // Explicit cadence isolates lifetime/late-tick tests from defaults.
+            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, dotMaxDurationSeconds: 2,
+                dotIntervals: default(PvpDotSettings).Apply(new(PvpDotEffect.PlasmaBurn, 0.75m)));
         }
         foreach (var create in new Func<CharacterDebuff_Plasma>[] { () => new(), () => new DerivedPlasma() })
         {
