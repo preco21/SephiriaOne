@@ -1,5 +1,10 @@
 # Development knowledge index
 
+[Zombie majority refill tuning](zombie-survival.md#dynamic-balancing-0760):
+`0.91.1` lowers dynamic refill smoothly as Zombies exceed half the roster
+(3:1 → ×0.75), retaining early-Zombie bonuses, incoming curves and existing
+time smoothing without extra combat-loop work.
+
 [Secondary emission controls](projectile-emission-controls.md): four additional
 Ice Weapon families, independent off/64-player/s/12-source/s creation budgets and
 rate-only Plitvice/Guillotine/Frost Flame Sword paths. Global FIFO is deliberately
@@ -127,7 +132,7 @@ nine-Aquamarine scenario still needs live confirmation.
 
 [Minority-side Zombie balancing](zombie-survival.md#dynamic-balancing-0760):
 neutral parity, modest minority-Zombie help and stronger minority-Human offense
-and protection. Zombie refill ×0.6..1.5, incoming 80..160%; Human incoming
+and protection. Zombie refill ×0.5..1.5, incoming 80..160%; Human incoming
 60..100%. Existing smoothing, toggles and manual settings remain; EN/KO status
 and the Zombie panel show the Human protection value.
 

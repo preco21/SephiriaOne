@@ -39,7 +39,9 @@ namespace SephiriaOne
             double magnitude = Math.Abs(imbalance);
             double strength = magnitude * magnitude * (3d - 2d * magnitude);
             bool minorityZombie = imbalance >= 0;
-            refill = 1d + (minorityZombie ? .5d : -.4d) * strength;
+            // Majority Zombies lose a little more refill as their share grows;
+            // minority bonuses and both incoming-damage curves stay independent.
+            refill = 1d + (minorityZombie ? .5d : -.5d) * strength;
             incoming = 1d + (minorityZombie ? -.2d : .6d) * strength;
             humanIncoming = minorityZombie ? 1d : 1d - .4d * strength;
         }

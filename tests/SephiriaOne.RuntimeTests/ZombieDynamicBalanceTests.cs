@@ -70,7 +70,7 @@ internal static class ZombieDynamicBalanceTests
             "Stop removes all dynamic role modifiers");
         all = New(9); Begin(8);
         zombie = all.First(CombatMatchRuntime.IsActiveZombie);
-        check(Near(CombatMatchRuntime.RefillRoleScale(zombie), 2371d / 3645) &&
+        check(Near(CombatMatchRuntime.RefillRoleScale(zombie), 821d / 1458) &&
             Near(CombatMatchRuntime.IncomingRoleScale(zombie), 1852d / 1215), "New nine-player match cannot reuse old ratio");
         var lastHuman = all.Single(p => !CombatMatchRuntime.IsActiveZombie(p));
         check(Near(CombatMatchRuntime.IncomingRoleScale(lastHuman), 2371d / 3645) &&
@@ -190,21 +190,23 @@ internal static class ZombieDynamicBalanceTests
         check(curve.RefillScale(0) == 1 && curve.IncomingScale(0) == 1, "Absent match has neutral dynamic policy");
         foreach (var example in new[]
         {
-            (z: 1, h: 1, refill: 1d, incoming: 1d),
-            (z: 1, h: 5, refill: 37d / 27, incoming: 23d / 27),
-            (z: 5, h: 1, refill: 19d / 27, incoming: 13d / 9),
-            (z: 8, h: 1, refill: 2371d / 3645, incoming: 1852d / 1215)
+            (z: 1, h: 1, refill: 1d, incoming: 1d, human: 1d),
+            (z: 1, h: 5, refill: 37d / 27, incoming: 23d / 27, human: 1d),
+            (z: 2, h: 1, refill: 47d / 54, incoming: 52d / 45, human: 121d / 135),
+            (z: 3, h: 1, refill: .75d, incoming: 1.3d, human: .8d),
+            (z: 5, h: 1, refill: 17d / 27, incoming: 13d / 9, human: 19d / 27),
+            (z: 8, h: 1, refill: 821d / 1458, incoming: 1852d / 1215, human: 2371d / 3645)
         })
         {
             curve = default; curve.Retarget(example.z, example.h, 0);
             check(Near(curve.RefillScale(0), example.refill) && Near(curve.IncomingScale(0), example.incoming),
                 $"Minority curve target {example.z}:{example.h} is neutral at parity and favors the outnumbered side");
-            check(Near(curve.HumanIncomingScale(0), example.z > example.h ? example.refill : 1),
-                "Only a Human minority receives incoming-damage compensation");
+            check(Near(curve.HumanIncomingScale(0), example.human),
+                "Majority refill tuning preserves the independent Human protection curve");
         }
         for (int zombies = 1; zombies <= 100; zombies++)
         {
-            double last = .6, lastIncoming = 1.6, lastHuman = .6;
+            double last = .5, lastIncoming = 1.6, lastHuman = .6;
             for (int humans = 1; humans <= 100; humans++)
             {
                 curve = default; curve.Retarget(zombies, humans, 0);
@@ -232,7 +234,7 @@ internal static class ZombieDynamicBalanceTests
         curve = default; curve.Retarget(1, int.MaxValue, 0);
         check(curve.RefillScale(0) <= 1.5 && curve.IncomingScale(0) >= .8 && curve.HumanIncomingScale(0) == 1, "Extreme outnumbering saturates below bounds");
         curve = default; curve.Retarget(int.MaxValue, 1, 0);
-        check(curve.RefillScale(0) >= .6 && curve.IncomingScale(0) <= 1.6 && curve.HumanIncomingScale(0) >= .6,
+        check(curve.RefillScale(0) >= .5 && curve.IncomingScale(0) <= 1.6 && curve.HumanIncomingScale(0) >= .6,
             "Last-Human compensation stays finite and never grants invulnerability");
         foreach (int humans in new[] { 999999, 1000001 })
         {
@@ -241,16 +243,19 @@ internal static class ZombieDynamicBalanceTests
                 Math.Abs(curve.HumanIncomingScale(0) - 1) < 1e-10, "No slope jump or bonus step at team parity");
         }
         curve = default; curve.Retarget(1, 5, 0);
-        double priorZombie = curve.IncomingScale(0), priorHuman = curve.HumanIncomingScale(0);
+        double priorZombie = curve.IncomingScale(0), priorHuman = curve.HumanIncomingScale(0), priorRefill = curve.RefillScale(0);
         curve.Retarget(5, 1, 0);
-        check(curve.IncomingScale(0) == priorZombie && curve.HumanIncomingScale(0) == priorHuman,
-            "Crossing parity changes targets without jumping current protection");
+        check(curve.IncomingScale(0) == priorZombie && curve.HumanIncomingScale(0) == priorHuman && curve.RefillScale(0) == priorRefill,
+            "Crossing parity changes targets without jumping current protection or refill");
         for (int i = 1; i <= 30; i++)
         {
             double now = i / 10d, nextZombie = curve.IncomingScale(now), nextHuman = curve.HumanIncomingScale(now);
-            check(nextZombie >= priorZombie && nextHuman <= priorHuman && nextHuman >= .6,
+            double nextRefill = curve.RefillScale(now);
+            check(nextZombie >= priorZombie && nextHuman <= priorHuman && nextHuman >= .6 &&
+                nextRefill <= priorRefill && nextRefill >= 17d / 27,
                 "Conversions smoothly transfer advantage from Zombies to Humans");
-            priorZombie = nextZombie; priorHuman = nextHuman;
+            priorZombie = nextZombie; priorHuman = nextHuman; priorRefill = nextRefill;
         }
+        check(Near(curve.RefillScale(30), 17d / 27), "Majority refill settles at its lower target without a reset");
     }
 }

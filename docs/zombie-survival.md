@@ -1,4 +1,4 @@
-# Zombie Survival (0.78.0, 2026-10-21)
+# Zombie Survival (0.91.1, 2026-10-23)
 
 ## Dynamic Balancing (0.76.0)
 
@@ -12,6 +12,12 @@ Zombies ×2 refill / 65% incoming damage at parity and never favored Humans.
 Even teams are now neutral; minority Zombies get a modest advantage, while
 minority Humans get stronger offense and direct protection.
 
+`0.91.1` slightly strengthens the majority-Zombie refill reduction. Minority
+Zombies and parity are unchanged; only the majority coefficient changes from
+`-0.4` to `-0.5`. At 2:1 the old multiplier was about 0.90 and is now 0.87;
+at 3:1 it changes from 0.80 to 0.75. Both incoming-damage curves, static settings,
+stored damage budget and match cleanup retain their existing behavior.
+
 Let `s = Humans / (Humans + Zombies)`, signed imbalance `b = 2s - 1`,
 and `u = |b|² (3 - 2|b|)`. This bounded smoothstep has no first-derivative jump
 at parity; extreme ratios approach finite bounds with diminishing returns.
@@ -19,16 +25,18 @@ at parity; extreme ratios approach finite bounds with diminishing returns.
 | Condition | Zombie refill | Zombie incoming | Human incoming |
 | --- | --- | --- | --- |
 | Humans ≥ Zombies | `1 + 0.5u` | `1 - 0.2u` | `1` |
-| Zombies > Humans | `1 - 0.4u` | `1 + 0.6u` | `1 - 0.4u` |
+| Zombies > Humans | `1 - 0.5u` | `1 + 0.6u` | `1 - 0.4u` |
 
 | Zombies : Humans | Zombie refill | Damage Zombies take | Damage Humans take |
 | --- | --- | --- | --- |
 | 1 : 5 | ×1.37 | 85.19% | 100% |
 | 1 : 1 | ×1.00 | 100% | 100% |
-| 5 : 1 | ×0.70 | 144.44% | 70.37% |
-| 8 : 1 | ×0.65 | 152.43% | 65.05% |
+| 2 : 1 | ×0.87 | 115.56% | 89.63% |
+| 3 : 1 | ×0.75 | 130% | 80% |
+| 5 : 1 | ×0.63 | 144.44% | 70.37% |
+| 8 : 1 | ×0.56 | 152.43% | 65.05% |
 
-Bounds: Zombie refill **×0.6..×1.5**, Zombie incoming **80..160%**, Human incoming
+Bounds: Zombie refill **×0.5..×1.5**, Zombie incoming **80..160%**, Human incoming
 **60..100%**. Human offense improves by making majority Zombies more vulnerable;
 Human refill is unchanged. Direct Human protection also reduces initial bursts
 and works independently of the optional global PvP-balancing toggle.
@@ -69,6 +77,13 @@ receipt-bound roster. Smoothed outputs are cached and recalculated only when
 the share advances; repeated queries at the same time reuse them.
 The implementation adds no network messages or per-query roster allocations;
 guests receive the already-established host-authoritative damage results.
+The `0.91.1` coefficient adjustment adds no calculations to the existing path.
+Its verification passed 14,157 session/runtime and 15,593 executable combat
+checks, the portable policy/localization suite, and a Release build with no
+warnings/errors (`DeployMod=false`). New ratio and actual refill assertions
+failed against the preceding coefficient before passing with the change.
+Parity continuity, monotonicity, static restoration, PvE isolation and the
+zero-allocation paired-role fixture remain covered. No live match was run.
 
 Verification covers curve bounds/monotonicity, frame-rate independence,
 consecutive conversions, pending/manual respawns, nonconverting deaths, live

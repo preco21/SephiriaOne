@@ -112,8 +112,8 @@ internal static class ZombieCombatTests
             priorHumanHp = other.Hp; priorZombieHp = human.Hp;
             human.ApplyDamage(Hit(other, float.MaxValue)); other.ApplyDamage(Hit(human, float.MaxValue));
             check(Math.Abs(human.Hp - (priorZombieHp - 5 * 13d / 9)) < .001 &&
-                Math.Abs(other.Hp - (priorHumanHp - 5 * 19d / 27 * 19d / 27)) < .001,
-                "Vulnerability/refunds preserve funded units and Human defense combines with lower Zombie refill");
+                Math.Abs(other.Hp - (priorHumanHp - 5 * 17d / 27 * 19d / 27)) < .001,
+                "Majority Zombies refill less while funded units and Human defense remain unchanged");
         }
         finally
         {
