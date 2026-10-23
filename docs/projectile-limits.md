@@ -2,6 +2,12 @@
 
 Implemented in 0.79.0, 2026-10-21.
 
+The [0.90.3 performance audit](projectile-performance-audit.md) confirms that
+**the six damaging Ice Weapons families and their fire variants are not covered**.
+Ice Vine is a separate source. It also documents client visual descendants,
+rapid spawn turnover and expensive low-count effects. This release reduces
+counter-storage allocation only; source coverage and admission policy are unchanged.
+
 Since `0.89.2` (2026-10-23), the default per-source cap is **12**, down from 16.
 Default/reset and presets with no explicit source-default row use 12. Saved
 explicit values (including 16) and individual source overrides are preserved.

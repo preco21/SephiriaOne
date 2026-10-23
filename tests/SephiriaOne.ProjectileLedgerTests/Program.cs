@@ -269,6 +269,47 @@ Test("Warmed denied admissions and count reads allocate no managed memory", () =
     lease.Dispose();
 });
 
+Test("Short-lived sequential projectiles do not recreate counter storage", () =>
+{
+    long Measure(bool keepOwnerLive)
+    {
+        var ledger = new ProjectileInstanceLedger<object>();
+        var owner = new object();
+        var anchor = keepOwnerLive ? Reserve(ledger, owner, "anchor") : null;
+        for (int i = 0; i < 2_000; i++)
+        { ledger.TryReserve(owner, "kunai", 64, 12, out var warm); warm.Release(); }
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 10_000; i++)
+        { ledger.TryReserve(owner, "kunai", 64, 12, out var lease); lease.Release(); }
+        long bytes = GC.GetAllocatedBytesForCurrentThread() - before;
+        anchor?.Release();
+        Check(ledger.OwnerCount == 0, "No empty owner remains registered after the workload");
+        return bytes;
+    }
+    long live = Measure(true), empty = Measure(false);
+    Console.WriteLine($"Ledger turnover: {empty} bytes / 10,000 sequential admissions; retained-owner reference {live} bytes.");
+    Check(empty <= live, "Returning to zero active instances must not allocate fresh counter dictionaries per spawn");
+});
+
+Test("Reused empty counter storage cannot be debited by retired leases", () =>
+{
+    var ledger = new ProjectileInstanceLedger<object>();
+    var owner = new object();
+    var retired = Reserve(ledger, owner, "kunai");
+    ledger.Clear();
+    var released = Reserve(ledger, owner, "kunai");
+    released.Release();
+    var current = Reserve(ledger, owner, "kunai");
+    retired.Release(); released.Release();
+    Check(ledger.Count(owner) == 1, "Clear-retired and already-released leases cannot debit a reused empty counter");
+    ledger.Forget(owner);
+    var replacement = Reserve(ledger, owner, "meteor");
+    current.Release();
+    Check(ledger.Count(owner) == 1 && ledger.Count(owner, "meteor") == 1,
+        "Forget-retired leases cannot debit replacement storage");
+    replacement.Release();
+});
+
 Console.WriteLine($"Projectile ledger: {checks} checks, {failures} failed cases.");
 return failures == 0 ? 0 : 1;
 

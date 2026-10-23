@@ -167,6 +167,13 @@ RNG order, early-read guards, cleanup, readback and rollback constraints.
 The [performance reviews](performance-review.md) include allocation fixtures;
 their .NET measurements are not Unity FPS measurements.
 
+Measure accepted short-lived admissions as well as denied hot paths. Projectile
+denial was allocation-free while repeatedly returning to zero live instances
+recreated counter dictionaries. Version `0.90.3` retains one empty container only
+after all leases release; it never recycles a Clear/Forget-retired state with
+outstanding leases. This preserves stale-callback rejection while reducing
+bookkeeping churn. See the [audit and measured limits](projectile-performance-audit.md).
+
 The settings panel requests explicit `SnapshotContent` sections through the
 shared read-only capture path. New tabs should select the sections they display;
 omitted player dictionaries are immutable empties, not cached previous values.

@@ -9,6 +9,10 @@ namespace SephiriaOne
         // Used on the native gameplay thread. Owners are connection receipts, never account IDs.
         private readonly Dictionary<TOwner, OwnerState> owners =
             new Dictionary<TOwner, OwnerState>(OwnerIdentityComparer.Instance);
+        // A short-lived source often returns to zero between emissions. Retain
+        // one empty counter container, without retaining its owner or any leases.
+        // Never recycle Clear/Forget states: their outstanding leases are stale.
+        private OwnerState spare;
 
         public int OwnerCount => owners.Count;
 
@@ -55,7 +59,7 @@ namespace SephiriaOne
             return owners.Remove(owner);
         }
 
-        public void Clear() => owners.Clear();
+        public void Clear() { owners.Clear(); spare = null; }
 
         private static void Validate(TOwner owner, string source)
         {
@@ -67,7 +71,8 @@ namespace SephiriaOne
         {
             if (state == null)
             {
-                state = new OwnerState();
+                state = spare ?? new OwnerState();
+                spare = null;
                 owners.Add(owner, state);
             }
             state.Sources.TryGetValue(source, out int count);
@@ -86,7 +91,13 @@ namespace SephiriaOne
             int count = state.Sources[source];
             if (count == 1) state.Sources.Remove(source);
             else state.Sources[source] = count - 1;
-            if (--state.Total == 0) owners.Remove(owner);
+            if (--state.Total == 0)
+            {
+                owners.Remove(owner);
+                // All leases have released exactly once and Sources is empty.
+                // Only this path can safely recycle the state identity.
+                if (spare == null) spare = state;
+            }
         }
 
         public sealed class Lease : IDisposable

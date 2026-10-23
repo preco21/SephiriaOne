@@ -1,5 +1,10 @@
 # Development knowledge index
 
+[Projectile/effect performance audit](projectile-performance-audit.md): full Ice
+Weapons category and variant coverage gaps, RPC/local effects, client trails,
+child provenance and spawn-throughput limits. Includes a measured counter-storage
+optimization in 0.90.3 and prioritized follow-ups; guest stutter cause unproven.
+
 [Respawn countdown emphasis](overhead-message-transport.md#respawn-countdown-emphasis-0902-2026-10-23):
 native cyan floating respawn text uses 125% size and bold markup. Chat/bubbles
 remain for comparison; the bitmap-font limitation and stock-guest evidence are
@@ -55,7 +60,7 @@ interval, default off / 2s, for seven audited automatic artifact sources.
 Dark Cloud uses its own interval. Shared pair/life/session clocks, explicit weapon/book/companion/planet
 exclusions, native guest damage sync, EN/KO controls and v47 presets.
 
-Maintained: 2026-10-23 (Asia/Seoul), addon `0.90.2`.
+Maintained: 2026-10-23 (Asia/Seoul), addon `0.90.3`.
 
 [Configurable PvP DoT duration](pvp-dot-intervals.md#configurable-duration-cap-0850-2026-10-22):
 Burn/Plasma/blue/evolved lifetime cap now defaults to 1.2s, adjustable 0.05..10s

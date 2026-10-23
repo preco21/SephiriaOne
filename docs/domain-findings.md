@@ -71,6 +71,14 @@ can begin a delayed explosion. Preserve child provenance before teardown.
 See [secondary projectile limits](projectile-limits.md) for coverage, contracts,
 performance design and stock-guest limitations.
 
+The `0.90.3` [effect performance audit](projectile-performance-audit.md) confirms
+that all six damaging FROST/Ice Weapons sources are outside that registry,
+including converted fire variants and separate Eternal Eclipse Flame Sword
+callbacks. Ice Vine is not the FROST family. Destruction-module children of
+tracked missiles inherit counters, but local/RPC attacks, ground records and
+client visual trails do not. Instance caps and creation-rate budgets solve
+different problems; do not infer rendering or bandwidth cost from live count.
+
 Consolidated 2026-10-09 (Asia/Seoul), source through addon `0.38.0`.
 This summarizes reusable findings; linked feature documents contain detailed
 symbols, tests and limitations. It is not a new live gameplay audit.
