@@ -42,7 +42,7 @@ namespace SephiriaOne
             AddCheckbox("Periodic recovery", 312, 124, 272, 25, s => s.FriendlyFire.Rapid.PeriodicReset,
                 s => s.FriendlyFireAvailable, "/one friendlyfire rapid recovery");
             BuildPvpRapidValue("interval", "Recovery interval (s)", 312, 153);
-            widgets.Text(pageRoot, "RapidResetHint", "Default on / 3 s · 0.1..60 s\nRestores burst + history, even while firing.", 312, 182, 272, 28, 10);
+            widgets.Text(pageRoot, "RapidResetHint", "Default on / 1 s · 0.1..60 s\nRestores burst + history, even while firing.", 312, 182, 272, 28, 10);
             pvpRapidRecovery = widgets.Text(pageRoot, "RapidRecovery", "", 312, 211, 272, 12, 9);
             pvpRapidRecovery.enableAutoSizing = true;
             pvpRapidReset = widgets.Button(pageRoot, "Reset rapid settings", 312, 224, 272, 25, ResetPvpRapid);

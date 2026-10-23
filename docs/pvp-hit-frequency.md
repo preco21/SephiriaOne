@@ -1,9 +1,9 @@
 # Optional PvP hit-frequency scaling
 
-## Periodic recovery (0.92.0, 2026-10-24)
+## Periodic recovery (updated 0.94.4, 2026-10-24)
 
 The user requested recovery even during uninterrupted attacks, with the new
-option **on by default, every 3 seconds**. It is separate from **History window**
+option **on by default, every 1 second**. It is separate from **History window**
 (previously described as hit record time): history measures recent cadence;
 periodic recovery restores the pair's configured stored burst allowance and
 clears direct, incidental and individual Planet cadence histories together.
@@ -16,7 +16,7 @@ Use **Rapid Hits → Periodic recovery / 주기적 피해량 회복** and
 ```text
 /one friendlyfire rapid recovery on
 /one friendlyfire rapid recovery off
-/one friendlyfire rapid interval 3
+/one friendlyfire rapid interval 1
 /one friendlyfire rapid interval reset
 /one save
 ```
@@ -29,8 +29,8 @@ deadline recovers capacity; missed intervals collapse to one recovery, never
 multiple banked bursts. No firing pause, timer job or per-frame scan is needed.
 
 Continuous refill continues between recoveries. This intentionally raises the
-available sustained damage: at shipped 75% stored capacity and 3 seconds, the
-additional allowance can approach 25% of opponent maximum HP/second on top of
+available sustained damage: at shipped 75% stored capacity and 1 second, the
+additional allowance can approach 75% of opponent maximum HP/second on top of
 continuous refill, before roles/defenses and minimum-hit effects. Shorter
 intervals grant more frequent bursts. It is not a strict fixed-window DPS cap.
 
@@ -57,15 +57,23 @@ independent opponents, long idle, live edits, nested refunds, floors and current
 PvP modes. Warmed periodic recovery allocated zero managed bytes across 3,000
 hits in the executable fixture. These are not live multiplayer/FPS measurements.
 
-Verification: Release build passed with zero warnings/errors; 15,654 executable
+Original 0.92.0 verification: Release build passed with zero warnings/errors; 15,654 executable
 combat checks and 14,193 runtime/session checks passed. Portable policy/catalog
 checks and installed-game/UI/Harmony contract checks passed. Independent review
 findings were reproduced in regression tests and corrected before completion.
 
-Preset v51 stores nondefault recovery settings; older presets that omit them
-adopt the user-approved on/3s default. Existing history, burst and refill values
+`0.94.4` changes only the default/reset interval from 3 seconds to 1 second.
+Explicit saved custom intervals stay unchanged. Preset v51 stores nondefault
+recovery settings; older presets that omit them
+adopt the user-approved on/1s default. Existing history, burst and refill values
 are preserved. Recovery off restores continuous-refill-only behavior. No
 deployment or live game test was performed.
+
+For 0.94.4, the non-deploying Release build, policy/catalog, localization and
+panel checks passed, along with 15,713 executable combat checks and 14,419
+runtime/session checks. Recovery tests exercise the new default during continuous
+fire; history-only and continuous-refill-only fixtures explicitly disable recovery
+so they continue checking those independent controls.
 
 Planet handling (`0.89.3`): [Planet damage audit](pvp-planet-damage.md) separates each audited
 Planet type's cadence from other Planets and incidental damage. Copies of the
@@ -99,7 +107,7 @@ The frequency toggle remains default **off**. Stored capacity changed to 75% in
 | Stored burst allowance | 75% of victim max HP | 1–100% | Maximum credit stored for this attacker/opponent pair. |
 | Continuous refill | 70% of victim max HP/second | 1–300%/second | Adds allowance over elapsed game time, up to capacity. |
 | Periodic recovery | On | On/off | Restores shared capacity and clears hit history even during uninterrupted fire. |
-| Recovery interval | 3 seconds | 0.1–60 seconds | Fixed deadlines per attacker/opponent; missed recoveries never accumulate. |
+| Recovery interval | 1 second | 0.1–60 seconds | Fixed deadlines per attacker/opponent; missed recoveries never accumulate. |
 
 All numeric values accept two decimal places. Hit history ages out and damage credit
 refills continuously; since `0.92.0`, the separate periodic-recovery control above
@@ -133,7 +141,7 @@ The page uses the same host commands as chat:
 ```
 
 `hit-frequency reset` switches only the frequency toggle off. `rapid reset`
-restores the four original numbers plus recovery on/3s, without changing the
+restores the four original numbers plus recovery on/1s, without changing the
 frequency toggle, continuous refill or other settings. Each
 numeric key also accepts `reset`; `refill reset` restores refill separately.
 The preference can be configured while

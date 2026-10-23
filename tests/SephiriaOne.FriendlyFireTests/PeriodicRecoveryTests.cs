@@ -38,14 +38,14 @@ internal static class PeriodicRecoveryTests
                 !clock.Due(sample.Item3, settings, 0), "Fractional missed deadlines recover only once at the same timestamp");
         }
 
-        Fresh(); Set("interval 3"); Set("window 10"); Set("rate 0.1"); Set("exponent 2");
+        Fresh(); Set("window 10"); Set("rate 0.1"); Set("exponent 2");
         check(Strike(0) == 20, "First hit uses normal configured reserve");
-        for (int i = 1; i < 30; i++) check(Near(Strike(i / 10f), 1), "Continuous valid hits retain the floor while depleted");
-        check(Strike(3) == 20, "Default recovery restores burst AND cadence during uninterrupted fire");
-        for (int i = 31; i < 60; i++) Strike(i / 10f);
-        check(Strike(6) == 20, "Repeated recovery does not require a firing pause");
+        for (int i = 1; i < 10; i++) check(Near(Strike(i / 10f), 1), "Continuous valid hits retain the floor while depleted");
+        check(Strike(1) == 20, "Default one-second recovery restores burst AND cadence during uninterrupted fire");
+        for (int i = 11; i < 20; i++) Strike(i / 10f);
+        check(Strike(2) == 20, "Repeated recovery does not require a firing pause");
 
-        Fresh(false); check(Strike(0) == 20, "Frequency-off has the same shared reserve");
+        Fresh(false); Set("interval 3"); check(Strike(0) == 20, "Frequency-off has the same shared reserve");
         check(Near(Strike(2.9f), 2.9) && Strike(3) == 20 && Strike(3) == 1,
             "Periodic recovery remains independent of frequency toggle and occurs once per boundary");
         check(Strike(100) == 20 && Strike(100) == 1, "Long idle never banks missed resets");
@@ -55,19 +55,19 @@ internal static class PeriodicRecoveryTests
             "Re-enabling arms a future deadline without granting immediate credit");
         Set("interval 2"); check(Strike(108) == 1 && Strike(109) == 1 && Strike(110) == 20,
             "Live interval edit starts a new deadline without minting an immediate burst");
-        Fresh(false); Strike(0); Set("recovery off"); Set("recovery on");
+        Fresh(false); Set("interval 3"); Strike(0); Set("recovery off"); Set("recovery on");
         check(Strike(3) == 3 && Strike(6) == 20, "Unobserved off/on edits rearm through settings revision without minting credit");
-        Fresh(false); Strike(0); target.currentFloorGuid = "next-floor";
+        Fresh(false); Set("interval 3"); Strike(0); target.currentFloorGuid = "next-floor";
         check(Strike(2) == 20 && Strike(3) == 1 && Strike(5) == 20, "Floor transition starts a fresh pair clock with normal lifetime cleanup");
 
-        Fresh(false); var other = new PlayerAvatar { Hp = 1000, MaxHp = 100 };
+        Fresh(false); Set("interval 3"); var other = new PlayerAvatar { Hp = 1000, MaxHp = 100 };
         Strike(0); Strike(1, victim: other);
         check(Strike(3) == 20 && Strike(3, victim: other) == 2 && Strike(4, victim: other) == 20,
             "Opponents keep independent clocks");
         var secondary = new DamageInstance { origin = source, damage = 100, id = "Charm_Meteor" };
         check(Strike(4, secondary) == 1, "Artifact and direct attacks share the same pair capacity");
 
-        Fresh(false); Strike(0);
+        Fresh(false); Set("interval 3"); Strike(0);
         target.SuperArmor = true;
         bool nested = false;
         target.OnHit = (_, _) =>
@@ -82,9 +82,9 @@ internal static class PeriodicRecoveryTests
         target.OnHit = null;
         check(Strike(3) == 1, "Earlier in-flight hit cannot refund into the recovered reserve");
 
-        Fresh(false);
+        Fresh(false); Set("interval 3");
         SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, refillPercent: 300,
-            rapid: new PvpRapidSettings(burstPercent: 20), lowerBound: new PvpLowerBoundSettings(true));
+            rapid: new PvpRapidSettings(burstPercent: 20, resetSeconds: 3), lowerBound: new PvpLowerBoundSettings(true));
         Strike(0); hit.damage = 1; target.SuperArmor = true;
         target.OnHit = (_, _) =>
         {

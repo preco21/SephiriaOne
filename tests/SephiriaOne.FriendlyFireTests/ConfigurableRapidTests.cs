@@ -12,7 +12,9 @@ internal static class ConfigurableRapidTests
             FriendlyFireParticipants.Clear(); FriendlyFireRuntime.Clear();
             CombatMatchRuntime.PairRule = null; Mirror.NetworkServer.active = true;
             Time.time = 10;
-            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, hitFrequency: frequency);
+            // Isolate rolling hit history and continuous refill from periodic recovery.
+            SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, hitFrequency: frequency,
+                rapid: new PvpRapidSettings(periodicReset: false));
             source = new(); target = new() { Hp = 10000, MaxHp = 10000 };
             hit = new() { origin = source, damage = 10, fromType = EDamageFromType.DirectAttack };
         }

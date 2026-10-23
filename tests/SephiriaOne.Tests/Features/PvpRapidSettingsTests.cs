@@ -123,8 +123,8 @@ internal static class PvpRapidSettingsTests
     private static void RecoverySettings(Action<bool, string> check)
     {
         var defaults = default(PvpRapidSettings);
-        check(defaults.PeriodicReset && defaults.ResetSeconds == 3 && defaults.ResetScale == 3 && !defaults.HasResetChanges,
-            "Periodic recovery defaults on with a separate three-second interval");
+        check(defaults.PeriodicReset && defaults.ResetSeconds == 1 && defaults.ResetScale == 1 && !defaults.HasResetChanges,
+            "Periodic recovery defaults on with a separate one-second interval");
         var policy = new SessionPolicy();
         void Edit(string edit)
         {
@@ -140,7 +140,7 @@ internal static class PvpRapidSettingsTests
         check(!policy.FriendlyFire.Rapid.PeriodicReset && policy.FriendlyFire.Rapid.ResetSeconds == 2.25m &&
             defaults.SameFrequency(new PvpRapidSettings(periodicReset: false, resetSeconds: 10)), "Recovery edits preserve cadence parameters");
         Edit("recovery reset"); check(policy.FriendlyFire.Rapid.PeriodicReset && policy.FriendlyFire.Rapid.ResetSeconds == 2.25m, "Toggle reset retains interval");
-        Edit("interval reset"); check(policy.FriendlyFire.Rapid.ResetSeconds == 3 && policy.FriendlyFire.Rapid.HitsPerSecond == 6, "Interval reset retains rate");
+        Edit("interval reset"); check(policy.FriendlyFire.Rapid.ResetSeconds == 1 && policy.FriendlyFire.Rapid.HitsPerSecond == 6, "Interval reset retains rate");
         Edit("recovery off"); Edit("reset"); check(!policy.HasChanges && policy.FriendlyFire.Rapid.PeriodicReset, "Full rapid reset restores enabled recovery");
         foreach (string edit in new[] { "interval 0.1", "interval 60", "interval 1.25", "recovery ON", "recovery OFF" }) Edit(edit);
         foreach (string edit in new[] { "interval 0", "interval 60.01", "interval NaN", "interval 1.001", "recovery 1", "recovery on extra" })
@@ -148,7 +148,7 @@ internal static class PvpRapidSettingsTests
         for (int version = 1; version <= 50; version++)
         {
             check(SessionPolicy.TryReadPreset($"SephiriaOne preset v{version}\n", out var old, out _) && old.FriendlyFire.Rapid.PeriodicReset &&
-                old.FriendlyFire.Rapid.ResetSeconds == 3, "Older omitted settings adopt approved on/3s default");
+                old.FriendlyFire.Rapid.ResetSeconds == 1, "Older omitted settings adopt current on/1s default");
             foreach (string row in new[] { "rapid-recovery 0", "rapid-interval 2" })
                 check(!SessionPolicy.TryReadPreset($"SephiriaOne preset v{version}\nfriendlyfire {row}\n", out _, out _), "Older schemas reject recovery rows");
         }

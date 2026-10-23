@@ -1,7 +1,7 @@
 using SephiriaOne;
 using UnityEngine;
 
-// Explicit 20% reserve below tests legacy configured capacity, independent of shipped defaults.
+// Explicit 20% reserve and recovery off isolate role-adjusted continuous refill.
 internal static class ChaserBalanceTests
 {
     internal static void Run(Action<bool, string> check)
@@ -11,7 +11,8 @@ internal static class ChaserBalanceTests
         void Fresh(bool balance = false, bool attackerChases = false)
         {
             FriendlyFireRuntime.Clear(); FriendlyFireParticipants.Clear();
-            SessionSettings.FriendlyFireForHit = new(true, 100, balance: balance, rapid: new PvpRapidSettings(burstPercent: 20), refillPercent: 10);
+            SessionSettings.FriendlyFireForHit = new(true, 100, balance: balance,
+                rapid: new PvpRapidSettings(burstPercent: 20, periodicReset: false), refillPercent: 10);
             SessionSettings.PlayTagChaser = default;
             source = new(); target = new(); Time.time = 0;
             CombatMatchRuntime.Chaser = attackerChases ? source : target;

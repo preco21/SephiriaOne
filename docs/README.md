@@ -27,7 +27,7 @@ coverage and limiter admission as an unconfirmed explanation. Added regression
 and installed-game checks; no confirmed gameplay defect or behavior change.
 
 [Periodic PvP recovery](pvp-hit-frequency.md#periodic-recovery-0920-2026-10-24):
-default on/3s, distinct from the rolling hit-history window. Restores shared
+default on/1s, distinct from the rolling hit-history window. Restores shared
 pair burst/history during continuous fire; lazy fixed deadlines, array reuse,
 live-edit rearming, nested-refund protection and EN/KO controls/preset v51.
 

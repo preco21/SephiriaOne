@@ -10,14 +10,15 @@ namespace SephiriaOne
         public const decimal DefaultHitsPerSecond = 4m;
         public const decimal DefaultExponent = 0.5m;
         public const decimal DefaultBurstPercent = 75m;
-        public const decimal DefaultResetSeconds = 3m;
+        public const decimal DefaultResetSeconds = 1m;
         private const int DefaultBurstHundredths = (int)(DefaultBurstPercent * 100);
+        private const int DefaultResetHundredths = (int)(DefaultResetSeconds * 100);
         private readonly int windowOffset, rateOffset, exponentOffset, burstOffset;
         private readonly int resetOffset;
         private readonly bool periodicResetDisabled;
         public bool PeriodicReset => !periodicResetDisabled;
-        public decimal ResetSeconds => (resetOffset + 300) / 100m;
-        public double ResetScale => (resetOffset + 300) / 100d;
+        public decimal ResetSeconds => (resetOffset + DefaultResetHundredths) / 100m;
+        public double ResetScale => (resetOffset + DefaultResetHundredths) / 100d;
         public string ResetNumber => ResetSeconds.ToString("0.##", CultureInfo.InvariantCulture);
         public bool HasResetChanges => periodicResetDisabled || resetOffset != 0;
         public decimal WindowSeconds => (windowOffset + 100) / 100m;
@@ -44,7 +45,7 @@ namespace SephiriaOne
             if (!ValidBurst(burstPercent)) throw new ArgumentOutOfRangeException(nameof(burstPercent));
             if (!ValidReset(resetSeconds)) throw new ArgumentOutOfRangeException(nameof(resetSeconds));
             periodicResetDisabled = !periodicReset;
-            resetOffset = (int)(resetSeconds * 100) - 300;
+            resetOffset = (int)(resetSeconds * 100) - DefaultResetHundredths;
             windowOffset = (int)(windowSeconds * 100) - 100;
             rateOffset = (int)(hitsPerSecond * 100) - 400;
             exponentOffset = (int)(exponent * 100) - 50;
