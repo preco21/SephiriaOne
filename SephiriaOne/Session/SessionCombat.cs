@@ -10,6 +10,7 @@ namespace SephiriaOne
         internal static FriendlyFireSettings FriendlyFireSupplies => EnsureResourceScope() ? policy.FriendlyFire : default;
         internal static long CombatBalanceRevision { get; private set; }
         internal static long CombatFrequencyRevision { get; private set; }
+        internal static long CombatRecoveryRevision { get; private set; }
 
         private static void RecordFriendlyFire(FriendlyFireCommand command)
         {
@@ -21,6 +22,7 @@ namespace SephiriaOne
                 PvpPotionSupplies.SettingsChanged();
             if (previous != policy.FriendlyFire.Balance || command.Reset) CombatBalanceRevision++;
             if (previousFrequency != policy.FriendlyFire.HitFrequency || !before.Rapid.SameFrequency(policy.FriendlyFire.Rapid) || command.Reset) CombatFrequencyRevision++;
+            if (!before.Rapid.SameRecovery(policy.FriendlyFire.Rapid) || command.Reset) CombatRecoveryRevision++;
             if (command.Reset) FriendlyFireParticipants.ResetSelection();
         }
 
@@ -106,6 +108,8 @@ namespace SephiriaOne
             L.F("Hit-frequency scaling: {0} (requires PvP balancing).", L.T(settings.HitFrequency ? "on" : "off")) + " " +
             L.F("Rapid history: {0}s; full-damage threshold: {1} hits/s; reduction exponent: {2}; burst allowance: {3}% max HP.",
                 settings.Rapid.WindowNumber, settings.Rapid.RateNumber, settings.Rapid.ExponentNumber, settings.Rapid.BurstNumber) + " " +
+            L.F("Periodic recovery: {0}; every {1}s restores shared burst and clears hit history. Continuous refill remains active.",
+                L.T(settings.Rapid.PeriodicReset ? "on" : "off"), settings.Rapid.ResetNumber) + " " +
             L.F("PvP refill: {0}% max HP/s.", settings.RefillNumber) + " " +
             L.F("Allowance refills continuously; base empty-to-full recovery: {0}s. All hit types share one reserve; native defenses, role modifiers and debuff schedules still apply. Minimum hits can exceed the allowance.",
                 (settings.Rapid.BurstPercent / settings.RefillPercent).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)) + " " +

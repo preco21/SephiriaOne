@@ -12,6 +12,9 @@ namespace SephiriaOne
         private long total;
         private double lastSlot, lastTime, lastBucketSeconds;
 
+        // Keep the fixed array; the next observation clears it before reading.
+        internal void Reset() { lastBucketSeconds = 0; }
+
         internal double Next(double now, PvpRapidSettings settings = default)
         {
             if (double.IsNaN(now) || double.IsInfinity(now)) return 0;

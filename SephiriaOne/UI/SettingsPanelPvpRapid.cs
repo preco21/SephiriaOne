@@ -15,7 +15,7 @@ namespace SephiriaOne
             internal bool Draft;
             internal decimal LastValue = -1;
         }
-        private readonly List<RapidValueEditor> pvpRapidEditors = new List<RapidValueEditor>(4);
+        private readonly List<RapidValueEditor> pvpRapidEditors = new List<RapidValueEditor>(5);
         private TMP_Text pvpRapidRecovery, pvpRapidExample;
         private Button pvpRapidReset;
         private decimal pvpRapidLastBurst = -1, pvpRapidLastRefill = -1, pvpRapidLastExponent = -1;
@@ -25,7 +25,7 @@ namespace SephiriaOne
             AddCheckbox("Hit-frequency scaling", 16, 0, 273, 25, s => s.FriendlyFire.HitFrequency,
                 s => s.FriendlyFireAvailable, "/one friendlyfire hit-frequency");
             BuildPvpRapidValue("window", "History window (s)", 16, 34);
-            widgets.Text(pageRoot, "RapidWindowHint", "Default 1 s · 0.1..10 s\nSeparate direct / incidental / each Planet.", 16, 63, 273, 31, 10);
+            widgets.Text(pageRoot, "RapidWindowHint", "Rolling hit history, not a budget reset.\nDefault 1 s · separate attack categories.", 16, 63, 273, 31, 10);
             BuildPvpRapidValue("rate", "Full-damage hits/s", 16, 100);
             widgets.Text(pageRoot, "RapidRateHint", "Default 4/s · 0.1..100/s\nFirst hit: no frequency reduction. Threshold = max(1, rate × window).", 16, 129, 273, 34, 10);
             BuildPvpRapidValue("exponent", "Reduction exponent", 16, 166);
@@ -38,11 +38,14 @@ namespace SephiriaOne
             widgets.Text(pageRoot, "RapidRefill", "PvP refill (%/s)", 312, 66, 116, 25, 12);
             friendlyRefill = widgets.Input(pageRoot, 432, 66, 68, EditFriendlyRefill);
             changeButtons.Add(widgets.Button(pageRoot, "Apply", 508, 66, 76, 25, ApplyFriendlyRefill));
-            widgets.Text(pageRoot, "RapidRefillHint", "Default 70%/s · 1..300%/s of victim max HP.\nContinuous refill; no periodic reset.", 312, 95, 272, 31, 10);
-            pvpRapidRecovery = widgets.Text(pageRoot, "RapidRecovery", "", 312, 130, 272, 26, 10);
+            widgets.Text(pageRoot, "RapidRefillHint", "Default 70%/s · 1..300%/s of victim max HP.\nRefills continuously between resets.", 312, 95, 272, 26, 10);
+            AddCheckbox("Periodic recovery", 312, 124, 272, 25, s => s.FriendlyFire.Rapid.PeriodicReset,
+                s => s.FriendlyFireAvailable, "/one friendlyfire rapid recovery");
+            BuildPvpRapidValue("interval", "Recovery interval (s)", 312, 153);
+            widgets.Text(pageRoot, "RapidResetHint", "Default on / 3 s · 0.1..60 s\nRestores burst + history, even while firing.", 312, 182, 272, 28, 10);
+            pvpRapidRecovery = widgets.Text(pageRoot, "RapidRecovery", "", 312, 211, 272, 12, 9);
             pvpRapidRecovery.enableAutoSizing = true;
-            widgets.Text(pageRoot, "RapidScope", "Requires PvP balancing. All hit types share one reserve, even with frequency off. Defenses, roles and DoT intervals still apply. Minimum hits can exceed it.", 312, 160, 272, 54, 10);
-            pvpRapidReset = widgets.Button(pageRoot, "Reset four rapid values", 312, 224, 272, 25, ResetPvpRapid);
+            pvpRapidReset = widgets.Button(pageRoot, "Reset rapid settings", 312, 224, 272, 25, ResetPvpRapid);
         }
 
         private void BuildPvpRapidValue(string key, string label, float x, float y)
@@ -64,7 +67,7 @@ namespace SephiriaOne
             {
                 row.Input.interactable = enabled;
                 decimal value = row.Key == "window" ? rapid.WindowSeconds : row.Key == "rate" ? rapid.HitsPerSecond :
-                    row.Key == "exponent" ? rapid.Exponent : rapid.BurstPercent;
+                    row.Key == "exponent" ? rapid.Exponent : row.Key == "interval" ? rapid.ResetSeconds : rapid.BurstPercent;
                 RefreshPvpRapidValue(row, value);
             }
             friendlyRefill.interactable = enabled;
@@ -78,7 +81,7 @@ namespace SephiriaOne
             }
             if (pvpRapidLastBurst == rapid.BurstPercent && pvpRapidLastRefill == refill) return;
             pvpRapidLastBurst = rapid.BurstPercent; pvpRapidLastRefill = refill;
-            pvpRapidRecovery.text = L.F("Applied empty-to-full: {0}s (burst ÷ refill).\nBefore role modifiers; no incoming hits.",
+            pvpRapidRecovery.text = L.F("Continuous refill only: {0}s to full before roles.",
                 (rapid.BurstPercent / refill).ToString("0.###", CultureInfo.InvariantCulture));
         }
 

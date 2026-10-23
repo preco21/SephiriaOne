@@ -54,7 +54,9 @@ internal static class LocalizationCatalogTests
             foreach (var effect in Enum.GetValues<PvpDotEffect>())
                 Check(korean.ContainsKey(PvpDotSettings.Label(effect)), "Missing DoT label translation: " + effect);
             foreach (string label in new[] { "Rapid Hits", "History window (s)", "Full-damage hits/s", "Reduction exponent",
-                "Stored burst (% HP)", "Reset four rapid values" })
+                "Stored burst (% HP)", "Reset rapid settings", "Periodic recovery", "Recovery interval (s)",
+                "Rolling hit history, not a budget reset.\nDefault 1 s · separate attack categories.",
+                "Default on / 3 s · 0.1..60 s\nRestores burst + history, even while firing." })
                 Check(korean.ContainsKey(label), "Missing Rapid Hits control translation: " + label);
             foreach (string label in new[] { "Perfect Guard MP multiplier", "Native MP cost (x)", "When on, shield MP minimum does not apply." })
                 Check(korean.ContainsKey(label), "Missing Perfect Guard control translation: " + label);

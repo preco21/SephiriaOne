@@ -19,7 +19,7 @@ namespace SephiriaOne
             internal long ParticipantEpoch;
             internal FriendlyFireParticipants.Receipt AttackerReceipt, VictimReceipt;
             internal BalanceWindow BudgetWindow;
-            internal long BudgetGeneration;
+            internal long BudgetGeneration, BudgetRecoveryGeneration;
             internal double BudgetCharged, BudgetMaxHp, BudgetAccounted, BudgetIncomingScale;
             internal double BudgetBonusCharged;
             internal int ParryMpBefore;

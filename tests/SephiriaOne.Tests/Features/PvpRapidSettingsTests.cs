@@ -6,6 +6,7 @@ internal static class PvpRapidSettingsTests
     {
         int checks = 0;
         void Check(bool value, string why) { if (!value) throw new Exception(why); checks++; }
+        RecoverySettings(Check);
         foreach (string edit in new[] { "window 0.1", "window 10", "rate 0.1", "rate 100", "exponent 0", "exponent 2", "burst 1", "burst 100", "window reset", "rate reset", "exponent reset", "burst reset", "reset" })
             Check(FriendlyFireCommand.Parse("/ONE FRIENDLYFIRE RAPID " + edit, out var command) == FriendlyFireParseResult.Valid &&
                 !command.TouchesMasterToggle && !command.Reset, "Rapid numeric command preserves mode/toggles: " + edit);
@@ -117,5 +118,41 @@ internal static class PvpRapidSettingsTests
         policy.Record(new FriendlyFireCommand(false, reset: true));
         Check(!policy.HasChanges && !policy.FriendlyFire.Rapid.HasChanges, "Full combat reset restores rapid defaults too");
         return checks;
+    }
+
+    private static void RecoverySettings(Action<bool, string> check)
+    {
+        var defaults = default(PvpRapidSettings);
+        check(defaults.PeriodicReset && defaults.ResetSeconds == 3 && defaults.ResetScale == 3 && !defaults.HasResetChanges,
+            "Periodic recovery defaults on with a separate three-second interval");
+        var policy = new SessionPolicy();
+        void Edit(string edit)
+        {
+            check(FriendlyFireCommand.Parse("/one friendlyfire rapid " + edit, out var command) == FriendlyFireParseResult.Valid && !command.TouchesMasterToggle,
+                "Recovery edit preserves master toggle: " + edit);
+            policy.Record(command);
+        }
+        Edit("recovery off"); Edit("interval 2.25"); Edit("rate 6");
+        string saved = policy.ToPresetText();
+        check(saved.StartsWith("SephiriaOne preset v51\n") && saved.Contains("rapid-recovery 0\n") && saved.Contains("rapid-interval 2.25\n") &&
+            SessionPolicy.TryReadPreset(saved, out var restored, out _) && restored.ToPresetText() == saved,
+            "Recovery settings round trip independently in v51");
+        check(!policy.FriendlyFire.Rapid.PeriodicReset && policy.FriendlyFire.Rapid.ResetSeconds == 2.25m &&
+            defaults.SameFrequency(new PvpRapidSettings(periodicReset: false, resetSeconds: 10)), "Recovery edits preserve cadence parameters");
+        Edit("recovery reset"); check(policy.FriendlyFire.Rapid.PeriodicReset && policy.FriendlyFire.Rapid.ResetSeconds == 2.25m, "Toggle reset retains interval");
+        Edit("interval reset"); check(policy.FriendlyFire.Rapid.ResetSeconds == 3 && policy.FriendlyFire.Rapid.HitsPerSecond == 6, "Interval reset retains rate");
+        Edit("recovery off"); Edit("reset"); check(!policy.HasChanges && policy.FriendlyFire.Rapid.PeriodicReset, "Full rapid reset restores enabled recovery");
+        foreach (string edit in new[] { "interval 0.1", "interval 60", "interval 1.25", "recovery ON", "recovery OFF" }) Edit(edit);
+        foreach (string edit in new[] { "interval 0", "interval 60.01", "interval NaN", "interval 1.001", "recovery 1", "recovery on extra" })
+            check(FriendlyFireCommand.Parse("/one friendlyfire rapid " + edit, out _) == FriendlyFireParseResult.Invalid, "Reject malformed recovery: " + edit);
+        for (int version = 1; version <= 50; version++)
+        {
+            check(SessionPolicy.TryReadPreset($"SephiriaOne preset v{version}\n", out var old, out _) && old.FriendlyFire.Rapid.PeriodicReset &&
+                old.FriendlyFire.Rapid.ResetSeconds == 3, "Older omitted settings adopt approved on/3s default");
+            foreach (string row in new[] { "rapid-recovery 0", "rapid-interval 2" })
+                check(!SessionPolicy.TryReadPreset($"SephiriaOne preset v{version}\nfriendlyfire {row}\n", out _, out _), "Older schemas reject recovery rows");
+        }
+        foreach (string row in new[] { "rapid-recovery 2", "rapid-recovery 0.0", "rapid-interval 0", "rapid-interval 3.000", "rapid-interval 2\nfriendlyfire rapid-interval 4" })
+            check(!SessionPolicy.TryReadPreset("SephiriaOne preset v51\nfriendlyfire " + row + "\n", out _, out _), "Malformed recovery preset is atomic");
     }
 }

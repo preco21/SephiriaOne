@@ -1,5 +1,10 @@
 # Development knowledge index
 
+[Periodic PvP recovery](pvp-hit-frequency.md#periodic-recovery-0920-2026-10-24):
+default on/3s, distinct from the rolling hit-history window. Restores shared
+pair burst/history during continuous fire; lazy fixed deadlines, array reuse,
+live-edit rearming, nested-refund protection and EN/KO controls/preset v51.
+
 [Zombie majority refill tuning](zombie-survival.md#dynamic-balancing-0760):
 `0.91.1` lowers dynamic refill smoothly as Zombies exceed half the roster
 (3:1 → ×0.75), retaining early-Zombie bonuses, incoming curves and existing

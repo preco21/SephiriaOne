@@ -75,6 +75,17 @@ internal static class FriendlyFireRuntimeTests
             SessionSettings.FriendlyFireForHit.Enabled == prior.Enabled && SessionSettings.FriendlyFireForHit.Balance == prior.Balance &&
             SessionSettings.FriendlyFireForHit.HitFrequency == prior.HitFrequency, "All rapid edits preserve active mode, switches, scores, roles and budget revision");
         var configured = SessionSettings.FriendlyFireForHit.Rapid;
+        long recoveryRevision = SessionSettings.CombatRecoveryRevision;
+        foreach (string edit in new[] { "recovery off", "interval 2.25", "recovery on" })
+        {
+            check(SettingsActions.Execute("/one friendlyfire rapid " + edit).Success && SessionSettings.CombatRecoveryRevision == ++recoveryRevision &&
+                SessionSettings.CombatFrequencyRevision == frequency && SessionSettings.CombatBalanceRevision == balance &&
+                CombatMatchRuntime.MatchToken == token && FriendlyFireKda.Epoch == scores && CombatMatchRuntime.IsRunning == matchRunning,
+                "Recovery edit rearms only its deadline across casual and match modes: " + edit);
+            check(SettingsActions.Execute("/one friendlyfire rapid " + edit).Success && SessionSettings.CombatRecoveryRevision == recoveryRevision,
+                "Repeated recovery command preserves deadline");
+        }
+        check(SettingsActions.Execute("/one friendlyfire rapid interval reset").Success, "Restore recovery interval after mode check");
         check(SessionSettings.ReadSnapshot().FriendlyFire.Rapid.Equals(configured) &&
             SettingsActions.Execute("/one friendlyfire status").Messages.Any(m => m.Contains("Rapid history: 2.25s;") &&
                 m.Contains("8.75 hits/s") && m.Contains("exponent: 1.25") && m.Contains("35.25% max HP") &&
@@ -91,7 +102,8 @@ internal static class FriendlyFireRuntimeTests
         check(SettingsActions.Execute("/one friendlyfire rapid reset").Success && SessionSettings.CombatFrequencyRevision == frequency,
             "Repeated numeric reset never clears history again");
         check(SessionSettings.TryExecuteFriendlyFire(new FriendlyFireCommand(false, rapid: new PvpRapidChange(prior.Rapid.WindowSeconds,
-            prior.Rapid.HitsPerSecond, prior.Rapid.Exponent, prior.Rapid.BurstPercent), refillPercent: prior.RefillPercent), out _),
+            prior.Rapid.HitsPerSecond, prior.Rapid.Exponent, prior.Rapid.BurstPercent,
+            periodicReset: prior.Rapid.PeriodicReset, resetSeconds: prior.Rapid.ResetSeconds), refillPercent: prior.RefillPercent), out _),
             "Restore prior rapid and refill controls");
     }
 
@@ -382,6 +394,10 @@ internal static class FriendlyFireRuntimeTests
         check(!SessionSettings.FriendlyFireForHit.PerfectGuard.HasChanges, "Full reset restores Perfect Guard off/x2");
         check(SessionSettings.FriendlyFireForHit.DotMaxDurationSeconds == 1.2m, "Full reset restores 1.2-second duration");
         FriendlyFireFeature.Available = false;
+        check(!SettingsActions.Execute("/one friendlyfire rapid recovery on").Success &&
+            SettingsActions.Execute("/one friendlyfire rapid recovery off").Success &&
+            SettingsActions.Execute("/one friendlyfire rapid recovery reset").Success,
+            "Explicit periodic recovery reset remains available during compatibility failure");
         check(!SettingsActions.Execute("/one friendlyfire suppress-thorns on").Success &&
             SettingsActions.Execute("/one friendlyfire suppress-thorns off").Success &&
             SettingsActions.Execute("/one friendlyfire suppress-thorns reset").Success, "Thorns off/reset remain available during compatibility failure");

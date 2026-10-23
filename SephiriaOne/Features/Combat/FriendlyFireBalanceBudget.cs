@@ -17,9 +17,11 @@ namespace SephiriaOne
         {
             internal bool Started;
             internal long CombatEpoch, ParticipantEpoch, Revision, SourceLife, TargetLife, Generation, RoleRevision;
+            internal long RecoveryGeneration;
             internal string SourceFloor, TargetFloor;
             internal FriendlyFireDamageBudget Budget;
             internal FriendlyFireDamageBudget Assistance;
+            internal PvpRecoveryClock Recovery;
             internal FriendlyFireHitFrequency Frequency, IncidentalFrequency;
             private FriendlyFireHitFrequency[] planets;
             internal long FrequencyRevision;
@@ -30,8 +32,9 @@ namespace SephiriaOne
             }
             internal void ResetFrequencies()
             {
-                Frequency = IncidentalFrequency = default;
-                if (planets != null) System.Array.Clear(planets, 0, planets.Length);
+                Frequency.Reset(); IncidentalFrequency.Reset();
+                if (planets != null)
+                    for (int i = 0; i < planets.Length; i++) planets[i].Reset();
             }
             // Fixed catalog-sized storage, allocated only for a pair that lands
             // an audited artifact hit. Re-equipping cannot reset source identity.
@@ -104,6 +107,7 @@ namespace SephiriaOne
                 window.SourceFloor != sourceFloor || window.TargetFloor != targetFloor)
             {
                 window.Started = true; window.Budget = window.Assistance = default; window.Generation++;
+                window.Recovery = default;
                 window.ResetPulses(); window.ResetArtifacts();
                 window.ResetFrequencies();
                 window.CombatEpoch = epoch; window.ParticipantEpoch = participants; window.Revision = revision;
@@ -128,6 +132,13 @@ namespace SephiriaOne
             var effect = (PvpDotEffect)pulse;
             if (pulse >= 0 && intervals.PreserveSchedule(effect) &&
                 !window.Pulse(effect).Ready(now, intervals.Interval(effect))) return 0;
+            if (window.Recovery.Due(now, rapid, SessionSettings.CombatRecoveryRevision))
+            {
+                window.Budget = default;
+                window.ResetFrequencies();
+                // An earlier outer hit must not refund credit into this new pool.
+                window.RecoveryGeneration++;
+            }
             double requestedBonus = lowerBound.Enabled ? FriendlyFireLowerBound.RequestedBonus(damage, maxHp, lowerBound.ReferenceScale) : 0;
             if (hitFrequency && damage > 0)
             {
@@ -172,6 +183,7 @@ namespace SephiriaOne
                 if (pulse >= 0) window.Pulse(effect).Reserve(now);
                 if (artifact >= 0) window.ReserveArtifact(artifact, now);
                 current.BudgetWindow = window; current.BudgetGeneration = window.Generation;
+                current.BudgetRecoveryGeneration = window.RecoveryGeneration;
                 current.BudgetCharged = charged; current.BudgetMaxHp = maxHp;
                 current.BudgetIncomingScale = incomingScale;
                 current.BudgetBonusCharged = fundedBonus;
@@ -203,9 +215,11 @@ namespace SephiriaOne
             // Native shields and HP report their own applied amounts. Preserve
             // fractional credit lost to MP integer rounding or a later veto.
             // Never refund an exceptional hit: it may already have written HP.
-            window.Budget.Refund(unused / current.BudgetMaxHp, SessionSettings.FriendlyFireForHit.Rapid.BurstScale);
+            if (current.BudgetRecoveryGeneration == window.RecoveryGeneration)
+                window.Budget.Refund(unused / current.BudgetMaxHp, SessionSettings.FriendlyFireForHit.Rapid.BurstScale);
             // Native veto/overkill losses return the bonus portion first, once.
-            // Shield absorption is already accounted as delivered damage above.
+            // Recovery replaces only the main reserve; assistance still owns
+            // its earlier reservation and refund until the full lifetime changes.
             double unusedBonus = System.Math.Min(unused, current.BudgetBonusCharged);
             if (unusedBonus > 0) window.Assistance.Refund(unusedBonus / current.BudgetMaxHp,
                 SessionSettings.FriendlyFireForHit.LowerBound.ReferenceScale);

@@ -21,7 +21,8 @@ internal static class GameRapidPanelTests
         var build = Code("BuildPvpRapidEditor");
         Require(build.Any(i => i.LoadsConstant("/one friendlyfire hit-frequency")) &&
             build.Any(i => Call(i, "SettingsPanel", "AddCheckbox")) &&
-            new[] { "window", "rate", "exponent", "burst" }.All(key => build.Any(i => i.LoadsConstant(key))),
+            build.Any(i => i.LoadsConstant("/one friendlyfire rapid recovery")) &&
+            new[] { "window", "rate", "exponent", "burst", "interval" }.All(key => build.Any(i => i.LoadsConstant(key))),
             "Independent rapid values and the existing toggle use the shared host command family");
         Require(build.Any(i => i.operand is FieldInfo f && f.Name == "friendlyRefill") &&
             !Code("BuildPvpBalanceEditor").Any(i => i.operand is FieldInfo f && f.Name == "friendlyRefill") &&

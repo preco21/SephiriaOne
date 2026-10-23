@@ -15,6 +15,7 @@ ResponsiveBudgetTests.Run(Check);
 PlanetCadenceTests.Run(Check);
 LowerBoundCombatTests.Run(Check);
 ConfigurableRapidTests.Run(Check);
+PeriodicRecoveryTests.Run(Check);
 PerfectGuardTests.Run(Check);
 ArtifactRateTests.Run(Check);
 ThornsTests.Run(Check);

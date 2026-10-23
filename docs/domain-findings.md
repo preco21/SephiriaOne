@@ -1,5 +1,13 @@
 # Sephiria domain findings
 
+PvP periodic recovery (`0.92.0`): rolling cadence history and stored damage
+capacity serve different purposes. Recover both through one directed-pair clock,
+not separate weapon timers. Reuse history arrays, keep effect cooldowns intact,
+and use a separate recovery generation so an outer native callback cannot refund
+into a recovered reserve while its unused assistance can still be returned.
+Fractional missed deadlines must advance past now and reject duplicate timestamps. See
+[semantics and verification](pvp-hit-frequency.md#periodic-recovery-0920-2026-10-24).
+
 Secondary emissions (`0.91.0`): active count and creation throughput are separate
 budgets. Rate credit must be reserved before callbacks and never refunded merely
 because an object despawned. Host RPC loopback is queued, so a sender-stack

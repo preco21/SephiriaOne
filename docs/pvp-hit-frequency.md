@@ -1,6 +1,73 @@
 # Optional PvP hit-frequency scaling
 
-Latest (`0.89.3`): [Planet damage audit](pvp-planet-damage.md) separates each audited
+## Periodic recovery (0.92.0, 2026-10-24)
+
+The user requested recovery even during uninterrupted attacks, with the new
+option **on by default, every 3 seconds**. It is separate from **History window**
+(previously described as hit record time): history measures recent cadence;
+periodic recovery restores the pair's configured stored burst allowance and
+clears direct, incidental and individual Planet cadence histories together.
+Neither control enables PvP balancing itself; recovery requires balanced PvP
+but works whether optional hit-frequency scaling is on or off.
+
+Use **Rapid Hits → Periodic recovery / 주기적 피해량 회복** and
+**Recovery interval (s) / 회복 주기 (초)**, or:
+
+```text
+/one friendlyfire rapid recovery on
+/one friendlyfire rapid recovery off
+/one friendlyfire rapid interval 3
+/one friendlyfire rapid interval reset
+/one save
+```
+
+Interval range: 0.1..60 seconds, up to two decimal places. One clock belongs to
+each directed attacker/opponent pair, shared by all weapons, artifacts, owned
+companions and hit categories. It starts at the first eligible balanced hit and
+keeps fixed deadlines during continuous fire. The first eligible hit at/after a
+deadline recovers capacity; missed intervals collapse to one recovery, never
+multiple banked bursts. No firing pause, timer job or per-frame scan is needed.
+
+Continuous refill continues between recoveries. This intentionally raises the
+available sustained damage: at shipped 75% stored capacity and 3 seconds, the
+additional allowance can approach 25% of opponent maximum HP/second on top of
+continuous refill, before roles/defenses and minimum-hit effects. Shorter
+intervals grant more frequent bursts. It is not a strict fixed-window DPS cap.
+
+Live recovery toggle/interval edits rearm on the next eligible hit without
+immediate credit. An independent revision observes off/on changes even when no
+hit occurred between the commands. Repeating an unchanged command preserves the
+deadline. Changing history parameters, stored capacity or continuous refill does
+not restart the periodic clock. Full shared lifetime resets (life, floor,
+participant/session/KDA epochs, balance activation) also discard that clock.
+All PvP sub-modes use this same path, including Zombie and Play Tag role factors.
+
+Recovery leaves lower-bound assistance, debuff schedules and autonomous-artifact
+cooldowns untouched. Those cadence gates run before recovery admission; rejected
+effects cannot reset their own cooldowns. The existing positive-hit floor remains
+when the burst runs out. Native defenses still apply. PvE is untouched.
+
+The hit-history arrays are reused across recoveries; a separate recovery
+generation prevents a pre-recovery outer hit from refunding into a nested new
+reserve, while still returning unused assistance to its unchanged pool. Fractional
+missed deadlines cannot recover twice at the same timestamp. Explicit
+`recovery reset` remains available during compatibility faults without allowing
+an ordinary enable command. Tests cover uninterrupted 10 Hz fire, exact deadlines, shared categories,
+independent opponents, long idle, live edits, nested refunds, floors and current
+PvP modes. Warmed periodic recovery allocated zero managed bytes across 3,000
+hits in the executable fixture. These are not live multiplayer/FPS measurements.
+
+Verification: Release build passed with zero warnings/errors; 15,654 executable
+combat checks and 14,193 runtime/session checks passed. Portable policy/catalog
+checks and installed-game/UI/Harmony contract checks passed. Independent review
+findings were reproduced in regression tests and corrected before completion.
+
+Preset v51 stores nondefault recovery settings; older presets that omit them
+adopt the user-approved on/3s default. Existing history, burst and refill values
+are preserved. Recovery off restores continuous-refill-only behavior. No
+deployment or live game test was performed.
+
+Planet handling (`0.89.3`): [Planet damage audit](pvp-planet-damage.md) separates each audited
 Planet type's cadence from other Planets and incidental damage. Copies of the
 same type still share history; all sources still share one damage allowance.
 
@@ -22,7 +89,7 @@ also replaces zero-budget rejection with a positive pre-shield minimum.
 Since `0.83.0` (2026-10-22), use **Rapid Hits / 연속 타격** beside **PvP Balance**.
 Enable PvP balancing on the latter page for these controls to affect combat.
 The frequency toggle remains default **off**. Stored capacity changed to 75% in
-`0.88.0`; other defaults remain unchanged.
+`0.88.0`; periodic recovery was added in `0.92.0`.
 
 | Control | Default | Range | Effect |
 | --- | --- | --- | --- |
@@ -31,10 +98,13 @@ The frequency toggle remains default **off**. Stored capacity changed to 75% in
 | Reduction exponent | 0.5 | 0–2 | Above threshold, multiply by `(threshold / count)^exponent`; higher reduces more, zero removes frequency reduction. |
 | Stored burst allowance | 75% of victim max HP | 1–100% | Maximum credit stored for this attacker/opponent pair. |
 | Continuous refill | 70% of victim max HP/second | 1–300%/second | Adds allowance over elapsed game time, up to capacity. |
+| Periodic recovery | On | On/off | Restores shared capacity and clears hit history even during uninterrupted fire. |
+| Recovery interval | 3 seconds | 0.1–60 seconds | Fixed deadlines per attacker/opponent; missed recoveries never accumulate. |
 
-All values accept two decimal places. **There is no periodic reset interval or
-fixed-window damage cap.** Hit history ages out; damage credit refills
-continuously. Base empty-to-full recovery is `burst / refill` seconds (about
+All numeric values accept two decimal places. Hit history ages out and damage credit
+refills continuously; since `0.92.0`, the separate periodic-recovery control above
+also resets shared capacity/history by default. Base empty-to-full recovery from
+continuous refill alone is `burst / refill` seconds (about
 1.071 seconds by default). Play Tag/Zombie refill modifiers can change that time.
 The UI shows applied values and an example of reduction above the expected rate.
 
@@ -62,8 +132,9 @@ The page uses the same host commands as chat:
 /one save
 ```
 
-`hit-frequency reset` switches only the toggle off. `rapid reset` restores the
-four new numbers without changing the toggle, refill or other settings. Each
+`hit-frequency reset` switches only the frequency toggle off. `rapid reset`
+restores the four original numbers plus recovery on/3s, without changing the
+frequency toggle, continuous refill or other settings. Each
 numeric key also accepts `reset`; `refill reset` restores refill separately.
 The preference can be configured while
 balancing is off, and takes effect when its prerequisites are enabled. Toggle
