@@ -4,7 +4,7 @@ using System.Globalization;
 
 namespace SephiriaOne
 {
-    internal enum ProjectileLimitOperation { Reset, Toggle, Total, DefaultSource, Source, ResetSource }
+    internal enum ProjectileLimitOperation { Reset, Toggle, Total, DefaultSource, Source, ResetSource, RateReset, RateToggle, RateTotal, RateSource }
     internal enum ProjectileLimitParseResult { NotCommand, Help, Status, Invalid, Valid }
     internal readonly struct ProjectileLimitCommand
     {
@@ -22,9 +22,14 @@ namespace SephiriaOne
             ProjectileLimitOperation.DefaultSource => settings.WithDefaultSourceLimit(Limit),
             ProjectileLimitOperation.Source => settings.WithSourceLimit(Source!, Limit),
             ProjectileLimitOperation.ResetSource => settings.WithoutSourceLimit(Source!),
+            ProjectileLimitOperation.RateToggle => settings.WithRateEnabled(Enabled),
+            ProjectileLimitOperation.RateTotal => settings.WithPlayerRate(Limit),
+            ProjectileLimitOperation.RateSource => settings.WithSourceRate(Limit),
+            ProjectileLimitOperation.RateReset => settings.WithRateEnabled(false).WithPlayerRate(ProjectileLimitSettings.DefaultPlayerRate)
+                .WithSourceRate(ProjectileLimitSettings.DefaultSourceRate),
             _ => default
         };
-        public static string Usage => L.T("Host only: /one projectiles on|off|reset|status; total N; source default N; source <id> N|reset. Limits: 1–4096; default off, 64 total/player, 12/source. /one save persists settings.");
+        public static string Usage => L.T("Host only: /one projectiles on|off|reset|status; total N; source default N; source <id> N|reset; rate on|off|reset; rate total N; rate source N. Limits: 1–4096. Active caps and spawn rates default off, 64/player and 12/source; rates are per second. /one save persists settings.");
         public static ProjectileLimitParseResult Parse(string? text, out ProjectileLimitCommand command)
         {
             command = default;
@@ -38,6 +43,17 @@ namespace SephiriaOne
                 if (Is(2, "reset")) return ProjectileLimitParseResult.Valid;
                 if (!Is(2, "on") && !Is(2, "off")) return ProjectileLimitParseResult.Invalid;
                 command = new ProjectileLimitCommand(ProjectileLimitOperation.Toggle, Is(2, "on"));
+                return ProjectileLimitParseResult.Valid;
+            }
+            if (Is(2, "rate"))
+            {
+                if (parts.Length == 4 && Is(3, "reset"))
+                    command = new ProjectileLimitCommand(ProjectileLimitOperation.RateReset);
+                else if (parts.Length == 4 && (Is(3, "on") || Is(3, "off")))
+                    command = new ProjectileLimitCommand(ProjectileLimitOperation.RateToggle, Is(3, "on"));
+                else if (parts.Length == 5 && (Is(3, "total") || Is(3, "source")) && TryLimit(parts[4], out int rate))
+                    command = new ProjectileLimitCommand(Is(3, "total") ? ProjectileLimitOperation.RateTotal : ProjectileLimitOperation.RateSource, limit: rate);
+                else return ProjectileLimitParseResult.Invalid;
                 return ProjectileLimitParseResult.Valid;
             }
             if (parts.Length == 4 && Is(2, "total") && TryLimit(parts[3], out int total))

@@ -62,6 +62,9 @@ internal static class IlStackVerifier
         if (instruction.opcode.StackBehaviourPush != StackBehaviour.Varpush)
             return FixedCount(instruction.opcode.StackBehaviourPush);
         if (instruction.operand is MethodInfo called) return called.ReturnType == typeof(void) ? 0 : 1;
+        // Value-type initialization can call .ctor on an existing managed pointer.
+        // Unlike newobj (a fixed one-value push), that call returns void.
+        if (instruction.opcode == OpCodes.Call && instruction.operand is ConstructorInfo) return 0;
         throw new Exception("Unsupported variable stack push: " + instruction);
     }
 

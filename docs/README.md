@@ -1,5 +1,10 @@
 # Development knowledge index
 
+[Secondary emission controls](projectile-emission-controls.md): four additional
+Ice Weapon families, independent off/64-player/s/12-source/s creation budgets and
+rate-only Plitvice/Guillotine/Frost Flame Sword paths. Global FIFO is deliberately
+not enabled after native teardown, guest-lifetime and churn risks were confirmed.
+
 [Host-only capabilities](host-only-capabilities.md): guest-visible gameplay and
 presentation survey, including initial versus live player scaling, native skins,
 FX/audio selectors, pings, persistent markers and weather. Distinguishes replicated
@@ -66,7 +71,7 @@ interval, default off / 2s, for seven audited automatic artifact sources.
 Dark Cloud uses its own interval. Shared pair/life/session clocks, explicit weapon/book/companion/planet
 exclusions, native guest damage sync, EN/KO controls and v47 presets.
 
-Maintained: 2026-10-23 (Asia/Seoul), addon `0.90.3`.
+Maintained: 2026-10-23 (Asia/Seoul), addon `0.91.0`.
 
 [Configurable PvP DoT duration](pvp-dot-intervals.md#configurable-duration-cap-0850-2026-10-22):
 Burn/Plasma/blue/evolved lifetime cap now defaults to 1.2s, adjustable 0.05..10s

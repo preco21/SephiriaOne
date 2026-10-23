@@ -7,5 +7,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../../SephiriaOne/Features/ProjectileLimits/ProjectileInstanceLedger.cs" Link="ProjectileInstanceLedger.cs" />
+    <Compile Include="../../SephiriaOne/Features/ProjectileLimits/ProjectileRateLedger.cs" Link="ProjectileRateLedger.cs" />
   </ItemGroup>
 </Project>

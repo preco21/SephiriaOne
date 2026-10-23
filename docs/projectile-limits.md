@@ -2,11 +2,13 @@
 
 Implemented in 0.79.0, 2026-10-21.
 
-The [0.90.3 performance audit](projectile-performance-audit.md) confirms that
-**the six damaging Ice Weapons families and their fire variants are not covered**.
-Ice Vine is a separate source. It also documents client visual descendants,
-rapid spawn turnover and expensive low-count effects. This release reduces
-counter-storage allocation only; source coverage and admission policy are unchanged.
+The [0.91.0 follow-up](projectile-emission-controls.md) adds active/rate coverage
+for Scabbard, Voluspa, Frozen Bow and Blizzard Hammer, including fire variants.
+It also adds separate creation-rate controls for Plitvice/Guillotine and Frost
+Flame Sword callbacks; their local objects are not counted by active caps.
+The earlier [0.90.3 audit](projectile-performance-audit.md) records the original
+gaps, client descendants, turnover and expensive low-count effects. Reject-new
+remains the policy after the FIFO safety audit; no live entities are evicted.
 
 Since `0.89.2` (2026-10-23), the default per-source cap is **12**, down from 16.
 Default/reset and presets with no explicit source-default row use 12. Saved
@@ -64,6 +66,10 @@ Equipment changes cannot relabel a projectile or release its occupied slot.
 | `weapon-spike` | `WeaponAddonGreatsword_FireNeedleBullet.HandleAttackUnit` |
 | `flame-ball` | `Charm_FlameBall.HandleSwing` |
 | `yearning-robe` | `Charm_NearMagicBullet.AddBulletAttackCallback` |
+| `ice-air-slash` | `Charm_AirSlash.AirSlashCoroutine` |
+| `ice-spear` | `Charm_IceSpear.FireSpearCoroutine` |
+| `ice-bow` | `Charm_IceBow.FireArrow` |
+| `ice-hammer` | `Charm_IceHammer.HammerCoroutine` |
 
 The `planets` setting applies independently to each native planet damage ID;
 different planet artifacts do not share a counter. Copies of the same artifact
@@ -91,11 +97,12 @@ interval change is applied.
 
 Other inspected effects need separate adapters before safe inclusion:
 
-- Plitvice swords, Ice Bat bullets, Growth Parry daggers and Guillotine use
-  RPC-created client effects with distinct lifetimes. Limiting only host-local
-  instances would diverge from unmodified guests.
-- Air Slash, Frozen Bow, Voluspa and Blizzard Hammer have additional return-value
-  mutations or active-object collections requiring individual validation.
+- Plitvice swords and Guillotine now have pre-send rate gates, but still lack
+  active-instance accounting. Ice Bat and Growth Parry daggers remain outside
+  coverage. These use local/RPC effects with distinct lifetimes; deleting only
+  host-local instances would diverge from unmodified guests.
+- Air Slash, Frozen Bow, Voluspa and Blizzard Hammer now have validated guards
+  covering their post-spawn mutations and active-object collection updates.
 - Dark Cloud/chain-lightning hit RPCs and cosmetic particles are not missile
   instances. Existing PvP tick controls remain independent.
 

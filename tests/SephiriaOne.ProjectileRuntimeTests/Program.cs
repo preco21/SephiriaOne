@@ -75,6 +75,8 @@ BulletDestroyModule Module(Bullet bullet)
 }
 void Test(string name, Action run)
 {
+    Time.unscaledTimeAsDouble = 0;
+    Time.timeAsDouble = 0;
     ProjectileLimitRuntime.Clear();
     NetworkServer.connections.Clear();
     NetworkServer.spawned.Clear();
@@ -413,6 +415,149 @@ Test("Warmed runtime denial path allocates no managed memory", () =>
     Check(admitted == 0 && pool.NativeCalls == nativeCalls, "All measured attempts are denied before native spawn");
     Check(allocated == 0, $"Warmed 10,000 runtime denials allocated {allocated} bytes");
     Console.WriteLine($"Runtime denial allocation: {allocated} bytes / 10,000 calls.");
+});
+
+Test("Rate-only mode gates creation before native work and keeps active instances", () =>
+{
+    SessionSettings.ProjectilesForUse = new ProjectileLimitSettings(false, 1, 1, rateEnabled: true, playerRate: 3, sourceRate: 2);
+    ProjectileLimitRuntime.Refresh();
+    var first = Spawn(); var second = Spawn();
+    Check(first && second, "Rate-only mode does not enforce disabled active cap");
+    int calls = pool.NativeCalls;
+    Check(!Spawn() && pool.NativeCalls == calls, "Rate exhausted source never enters native creation");
+    Check(Spawn("meteor", damageId: "Charm_Meteor"), "Other source can consume shared remaining credit");
+    Check(!Spawn("ice-bow", damageId: "Charm_IceBow"), "Shared total limits a new source");
+    Check(first.IsSpawned && second.IsSpawned, "Existing projectiles are not evicted");
+    Despawn(first);
+    Check(!Spawn(), "Actual despawn frees active count but never refunds creation credit");
+    Time.timeAsDouble = 1000;
+    Check(!Spawn(), "Game time acceleration does not refill a real-time performance budget");
+    Time.unscaledTimeAsDouble = .51;
+    Check(Spawn(), "Unscaled continuous refill admits a later attempt");
+    Check(Spawn(null, damageId: "Weapon_Attack"), "Primary attacks stay native when secondary rate is exhausted");
+});
+Test("Cap denial does not consume rate credit; settings edits do not refill it", () =>
+{
+    SessionSettings.ProjectilesForUse = new ProjectileLimitSettings(true, 1, 1, rateEnabled: true, playerRate: 2, sourceRate: 2);
+    ProjectileLimitRuntime.Refresh();
+    var first = Spawn();
+    Check(first && !Spawn(), "Instance cap still applies");
+    Despawn(first);
+    var second = Spawn();
+    Check(second, "Denied instance attempt did not spend creation credit");
+    Despawn(second);
+    Check(!Spawn(), "Both admitted creations spent credit");
+    SessionSettings.ProjectilesForUse = SessionSettings.ProjectilesForUse.WithSourceLimit("kunai", 8).WithPlayerRate(10);
+    ProjectileLimitRuntime.Refresh();
+    Check(!Spawn(), "Live edits do not mint credit or reset rate counters");
+    SessionSettings.ProjectilesForUse = SessionSettings.ProjectilesForUse.WithRateEnabled(false);
+    ProjectileLimitRuntime.Refresh();
+    Check(Spawn(), "Rate off immediately restores active-cap-only admission");
+});
+Test("Rate reservation precedes native reentrancy and resets across run and connection lifetimes", () =>
+{
+    SessionSettings.ProjectilesForUse = new ProjectileLimitSettings(false, rateEnabled: true, playerRate: 1, sourceRate: 1);
+    ProjectileLimitRuntime.Refresh();
+    bool nestedRejected = false;
+    pool.BeforeInstantiation = () => { pool.BeforeInstantiation = null; nestedRejected = !Spawn(); };
+    Check(Spawn() && nestedRejected, "Nested initialization cannot spend the same rate allowance");
+    ProjectileLimitRuntime.RetireConnection(player.spawner.connectionToClient);
+    Check(!Spawn(), "Old connection cannot emit after retirement");
+    player = Connect(2);
+    Check(Spawn(), "New connection starts with its own credit");
+    SessionSettings.ResourceGeneration++;
+    Check(Spawn(), "Fresh run resets rate allowance despite retained avatar");
+});
+Test("RPC effects share missile rates and never receive an active-cap-only restriction", () =>
+{
+    Configure(total: 1, source: 1);
+    Check(Spawn() && ProjectileLimitRuntime.AdmitEffect(player, "ice-sword"), "Instance cap does not claim to count local effects");
+    SessionSettings.ProjectilesForUse = new ProjectileLimitSettings(false, rateEnabled: true, playerRate: 3, sourceRate: 1);
+    ProjectileLimitRuntime.Refresh();
+    Check(ProjectileLimitRuntime.AdmitEffect(player, "ice-sword"), "First local effect admitted");
+    Check(!ProjectileLimitRuntime.AdmitEffect(player, "ice-sword"), "Repeated local effect rate limited");
+    Check(Spawn() && ProjectileLimitRuntime.AdmitEffect(player, "ice-guillotine"), "Different effects share remaining player credit");
+    Check(!ProjectileLimitRuntime.AdmitEffect(player, "frost-flame-sword"), "A separate callback cannot bypass total rate");
+    SessionSettings.ProjectilesForUse = SessionSettings.ProjectilesForUse.WithEnabled(true);
+    ProjectileLimitRuntime.Refresh();
+    Check(!ProjectileLimitRuntime.AdmitEffect(player, "frost-flame-sword"), "Enabling instance caps does not reset rate credit");
+});
+Test("Rate invalid clock is contained and active-cap operation remains available", () =>
+{
+    Time.unscaledTimeAsDouble = double.NaN;
+    SessionSettings.ProjectilesForUse = new ProjectileLimitSettings(true, 1, 1, rateEnabled: true, playerRate: 2, sourceRate: 2);
+    ProjectileLimitRuntime.Refresh();
+    Check(!Spawn(), "Invalid creation clock fails closed when rate enabled");
+    SessionSettings.ProjectilesForUse = SessionSettings.ProjectilesForUse.WithRateEnabled(false);
+    ProjectileLimitRuntime.Refresh();
+    Check(Spawn() && !Spawn(), "Active caps continue independently with invalid rate clock");
+    Time.unscaledTimeAsDouble = 1;
+    SessionSettings.ProjectilesForUse = SessionSettings.ProjectilesForUse.WithEnabled(false).WithRateEnabled(true);
+    ProjectileLimitRuntime.Refresh();
+    Check(Spawn(), "Finite clock recovers normal admission");
+});
+Test("Ice families are adopted on activation and share elemental source identities", () =>
+{
+    Configure(false);
+    var ids = new[] { "Charm_AirSlash", "Charm_IceSpear", "Charm_IceBow", "Charm_IceHammer" };
+    var sources = new[] { "ice-air-slash", "ice-spear", "ice-bow", "ice-hammer" };
+    foreach (string id in ids) Native(id);
+    Configure(true, 64, 1);
+    for (int i = 0; i < ids.Length; i++)
+        Check(ProjectileLimitRuntime.SourceOf(ids[i], "AnyIceOrFireVariant") == sources[i] && !Spawn(sources[i], damageId: ids[i]),
+            "Existing Ice/fire family counts prevent excess new admissions: " + sources[i]);
+});
+Test("Warmed exhausted rate path is allocation-free before instance reservations", () =>
+{
+    SessionSettings.ProjectilesForUse = new ProjectileLimitSettings(false, rateEnabled: true, playerRate: 1, sourceRate: 1);
+    ProjectileLimitRuntime.Refresh();
+    Check(Spawn(), "Initial rate credit is available");
+    for (int i = 0; i < 2000; i++) Spawn();
+    int native = pool.NativeCalls, accepted = 0;
+    long before = GC.GetAllocatedBytesForCurrentThread();
+    for (int i = 0; i < 10000; i++) if (Spawn()) accepted++;
+    long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+    Check(accepted == 0 && pool.NativeCalls == native && allocated == 0, $"Exhausted rate path: {allocated} bytes / 10000 attempts");
+});
+Test("Rate-only tracking survives cap enable and stale descendants", () =>
+{
+    SessionSettings.ProjectilesForUse = new ProjectileLimitSettings(false, 1, 1, rateEnabled: true, playerRate: 3, sourceRate: 3);
+    ProjectileLimitRuntime.Refresh();
+    var parent = Spawn(); var module = Module(parent);
+    SessionSettings.ProjectilesForUse = SessionSettings.ProjectilesForUse.WithEnabled(true);
+    ProjectileLimitRuntime.Refresh();
+    Check(!Spawn(), "Enabling caps sees instances already tracked under rate-only mode");
+    Despawn(parent);
+    var prior = ProjectileLimitRuntime.BeginChildren(module);
+    try { Check(Spawn(null), "A child keeps parent source after native parent despawn"); }
+    finally { ProjectileLimitRuntime.EndChildren(prior); }
+    ProjectileLimitRuntime.RetireConnection(player.spawner.connectionToClient);
+    player = Connect(1);
+    prior = ProjectileLimitRuntime.BeginChildren(module);
+    try { Check(!Spawn(null), "Reused ID cannot give retired child provenance fresh credit"); }
+    finally { ProjectileLimitRuntime.EndChildren(prior); }
+    Check(Spawn(), "Replacement connection remains independent");
+});
+Test("Low-rate Liberation keeps schedulers independent from damage emission credit", () =>
+{
+    SessionSettings.ProjectilesForUse = new ProjectileLimitSettings(false, rateEnabled: true, playerRate: 1, sourceRate: 1);
+    ProjectileLimitRuntime.Refresh();
+    var emitter = Scheduler();
+    Check(emitter && Emit(emitter), "One credit allows a scheduler's first missile");
+    Check(!Emit(emitter), "Further missiles still obey one creation per second");
+    Time.unscaledTimeAsDouble = 1;
+    Check(Emit(emitter), "Later scheduler emission uses replenished credit");
+});
+Test("Partial native creation failure cannot refund rate work already admitted", () =>
+{
+    SessionSettings.ProjectilesForUse = new ProjectileLimitSettings(false, rateEnabled: true, playerRate: 1, sourceRate: 1);
+    ProjectileLimitRuntime.Refresh();
+    pool.BeforeInstantiation = () => throw new InvalidOperationException("Native failure");
+    try { Spawn(); } catch (InvalidOperationException) { }
+    pool.BeforeInstantiation = null;
+    Check(!Spawn(), "Failure cannot trigger repeated free creation attempts");
+    Time.unscaledTimeAsDouble = 1;
+    Check(Spawn(), "Budget naturally recovers after failure");
 });
 
 Console.WriteLine($"{checks} checks, {failures} failed cases.");

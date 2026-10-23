@@ -1,5 +1,12 @@
 # Sephiria domain findings
 
+Secondary emissions (`0.91.0`): active count and creation throughput are separate
+budgets. Rate credit must be reserved before callbacks and never refunded merely
+because an object despawned. Host RPC loopback is queued, so a sender-stack
+reservation cannot track a later local instance. Raw network deletion also skips
+native teardown; generic FIFO is not a safe alternative to admission gates.
+See [new coverage, rate controls and FIFO evidence](projectile-emission-controls.md).
+
 Host-only presentation (2026-10-23): a native spawn envelope carries root scale,
 but the shipped player transform has scale synchronization disabled. Initial
 scale and live resizing are different capabilities; changing serialization flags

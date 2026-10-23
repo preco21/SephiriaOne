@@ -33,6 +33,7 @@ namespace SephiriaOne
         }
 
         private static readonly ProjectileInstanceLedger<Owner> bullets = new ProjectileInstanceLedger<Owner>();
+        private static readonly ProjectileRateLedger<Owner> rates = new ProjectileRateLedger<Owner>();
         // FuryMP controllers are invisible, non-damaging schedulers. Bounding them
         // separately avoids using the last missile slot to block their own output.
         private static readonly ProjectileInstanceLedger<Owner> emitters = new ProjectileInstanceLedger<Owner>();
@@ -62,13 +63,15 @@ namespace SephiriaOne
                 { playerBullets += bullets.Count(owner); playerEmitters += emitters.Count(owner); }
             return "projectile-limits enabled=" + enabled + "; playerBullets=" + playerBullets +
                 "; playerEmitters=" + playerEmitters + "; totalCapPerPool=" + settings.PlayerLimit +
-                "; sourceDefault=" + settings.DefaultSourceLimit + "; tracked=" + tracked.Count;
+                "; sourceDefault=" + settings.DefaultSourceLimit + "; tracked=" + tracked.Count +
+                "; activeCaps=" + settings.Enabled + "; rateEnabled=" + settings.RateEnabled +
+                "; creations/player/s=" + settings.PlayerRate + "; creations/source/s=" + settings.SourceRate;
         }
 
         internal static void Clear()
         {
             enabled = false; scope++;
-            bullets.Clear(); emitters.Clear(); owners.Clear(); emitterPrefabs.Clear(); tracked.Clear();
+            bullets.Clear(); emitters.Clear(); rates.Clear(); owners.Clear(); emitterPrefabs.Clear(); tracked.Clear();
             dungeon = null;
             // An in-progress callback owns its pending reservation/finalizer.
             // Scope invalidation prevents it from admitting stale descendants.
@@ -81,12 +84,14 @@ namespace SephiriaOne
             try
             {
                 ProjectileLimitSettings next = SessionSettings.ProjectilesForUse;
-                bool active = ProjectileLimitFeature.Available && NetworkServer.active && next.Enabled;
+                bool active = ProjectileLimitFeature.Available && NetworkServer.active && (next.Enabled || next.RateEnabled);
                 DungeonManager current = active ? DungeonManager.Instance : null;
                 long generation = SessionSettings.ResourceGeneration;
                 bool reseed = active && (!enabled || !ReferenceEquals(current, dungeon) || generation != runGeneration);
                 if (!active) { Clear(); return; }
                 if (reseed) Clear();
+                if (!next.RateEnabled || !settings.RateEnabled) rates.Clear();
+                rates.Configure(next.PlayerRate, next.SourceRate, Time.unscaledTimeAsDouble);
                 settings = next; dungeon = current; runGeneration = generation; enabled = true;
                 if (reseed) SeedExisting();
             }
@@ -133,7 +138,7 @@ namespace SephiriaOne
             ReferenceEquals(live, owner.Connection) && ReferenceEquals(owner.Connection.identity, owner.Spawner.netIdentity);
 
         private static void Retire(Owner owner)
-        { owner.Retired = true; bullets.Forget(owner); emitters.Forget(owner); }
+        { owner.Retired = true; bullets.Forget(owner); emitters.Forget(owner); rates.Forget(owner); }
 
         internal static void RetireConnection(NetworkConnectionToClient connection)
         {
@@ -186,8 +191,14 @@ namespace SephiriaOne
                 return pool.Spawn(key, position, transparent, fromType, damageId, damage, stagger, force,
                     avatar, targets, height, begin, end, shared, attack, range, element, showSwing);
             }
-            if (!Current(owner) || !bullets.TryReserve(owner, source, settings.PlayerLimit,
-                SourceLimit(source), out var lease)) return null;
+            if (!Current(owner)) return null;
+            int totalCap = settings.Enabled ? settings.PlayerLimit : int.MaxValue;
+            int sourceCap = settings.Enabled ? SourceLimit(source) : int.MaxValue;
+            // Check capacity first without allocating a lease or spending rate credit.
+            // No native callbacks occur between this check and reservation.
+            if (settings.Enabled && (bullets.Count(owner) >= totalCap || bullets.Count(owner, source) >= sourceCap)) return null;
+            if (settings.RateEnabled && !rates.TryConsume(owner, source, Time.unscaledTimeAsDouble)) return null;
+            if (!bullets.TryReserve(owner, source, totalCap, sourceCap, out var lease)) return null;
             var admission = new Admission { Lease = lease, Previous = pendingBullet };
             pendingBullet = admission;
             try
@@ -200,6 +211,16 @@ namespace SephiriaOne
                 pendingBullet = admission.Previous;
                 if (!admission.Bound) lease.Release();
             }
+        }
+
+        // Local/RPC effects have no stock instance-destruction protocol. Gate the
+        // creation sender as a rate-only source; never suppress just the host receiver.
+        internal static bool AdmitEffect(UnitAvatar avatar, string source)
+        {
+            if (!Active() || !settings.RateEnabled) return true;
+            Owner owner = Capture(avatar);
+            if (owner == null) return !(avatar is PlayerAvatar);
+            return Current(owner) && rates.TryConsume(owner, source, Time.unscaledTimeAsDouble);
         }
 
         private static void Bind(ProjectileBase projectile, Admission admission)
@@ -259,8 +280,8 @@ namespace SephiriaOne
             if (!matches) return true;
             Owner owner = Capture(avatar);
             if (owner == null) return !(avatar is PlayerAvatar);
-            if (!emitters.TryReserve(owner, "liberation", settings.PlayerLimit,
-                settings.GetSourceLimit("liberation"), out var lease)) return false;
+            if (!Current(owner) || !emitters.TryReserve(owner, "liberation", settings.Enabled ? settings.PlayerLimit : int.MaxValue,
+                settings.Enabled ? settings.GetSourceLimit("liberation") : int.MaxValue, out var lease)) return false;
             admission = new Admission { Previous = pendingEmitter, Lease = lease };
             pendingEmitter = admission;
             return true;
@@ -329,6 +350,10 @@ namespace SephiriaOne
                 case "Charm_FlameBall": return "flame-ball";
                 case "Charm_NearMagicBullet": return "yearning-robe";
                 case "Weapon_Spike": return "weapon-spike";
+                case "Charm_AirSlash": return "ice-air-slash";
+                case "Charm_IceSpear": return "ice-spear";
+                case "Charm_IceBow": return "ice-bow";
+                case "Charm_IceHammer": return "ice-hammer";
             }
             if (damageId != null && damageId.StartsWith("Charm_Planet_", StringComparison.Ordinal)) return damageId;
             if (damageId == "Weapon_SpecialAttack" && (prefab == "FuryMPBullet_Physical" || prefab == "FuryMPBullet_Fire" ||

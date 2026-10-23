@@ -33,6 +33,15 @@ namespace SephiriaOne
                 tail: AccessTools.Field(typeof(ProjectileBase), "swingId"));
             yield return new Emitter(typeof(Charm_NearMagicBullet), "AddBulletAttackCallback", "yearning-robe", tail: fakeTarget);
             yield return new Emitter(typeof(Charm_CreateBulletOnSweep), "CreateBullet", "ice-vine");
+            yield return new Emitter(typeof(Charm_AirSlash), "AirSlashCoroutine", "ice-air-slash",
+                tail: AccessTools.Field(typeof(ProjectileBase), "swingId"), iterator: true);
+            yield return new Emitter(typeof(Charm_IceSpear), "FireSpearCoroutine", "ice-spear",
+                tail: AccessTools.Field(typeof(ProjectileBase), "swingId"), iterator: true);
+            yield return new Emitter(typeof(Charm_IceBow), "FireArrow", "ice-bow",
+                tail: AccessTools.Field(typeof(ProjectileBase), "swingId"));
+            // A rejected hammer must also skip activeBullets.Add and its throw RPC.
+            yield return new Emitter(typeof(Charm_IceHammer), "HammerCoroutine", "ice-hammer",
+                tail: AccessTools.DeclaredMethod(typeof(Charm_IceHammer), "RpcCreateHammer"), iterator: true);
             yield return new Emitter(typeof(Charm_ElectricEarring), "AttackCoroutine", "thunder-earring", iterator: true);
             yield return new Emitter(typeof(Charm_FireFeather), "OnUpdate", "phoenix-wing");
             yield return new Emitter(typeof(Charm_FlameGround_Meteor), "MeteorCoroutine", "meteor", iterator: true);
@@ -67,6 +76,7 @@ namespace SephiriaOne
                     ValidateEmitter(PatchProcessor.GetOriginalInstructions(emitter.Method), emitter);
                 }
                 ValidateSpecial(PatchProcessor.GetOriginalInstructions(SpecialSpawn));
+                ProjectileEffectRateHooks.Install(harmony);
                 foreach (Emitter emitter in Emitters())
                     harmony.Patch(emitter.Method, transpiler: Hook(nameof(Rewrite)));
                 foreach (Type type in ChildTypes())

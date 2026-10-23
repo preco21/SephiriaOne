@@ -2,6 +2,11 @@
 
 2026-10-23, addon `0.90.3`; installed Sephiria assembly fingerprint below.
 
+Historical audit: the [0.91.0 follow-up](projectile-emission-controls.md) implements
+four more Bullet families and independent creation-rate controls, including
+selected local/RPC effects. It records why the requested FIFO fallback remains
+reject-new. The coverage and recommendations below describe the `0.90.3` baseline.
+
 ## Result and scope
 
 The current per-source cap of 12 is not an effect-performance budget. It covers

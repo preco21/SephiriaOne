@@ -221,6 +221,8 @@ namespace SephiriaOne
             collinReset = null;
             projectileTotal = projectileDefault = projectileSource = null; projectilePicker = null;
             projectileTotalDraft = projectileDefaultDraft = projectileSourceDraft = false;
+            projectileRateTotal = projectileRateSource = null; projectileRateReset = null;
+            projectileRateTotalDraft = projectileRateSourceDraft = false;
             requitalCount = null; slatePicker = null; requitalCountDraft = false; requitalApply = requitalGive = requitalReset = null;
             updateInstall = updateCheck = null; updateAutomatic = null;
             friendlyDamage = null; friendlyDraft = false; friendlyRefill = null; friendlyRefillDraft = false;

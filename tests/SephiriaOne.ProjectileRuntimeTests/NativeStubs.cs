@@ -6,6 +6,7 @@ using UnityEngine;
 
 namespace UnityEngine
 {
+    public static class Time { public static double timeAsDouble, unscaledTimeAsDouble; }
     public class Object
     {
         internal bool Destroyed;

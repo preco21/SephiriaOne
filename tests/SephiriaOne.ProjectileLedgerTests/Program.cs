@@ -310,6 +310,8 @@ Test("Reused empty counter storage cannot be debited by retired leases", () =>
     replacement.Release();
 });
 
+Test("Creation rates preserve bursts, continuous refill and connection identity without hot-path allocation", () => RateTests.Run(Check));
+
 Console.WriteLine($"Projectile ledger: {checks} checks, {failures} failed cases.");
 return failures == 0 ? 0 : 1;
 

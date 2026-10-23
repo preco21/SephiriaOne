@@ -8,6 +8,7 @@
   <ItemGroup>
     <Compile Include="../../SephiriaOne/Features/ProjectileLimits/ProjectileLimitRuntime.cs" Link="ProjectileLimitRuntime.cs" />
     <Compile Include="../../SephiriaOne/Features/ProjectileLimits/ProjectileInstanceLedger.cs" Link="ProjectileInstanceLedger.cs" />
+    <Compile Include="../../SephiriaOne/Features/ProjectileLimits/ProjectileRateLedger.cs" Link="ProjectileRateLedger.cs" />
     <Compile Include="../../SephiriaOne/Features/ProjectileLimits/ProjectileLimitSettings.cs" Link="ProjectileLimitSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/ProjectileLimits/ProjectileLimitCatalog.cs" Link="ProjectileLimitCatalog.cs" />
   </ItemGroup>

@@ -78,6 +78,10 @@ Test("Exact audited emitter inventory excludes primary and held-fire weapons", (
         ["SpecialProjectile_FuryMP"] = ("liberation", 1),
         ["Charm_NearMagicBullet"] = ("yearning-robe", 1),
         ["Charm_CreateBulletOnSweep"] = ("ice-vine", 1),
+        ["Charm_AirSlash"] = ("ice-air-slash", 1),
+        ["Charm_IceSpear"] = ("ice-spear", 1),
+        ["Charm_IceBow"] = ("ice-bow", 1),
+        ["Charm_IceHammer"] = ("ice-hammer", 1),
         ["Charm_ElectricEarring"] = ("thunder-earring", 1),
         ["Charm_FireFeather"] = ("phoenix-wing", 1),
         ["Charm_FlameGround_Meteor"] = ("meteor", 1),
@@ -103,6 +107,64 @@ Test("Exact audited emitter inventory excludes primary and held-fire weapons", (
     }
     Check(expected.Count == 0, "Missing expected emitter");
     Check(!emitters.Any(e => Field<MethodInfo>(e, "Method") == spawn), "Generic native spawning must not be globally denied");
+});
+
+Test("Ice Weapon denials preserve loop timing and skip every spawn-dependent operation", () =>
+{
+    var contracts = new[]
+    {
+        (source: "ice-air-slash", type: "Charm_AirSlash", name: "AirSlashCoroutine", iterator: true),
+        (source: "ice-spear", type: "Charm_IceSpear", name: "FireSpearCoroutine", iterator: true),
+        (source: "ice-bow", type: "Charm_IceBow", name: "FireArrow", iterator: false),
+        (source: "ice-hammer", type: "Charm_IceHammer", name: "HammerCoroutine", iterator: true)
+    };
+    var swingId = AccessTools.Field(game.GetType("ProjectileBase", true), "swingId");
+    foreach (var contract in contracts)
+    {
+        var matches = emitters.Where(e => Field<string?>(e, "Source") == contract.source).ToArray();
+        Check(matches.Length == 1, "Missing or duplicated Ice Weapon emitter: " + contract.source);
+        var emitter = matches[0];
+        var entry = Native(contract.type, contract.name);
+        var expectedMethod = contract.iterator
+            ? AccessTools.DeclaredMethod(entry.GetCustomAttribute<System.Runtime.CompilerServices.IteratorStateMachineAttribute>()!.StateMachineType, "MoveNext")
+            : entry;
+        var method = Field<MethodInfo>(emitter, "Method");
+        Check(method == expectedMethod, "The exact native emission body is required: " + contract.source);
+        MemberInfo expectedTail = contract.source == "ice-hammer" ? Native("Charm_IceHammer", "RpcCreateHammer") : swingId;
+        Check(Equals(Field<MemberInfo>(emitter, "GuardTail"), expectedTail), "Wrong denial boundary: " + contract.source);
+        var original = PatchProcessor.GetOriginalInstructions(method, out var generator).ToList();
+        var rewritten = Rewrite(emitter, original, generator);
+        int call = rewritten.FindIndex(i => i.Calls(replacement));
+        Label denied = (Label)rewritten[call + 4].operand;
+        int continuation = rewritten.FindIndex(i => i.labels.Contains(denied));
+        var guarded = rewritten.Skip(call + 5).Take(continuation - call - 5).ToList();
+        Check(guarded.Count(i => i.StoresField(swingId)) == 1,
+            "Denied shots must skip the FROSTRELIC mutation: " + contract.source);
+        if (contract.source == "ice-hammer")
+        {
+            var active = AccessTools.Field(game.GetType("Charm_IceHammer", true), "activeBullets");
+            Check(guarded.Count(i => i.LoadsField(active)) == 1 &&
+                guarded.Count(i => i.operand is MethodInfo m && m.Name == "Add" &&
+                    m.DeclaringType!.IsGenericType && m.DeclaringType.GetGenericTypeDefinition() == typeof(List<>)) == 1 &&
+                guarded.Count(i => i.Calls((MethodInfo)expectedTail)) == 1,
+                "Hammer denial must skip activeBullets admission and the throw RPC together");
+        }
+        if (contract.iterator)
+        {
+            Check(rewritten.Skip(continuation).Take(4).Any(i => i.LoadsConstant(0.25f)) &&
+                rewritten.Skip(continuation).Take(4).Any(i => i.operand is ConstructorInfo c && c.DeclaringType!.Name == "WaitForSeconds"),
+                "Denied attempts retain their immediate quarter-second wait: " + contract.source);
+            Check(rewritten.Skip(continuation).Any(i => i.operand is MethodInfo m && m.Name == "CalculateRetriggerCoroutine"),
+                "Denied attempts must still reach native retrigger processing: " + contract.source);
+        }
+        else
+        {
+            var increment = rewritten.Skip(continuation).Take(4).ToArray();
+            Check(increment.Any(i => i.LoadsConstant(1)) && increment.Any(i => i.opcode == OpCodes.Add) &&
+                increment.Any(i => i.opcode == OpCodes.Stloc_S),
+                "Denied Bow amplification consumes its loop iteration");
+        }
+    }
 });
 
 Test("Native spawn replacement preserves every argument and result", () =>
@@ -291,6 +353,195 @@ Test("Bullet accounting binds in the native OnSpawn prefix before callbacks", ()
     Check(Code(spawn).Any(i => i.operand is MethodInfo m && m.Name == "OnSpawn"),
         "Native pool creation invokes the audited initialization boundary");
 });
+
+Test("Rate-only local effects gate only audited creation senders", () =>
+{
+    var effects = addon.GetType("SephiriaOne.ProjectileEffectRateHooks", true)!;
+    MethodInfo Effect(string name) => AccessTools.DeclaredMethod(effects, name)!;
+    var contracts = new[]
+    {
+        (type: "Charm_IceSword", sender: "RpcCreateSwords", prefix: "BeforeIceSword", source: "ice-sword"),
+        (type: "Charm_Guillotine", sender: "RpcCreateGuillotine", prefix: "BeforeGuillotine", source: "ice-guillotine")
+    };
+    foreach (var contract in contracts)
+    {
+        var sender = Native(contract.type, contract.sender);
+        var original = Code(sender);
+        Invoke(Effect("ValidateSender"), sender, original);
+        var prefix = Effect(contract.prefix);
+        Check(prefix.ReturnType == typeof(bool) && prefix.GetParameters().Single().ParameterType == sender.DeclaringType,
+            "Creation prefix must bind the exact sender instance: " + contract.source);
+        Check(Code(prefix).Count(i => i.Calls(RuntimeMethod("AdmitEffect"))) == 1 &&
+            Code(prefix).Count(i => i.LoadsConstant(contract.source)) == 1,
+            "Each creation sender charges its exact rate source once: " + contract.source);
+        Check(!Code(prefix).Any(i => i.Calls(RuntimeMethod("Spawn")) || i.opcode == OpCodes.Stfld),
+            "Rate-only admission must not manipulate local objects or native state");
+        var send = original.Single(i => i.operand is MethodInfo m && m.Name == "SendRPCInternal");
+        Reject(() => Invoke(Effect("ValidateSender"), sender, original.Where(i => !ReferenceEquals(i, send)).ToList()),
+            "Missing creation RPC send must fail compatibility validation");
+        Reject(() => Invoke(Effect("ValidateSender"), sender, original.Concat(new[] { new CodeInstruction(send) }).ToList()),
+            "An additional creation RPC send must fail compatibility validation");
+        var changed = original.Select(i => new CodeInstruction(i)).ToList();
+        int call = changed.FindIndex(i => i.operand is MethodInfo m && m.Name == "SendRPCInternal");
+        changed[call - 1] = new CodeInstruction(OpCodes.Ldc_I4_0);
+        Reject(() => Invoke(Effect("ValidateSender"), sender, changed), "Creation RPC must continue including its owner");
+        changed = original.Select(i => new CodeInstruction(i)).ToList();
+        changed[call - 2] = new CodeInstruction(OpCodes.Ldc_I4_1);
+        Reject(() => Invoke(Effect("ValidateSender"), sender, changed), "Creation RPC must retain the reliable channel");
+        changed = original.Select(i => new CodeInstruction(i)).ToList();
+        changed.Single(i => i.opcode == OpCodes.Ldstr).operand = "ChangedRpc";
+        Reject(() => Invoke(Effect("ValidateSender"), sender, changed), "Changed RPC identity requires another audit");
+        Reject(() => Invoke(Effect("ValidateSender"), Native(contract.type, "GetDamage"), original),
+            "An unrelated method must never qualify as an emission sender");
+        IlStackVerifier.Verify(prefix, Code(prefix));
+        NativeRewriteJit.Verify(prefix, (code, _) => code);
+        checks += 2;
+    }
+    Check(Code(Hook("Install")).Count(i => i.Calls(Effect("Install"))) == 1,
+        "Local rate hooks must join the same all-or-nothing hook installation");
+    Check(!Code(Effect("Install")).Any(i => i.operand is string s &&
+        (s.StartsWith("UserCode_", StringComparison.Ordinal) || s == "Initialize" || s == "OnDestroy")),
+        "Receivers and lifetimes are not rate-admission boundaries");
+});
+
+Test("Only the Frost Flame Sword callback gains per-sword admission", () =>
+{
+    var effects = addon.GetType("SephiriaOne.ProjectileEffectRateHooks", true)!;
+    MethodInfo Effect(string name) => AccessTools.DeclaredMethod(effects, name)!;
+    var callback = Native("ComboEffect_FlameSword", "HandleAttackUnit");
+    var batch = Native("ComboEffect_FlameSword", "ServerFireSword");
+    var fire = Native("ComboEffect_FlameSword", "FireSword");
+    var use = Native("ComboEffect_FlameSword", "UseSword");
+    var create = Native("ComboEffect_FlameSword", "CreateFlameSword");
+    var originalCallback = Code(callback);
+    Invoke(Effect("ValidateCallback"), originalCallback);
+    var rewrittenCallback = ((IEnumerable<CodeInstruction>)Invoke(Effect("RewriteCallback"), originalCallback)!).ToList();
+    Check(originalCallback.Count(i => i.Calls(batch)) == 2 && rewrittenCallback.Count(i => i.Calls(batch)) == 1 &&
+        rewrittenCallback.Count(i => i.Calls(Effect("FrostBatch"))) == 1,
+        "Only the second, Frost-specific callback call may be wrapped");
+    int first = originalCallback.FindIndex(i => i.Calls(batch));
+    Check(rewrittenCallback[first].Calls(batch), "The direct/magic callback call remains native");
+    Check(originalCallback.Where(i => i.operand is FieldInfo).Select(i => (i.opcode, i.operand)).SequenceEqual(
+        rewrittenCallback.Where(i => i.operand is FieldInfo).Select(i => (i.opcode, i.operand))),
+        "Native callback eligibility and cooldown writes are preserved");
+    foreach (string flag in new[] { "FLAMESWORDCALLBACKFROST", "FROSTRELIC" })
+        Reject(() => Invoke(Effect("ValidateCallback"), originalCallback.Where(i => !i.LoadsConstant(flag)).ToList()),
+            "Missing Frost eligibility flag must disable this adapter: " + flag);
+    Reject(() => Invoke(Effect("ValidateCallback"), originalCallback.Where(i => !i.Calls(batch)).ToList()),
+        "Changed callback call count must fail validation");
+    var mutatedCallback = originalCallback.Select(i => new CodeInstruction(i)).ToList();
+    mutatedCallback[mutatedCallback.FindLastIndex(i => i.Calls(batch)) - 1] = new CodeInstruction(OpCodes.Ldc_I4_1);
+    Reject(() => Invoke(Effect("ValidateCallback"), mutatedCallback), "Frost must not silently become an asynchronous targeting path");
+
+    var originalBatch = PatchProcessor.GetOriginalInstructions(batch, out var batchGenerator).ToList();
+    Invoke(Effect("ValidateBatch"), originalBatch);
+    var rewrittenBatch = ((IEnumerable<CodeInstruction>)Invoke(Effect("RewriteBatch"), originalBatch, batchGenerator)!).ToList();
+    Check(rewrittenBatch.Count(i => i.Calls(Effect("TakeBatchRequest"))) == 1 &&
+        rewrittenBatch.Count(i => i.Calls(Effect("BatchSword"))) == 1 && !rewrittenBatch.Any(i => i.Calls(fire)),
+        "Each synchronous batch captures provenance once and hands it to each sword");
+    var autoSearch = Native("ComboEffect_FlameSword", "AutoSearchNearEnemyAndFireSword");
+    Check(rewrittenBatch.Count(i => i.Calls(autoSearch)) == 1,
+        "The separate manual/autosearch coroutine stays native");
+    Reject(() => Invoke(Effect("ValidateBatch"), originalBatch.Where(i => !i.Calls(fire)).ToList()),
+        "Missing per-sword loop call must disable the adapter");
+    Reject(() => Invoke(Effect("ValidateBatch"), originalBatch.Concat(new[] { new CodeInstruction(OpCodes.Call, fire) }).ToList()),
+        "Additional per-sword call requires a new audit");
+
+    var originalFire = PatchProcessor.GetOriginalInstructions(fire, out var fireGenerator).ToList();
+    Invoke(Effect("ValidateFireSword"), originalFire);
+    var rewrittenFire = ((IEnumerable<CodeInstruction>)Invoke(Effect("RewriteFireSword"), originalFire, fireGenerator)!).ToList();
+    int gate = rewrittenFire.FindIndex(i => i.Calls(Effect("AdmitFlameSword")));
+    Check(rewrittenFire.FindIndex(i => i.Calls(use)) < gate && gate < rewrittenFire.FindIndex(i => i.Calls(create)),
+        "Native sword stock is consumed before admission, and denied effects never start their coroutine");
+    Check(rewrittenFire.Count(i => i.Calls(Effect("TakeSwordRequest"))) == 1 &&
+        rewrittenFire[gate + 1].opcode == OpCodes.Brtrue && rewrittenFire[gate + 2].LoadsConstant(1) &&
+        rewrittenFire[gate + 3].opcode == OpCodes.Ret,
+        "A denied, already-consumed sword returns native success and continues its outer loop");
+    Check(originalFire.Where(i => i.operand is MethodBase).Select(i => i.operand).SequenceEqual(
+        rewrittenFire.Where(i => i.operand is MethodBase && !i.Calls(Effect("TakeSwordRequest")) && !i.Calls(Effect("AdmitFlameSword"))).Select(i => i.operand)),
+        "Native calls retain their order, including stock and coroutine operations");
+    var gateCode = rewrittenFire.Skip(gate - 3).Take(7).ToArray();
+    Check(RunEffectGate(gateCode, false, false) == 11, "Unscoped direct, magic and manual sword paths bypass rate admission");
+    Check(RunEffectGate(gateCode, true, false) == 101, "Denied Frost sword consumes stock without starting FX/damage/pickup work");
+    Check(RunEffectGate(gateCode, true, true) == 111, "Admitted Frost sword continues into the native coroutine");
+    Reject(() => Invoke(Effect("ValidateFireSword"), originalFire.Where(i => !i.Calls(use)).ToList()),
+        "Removing native stock consumption must fail validation");
+    Reject(() => Invoke(Effect("ValidateFireSword"), originalFire.Where(i => !i.Calls(create)).ToList()),
+        "Changed coroutine construction must fail validation");
+    var changedFire = originalFire.Select(i => new CodeInstruction(i)).ToList();
+    changedFire[changedFire.FindIndex(i => i.Calls(use)) + 1].opcode = OpCodes.Brfalse_S;
+    Reject(() => Invoke(Effect("ValidateFireSword"), changedFire), "Changed stock-success branch must fail validation");
+    foreach (var pair in new[] { (callback, rewrittenCallback), (batch, rewrittenBatch), (fire, rewrittenFire) })
+    {
+        IlStackVerifier.Verify(pair.Item1, pair.Item2);
+        checks++;
+    }
+    NativeRewriteJit.Verify(callback, (code, _) => ((IEnumerable<CodeInstruction>)Invoke(Effect("RewriteCallback"), code)!).ToList());
+    NativeRewriteJit.Verify(batch, (code, generator) => ((IEnumerable<CodeInstruction>)Invoke(Effect("RewriteBatch"), code, generator)!).ToList());
+    NativeRewriteJit.Verify(fire, (code, generator) => ((IEnumerable<CodeInstruction>)Invoke(Effect("RewriteFireSword"), code, generator)!).ToList());
+    checks += 3;
+    foreach (string wrapper in new[] { "FrostBatch", "BatchSword" })
+        Check(Effect(wrapper).GetMethodBody()!.ExceptionHandlingClauses.Any(c => c.Flags == ExceptionHandlingClauseOptions.Finally),
+            "The native-call handoff must restore prior state even on exceptions: " + wrapper);
+});
+
+Test("Frost provenance handoffs are consumed once and cannot label nested manual calls", () =>
+{
+    var effects = addon.GetType("SephiriaOne.ProjectileEffectRateHooks", true)!;
+    foreach (var pair in new[] { (field: "requestedBatch", take: "TakeBatchRequest"), (field: "requestedSword", take: "TakeSwordRequest") })
+    {
+        var slot = effects.GetField(pair.field, all)!;
+        var take = AccessTools.DeclaredMethod(effects, pair.take)!;
+        Check(slot.IsDefined(typeof(ThreadStaticAttribute)), "Provenance handoffs must remain thread-local");
+        object marker = new object();
+        try
+        {
+            slot.SetValue(null, marker);
+            Check((bool)Invoke(take, marker)!, "The intended immediate native entry receives its provenance");
+            Check(!(bool)Invoke(take, marker)!, "A nested/manual call cannot reuse the consumed provenance");
+            slot.SetValue(null, marker);
+            Check(!(bool)Invoke(take, new object())! && slot.GetValue(null) == null,
+                "A different effect cannot inherit or leave behind the pending provenance");
+            Check(!(bool)Invoke(take, new object?[] { null })!, "An absent request never matches a null instance");
+        }
+        finally { slot.SetValue(null, null); }
+    }
+});
+
+int RunEffectGate(IReadOnlyList<CodeInstruction> gate, bool scoped, bool allowed)
+{
+    var method = new DynamicMethod("EffectAdmissionBranch", typeof(int), new[] { typeof(bool), typeof(bool) });
+    var il = method.GetILGenerator();
+    var calls = il.DeclareLocal(typeof(int));
+    Label continuation = il.DefineLabel();
+    foreach (var instruction in gate)
+    {
+        if (instruction.opcode == OpCodes.Ldloc) il.Emit(OpCodes.Ldarg_0);
+        else if (instruction.opcode == OpCodes.Ldarg_0) il.Emit(OpCodes.Ldnull);
+        else if (instruction.opcode == OpCodes.Call)
+        {
+            il.Emit(OpCodes.Pop);
+            il.Emit(OpCodes.Ldc_I4, 100);
+            il.Emit(OpCodes.Stloc, calls);
+            il.Emit(OpCodes.Ldarg_1);
+        }
+        else if (instruction.opcode == OpCodes.Brtrue || instruction.opcode == OpCodes.Brfalse)
+            il.Emit(instruction.opcode, continuation);
+        else if (instruction.opcode == OpCodes.Ret)
+        {
+            il.Emit(OpCodes.Ldloc, calls);
+            il.Emit(OpCodes.Add);
+            il.Emit(OpCodes.Ret);
+        }
+        else il.Emit(instruction.opcode);
+    }
+    il.MarkLabel(continuation);
+    il.Emit(OpCodes.Ldloc, calls);
+    il.Emit(OpCodes.Ldc_I4, 11);
+    il.Emit(OpCodes.Add);
+    il.Emit(OpCodes.Ret);
+    return method.CreateDelegate<Func<bool, bool, int>>()(scoped, allowed);
+}
 
 Console.WriteLine($"Projectile native contracts: {checks} checks in {cases} cases, {failures} failed. Assembly SHA-256 verified; no Unity/game methods executed.");
 return failures == 0 ? 0 : 1;
