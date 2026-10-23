@@ -1,5 +1,12 @@
 # Sephiria domain findings
 
+Dark Cloud presentation (2026-10-24): extending native targeting does not extend
+native FX delivery. Player strikes call `TargetCreateFx` on the cloud owner's
+connection. Its stock positional lightning/ice/EX receiver is cosmetic and does
+not require ownership, so targeted observer forwarding is a host-only candidate.
+The separate range ring is locally gated by `isOwned`. See
+[visual investigation](dark-cloud-pvp-visuals.md); forwarding is not implemented.
+
 Rabbit/PvP potion precedence (`0.94.0`): independent costume retention previously
 bypassed the general PvP infinite-off setting. Gate the costume branch at both
 drink admission and completion using shared `PvpParticipation`; do not implement

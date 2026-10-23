@@ -143,6 +143,11 @@ damage. Nothing was deployed or launched for this change.
 
 ## Dark Cloud player strike limit (0.51.2, 2026-10-13)
 
+Visual investigation (2026-10-24): the native FX preserved by this limiter goes
+only to the owning client. A fixture FX-call count does not prove guest delivery.
+See [host-only forwarding feasibility](dark-cloud-pvp-visuals.md) for the confirmed
+owner-only route, exact native effect reuse and separate owner-only range ring.
+
 Follow-up (`0.52.0`): this limit now requires [PvP balancing](pvp-balancing.md),
 an off-by-default host toggle. Balance edits invalidate its cooldown revision.
 The behavior below describes the limit while balancing is on.

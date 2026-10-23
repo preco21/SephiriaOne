@@ -6,6 +6,7 @@ internal static class GameFriendlyFireArtifactTests
 {
     internal static void Run(Assembly game, Assembly addon)
     {
+        GameDarkCloudVisualTests.Run(game);
         var hooks = addon.GetType("SephiriaOne.FriendlyFireArtifactHooks", true)!;
         var targeting = addon.GetType("SephiriaOne.FriendlyFireTargetingHooks", true)!;
         Type Native(string name) => game.GetType(name, true)!;
