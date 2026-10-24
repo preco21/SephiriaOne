@@ -1,8 +1,50 @@
-# Dark Cloud PvP visuals: host-only feasibility
+# Dark Cloud PvP visuals: host-only observer forwarding
 
 Investigated 2026-10-24 against installed Sephiria 1.0.33 and addon 0.94.0
-(`8f0c51d`). **Research only:** no gameplay changes, deployment or live multiplayer
-test. The user reports damage without the corresponding visual on hostile players.
+(`8f0c51d`); forwarding implemented in **0.94.5**. The user reported damage without
+the corresponding visual on hostile players. No deployment or live multiplayer
+rendering/audio test was performed.
+
+## Implementation (0.94.5)
+
+`Features/Combat/Presentation/FriendlyFireDarkCloudVisuals.cs` forwards the
+existing `TargetCreateFx` emission to other ready clients on the same floor who
+already observe the cloud identity. It keeps the native owner send and skips
+that connection while forwarding. Position, ice and empowered flags are copied
+unchanged, so each stock receiver uses the original beam, impact, cloud animation
+and native attack sound. No client addon, new asset, protocol, gameplay projectile
+or custom client script is required. The original owner-only radius ring remains
+unchanged. This runs for admitted hostile-player strikes with friendly fire on,
+whether optional PvP balancing is on or off, using the common mode/selection rules.
+
+The entry scope captures admission before damage. This preserves the lethal
+strike even when its callbacks end a Tournament or other match. Before each send,
+the adapter checks current source/victim connection receipts, cloud ownership,
+spawned identity and floor. It does not recheck the now-ended pairing. Nested
+strikes restore their enclosing scope in a finalizer, including when another
+Harmony prefix rejects a nested strike. The native whole-strike limiter still
+controls damage, Burn callbacks and visual emission together.
+
+Observer snapshots use `ArrayPool` and are rechecked against the live connection
+and observer dictionaries. A reused connection ID cannot receive an old message.
+Each forwarding scope is consumed before sends; failures are logged once and
+never retried. The independent cosmetic hook validates the native contract once
+and caches a delegate; incompatibility leaves native owner FX and combat active.
+There are no additional per-frame callbacks or persistent visual entities. Native
+pooled FX expire themselves. Unload removes the separate hook and sender cache.
+
+Executable fixtures cover ownership directions, all four variant combinations,
+spectators, rejected strikes, lethal mode-end, nested prefix ordering, exceptions,
+observer mutation, connection reuse, run/floor changes and unload. Warmed
+forwarding allocated **0 managed bytes across 3,000 strikes to nine observers**
+in the .NET fixture. This is not a live Unity frame-time/network measurement.
+Installed-game checks validate the production guard and reject altered payload,
+channel, ownership and gameplay-bearing receiver layouts.
+
+Validation: non-deploying Release build passed with no warnings/errors; 42 focused
+observer checks, 15,713 combat checks, 14,419 runtime/session checks and the full
+policy/installed-game compatibility suite passed. Independent review found no
+remaining production defect; its nested-unload test gap was covered before commit.
 
 ## Confirmed cause
 
@@ -51,7 +93,7 @@ that client to own the sending component. Therefore a host addon can route the
 same native message to additional observers without guest scripts or new assets.
 This is a static compatibility finding, not evidence of a successful live send.
 
-## Recommended implementation boundary
+## Forwarding boundary
 
 Forward the **existing visual emission**, only for an admitted hostile-player
 strike, to ready, same-floor clients already observing the cloud's network
@@ -123,9 +165,10 @@ corroborated control flow. Temporary exports stay outside Git under
 
 `GameDarkCloudVisualTests` checks the installed owner-only sender, serialized
 fields, stock receiver/registration, cosmetic calls, all variant keys, observer
-creation and ring/audio distinction. It does not implement forwarding.
+creation and ring/audio distinction, plus the production forwarding guard.
 
-A later implementation must test host→guest, guest→host, guest→guest and a third
-observer; normal/ice/EX strikes; lethal hits; cadence rejection; each PvP mode;
-same-team/excluded players; floor changes, reconnect and addon unload. Verify
-one visual/sound per admitted strike without extra HP/Burn/cloud-charge changes.
+Live verification still needs host→guest, guest→host, guest→guest and a third
+observer; normal/ice/EX strikes; lethal hits; cadence rejection and each PvP mode.
+Confirm one visible/audible strike per observer without extra HP/Burn/cloud-charge
+changes. Static native compatibility and simulated message delivery do not prove
+client rendering or audibility under all graphics/audio settings.

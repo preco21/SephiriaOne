@@ -58,6 +58,7 @@ namespace SephiriaOne
                 harmony.Patch(update, prefix: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.BeforeCompanionUpdate)));
                 FriendlyFireCompanionPenaltyHooks.Install(harmony);
                 FriendlyFireEffectHooks.Install(harmony);
+                FriendlyFireDarkCloudVisualHooks.TryInstall();
             }
             catch { harmony.UnpatchAll(Id); throw; }
         }
@@ -136,6 +137,6 @@ namespace SephiriaOne
             }
             return deny == 2 && block == 1 && relation == 1 && value == 1 && reason == 1 && factionInstance == 2 && dungeonInstance == 1;
         }
-        internal static void Uninstall() { new Harmony(Id).UnpatchAll(Id); FriendlyFireRuntime.Clear(); }
+        internal static void Uninstall() { FriendlyFireDarkCloudVisualHooks.Uninstall(); new Harmony(Id).UnpatchAll(Id); FriendlyFireRuntime.Clear(); }
     }
 }

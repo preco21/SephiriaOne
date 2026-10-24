@@ -37,6 +37,11 @@ namespace Mirror { public static class NetworkServer { public static bool active
 namespace Mirror { public class SyncList<T> : List<T> { [MethodImpl(MethodImplOptions.NoInlining)] public new bool Contains(T item) => base.Contains(item); } }
 namespace SephiriaOne
 {
+    internal static class FriendlyFireDarkCloudVisualHooks
+    {
+        internal static void TryInstall() { } // Observer transport has its own executable fixtures.
+        internal static void Uninstall() { }
+    }
     internal static partial class CombatMatchRuntime
     {
         internal static PlayerAvatar Chaser;

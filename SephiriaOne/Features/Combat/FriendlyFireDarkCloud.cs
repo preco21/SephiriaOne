@@ -6,6 +6,8 @@ namespace SephiriaOne
 {
     internal static partial class FriendlyFireRuntime
     {
+        internal static bool CanShowDarkCloudStrike(PlayerAvatar source, PlayerAvatar victim) => CanAffectTeam(source, victim);
+
         private sealed class DarkCloudTargets
         {
             internal readonly ConditionalWeakTable<FriendlyFireParticipants.Receipt, DarkCloudWindow> Windows =

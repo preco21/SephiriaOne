@@ -2,11 +2,11 @@ using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
 
-// Research contract only: establishes the shipped routing/receiver boundary.
-// This does not forward messages or prove live rendering on a guest.
+// Establishes the shipped routing/receiver boundary and production guard.
+// Static inspection does not prove live rendering on a guest.
 internal static class GameDarkCloudVisualTests
 {
-    internal static void Run(Assembly game)
+    internal static void Run(Assembly game, Assembly addon)
     {
         Type cloud = game.GetType("ComboEffect_DarkCloud", true)!;
         Type visual = game.GetType("DarkCloudObject", true)!;
@@ -55,6 +55,28 @@ internal static class GameDarkCloudVisualTests
             m.DeclaringType?.Name == "StudioEventEmitter" && m.Name == "Play"), "native strike includes cloud animation and attack audio");
         Require(Code(cloud.TypeInitializer!).Any(i => i.opcode == OpCodes.Ldftn && Equals(i.operand, Method(cloud, "Invoke" + bodyName))),
             "unmodified clients register the target receiver");
-        Console.WriteLine("Verified Dark Cloud owner-only native FX routing, stock positional/ice/empowered receiver, observer creation and owner-only ring (research only; no live guest rendering).");
+        var hooks = addon.GetType("SephiriaOne.FriendlyFireDarkCloudVisualHooks", true)!;
+        var combat = addon.GetType("SephiriaOne.FriendlyFireHooks", true)!;
+        Require(Code(Method(combat, "Install")).Any(i => i.Calls(Method(hooks, "TryInstall"))) &&
+            Code(Method(combat, "Uninstall")).Any(i => i.Calls(Method(hooks, "Uninstall"))), "combat lifecycle installs and removes the cosmetic adapter");
+        var runtime = addon.GetType("SephiriaOne.FriendlyFireRuntime", true)!;
+        Require(Code(Method(runtime, "CanShowDarkCloudStrike")).Any(i => i.Calls(Method(runtime, "CanAffectTeam"))),
+            "visual admission shares production participant and PvP mode rules");
+        Require((bool)Method(hooks, "Validate").Invoke(null, null)!, "production transport guard accepts installed sender, receiver, animation and observer initialization");
+        var validate = Method(hooks, "ValidateCode");
+        bool Accept(List<CodeInstruction> s, List<CodeInstruction> r, List<CodeInstruction> b) => (bool)validate.Invoke(null, new object[] { s, r, b })!;
+        var changed = sender.Select(i => new CodeInstruction(i)).ToList();
+        changed.RemoveAt(changed.FindIndex(i => Calls(i, "WriteBool")));
+        Require(!Accept(changed, receiver, body), "reject a missing variant field");
+        changed = sender.Select(i => new CodeInstruction(i)).ToList();
+        changed[changed.FindIndex(i => Calls(i, "SendTargetRPCInternal")) - 1] = new CodeInstruction(OpCodes.Ldc_I4_1);
+        Require(!Accept(changed, receiver, body), "reject a changed native channel");
+        changed = receiver.Select(i => new CodeInstruction(i)).ToList();
+        changed.Add(new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(cloud, "isOwned")));
+        Require(!Accept(sender, changed, body), "reject a new receiver ownership filter");
+        changed = body.Select(i => new CodeInstruction(i)).ToList();
+        changed.Add(new CodeInstruction(OpCodes.Call, Method(cloud, "FireLightning")));
+        Require(!Accept(sender, receiver, changed), "reject gameplay added to the cosmetic body");
+        Console.WriteLine("Verified Dark Cloud stock positional/ice/empowered receiver, production observer-FX contract and four incompatible-layout mutations (no live guest rendering).");
     }
 }

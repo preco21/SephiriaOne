@@ -3,9 +3,13 @@
 Dark Cloud presentation (2026-10-24): extending native targeting does not extend
 native FX delivery. Player strikes call `TargetCreateFx` on the cloud owner's
 connection. Its stock positional lightning/ice/EX receiver is cosmetic and does
-not require ownership, so targeted observer forwarding is a host-only candidate.
+not require ownership, so 0.94.5 forwards admitted PvP strikes to current, ready,
+same-floor observers without guest addon code. Preserve native variant arguments
+and the owner send, snapshot observers, and recheck connection/identity lifetimes
+before each additional send. Cosmetic recipients do not need inventory readiness.
 The separate range ring is locally gated by `isOwned`. See
-[visual investigation](dark-cloud-pvp-visuals.md); forwarding is not implemented.
+[visual implementation and evidence](dark-cloud-pvp-visuals.md); live rendering
+and audio remain unverified.
 
 Rabbit/PvP potion precedence (`0.94.0`): independent costume retention previously
 bypassed the general PvP infinite-off setting. Gate the costume branch at both

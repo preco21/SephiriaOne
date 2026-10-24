@@ -1,9 +1,9 @@
 # Development knowledge index
 
-[Dark Cloud PvP visual investigation](dark-cloud-pvp-visuals.md): native strikes
-send FX only to the owner. The exact stock lightning/ice/EX receiver can be
-addressed to additional observing clients; the range ring remains owner-only.
-Research and installed-game contracts only; no runtime forwarding implemented.
+[Dark Cloud PvP observer FX](dark-cloud-pvp-visuals.md): host forwards the native
+lightning/ice/EX strike to ready same-floor cloud observers, including guests
+without the addon. Owner FX/audio stays single; the range ring remains owner-only.
+Scoped routing and installed-game contracts verified; live guest rendering pending.
 
 [Rabbit infinite-potion PvP override](pvp-potions.md#rabbit-costume-override-0940):
 default-on Combat checkbox and command prevent costume retention from bypassing
