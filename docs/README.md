@@ -1,5 +1,10 @@
 # Development knowledge index
 
+[PvP startup compatibility fix](harmony-compatibility.md#pvp-initialization-and-dark-cloud-observer-fx-0952):
+the Dark Cloud observer adapter used a helper absent from co-installed HarmonyX,
+disabling friendly fire. Framework delegate binding and a caught non-inlined
+installer preserve optional-FX isolation; exact-library API audit passes.
+
 [Settings UI fixes](tabbed-settings-ui.md#scroll-layout-and-dropdown-cursor-fixes-0951-2026-10-25):
 equal-width scrollbar arrows/track, whole-rail auto-hide, padded scrolling forms,
 and projectile readout separated from controls. Addon dropdowns draw below the

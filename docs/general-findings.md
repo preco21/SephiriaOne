@@ -48,6 +48,14 @@ string IL using `instruction.opcode == OpCodes.Ldstr` and the exact operand.
 Run the [alternate-library API audit](harmony-compatibility.md#regression-procedure)
 when adding Harmony API calls; embedding a newer build package is insufficient.
 
+`0.95.2` fixes another occurrence in Dark Cloud observer FX: avoid
+`AccessTools.MethodDelegate<T>` against the co-installed HarmonyX library. Use
+framework `Delegate.CreateDelegate` for compatible open-instance native senders.
+An optional adapter's `try/catch` cannot catch an unresolved-member exception
+thrown while compiling that same method; put its installation body behind a
+non-inlined call inside the catch boundary. See the
+[PvP startup regression](harmony-compatibility.md#pvp-initialization-and-dark-cloud-observer-fx-0952).
+
 Evidence: [loader/API notes](development-notes.md#loader-and-api-findings),
 [resource compatibility correction](resource-settings-implementation.md),
 [dependency notices](third-party-notices.md).

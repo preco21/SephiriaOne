@@ -1,6 +1,50 @@
 # Co-installed Harmony compatibility
 
-Updated 2026-10-13, addon `0.51.3`.
+Updated 2026-10-25, addon `0.95.2`.
+
+## PvP initialization and Dark Cloud observer FX (`0.95.2`)
+
+The 2026-10-25 `Player.log` from addon assembly `0.95.0` reports:
+
+```text
+Friendly fire unavailable: System.MissingMethodException:
+HarmonyLib.AccessTools.MethodDelegate<T>(MethodInfo, object, bool, Type[])
+```
+
+This came from the observer-FX adapter introduced in `0.94.5`, not the settings
+UI. The co-installed RaidRaid library identifies as `0Harmony 2.9.0.0` and lacks
+that helper signature. The compiled-addon API audit against that exact DLL
+reproduced the failure; it was the only missing compiled Harmony member.
+
+`FriendlyFireDarkCloudVisualHooks` now binds the native sender with framework
+`Delegate.CreateDelegate`, matching our other native FX adapters. The binding is
+an open instance delegate: each call supplies the cloud, recipient, position and
+variant flags. It is cached once at installation and retains the existing sender
+hook, observer guards and single native owner delivery.
+
+The previous `try/catch` was in the same method as the unresolved member call.
+Mono could throw while compiling that method, before entering its catch, so the
+exception reached the outer combat installer and rolled back friendly fire.
+The optional installation body now sits in a separate non-inlined method called
+inside `TryInstall`'s catch boundary. Optional initialization failures remove
+its own patches/cache and warn, while leaving combat initialization available.
+Native contract checks are retained; no compatibility check is bypassed.
+
+Regression coverage now executes the production FX installer (only native IL
+validation is substituted in the fixture), checks dependency failure and failure
+after patch installation, owned cleanup, recovery, and observer routing. The
+installed-game test also creates the framework delegate against the real native
+RPC signature without executing it. The complete API audit passes all 41
+compiled Harmony references against the installed alternate DLL. Existing warm
+forwarding still allocates zero managed bytes across 3,000 nine-observer strikes
+in the .NET fixture; the change adds no per-frame or per-hit reflection.
+
+These checks do not execute HarmonyX's detours in the game's Mono runtime or
+confirm live guest rendering. After manual installation, fully restart the game
+and verify PvP controls and Dark Cloud guest effects. No addon was deployed and
+no co-installed library was replaced. A DLL's metadata version label can differ
+from its assembly version; this log showed metadata `0.94.0`, but that label was
+not the cause of the missing-method exception.
 
 ## Death, revive and private kill notices
 

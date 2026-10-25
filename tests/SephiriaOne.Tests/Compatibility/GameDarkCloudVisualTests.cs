@@ -59,6 +59,15 @@ internal static class GameDarkCloudVisualTests
         var combat = addon.GetType("SephiriaOne.FriendlyFireHooks", true)!;
         Require(Code(Method(combat, "Install")).Any(i => i.Calls(Method(hooks, "TryInstall"))) &&
             Code(Method(combat, "Uninstall")).Any(i => i.Calls(Method(hooks, "Uninstall"))), "combat lifecycle installs and removes the cosmetic adapter");
+        var installer = Method(hooks, "Install");
+        Require((installer.GetMethodImplementationFlags() & MethodImplAttributes.NoInlining) != 0 &&
+            Code(installer).Any(i => i.operand is MethodInfo m && m.DeclaringType == typeof(Delegate) && m.Name == "CreateDelegate"),
+            "optional installation isolates JIT failures and uses framework binding available alongside HarmonyX");
+        var presentation = addon.GetType("SephiriaOne.FriendlyFireDarkCloudVisuals", true)!;
+        var delegateType = AccessTools.DeclaredField(presentation, "send").FieldType;
+        var binding = Delegate.CreateDelegate(delegateType, target);
+        Require(binding.Target == null && binding.Method == target,
+            "framework open delegate binds the installed native RPC signature without invoking Unity or sending messages");
         var runtime = addon.GetType("SephiriaOne.FriendlyFireRuntime", true)!;
         Require(Code(Method(runtime, "CanShowDarkCloudStrike")).Any(i => i.Calls(Method(runtime, "CanAffectTeam"))),
             "visual admission shares production participant and PvP mode rules");

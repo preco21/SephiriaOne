@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using HarmonyLib;
 using Mirror;
 using UnityEngine;
@@ -17,19 +18,27 @@ namespace SephiriaOne
         internal static void TryInstall()
         {
             Uninstall();
-            try
-            {
-                if (!Validate()) throw new InvalidOperationException("Native Dark Cloud cosmetic contract changed.");
-                var type = typeof(ComboEffect_DarkCloud);
-                var sender = AccessTools.DeclaredMethod(type, "TargetCreateFx");
-                FriendlyFireDarkCloudVisuals.send = AccessTools.MethodDelegate<Action<ComboEffect_DarkCloud, NetworkConnectionToClient, Vector3, bool, bool>>(sender);
-                var harmony = new Harmony(Id);
-                harmony.Patch(AccessTools.DeclaredMethod(type, "FireLightning"),
-                    prefix: new HarmonyMethod(typeof(FriendlyFireDarkCloudVisuals), nameof(FriendlyFireDarkCloudVisuals.BeforeStrike)),
-                    finalizer: new HarmonyMethod(typeof(FriendlyFireDarkCloudVisuals), nameof(FriendlyFireDarkCloudVisuals.AfterStrike)));
-                harmony.Patch(sender, postfix: new HarmonyMethod(typeof(FriendlyFireDarkCloudVisuals), nameof(FriendlyFireDarkCloudVisuals.AfterNativeSend)));
-            }
+            try { Install(); }
             catch (Exception error) { Uninstall(); FriendlyFireDarkCloudVisuals.Warn(error); }
+        }
+
+        // A missing dependency can fail while Mono compiles a method, before its
+        // own try/catch runs. Keep the optional installer behind a caught call.
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void Install()
+        {
+            if (!Validate()) throw new InvalidOperationException("Native Dark Cloud cosmetic contract changed.");
+            var type = typeof(ComboEffect_DarkCloud);
+            var sender = AccessTools.DeclaredMethod(type, "TargetCreateFx");
+            // Use the same framework binding as our other native FX adapters.
+            // Co-installed HarmonyX lacks the build package's MethodDelegate API.
+            FriendlyFireDarkCloudVisuals.send = (Action<ComboEffect_DarkCloud, NetworkConnectionToClient, Vector3, bool, bool>)
+                Delegate.CreateDelegate(typeof(Action<ComboEffect_DarkCloud, NetworkConnectionToClient, Vector3, bool, bool>), sender);
+            var harmony = new Harmony(Id);
+            harmony.Patch(AccessTools.DeclaredMethod(type, "FireLightning"),
+                prefix: new HarmonyMethod(typeof(FriendlyFireDarkCloudVisuals), nameof(FriendlyFireDarkCloudVisuals.BeforeStrike)),
+                finalizer: new HarmonyMethod(typeof(FriendlyFireDarkCloudVisuals), nameof(FriendlyFireDarkCloudVisuals.AfterStrike)));
+            harmony.Patch(sender, postfix: new HarmonyMethod(typeof(FriendlyFireDarkCloudVisuals), nameof(FriendlyFireDarkCloudVisuals.AfterNativeSend)));
         }
 
         internal static void Uninstall() { new Harmony(Id).UnpatchAll(Id); FriendlyFireDarkCloudVisuals.Reset(); }

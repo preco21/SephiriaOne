@@ -1,4 +1,5 @@
 using HarmonyLib;
+using System.Runtime.CompilerServices;
 using Mirror;
 using SephiriaOne;
 using UnityEngine;
@@ -10,13 +11,33 @@ var adapter = typeof(Program).Assembly.GetType("SephiriaOne.FriendlyFireDarkClou
 var strike = AccessTools.Method(typeof(ComboEffect_DarkCloud), "FireLightning");
 var sender = AccessTools.Method(typeof(ComboEffect_DarkCloud), "TargetCreateFx");
 void BindSender() => AccessTools.Field(adapter, "send").SetValue(null,
-    AccessTools.MethodDelegate<Action<ComboEffect_DarkCloud, NetworkConnectionToClient, Vector3, bool, bool>>(sender));
-if (adapter != null)
-{
-    BindSender();
-    harmony.Patch(strike, prefix: new HarmonyMethod(adapter, "BeforeStrike"), finalizer: new HarmonyMethod(adapter, "AfterStrike"));
-    harmony.Patch(sender, postfix: new HarmonyMethod(adapter, "AfterNativeSend"));
-}
+    Delegate.CreateDelegate(typeof(Action<ComboEffect_DarkCloud, NetworkConnectionToClient, Vector3, bool, bool>), sender));
+var hooks = typeof(FriendlyFireDarkCloudVisualHooks);
+var install = AccessTools.DeclaredMethod(hooks, "Install");
+Check(install != null && (install.GetMethodImplementationFlags() & System.Reflection.MethodImplAttributes.NoInlining) != 0,
+    "Optional installation must have a non-inlined JIT boundary inside TryInstall's catch");
+// Native IL validation has separate installed-game tests. Substitute only that
+// boundary here, exercising production delegate creation, patching and cleanup.
+harmony.Patch(AccessTools.DeclaredMethod(hooks, "Validate"), prefix: new HarmonyMethod(typeof(InstallationFixture), "Validate"));
+BindSender();
+int warnings = Debug.Warnings;
+InstallationFixture.Failure = new MissingMethodException("fixture: incompatible optional dependency");
+FriendlyFireDarkCloudVisualHooks.TryInstall();
+Check(FriendlyFireDarkCloudVisuals.send == null && Debug.Warnings == warnings + 1,
+    "Optional dependency failure is contained, clears cached sender and warns instead of escaping to combat installation");
+InstallationFixture.Failure = null;
+harmony.Patch(install, postfix: new HarmonyMethod(typeof(InstallationFixture), "AfterInstall"));
+FriendlyFireDarkCloudVisualHooks.TryInstall();
+Check(FriendlyFireDarkCloudVisuals.send == null &&
+    Harmony.GetPatchInfo(sender)?.Owners.Contains("SephiriaOne.DarkCloudVisuals") != true &&
+    Harmony.GetPatchInfo(strike)?.Owners.Contains("SephiriaOne.DarkCloudVisuals") != true,
+    "Failure after installing hooks removes all optional patches and the cached sender");
+Check(Harmony.GetPatchInfo(AccessTools.DeclaredMethod(hooks, "Validate")).Owners.Contains(harmony.Id),
+    "Optional cleanup leaves other Harmony owners intact");
+harmony.Unpatch(install, HarmonyPatchType.All, harmony.Id);
+FriendlyFireDarkCloudVisualHooks.TryInstall();
+Check(FriendlyFireDarkCloudVisuals.send != null && Harmony.GetPatchInfo(sender).Owners.Contains("SephiriaOne.DarkCloudVisuals"),
+    "Production installer binds the open sender and installs the observer hook after recovery");
 PlayerAvatar Player(int id)
 {
     var p = new PlayerAvatar();
@@ -125,6 +146,19 @@ long bytes = GC.GetAllocatedBytesForCurrentThread() - before;
 Check(bytes == 0, "Warmed forwarding allocates zero managed bytes: " + bytes);
 Check(players.All(p => p.spawner.connectionToClient.Effects == 3100), "Nine observers each receive exactly one message per admitted strike");
 Console.WriteLine($"Dark Cloud forwarding: {bytes} bytes/3000 strikes to nine observers.");
-harmony.UnpatchAll(harmony.Id); Fresh(); cloud.FireLightning(players[1]);
+FriendlyFireDarkCloudVisualHooks.Uninstall(); harmony.UnpatchAll(harmony.Id); Fresh(); cloud.FireLightning(players[1]);
 Check(C(0).Effects == 1 && C(1).Effects == 0, "Unload restores native owner-only presentation");
 Console.WriteLine($"Passed {checks} Dark Cloud observer routing/lifetime checks (fixtures, not live rendering).");
+
+internal static class InstallationFixture
+{
+    internal static Exception Failure;
+    internal static void AfterInstall() => throw new MissingMethodException("fixture: failure after patch installation");
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    internal static bool Validate(ref bool __result)
+    {
+        if (Failure != null) throw Failure;
+        __result = true;
+        return false;
+    }
+}

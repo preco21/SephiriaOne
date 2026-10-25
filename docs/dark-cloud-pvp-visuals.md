@@ -5,6 +5,11 @@ Investigated 2026-10-24 against installed Sephiria 1.0.33 and addon 0.94.0
 the corresponding visual on hostile players. No deployment or live multiplayer
 rendering/audio test was performed.
 
+`0.95.2` fixes a [co-installed Harmony startup failure](harmony-compatibility.md#pvp-initialization-and-dark-cloud-observer-fx-0952)
+in the observer adapter: framework delegate binding replaces an unavailable
+Harmony helper, and optional installation has a caught non-inlined boundary.
+Observer routing, payloads, gameplay and native validation remain unchanged.
+
 ## Implementation (0.94.5)
 
 `Features/Combat/Presentation/FriendlyFireDarkCloudVisuals.cs` forwards the
