@@ -66,6 +66,12 @@ if (args.Length == 1 && (args[0] == "--perf" || args[0] == "--perf-check"))
     return;
 }
 
+if (args.Length == 1 && args[0] == "--perf-participants")
+{
+    ParticipantPerformanceProbe.Run(Start, id => Add(id));
+    return;
+}
+
 if (args.Length == 1 && args[0] == "--participants")
 {
     FriendlyFireParticipantTests.Run(Start, id => Add(id), Check);

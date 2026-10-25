@@ -1,5 +1,64 @@
 # Synchronization performance review
 
+## Cached PvP participant admission (0.96.1, 2026-10-26)
+
+The combat/projectile/UI audit found one small, measurable optimization worth
+applying. `FriendlyFireParticipants.Capture` previously called `CurrentPlayer`
+before retrieving the two lifetime records, then called it again through
+`Valid` for an already-cached receipt. The common successful path repeated the
+roster search, native identity/authority checks and Mirror dictionary lookups,
+and performed two unnecessary conditional-weak-table lookups.
+
+Capture now tests a cached receipt with the existing full `Valid` predicate
+first. Only a missing/invalid receipt enters the lifetime-resolution and creation
+path. This does **not** cache permission results across calls or frames: every
+read still validates the current session, roster, identities, exact connection,
+retirement/initialization flags and both lifetime generations. Selection pruning
+and callback-time revalidation are unchanged. This benefits all PvP modes and
+the targeting, damage and participant-scoped features that use this registry.
+
+### Measurement
+
+Added `--perf-participants` to the source-linked runtime fixture: nine selected
+players, round-robin reads, 40,000 warmups and three trials of 400,000 reads each.
+The standalone comparison disables .NET tiered compilation to avoid comparing
+different JIT tiers during short trials:
+
+```powershell
+$env:DOTNET_TieredCompilation = '0'
+dotnet run --project tests/SephiriaOne.RuntimeTests -c Release -p:DeployMod=false -- --perf-participants
+```
+
+| Stable read | Before, median ns/read | After, median ns/read | Allocations |
+| --- | ---: | ---: | --- |
+| Capture | 49.4 | 24.7 | 0 before and after |
+| Includes, with all nine selected | 226.5 | 205.8 | 0 before and after |
+
+`Includes` retains its full selected-roster pruning, so its gain is smaller
+(about 9%, versus 50% for Capture alone). These are .NET 10 boundary-fixture
+measurements, **not Unity/Mono frame-time or guest-rendering measurements**.
+The probe asserts stable admission and zero allocations, not noisy timing limits.
+
+### Behavior and scope
+
+Regression coverage checks cached admission against native roster removal,
+missing/replaced spawned identities, avatar/spawner reassignment, connection
+mismatch, changed network IDs and server-authority loss without waiting for
+lifecycle hooks. Existing tests cover disconnect/reconnect with reused objects,
+initialization success/failure, retirement callbacks, new runs, server stop,
+selection changes and nine-player sessions.
+
+No projectile limits, native spawn/despawn behavior, PvP damage formulas, network
+messages or UI refresh cadence changed. Projectile denial/rate paths already
+avoid allocations after warmup; their live ownership checks remain intact.
+Install-time reflection/transpiler scans were left alone. More invasive receipt
+pooling or throttling would add lifecycle risk without a demonstrated need.
+
+Verification: non-deploying Release build (zero warnings/errors), 14,436 runtime
+integration checks, 135 projectile-runtime checks, the portable/installed-game
+contract suite and all 41 compiled Harmony API references against the installed
+HarmonyX 2.9 assembly passed. No live gameplay profiling or deployment performed.
+
 ## Diagnostic state labels (0.60.2, 2026-10-16)
 
 Reviewed the current synchronization/participant lifetimes, combat budget and

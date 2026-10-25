@@ -19,6 +19,34 @@ internal static class FriendlyFireParticipantTests
             var g = FriendlyFireParticipants.Capture(guest.PlayerAvatar);
             check(h != null && g != null && ReferenceEquals(g, FriendlyFireParticipants.Capture(guest.PlayerAvatar)),
                 "Capture returns the cached exact current lifetime");
+            // Cached admission must still observe native state changes even if
+            // no lifecycle hook or synchronization frame has run in between.
+            var guestAvatar = guest.PlayerAvatar;
+            void RejectTransient(Action invalidate, Action restore, string label)
+            {
+                invalidate();
+                check(FriendlyFireParticipants.Capture(guestAvatar) == null && !FriendlyFireParticipants.IsCurrent(g), label);
+                restore();
+                check(ReferenceEquals(g, FriendlyFireParticipants.Capture(guestAvatar)),
+                    "Restored native state retains the same live receipt: " + label);
+            }
+            check(FriendlyFireParticipants.Capture(null) == null, "Null avatar cannot enter cached admission");
+            RejectTransient(() => PlayerSpawner.MultiplayerList.Remove(guest), () => PlayerSpawner.MultiplayerList.Add(guest),
+                "Cached player must remain in the native roster");
+            RejectTransient(() => NetworkServer.spawned.Remove(guest.netId), () => NetworkServer.spawned.Add(guest.netId, guest.netIdentity),
+                "Cached player must retain a spawned identity");
+            RejectTransient(() => NetworkServer.spawned[guest.netId] = host.netIdentity, () => NetworkServer.spawned[guest.netId] = guest.netIdentity,
+                "Cached player rejects replacement spawned identities");
+            RejectTransient(() => guest.PlayerAvatar = other.PlayerAvatar, () => guest.PlayerAvatar = guestAvatar,
+                "Cached avatar must still belong to its spawner");
+            RejectTransient(() => guestAvatar.connectionToClient = host.connectionToClient, () => guestAvatar.connectionToClient = guest.connectionToClient,
+                "Cached avatar and spawner must share the exact connection");
+            RejectTransient(() => guestAvatar.netId = host.netId, () => guestAvatar.netId = guest.netId,
+                "Cached avatar cannot change its network ID");
+            RejectTransient(() => guestAvatar.isServer = false, () => guestAvatar.isServer = true,
+                "Cached client-only avatar is ineligible");
+            RejectTransient(() => guest.isServer = false, () => guest.isServer = true,
+                "Cached client-only spawner is ineligible");
             check(FriendlyFireParticipants.Includes(host.PlayerAvatar) && FriendlyFireParticipants.Includes(guest.PlayerAvatar),
                 "Empty selection includes all current eligible players");
             check(FriendlyFireParticipants.Set(h, true) && FriendlyFireParticipants.Set(g, true) &&

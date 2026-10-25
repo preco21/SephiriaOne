@@ -1,5 +1,10 @@
 # Development knowledge index
 
+[PvP participant lookup optimization](performance-review.md#cached-pvp-participant-admission-0961-2026-10-26):
+cached receipts retain full live validation while avoiding duplicate roster,
+identity and lifetime lookups. Nine-player fixture: Capture about 50% faster,
+Includes about 9% faster, both allocation-free; lifecycle regression coverage.
+
 [Bolt Magic projectile limits](projectile-limits.md#bolt-magic-coverage-0960-2026-10-26):
 manual/automatic/staff Bolt casts share one source across elements, existing
 active/rate admission and lifecycle cleanup. Both native branches have safe

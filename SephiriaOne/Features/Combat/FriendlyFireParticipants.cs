@@ -61,16 +61,17 @@ namespace SephiriaOne
 
         internal static Receipt Capture(PlayerAvatar player)
         {
-            if (!EnsureScope() || !CurrentPlayer(player)) return null;
+            if (!EnsureScope() || !player) return null;
+            // Valid checks the live roster, identities, connection and both
+            // lifetime generations. A cached receipt needs that full check once,
+            // without also resolving the same lifetime tables again per read.
+            if (receipts.TryGetValue(player, out Receipt current) && Valid(current)) return current;
+            if (!CurrentPlayer(player)) return null;
             PlayerSpawner spawner = player.spawner;
             Lifetime playerLifetime = playerLifetimes.GetValue(spawner, createPlayerLifetime);
             Lifetime connectionLifetime = connectionLifetimes.GetValue(spawner.connectionToClient, createConnectionLifetime);
             if (playerLifetime.Retired || playerLifetime.Initializing != 0 || connectionLifetime.Retired) return null;
-            if (receipts.TryGetValue(player, out Receipt current))
-            {
-                if (Valid(current)) return current;
-                receipts.Remove(player);
-            }
+            if (current != null) receipts.Remove(player);
             var receipt = new Receipt(player, playerLifetime, connectionLifetime);
             receipts.Add(player, receipt);
             return receipt;
