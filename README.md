@@ -1,5 +1,7 @@
 # SephiriaOne
 
+**한국어** | [English](README-en.md)
+
 > 개인적으로 놀려고 만든 잡탕 모드 (aka. 금수저런)
 
 ESC 메뉴 우상단에서 모드 메뉴를 열 수 있습니다.
