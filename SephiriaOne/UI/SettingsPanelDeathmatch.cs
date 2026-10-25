@@ -25,7 +25,7 @@ namespace SephiriaOne
             deathmatchStop.interactable = host && CombatMatchRuntime.IsDeathmatch;
             deathmatchResetKda.interactable = host && (!CombatMatchRuntime.IsRunning || CombatMatchRuntime.IsDeathmatch) && SessionSettings.CanResetFriendlyFireScores;
             deathmatchApply.interactable = amount.interactable = host;
-            availability.text = CombatMatchRuntime.Describe();
+            availability.text = CombatMatchRuntime.IsDeathmatch ? CombatMatchRuntime.Describe() : "";
             availability.color = PanelWidgets.Muted;
             if (!DeathmatchFeature.Available || !FriendlyFireFeature.Available || !ReviveAllFeature.Available)
                 availability.text = L.T("Deathmatch compatibility checks failed. Stop remains available; see Player.log.");

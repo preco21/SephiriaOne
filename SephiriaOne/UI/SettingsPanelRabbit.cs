@@ -22,14 +22,14 @@ namespace SephiriaOne
                     snapshot => index == 4 ? snapshot.RabbitLevelUpPotionsAvailable : snapshot.RabbitPotionsAvailable,
                     "/one rabbit " + option, recoveryValue: index == 5);
             }
-            widgets.Text(pageRoot, "RabbitMpAmount", "MP cost", 16, 161, 57, 23, 10);
+            widgets.Text(pageRoot, "RabbitMpAmount", "MP cost", 16, 159, 57, 25, 10);
             amount = widgets.Input(pageRoot, 79, 159, 64, draft.Edit);
             changeButtons.Add(widgets.Button(pageRoot, "Set & on", 151, 159, 66, 25,
                 () => Execute("/one rabbit mp-cost " + draft.Text, true)));
             resetAll = widgets.Button(pageRoot, "Reset", 225, 159, 64, 25,
                 () => Execute("/one rabbit reset", true));
             widgets.Text(pageRoot, "RabbitStatus", "Current settings", 312, 0, 272, 22, 10).color = PanelWidgets.Muted;
-            readout = widgets.Scroll(pageRoot, 312, 26, 272, 158);
+            readout = widgets.Scroll(pageRoot, 312, 26, 272, PageHeight - 26);
         }
 
         private static string RabbitValues(SettingsSnapshot snapshot) =>

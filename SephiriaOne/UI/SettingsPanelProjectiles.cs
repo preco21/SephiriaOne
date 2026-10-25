@@ -43,7 +43,7 @@ namespace SephiriaOne
                 Execute("/one projectiles source " + ProjectileLimitCatalog.All[projectileSourceIndex].Id + " " + projectileSource.text.Trim(), true)));
             resetOne = widgets.Button(pageRoot, "Reset", 496, 55, 88, 25, () =>
                 Execute("/one projectiles source " + ProjectileLimitCatalog.All[projectileSourceIndex].Id + " reset", true));
-            readout = widgets.Scroll(pageRoot, 312, 91, 272, 71);
+            readout = widgets.Scroll(pageRoot, 312, 91, 272, PageHeight - 91);
 
             AddCheckbox("Limit secondary spawn rate", 16, 174, 273, 25, s => s.Projectiles.RateEnabled,
                 s => s.ProjectilesAvailable, "/one projectiles rate");

@@ -47,6 +47,7 @@ static class Program
         restriction.UserEdit(false, true, true, value => true);
         Check(!restriction.Value, "Available hooks allow restriction opt-out");
         PanelBindingLifetimeTests.Run();
+        PanelNavigationTests.Run();
         Console.WriteLine("Passed 16 window geometry and checkbox intent checks.");
     }
 }

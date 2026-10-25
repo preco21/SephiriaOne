@@ -29,7 +29,7 @@ namespace SephiriaOne
             widgets.Text(pageRoot, "MerchantHelp", "Chance: 0..100%. First eligible floor: 1..1000. Run limit: 0..1000 (0 = unlimited).",
                 16, 137, 273, 25, 9);
             widgets.Text(pageRoot, "MerchantStatus", "Current settings", 312, 0, 272, 22, 10).color = PanelWidgets.Muted;
-            readout = widgets.Scroll(pageRoot, 312, 26, 272, 136);
+            readout = widgets.Scroll(pageRoot, 312, 26, 272, PageHeight - 26);
         }
 
         private string MerchantPrefix() => "/one merchant " + MerchantCatalog.All[merchantIndex].Id;

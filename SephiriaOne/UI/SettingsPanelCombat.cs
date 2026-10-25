@@ -46,14 +46,14 @@ namespace SephiriaOne
             amount = widgets.Input(pageRoot, 136, 86, 62, EditFriendlyDamage);
             changeButtons.Add(widgets.Button(pageRoot, "Apply damage", 204, 86, 85, 25, ApplyFriendlyDamage));
             var track = PanelWidgets.Rect(pageRoot, "AlliedDamageSlider", 24, 124, 255, 14);
-            track.gameObject.AddComponent<Image>().color = new Color32(48, 66, 88, 255);
+            PanelSurface.Add(track.gameObject, new Color32(48, 66, 88, 255), 5);
             friendlyDamage = track.gameObject.AddComponent<Slider>();
             friendlyDamage.minValue = 0; friendlyDamage.maxValue = 300; friendlyDamage.wholeNumbers = false;
             // Slider stretches the orthogonal anchors. Zero height delta keeps
             // the handle inside the track instead of doubling its height.
             var handle = PanelWidgets.Rect(track, "Handle", 0, 0, 14, 0);
             handle.pivot = new Vector2(0.5f, 0.5f);
-            var handleImage = handle.gameObject.AddComponent<Image>(); handleImage.color = PanelWidgets.Accent;
+            var handleImage = PanelSurface.Add(handle.gameObject, PanelWidgets.Accent, 4);
             friendlyDamage.handleRect = handle; friendlyDamage.targetGraphic = handleImage;
             friendlyDamage.direction = Slider.Direction.LeftToRight;
             friendlyDamage.onValueChanged.AddListener(DragFriendlyDamage);

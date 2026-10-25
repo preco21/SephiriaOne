@@ -18,7 +18,7 @@ namespace SephiriaOne
             widgets.Text(pageRoot, "SpawnHelp", eventSpawnsSelected ?
                 "New chapters only. x0 disables events; x1 restores native odds." :
                 "Future spawn checks only. Reset restores native odds.", 16, 94, 273, 62, 10);
-            readout = widgets.Scroll(pageRoot, 312, 0, 272, 162);
+            readout = widgets.Scroll(pageRoot, 312, 0, 272, PageHeight);
         }
 
         private bool SpawnAvailable(SettingsSnapshot snapshot) => eventSpawnsSelected ? snapshot.EventSpawnsAvailable : snapshot.JarSpawnsAvailable;

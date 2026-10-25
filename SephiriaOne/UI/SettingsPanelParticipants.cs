@@ -28,19 +28,20 @@ namespace SephiriaOne
             resetPlayerSelection = widgets.Button(pageRoot, "Reset selection", 452, 26, 132, 25,
                 () => Execute("/one friendlyfire players reset", true));
             var container = PanelWidgets.Rect(pageRoot, "PlayerSelection", 312, 57, 272, PageHeight - 57);
-            container.gameObject.AddComponent<Image>().color = new Color32(17, 27, 40, 255);
+            PanelSurface.Add(container.gameObject, new Color32(17, 27, 40, 255), 8);
             var scroll = container.gameObject.AddComponent<ScrollRect>();
-            var viewport = PanelWidgets.Rect(container, "Viewport", 3, 3, 266, PageHeight - 63);
+            var viewport = PanelWidgets.Rect(container, "Viewport", 3, 3, 246, PageHeight - 63);
             viewport.gameObject.AddComponent<RectMask2D>();
-            participantContent = PanelWidgets.Rect(viewport, "Players", 0, 0, 266, PageHeight - 63);
+            participantContent = PanelWidgets.Rect(viewport, "Players", 0, 0, 246, PageHeight - 63);
             scroll.viewport = viewport; scroll.content = participantContent; scroll.horizontal = false;
             scroll.movementType = ScrollRect.MovementType.Clamped; scroll.scrollSensitivity = 26;
+            widgets.AddScrollbar(scroll, container, 254, 3, 14, PageHeight - 63);
         }
 
         private void RefreshParticipants(SettingsSnapshot snapshot)
         {
             bool host = snapshot.HostActive && snapshot.SessionIdentity != null;
-            participantSummary.text = snapshot.FriendlyFireSelectedCount == 0 ? L.T("Everyone · no selection") :
+            participantSummary.text = snapshot.FriendlyFireSelectedCount == 0 ? L.T("Participants") :
                 L.F("Selected players only: {0}", snapshot.FriendlyFireSelectedCount);
             selectAllPlayers.interactable = host && snapshot.FriendlyFireAvailable && snapshot.FriendlyFirePlayers.Count > 0;
             resetPlayerSelection.interactable = host;
@@ -48,7 +49,7 @@ namespace SephiriaOne
             {
                 if (i == participantRows.Count)
                 {
-                    var toggle = widgets.Checkbox(participantContent, "", 0, i * 28, 266, 25);
+                    var toggle = widgets.Checkbox(participantContent, "", 0, i * 28, 246, 25);
                     var row = new ParticipantRow { Toggle = toggle, Label = toggle.GetComponentInChildren<TMP_Text>() };
                     participantRows.Add(row);
                     toggle.onValueChanged.AddListener(value =>
@@ -67,7 +68,7 @@ namespace SephiriaOne
             }
             for (int i = snapshot.FriendlyFirePlayers.Count; i < participantRows.Count; i++)
             { participantRows[i].Player = null; participantRows[i].Toggle.gameObject.SetActive(false); }
-            participantContent.sizeDelta = new Vector2(266, Mathf.Max(PageHeight - 63, snapshot.FriendlyFirePlayers.Count * 28));
+            participantContent.sizeDelta = new Vector2(246, Mathf.Max(PageHeight - 63, snapshot.FriendlyFirePlayers.Count * 28));
         }
     }
 }

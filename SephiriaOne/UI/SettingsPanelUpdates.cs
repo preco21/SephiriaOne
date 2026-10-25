@@ -6,7 +6,7 @@ namespace SephiriaOne
 {
     public sealed partial class SettingsPanel
     {
-        private TMP_Text updateLabel, scopeLabel;
+        private TMP_Text updateLabel, updateNotice;
         private Toggle updateAutomatic;
         private Button updateInstall, updateCheck;
 
@@ -22,7 +22,7 @@ namespace SephiriaOne
                 var state = UpdateFeature.Snapshot;
                 updateAutomatic.SetIsOnWithoutNotify(state != null && state.Automatic);
             });
-            readout = widgets.Scroll(pageRoot, 16, 62, 568, 100);
+            readout = widgets.Scroll(pageRoot, 16, 62, 568, PageHeight - 62);
         }
 
         private void RefreshUpdateHeader()
@@ -30,17 +30,20 @@ namespace SephiriaOne
             var state = UpdateFeature.Snapshot;
             bool notice = state != null && (state.CanInstall || state.Phase == UpdatePhase.RestartRequired || state.Busy);
             updateLabel.text = state != null && state.CanInstall ? L.T("Update available") : L.T("Updates");
-            scopeLabel.text = !notice ? L.T(page == 9 || page == 13 || page == 14 ? "Host · Combat participants" : "Host · All players") :
-                state.Phase == UpdatePhase.Installing ? L.T("Installing update · Keep the game open") :
-                state.Phase == UpdatePhase.RestartRequired ? L.T("Update installed · Restart required") :
-                state.CanInstall ? L.F("Update {0} available", state.Candidate.Version) : L.T("Checking for updates...");
-            scopeLabel.color = notice ? (Color)new Color32(255, 200, 122, 255) : PanelWidgets.Muted;
+            // Exceptional update warnings remain visible on every page. Ordinary
+            // host/ready/count labels no longer occupy the title bar.
+            updateNotice.text = state != null && state.Phase == UpdatePhase.Installing ? L.T("Installing update · Keep the game open") :
+                state != null && state.Phase == UpdatePhase.RestartRequired ? L.T("Update installed · Restart required") :
+                state != null && state.CanInstall ? L.F("Update {0} available", state.Candidate.Version) : "";
+            updateLabel.color = notice ? (Color)new Color32(255, 200, 122, 255) :
+                page == 12 ? PanelWidgets.Ink : PanelWidgets.Muted;
         }
 
         private void RefreshUpdates()
         {
             var state = UpdateFeature.Snapshot;
-            availability.text = L.T("Local updates · Restart the game to apply");
+            availability.text = state != null && state.Phase == UpdatePhase.Installing ? L.T("Installing update · Keep the game open") :
+                state != null && state.Phase == UpdatePhase.RestartRequired ? L.T("Update installed · Restart required") : "";
             availability.color = PanelWidgets.Muted;
             updateCheck.interactable = state != null && !state.Busy && state.Phase != UpdatePhase.RestartRequired;
             updateInstall.interactable = state != null && state.CanInstall;

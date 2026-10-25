@@ -11,10 +11,12 @@ internal static class GameRapidPanelTests
         void Require(bool value, string why) { if (!value) throw new Exception("Rapid Hits panel: " + why); }
         Require(AccessTools.DeclaredMethod(panel, "ContentForPage").Invoke(null, new object[] { 19 })?.ToString() == "None",
             "Rapid Hits requests no participant details");
-        Require(Code("Initialize").Any(i => i.LoadsConstant("Rapid Hits")) &&
+        var navigation = addon.GetType("SephiriaOne.PanelNavigation", true)!;
+        Require(Code("Initialize").Any(i => Call(i, "SettingsPanel", "BuildNavigation")) &&
+            AccessTools.DeclaredMethod(navigation, "Label").Invoke(null, new object[] { 19 })?.ToString() == "PvP balance (sustained hits)" &&
             Code("BuildPage").Any(i => Call(i, "SettingsPanel", "BuildPvpRapidEditor")) &&
             Code("Refresh").Any(i => Call(i, "SettingsPanel", "RefreshPvpRapid")),
-            "Rapid Hits has a top-level tab, build route and early refresh route");
+            "Rapid Hits has a grouped navigation destination, build route and early refresh route");
         Require(Code("BuildPvpBalanceEditor").Any(i => i.LoadsConstant("Rapid Hits")) &&
             !Code("BuildPvpBalanceEditor").Any(i => i.LoadsConstant("/one friendlyfire hit-frequency")),
             "PvP Balance links to the dedicated frequency controls");

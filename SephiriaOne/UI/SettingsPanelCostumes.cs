@@ -14,7 +14,7 @@ namespace SephiriaOne
             AddCheckbox("Collin starting artifact", 16, 94, 174, 25, s => s.CollinStartingArtifact, s => s.CollinAvailable, "/one collin");
             collinReset = widgets.Button(pageRoot, "Reset", 200, 94, 89, 25, () => Execute("/one collin reset", true));
             widgets.Text(pageRoot, "CollinHelp", "Mole / Farmer Squirrel / Turtle. Next equip or fresh-run restock.", 16, 125, 273, 36, 9);
-            readout = widgets.Scroll(pageRoot, 312, 0, 272, 162);
+            readout = widgets.Scroll(pageRoot, 312, 0, 272, PageHeight);
         }
         private static string CostumeValues(SettingsSnapshot snapshot) => SessionSettings.DescribeCollin(snapshot.CollinStartingArtifact) +
             (snapshot.CollinAvailable ? "" : "\n" + L.T("Collin compatibility checks failed. Off/reset remain available; see Player.log.")) +

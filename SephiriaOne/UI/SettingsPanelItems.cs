@@ -28,7 +28,7 @@ namespace SephiriaOne
             requitalApply = widgets.Button(pageRoot, "Apply", 82, 125, 74, 25, () =>
                 Execute("/one slates count " + requitalCount.text.Trim(), true, clearInputOnSuccess: ClearRequitalCount));
             requitalGive = widgets.Button(pageRoot, "Give now", 162, 125, 127, 25, () => Execute("/one slates give", true));
-            readout = widgets.Scroll(pageRoot, 312, 0, 272, 162);
+            readout = widgets.Scroll(pageRoot, 312, 0, 272, PageHeight);
         }
 
         private void RefreshRequital(SettingsSnapshot snapshot)

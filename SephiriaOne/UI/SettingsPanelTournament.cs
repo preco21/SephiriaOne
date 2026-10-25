@@ -25,7 +25,7 @@ namespace SephiriaOne
             tournamentStop.interactable = host && CombatMatchRuntime.IsRunning && CombatMatchRuntime.IsTournament;
             tournamentResetKda.interactable = host && SessionSettings.CanResetFriendlyFireScores;
             tournamentApply.interactable = amount.interactable = host;
-            availability.text = CombatMatchRuntime.DescribeTournament();
+            availability.text = CombatMatchRuntime.IsTournament ? CombatMatchRuntime.DescribeTournament() : "";
             availability.color = PanelWidgets.Muted;
             if (!DeathmatchFeature.Available || !FriendlyFireFeature.Available || !ReviveAllFeature.Available)
                 availability.text = L.T("Tournament compatibility checks failed. Stop remains available; see Player.log.");

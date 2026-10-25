@@ -39,7 +39,8 @@ internal static class LocalizationCatalogTests
                 Check(!string.IsNullOrWhiteSpace(entry.Value) && L.T(entry.Key) == entry.Value, "Korean entry was rejected or missing: " + entry.Key);
                 // Presence alone misses English copied into ko.json. Product
                 // names and purely symbolic templates intentionally stay intact.
-                if (entry.Key != "SephiriaOne" && Regex.IsMatch(entry.Key, "[A-Za-z]{2}"))
+                // Product name and the requested PvP section acronym are language-neutral.
+                if (entry.Key != "SephiriaOne" && entry.Key != "PvP" && Regex.IsMatch(entry.Key, "[A-Za-z]{2}"))
                     Check(Regex.IsMatch(entry.Value, "[가-힣]"), "Korean wording is untranslated: " + entry.Key);
             }
             foreach (var stat in StatCatalog.All)

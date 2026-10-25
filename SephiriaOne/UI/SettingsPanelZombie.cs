@@ -68,8 +68,8 @@ namespace SephiriaOne
                 if (!zombieRefillDraft) zombieRefill.SetTextWithoutNotify(modifiers.RefillNumber);
                 if (!zombieIncomingDraft) zombieIncoming.SetTextWithoutNotify(modifiers.IncomingNumber);
             }
-            availability.text = CombatMatchRuntime.DescribeZombie();
-            if (dynamic) availability.text += "\n" + ZombieSurvivalCommand.DescribeHumanModifier();
+            availability.text = CombatMatchRuntime.IsZombieSurvival ? CombatMatchRuntime.DescribeZombie() : "";
+            if (dynamic && CombatMatchRuntime.IsZombieSurvival) availability.text += "\n" + ZombieSurvivalCommand.DescribeHumanModifier();
             availability.color = PanelWidgets.Muted;
             if (!DeathmatchFeature.Available || !FriendlyFireFeature.Available || !ReviveAllFeature.Available)
                 availability.text = L.T("Zombie Survival compatibility checks failed. Stop remains available; see Player.log.");

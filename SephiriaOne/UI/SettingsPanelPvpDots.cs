@@ -24,8 +24,8 @@ namespace SephiriaOne
         {
             widgets.Text(pageRoot, "DotHeading", "Artifacts / Debuffs", 312, 0, 272, 24, 13);
             const float height = PageHeight - 32;
-            var container = PanelWidgets.Rect(pageRoot, "DotIntervals", 312, 32, 272, height);
-            container.gameObject.AddComponent<Image>().color = new Color32(17, 27, 40, 255);
+            var container = PanelWidgets.Rect(pageRoot, "DotIntervals", 312, 32, 282, height);
+            PanelSurface.Add(container.gameObject, new Color32(17, 27, 40, 255), 8);
             var scroll = container.gameObject.AddComponent<ScrollRect>();
             var viewport = PanelWidgets.Rect(container, "Viewport", 0, 0, 258, height);
             viewport.gameObject.AddComponent<RectMask2D>();
@@ -35,16 +35,7 @@ namespace SephiriaOne
             var content = PanelWidgets.Rect(viewport, "Effects", 0, 0, 258, durationHeight + PvpDotSettings.Count * 62);
             scroll.viewport = viewport; scroll.content = content; scroll.horizontal = false;
             scroll.movementType = ScrollRect.MovementType.Clamped; scroll.scrollSensitivity = 30;
-            var track = PanelWidgets.Rect(container, "Scrollbar", 264, 0, 8, height);
-            track.gameObject.AddComponent<Image>().color = new Color32(39, 59, 82, 255);
-            var bar = track.gameObject.AddComponent<Scrollbar>();
-            var handle = PanelWidgets.Rect(track, "Handle", 0, 0, 0, 0);
-            handle.anchorMin = Vector2.zero; handle.anchorMax = Vector2.one;
-            handle.pivot = new Vector2(0.5f, 0.5f);
-            var image = handle.gameObject.AddComponent<Image>(); image.color = PanelWidgets.Accent;
-            bar.handleRect = handle; bar.targetGraphic = image; bar.direction = Scrollbar.Direction.BottomToTop;
-            bar.navigation = new Navigation { mode = Navigation.Mode.None };
-            scroll.verticalScrollbar = bar;
+            widgets.AddScrollbar(scroll, container, 266, 0, 14, height);
             AddCheckbox("Suppress Thorns", 4, 0, 250, 25, s => s.FriendlyFire.SuppressThorns,
                 s => s.FriendlyFireAvailable, "/one friendlyfire suppress-thorns", parent: content);
             BuildPvpArtifactRate(PanelWidgets.Rect(content, "ArtifactControls", 0, thornsHeight, 258, ArtifactRateEditorHeight));

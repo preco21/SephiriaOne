@@ -13,6 +13,7 @@ internal static class GamePanelCompatibilityTests
         GamePerfectGuardPanelTests.Run(addon);
         GameLowerBoundPanelTests.Run(addon);
         GameProjectileRatePanelTests.Run(addon);
+        GamePanelPresentationTests.Run(addon);
         var ui = game.GetType("UIBase", true)!;
         var root = game.GetType("UIRoot", true)!;
         var open = Required(ui, "Open");

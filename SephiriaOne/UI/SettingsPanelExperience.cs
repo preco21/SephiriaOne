@@ -9,7 +9,7 @@ namespace SephiriaOne
             AddCheckbox("Exempt Wing-Eared Rabbit", 16, 36, 273, 28, s => s.Experience.RabbitExempt,
                 s => s.ExperienceAvailable, "/one xp rabbit-exempt");
             resetAll = widgets.Button(pageRoot, "Reset", 16, 137, 273, 25, () => Execute("/one xp reset", true));
-            readout = widgets.Scroll(pageRoot, 312, 0, 272, 162);
+            readout = widgets.Scroll(pageRoot, 312, 0, 272, PageHeight);
         }
     }
 }

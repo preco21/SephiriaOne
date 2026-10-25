@@ -8,5 +8,7 @@
     <Compile Include="../../SephiriaOne/UI/PanelToggleState.cs" />
     <Compile Include="../../SephiriaOne/UI/PanelBindingLifetime.cs" />
     <Compile Include="../../SephiriaOne/UI/PanelDraft.cs" />
+    <Compile Include="../../SephiriaOne/UI/PanelNavigation.cs" />
+    <Compile Include="../../SephiriaOne/UI/PanelScrollMath.cs" />
   </ItemGroup>
 </Project>

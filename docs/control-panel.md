@@ -1,5 +1,12 @@
 # Host settings panel
 
+## Grouped left navigation (`0.95.0`, 2026-10-25)
+
+The current [window layout](tabbed-settings-ui.md#grouped-navigation-and-rounded-controls-0950-2026-10-25)
+uses seven sections, a vertical left rail and rounded native controls. The
+21 existing destinations and command/snapshot contracts remain stable. This
+supersedes the older horizontal layouts and dimensions described below.
+
 ## Weak-hit assistance (`0.90.0`, 2026-10-23)
 
 The left **PvP Balance** pane now scrolls to expose the lower-bound toggle,

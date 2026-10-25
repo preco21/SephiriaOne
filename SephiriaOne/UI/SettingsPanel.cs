@@ -10,12 +10,12 @@ namespace SephiriaOne
 {
     public sealed partial class SettingsPanel : UIBase
     {
-        private const float WindowWidth = 760, WindowHeight = 560, PageHeight = 250;
+        private const float WindowWidth = 940, WindowHeight = 560, PageHeight = 366;
         private const int PvpBalancePage = 18;
         private const int PvpRapidPage = 19;
         private const int ProjectilesPage = 20;
         private readonly PanelWindowGeometry geometry = new PanelWindowGeometry(WindowWidth, WindowHeight);
-        private readonly List<Button> tabs = new List<Button>();
+        private readonly Button[] tabs = new Button[PanelNavigation.PageCount];
         private readonly List<PanelCheckbox> checkboxes = new List<PanelCheckbox>();
         private Vector2 lastBounds;
         private readonly PanelDraft draft = new PanelDraft();
@@ -45,28 +45,20 @@ namespace SephiriaOne
             gameObject.AddComponent<Image>().color = new Color(0.01f, 0.025f, 0.05f, 0.12f);
             window = PanelWidgets.Rect(transform, "Settings", 0, 0, WindowWidth, WindowHeight);
             window.anchorMin = window.anchorMax = window.pivot = new Vector2(0.5f, 0.5f);
-            window.gameObject.AddComponent<Image>().color = new Color(0.09f, 0.14f, 0.20f, 0.88f);
-            var title = PanelWidgets.Rect(window, "TitleDrag", 0, 0, 700, 38);
-            title.gameObject.AddComponent<Image>().color = new Color32(23, 35, 50, 255);
+            PanelSurface.Add(window.gameObject, new Color(0.09f, 0.14f, 0.20f, 0.94f), 14);
+            var title = PanelWidgets.Rect(window, "TitleDrag", 8, 8, WindowWidth - 58, 34);
+            PanelSurface.Add(title.gameObject, new Color32(23, 35, 50, 255), 8, 0);
             title.gameObject.AddComponent<PanelWindowDrag>().Initialize((RectTransform)transform, window, geometry);
-            widgets.Text(title, "Title", "SephiriaOne", 16, 8, 190, 24, 18);
-            var close = widgets.Button(window, "Close", 714, 8, 28, 26, Close);
+            widgets.Text(title, "Title", "SephiriaOne", 10, 2, 202, 28, 18);
+            pageTitle = widgets.Text(title, "PageTitle", "", 224, 2, 410, 28, 16);
+            updateNotice = widgets.Text(title, "UpdateNotice", "", 644, 1, 220, 32, 10);
+            updateNotice.color = new Color32(255, 200, 122, 255);
+            updateNotice.enableAutoSizing = true;
+            var close = widgets.Button(window, "Close", WindowWidth - 42, 12, 28, 26, Close);
             defaultSelectable = close.gameObject;
-            scopeLabel = widgets.Text(title, "Scope", "Host · All players", 220, 8, 464, 26, 11);
-            scopeLabel.color = PanelWidgets.Muted;
-            availability = widgets.Text(window, "Availability", "", 16, 44, 728, 28, 12);
-            string[] pages = { "Stats", "Fountain", "Choices", "Resources", "Presets", "Status", "Rabbit", "Merchant", "Items", "Combat", "Spawns", "Costumes", "Updates", "Deathmatch", "Tournament", "Play Tag", "Zombie", "Progression", "PvP Balance", "Rapid Hits", "Projectiles" };
-            for (int i = 0; i < pages.Length; i++)
-            {
-                int target = i;
-                // Stable page IDs; balancing beside Combat, projectiles beside Spawns.
-                int slot = i == PvpBalancePage ? 10 : i == PvpRapidPage ? 11 :
-                    i == ProjectilesPage ? 13 : i >= 11 ? i + 3 : i == 10 ? 12 : i;
-                var tab = widgets.Button(window, pages[i], 16 + 105 * (slot % 7), 78 + 32 * (slot / 7), 99, 28, () => SelectPage(target));
-                tabs.Add(tab);
-                if (i == 12) updateLabel = tab.GetComponentInChildren<TMP_Text>();
-            }
-            feedback = widgets.Text(window, "Feedback", "", 16, 510, 728, 46, 12);
+            availability = widgets.Text(window, "Availability", "", 242, 45, 678, 28, 11);
+            BuildNavigation();
+            feedback = widgets.Text(window, "Feedback", "", 242, 510, 678, 40, 11);
             feedback.enableAutoSizing = true;
             SelectPage(0);
         }
@@ -158,7 +150,7 @@ namespace SephiriaOne
                 page == 3 ? ResourceFeature.UnavailableReason(ResourceCatalog.All[resourceIndex].Kind) :
                 L.T("Extra-choice compatibility guard failed. Reset remains available; see Player.log.")) :
                 !levelUpReady ? L.T("Rabbit level-up potion compatibility checks failed. Off/reset remain available; see Player.log.") :
-                L.F("Ready · {0} players", snapshot.Players.Count);
+                "";
             availability.color = snapshot.CanMutate && choicesReady && levelUpReady ? PanelWidgets.Muted : (Color)new Color32(255, 200, 122, 255);
             foreach (var button in changeButtons) button.interactable = snapshot.CanMutate && choicesReady;
             RefreshCombat(snapshot);
@@ -216,7 +208,7 @@ namespace SephiriaOne
         private void BuildPage(int target)
         {
             page = target; draft.Clear(); changeButtons.Clear(); checkboxes.Clear();
-            for (int i = 0; i < tabs.Count; i++) { var colors = tabs[i].colors; colors.normalColor = i == target ? PanelWidgets.Accent : (Color)new Color32(39, 59, 82, 255); colors.selectedColor = colors.normalColor; tabs[i].colors = colors; }
+            RefreshNavigation();
             statPicker = null; amount = null; resetOne = resetAll = save = forget = null;
             collinReset = null;
             projectileTotal = projectileDefault = projectileSource = null; projectilePicker = null;
@@ -248,8 +240,8 @@ namespace SephiriaOne
             zombieDurationDraft = zombieCountDraft = zombieRefillDraft = zombieIncomingDraft = false;
             participantRows.Clear(); participantContent = null; participantSummary = null;
             if (pageRoot) { widgets.Forget(pageRoot); pageRoot.gameObject.SetActive(false); Destroy(pageRoot.gameObject); }
-            pageRoot = PanelWidgets.Rect(window, "Page", 4, 184, 600, PageHeight);
-            pageRoot.localScale = Vector3.one * 1.25f;
+            pageRoot = PanelWidgets.Rect(window, "Page", 232, 78, 600, PageHeight);
+            pageRoot.localScale = Vector3.one * 1.15f;
             if (page < 4) BuildEditor();
             else if (page == 6) BuildRabbitEditor();
             else if (page == 7) BuildMerchantEditor();
@@ -274,13 +266,13 @@ namespace SephiriaOne
                     forget = widgets.Button(pageRoot, "Delete preset", 207, 0, 180, 24, () => Execute("/one forget", false));
                     widgets.Button(pageRoot, "Refresh", 396, 0, 188, 24, RefreshSaved);
                     widgets.Text(pageRoot, "SavedHelp", "Saves applied settings for future sessions.", 16, 28, 568, 19, 9);
-                    readout = widgets.Scroll(pageRoot, 16, 50, 568, 112);
+                    readout = widgets.Scroll(pageRoot, 16, 50, 568, PageHeight - 50);
                 }
                 else
                 {
                     widgets.Button(pageRoot, "Refresh", 494, 0, 90, 22, RefreshSaved);
                     widgets.Text(pageRoot, "StatusTitle", "Synchronization status", 16, 1, 470, 20, 11);
-                    readout = widgets.Scroll(pageRoot, 16, 26, 568, 136);
+                    readout = widgets.Scroll(pageRoot, 16, 26, 568, PageHeight - 26);
                 }
             }
         }
@@ -327,7 +319,7 @@ namespace SephiriaOne
                     () => Execute(page == 0 ? "/stats reset" : page == 3 ? "/resources reset" : "/choices reset", true));
             }
             widgets.Text(pageRoot, "Players", "Player values", 312, 0, 272, 22, 10).color = PanelWidgets.Muted;
-            readout = widgets.Scroll(pageRoot, 312, 26, 272, 136);
+            readout = widgets.Scroll(pageRoot, 312, 26, 272, PageHeight - 26);
             UpdateSelection();
         }
 

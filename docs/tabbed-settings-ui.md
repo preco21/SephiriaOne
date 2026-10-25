@@ -4,6 +4,64 @@ Introduced in `0.39.0`, following the user's approval of option 2 from the
 [UI comparison](ui-revamp-investigation.md). The window uses the installed
 Unity uGUI/TextMeshPro components and the existing settings services.
 
+## Grouped navigation and rounded controls (`0.95.0`, 2026-10-25)
+
+The current window is **940×560** with a scrollable left navigation rail and a
+larger content area. This supersedes the historical horizontal-tab layouts below.
+The requested Korean hierarchy is:
+
+| Section | Destinations |
+| --- | --- |
+| 능력치 및 자원 | 스테이터스, 소원 분수, 보상 선택지, 자원, 아이템 |
+| 코스튬 기능 | 날개귀 토끼 힐러 옵션, 기타 코스튬 옵션 |
+| 재미 | 황금 고블린 상인, 이벤트 확률 조정 |
+| PvP | PvP 전투, 데스매치, 토너먼트, 술래잡기, 좀비 서바이벌, PvP 밸런싱 (기본), PvP 밸런싱 (지속 타격) |
+| 성장 | XP 획득 제한 |
+| 최적화 | 투사체 최적화 |
+| 시스템 | 로그, 설정 프리셋, 업데이트 |
+
+Each section has a small mesh-drawn icon (bars, rabbit, die, crossed swords,
+sprout, lightning, gear). System uses quieter colors. The rail supports wheel,
+dragged scrollbar and up/down buttons; keyboard selection and page shortcuts
+reveal offscreen destinations. All 21 stable page IDs, snapshot scopes, action
+routing and draft lifetimes are preserved. Rabbit already contained only its
+own healing/potion options; other costumes remain separate.
+
+Main and internal surfaces, buttons, input fields, dropdowns, slider handles and
+filled-square checkboxes have softened exponent-three corners and subtle borders.
+Single-row labels align vertically with inputs. Long lists have more height.
+Every scroll region has arrow buttons, including stat/source/Slate dropdowns,
+readouts, player selection and both balancing columns. The shorter two-Slate
+popup retains correctly anchored arrows and viewport when TMP resizes it.
+
+Routine ready/host/player-count header labels and idle match descriptions were
+removed. Compatibility failures, active match status, action results and global
+installation/restart warnings remain visible. English and Korean navigation
+labels are bundled; existing custom translation files are preserved.
+
+### Shared implementation and performance
+
+- `PanelNavigation` holds group order and existing page IDs; page builders remain
+  responsible only for their own controls.
+- `PanelSurface : Image` draws a single fill/border mesh with a cached corner
+  curve. It retains native UI material, tint, masks and batching; no custom
+  texture, shader or per-frame poll. A normal bordered surface has 85 vertices.
+- `PanelSectionIcon` draws font-independent icons; no Unicode availability risk.
+- `PanelWidgets.AddScrollbar` owns the common track/arrows. `PanelScrollArrow`
+  uses serialized references and balanced enable/disable listeners, so Unity's
+  TMP template cloning binds to the displayed popup rather than its template.
+- `PanelScrollMath` provides bounded pixel steps and selection reveal;
+  `PanelNavigationFocus` runs on selection only. Existing cached readouts and
+  pooled participant rows remain unchanged.
+
+Validation covers all destinations/order, scroll limits/focus, 25,320 shape
+checks (including zero allocation across 10,000 geometry samples), localization,
+installed UI/lifecycle/command contracts, and a non-deploying Release build.
+An offline layout inspection is not proof of native font rasterization or Unity
+interaction. Live EN/KO wrapping, hover/focus, short dropdowns, scroll arrows,
+window scaling and dragging still need an in-game smoke test. No gameplay or
+network policy changed, and no build was deployed.
+
 ## Window
 
 Open with `/one ui`, the **SephiriaOne** pause-menu button, or your configured
@@ -36,7 +94,7 @@ This pass passed Debug/Release builds, existing window fixtures and the full
 portable/installed-game contract suite, including 3,066 catalog checks. No new
 input or gameplay hooks were added. Actual EN/KO rendering remains a manual check.
 
-Current tabs are **Stats, Fountain, Choices, Resources, Presets, Status, Rabbit,
+Historically, tabs were **Stats, Fountain, Choices, Resources, Presets, Status, Rabbit,
 Merchant, Items, Combat, PvP Balance, Spawns, Costumes, Updates, Deathmatch,
 Tournament, Play Tag, Zombie and Progression**. Stats
 also has a scrollable selector for supported visible stats. Boolean

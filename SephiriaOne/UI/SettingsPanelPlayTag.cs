@@ -51,7 +51,7 @@ namespace SephiriaOne
             var chaser = SessionSettings.PlayTagChaser;
             if (!playTagRefillDraft) playTagRefill.SetTextWithoutNotify(chaser.RefillNumber);
             if (!playTagIncomingDraft) playTagIncoming.SetTextWithoutNotify(chaser.IncomingNumber);
-            availability.text = CombatMatchRuntime.DescribePlayTag();
+            availability.text = CombatMatchRuntime.IsPlayTag ? CombatMatchRuntime.DescribePlayTag() : "";
             availability.color = PanelWidgets.Muted;
             if (!DeathmatchFeature.Available || !FriendlyFireFeature.Available || !ReviveAllFeature.Available)
                 availability.text = L.T("Play Tag compatibility checks failed. Stop remains available; see Player.log.");

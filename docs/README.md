@@ -1,5 +1,10 @@
 # Development knowledge index
 
+[Grouped settings window](tabbed-settings-ui.md#grouped-navigation-and-rounded-controls-0950-2026-10-25):
+seven sections in a vertical rail, exact EN/KO labels, drawn icons, rounded
+surfaces, subtle control borders and shared scrollbar arrows. Stable commands,
+snapshot scopes and input ownership; no per-frame presentation work.
+
 [Dark Cloud PvP observer FX](dark-cloud-pvp-visuals.md): host forwards the native
 lightning/ice/EX strike to ready same-floor cloud observers, including guests
 without the addon. Owner FX/audio stays single; the range ring remains owner-only.

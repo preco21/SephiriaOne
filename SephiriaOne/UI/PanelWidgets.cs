@@ -56,6 +56,7 @@ namespace SephiriaOne
             text.enableAutoSizing = value.Length > 0; text.fontSizeMax = size; text.fontSizeMin = size * 0.8f;
             text.raycastTarget = false; text.textWrappingMode = TextWrappingModes.Normal;
             text.overflowMode = TextOverflowModes.Truncate;
+            text.alignment = height <= 26 ? TextAlignmentOptions.MidlineLeft : TextAlignmentOptions.TopLeft;
             // Values supplied here are addon-owned static labels. Dynamic/player text
             // is assigned by the caller and is never used as a catalog lookup key.
             text.text = L.T(value);
@@ -66,8 +67,7 @@ namespace SephiriaOne
         public Button Button(Transform parent, string value, float x, float y, float width, float height, UnityAction action)
         {
             var rect = Rect(parent, value, x, y, width, height);
-            var image = rect.gameObject.AddComponent<Image>();
-            image.color = Color.white;
+            var image = PanelSurface.Add(rect.gameObject, Color.white);
             var button = rect.gameObject.AddComponent<Button>();
             button.targetGraphic = image;
             var colors = button.colors;
@@ -83,7 +83,7 @@ namespace SephiriaOne
             string caption = value == "Add" ? "+" : value == "Subtract" ? "−" : value == "Close" ? "×" : value;
             var label = Text(rect, "Label", caption, 2, 0, width - 4, height, 10);
             label.alignment = TextAlignmentOptions.Center;
-            button.onClick.AddListener(action);
+            if (action != null) button.onClick.AddListener(action);
             return button;
         }
 
@@ -91,24 +91,30 @@ namespace SephiriaOne
             List<string> options, UnityAction<int> changed)
         {
             var rect = Rect(parent, "Stat selection", x, y, width, height);
-            rect.gameObject.AddComponent<Image>().color = new Color32(25, 42, 62, 255);
+            var backgroundImage = PanelSurface.Add(rect.gameObject, new Color32(25, 42, 62, 255));
             var dropdown = rect.gameObject.AddComponent<TMP_Dropdown>();
+            dropdown.targetGraphic = backgroundImage;
             dropdown.captionText = Text(rect, "Selection", "", 6, 0, width - 12, height, 12);
             var template = Rect(rect, "Template", 0, height, width, 150);
             template.pivot = new Vector2(0, 1);
-            template.gameObject.AddComponent<Image>().color = new Color32(17, 27, 40, 255);
+            PanelSurface.Add(template.gameObject, new Color32(17, 27, 40, 255), 8);
             var scroll = template.gameObject.AddComponent<ScrollRect>();
-            var viewport = Rect(template, "Viewport", 0, 0, width, 150);
-            viewport.gameObject.AddComponent<Image>().color = new Color32(17, 27, 40, 255);
+            float listWidth = width - 24;
+            var viewport = Rect(template, "Viewport", 3, 3, listWidth, 144);
+            // TMP shrinks short popups (e.g. the two Slates); keep viewport and
+            // scrollbar insets relative to the resulting popup, not its template.
+            viewport.anchorMin = Vector2.zero; viewport.anchorMax = Vector2.one;
+            viewport.offsetMin = new Vector2(3, 3); viewport.offsetMax = new Vector2(-21, -3);
             viewport.gameObject.AddComponent<RectMask2D>();
-            var content = Rect(viewport, "Content", 0, 0, width, 26);
-            var item = Rect(content, "Item", 0, 0, width, 26);
-            var background = item.gameObject.AddComponent<Image>(); background.color = new Color32(39, 59, 82, 255);
+            var content = Rect(viewport, "Content", 0, 0, listWidth, 26);
+            var item = Rect(content, "Item", 0, 0, listWidth, 26);
+            var background = PanelSurface.Add(item.gameObject, new Color32(39, 59, 82, 255), 4);
             var toggle = item.gameObject.AddComponent<Toggle>(); toggle.targetGraphic = background;
-            var label = Text(item, "Name", "", 6, 0, width - 12, 26, 11);
+            var label = Text(item, "Name", "", 6, 0, listWidth - 12, 26, 11);
             dropdown.itemText = label;
             dropdown.template = template; scroll.viewport = viewport; scroll.content = content;
             scroll.horizontal = false; scroll.movementType = ScrollRect.MovementType.Clamped; scroll.scrollSensitivity = 26;
+            AddScrollbar(scroll, template, width - 17, 3, 14, 144);
             template.gameObject.SetActive(false);
             dropdown.AddOptions(options); dropdown.onValueChanged.AddListener(changed);
             return dropdown;
@@ -117,13 +123,12 @@ namespace SephiriaOne
         public Toggle Checkbox(Transform parent, string value, float x, float y, float width, float height)
         {
             var rect = Rect(parent, value, x, y, width, height);
-            var background = rect.gameObject.AddComponent<Image>();
-            background.color = new Color32(25, 42, 62, 255);
+            var background = PanelSurface.Add(rect.gameObject, new Color32(25, 42, 62, 255));
             var toggle = rect.gameObject.AddComponent<Toggle>();
             var box = Rect(rect, "Checkbox", 4, 3, height - 6, height - 6);
-            box.gameObject.AddComponent<Image>().color = new Color32(12, 21, 32, 255);
-            var check = Rect(box, "Check", 3, 3, height - 12, height - 12).gameObject.AddComponent<Image>();
-            check.color = Accent;
+            PanelSurface.Add(box.gameObject, new Color32(12, 21, 32, 255), 3);
+            var check = PanelSurface.Add(Rect(box, "Check", 3, 3, height - 12, height - 12).gameObject, Accent, 2, 0);
+            check.raycastTarget = false;
             toggle.targetGraphic = background; toggle.graphic = check;
             toggle.toggleTransition = Toggle.ToggleTransition.None;
             var label = Text(rect, "Label", value, height + 3, 0, width - height - 7, height, 11);
@@ -135,8 +140,9 @@ namespace SephiriaOne
         public TMP_InputField Input(Transform parent, float x, float y, float width, UnityAction<string> edited)
         {
             var rect = Rect(parent, "Amount", x, y, width, 25);
-            rect.gameObject.AddComponent<Image>().color = new Color32(14, 24, 36, 255);
+            var background = PanelSurface.Add(rect.gameObject, new Color32(14, 24, 36, 255));
             var field = rect.gameObject.AddComponent<TMP_InputField>();
+            field.targetGraphic = background;
             var viewport = Rect(rect, "Viewport", 5, 2, width - 10, 21);
             viewport.gameObject.AddComponent<RectMask2D>();
             var text = Text(viewport, "Text", "", 0, 0, width - 10, 21, 12);
@@ -155,20 +161,53 @@ namespace SephiriaOne
             return field;
         }
 
+        public void AddScrollbar(ScrollRect scroll, Transform parent, float x, float y, float width, float height)
+        {
+            float bottom = ((RectTransform)parent).rect.height - y - height;
+            var track = Rect(parent, "Scrollbar", x, y + width + 2, width, height - 2 * (width + 2));
+            track.anchorMin = Vector2.zero; track.anchorMax = new Vector2(0, 1);
+            track.offsetMin = new Vector2(x, bottom + width + 2);
+            track.offsetMax = new Vector2(x + width, -y - width - 2);
+            PanelSurface.Add(track.gameObject, new Color32(25, 39, 55, 255), 4);
+            var bar = track.gameObject.AddComponent<Scrollbar>();
+            var handle = Rect(track, "Handle", 0, 0, 0, 0);
+            Stretch(handle); handle.pivot = new Vector2(0.5f, 0.5f);
+            var image = PanelSurface.Add(handle.gameObject, new Color32(87, 121, 158, 255), 4, 0);
+            bar.handleRect = handle; bar.targetGraphic = image; bar.direction = Scrollbar.Direction.BottomToTop;
+            bar.navigation = new Navigation { mode = Navigation.Mode.None };
+            scroll.verticalScrollbar = bar;
+            ScrollArrow(scroll, parent, x, y, width, 1);
+            var down = ScrollArrow(scroll, parent, x, y + height - width, width, -1);
+            down.anchorMin = down.anchorMax = down.pivot = Vector2.zero;
+            down.anchoredPosition = new Vector2(x, bottom);
+        }
+
+        private RectTransform ScrollArrow(ScrollRect scroll, Transform parent, float x, float y, float size, int direction)
+        {
+            var button = Button(parent, "", x, y, size, size, null);
+            button.name = direction > 0 ? "ScrollUp" : "ScrollDown";
+            button.gameObject.AddComponent<PanelScrollArrow>().Configure(scroll, direction);
+            var icon = Rect(button.transform, "Arrow", 3, 3, size - 6, size - 6).gameObject.AddComponent<PanelSectionIcon>();
+            icon.Configure(direction > 0 ? PanelSectionSymbol.Up : PanelSectionSymbol.Down, Ink);
+            return (RectTransform)button.transform;
+        }
+
         public PanelTextScroll Scroll(Transform parent, float x, float y, float width, float height)
         {
             var rect = Rect(parent, "Readout", x, y, width, height);
-            rect.gameObject.AddComponent<Image>().color = new Color32(17, 27, 40, 255);
+            PanelSurface.Add(rect.gameObject, new Color32(17, 27, 40, 255), 8);
             var scroll = rect.gameObject.AddComponent<ScrollRect>();
-            var viewport = Rect(rect, "Viewport", 5, 5, width - 10, height - 10);
+            float textWidth = width - 29;
+            var viewport = Rect(rect, "Viewport", 6, 5, textWidth, height - 10);
             viewport.gameObject.AddComponent<RectMask2D>();
-            var text = Text(viewport, "Values", "", 0, 0, width - 10, height - 10, 10);
+            var text = Text(viewport, "Values", "", 0, 0, textWidth, height - 10, 10);
             text.overflowMode = TextOverflowModes.Overflow;
             text.raycastTarget = true;
             scroll.viewport = viewport; scroll.content = text.rectTransform;
             scroll.horizontal = false; scroll.vertical = true;
             scroll.movementType = ScrollRect.MovementType.Clamped; scroll.scrollSensitivity = 24;
-            return new PanelTextScroll(text, scroll, height - 10, width - 10);
+            AddScrollbar(scroll, rect, width - 19, 5, 14, height - 10);
+            return new PanelTextScroll(text, scroll, height - 10, textWidth);
         }
     }
 

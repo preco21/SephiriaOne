@@ -143,7 +143,7 @@ internal static class GameFriendlyFireDebuffTests
         Require(editor.Any(i => Call(i, "PvpDotSettings", "SupportsSchedule")) && editor.Any(i => Call(i, "SettingsPanel", "AddCheckbox")),
             "Debuff rows expose shared checkbox bindings while Dark Cloud keeps only its strike interval");
         Require(editor.Any(i => Call(i, "ScrollRect", "set_content")) && editor.Any(i => Call(i, "ScrollRect", "set_viewport")) &&
-            editor.Any(i => Call(i, "ScrollRect", "set_verticalScrollbar")), "all ten controls are reachable in a bounded scroll area with a visible scroll affordance");
+            editor.Any(i => Call(i, "PanelWidgets", "AddScrollbar")), "all ten controls are reachable in a bounded scroll area with a shared scrollbar and arrows");
         GamePvpBurnDurationTests.Run(game, addon);
         GameHitFrequencyTests.Run(addon);
         Console.WriteLine("Verified all 11 native debuff types: five configurable periodic timers, four pulse controls, independent Dark Cloud, native variants/stun/expiry and scrollable shared UI (not live gameplay).");
