@@ -17,7 +17,7 @@ internal static class GameAmplificationPanelTests
             build.Any(i => i.LoadsConstant("Soft bonus (%)")) && build.Any(i => i.LoadsConstant("Hard bonus (%)")) &&
             build.Any(i => i.LoadsConstant("Bonus %, not C-menu total.")),
             "Controls identify bonus units and the required balancing toggle");
-        Require(build.Any(i => Call(i, "ScrollRect", "set_content")) &&
+        Require(build.Any(i => Call(i, "PanelWidgets", "ScrollSection")) &&
             build.Any(i => Call(i, "SettingsPanel", "BuildPvpLowerBound")) &&
             build.Any(i => Call(i, "SettingsPanel", "BuildPvpDotEditor")),
             "General balancing scrolls through assistance controls beside the full dedicated debuff editor");

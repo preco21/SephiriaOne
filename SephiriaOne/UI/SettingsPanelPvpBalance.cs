@@ -20,15 +20,7 @@ namespace SephiriaOne
 
         private void BuildPvpBalanceEditor()
         {
-            var container = PanelWidgets.Rect(pageRoot, "BalanceScroll", 16, 0, 290, PageHeight);
-            PanelSurface.Add(container.gameObject, new Color32(17, 27, 40, 255), 8);
-            var scroll = container.gameObject.AddComponent<ScrollRect>();
-            var viewport = PanelWidgets.Rect(container, "Viewport", 0, 0, 273, PageHeight);
-            viewport.gameObject.AddComponent<RectMask2D>();
-            var content = PanelWidgets.Rect(viewport, "BalanceControls", 0, 0, 273, 900);
-            scroll.viewport = viewport; scroll.content = content; scroll.horizontal = false;
-            scroll.movementType = ScrollRect.MovementType.Clamped; scroll.scrollSensitivity = 30;
-            widgets.AddScrollbar(scroll, container, 276, 0, 14, PageHeight);
+            var content = widgets.ScrollSection(pageRoot, "BalanceScroll", 10, 0, 273, PageHeight, 900);
             AddCheckbox("PvP balancing", 0, 0, 170, 25, s => s.FriendlyFire.Balance,
                 s => s.FriendlyFireAvailable, "/one friendlyfire balance", parent: content);
             widgets.Button(content, "Rapid Hits", 178, 0, 95, 25, () => SelectPage(PvpRapidPage));

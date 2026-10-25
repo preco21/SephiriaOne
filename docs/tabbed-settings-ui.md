@@ -4,6 +4,55 @@ Introduced in `0.39.0`, following the user's approval of option 2 from the
 [UI comparison](ui-revamp-investigation.md). The window uses the installed
 Unity uGUI/TextMeshPro components and the existing settings services.
 
+## Scroll layout and dropdown cursor fixes (`0.95.1`, 2026-10-25)
+
+- Each shared scrollbar now has one fixed-width rail. The track and both arrow
+  buttons stretch to that same width; native `AutoHide` hides the complete rail
+  when the content fits. The viewport keeps its width, avoiding layout/reflow
+  oscillation when the rail appears. Short dropdown templates still resize
+  vertically through their native anchors.
+- The Projectile Optimization readout previously began at y=91 and extended
+  behind the spawn-rate controls. Its scrollbar looked like a nested scrollbar
+  belonging to the reset button/settings area. It now begins at y=244, below the
+  final control row at y=207..232. Only the readout scrolls in that area.
+- `PanelWidgets.ScrollSection` shares the padded form viewport used by general
+  PvP balancing, debuff intervals and participant lists. It retains their logical
+  control widths, adds six units before the content, and reserves separate room
+  for the scrollbar and outer margin. Readouts and navigation retain their
+  existing padding. The participant viewport/content minimum heights match so
+  an otherwise fitting list does not acquire an unnecessary scrollbar.
+- `PanelDropdown : TMP_Dropdown` adjusts only its created popup's canvas order
+  to the owning canvas plus two. The installed game's cursor is a UI graphic:
+  `UI_Cursor.Start` hides the OS cursor, while its AppUI canvas draws at order 20.
+  TMP's native popup order 30000 covered that graphic. Native settings roots use
+  orders 0/2/10 on the same sorting layer, so addon popups now remain above their
+  settings surface and below the cursor. The native popup blocker uses the live
+  popup's order minus one. No global cursor override or extra pointer is added.
+
+Installed assembly inspection confirmed that `Scrollbar.UpdateCachedReferences`
+uses the handle's parent as its travel rectangle; moving the component to the
+rail preserves the track bounds. `ScrollRect.UpdateOneScrollbarVisibility`
+toggles the scrollbar GameObject, hiding arrows with the rail. Native pointer
+dispatch stops at child arrow Buttons instead of also paging the parent bar.
+`TMP_Dropdown.Show` does not overwrite the clone's order after
+`CreateDropdownList`, and `CreateBlocker` reads that clone's canvas. There is no
+new polling, per-frame calculation, gameplay hook or network message.
+
+Evidence: Assembly-CSharp SHA-256
+`c57a0daeab8e8d0af7066a344133eec4c57d8f303fd9e25da9410fbfc4cf1510`;
+UnityEngine.UI `7bcf49f62817038d2616c5d7b42face202c1ac6327fc4a859d90d24ec521f547`;
+Unity.TextMeshPro `1d33a1226eb2256772d02279c45a7cf551ce8494b9ddf1336deff3ad0be8e60c`.
+Serialized `level1` and `level2` verified the AppUI cursor and settings canvas
+orders (sorting layer ID 879412301). Assets and decompiled material remain outside
+the repository.
+
+Verification: non-deploying Release build, portable/installed-game contracts,
+panel and shape fixtures. These checks validate layout construction and native
+API assumptions, not Unity rendering. In-game smoke checks still needed:
+stat/source/two-Slate dropdown cursor and selection, outside-click/Escape close,
+scroll arrows and dragging, a fitting versus overflowing participant list, and
+the projectile tab's separated controls/readout. Nothing was deployed.
+
 ## Grouped navigation and rounded controls (`0.95.0`, 2026-10-25)
 
 The current window is **940×560** with a scrollable left navigation rail and a
@@ -21,7 +70,7 @@ The requested Korean hierarchy is:
 | 시스템 | 로그, 설정 프리셋, 업데이트 |
 
 Each section has a small mesh-drawn icon (bars, rabbit, die, crossed swords,
-sprout, lightning, gear). System uses quieter colors. The rail supports wheel,
+sprout, lightning, sliders). System uses quieter colors. The rail supports wheel,
 dragged scrollbar and up/down buttons; keyboard selection and page shortcuts
 reveal offscreen destinations. All 21 stable page IDs, snapshot scopes, action
 routing and draft lifetimes are preserved. Rabbit already contained only its

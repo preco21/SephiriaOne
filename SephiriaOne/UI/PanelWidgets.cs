@@ -92,7 +92,7 @@ namespace SephiriaOne
         {
             var rect = Rect(parent, "Stat selection", x, y, width, height);
             var backgroundImage = PanelSurface.Add(rect.gameObject, new Color32(25, 42, 62, 255));
-            var dropdown = rect.gameObject.AddComponent<TMP_Dropdown>();
+            var dropdown = rect.gameObject.AddComponent<PanelDropdown>();
             dropdown.targetGraphic = backgroundImage;
             dropdown.captionText = Text(rect, "Selection", "", 6, 0, width - 12, height, 12);
             var template = Rect(rect, "Template", 0, height, width, 150);
@@ -164,22 +164,29 @@ namespace SephiriaOne
         public void AddScrollbar(ScrollRect scroll, Transform parent, float x, float y, float width, float height)
         {
             float bottom = ((RectTransform)parent).rect.height - y - height;
-            var track = Rect(parent, "Scrollbar", x, y + width + 2, width, height - 2 * (width + 2));
-            track.anchorMin = Vector2.zero; track.anchorMax = new Vector2(0, 1);
-            track.offsetMin = new Vector2(x, bottom + width + 2);
-            track.offsetMax = new Vector2(x + width, -y - width - 2);
+            var rail = Rect(parent, "Scrollbar", x, y, width, height);
+            rail.anchorMin = Vector2.zero; rail.anchorMax = new Vector2(0, 1);
+            rail.offsetMin = new Vector2(x, bottom); rail.offsetMax = new Vector2(x + width, -y);
+            var track = Rect(rail, "Track", 0, width + 2, width, height - 2 * (width + 2));
+            Stretch(track);
+            track.offsetMin = new Vector2(0, width + 2); track.offsetMax = new Vector2(0, -width - 2);
             PanelSurface.Add(track.gameObject, new Color32(25, 39, 55, 255), 4);
-            var bar = track.gameObject.AddComponent<Scrollbar>();
+            var bar = rail.gameObject.AddComponent<Scrollbar>();
             var handle = Rect(track, "Handle", 0, 0, 0, 0);
             Stretch(handle); handle.pivot = new Vector2(0.5f, 0.5f);
             var image = PanelSurface.Add(handle.gameObject, new Color32(87, 121, 158, 255), 4, 0);
             bar.handleRect = handle; bar.targetGraphic = image; bar.direction = Scrollbar.Direction.BottomToTop;
             bar.navigation = new Navigation { mode = Navigation.Mode.None };
             scroll.verticalScrollbar = bar;
-            ScrollArrow(scroll, parent, x, y, width, 1);
-            var down = ScrollArrow(scroll, parent, x, y + height - width, width, -1);
-            down.anchorMin = down.anchorMax = down.pivot = Vector2.zero;
-            down.anchoredPosition = new Vector2(x, bottom);
+            // Native AutoHide now hides the complete rail, including both arrows.
+            // Keep the viewport fixed, avoiding width/reflow oscillation.
+            scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
+            var up = ScrollArrow(scroll, rail, 0, 0, width, 1);
+            up.anchorMin = new Vector2(0, 1); up.anchorMax = Vector2.one;
+            up.sizeDelta = new Vector2(0, width);
+            var down = ScrollArrow(scroll, rail, 0, 0, width, -1);
+            down.anchorMin = down.pivot = Vector2.zero; down.anchorMax = new Vector2(1, 0);
+            down.anchoredPosition = Vector2.zero; down.sizeDelta = new Vector2(0, width);
         }
 
         private RectTransform ScrollArrow(ScrollRect scroll, Transform parent, float x, float y, float size, int direction)
@@ -190,6 +197,23 @@ namespace SephiriaOne
             var icon = Rect(button.transform, "Arrow", 3, 3, size - 6, size - 6).gameObject.AddComponent<PanelSectionIcon>();
             icon.Configure(direction > 0 ? PanelSectionSymbol.Up : PanelSectionSymbol.Down, Ink);
             return (RectTransform)button.transform;
+        }
+
+        // Preserve the existing logical form width while adding room around it.
+        // 6 left + 2 gap + 14 scrollbar + 4 right = 26 extra units.
+        public RectTransform ScrollSection(Transform parent, string name, float x, float y,
+            float contentWidth, float height, float contentHeight, float sensitivity = 30)
+        {
+            var container = Rect(parent, name, x, y, contentWidth + 26, height);
+            PanelSurface.Add(container.gameObject, new Color32(17, 27, 40, 255), 8);
+            var scroll = container.gameObject.AddComponent<ScrollRect>();
+            var viewport = Rect(container, "Viewport", 6, 6, contentWidth, height - 12);
+            viewport.gameObject.AddComponent<RectMask2D>();
+            var content = Rect(viewport, "Content", 0, 0, contentWidth, Mathf.Max(height - 12, contentHeight));
+            scroll.viewport = viewport; scroll.content = content; scroll.horizontal = false;
+            scroll.movementType = ScrollRect.MovementType.Clamped; scroll.scrollSensitivity = sensitivity;
+            AddScrollbar(scroll, container, contentWidth + 8, 6, 14, height - 12);
+            return content;
         }
 
         public PanelTextScroll Scroll(Transform parent, float x, float y, float width, float height)

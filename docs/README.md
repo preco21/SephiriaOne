@@ -1,5 +1,10 @@
 # Development knowledge index
 
+[Settings UI fixes](tabbed-settings-ui.md#scroll-layout-and-dropdown-cursor-fixes-0951-2026-10-25):
+equal-width scrollbar arrows/track, whole-rail auto-hide, padded scrolling forms,
+and projectile readout separated from controls. Addon dropdowns draw below the
+native cursor; installed canvas/blocker semantics checked, live input pending.
+
 [Grouped settings window](tabbed-settings-ui.md#grouped-navigation-and-rounded-controls-0950-2026-10-25):
 seven sections in a vertical rail, exact EN/KO labels, drawn icons, rounded
 surfaces, subtle control borders and shared scrollbar arrows. Stable commands,

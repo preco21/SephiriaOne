@@ -27,15 +27,8 @@ namespace SephiriaOne
                 () => Execute("/one friendlyfire players all", true));
             resetPlayerSelection = widgets.Button(pageRoot, "Reset selection", 452, 26, 132, 25,
                 () => Execute("/one friendlyfire players reset", true));
-            var container = PanelWidgets.Rect(pageRoot, "PlayerSelection", 312, 57, 272, PageHeight - 57);
-            PanelSurface.Add(container.gameObject, new Color32(17, 27, 40, 255), 8);
-            var scroll = container.gameObject.AddComponent<ScrollRect>();
-            var viewport = PanelWidgets.Rect(container, "Viewport", 3, 3, 246, PageHeight - 63);
-            viewport.gameObject.AddComponent<RectMask2D>();
-            participantContent = PanelWidgets.Rect(viewport, "Players", 0, 0, 246, PageHeight - 63);
-            scroll.viewport = viewport; scroll.content = participantContent; scroll.horizontal = false;
-            scroll.movementType = ScrollRect.MovementType.Clamped; scroll.scrollSensitivity = 26;
-            widgets.AddScrollbar(scroll, container, 254, 3, 14, PageHeight - 63);
+            participantContent = widgets.ScrollSection(pageRoot, "PlayerSelection", 312, 57, 246,
+                PageHeight - 57, PageHeight - 69, 26);
         }
 
         private void RefreshParticipants(SettingsSnapshot snapshot)
@@ -68,7 +61,7 @@ namespace SephiriaOne
             }
             for (int i = snapshot.FriendlyFirePlayers.Count; i < participantRows.Count; i++)
             { participantRows[i].Player = null; participantRows[i].Toggle.gameObject.SetActive(false); }
-            participantContent.sizeDelta = new Vector2(246, Mathf.Max(PageHeight - 63, snapshot.FriendlyFirePlayers.Count * 28));
+            participantContent.sizeDelta = new Vector2(246, Mathf.Max(PageHeight - 69, snapshot.FriendlyFirePlayers.Count * 28));
         }
     }
 }

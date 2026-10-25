@@ -24,18 +24,11 @@ namespace SephiriaOne
         {
             widgets.Text(pageRoot, "DotHeading", "Artifacts / Debuffs", 312, 0, 272, 24, 13);
             const float height = PageHeight - 32;
-            var container = PanelWidgets.Rect(pageRoot, "DotIntervals", 312, 32, 282, height);
-            PanelSurface.Add(container.gameObject, new Color32(17, 27, 40, 255), 8);
-            var scroll = container.gameObject.AddComponent<ScrollRect>();
-            var viewport = PanelWidgets.Rect(container, "Viewport", 0, 0, 258, height);
-            viewport.gameObject.AddComponent<RectMask2D>();
             const int thornsHeight = 34;
             const int durationOffset = thornsHeight + ArtifactRateEditorHeight;
             const int durationHeight = durationOffset + 80;
-            var content = PanelWidgets.Rect(viewport, "Effects", 0, 0, 258, durationHeight + PvpDotSettings.Count * 62);
-            scroll.viewport = viewport; scroll.content = content; scroll.horizontal = false;
-            scroll.movementType = ScrollRect.MovementType.Clamped; scroll.scrollSensitivity = 30;
-            widgets.AddScrollbar(scroll, container, 266, 0, 14, height);
+            var content = widgets.ScrollSection(pageRoot, "DotIntervals", 312, 32, 258, height,
+                durationHeight + PvpDotSettings.Count * 62);
             AddCheckbox("Suppress Thorns", 4, 0, 250, 25, s => s.FriendlyFire.SuppressThorns,
                 s => s.FriendlyFireAvailable, "/one friendlyfire suppress-thorns", parent: content);
             BuildPvpArtifactRate(PanelWidgets.Rect(content, "ArtifactControls", 0, thornsHeight, 258, ArtifactRateEditorHeight));
