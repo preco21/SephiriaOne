@@ -39,7 +39,7 @@ Open the mod menu from the upper-right corner of the ESC menu.
 ## Development
 
 - Built with OpenAI Codex—Astra at `xhigh` reasoning effort—plus [superpowers](https://github.com/obra/superpowers) and [REA](https://github.com/morluto/rea).
-- [Visual Studio 2026](https://visualstudio.microsoft.com/downloads/) is required. Select the **.NET desktop development** workload in the installer to build the project.
+- [Visual Studio 2026](https://visualstudio.microsoft.com/downloads/) is required. Select the **.NET desktop development** sdk in the installer to build the project.
 - Development resources are available in the [documentation index](docs/README.md). The `docs/` folder contains general development knowledge, game-domain research, feature designs, and references. `AGENTS.md` directs other AI agents to consult these materials. If you have a GitHub account, use **Fork** in the upper-right corner to create your own copy.
 - A **Deploy Mod** script is included so you can quickly try your changes in-game. Use `scripts/Deploy-Mod.ps1` or the **Deploy Mod** button at the top of the Visual Studio solution. It deploys to the local `C:\Program Files (x86)\Steam\steamapps\common\Sephiria\AddOns` directory.
 
