@@ -97,7 +97,7 @@ namespace SephiriaOne
         {
             string source = ProjectileLimitCatalog.All[projectileSourceIndex].Id;
             return L.F("Source: {0} · {1}", source, L.T(snapshot.Projectiles.SourceLimits.ContainsKey(source) ? "override" : "default")) +
-                "\n" + L.T("Caps per player. Existing projectiles finish. Primary attacks stay native.") +
+                "\n" + L.T("Caps per player, including Bolt Magic. Existing projectiles finish. Other primary attacks stay native.") +
                 "\n" + L.T("Independent rate budget: stores 1 second and refills continuously. Includes supported secondary effects beyond active caps; denied attempts are skipped.");
         }
     }

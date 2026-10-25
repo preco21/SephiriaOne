@@ -2,6 +2,79 @@
 
 Implemented in 0.79.0, 2026-10-21.
 
+## Bolt Magic coverage (`0.96.0`, 2026-10-26)
+
+**Bolt Magic (all elements) / 볼트 마법 (모든 속성)** is now a source in the
+Projectile Optimization selector. It uses the existing player total, default
+source cap (12 unless changed), source override and independent creation-rate
+budget. All elements and casting origins share one `bolt-magic` counter per
+player. This includes manual books, automatic casts and staff-triggered Bolts;
+switching elements cannot multiply the allowance. Settings are still host-owned
+and apply to PvE and PvP, independently of friendly-fire participation.
+
+```text
+/one projectiles source bolt-magic 12
+/one projectiles source bolt-magic reset
+```
+
+The source appears automatically through the shared registry; existing commands,
+UI, reset and preset storage need no new schema. Enabling active caps or rate
+limits uses the current settings; neither toggle/default was changed.
+
+The installed `ActiveSkill_Bolt.OnServerUpdate` has two spawn sites, for its
+multishot loop and single-shot branch. Each now uses the existing reserved-spawn
+wrapper. A null result skips that shot's `OnCreateProjectile` callback and
+`TurnOnHoming(bool, UnitAvatar)` call, while preserving loop increments, native
+timers, boltCounter progression and skill completion/despawn. Admitted shots
+retain all arguments, callbacks, damage, homing and native network delivery.
+Denied attempts are consumed, not queued, refunded or replaced by early eviction.
+
+The shared emitter guard now pairs each spawn with its own ordered configuration
+tail, validates their count/order/exception boundaries, and emits a distinct
+continuation for each. Existing one-site emitters retain their prior behavior.
+All reflection, instruction scans and continuation arrays occur at hook setup;
+runtime uses the existing constant-time ledger/rate admission and cleanup paths.
+
+Existing in-flight bolts are adopted by their exact damage IDs:
+`Skill_FireBolt` (also Water), `Skill_AirBolt`, `Skill_EarthBolt`,
+`Skill_LightningBolt`, and `Skill_IceBolt`. Destruction children inherit tracked
+parent provenance through the existing adapters. Native despawn, direct destroy,
+disconnect/reconnect, activation and run resets reuse the same release-once
+leases and connection lifetimes. Existing bolts are never force-destroyed.
+
+The staff path uses `SpecialProjectile_RandomBolt.OnUpdateServer` to choose a
+Bolt book and invoke `Charm_Magic.FireCasting`; subsequent emissions reach the
+same `ActiveSkill_Bolt` boundary. Serialized `sharedassets0.assets` links
+`Weapon_Staff_Rolling_T3Bolt` (GO85907) through
+`Weapon_Staff_AttackRolling_Bolt(SP)` (179327) to `RandomBolt` (GO75560), whose
+184563 component resolves to `SpecialProjectile_RandomBolt` in
+`globalgamemanagers.assets`. This confirms the native rolling-staff Bolt path;
+the reported 20–40 shots/second has not been measured here.
+
+The short-lived RandomBolt casting controller, skill instances, casting circles,
+and client cosmetic children are not Bullet instances and do not get a separate
+new cap. This extension controls the resulting bolts and supported destruction
+children, not every object created by casting. Other primary spells, ordinary
+direct weapons and Minigun remain native. No extra network entities or guest
+addon are introduced; native host spawns remain the replication boundary.
+
+Validation: Release build with deployment disabled; 500 native hook checks in
+63 cases (including stack checks and JIT preparation of rewritten methods),
+135 runtime checks, 136 ledger checks, full installed-game contracts, and the
+41-member API audit against co-installed HarmonyX 2.9. Mutations of spawn count,
+guard ordering and exception boundaries are rejected. Runtime tests cover Bolt
+adoption, mixed elements, descendants, rate refill, native destruction and reused
+connections. Existing warmed rejected-admission fixtures remain allocation-free.
+No live multiplayer, guest rendering or frame-time improvement is claimed.
+
+Installed assembly SHA-256 remains
+`c57a0daeab8e8d0af7066a344133eec4c57d8f303fd9e25da9410fbfc4cf1510`.
+Native evidence and the focused plan are recorded in
+[the Bolt implementation plan](superpowers/plans/2026-10-26-bolt-projectile-limits.md).
+No game was launched and nothing was deployed.
+
+## Earlier coverage and common behavior
+
 The [0.91.0 follow-up](projectile-emission-controls.md) adds active/rate coverage
 for Scabbard, Voluspa, Frozen Bow and Blizzard Hammer, including fire variants.
 It also adds separate creation-rate controls for Plitvice/Guillotine and Frost
@@ -55,6 +128,7 @@ Equipment changes cannot relabel a projectile or release its occupied slot.
 | --- | --- |
 | `pallas-card` | `Charm_PallasCard.OnBeginAttackAnimation` |
 | `liberation` | `SpecialProjectile_FuryMP.OnUpdateServer` |
+| `bolt-magic` | `ActiveSkill_Bolt.OnServerUpdate` (single and multishot) |
 | `ice-vine` | `Charm_CreateBulletOnSweep.CreateBullet` |
 | `thunder-earring` | `Charm_ElectricEarring.AttackCoroutine` |
 | `phoenix-wing` | `Charm_FireFeather.OnUpdate` |
@@ -91,8 +165,8 @@ does not refund native MP or reset the attack cycle.
 
 ### Exclusions and boundaries
 
-Ordinary melee, primary bullets, Minigun/held-fire Golem cadence, manually cast
-primary magic and enemy attacks remain native. No global spawn gate or attack
+Ordinary melee, other primary bullets, Minigun/held-fire Golem cadence, primary
+magic outside Bolt Magic and enemy attacks remain native. No global spawn gate or attack
 interval change is applied.
 
 Other inspected effects need separate adapters before safe inclusion:

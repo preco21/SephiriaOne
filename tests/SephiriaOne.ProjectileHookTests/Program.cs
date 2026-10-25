@@ -70,12 +70,13 @@ List<CodeInstruction> Code(MethodInfo method) => PatchProcessor.GetOriginalInstr
 List<CodeInstruction> Rewrite(object emitter, List<CodeInstruction> code, ILGenerator generator) =>
     ((IEnumerable<CodeInstruction>)Invoke(Hook("Rewrite"), code, generator, Field<MethodInfo>(emitter, "Method"))!).ToList();
 
-Test("Exact audited emitter inventory excludes primary and held-fire weapons", () =>
+Test("Exact audited emitter inventory includes Bolt but excludes other primary and held-fire weapons", () =>
 {
     var expected = new Dictionary<string, (string? source, int calls)>(StringComparer.Ordinal)
     {
         ["Charm_PallasCard"] = ("pallas-card", 1),
         ["SpecialProjectile_FuryMP"] = ("liberation", 1),
+        ["ActiveSkill_Bolt"] = ("bolt-magic", 2),
         ["Charm_NearMagicBullet"] = ("yearning-robe", 1),
         ["Charm_CreateBulletOnSweep"] = ("ice-vine", 1),
         ["Charm_AirSlash"] = ("ice-air-slash", 1),
@@ -165,6 +166,42 @@ Test("Ice Weapon denials preserve loop timing and skip every spawn-dependent ope
                 "Denied Bow amplification consumes its loop iteration");
         }
     }
+});
+
+Test("Both Bolt branches guard callbacks and homing while retaining emission progress", () =>
+{
+    var emitter = emitters.Single(e => Field<string?>(e, "Source") == "bolt-magic");
+    var method = Native("ActiveSkill_Bolt", "OnServerUpdate");
+    Check(Field<MethodInfo>(emitter, "Method") == method, "Guard the shared manual/automatic Bolt emission path");
+    var original = PatchProcessor.GetOriginalInstructions(method, out var generator).ToList();
+    var rewritten = Rewrite(emitter, original, generator);
+    var calls = Enumerable.Range(0, rewritten.Count).Where(i => rewritten[i].Calls(replacement)).ToArray();
+    var homing = AccessTools.DeclaredMethod(game.GetType("Bullet", true), "TurnOnHoming", new[] { typeof(bool), game.GetType("UnitAvatar", true)! });
+    Check(calls.Length == 2 && Equals(Field<MemberInfo>(emitter, "GuardTail"), homing), "Both spawn sites end configuration at homing setup");
+    for (int branch = 0; branch < calls.Length; branch++)
+    {
+        int call = calls[branch];
+        int resume = rewritten.FindIndex(i => i.labels.Contains((Label)rewritten[call + 4].operand));
+        var skipped = rewritten.Skip(call + 5).Take(resume - call - 5).ToArray();
+        Check(skipped.Count(i => i.operand is MethodInfo m && m.Name == "Invoke") == 1 && skipped.Count(i => i.Calls(homing)) == 1,
+            "Denied Bolt skips exactly its callback and homing, branch " + branch);
+        Check(GuardExecution.Run(rewritten.Skip(call + 1).Take(5).ToArray(), null) == 1 &&
+            GuardExecution.Run(rewritten.Skip(call + 1).Take(5).ToArray(), new object()) == 11, "Both guards execute correctly");
+        if (branch == 0)
+            Check(rewritten.Skip(resume).Take(5).Any(i => i.opcode == OpCodes.Add) && resume < calls[1],
+                "Multishot denial advances its loop instead of skipping later shots");
+        else
+            Check(rewritten.Skip(resume).Any(i => i.StoresField(AccessTools.Field(method.DeclaringType, "boltCounter"))) &&
+                rewritten.Skip(resume).Any(i => i.operand is MethodInfo m && m.Name == "Despawn"),
+                "Single-shot denial reaches shared count/completion instead of leaving its skill alive");
+    }
+    var changed = original.Select(i => new CodeInstruction(i)).ToList();
+    int tail = changed.FindIndex(i => i.Calls(homing));
+    changed.RemoveAt(tail);
+    changed.Add(new CodeInstruction(OpCodes.Callvirt, homing));
+    Reject(() => Invoke(Hook("ValidateEmitter"), changed, emitter), "Same-count tails in the wrong spawn region must fail validation");
+    Check(Code(Native("SpecialProjectile_RandomBolt", "OnUpdateServer")).Any(i => i.operand is MethodInfo m &&
+        m.DeclaringType?.Name == "Charm_Magic" && m.Name == "FireCasting"), "Staff's random Bolt controller feeds native book casting");
 });
 
 Test("Native spawn replacement preserves every argument and result", () =>

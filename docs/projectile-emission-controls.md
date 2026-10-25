@@ -5,6 +5,11 @@ Implemented `0.91.0`, 2026-10-23 (Asia/Seoul). Follows the
 [active-instance controls](projectile-limits.md). Host only; PvE and PvP;
 unmodified guests use the native creation messages.
 
+Since `0.96.0`, [Bolt Magic](projectile-limits.md#bolt-magic-coverage-0960-2026-10-26)
+also shares these active and creation-rate mechanisms under `bolt-magic`,
+including manual and staff-triggered casts. This extends the original
+primary-magic exclusion only for the Bolt family.
+
 ## Result
 
 - Four more Ice Weapon families now use both active-instance and creation-rate
@@ -85,7 +90,7 @@ Bullet variants use these four emission paths.
 The existing covered Bullet sources and tracked destruction children share the
 same rate buckets. Planet artifacts retain independent native source IDs under
 the shared player total. Copies of the same source do not gain extra capacity.
-Normal/direct weapons, Minigun, primary magic and native nonplayer attacks remain
+Normal/direct weapons, Minigun, other primary magic and native nonplayer attacks remain
 outside the registry.
 
 Plitvice's outward sword continues after leaving its orbit slot. Guillotine's

@@ -31,7 +31,8 @@ namespace SephiriaOne
             new ProjectileLimitSource("planets", "Planets (each)"),
             new ProjectileLimitSource("weapon-spike", "Weapon needles"),
             new ProjectileLimitSource("flame-ball", "Flame Ball"),
-            new ProjectileLimitSource("yearning-robe", "Yearning Robe")
+            new ProjectileLimitSource("yearning-robe", "Yearning Robe"),
+            new ProjectileLimitSource("bolt-magic", "Bolt Magic (all elements)")
         });
 
         public static ProjectileLimitSource? Find(string? id)

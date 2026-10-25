@@ -6,6 +6,9 @@ internal static class ProjectileLimitPolicyTests
     {
         int checks = 0;
         void Check(bool value, string message) { if (!value) throw new Exception(message); checks++; }
+        Check(ProjectileLimitCatalog.Find("bolt-magic") != null &&
+            ProjectileLimitCommand.Parse("/one projectiles source bolt-magic 8", out var boltLimit) == ProjectileLimitParseResult.Valid &&
+            boltLimit.Apply(default).GetSourceLimit("bolt-magic") == 8, "Bolt source supports the shared UI, command and preset registry");
         foreach (string text in new[] { "/one projectiles rate on", "/ONE PROJECTILES RATE OFF", "/one projectiles rate reset",
             "/one projectiles rate total 1", "/one projectiles rate source 4096" })
             Check(ProjectileLimitCommand.Parse(text, out _) == ProjectileLimitParseResult.Valid, "Valid independent rate command: " + text);

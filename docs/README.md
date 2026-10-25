@@ -1,5 +1,10 @@
 # Development knowledge index
 
+[Bolt Magic projectile limits](projectile-limits.md#bolt-magic-coverage-0960-2026-10-26):
+manual/automatic/staff Bolt casts share one source across elements, existing
+active/rate admission and lifecycle cleanup. Both native branches have safe
+post-spawn guards; in-flight adoption, command/UI/presets and EN/KO labels covered.
+
 [PvP startup compatibility fix](harmony-compatibility.md#pvp-initialization-and-dark-cloud-observer-fx-0952):
 the Dark Cloud observer adapter used a helper absent from co-installed HarmonyX,
 disabling friendly fire. Framework delegate binding and a caught non-inlined

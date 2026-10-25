@@ -354,6 +354,13 @@ namespace SephiriaOne
                 case "Charm_IceSpear": return "ice-spear";
                 case "Charm_IceBow": return "ice-bow";
                 case "Charm_IceHammer": return "ice-hammer";
+                // Water intentionally uses Skill_FireBolt too. All cast origins
+                // and elements share the same per-player Bolt allowance.
+                case "Skill_FireBolt":
+                case "Skill_AirBolt":
+                case "Skill_EarthBolt":
+                case "Skill_LightningBolt":
+                case "Skill_IceBolt": return "bolt-magic";
             }
             if (damageId != null && damageId.StartsWith("Charm_Planet_", StringComparison.Ordinal)) return damageId;
             if (damageId == "Weapon_SpecialAttack" && (prefab == "FuryMPBullet_Physical" || prefab == "FuryMPBullet_Fire" ||

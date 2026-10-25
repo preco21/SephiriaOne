@@ -983,6 +983,8 @@
   "Weapon needles": "무기 바늘",
   "Flame Ball": "화염구",
   "Yearning Robe": "갈망의 로브",
+  "Bolt Magic (all elements)": "볼트 마법 (모든 속성)",
+  "Caps per player, including Bolt Magic. Existing projectiles finish. Other primary attacks stay native.": "볼트 마법 포함, 플레이어별 제한. 기존 투사체는 유지되며 다른 기본 공격은 그대로입니다.",
   " /one projectiles help lists secondary projectile limits.": " /one projectiles help로 추가 투사체 제한을 확인합니다.",
   "lobby / future starts": "로비 / 다음 시작",
   "Updated lobby dice allowance and balance by the grant difference. Spent dice were not refilled.": "로비 주사위 지급 한도와 보유량을 설정 차이만큼 변경했습니다. 사용한 주사위는 보충되지 않았습니다.",

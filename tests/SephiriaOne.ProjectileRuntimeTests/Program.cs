@@ -507,6 +507,52 @@ Test("Ice families are adopted on activation and share elemental source identiti
         Check(ProjectileLimitRuntime.SourceOf(ids[i], "AnyIceOrFireVariant") == sources[i] && !Spawn(sources[i], damageId: ids[i]),
             "Existing Ice/fire family counts prevent excess new admissions: " + sources[i]);
 });
+Test("All Bolt elements share one limit and adopt existing casts without swallowing other magic", () =>
+{
+    Configure(false);
+    var ids = new[] { "Skill_FireBolt", "Skill_AirBolt", "Skill_EarthBolt", "Skill_LightningBolt", "Skill_IceBolt" };
+    foreach (string id in ids)
+    {
+        Check(ProjectileLimitRuntime.SourceOf(id, "Bolt") == "bolt-magic", "Recognize only audited Bolt IDs: " + id);
+        Native(id);
+    }
+    Native("Skill_FireArrow");
+    Configure(true, 64, 1);
+    Check(!Spawn("bolt-magic", damageId: ids[0]), "Already-flying bolts consume the same source limit on activation");
+    foreach (var bolt in pool.Created.Take(5).ToArray()) Despawn(bolt);
+    var accepted = Spawn("bolt-magic", damageId: ids[1]);
+    Check(accepted && !Spawn("bolt-magic", damageId: ids[3]), "Switching elements does not bypass the cap");
+    Check(Spawn("kunai"), "Unrelated source remains available");
+    accepted.gameObject.DestroyNow();
+    Check(Spawn("bolt-magic", damageId: ids[4]), "Natural destruction releases Bolt capacity");
+    Check(ProjectileLimitRuntime.SourceOf("Skill_FireArrow", "Bolt") == null &&
+        ProjectileLimitRuntime.SourceOf("Skill_FrostDagger", "Bolt") == null, "Do not classify unrelated magic from prefab names");
+});
+Test("Bolt descendants, rate credit and connection retirement share existing lifecycle", () =>
+{
+    SessionSettings.ProjectilesForUse = new ProjectileLimitSettings(true, 64, 1, rateEnabled: true, playerRate: 64, sourceRate: 2);
+    ProjectileLimitRuntime.Refresh();
+    var parent = Spawn("bolt-magic", damageId: "Skill_FireBolt");
+    var previous = ProjectileLimitRuntime.BeginChildren(Module(parent));
+    try
+    {
+        Despawn(parent);
+        var childBolt = Spawn(null, damageId: "Child");
+        Check(childBolt && !Spawn(null), "Child uses the same Bolt instance cap");
+        Despawn(childBolt);
+        Check(!Spawn(null), "Despawn does not refund Bolt rate credit");
+    }
+    finally { ProjectileLimitRuntime.EndChildren(previous); }
+    Time.unscaledTimeAsDouble = 0.5;
+    var old = Spawn("bolt-magic", damageId: "Skill_IceBolt");
+    Check(old, "Shared rate refill admits another element");
+    var oldConnection = player.spawner.connectionToClient;
+    ProjectileLimitRuntime.RetireConnection(oldConnection);
+    player = Connect(oldConnection.connectionId);
+    Check(Spawn("bolt-magic", damageId: "Skill_LightningBolt"), "Rejoined player receives fresh Bolt capacity");
+    old.gameObject.DestroyNow();
+    Check(!Spawn("bolt-magic"), "Stale destruction never releases the replacement's occupied slot");
+});
 Test("Warmed exhausted rate path is allocation-free before instance reservations", () =>
 {
     SessionSettings.ProjectilesForUse = new ProjectileLimitSettings(false, rateEnabled: true, playerRate: 1, sourceRate: 1);

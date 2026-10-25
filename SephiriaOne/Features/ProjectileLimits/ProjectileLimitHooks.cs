@@ -31,6 +31,10 @@ namespace SephiriaOne
             yield return new Emitter(typeof(Charm_PallasCard), "OnBeginAttackAnimation", "pallas-card", tail: fakeTarget);
             yield return new Emitter(typeof(SpecialProjectile_FuryMP), "OnUpdateServer", "liberation",
                 tail: AccessTools.Field(typeof(ProjectileBase), "swingId"));
+            // Single and multishot casts each have callbacks/homing after Spawn.
+            // A denial must skip only that shot's configuration, not progress.
+            yield return new Emitter(typeof(ActiveSkill_Bolt), "OnServerUpdate", "bolt-magic", 2,
+                tail: AccessTools.DeclaredMethod(typeof(Bullet), "TurnOnHoming", new[] { typeof(bool), typeof(UnitAvatar) }));
             yield return new Emitter(typeof(Charm_NearMagicBullet), "AddBulletAttackCallback", "yearning-robe", tail: fakeTarget);
             yield return new Emitter(typeof(Charm_CreateBulletOnSweep), "CreateBullet", "ice-vine");
             yield return new Emitter(typeof(Charm_AirSlash), "AirSlashCoroutine", "ice-air-slash",
@@ -119,14 +123,19 @@ namespace SephiriaOne
                 throw new InvalidOperationException("Native secondary spawn has no result consumer: " + emitter.Method);
             if (emitter.GuardTail != null)
             {
-                int tail = FindTail(code, emitter);
-                if (calls.Length != 1 || tail <= calls[0] || tail + 1 >= code.Count ||
-                    code.Skip(calls[0]).Take(tail - calls[0] + 1).Any(i => i.blocks.Count != 0))
-                    throw new InvalidOperationException("Native secondary post-spawn guard changed: " + emitter.Method);
+                int[] tails = FindTails(code, emitter);
+                for (int index = 0; index < calls.Length; index++)
+                {
+                    int call = calls[index], tail = tails[index];
+                    if (tail <= call || tail + 1 >= code.Count ||
+                        (index + 1 < calls.Length && tail >= calls[index + 1]) ||
+                        code.Skip(call).Take(tail - call + 1).Any(i => i.blocks.Count != 0))
+                        throw new InvalidOperationException("Native secondary post-spawn guard changed: " + emitter.Method);
+                }
                 if (emitter.Method.DeclaringType == typeof(SpecialProjectile_FuryMP))
                 {
                     var progress = AccessTools.Field(typeof(SpecialProjectile_FuryMP), "spawnedBulletCount");
-                    if (progress == null || !code.Skip(tail + 1).Any(i => i.StoresField(progress)))
+                    if (progress == null || !code.Skip(tails[0] + 1).Any(i => i.StoresField(progress)))
                         throw new InvalidOperationException("Native Liberation emission progress changed.");
                 }
             }
@@ -143,26 +152,32 @@ namespace SephiriaOne
                 }
             }
         }
-        private static int FindTail(List<CodeInstruction> code, Emitter emitter)
+        private static int[] FindTails(List<CodeInstruction> code, Emitter emitter)
         {
             int[] tails = Enumerable.Range(0, code.Count).Where(i =>
                 emitter.GuardTail is MethodInfo method ? code[i].Calls(method) :
                 emitter.GuardTail is FieldInfo field && code[i].StoresField(field)).ToArray();
-            if (tails.Length != 1) throw new InvalidOperationException("Native secondary guard tail changed: " + emitter.Method);
-            return tails[0];
+            if (tails.Length != emitter.Calls) throw new InvalidOperationException("Native secondary guard tail changed: " + emitter.Method);
+            return tails;
         }
         internal static IEnumerable<CodeInstruction> Rewrite(IEnumerable<CodeInstruction> instructions, ILGenerator generator, MethodBase __originalMethod)
         {
             Emitter emitter = Emitters().Single(e => e.Method == __originalMethod);
             var code = instructions.Select(i => new CodeInstruction(i)).ToList();
             ValidateEmitter(code, emitter);
-            Label continuation = default;
+            Label[] continuations = null;
             if (emitter.GuardTail != null)
             {
-                continuation = generator.DefineLabel();
-                code[FindTail(code, emitter) + 1].labels.Add(continuation);
+                int[] tails = FindTails(code, emitter);
+                continuations = new Label[tails.Length];
+                for (int index = 0; index < tails.Length; index++)
+                {
+                    continuations[index] = generator.DefineLabel();
+                    code[tails[index] + 1].labels.Add(continuations[index]);
+                }
             }
             var replacement = AccessTools.DeclaredMethod(typeof(ProjectileLimitRuntime), nameof(ProjectileLimitRuntime.Spawn));
+            int guardedCall = 0;
             for (int i = 0; i < code.Count; i++)
             {
                 CodeInstruction instruction = code[i];
@@ -177,7 +192,7 @@ namespace SephiriaOne
                 yield return new CodeInstruction(OpCodes.Dup);
                 yield return new CodeInstruction(OpCodes.Brtrue, accepted);
                 yield return new CodeInstruction(OpCodes.Pop);
-                yield return new CodeInstruction(OpCodes.Br, continuation);
+                yield return new CodeInstruction(OpCodes.Br, continuations[guardedCall++]);
                 var resume = new CodeInstruction(OpCodes.Nop); resume.labels.Add(accepted);
                 yield return resume;
             }
