@@ -47,8 +47,6 @@ Open the mod menu from the upper-right corner of the ESC menu.
 
 GNU Affero General Public License (AGPL)
 
-If you modify this mod, please publish your source code so more people can benefit.
-
 Anyone is free to redistribute, share, sell, and modify this project's code and build outputs.
 
 ## Credits
