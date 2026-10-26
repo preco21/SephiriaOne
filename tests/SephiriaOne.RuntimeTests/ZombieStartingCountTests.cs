@@ -51,12 +51,16 @@ internal static class ZombieStartingCountTests
             At(3);
             check(Zombies(players) == scenario.Item3 && ZombieRoleVisuals.Visible.Count == scenario.Item3,
                 "Unique initial Zombies and visuals clamp to roster while retaining one Human");
+            check(players.All(p => !CombatMatchRuntime.BlocksZombieHpPotions(p)),
+                "Clamped starting population retains normal potion admission");
             foreach (var first in players)
                 foreach (var second in players)
                     check(CombatMatchRuntime.AllowsPair(first, second) == (CombatMatchRuntime.IsActiveZombie(first) != CombatMatchRuntime.IsActiveZombie(second)),
                         "Multi-Zombie hostility only crosses team boundaries");
             check(players.Where(CombatMatchRuntime.IsActiveZombie).All(p => CombatMatchRuntime.IncomingRoleScale(p) == .3), "Every starting Zombie inherits role modifiers");
             check(Count("1") && Zombies(players) == scenario.Item3, "Editing count never changes active teams");
+            check(players.All(p => !CombatMatchRuntime.BlocksZombieHpPotions(p)),
+                "Editing next-match count does not change the active potion threshold");
             CombatMatchRuntime.Stop(true, false);
             check(ZombieRoleVisuals.Visible.Count == 0, "Stopping clears all initial role visuals");
             check(SettingsActions.Execute("/one zombie start").Success, "Next match uses updated count");
@@ -72,6 +76,8 @@ internal static class ZombieStartingCountTests
         var snapshot = New(5);
         check(Count("3") && SettingsActions.Execute("/one zombie start").Success && Count("1"), "Edit count during countdown");
         At(3); check(Zombies(snapshot) == 3, "Countdown retains count captured at Start");
+        check(snapshot.All(p => !CombatMatchRuntime.BlocksZombieHpPotions(p)),
+            "Countdown count edits cannot change the captured potion threshold");
         check(SettingsActions.Execute("/one save").Success, "Saving active match stores next-match count");
         check(!File.ReadAllText(Path.Combine(UnityEngine.Application.persistentDataPath, "SephiriaOne", "session-preset.txt")).Contains("zombie count "),
             "Active clamped count and teams never overwrite requested settings");

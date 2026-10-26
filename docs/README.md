@@ -56,7 +56,8 @@ without that override. No inventory snapshot restoration.
 [Zombie HP-potion restriction](zombie-survival.md#zombie-hp-potion-restriction-0970):
 default-on, live faction-based admission/completion guards, including pending
 conversion; Humans retain general PvP rules. Since 0.98.1, only Small/Large HP
-potions are blocked; Sample retains native behavior. Independent of supplies, with
+potions are covered; Sample retains native behavior. Since 0.98.2, blocking starts
+only above the match's captured starting Zombie count. Independent of supplies, with
 EN/KO controls and v54 preset persistence.
 
 [Zombie movement penalty](zombie-survival.md#zombie-movement-penalty-0970): Zombies

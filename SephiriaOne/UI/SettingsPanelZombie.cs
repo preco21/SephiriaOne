@@ -42,6 +42,7 @@ namespace SephiriaOne
             widgets.Text(pageRoot, "ZombieMovement", "[Z] Movement speed: 70%.", 16, 169, 273, 22, 11);
             AddCheckbox("Block Zombie HP potions", 16, 196, 273, 25, s => SessionSettings.ZombieBlockHpPotions,
                 s => RabbitPotionFeature.Available, "/one zombie block-hp", s => s.HostActive && s.SessionIdentity != null);
+            widgets.Text(pageRoot, "ZombiePotionThreshold", "Applies when Zombies exceed the starting count.", 16, 224, 273, 24, 11);
             BuildParticipantsEditor();
         }
         private void RefreshZombie(SettingsSnapshot snapshot)

@@ -25,6 +25,25 @@ internal static class ZombiePotionTests
                     "Blocked completion must have no gameplay effects and retain native cleanup");
             });
         foreach (bool local in new[] { false, true })
+        foreach (int id in new[] { 0, 1 })
+        foreach (bool infinite in new[] { false, true })
+        foreach (bool growth in new[] { false, true })
+            check($"Starting Zombie potion grace: host {local}, potion {id}, infinite {infinite}, growth {growth}", () =>
+            {
+                var s = setup(id, local); s.player.currentCostume = "Mole";
+                SessionSettings.FriendlyFireForHit = new() { Enabled = true, InfiniteHpPotions = infinite };
+                int population = 2;
+                CombatMatchRuntime.ZombiePotionRule = _ => population > 2;
+                install();
+                if (local) s.controller.UseItemKeyDown(); else s.controller.GuestUseItemKeyDown();
+                assert(s.controller.StartedDrinks == 1, "Initial Zombie population may begin drinking");
+                if (growth) population++;
+                s.controller.RunDrink();
+                assert(s.player.Heals.Count == (growth ? 0 : 1) && s.item.Quantity == (growth || infinite ? 3 : 2) &&
+                    s.player.mp == 30 && s.controller.CleanupCalls == 1,
+                    "Completion follows live population; otherwise the existing finite/infinite PvP rule remains authoritative");
+            });
+        foreach (bool local in new[] { false, true })
         foreach (bool infinite in new[] { false, true })
         foreach (bool converted in new[] { false, true })
             check($"Zombie Sample remains native: host {local}, infinite {infinite}, conversion {converted}", () =>

@@ -54,8 +54,10 @@ namespace SephiriaOne
 
         // Potion admission follows the faction even during death/pending revival.
         // Combat bonuses deliberately use the stricter, living-role lookup above.
+        // Use the captured (clamped) starting population, not next-match settings.
         internal static bool BlocksZombieHpPotions(PlayerAvatar player) => SessionSettings.ZombieBlockHpPotions &&
             SessionSettings.FriendlyFireForHit.Enabled && CurrentZombieCombat &&
+            zombiePlayers.Count - zombieRound.Humans > zombieStartingCount &&
             TryZombieIndex(player, out int index) && zombieRound.IsZombie(index);
 
         internal static string ZombieFactionMarker(FriendlyFireParticipants.Receipt receipt) =>

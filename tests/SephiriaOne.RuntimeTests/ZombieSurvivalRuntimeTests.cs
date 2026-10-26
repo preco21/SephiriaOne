@@ -46,12 +46,12 @@ internal static class ZombieSurvivalRuntimeTests
         bool NormalSpeed(PlayerAvatar p) => Math.Abs(p.moveSpeed - 4.4f) < .00001f;
         bool ZombieSpeed(PlayerAvatar p) => Math.Abs(p.moveSpeed - 4.4f * .7f) < .00001f;
         check(ZombieSpeed(zombie) && humans.All(NormalSpeed), "Only the initial Zombie has 30% slower synchronized base movement");
-        check(CombatMatchRuntime.BlocksZombieHpPotions(zombie) && humans.All(p => !CombatMatchRuntime.BlocksZombieHpPotions(p)),
-            "Only current Zombie faction blocks HP potion admission");
+        check(all.All(p => !CombatMatchRuntime.BlocksZombieHpPotions(p)),
+            "Initial Zombie population retains normal PvP potion admission");
         check(SettingsActions.Execute("/one zombie block-hp off").Success && !CombatMatchRuntime.BlocksZombieHpPotions(zombie) &&
             CombatMatchRuntime.IsZombieSurvival, "Live restriction toggle does not stop the match");
-        check(SettingsActions.Execute("/one zombie block-hp reset").Success && CombatMatchRuntime.BlocksZombieHpPotions(zombie),
-            "Reset immediately restores default Zombie restriction");
+        check(SettingsActions.Execute("/one zombie block-hp reset").Success && SessionSettings.ZombieBlockHpPotions &&
+            !CombatMatchRuntime.BlocksZombieHpPotions(zombie), "Reset enables the restriction without blocking the starting population");
         int speedWrites = zombie.MovementWrites;
         for (int i = 0; i < 50; i++) CombatMatchRuntime.Tick();
         check(zombie.MovementWrites == speedWrites && ZombieSpeed(zombie), "Stable ticks do not stack the penalty or send more speed updates");
@@ -66,7 +66,8 @@ internal static class ZombieSurvivalRuntimeTests
             CombatMatchRuntime.RefillRoleScale(humans[0]) == 1, "Zombie modifiers are independent active-role values");
         Kill(zombie, humans[0]);
         check(ZombieSpeed(humans[0]), "Conversion owns the speed penalty before the native respawn");
-        check(CombatMatchRuntime.BlocksZombieHpPotions(humans[0]), "Conversion blocks HP drinks immediately, before revival");
+        check(CombatMatchRuntime.BlocksZombieHpPotions(humans[0]) && CombatMatchRuntime.BlocksZombieHpPotions(zombie),
+            "Population growth blocks both initial and converted Zombies immediately, before revival");
         check(ZombieRoleVisuals.Visible.Contains(humans[0]), "Infection indicator starts during pending conversion and follows the corpse");
         check(humans[0].IsDead && !CombatMatchRuntime.IsActiveZombie(humans[0]) &&
             !CombatMatchRuntime.AllowsPair(humans[0], humans[1]), "Infected Human is not combat active before revival");
@@ -99,6 +100,34 @@ internal static class ZombieSurvivalRuntimeTests
         check(ZombieRoleVisuals.Visible.Count == 0, "Natural conclusion removes every Zombie visual");
         check(all.All(NormalSpeed), "Natural conclusion immediately restores every original movement speed");
         check(all.All(p => !CombatMatchRuntime.BlocksZombieHpPotions(p)), "Natural conclusion removes all faction potion restrictions");
+
+        all = New(6);
+        check(SettingsActions.Execute("/one zombie count 2").Success, "Configure two starting Zombies for potion threshold");
+        Begin();
+        var initialZombies = all.Where(CombatMatchRuntime.IsActiveZombie).ToArray();
+        humans = all.Where(p => !CombatMatchRuntime.IsActiveZombie(p)).ToArray();
+        check(initialZombies.Length == 2 && all.All(p => !CombatMatchRuntime.BlocksZombieHpPotions(p)),
+            "Two starting Zombies may drink at the inclusive threshold");
+        check(SettingsActions.Execute("/one zombie count 1").Success && initialZombies.All(p => !CombatMatchRuntime.BlocksZombieHpPotions(p)),
+            "Lowering next-match count cannot restrict the current starting population");
+        check(SettingsActions.Execute("/one zombie count 5").Success, "Raise next-match count before infection");
+        Kill(initialZombies[0], humans[0]);
+        check(initialZombies.All(CombatMatchRuntime.BlocksZombieHpPotions) && CombatMatchRuntime.BlocksZombieHpPotions(humans[0]) &&
+            humans.Skip(1).All(p => !CombatMatchRuntime.BlocksZombieHpPotions(p)),
+            "Third Zombie activates only faction restriction using captured count, including pending conversion");
+        check(SettingsActions.Execute("/one zombie block-hp off").Success && all.All(p => !CombatMatchRuntime.BlocksZombieHpPotions(p)),
+            "Disabling restriction restores admission above the population threshold");
+        check(SettingsActions.Execute("/one zombie block-hp reset").Success && initialZombies.All(CombatMatchRuntime.BlocksZombieHpPotions),
+            "Reset restores restriction immediately above the population threshold");
+        Kill(humans[1], initialZombies[1]);
+        check(CombatMatchRuntime.BlocksZombieHpPotions(initialZombies[0]) && CombatMatchRuntime.BlocksZombieHpPotions(initialZombies[1]),
+            "A dead Zombie still belongs to the population and cannot temporarily release the restriction");
+        CombatMatchRuntime.Stop(true, false);
+        check(all.All(p => !CombatMatchRuntime.BlocksZombieHpPotions(p)), "Stopping clears population restriction");
+        check(SettingsActions.Execute("/one zombie start").Success, "Restart after population growth");
+        At(6);
+        check(all.Count(CombatMatchRuntime.IsActiveZombie) == 5 && all.All(p => !CombatMatchRuntime.BlocksZombieHpPotions(p)),
+            "New match uses its own starting population without carrying over prior growth");
 
         all = New(2); Begin(); zombie = all.Single(CombatMatchRuntime.IsActiveZombie); var reflectedHuman = all.Single(p => p != zombie);
         // Native OnHit reflection can finish the Human death before the outer

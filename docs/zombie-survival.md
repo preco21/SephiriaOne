@@ -1,4 +1,4 @@
-# Zombie Survival (0.98.1, 2026-10-27)
+# Zombie Survival (0.98.2, 2026-10-27)
 
 ## Zombie HP-potion restriction (0.97.0)
 
@@ -9,14 +9,42 @@ v1–v53 files inherit the default, and older headers reject the new row. No
 faction, pending drink, or match state is persisted.
 
 Since **0.98.1**, only Small HP (ID 0) and Large HP (ID 1) are blocked for
-current Zombies while the match is active. This narrows the original 0.97.0
-scope to match the confirmed preference. Regeneration (Sample, ID 37) remains
+current Zombies while the match is active and the population rule below applies.
+This narrows the original 0.97.0 scope to match the confirmed preference.
+Regeneration (Sample, ID 37) remains
 usable and consumable normally, with no addon MP charge or Survival suppression.
 It is excluded at both admission and completion, even if conversion occurs during
 its animation. MP/buff potions are unaffected. Humans and spectators retain their
 existing potion rules.
 Automatic Large Potion grants at match entry/respawn remain independent: a
 Zombie may own a potion without being permitted to drink it.
+
+**Population grace (0.98.2):** the restriction applies only while the current
+Zombie count is **greater than the match's actual starting Zombie count**. At or
+below that threshold, Small/Large HP potions follow the existing PvP consumption
+settings. For example, starting with two Zombies allows potion use at two;
+converting a third blocks all Zombies, including the original two. This changes
+use permission only; automatic entry/respawn grants stay independent.
+
+The baseline is captured and clamped to eligible participants at match start.
+Editing the next-match starting-count setting during countdown or play does not
+change it. Population includes dead Zombies and pending conversions, so dying
+cannot reopen potion admission. Disconnection still cancels through the existing
+roster-lifetime rules. Stop/end clears both population and baseline; a new match
+starts fresh. Both drink admission and completion read this same live policy.
+
+Implementation: compare `zombiePlayers.Count - zombieRound.Humans` against the
+existing `zombieStartingCount` snapshot in `BlocksZombieHpPotions`. This constant-time
+comparison reuses authoritative round state without scans, allocations, cached
+permission, new replication, or per-frame work. A separate latched flag or the
+editable next-match count would create avoidable stale state. Regression coverage
+checks the inclusive threshold, growth before revival or drink completion, count
+edits, clamping, toggle/reset, stop/restart, and host/guest finite/infinite use.
+
+Verification for 0.98.2: Release build (zero warnings/errors), 14,634 runtime
+checks plus 69 Bat lifecycle checks, 430 potion-hook cases plus 12 alert checks,
+50 localization checks, and panel checks pass. Live host/guest gameplay remains
+unverified. Builds and tests used `-p:DeployMod=false`; no deployment.
 
 `CombatMatchRuntime.BlocksZombieHpPotions` uses the current round's faction and
 connection/roster receipt, including infected players waiting to revive. Do not
