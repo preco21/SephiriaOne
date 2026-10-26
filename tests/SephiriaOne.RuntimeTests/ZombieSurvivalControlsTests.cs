@@ -5,6 +5,34 @@ internal static class ZombieSurvivalControlsTests
     internal static void Run(Func<PlayerSpawner> start, Action<bool, string> check)
     {
         start();
+        check(SessionSettings.ZombieBlockHpPotions, "Zombie HP restriction defaults on");
+        check(SettingsActions.Execute("/one zombie block-hp off").Success && !SessionSettings.ZombieBlockHpPotions,
+            "Command disables Zombie HP restriction");
+        check(SettingsActions.Execute("/one save").Success, "Zombie HP preference saves");
+        string potionPreset = File.ReadAllText(Path.Combine(UnityEngine.Application.persistentDataPath, "SephiriaOne", "session-preset.txt"));
+        bool potionRead = SessionPolicy.TryReadPreset(potionPreset, out var potionPolicy, out _);
+        check(potionPreset.StartsWith("SephiriaOne preset v54\n") &&
+            potionRead && !potionPolicy.ZombieBlockHpPotions &&
+            potionPolicy.ToPresetText() == potionPreset, "Zombie HP preference round-trips with v54 gating");
+        potionPolicy.Clear();
+        check(potionPolicy.ZombieBlockHpPotions && potionPolicy.ToPresetText() == new SessionPolicy().ToPresetText(), "Policy clear restores HP restriction");
+        for (int version = 1; version <= 53; version++)
+        {
+            check(SessionPolicy.TryReadPreset("SephiriaOne preset v" + version + "\n", out var legacy, out _) && legacy.ZombieBlockHpPotions,
+                "Legacy preset inherits HP restriction default: " + version);
+            check(!SessionPolicy.TryReadPreset("SephiriaOne preset v" + version + "\nzombie block-hp 0\n", out _, out _),
+                "Legacy header cannot smuggle HP restriction setting: " + version);
+        }
+        foreach (string value in new[] { "2", "-1", "0.0", "false", "0\nzombie block-hp 1" })
+            check(!SessionPolicy.TryReadPreset("SephiriaOne preset v54\nzombie block-hp " + value + "\n", out _, out _),
+                "Malformed/duplicate HP restriction row is rejected: " + value);
+        check(!SettingsActions.Execute("/one zombie block-hp 1").Success, "HP restriction only accepts boolean commands");
+        Mirror.NetworkServer.active = false;
+        check(!SettingsActions.Execute("/one zombie block-hp on").Success && !SessionSettings.ZombieBlockHpPotions,
+            "Guests cannot change host potion policy");
+        Mirror.NetworkServer.active = true;
+        check(SettingsActions.Execute("/one zombie block-hp reset").Success && SessionSettings.ZombieBlockHpPotions,
+            "HP restriction reset restores default");
         check(SessionSettings.ZombieDuration == 120 && !SessionSettings.ZombieAnyDeath &&
             SessionSettings.ZombieModifiers.Equals(new CombatRoleSettings(true, 3m, true, 30m)), "Zombie defaults match confirmed settings");
         foreach (string op in new[] { "duration 37", "any-death on", "refill x3.25", "damage 45.5%", "refill off", "damage off" })

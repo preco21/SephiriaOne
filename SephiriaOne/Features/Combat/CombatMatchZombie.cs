@@ -52,6 +52,12 @@ namespace SephiriaOne
         }
         internal static bool IsActiveZombie(PlayerAvatar player) => TryActiveZombieRole(player, out bool zombie) && zombie;
 
+        // Potion admission follows the faction even during death/pending revival.
+        // Combat bonuses deliberately use the stricter, living-role lookup above.
+        internal static bool BlocksZombieHpPotions(PlayerAvatar player) => SessionSettings.ZombieBlockHpPotions &&
+            SessionSettings.FriendlyFireForHit.Enabled && CurrentZombieCombat &&
+            TryZombieIndex(player, out int index) && zombieRound.IsZombie(index);
+
         internal static string ZombieFactionMarker(FriendlyFireParticipants.Receipt receipt) =>
             zombieRound != null && CurrentZombieReceipt(receipt, token, out int index)
                 ? zombieRound.IsZombie(index) ? "[Z]" : "[H]" : "";

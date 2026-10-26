@@ -21,6 +21,8 @@ namespace SephiriaOne
     }
     internal static class CombatMatchRuntime
     {
+        internal static Func<PlayerAvatar, bool> ZombiePotionRule;
+        internal static bool BlocksZombieHpPotions(PlayerAvatar player) => ZombiePotionRule?.Invoke(player) ?? false;
         internal static Func<PlayerAvatar, bool> ParticipantRule;
         internal static bool AllowsParticipant(PlayerAvatar player) => ParticipantRule?.Invoke(player) ?? true;
     }

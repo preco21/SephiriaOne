@@ -1,5 +1,13 @@
 # PvP potion supplies and consumption
 
+## Zombie use restriction (0.97.0)
+
+Zombie Survival's default-on `/one zombie block-hp` is a separate **admission**
+rule for current Zombies: Small/Large/Sample HP potions cannot be used, including
+animations that complete after conversion. Humans retain the consumption rules
+below. Entry/respawn supplies remain independent and never grant use permission.
+See [implementation, lifecycle and verification](zombie-survival.md#zombie-hp-potion-restriction-0970).
+
 ## Authoritative PvP consumption (0.96.2, 2026-10-27)
 
 **Infinite PvP HP potions** / `/one friendlyfire infinite-hp on|off|reset`

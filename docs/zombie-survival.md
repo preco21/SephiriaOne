@@ -1,8 +1,51 @@
-# Zombie Survival (0.93.1, 2026-10-24)
+# Zombie Survival (0.97.0, 2026-10-27)
 
-## Zombie movement penalty (0.93.1)
+## Zombie HP-potion restriction (0.97.0)
 
-Current Zombies walk/run at **80% of normal speed**. This fixed role rule is
+The **Block Zombie HP potions** checkbox in Zombie Survival defaults on.
+`/one zombie block-hp on|off|reset` changes it live; reset restores on.
+`/one save` persists it. A nondefault `zombie block-hp 0` row uses preset v54;
+v1–v53 files inherit the default, and older headers reject the new row. No
+faction, pending drink, or match state is persisted.
+
+Small HP (ID 0), Large HP (ID 1), and Regeneration (Sample, ID 37) are blocked
+for current Zombies while the match is active. The sample restriction is an
+admission rule only: Sample remains excluded from Rabbit/PvP infinite-potion,
+MP-cost, and Survival overrides when drinking is allowed. MP/buff potions are
+unaffected. Humans and spectators retain their existing potion rules.
+Automatic Large Potion grants at match entry/respawn remain independent: a
+Zombie may own a potion without being permitted to drink it.
+
+`CombatMatchRuntime.BlocksZombieHpPotions` uses the current round's faction and
+connection/roster receipt, including infected players waiting to revive. Do not
+replace this with `IsActiveZombie`: that combat-only lookup intentionally excludes
+dead and pending players. It would admit an animation completing during conversion.
+The restriction disappears when toggled off, on match end/interruption, or outside
+this mode. It does not require PvP balancing to be enabled.
+
+The existing optional potion hook bundle now prefixes the host's
+`ItemController.LocalUseItemKeyDown` to reject an HP-potion attempt before wielding.
+Its already validated `DrinkPotionAnimation` adapter rechecks faction/settings
+at completion before any heal, MP fee, Survival callback, controller event, or
+inventory decrement. Rejection retains native catch/unwield cleanup. No item
+snapshot/refund, additional network state, per-frame scan, or guest addon is needed.
+The native alert transport gives the affected host/guest a localized refusal.
+If potion compatibility fails, the panel reports it and disallows enabling the
+restriction; disabling remains available. Other Zombie systems remain usable.
+
+Verification: Release build (zero warnings/errors), 14,578 runtime checks plus
+69 Bat lifecycle checks, 410 potion-hook cases plus 12 localized alert checks,
+EN/KO catalog checks, panel checks, and full installed-game compatibility runner.
+Fixtures cover live on/off/reset, host authority, presets/legacy rows, Humans,
+Small/Large/Sample, conversion during an animation (including death), spectators,
+match completion/interruption, and movement restoration/reconciliation. Installed
+contracts verify existing stock-client movement serialization and native potion
+admission/completion/cleanup. These are not live host/guest gameplay tests.
+Build/test commands used `-p:DeployMod=false`; no deployment was performed.
+
+## Zombie movement penalty (0.97.0)
+
+Current Zombies walk/run at **70% of normal speed** (30% slower; previously 80%). This fixed role rule is
 independent of dynamic balancing and the general PvP-balancing toggle. Humans,
 spectators, countdown entrants and other modes keep native movement. The Zombie
 panel and `/one zombie status` describe the rule in English/Korean; there is no

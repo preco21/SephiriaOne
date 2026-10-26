@@ -4,7 +4,7 @@ namespace SephiriaOne
     // Base speed composes with native equipment, frostbite and weapon modifiers.
     internal struct ZombieMovementSpeed
     {
-        private const float Scale = 0.8f;
+        private const float Scale = 0.7f;
         private float original, applied;
         private bool owned;
 

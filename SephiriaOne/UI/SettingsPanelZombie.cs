@@ -39,7 +39,9 @@ namespace SephiriaOne
                 "/one zombie damage", s => s.HostActive && s.SessionIdentity != null);
             zombieIncoming = widgets.Input(pageRoot, 174, 135, 56, EditZombieIncoming);
             zombieIncomingApply = widgets.Button(pageRoot, "Apply", 238, 135, 51, 25, ApplyZombieIncoming);
-            widgets.Text(pageRoot, "ZombieMovement", "[Z] Movement speed: 80%.", 16, 169, 273, 22, 11);
+            widgets.Text(pageRoot, "ZombieMovement", "[Z] Movement speed: 70%.", 16, 169, 273, 22, 11);
+            AddCheckbox("Block Zombie HP potions", 16, 196, 273, 25, s => SessionSettings.ZombieBlockHpPotions,
+                s => RabbitPotionFeature.Available, "/one zombie block-hp", s => s.HostActive && s.SessionIdentity != null);
             BuildParticipantsEditor();
         }
         private void RefreshZombie(SettingsSnapshot snapshot)
@@ -73,6 +75,8 @@ namespace SephiriaOne
             availability.color = PanelWidgets.Muted;
             if (!DeathmatchFeature.Available || !FriendlyFireFeature.Available || !ReviveAllFeature.Available)
                 availability.text = L.T("Zombie Survival compatibility checks failed. Stop remains available; see Player.log.");
+            if (SessionSettings.ZombieBlockHpPotions && !RabbitPotionFeature.Available)
+                availability.text += "\n" + L.T("Zombie HP-potion restriction unavailable: potion compatibility checks failed. See Player.log.");
             RefreshParticipants(snapshot);
         }
         private void EditZombieDuration(string text) => zombieDurationDraft = true;

@@ -72,7 +72,8 @@ namespace SephiriaOne
                     instance.Patch(heal, transpiler: new HarmonyMethod(typeof(RabbitPotionNativeHooks), nameof(CaptureHealCall)));
                     instance.Patch(consumer, transpiler: new HarmonyMethod(typeof(RabbitPotionNativeHooks), nameof(GuardCompletedDrink)));
                     instance.Patch(survival, prefix: new HarmonyMethod(typeof(RabbitPotionNativeHooks), nameof(AllowSurvival)));
-                    instance.Patch(useItem, transpiler: new HarmonyMethod(typeof(RabbitPotionNativeHooks), nameof(AllowRabbitThroughTension)));
+                    instance.Patch(useItem, prefix: new HarmonyMethod(typeof(RabbitPotionNativeHooks), nameof(AllowZombiePotionUse)),
+                        transpiler: new HarmonyMethod(typeof(RabbitPotionNativeHooks), nameof(AllowRabbitThroughTension)));
                     instance.Patch(drink, prefix: new HarmonyMethod(typeof(RabbitPotionNativeHooks), nameof(BeginDrink)),
                         postfix: new HarmonyMethod(typeof(RabbitPotionNativeHooks), nameof(CompleteDrink)),
                         finalizer: new HarmonyMethod(typeof(RabbitPotionNativeHooks), nameof(EndDrink)));

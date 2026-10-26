@@ -44,8 +44,13 @@ the former v53 opt-out allowed costume retention to bypass finite PvP potions.
 0.96.2 replaces it with unconditional general-option precedence; old presets load
 without that override. No inventory snapshot restoration.
 
-[Zombie movement penalty](zombie-survival.md#zombie-movement-penalty-0931): Zombies
-walk/run at 80% through the native base-speed SyncVar, with role-owned restoration,
+[Zombie HP-potion restriction](zombie-survival.md#zombie-hp-potion-restriction-0970):
+default-on, live faction-based admission/completion guards, including pending
+conversion; Humans retain general PvP rules. Independent of potion supplies, with
+EN/KO controls and v54 preset persistence.
+
+[Zombie movement penalty](zombie-survival.md#zombie-movement-penalty-0970): Zombies
+walk/run at 70% through the native base-speed SyncVar, with role-owned restoration,
 existing roster lifecycle and no repeat writes. Other movement modifiers remain
 native; includes EN/KO status and stock-client contract checks.
 

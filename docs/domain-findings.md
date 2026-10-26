@@ -1,5 +1,12 @@
 # Sephiria domain findings
 
+Zombie potion admission (`0.97.0`) must use the current round faction, including
+pending conversion, rather than the alive-only combat role helper. Recheck at
+native drink completion to close animation/conversion races; preserve native
+catch/unwield cleanup before all drink events and decrement. This is distinct
+from PvP consumption and supply grants. Zombie movement now uses 70% of the
+owned native base speed. See [Zombie Survival](zombie-survival.md).
+
 Dark Cloud presentation (2026-10-24): extending native targeting does not extend
 native FX delivery. Player strikes call `TargetCreateFx` on the cloud owner's
 connection. Its stock positional lightning/ice/EX receiver is cosmetic and does

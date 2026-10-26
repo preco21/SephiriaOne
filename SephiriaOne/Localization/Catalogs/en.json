@@ -1,4 +1,9 @@
 {
+  "Block Zombie HP potions": "Block Zombie HP potions",
+  "Block Zombie HP potions: {0}.": "Block Zombie HP potions: {0}.",
+  "Zombies cannot use HP potions.": "Zombies cannot use HP potions.",
+  "Zombie HP-potion restriction unavailable: potion compatibility checks failed. See Player.log.": "Zombie HP-potion restriction unavailable: potion compatibility checks failed. See Player.log.",
+  "Zombie HP potions: /one zombie block-hp on|off|reset (default on). Blocks Small, Large and Sample HP potions for current Zombies; Humans retain PvP potion rules.": "Zombie HP potions: /one zombie block-hp on|off|reset (default on). Blocks Small, Large and Sample HP potions for current Zombies; Humans retain PvP potion rules.",
   "- <indent=10>Outside PvP, HP potions except Potion of Regeneration (Sample) are not consumed and bypass Tension (requires one potion). In PvP, unlimited use requires the general Infinite PvP HP potions option.</indent>": "- <indent=10>Outside PvP, HP potions except Potion of Regeneration (Sample) are not consumed and bypass Tension (requires one potion). In PvP, unlimited use requires the general Infinite PvP HP potions option.</indent>",
   "Unlimited HP outside PvP; PvP uses its own option": "Unlimited HP outside PvP; PvP uses its own option",
   "Rapid hits: /one friendlyfire rapid window 0.1..10; rate 0.1..100; exponent 0..2; burst 1..100; recovery on|off|reset; interval 0.1..60 (up to 2 decimals). Periodic recovery defaults on / 1s. Each number accepts reset; rapid reset restores all rapid settings, leaving continuous refill unchanged.": "Rapid hits: /one friendlyfire rapid window 0.1..10; rate 0.1..100; exponent 0..2; burst 1..100; recovery on|off|reset; interval 0.1..60 (up to 2 decimals). Periodic recovery defaults on / 1s. Each number accepts reset; rapid reset restores all rapid settings, leaving continuous refill unchanged.",
@@ -993,7 +998,7 @@
   "Teleport requested for {0} player(s); {1} skipped; {2} failed. Destination: host position.": "Teleport requested for {0} player(s); {1} skipped; {2} failed. Destination: host position.",
   "Elemental stat limits: /one friendlyfire elements on|off|reset; elements physical|flame|ice|lightning limits <soft> <hard>; elements <element> reset. Default on, soft 50, hard 100 per element. Use 0..10000 with up to 2 decimals and soft <= hard. Effective participant stats while PvP balancing is on; participant PvE damage is also affected. Saved stats stay unchanged.": "Elemental stat limits: /one friendlyfire elements on|off|reset; elements physical|flame|ice|lightning limits <soft> <hard>; elements <element> reset. Default on, soft 50, hard 100 per element. Use 0..10000 with up to 2 decimals and soft <= hard. Effective participant stats while PvP balancing is on; participant PvE damage is also affected. Saved stats stay unchanged.",
   "Elemental stat limits: {0}; Physical {1}/{2}, Flame {3}/{4}, Ice {5}/{6}, Lightning {7}/{8} (soft/hard). Effective participant stats while PvP balancing is on; participant PvE damage is also affected. Saved stats stay unchanged.": "Elemental stat limits: {0}; Physical {1}/{2}, Flame {3}/{4}, Ice {5}/{6}, Lightning {7}/{8} (soft/hard). Effective participant stats while PvP balancing is on; participant PvE damage is also affected. Saved stats stay unchanged.",
-  "[Z] Movement speed: 80%.": "[Z] Movement speed: 80%.",
+  "[Z] Movement speed: 70%.": "[Z] Movement speed: 70%.",
   "Elemental stat limits": "Elemental stat limits",
   "Soft limit": "Soft limit",
   "Hard limit": "Hard limit",

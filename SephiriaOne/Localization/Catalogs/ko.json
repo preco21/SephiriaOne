@@ -1,4 +1,9 @@
 {
+  "Block Zombie HP potions": "좀비 HP 포션 사용 금지",
+  "Block Zombie HP potions: {0}.": "좀비 HP 포션 사용 금지: {0}.",
+  "Zombies cannot use HP potions.": "좀비는 HP 포션을 사용할 수 없습니다.",
+  "Zombie HP-potion restriction unavailable: potion compatibility checks failed. See Player.log.": "좀비 HP 포션 제한을 사용할 수 없습니다. 포션 호환성 검사에 실패했습니다. Player.log를 확인하세요.",
+  "Zombie HP potions: /one zombie block-hp on|off|reset (default on). Blocks Small, Large and Sample HP potions for current Zombies; Humans retain PvP potion rules.": "좀비 HP 포션: /one zombie block-hp on|off|reset (기본 켜짐). 현재 좀비의 소형·대형·샘플 HP 포션 사용을 차단합니다. 인간은 PvP 포션 설정을 따릅니다.",
   "- <indent=10>Outside PvP, HP potions except Potion of Regeneration (Sample) are not consumed and bypass Tension (requires one potion). In PvP, unlimited use requires the general Infinite PvP HP potions option.</indent>": "- <indent=10>PvP 외에는 재생의 포션 (맛보기 샘플)을 제외한 HP 포션을 소모하지 않으며, 긴장으로 인한 보스 전투 중 포션 사용 제한을 무시합니다(포션 1개 필요). PvP에서는 일반 PvP HP 포션 무제한 설정을 따릅니다.</indent>",
   "Unlimited HP outside PvP; PvP uses its own option": "PvP 외 HP 포션 무한 사용; PvP는 별도 설정 적용",
   "Rapid hits: /one friendlyfire rapid window 0.1..10; rate 0.1..100; exponent 0..2; burst 1..100; recovery on|off|reset; interval 0.1..60 (up to 2 decimals). Periodic recovery defaults on / 1s. Each number accepts reset; rapid reset restores all rapid settings, leaving continuous refill unchanged.": "연속 타격: /one friendlyfire rapid window 0.1..10; rate 0.1..100; exponent 0..2; burst 1..100; recovery on|off|reset; interval 0.1..60 (소수 둘째 자리까지). 주기적 회복 기본 켜짐 / 1초. 각 수치는 reset으로 초기화합니다. rapid reset은 연속 회복률을 유지하고 연속 타격 설정 전체를 초기화합니다.",
@@ -993,7 +998,7 @@
   "Teleport requested for {0} player(s); {1} skipped; {2} failed. Destination: host position.": "호스트 위치로 순간이동 요청: {0}명, 제외: {1}명, 실패: {2}명.",
   "Elemental stat limits: /one friendlyfire elements on|off|reset; elements physical|flame|ice|lightning limits <soft> <hard>; elements <element> reset. Default on, soft 50, hard 100 per element. Use 0..10000 with up to 2 decimals and soft <= hard. Effective participant stats while PvP balancing is on; participant PvE damage is also affected. Saved stats stay unchanged.": "속성 능력치 제한: /one friendlyfire elements on|off|reset; elements physical|flame|ice|lightning limits <시작> <최대>; elements <속성> reset. 기본 켜짐, 각 속성 완화 시작 50, 최대 100. 0..10000, 소수 둘째 자리까지, 시작 <= 최대. PvP 밸런싱 중 참가자의 유효 능력치에 적용되며 PvE 피해에도 영향을 줍니다. 저장된 능력치는 유지됩니다.",
   "Elemental stat limits: {0}; Physical {1}/{2}, Flame {3}/{4}, Ice {5}/{6}, Lightning {7}/{8} (soft/hard). Effective participant stats while PvP balancing is on; participant PvE damage is also affected. Saved stats stay unchanged.": "속성 능력치 제한: {0}; 물리 {1}/{2}, 화염 {3}/{4}, 냉기 {5}/{6}, 번개 {7}/{8} (완화 시작/최대). PvP 밸런싱 중 참가자의 유효 능력치에 적용되며 PvE 피해에도 영향을 줍니다. 저장된 능력치는 유지됩니다.",
-  "[Z] Movement speed: 80%.": "[Z] 좀비 이동 속도: 80%.",
+  "[Z] Movement speed: 70%.": "[Z] 이동 속도: 70%.",
   "Elemental stat limits": "속성 능력치 제한",
   "Soft limit": "완화 시작",
   "Hard limit": "최대 제한",

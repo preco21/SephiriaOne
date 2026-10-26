@@ -15,6 +15,7 @@ void Check(string name, Action action)
     FriendlyFireParticipants.Selected.Clear();
     FriendlyFireFeature.Available = true;
     CombatMatchRuntime.ParticipantRule = null;
+    CombatMatchRuntime.ZombiePotionRule = null;
     try { action(); Console.WriteLine("PASS " + name); passed++; }
     catch (Exception error) { Console.WriteLine("FAIL " + name + ": " + error); failed++; }
     finally { RabbitPotionFeature.Shutdown(); }
@@ -33,6 +34,7 @@ void Assert(bool ok, string reason) { if (!ok) throw new Exception(reason); }
 void Install() { RabbitPotionFeature.Initialize(); Assert(RabbitPotionFeature.Available, "Hook unavailable"); }
 
 TensionTests.Run(Check, Assert, Setup, Install);
+ZombiePotionTests.Run(Check, Assert, Setup, Install);
 PvpSharedHealTests.Run(Check, Assert, () => Setup(), Install);
 PvpInfinitePotionTests.Run(Check, Assert, Setup, Install);
 Check("PvP infinite HP potion works without Rabbit costume or options", () =>

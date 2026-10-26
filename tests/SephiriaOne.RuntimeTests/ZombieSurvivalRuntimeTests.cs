@@ -44,8 +44,14 @@ internal static class ZombieSurvivalRuntimeTests
         var zombie = all.Single(CombatMatchRuntime.IsActiveZombie);
         var humans = all.Where(p => p != zombie).ToArray();
         bool NormalSpeed(PlayerAvatar p) => Math.Abs(p.moveSpeed - 4.4f) < .00001f;
-        bool ZombieSpeed(PlayerAvatar p) => Math.Abs(p.moveSpeed - 4.4f * .8f) < .00001f;
-        check(ZombieSpeed(zombie) && humans.All(NormalSpeed), "Only the initial Zombie has 20% slower synchronized base movement");
+        bool ZombieSpeed(PlayerAvatar p) => Math.Abs(p.moveSpeed - 4.4f * .7f) < .00001f;
+        check(ZombieSpeed(zombie) && humans.All(NormalSpeed), "Only the initial Zombie has 30% slower synchronized base movement");
+        check(CombatMatchRuntime.BlocksZombieHpPotions(zombie) && humans.All(p => !CombatMatchRuntime.BlocksZombieHpPotions(p)),
+            "Only current Zombie faction blocks HP potion admission");
+        check(SettingsActions.Execute("/one zombie block-hp off").Success && !CombatMatchRuntime.BlocksZombieHpPotions(zombie) &&
+            CombatMatchRuntime.IsZombieSurvival, "Live restriction toggle does not stop the match");
+        check(SettingsActions.Execute("/one zombie block-hp reset").Success && CombatMatchRuntime.BlocksZombieHpPotions(zombie),
+            "Reset immediately restores default Zombie restriction");
         int speedWrites = zombie.MovementWrites;
         for (int i = 0; i < 50; i++) CombatMatchRuntime.Tick();
         check(zombie.MovementWrites == speedWrites && ZombieSpeed(zombie), "Stable ticks do not stack the penalty or send more speed updates");
@@ -54,11 +60,13 @@ internal static class ZombieSurvivalRuntimeTests
             !CombatMatchRuntime.AllowsPair(humans[0], humans[1]) && !CombatMatchRuntime.AllowsPair(zombie, zombie), "Only opposite teams are hostile");
         var late = add(20).PlayerAvatar;
         check(NormalSpeed(late), "Late spectators keep normal movement");
+        check(!CombatMatchRuntime.BlocksZombieHpPotions(late), "Spectators cannot inherit Zombie potion restriction");
         check(!CombatMatchRuntime.AllowsPair(zombie, late) && !CombatMatchRuntime.AllowsParticipant(late), "Late joiner is a spectator");
         check(CombatMatchRuntime.RefillRoleScale(zombie) == 3 && CombatMatchRuntime.IncomingRoleScale(zombie) == .3 &&
             CombatMatchRuntime.RefillRoleScale(humans[0]) == 1, "Zombie modifiers are independent active-role values");
         Kill(zombie, humans[0]);
         check(ZombieSpeed(humans[0]), "Conversion owns the speed penalty before the native respawn");
+        check(CombatMatchRuntime.BlocksZombieHpPotions(humans[0]), "Conversion blocks HP drinks immediately, before revival");
         check(ZombieRoleVisuals.Visible.Contains(humans[0]), "Infection indicator starts during pending conversion and follows the corpse");
         check(humans[0].IsDead && !CombatMatchRuntime.IsActiveZombie(humans[0]) &&
             !CombatMatchRuntime.AllowsPair(humans[0], humans[1]), "Infected Human is not combat active before revival");
@@ -90,6 +98,7 @@ internal static class ZombieSurvivalRuntimeTests
         check(all.All(p => CombatMatchRuntime.IncomingRoleScale(p) == 1 && CombatMatchRuntime.RefillRoleScale(p) == 1), "End removes every role bonus immediately");
         check(ZombieRoleVisuals.Visible.Count == 0, "Natural conclusion removes every Zombie visual");
         check(all.All(NormalSpeed), "Natural conclusion immediately restores every original movement speed");
+        check(all.All(p => !CombatMatchRuntime.BlocksZombieHpPotions(p)), "Natural conclusion removes all faction potion restrictions");
 
         all = New(2); Begin(); zombie = all.Single(CombatMatchRuntime.IsActiveZombie); var reflectedHuman = all.Single(p => p != zombie);
         // Native OnHit reflection can finish the Human death before the outer
@@ -152,6 +161,7 @@ internal static class ZombieSurvivalRuntimeTests
             check(!CombatMatchRuntime.IsRunning && CombatMatchRuntime.IncomingRoleScale(zombie) == 1, "Zombie cleanup on " + interrupt);
             check(ZombieRoleVisuals.Visible.Count == 0, "Zombie visual cleanup on " + interrupt);
             check(all.All(NormalSpeed), "Speed restores on " + interrupt);
+            check(all.All(p => !CombatMatchRuntime.BlocksZombieHpPotions(p)), "Potion admission restores on " + interrupt);
             if (interrupt is "selection" or "toggle" or "stop") check(!human.IsDead, "Stop recovers pending Human on " + interrupt);
         }
         all = New(); Begin(); zombie = all.Single(CombatMatchRuntime.IsActiveZombie); human = all.First(p => p != zombie);
@@ -163,9 +173,9 @@ internal static class ZombieSurvivalRuntimeTests
         all = New();
         foreach (var player in all) player.NetworkmoveSpeed = 7.25f;
         Begin(); zombie = all.Single(CombatMatchRuntime.IsActiveZombie);
-        check(Math.Abs(zombie.moveSpeed - 5.8f) < .00001f, "Penalty uses the actual baseline, not a hardcoded native speed");
+        check(Math.Abs(zombie.moveSpeed - 5.075f) < .00001f, "Penalty uses the actual baseline, not a hardcoded native speed");
         zombie.NetworkmoveSpeed = 10f; At(4);
-        check(zombie.moveSpeed == 8f, "External base-speed replacement is scaled once from its new value");
+        check(zombie.moveSpeed == 7f, "External base-speed replacement is scaled once from its new value");
         CombatMatchRuntime.Stop(true, false);
         check(zombie.moveSpeed == 10f && all.Where(p => p != zombie).All(p => p.moveSpeed == 7.25f),
             "Cleanup restores the latest baseline and leaves other players alone");

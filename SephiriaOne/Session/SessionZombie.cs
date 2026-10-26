@@ -7,6 +7,7 @@ namespace SephiriaOne
         internal static int ZombieDuration => policy.ZombieDuration;
         internal static int ZombieStartingCount => policy.ZombieStartingCount;
         internal static bool ZombieAnyDeath => policy.ZombieAnyDeath;
+        internal static bool ZombieBlockHpPotions => policy.ZombieBlockHpPotions;
         internal static bool ZombieDynamicBalance => policy.ZombieDynamicBalance;
         internal static CombatRoleSettings ZombieModifiers => policy.ZombieModifiers;
         internal static bool TrySetZombieDuration(int seconds, out string message)
@@ -24,6 +25,16 @@ namespace SephiriaOne
             if (policy.ZombieAnyDeath != enabled)
             { policy.RecordZombieAnyDeath(enabled); intentRevision++; NotifySettingsChanged(); }
             message = L.F("Convert on any Human death: {0}.", L.T(enabled ? "ON" : "OFF")); return true;
+        }
+        internal static bool TrySetZombieBlockHpPotions(bool enabled, out string message)
+        {
+            message = ZombieSurvivalCommand.Usage;
+            if (!NetworkServer.active || !EnsureResourceScope()) return false;
+            if (enabled && !RabbitPotionFeature.Available)
+            { message = L.T("Zombie HP-potion restriction unavailable: potion compatibility checks failed. See Player.log."); return false; }
+            if (policy.ZombieBlockHpPotions != enabled)
+            { policy.RecordZombieBlockHpPotions(enabled); intentRevision++; NotifySettingsChanged(); }
+            message = L.F("Block Zombie HP potions: {0}.", L.T(enabled ? "ON" : "OFF")); return true;
         }
         internal static bool TrySetZombieStartingCount(int count, out string message)
         {

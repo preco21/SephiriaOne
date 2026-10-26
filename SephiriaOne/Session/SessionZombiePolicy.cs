@@ -9,9 +9,10 @@ namespace SephiriaOne
         public int ZombieDuration { get; private set; } = ZombieSurvivalSettings.DefaultDuration;
         public int ZombieStartingCount { get; private set; } = ZombieSurvivalSettings.DefaultStartingCount;
         public bool ZombieAnyDeath { get; private set; }
+        public bool ZombieBlockHpPotions { get; private set; } = true;
         public bool ZombieDynamicBalance { get; private set; }
         public CombatRoleSettings ZombieModifiers { get; private set; } = ZombieSurvivalSettings.DefaultModifiers;
-        private bool HasZombieChanges => ZombieDynamicBalance || ZombieDuration != ZombieSurvivalSettings.DefaultDuration || ZombieStartingCount != ZombieSurvivalSettings.DefaultStartingCount || ZombieAnyDeath ||
+        private bool HasZombieChanges => !ZombieBlockHpPotions || ZombieDynamicBalance || ZombieDuration != ZombieSurvivalSettings.DefaultDuration || ZombieStartingCount != ZombieSurvivalSettings.DefaultStartingCount || ZombieAnyDeath ||
             !ZombieModifiers.Equals(ZombieSurvivalSettings.DefaultModifiers);
         public void RecordZombieDuration(int seconds)
         {
@@ -19,6 +20,7 @@ namespace SephiriaOne
             ZombieDuration = seconds;
         }
         public void RecordZombieAnyDeath(bool value) => ZombieAnyDeath = value;
+        public void RecordZombieBlockHpPotions(bool value) => ZombieBlockHpPotions = value;
         public void RecordZombieDynamicBalance(bool value) => ZombieDynamicBalance = value;
         public void RecordZombieStartingCount(int count)
         {
@@ -27,12 +29,13 @@ namespace SephiriaOne
         }
         public void RecordZombieModifiers(CombatRoleSettings settings) => ZombieModifiers = settings;
         private void ClearZombieSettings()
-        { ZombieDuration = ZombieSurvivalSettings.DefaultDuration; ZombieStartingCount = ZombieSurvivalSettings.DefaultStartingCount; ZombieAnyDeath = false; ZombieDynamicBalance = false; ZombieModifiers = ZombieSurvivalSettings.DefaultModifiers; }
+        { ZombieDuration = ZombieSurvivalSettings.DefaultDuration; ZombieStartingCount = ZombieSurvivalSettings.DefaultStartingCount; ZombieAnyDeath = false; ZombieBlockHpPotions = true; ZombieDynamicBalance = false; ZombieModifiers = ZombieSurvivalSettings.DefaultModifiers; }
         private void DescribeZombieSettings(List<string> lines)
         {
             if (ZombieDuration != ZombieSurvivalSettings.DefaultDuration) lines.Add("zombie duration " + ZombieDuration.ToString(CultureInfo.InvariantCulture));
             if (ZombieStartingCount != ZombieSurvivalSettings.DefaultStartingCount) lines.Add("zombie count " + ZombieStartingCount.ToString(CultureInfo.InvariantCulture));
             if (ZombieAnyDeath) lines.Add("zombie any-death 1");
+            if (!ZombieBlockHpPotions) lines.Add("zombie block-hp 0");
             if (ZombieDynamicBalance) lines.Add("zombie dynamic 1");
             if (!ZombieModifiers.RefillEnabled) lines.Add("zombie refill-enabled 0");
             if (ZombieModifiers.RefillMultiplier != ZombieSurvivalSettings.DefaultRefillMultiplier) lines.Add("zombie refill " + ZombieModifiers.RefillNumber);
@@ -44,6 +47,9 @@ namespace SephiriaOne
             if (text != value.ToString("0.##", CultureInfo.InvariantCulture)) return false;
             switch (key)
             {
+                case "block-hp":
+                    if (value != 0 && value != 1) return false;
+                    RecordZombieBlockHpPotions(value == 1); return true;
                 case "dynamic":
                     if (value != 0 && value != 1) return false;
                     RecordZombieDynamicBalance(value == 1); return true;

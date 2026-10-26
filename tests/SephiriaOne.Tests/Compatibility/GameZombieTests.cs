@@ -56,7 +56,12 @@ internal static class GameZombieTests
             Calls("CombatMatchRuntime", "UpdateZombieMovement", "CombatMatchRuntime", "IsZombieVisualCurrent") &&
             Calls("CombatMatchRuntime", "ClearZombie", "ZombieMovementSpeed", "Update"),
             "Movement uses replicated values, existing role/receipt gating and common cleanup");
-        Require(panel.Any(i => Equals(i.operand, "[Z] Movement speed: 80%.")), "Zombie panel discloses the fixed movement rule");
+        Require(panel.Any(i => Equals(i.operand, "[Z] Movement speed: 70%.")), "Zombie panel discloses the fixed movement rule");
+        Require(panel.Any(i => Equals(i.operand, "/one zombie block-hp")) &&
+            Calls("RabbitPotionNativeHooks", "AllowZombiePotionUse", "CombatMatchRuntime", "BlocksZombieHpPotions") &&
+            Calls("RabbitPotionNativeHooks", "RejectZombiePotionCompletion", "CombatMatchRuntime", "BlocksZombieHpPotions") &&
+            Calls("RabbitPotionNativeHooks", "DrinkAtCompletion", "RabbitPotionNativeHooks", "RejectZombiePotionCompletion"),
+            "Zombie potion UI and both native admission/completion paths share live faction policy");
         Console.WriteLine("Verified Zombie base movement replication, native walk/run composition and owned role cleanup (not live movement).");
         Console.WriteLine("Verified Zombie shared hostility, role modifiers, native callback and panel wiring (not live multiplayer).");
     }

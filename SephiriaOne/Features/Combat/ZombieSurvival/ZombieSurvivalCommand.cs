@@ -7,7 +7,8 @@ namespace SephiriaOne
     {
         internal static string Usage => L.T("Zombie Survival: /one zombie start|stop|resetkda|status|help; duration 3..3600|reset (default 120s); count N|reset (positive integer, default 1); any-death on|off|reset (default off). Duration and count apply to the next match; count leaves at least one Human. Other settings apply live. /one save stores settings.") + " " +
             L.T("Zombie bonuses: /one zombie refill on|off|xN|N|reset (0.1..10, default x3); damage on|off|N%|N|reset (0..100, default 30%). Both default on; up to 2 decimals. Refill requires PvP balancing.") + " " +
-            L.T("Dynamic Balancing: /one zombie dynamic on|off|reset (default off). Favors the minority, neutral at equal teams. Zombie refill x0.5..1.5; Zombie incoming damage 80..160%; Human incoming damage 60..100%. Changes ease over about 3s. Incoming switch controls both teams; manual values return when disabled.");
+            L.T("Dynamic Balancing: /one zombie dynamic on|off|reset (default off). Favors the minority, neutral at equal teams. Zombie refill x0.5..1.5; Zombie incoming damage 80..160%; Human incoming damage 60..100%. Changes ease over about 3s. Incoming switch controls both teams; manual values return when disabled.") + " " +
+            L.T("Zombie HP potions: /one zombie block-hp on|off|reset (default on). Blocks Small, Large and Sample HP potions for current Zombies; Humans retain PvP potion rules.");
         internal static string DescribeHumanModifier() => L.F("[H] Incoming damage: {0}%.",
             (CombatMatchRuntime.ZombieHumanIncomingScale * 100).ToString("0.##", CultureInfo.InvariantCulture));
         internal static string DescribeModifiers()
@@ -25,7 +26,8 @@ namespace SephiriaOne
                 L.T(settings.IncomingEnabled ? "ON" : "OFF"), incoming) + " " +
                 (SessionSettings.ZombieDynamicBalance ? DescribeHumanModifier() + " " : "") +
                 L.F("Convert on any Human death: {0}.", L.T(SessionSettings.ZombieAnyDeath ? "ON" : "OFF")) + " " +
-                L.T("[Z] Movement speed: 80%.");
+                L.T("[Z] Movement speed: 70%.") + " " +
+                L.F("Block Zombie HP potions: {0}.", L.T(SessionSettings.ZombieBlockHpPotions ? "ON" : "OFF"));
         }
         internal static bool Execute(string[] parts, out bool success, out string message)
         {
@@ -62,11 +64,12 @@ namespace SephiriaOne
                 else if (int.TryParse(parts[3], NumberStyles.None, CultureInfo.InvariantCulture, out int count) && ZombieSurvivalSettings.ValidStartingCount(count))
                     success = SessionSettings.TrySetZombieStartingCount(count, out message);
             }
-            else if (parts.Length == 4 && (op == "any-death" || op == "dynamic"))
+            else if (parts.Length == 4 && (op == "any-death" || op == "dynamic" || op == "block-hp"))
             {
                 string value = parts[3].ToLowerInvariant();
                 if (value == "on" || value == "off" || value == "reset")
-                    success = op == "dynamic" ? SessionSettings.TrySetZombieDynamicBalance(value == "on", out message) :
+                    success = op == "block-hp" ? SessionSettings.TrySetZombieBlockHpPotions(value != "off", out message) :
+                        op == "dynamic" ? SessionSettings.TrySetZombieDynamicBalance(value == "on", out message) :
                         SessionSettings.TrySetZombieAnyDeath(value == "on", out message);
             }
             else if (parts.Length == 4 && (op == "refill" || op == "damage"))

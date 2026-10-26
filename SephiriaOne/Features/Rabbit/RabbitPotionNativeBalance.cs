@@ -79,6 +79,7 @@ namespace SephiriaOne
         {
             // This call stays inside the validated native catch-all, before both controller event and decrement.
             // No state is reserved at animation start, so cancellation cannot charge or replay anything.
+            RejectZombiePotionCompletion(potion);
             DrinkContext context = CaptureContext(potion, instanceId, allowDead: true);
             // A pending animation may reach the native consumer after death. Reject before any
             // event or MP charge rather than falling through to unprotected native consumption.
