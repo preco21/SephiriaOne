@@ -3,8 +3,9 @@
 ## Zombie use restriction (0.97.0)
 
 Zombie Survival's default-on `/one zombie block-hp` is a separate **admission**
-rule for current Zombies: Small/Large/Sample HP potions cannot be used, including
-animations that complete after conversion. Humans retain the consumption rules
+rule for current Zombies: Small/Large HP potions cannot be used, including
+animations that complete after conversion. Since 0.98.1, Sample is excluded and
+retains native use/consumption/talent behavior. Humans retain the consumption rules
 below. Entry/respawn supplies remain independent and never grant use permission.
 See [implementation, lifecycle and verification](zombie-survival.md#zombie-hp-potion-restriction-0970).
 

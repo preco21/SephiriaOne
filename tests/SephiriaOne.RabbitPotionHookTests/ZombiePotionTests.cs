@@ -7,7 +7,7 @@ internal static class ZombiePotionTests
         Action install)
     {
         foreach (bool local in new[] { false, true })
-        foreach (int id in new[] { 0, 1, 37 })
+        foreach (int id in new[] { 0, 1 })
         foreach (bool infinite in new[] { false, true })
             check($"Zombie HP admission/completion: potion {id}, host {local}, infinite {infinite}", () =>
             {
@@ -23,6 +23,26 @@ internal static class ZombiePotionTests
                 assert(s.player.Heals.Count == 0 && s.player.mp == 30 && s.item.Quantity == 3 &&
                     survival.StatGains == 0 && s.player.DrinkEvents == 0 && s.controller.CleanupCalls == 1,
                     "Blocked completion must have no gameplay effects and retain native cleanup");
+            });
+        foreach (bool local in new[] { false, true })
+        foreach (bool infinite in new[] { false, true })
+        foreach (bool converted in new[] { false, true })
+            check($"Zombie Sample remains native: host {local}, infinite {infinite}, conversion {converted}", () =>
+            {
+                var s = setup(37, local);
+                var survival = new PassiveObject_PotionAndRandomStat(); survival.Enable(s.player);
+                SessionSettings.RabbitPotionsForUse = new(true, true, true, true, 10);
+                SessionSettings.FriendlyFireForHit = new() { Enabled = true, InfiniteHpPotions = infinite };
+                bool zombie = !converted;
+                CombatMatchRuntime.ZombiePotionRule = _ => zombie;
+                install();
+                if (local) s.controller.UseItemKeyDown(); else s.controller.GuestUseItemKeyDown();
+                assert(s.controller.StartedDrinks == 1, "Sample admission must not be blocked for Zombies");
+                zombie = true;
+                s.controller.RunDrink();
+                assert(s.player.Heals.Count == 1 && s.item.Quantity == 2 && s.player.mp == 30 &&
+                    survival.StatGains == 1 && s.player.DrinkEvents == 1 && s.controller.CleanupCalls == 1,
+                    "Sample heals and is consumed normally, without addon MP charge or Survival suppression, even after conversion");
             });
         foreach (bool infinite in new[] { false, true })
             check("Human conversion and live release preserve PvP potion policy: " + infinite, () =>

@@ -4,9 +4,9 @@ namespace SephiriaOne
 {
     internal static partial class RabbitPotionNativeHooks
     {
-        // Sample remains excluded from Rabbit/PvP infinite, MP and talent overrides.
-        // This separate use restriction covers all three native HP potions.
-        private static bool IsRestrictedZombieHpPotion(int id) => id == 0 || id == 1 || id == 37;
+        // Only Small/Large HP potions are restricted. Sample also stays outside
+        // Rabbit/PvP infinite, MP and talent overrides and retains native use.
+        private static bool IsRestrictedZombieHpPotion(int id) => id == 0 || id == 1;
 
         private static bool AllowZombiePotionUse(ItemController __instance)
         {
@@ -42,6 +42,6 @@ namespace SephiriaOne
         }
 
         private static void NotifyZombiePotionBlocked(PlayerAvatar player) => NativePlayerAlert.Show(player,
-            player.spawner.connectionToClient, L.T("Zombies cannot use HP potions."));
+            player.spawner.connectionToClient, L.T("Zombies cannot use Small or Large HP potions."));
     }
 }

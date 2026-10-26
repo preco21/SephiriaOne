@@ -1,4 +1,4 @@
-# Zombie Survival (0.97.0, 2026-10-27)
+# Zombie Survival (0.98.1, 2026-10-27)
 
 ## Zombie HP-potion restriction (0.97.0)
 
@@ -8,11 +8,13 @@ The **Block Zombie HP potions** checkbox in Zombie Survival defaults on.
 v1–v53 files inherit the default, and older headers reject the new row. No
 faction, pending drink, or match state is persisted.
 
-Small HP (ID 0), Large HP (ID 1), and Regeneration (Sample, ID 37) are blocked
-for current Zombies while the match is active. The sample restriction is an
-admission rule only: Sample remains excluded from Rabbit/PvP infinite-potion,
-MP-cost, and Survival overrides when drinking is allowed. MP/buff potions are
-unaffected. Humans and spectators retain their existing potion rules.
+Since **0.98.1**, only Small HP (ID 0) and Large HP (ID 1) are blocked for
+current Zombies while the match is active. This narrows the original 0.97.0
+scope to match the confirmed preference. Regeneration (Sample, ID 37) remains
+usable and consumable normally, with no addon MP charge or Survival suppression.
+It is excluded at both admission and completion, even if conversion occurs during
+its animation. MP/buff potions are unaffected. Humans and spectators retain their
+existing potion rules.
 Automatic Large Potion grants at match entry/respawn remain independent: a
 Zombie may own a potion without being permitted to drink it.
 
@@ -33,7 +35,7 @@ The native alert transport gives the affected host/guest a localized refusal.
 If potion compatibility fails, the panel reports it and disallows enabling the
 restriction; disabling remains available. Other Zombie systems remain usable.
 
-Verification: Release build (zero warnings/errors), 14,578 runtime checks plus
+Initial 0.97.0 verification: Release build (zero warnings/errors), 14,578 runtime checks plus
 69 Bat lifecycle checks, 410 potion-hook cases plus 12 localized alert checks,
 EN/KO catalog checks, panel checks, and full installed-game compatibility runner.
 Fixtures cover live on/off/reset, host authority, presets/legacy rows, Humans,
@@ -42,6 +44,12 @@ match completion/interruption, and movement restoration/reconciliation. Installe
 contracts verify existing stock-client movement serialization and native potion
 admission/completion/cleanup. These are not live host/guest gameplay tests.
 Build/test commands used `-p:DeployMod=false`; no deployment was performed.
+
+Scope correction 0.98.1: native-hook regression cases cover host/guest Sample
+admission and completion, conversion during its animation, both general PvP
+infinite settings, and all Rabbit overrides enabled. Sample heals and consumes
+normally, charges no addon MP, and permits Survival. Small/Large admission and
+completion blocks remain covered. The default-on policy and presets are unchanged.
 
 ## Zombie movement penalty (0.97.0)
 
