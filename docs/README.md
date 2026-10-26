@@ -1,5 +1,10 @@
 # Development knowledge index
 
+[Authoritative PvP potion consumption](pvp-potions.md#authoritative-pvp-consumption-0962-2026-10-27):
+all active participants, including Rabbit, follow only Infinite PvP HP potions.
+Retired costume bypass is removed from UI/state and ignored in legacy presets;
+entry/respawn supplies stay independent. Live callback/death guards preserved.
+
 [PvP participant lookup optimization](performance-review.md#cached-pvp-participant-admission-0961-2026-10-26):
 cached receipts retain full live validation while avoiding duplicate roster,
 identity and lifetime lookups. Nine-player fixture: Capture about 50% faster,
@@ -30,10 +35,10 @@ lightning/ice/EX strike to ready same-floor cloud observers, including guests
 without the addon. Owner FX/audio stays single; the range ring remains owner-only.
 Scoped routing and installed-game contracts verified; live guest rendering pending.
 
-[Rabbit infinite-potion PvP override](pvp-potions.md#rabbit-costume-override-0940):
-default-on Combat checkbox and command prevent costume retention from bypassing
-finite PvP potions. Shared participant admission, callback/death guards and preset
-v53; general PvP infinite HP retains priority. No inventory snapshot restoration.
+[Rabbit infinite-potion PvP history](pvp-potions.md#rabbit-costume-override-historical-0940):
+the former v53 opt-out allowed costume retention to bypass finite PvP potions.
+0.96.2 replaces it with unconditional general-option precedence; old presets load
+without that override. No inventory snapshot restoration.
 
 [Zombie movement penalty](zombie-survival.md#zombie-movement-penalty-0931): Zombies
 walk/run at 80% through the native base-speed SyncVar, with role-owned restoration,

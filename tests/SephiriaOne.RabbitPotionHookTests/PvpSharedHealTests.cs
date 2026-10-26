@@ -12,12 +12,12 @@ internal static class PvpSharedHealTests
             {
                 var source = setup(); var recipient = new PlayerAvatar(); _ = new PlayerSpawner(recipient);
                 SessionSettings.RabbitPotionsForUse = new(true, true, true, true, blockPvpShare: false);
-                SessionSettings.FriendlyFireForHit = new() { Enabled = true, Balance = balance, BlockRabbitInfinite = false };
+                SessionSettings.FriendlyFireForHit = new() { Enabled = true, Balance = balance };
                 if (active != "recipient") FriendlyFireParticipants.Selected.Add(source.player);
                 if (active != "source") FriendlyFireParticipants.Selected.Add(recipient);
                 install(); source.controller.RunDrink();
                 assert(recipient.Heals.Count == 1 && recipient.HealVisuals == 1 && source.player.Heals.Count == 1 &&
-                    source.player.mp == 20 && source.item.Quantity == 3, "Opt-out enables heal/FX and preserves other potion behaviors");
+                    source.player.mp == 20 && source.item.Quantity == (active == "recipient" ? 3 : 2), "Sharing opt-out changes heal/FX, never the PvP consumption rule");
                 SessionSettings.RabbitPotionsForUse = SessionSettings.RabbitPotionsForUse.Apply(new(RabbitOption.BlockPvpShare, true));
                 source.controller.RunDrink();
                 assert(recipient.Heals.Count == 1 && recipient.HealVisuals == 1, "Re-enabling the restriction applies on next drink");
@@ -52,13 +52,13 @@ internal static class PvpSharedHealTests
                 var source = setup();
                 var recipient = new PlayerAvatar(); _ = new PlayerSpawner(recipient);
                 SessionSettings.RabbitPotionsForUse = new(true, true, true, true);
-                SessionSettings.FriendlyFireForHit = new() { Enabled = true, Balance = balance, BlockRabbitInfinite = false };
+                SessionSettings.FriendlyFireForHit = new() { Enabled = true, Balance = balance };
                 if (active != "recipient") FriendlyFireParticipants.Selected.Add(source.player);
                 if (active != "source") FriendlyFireParticipants.Selected.Add(recipient);
                 install(); source.controller.RunDrink();
                 assert(recipient.Heals.Count == 0 && recipient.HealVisuals == 0,
                     "PvP participant must not send or receive shared potion healing/FX");
-                assert(source.player.Heals.Count == 1 && source.player.mp == 20 && source.item.Quantity == 3,
+                assert(source.player.Heals.Count == 1 && source.player.mp == 20 && source.item.Quantity == (active == "recipient" ? 3 : 2),
                     "PvP sharing restriction must preserve self healing, MP fee and infinite potion");
                 SessionSettings.FriendlyFireForHit = default;
                 source.controller.RunDrink();

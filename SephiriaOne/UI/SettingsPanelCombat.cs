@@ -34,8 +34,7 @@ namespace SephiriaOne
                 s => s.FriendlyFireAvailable && LargePotionGrant.Available, "/one friendlyfire auto-potion");
             AddCheckbox("Infinite PvP HP potions", 16, 202, 273, 21, s => s.FriendlyFire.InfiniteHpPotions,
                 s => s.FriendlyFireAvailable && RabbitPotionFeature.Available, "/one friendlyfire infinite-hp");
-            AddCheckbox("Block Rabbit infinite HP in PvP", 16, 228, 273, 21, s => s.FriendlyFire.BlockRabbitInfinite,
-                s => s.FriendlyFireAvailable && RabbitPotionFeature.Available, "/one friendlyfire block-rabbit-infinite", recoveryValue: true);
+            widgets.Text(pageRoot, "PvpPotionPolicy", "PvP potion consumption also applies to Rabbit. Grants are separate.", 16, 228, 273, 42, 10);
         }
 
         private void BuildFriendlyDamageEditor()

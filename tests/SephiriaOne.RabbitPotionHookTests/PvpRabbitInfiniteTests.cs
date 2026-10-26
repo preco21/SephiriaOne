@@ -9,23 +9,39 @@ internal static class PvpRabbitInfiniteTests
         foreach (int id in new[] { 0, 1, 37 })
         foreach (bool local in new[] { false, true })
         foreach (bool general in new[] { false, true })
-        foreach (bool block in new[] { false, true })
+        foreach (bool costumeInfinite in new[] { false, true })
         foreach (bool balance in new[] { false, true })
-            check($"Rabbit PvP precedence {id}/{local}/{general}/{block}/{balance}", () =>
+            check($"Rabbit PvP precedence {id}/{local}/{general}/{costumeInfinite}/{balance}", () =>
             {
                 var s = setup(id, local);
-                SessionSettings.RabbitPotionsForUse = new(true, false, true, true, 10);
+                SessionSettings.RabbitPotionsForUse = new(costumeInfinite, false, true, true, 10);
                 SessionSettings.FriendlyFireForHit = new() { Enabled = true, InfiniteHpPotions = general,
-                    BlockRabbitInfinite = block, Balance = balance };
+                    Balance = balance };
                 var survival = new PassiveObject_PotionAndRandomStat(); survival.Enable(s.player);
                 install(); s.controller.RunDrink();
-                bool retained = id != 37 && (general || !block);
+                bool retained = id != 37 && general;
                 assert(s.item.Quantity == (retained ? 3 : 2) && s.player.Heals.Count == 1,
-                    "General infinite takes priority; Sample always consumes; restricted Rabbit drinks consume natively");
+                    "PvP alone controls retention regardless of costume retention; Sample always consumes");
                 assert(s.player.mp == (id == 37 || general ? 30 : 20) && survival.StatGains == (id == 37 ? 1 : 0),
-                    "The override does not alter separate Rabbit MP/Survival rules; general PvP infinite remains free and suppressed");
+                    "Separate Rabbit MP/Survival rules remain; infinite PvP drinks are always free and suppressed");
             });
-        foreach (string transition in new[] { "death", "end", "disable-restriction", "spectator" })
+        check("Live PvP toggle controls Rabbit without changing its costume options", () =>
+        {
+            var s = setup(1, false);
+            SessionSettings.RabbitPotionsForUse = new(true, false);
+            var survival = new PassiveObject_PotionAndRandomStat(); survival.Enable(s.player);
+            SessionSettings.FriendlyFireForHit = new() { Enabled = true, InfiniteHpPotions = true };
+            install(); s.controller.RunDrink();
+            assert(s.item.Quantity == 3 && survival.StatGains == 0, "Infinite PvP retains and suppresses Survival together");
+            SessionSettings.FriendlyFireForHit = new() { Enabled = true, InfiniteHpPotions = false };
+            s.controller.RunDrink();
+            assert(s.item.Quantity == 2 && survival.StatGains == 1, "Finite PvP consumes and keeps native Survival when costume suppression is off");
+            SessionSettings.FriendlyFireForHit = new() { Enabled = true, InfiniteHpPotions = true };
+            s.controller.RunDrink();
+            assert(s.item.Quantity == 2 && survival.StatGains == 1 && s.player.mp == 30,
+                "Re-enabling infinite PvP retains existing potion without restoring spent quantities or charging MP");
+        });
+        foreach (string transition in new[] { "death", "end", "enable-infinite", "spectator" })
             check("Finite Rabbit drink remains finite across callback: " + transition, () =>
             {
                 var s = setup(1, false);
@@ -35,20 +51,20 @@ internal static class PvpRabbitInfiniteTests
                 {
                     if (transition == "death") { s.player.IsDead = true; s.controller.currentWieldingItem = null; }
                     if (transition == "end") SessionSettings.FriendlyFireForHit = default;
-                    if (transition == "disable-restriction") SessionSettings.FriendlyFireForHit = new() { Enabled = true, BlockRabbitInfinite = false };
+                    if (transition == "enable-infinite") SessionSettings.FriendlyFireForHit = new() { Enabled = true, InfiniteHpPotions = true };
                     if (transition == "spectator") CombatMatchRuntime.ParticipantRule = _ => false;
                 };
                 install(); s.controller.RunDrink();
                 assert(s.item.Quantity == 2 && s.player.Heals.Count == 1, "Callback cannot retroactively retain a finite drink");
             });
-        check("Restriction takes effect at completion and restores only ability on exit", () =>
+        check("PvP takes precedence over a PvE drink and restores only ability on exit", () =>
         {
             var s = setup(0, false);
             SessionSettings.RabbitPotionsForUse = new(true, false);
-            SessionSettings.FriendlyFireForHit = new() { Enabled = true, BlockRabbitInfinite = false };
+            SessionSettings.FriendlyFireForHit = default;
             s.player.OnPotionEvent = () => SessionSettings.FriendlyFireForHit = new() { Enabled = true };
             install(); s.controller.RunDrink();
-            assert(s.item.Quantity == 2, "Live enable blocks a drink admitted before restriction");
+            assert(s.item.Quantity == 2, "Entering finite PvP blocks costume retention admitted outside PvP");
             s.player.OnPotionEvent = null;
             SessionSettings.FriendlyFireForHit = default;
             s.controller.RunDrink();

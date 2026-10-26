@@ -21,9 +21,9 @@ internal static class TensionTests
                 SessionSettings.FriendlyFireForHit = new() { Enabled = true, InfiniteHpPotions = general };
                 install(); s.controller.GuestUseItemKeyDown();
                 assert(s.controller.StartedDrinks == 0 && s.controller.BlockedNotices == 1, "Restricted costume ability does not bypass Tension");
-                SessionSettings.FriendlyFireForHit = new() { Enabled = true, InfiniteHpPotions = general, BlockRabbitInfinite = false };
+                SessionSettings.FriendlyFireForHit = default;
                 s.controller.GuestUseItemKeyDown();
-                assert(s.controller.StartedDrinks == 1, "Opt-out restores costume Tension exemption");
+                assert(s.controller.StartedDrinks == 1, "Leaving PvP restores costume Tension exemption");
             });
         foreach (bool local in new[] { true, false })
         foreach (int id in new[] { 0, 1 })

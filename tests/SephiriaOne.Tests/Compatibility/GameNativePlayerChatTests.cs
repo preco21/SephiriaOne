@@ -30,16 +30,17 @@ internal static class GameNativePlayerChatTests
         Type role = addon.GetType("SephiriaOne.CostumeRoleText", true)!;
         Type potionSettings = addon.GetType("SephiriaOne.RabbitPotionSettings", true)!;
         object options = Activator.CreateInstance(potionSettings, new object[] { true, true, true, false, 37, true, true })!;
-        var clauses = (List<string>)AccessTools.DeclaredMethod(role, "Rabbit").Invoke(null, new[] { options, true, true, true })!;
+        var clauses = (List<string>)AccessTools.DeclaredMethod(role, "Rabbit").Invoke(null, new[] { options, true, true })!;
         Require(string.Join(" ", clauses).Contains("Unlimited HP outside PvP"), "role notice discloses costume infinite PvP restriction");
         var pack = AccessTools.DeclaredMethod(role, "Pack");
         var roleLines = (List<string>)pack.Invoke(null, new object[] { clauses })!;
         Require(string.Join(" ", roleLines).Contains("37 MP") && string.Join(" ", roleLines).Contains("5 tiles"),
             "role notice uses active fee and actual shared-heal radius");
         object unrestricted = Activator.CreateInstance(potionSettings, new object[] { true, true, true, false, 37, true, false })!;
-        var unrestrictedClauses = (List<string>)AccessTools.DeclaredMethod(role, "Rabbit").Invoke(null, new[] { unrestricted, true, true, false })!;
-        Require(string.Join(" ", unrestrictedClauses).Contains("including PvP") && !string.Join(" ", unrestrictedClauses).Contains("outside PvP"),
-            "role notice reflects current PvP sharing opt-out");
+        var unrestrictedClauses = (List<string>)AccessTools.DeclaredMethod(role, "Rabbit").Invoke(null, new[] { unrestricted, true, true })!;
+        Require(string.Join(" ", unrestrictedClauses).Contains("including PvP") && !string.Join(" ", unrestrictedClauses).Contains("Shared heal outside PvP") &&
+            string.Join(" ", unrestrictedClauses).Contains("Unlimited HP outside PvP"),
+            "sharing opt-out changes only sharing text, not authoritative PvP consumption");
         roleLines.AddRange((List<string>)pack.Invoke(null, new object[] { unrestrictedClauses })!);
         var companionLines = (List<string>)pack.Invoke(null, new object[] { new List<string>
         {

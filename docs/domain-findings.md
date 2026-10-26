@@ -11,13 +11,14 @@ The separate range ring is locally gated by `isOwned`. See
 [visual implementation and evidence](dark-cloud-pvp-visuals.md); live rendering
 and audio remain unverified.
 
-Rabbit/PvP potion precedence (`0.94.0`): independent costume retention previously
-bypassed the general PvP infinite-off setting. Gate the costume branch at both
-drink admission and completion using shared `PvpParticipation`; do not implement
-refunds or alternate inventory writes. A finite admitted drink must stay finite
-if a callback ends PvP. The default-on override also gates the costume-specific
-Tension exception; general PvP infinite still grants retention, free MP and
-Survival suppression independently. See [potion policy](pvp-potions.md#rabbit-costume-override-0940).
+Rabbit/PvP potion precedence (`0.96.2`): active participants use one authoritative
+HP consumption rule, selected by `PvpPotionPolicy.RuleFor`. General PvP infinite
+off always consumes; costume retention is available only outside active PvP.
+The former optional Rabbit override is retired, including legacy preset opt-outs.
+A finite/PvP-admitted drink cannot become costume-infinite if a callback ends PvP.
+Keep native completion/death/Survival guards and independently configured
+entry/respawn supplies. No refunds or alternate inventory writes. See
+[potion policy](pvp-potions.md#authoritative-pvp-consumption-0962-2026-10-27).
 
 Zombie movement (`0.93.1`): `UnitAvatar.NetworkmoveSpeed` synchronizes the base
 used by both walk/run consumers, separately from additive equipment/status,

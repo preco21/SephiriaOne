@@ -8,12 +8,12 @@ namespace SephiriaOne
         internal static bool Companion(string id) => id == "Mole" || id == "Squirrel" || id == "Turtle";
         internal static bool Supported(string id) => id == "HolyRabbit" || Companion(id);
 
-        internal static List<string> Rabbit(RabbitPotionSettings settings, bool potions, bool levelUp, bool blockPvpInfinite = false)
+        internal static List<string> Rabbit(RabbitPotionSettings settings, bool potions, bool levelUp)
         {
             var parts = new List<string> { L.T("Wing-Eared Rabbit · Healer") };
             if (potions)
             {
-                if (settings.Infinite) parts.Add(L.T(blockPvpInfinite ? "Unlimited HP outside PvP; PvP uses its own option" : "Unlimited HP potions (requires one)"));
+                if (settings.Infinite) parts.Add(L.T("Unlimited HP outside PvP; PvP uses its own option"));
                 if (settings.ConsumeMp) parts.Add(L.F("HP potion: {0} MP", settings.MpCostPerDrink));
                 if (settings.Share) parts.Add(L.F(settings.BlockPvpShare ? "Shared heal outside PvP: {0} tiles" : "Shared heal (including PvP): {0} tiles", RabbitPotionSettings.ShareRadiusTiles));
                 if (settings.Infinite || settings.ConsumeMp || settings.Share) parts.Add(L.T("Sample excluded"));

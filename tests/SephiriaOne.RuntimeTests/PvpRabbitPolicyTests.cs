@@ -16,13 +16,21 @@ internal static class PvpRabbitPolicyTests
         var all = New(9);
         Command("infinite-hp off"); Command("on");
         check(all.All(PvpPotionPolicy.BlocksRabbitInfinite), "All nine casual participants receive restriction with balancing off");
+        PvpPotionSupplies.Tick();
+        int writes = all.Sum(p => p.Inventory.PotionWrites);
+        Command("infinite-hp on"); PvpPotionSupplies.Tick();
+        Command("infinite-hp off"); PvpPotionSupplies.Tick();
+        check(all.Sum(p => p.Inventory.PotionWrites) == writes && SessionSettings.FriendlyFireForHit.AutoPotion,
+            "Consumption edits do not retrigger automatic supplies or change the grant option");
         FriendlyFireParticipants.Set(FriendlyFireParticipants.Capture(all[0]), true);
         FriendlyFireParticipants.Set(FriendlyFireParticipants.Capture(all[1]), true);
         check(all.Take(2).All(PvpPotionPolicy.BlocksRabbitInfinite) && all.Skip(2).All(p => !PvpPotionPolicy.BlocksRabbitInfinite(p)),
             "Restriction follows shared participant selection");
         Command("block-rabbit-infinite off");
-        check(all.All(p => !PvpPotionPolicy.BlocksRabbitInfinite(p)), "Live opt-out is immediate");
+        check(all.Take(2).All(PvpPotionPolicy.BlocksRabbitInfinite) && !SessionSettings.FriendlyFireForHit.InfiniteHpPotions, "Legacy opt-out cannot bypass finite PvP consumption");
         Command("block-rabbit-infinite reset");
+        PvpPotionSupplies.Tick();
+        check(all.Sum(p => p.Inventory.PotionWrites) == writes, "Deprecated Rabbit commands do not grant extra potions");
         check(PvpPotionPolicy.BlocksRabbitInfinite(all[0]) && !SessionSettings.FriendlyFireForHit.InfiniteHpPotions, "Reset does not change general option");
         Command("off"); check(all.All(p => !PvpPotionPolicy.BlocksRabbitInfinite(p)), "Casual exit restores costume policy immediately");
 
@@ -33,8 +41,10 @@ internal static class PvpRabbitPolicyTests
             check(all.All(p => !PvpPotionPolicy.BlocksRabbitInfinite(p)), mode + " countdown is outside combat admission");
             UnityEngine.Time.unscaledTime = 3; CombatMatchRuntime.Tick();
             check(all.All(PvpPotionPolicy.BlocksRabbitInfinite), mode + " live participants inherit restriction");
+            Command("auto-potion off");
+            check(all.All(p => PvpPotionPolicy.RuleFor(p) == HpPotionRule.PvpFinite), mode + " supply opt-out does not change finite consumption");
             Command("block-rabbit-infinite off");
-            check(CombatMatchRuntime.IsRunning && all.All(p => !PvpPotionPolicy.BlocksRabbitInfinite(p)), mode + " live edit does not stop match");
+            check(CombatMatchRuntime.IsRunning && all.All(PvpPotionPolicy.BlocksRabbitInfinite), mode + " legacy opt-out changes neither match nor precedence");
             Command("block-rabbit-infinite on");
             check(CombatMatchRuntime.IsRunning && all.All(PvpPotionPolicy.BlocksRabbitInfinite), mode + " live enable retains match");
             Command("infinite-hp on");
@@ -48,7 +58,7 @@ internal static class PvpRabbitPolicyTests
         var rejoined = add(2).PlayerAvatar;
         check(!PvpPotionPolicy.BlocksRabbitInfinite(all[1]) && PvpPotionPolicy.BlocksRabbitInfinite(rejoined), "New connection re-evaluates live policy; old avatar loses admission");
         RabbitPotionFeature.Available = false;
-        check(!SettingsActions.Execute("/one friendlyfire block-rabbit-infinite off").Success, "Unavailable hooks cannot relax restriction");
+        check(SettingsActions.Execute("/one friendlyfire block-rabbit-infinite off").Success && PvpPotionPolicy.BlocksRabbitInfinite(rejoined), "Deprecated command is harmless even when hooks are unavailable");
         Command("block-rabbit-infinite on"); Command("block-rabbit-infinite reset");
         RabbitPotionFeature.Available = true;
     }

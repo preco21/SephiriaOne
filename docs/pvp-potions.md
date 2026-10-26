@@ -1,6 +1,64 @@
 # PvP potion supplies and consumption
 
-## Rabbit costume override (0.94.0)
+## Authoritative PvP consumption (0.96.2, 2026-10-27)
+
+**Infinite PvP HP potions** / `/one friendlyfire infinite-hp on|off|reset`
+is now the only consumption rule for active participants, including Wing-Eared
+Rabbit. PvP balancing does not need to be enabled.
+
+| PvP infinite HP | Small/Large HP potion use by an active participant |
+| --- | --- |
+| On | Retained, normal self-healing, no addon MP fee, Survival random-stat bonus suppressed |
+| Off | Consumed normally, even when Rabbit's costume infinite option is on |
+
+The previous independent `block-rabbit-infinite off` setting was a real bypass:
+it admitted Rabbit retention, and the completion hook combined that with PvP
+retention using OR. A source-linked native-drink regression reproduced the
+conflict for both Small/Large potions, host/guest actors and balancing on/off.
+
+`PvpPotionPolicy.RuleFor` now resolves one of Costume, PvpFinite or PvpInfinite
+using current shared combat participation. `RetainsPotion` exclusively selects
+that path; the costume branch is unreachable during active PvP. Capture records
+the admitted rule, and completion rechecks live policy. A finite or PvP drink
+cannot become costume-infinite because a callback ends the match or excludes its
+participant. Infinite PvP still requires the validated native completion and
+current connection receipt; existing death, nested-drink, item/slot, floor,
+initialization and Survival-revocation guards remain in place.
+
+The redundant Rabbit override checkbox and stored gameplay setting are removed.
+Old `block-rabbit-infinite on|off|reset` commands return a localized explanation
+without mutating policy, scores, matches or supply state. Valid v53 preset rows
+are accepted and ignored, then omitted on the next save; malformed/duplicate rows
+still reject the preset atomically. General infinite and automatic-grant choices
+survive migration independently. No new preset format is needed.
+
+**Automatic grants are separate.** `PvpPotionSupplies` and `LargePotionGrant` are
+unchanged: Auto Large Potion checks eligible players at session/match entry and
+after successful respawn, and grants one only when missing. Changing consumption
+policy does not refill a used potion. The manual grant button/command also stays
+unchanged. No inventory snapshot restoration, quantity refund, custom item or
+additional network message is introduced.
+
+Outside active combat participation, Rabbit's costume behavior resumes. The
+existing exclusions for selection/countdown/Tournament spectators remain; Small
+and Large are IDs 0/1, while Sample ID 37 and other potions remain excluded from
+these overrides. Finite drinks retain independently configured Rabbit MP fees,
+Survival suppression and sharing. Rabbit's costume-infinite Tension exception
+cannot bypass PvP policy; general PvP infinite still does not exempt Tension.
+EN/KO UI, help, status, tooltip and role notices describe the same precedence.
+
+Verification: 393 source-linked potion-hook cases plus 12 localized alerts,
+14,448 runtime/session checks (including supplies, all four match modes and
+rejoins), 208 legacy preset/command checks, 53 tooltip plus 12 translated-tooltip
+checks, panel/localization suites, the full installed-game contract suite and
+41 HarmonyX API references passed. Release build has zero warnings/errors.
+Independent code review found no actionable issues. Live gameplay remains
+unverified; no deployment was performed.
+
+## Rabbit costume override (historical 0.94.0)
+
+Superseded by 0.96.2 above: the optional bypass and its checkbox no longer exist.
+The following records the original investigation and migration context.
 
 **Combat → Block Rabbit infinite HP in PvP** (Korean: **PvP 토끼 HP 포션 무한 사용 차단**)
 is enabled by default. Command:

@@ -83,13 +83,11 @@ SessionSettings.Change(false, false);
 Check(panel.tooltipEffectText.text == native, "disabling level-up potion restores the native tooltip");
 SessionSettings.Change(true, false);
 Check(panel.tooltipEffectText.text.Contains("not consumed"), "policy event refreshes current tooltip");
-SessionSettings.FriendlyFireForDisplay = new() { BlockRabbitInfinite = true };
 SessionSettings.Change(true, false);
 Check(panel.tooltipEffectText.text.Contains("Outside PvP") && panel.tooltipEffectText.text.Contains("general Infinite PvP HP potions"),
     "Default restriction describes PvP precedence");
-SessionSettings.FriendlyFireForDisplay = new() { BlockRabbitInfinite = false };
 SessionSettings.Change(true, false);
-Check(!panel.tooltipEffectText.text.Contains("Outside PvP"), "Live restriction opt-out removes conditional text");
+Check(panel.tooltipEffectText.text.Contains("Outside PvP"), "Costume tooltip always explains authoritative PvP consumption");
 SessionSettings.Change(true, true);
 Check(panel.tooltipEffectText.text.Contains("Nearby allies"), "second option refreshes current tooltip");
 Check(panel.tooltipEffectText.text.Split("Nearby allies").Length == 2, "refresh does not duplicate line");
@@ -125,12 +123,12 @@ SessionSettings.Change(true, true);
 RabbitDescriptionFeature.Shutdown();
 Check(!RabbitDescriptionFeature.Available && panel.tooltipEffectText.text == native, "unload removes rendered text and hook");
 
-const string nativeIdentical = native + "\n- <indent=10>HP potions, except Potion of Regeneration (Sample), are not consumed after a successful drink (requires one potion). These potions can be used during boss combat with Tension.</indent>";
+const string nativeIdentical = native + "\n- <indent=10>Outside PvP, HP potions except Potion of Regeneration (Sample) are not consumed and bypass Tension (requires one potion). In PvP, unlimited use requires the general Infinite PvP HP potions option.</indent>";
 UI_CostumePanel.NativeDescription = nativeIdentical;
 RabbitDescriptionFeature.Initialize();
 panel.Select(new CostumeEntity(rabbit));
 SessionSettings.Change(true, false);
-Check(panel.tooltipEffectText.text == nativeIdentical + "\n- <indent=10>HP potions, except Potion of Regeneration (Sample), are not consumed after a successful drink (requires one potion). These potions can be used during boss combat with Tension.</indent>",
+Check(panel.tooltipEffectText.text == nativeIdentical + "\n- <indent=10>Outside PvP, HP potions except Potion of Regeneration (Sample) are not consumed and bypass Tension (requires one potion). In PvP, unlimited use requires the general Infinite PvP HP potions option.</indent>",
     "option line is appended even when native text coincidentally ends with it");
 SessionSettings.Change(false, false);
 Check(panel.tooltipEffectText.text == nativeIdentical, "reset preserves identical native trailing line");

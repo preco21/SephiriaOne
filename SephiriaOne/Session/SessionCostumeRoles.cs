@@ -59,7 +59,7 @@ namespace SephiriaOne
             if (changed)
             {
                 List<string> parts = companion ? CostumeRoleText.CompanionParts(costume, collin) :
-                    CostumeRoleText.Rabbit(policy.RabbitPotions, observed.Item4, observed.Item5, policy.FriendlyFire.BlockRabbitInfinite);
+                    CostumeRoleText.Rabbit(policy.RabbitPotions, observed.Item4, observed.Item5);
                 if (companion)
                     foreach (StatSnapshot value in notice.Stats)
                         if (policy.TryDescribeAppliedCompanionStat(value, out string text)) parts.Add(text);
