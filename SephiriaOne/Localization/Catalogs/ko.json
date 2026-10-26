@@ -832,7 +832,7 @@
   "Chance rolls only; no guaranteed encounter.": "확률 출현만 적용. 확정 출현 없음.",
   "Types roll independently: up to 1 each per floor. The run cap includes the guarantee and reserves its slot while reachable.": "유형별 독립 추첨, 층당 각 1명. 런 제한에는 확정 출현도 포함되며, 출현 가능하면 1자리를 남겨 둡니다.",
   "Floor = main dungeon stage. Normal rooms only; excludes boss-only floors, towns and training.": "층 = 메인 던전 단계. 일반 방만 적용. 보스 전용 층·마을·훈련장 제외.",
-  "Base HP by stage 1–6+: ×1/2/4/5/7/8. Native bonuses also apply; set once at spawn.": "1~6층 이상 기본 HP 배율: ×1/2/4/5/7/8. 기본 보너스도 적용되며 생성 시 1회 설정됩니다.",
+  "Base HP: stages 1–3 use ×1/2/4; stage 4 starts at ×6, then +1 per stage. Native bonuses also apply; set once at spawn.": "기본 HP: 1~3단계는 ×1/2/4, 4단계부터 ×6으로 시작해 단계마다 +1배. 기본 보너스도 적용되며 생성 시 한 번만 계산합니다.",
   "Added merchants are hostile with no negotiation penalty. Off/reset stops future spawns; existing merchants stay unchanged.": "추가 상인은 적대적이며 협상력 페널티가 없습니다. 끄기·초기화는 이후 출현만 중지합니다.",
   "Name gradient: #408af1 → #a8d7fa": "이름 그라데이션: #408af1 → #a8d7fa",
   "Refreshed.": "새로 고침 완료.",

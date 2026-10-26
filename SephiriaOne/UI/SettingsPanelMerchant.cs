@@ -54,7 +54,7 @@ namespace SephiriaOne
                     L.T("Chance rolls only; no guaranteed encounter.")) +
                 "\n\n" + L.T("Types roll independently: up to 1 each per floor. The run cap includes the guarantee and reserves its slot while reachable.") +
                 "\n\n" + L.T("Floor = main dungeon stage. Normal rooms only; excludes boss-only floors, towns and training.") +
-                "\n\n" + L.T("Base HP by stage 1–6+: ×1/2/4/5/7/8. Native bonuses also apply; set once at spawn.") +
+                "\n\n" + L.T("Base HP: stages 1–3 use ×1/2/4; stage 4 starts at ×6, then +1 per stage. Native bonuses also apply; set once at spawn.") +
                 "\n\n" + L.T("Added merchants are hostile with no negotiation penalty. Off/reset stops future spawns; existing merchants stay unchanged.") +
                 (snapshot.MerchantsAvailable ? "" : "\n\n" + L.T("Merchant hooks unavailable; native behavior continues. See Player.log."));
         }

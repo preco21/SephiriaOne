@@ -229,9 +229,8 @@ namespace SephiriaOne
             {
                 case 2: return 2;
                 case 3: return 4;
-                case 4: return 5;
-                case 5: return 7;
-                default: return 8; // Floor 6 and later retain the final configured tier.
+                // Floor 4 starts at x6, then each later main stage adds x1.
+                default: return (int)Math.Min((long)floorNumber + 2, int.MaxValue);
             }
         }
 

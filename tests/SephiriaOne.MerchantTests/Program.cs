@@ -674,11 +674,11 @@ Scenario("floor three multiplies merchant base HP while retaining native bonuses
         "Floor scaling changes only HP and finishes with a single full heal");
 });
 
-foreach (var (floorNumber, multiplier) in new[] { (1, 1), (2, 2), (3, 4), (4, 5), (5, 7), (6, 8), (7, 8) })
+foreach (var (floorNumber, multiplier) in new[] { (1, 1), (2, 2), (3, 4), (4, 6), (5, 7), (6, 8), (7, 9), (8, 10), (10, 12) })
 foreach (int players in new[] { 1, 5 })
 Scenario("all merchant types scale on floor " + floorNumber + " with " + players + " players", () =>
 {
-    DungeonManager.Instance.Opportunities = Enumerable.Range(0, 7).ToArray(); EnableVariants(100);
+    DungeonManager.Instance.Opportunities = Enumerable.Range(0, Math.Max(7, floorNumber)).ToArray(); EnableVariants(100);
     for (int player = 2; player <= players; player++) NetworkServer.connections[player] = new();
     SocialIDDatabase.Variants["Traveler_Merchant_Papyrus"].avatarPrefab.GetComponent<UnitAvatar>().maxHp = 1200;
     SocialIDDatabase.Variants["Traveler_Merchant_Taz"].avatarPrefab.GetComponent<UnitAvatar>().maxHp = 900;
@@ -712,7 +712,7 @@ Scenario("floor HP never stacks after refresh, settings changes, re-entry or lat
         "An existing actor retains its spawn-time health and is never healed or rescaled by refresh");
     Check(natural.Avatar.maxHp == 2500 && natural.Avatar.BaseHpWrites == 0,
         "Natural merchant HP remains untouched even on later floors");
-    Check(Actors().Last().Avatar.maxHp == 12500, "A newly spawned merchant uses its later floor independently");
+    Check(Actors().Last().Avatar.maxHp == 15000, "A newly spawned merchant uses floor 4's x6 factor independently");
     SaveManager.CurrentRun = CopyRun(); MerchantRuntime.Refresh();
     Check(Actors().Length == 1 && Actors()[0] == natural, "Saved consumed rolls never recreate actors after runtime reconstruction");
 });
@@ -749,7 +749,7 @@ Scenario("scaled HP overflow aborts before a synchronized base-HP write", () =>
     Check(!SaveManager.CurrentRun.GetBool(EncounterKey) && prefab.maxHp == 1e36f,
         "The guarantee remains pending and the shared prefab remains unchanged");
     prefab.maxHp = 2500; SessionSettings.MerchantSpawnChanceForUse = 0; Visit(At(3));
-    Check(Actors().Single().Avatar.maxHp == 12500 && SaveManager.CurrentRun.GetBool(EncounterKey),
+    Check(Actors().Single().Avatar.maxHp == 15000 && SaveManager.CurrentRun.GetBool(EncounterKey),
         "After a safe native template is restored, the pending guarantee scales on its next eligible floor");
 });
 

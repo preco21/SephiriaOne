@@ -118,7 +118,7 @@ The game saves these values on its normal cadence; the addon does not force save
 
 ## Floor-based health
 
-Since **0.28.3**, each added merchant uses the following base-HP multiplier at
+Since **0.96.3**, each added merchant uses the following base-HP multiplier at
 spawn, retaining the normal native stage and multiplayer percentage bonuses:
 
 | Main dungeon stage | Base-HP multiplier |
@@ -126,12 +126,22 @@ spawn, retaining the normal native stage and multiplayer percentage bonuses:
 | 1 | ×1 |
 | 2 | ×2 |
 | 3 | ×4 |
-| 4 | ×5 |
+| 4 | ×6 |
 | 5 | ×7 |
-| 6 and later | ×8 |
+| 6 | ×8 |
+| 7 and later | stage number + 2 (×9, ×10, …) |
 
 This applies to guaranteed and chance-based encounters of every type without a
-separate setting or preset migration.
+separate setting or preset migration. The 0.96.3 change (2026-10-27) raises stage
+4 from ×5 to ×6 and removes the old ×8 plateau after stage 6. Stages 1–3 and
+existing stage-5/6 values are unchanged. The rule uses integer arithmetic only
+at spawn, with overflow-safe addition; existing live merchants are not rescaled.
+
+0.96.3 verification: 642 merchant fixture checks across 88 scenarios passed,
+including every variant with one/five players through stage 10, deferred
+guarantees, native percentage bonuses, overflow rejection and no rescaling of
+existing/natural actors. Non-deploying Release build and installed-game
+HP/replication contracts passed. Live gameplay was not run; nothing was deployed.
 
 The floor number is the same main dungeon stage number used by `from`. Maps and
 Grassland missions within one stage all use the same factor. Main-stage ordinals

@@ -1,5 +1,9 @@
 # Development knowledge index
 
+[Hostile Merchant HP progression](merchant-variants.md): 0.96.3 uses ×6 at stage
+4, then +1 per stage (×7, ×8, ×9, …). Stages 1–3 stay ×1/2/4; native bonuses and
+once-at-spawn synchronization are preserved for every merchant variant.
+
 [Authoritative PvP potion consumption](pvp-potions.md#authoritative-pvp-consumption-0962-2026-10-27):
 all active participants, including Rabbit, follow only Infinite PvP HP potions.
 Retired costume bypass is removed from UI/state and ignored in legacy presets;

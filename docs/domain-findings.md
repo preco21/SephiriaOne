@@ -595,8 +595,8 @@ Run receipts/consumed rolls are separate from preset intent: changing settings,
 reloading presets or guest re-entry must not reroll/reset them.
 
 Main dungeon stage ordinal is not map-visit count. Several maps can be in stage 1;
-`from 2` excludes all of them. Merchant base-HP factors by stage are 1/2/4/5/7/8
-(×8 thereafter, ×1 for unknown progress), before native stage/co-op bonuses applied
+`from 2` excludes all of them. Merchant base-HP factors by stage are 1/2/4/6/7/8
+(since 0.96.3, stage + 2 thereafter; ×1 for unknown progress), before native stage/co-op bonuses applied
 once. Existing actors retain spawn-time health. Crime exemption belongs only to
 the exact addon-spawned actors, not natural merchants. Guarantees remain subject
 to eligible normal rooms, safe placement and remaining route; an early-ended run
