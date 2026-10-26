@@ -98,7 +98,7 @@ internal static class ResponsiveBudgetTests
         check(before - target.Hp == 2, "Partial refund restores only paid credit, with no floor debt or free burst");
 
         var budget = new FriendlyFireDamageBudget();
-        check(budget.Take(100, 100, 0, out double paid, minimumDamage: 1) == 75 && paid == 75,
+        check(budget.Take(100, 100, 0, out double paid, minimumDamage: 1) == 70 && paid == 70,
             "Initial full allowance is funded exactly");
         check(budget.Take(100, 100, 0, out paid, minimumDamage: 1) == 1 && paid == 0,
             "Exhausted floor has zero refundable charge");

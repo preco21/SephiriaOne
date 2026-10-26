@@ -55,9 +55,9 @@ internal static class SharedBurstTests
         check(Near(Strike(100), 60) && target.Shield == 0, "Native shields absorb the newly funded heavy hit normally");
         Fresh(); SessionSettings.FriendlyFireForHit = new(true, .3m, balance: false);
         check(Near(Strike(130), 130), "Disabling balance restores native PvP-scaled damage immediately");
-        check(default(PvpRapidSettings).BurstPercent == 75 && default(PvpRapidSettings).BurstScale == .75,
-            "Default policy stores a meaningful 75-percent burst without altering frequency parameters");
-        check(new FriendlyFireDamageBudget().Take(130, 150, 0) == 112.5,
+        check(default(PvpRapidSettings).BurstPercent == 70 && default(PvpRapidSettings).BurstScale == .7,
+            "Default policy stores a meaningful 70-percent burst without altering frequency parameters");
+        check(new FriendlyFireDamageBudget().Take(130, 150, 0) == 105,
             "Pure budget and session settings use the same default capacity");
         FriendlyFireRuntime.Clear(); FriendlyFireParticipants.Clear(); SessionSettings.FriendlyFireForHit = default;
     }

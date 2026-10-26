@@ -171,15 +171,15 @@ internal static class RapidHitTests
             var budget = new FriendlyFireDamageBudget();
             double sum = 0;
             for (int i = 0; i < 100; i++) sum += budget.Take(hp, hp, 10);
-            check(Near(sum, 0.75 * hp), "Same-time storm respects maximum-HP-relative burst at " + hp);
+            check(Near(sum, 0.7 * hp), "Same-time storm respects maximum-HP-relative burst at " + hp);
             for (int i = 1; i <= 100; i++) sum += budget.Take(hp, hp, 10 + i / 100d);
-            check(Near(sum, 1.45 * hp), "One second of continuous attacks admits burst plus refill at " + hp);
-            check(Near(budget.Take(hp, hp, 100), 0.75 * hp), "Long inactivity cannot accumulate extra capacity");
+            check(Near(sum, 1.4 * hp), "One second of continuous attacks admits burst plus refill at " + hp);
+            check(Near(budget.Take(hp, hp, 100), 0.7 * hp), "Long inactivity cannot accumulate extra capacity");
             budget = default;
             for (int i = 0; i < 10; i++)
                 check(Near(budget.Take(hp * 0.1, hp, i), hp * 0.1), "Ordinary spaced hits remain unchanged");
             budget = default;
-            check(Near(budget.Take(hp, hp, 0.999), hp * 0.75) && budget.Take(hp, hp, 1.001) < hp * 0.003,
+            check(Near(budget.Take(hp, hp, 0.999), hp * 0.7) && budget.Take(hp, hp, 1.001) < hp * 0.003,
                 "No fixed-second boundary permits a double burst");
         }
         var invalidBudget = new FriendlyFireDamageBudget();
@@ -190,16 +190,16 @@ internal static class RapidHitTests
         }
         check(invalidBudget.Take(100, 100, double.NaN) == 0 && invalidBudget.Take(100, 100, double.PositiveInfinity) == 0,
             "Invalid clocks never manufacture damage");
-        check(invalidBudget.Take(100, 100, 0) == 75, "Invalid inputs consume no credit before a valid hit");
+        check(invalidBudget.Take(100, 100, 0) == 70, "Invalid inputs consume no credit before a valid hit");
         var huge = new FriendlyFireDamageBudget();
         double enormous = huge.Take(double.MaxValue, double.MaxValue, 0);
-        check(double.IsFinite(enormous) && enormous <= double.MaxValue * 0.75, "Finite extreme arithmetic remains bounded");
+        check(double.IsFinite(enormous) && enormous <= double.MaxValue * 0.7, "Finite extreme arithmetic remains bounded");
         foreach (double rate in new[] { 0.01, 0.4, 1, 1.255, 3 })
         {
             var budget = new FriendlyFireDamageBudget();
             double sum = budget.Take(100, 100, 0, rate);
             for (int i = 1; i <= 100; i++) sum += budget.Take(100, 100, i / 100d, rate);
-            check(Near(sum, 75 + 100 * rate), "Continuous allowance follows configured refill " + rate);
+            check(Near(sum, 70 + 100 * rate), "Continuous allowance follows configured refill " + rate);
         }
         var edited = new FriendlyFireDamageBudget();
         edited.Take(100, 100, 0, 0.4);

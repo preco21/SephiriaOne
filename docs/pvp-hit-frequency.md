@@ -29,8 +29,8 @@ deadline recovers capacity; missed intervals collapse to one recovery, never
 multiple banked bursts. No firing pause, timer job or per-frame scan is needed.
 
 Continuous refill continues between recoveries. This intentionally raises the
-available sustained damage: at shipped 75% stored capacity and 1 second, the
-additional allowance can approach 75% of opponent maximum HP/second on top of
+available sustained damage: at shipped 70% stored capacity and 1 second, the
+additional allowance can approach 70% of opponent maximum HP/second on top of
 continuous refill, before roles/defenses and minimum-hit effects. Shorter
 intervals grant more frequent bursts. It is not a strict fixed-window DPS cap.
 
@@ -80,7 +80,7 @@ Planet type's cadence from other Planets and incidental damage. Copies of the
 same type still share history; all sources still share one damage allowance.
 
 Since `0.88.0`, the [shared-burst fix](pvp-burst-audit.md) removes the separate
-per-hit curve and raises default stored capacity to 75% max HP, preserving
+per-hit curve and raised default stored capacity to 75% (70% since `0.97.1`), preserving
 infrequent heavy attacks while all hit types continue sharing one reserve.
 
 Added in `0.60.0`, 2026-10-16. Default **off**, host-controlled, using the existing
@@ -97,14 +97,14 @@ also replaces zero-budget rejection with a positive pre-shield minimum.
 Since `0.83.0` (2026-10-22), use **Rapid Hits / 연속 타격** beside **PvP Balance**.
 Enable PvP balancing on the latter page for these controls to affect combat.
 The frequency toggle remains default **off**. Stored capacity changed to 75% in
-`0.88.0`; periodic recovery was added in `0.92.0`.
+`0.88.0`, then to 70% in `0.97.1`; periodic recovery was added in `0.92.0`.
 
 | Control | Default | Range | Effect |
 | --- | --- | --- | --- |
 | Detection window | 1 second | 0.1–10 seconds | How long recent hits remain in the rolling estimate. |
 | Full-damage rate | 4 hits/second | 0.1–100 | Full damage up to `max(1, rate × window)` recent hits. |
 | Reduction exponent | 0.5 | 0–2 | Above threshold, multiply by `(threshold / count)^exponent`; higher reduces more, zero removes frequency reduction. |
-| Stored burst allowance | 75% of victim max HP | 1–100% | Maximum credit stored for this attacker/opponent pair. |
+| Stored burst allowance | 70% of victim max HP | 1–100% | Maximum credit stored for this attacker/opponent pair. |
 | Continuous refill | 70% of victim max HP/second | 1–300%/second | Adds allowance over elapsed game time, up to capacity. |
 | Periodic recovery | On | On/off | Restores shared capacity and clears hit history even during uninterrupted fire. |
 | Recovery interval | 1 second | 0.1–60 seconds | Fixed deadlines per attacker/opponent; missed recoveries never accumulate. |
@@ -113,14 +113,14 @@ All numeric values accept two decimal places. Hit history ages out and damage cr
 refills continuously; since `0.92.0`, the separate periodic-recovery control above
 also resets shared capacity/history by default. Base empty-to-full recovery from
 continuous refill alone is `burst / refill` seconds (about
-1.071 seconds by default). Play Tag/Zombie refill modifiers can change that time.
+1 second by default). Play Tag/Zombie refill modifiers can change that time.
 The UI shows applied values and an example of reduction above the expected rate.
 
 The shared budget still applies when the frequency toggle is off. A heavy hit
 can use the entire stored reserve; smaller packets spend that same reserve.
 There is no separate low per-hit ceiling. Native defenses, role modifiers and
 separate DoT schedules still apply. Explicit saved capacity/refill settings are
-preserved; omitted capacity inherits 75%. Use `rapid burst reset` if a saved
+preserved; omitted capacity inherits 70%. Use `rapid burst reset` if a saved
 20% setting is still limiting heavy hits.
 
 The page uses the same host commands as chat:
@@ -132,7 +132,7 @@ The page uses the same host commands as chat:
 /one friendlyfire rapid window 1
 /one friendlyfire rapid rate 4
 /one friendlyfire rapid exponent 0.5
-/one friendlyfire rapid burst 75
+/one friendlyfire rapid burst 70
 /one friendlyfire refill 70
 /one friendlyfire rapid window reset
 /one friendlyfire rapid reset

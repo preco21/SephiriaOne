@@ -50,7 +50,7 @@
   "Default 4/s · 0.1..100/s\nFirst hit: no frequency reduction. Threshold = max(1, rate × window).": "기본 초당 4회 · 0.1~100회\n첫 타격은 빈도 감쇠 없음. 기준 = max(1, 초당 타수 × 기록 시간).",
   "Reduction exponent": "감쇠 지수",
   "Stored burst (% HP)": "저장 피해량(HP %)",
-  "Default 75% · 1..100% of victim max HP.\nOne shared reserve for heavy hits and barrages.": "기본 75% · 피해자 최대 HP의 1~100%.\n큰 한 방과 연속 타격이 같은 저장량을 사용합니다.",
+  "Default 70% · 1..100% of victim max HP.\nOne shared reserve for heavy hits and barrages.": "기본 70% · 피해자 최대 HP의 1~100%.\n큰 한 방과 연속 타격이 같은 저장량을 사용합니다.",
   "Rapid history: {0}s; full-damage threshold: {1} hits/s; reduction exponent: {2}; burst allowance: {3}% max HP.": "타격 기록: {0}초; 감쇠 없는 초당 타수: {1}회; 감쇠 지수: {2}; 저장 피해량: 최대 HP의 {3}%.",
   "PvP Balance": "PvP 밸런스",
   "Debuffs / Dark Cloud": "디버프 / 먹구름",

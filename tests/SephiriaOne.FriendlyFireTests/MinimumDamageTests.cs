@@ -108,7 +108,7 @@ internal static class MinimumDamageTests
         foreach (double invalid in new[] { -1, double.NaN, double.PositiveInfinity })
         {
             budget = default;
-            check(budget.Take(10, 100, 0, minimumDamage: invalid) == 0 && budget.Take(100, 100, 0) == 75,
+            check(budget.Take(10, 100, 0, minimumDamage: invalid) == 0 && budget.Take(100, 100, 0) == 70,
                 "Invalid minimum cannot poison future budget state");
         }
         SessionSettings.FriendlyFireForHit = default;

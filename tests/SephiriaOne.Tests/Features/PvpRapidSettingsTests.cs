@@ -11,21 +11,21 @@ internal static class PvpRapidSettingsTests
             Check(FriendlyFireCommand.Parse("/ONE FRIENDLYFIRE RAPID " + edit, out var command) == FriendlyFireParseResult.Valid &&
                 !command.TouchesMasterToggle && !command.Reset, "Rapid numeric command preserves mode/toggles: " + edit);
         var defaults = default(PvpRapidSettings);
-        Check(defaults.WindowSeconds == 1m && defaults.HitsPerSecond == 4m && defaults.Exponent == 0.5m && defaults.BurstPercent == 75m &&
-            defaults.WindowScale == 1d && defaults.RateScale == 4d && defaults.ExponentScale == 0.5d && defaults.BurstScale == 0.75d &&
-            !defaults.HasChanges && defaults.Equals(new PvpRapidSettings(1, 4, 0.5m, 75)), "Zero-initialized rapid settings retain every shipped default");
+        Check(defaults.WindowSeconds == 1m && defaults.HitsPerSecond == 4m && defaults.Exponent == 0.5m && defaults.BurstPercent == 70m &&
+            defaults.WindowScale == 1d && defaults.RateScale == 4d && defaults.ExponentScale == 0.5d && defaults.BurstScale == 0.7d &&
+            !defaults.HasChanges && defaults.Equals(new PvpRapidSettings(1, 4, 0.5m, 70)), "Zero-initialized rapid settings retain every shipped default");
         var policy = new SessionPolicy();
         Check(SessionPolicy.TryReadPreset("SephiriaOne preset v44\nfriendlyfire rapid-burst 20\nfriendlyfire refill 300\n", out var explicitLegacy, out _) &&
             explicitLegacy.FriendlyFire.Rapid.BurstPercent == 20 && explicitLegacy.FriendlyFire.RefillPercent == 300 &&
             explicitLegacy.ToPresetText().Contains("friendlyfire rapid-burst 20\n"),
             "Explicit legacy reserve/refill survive the new default and remain serializable");
         Check(SessionPolicy.TryReadPreset("SephiriaOne preset v44\nfriendlyfire rapid-rate 6\n", out var omittedBurst, out _) &&
-            omittedBurst.FriendlyFire.Rapid.BurstPercent == 75 && omittedBurst.FriendlyFire.Rapid.HitsPerSecond == 6,
+            omittedBurst.FriendlyFire.Rapid.BurstPercent == 70 && omittedBurst.FriendlyFire.Rapid.HitsPerSecond == 6,
             "Omitted reserve adopts the current default without overwriting other saved tuning");
         Check(PvpRapidChange.TryParse("burst", "reset", out var resetBurst) &&
-            resetBurst.Apply(new PvpRapidSettings(hitsPerSecond: 6, burstPercent: 20)).BurstPercent == 75 &&
+            resetBurst.Apply(new PvpRapidSettings(hitsPerSecond: 6, burstPercent: 20)).BurstPercent == 70 &&
             resetBurst.Apply(new PvpRapidSettings(hitsPerSecond: 6, burstPercent: 20)).HitsPerSecond == 6,
-            "Single-field burst reset adopts 75 percent while retaining the player's cadence tuning");
+            "Single-field burst reset adopts 70 percent while retaining the player's cadence tuning");
         void Parse(string edit)
         {
             Check(FriendlyFireCommand.Parse("/one friendlyfire rapid " + edit, out var command) == FriendlyFireParseResult.Valid,

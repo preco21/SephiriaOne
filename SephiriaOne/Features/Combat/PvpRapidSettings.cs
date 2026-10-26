@@ -9,7 +9,7 @@ namespace SephiriaOne
         public const decimal DefaultWindowSeconds = 1m;
         public const decimal DefaultHitsPerSecond = 4m;
         public const decimal DefaultExponent = 0.5m;
-        public const decimal DefaultBurstPercent = 75m;
+        public const decimal DefaultBurstPercent = 70m;
         public const decimal DefaultResetSeconds = 1m;
         private const int DefaultBurstHundredths = (int)(DefaultBurstPercent * 100);
         private const int DefaultResetHundredths = (int)(DefaultResetSeconds * 100);

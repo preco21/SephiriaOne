@@ -55,9 +55,9 @@ internal static class DamagePipelineAudit
                 total += budget.Take(damage, hp, now, out double charge, refillPerSecond: refill, minimumDamage: 1);
                 funded += charge;
             }
-            if (funded > hp * (.75 + refill * duration) + .001 || total - funded > 16)
+            if (funded > hp * (.7 + refill * duration) + .001 || total - funded > 16)
                 throw new Exception("Split packets cannot acquire extra funded reserve");
-            if (!frequencyOn) Near(total, duration == 0 ? 114.5 : 130, "Only elapsed refill and the minimum explain split damage");
+            if (!frequencyOn) Near(total, duration == 0 ? 108 : 130, "Only elapsed refill and the minimum explain split damage");
             checks++;
             Console.WriteLine($"130 / 16 hits over {duration}s, refill {100 * refill}%/s, frequency {(frequencyOn ? "ON, rate 6" : "OFF")}: {total:F3} damage ({funded:F3} funded).");
         }

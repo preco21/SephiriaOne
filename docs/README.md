@@ -1,5 +1,9 @@
 # Development knowledge index
 
+[PvP stored-burst default](pvp-burst-audit.md): 0.97.1 reduces 저장 피해량 from
+75% to 70% of victim maximum HP. New/omitted values and resets follow 70%;
+explicit saved tuning and the balancing algorithms remain unchanged.
+
 [Hostile Merchant HP progression](merchant-variants.md): 0.96.3 uses ×6 at stage
 4, then +1 per stage (×7, ×8, ×9, …). Stages 1–3 stay ×1/2/4; native bonuses and
 once-at-spawn synchronization are preserved for every merchant variant.
@@ -128,7 +132,7 @@ all limiter controls now live beside Spawns in their own EN/KO tab. Spawn contro
 projectile policies, saved values and shared command/lifecycle behavior remain unchanged.
 
 [PvP shared-burst fix](pvp-burst-audit.md): removes the low per-hit curve and
-raises default stored reserve to 75% max HP. Slow heavy hits and rapid packets
+uses a shared stored reserve (70% max HP since 0.97.1). Slow heavy hits and rapid packets
 share one recoverable allowance; refill remains independently configurable.
 Includes before/after diagnostics, saved-setting behavior and validation limits.
 

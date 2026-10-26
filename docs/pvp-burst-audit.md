@@ -1,5 +1,11 @@
 # Slow burst versus split damage audit
 
+`0.97.1` (2026-10-27) changes the stored-burst default from **75% to 70%**
+of victim maximum HP. New/omitted settings and burst resets use 70%; explicit
+saved values remain unchanged. At the default 70%/s continuous refill, an empty
+reserve recovers in one second. The 0.88.0 comparisons below intentionally retain
+**explicit 75%** for their historical measurements; algorithms are unchanged.
+
 `0.90.0` adds optional [lower-bound assistance](pvp-lower-bound.md) before this
 shared reserve. It supplies a small separate allowance for weak hits, applies
 rapid-hit scaling to original and bonus damage together, and still funds their
@@ -64,7 +70,7 @@ Use **Rapid Hits / 연속 타격**. Stored burst determines how much a fresh hea
 or barrage can use; refill determines recovery over time. Commands:
 
 ```text
-/one friendlyfire rapid burst 75
+/one friendlyfire rapid burst 70
 /one friendlyfire rapid burst reset
 /one friendlyfire refill 70
 /one save
@@ -72,8 +78,8 @@ or barrage can use; refill determines recovery over time. Commands:
 
 The single-field reset changes only burst capacity, retaining cadence, refill,
 K/D/A and the match. Explicit saved values are preserved, including 20% / 300%.
-Change burst to 75 (or reset that field) if it still shows 20. Presets that omitted
-the old default inherit 75. No new preset field/schema is required. Bundled EN/KO
+Change burst to 70 (or reset that field) if it still shows 20. Presets that omitted
+the old default inherit 70. No new preset field/schema is required. Bundled EN/KO
 controls, help and status explain the new shared reserve. Custom translations
 can add the changed keys; missing keys retain normal English fallback.
 

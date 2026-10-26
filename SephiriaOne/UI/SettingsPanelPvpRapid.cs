@@ -34,7 +34,7 @@ namespace SephiriaOne
             pvpRapidExample.enableAutoSizing = true;
 
             BuildPvpRapidValue("burst", "Stored burst (% HP)", 312, 0);
-            widgets.Text(pageRoot, "RapidBurstHint", "Default 75% · 1..100% of victim max HP.\nOne shared reserve for heavy hits and barrages.", 312, 29, 272, 31, 10);
+            widgets.Text(pageRoot, "RapidBurstHint", "Default 70% · 1..100% of victim max HP.\nOne shared reserve for heavy hits and barrages.", 312, 29, 272, 31, 10);
             widgets.Text(pageRoot, "RapidRefill", "PvP refill (%/s)", 312, 66, 116, 25, 12);
             friendlyRefill = widgets.Input(pageRoot, 432, 66, 68, EditFriendlyRefill);
             changeButtons.Add(widgets.Button(pageRoot, "Apply", 508, 66, 76, 25, ApplyFriendlyRefill));

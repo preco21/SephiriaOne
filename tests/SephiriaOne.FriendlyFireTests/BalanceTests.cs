@@ -17,7 +17,7 @@ internal static class BalanceTests
             foreach (double fraction in new[] { 0.0001, 0.01, 0.05, 0.2, 0.75, 1, 100, 10000000 })
             {
                 var budget = new FriendlyFireDamageBudget();
-                check(Near(budget.Take(hp * fraction, hp, 0), hp * Math.Min(fraction, .75)),
+                check(Near(budget.Take(hp * fraction, hp, 0), hp * Math.Min(fraction, .7)),
                     "Fresh burst preserves funded damage and bounds extremes at HP " + hp);
             }
         }
@@ -36,7 +36,7 @@ internal static class BalanceTests
         target = new PlayerAvatar(); target.ApplyDamage(new() { origin = source, damage = 50 });
         target.MaxHp = 200; target.Hp = 100;
         target.ApplyDamage(new() { origin = source, damage = float.MaxValue });
-        check(Near(target.Hp, 50), "Maximum-HP doubling turns the remaining 25% reserve into 50 HP, without resetting credit");
+        check(Near(target.Hp, 60), "Maximum-HP doubling turns the remaining 20% reserve into 40 HP, without resetting credit");
         target = new PlayerAvatar { Shield = 10 }; target.ApplyDamage(damage);
         check(target.Shield == 0 && target.Hp == 90, "Shields absorb funded damage with native HP overflow");
         target = new PlayerAvatar { IsMpShield = true, Mp = 10 }; target.ApplyDamage(damage);
@@ -75,12 +75,12 @@ internal static class BalanceTests
         {
             SessionSettings.FriendlyFireForHit = new(true, percent, balance: true);
             target = new PlayerAvatar(); target.ApplyDamage(damage);
-            check(Near(target.Hp, 100 - (percent == 0 ? 0 : Math.Max(1, Math.Min(20 * (double)percent / 100, 75)))),
+            check(Near(target.Hp, 100 - (percent == 0 ? 0 : Math.Max(1, Math.Min(20 * (double)percent / 100, 70)))),
                 "Existing percentage is applied once with a positive-only final minimum: " + percent);
         }
         SessionSettings.FriendlyFireForHit = new(true, 100, balance: true);
         target = new PlayerAvatar(); target.ApplyDamage(new() { origin = source, damage = float.MaxValue });
-        check(target.Hp == 25, "Float-scale extreme hit reaches the shared 75% reserve instead of one-shot damage");
+        check(target.Hp == 30, "Float-scale extreme hit reaches the shared 70% reserve instead of one-shot damage");
         target = new PlayerAvatar();
         // Before-attack callbacks belong to the attacking avatar.
         source.OnAttackUnitBeforeOperation = (_, _) => SessionSettings.FriendlyFireForHit = new(true, 100, balance: false);

@@ -39,7 +39,7 @@ return path allocated 0 bytes across 1,000 hits. No deployment or game launch.
 ## Shared recoverable burst (`0.88.0`, 2026-10-22)
 
 The [slow-burst fix](pvp-burst-audit.md) removes the old unconditional per-hit
-curve. Heavy hits and rapid packets share one reserve, now defaulting to 75%
+curve. Heavy hits and rapid packets share one reserve, defaulting to 70% since `0.97.1`
 of victim maximum HP. Continuous refill remains 70%/s; saved values are retained.
 The minimum positive hit, native defenses, optional cadence controls, role
 modifiers and shared lifecycle cleanup stay intact. No new per-hit allocations
@@ -62,8 +62,8 @@ and participants. See the [current panel guide](control-panel.md).
 
 Since `0.83.0`, [Rapid Hits](pvp-hit-frequency.md#controls) exposes the rolling
 detection window, full-damage rate, reduction exponent and stored burst capacity,
-alongside continuous refill. Current defaults are 1s, 4 hits/s, 0.5, 75% and 70%/s.
-There is no periodic budget reset. Live parameter edits preserve match/KDA state
+alongside continuous refill. Current defaults are 1s, 4 hits/s, 0.5, 70% and 70%/s.
+Periodic recovery is separately enabled by default at 1s. Live parameter edits preserve match/KDA state
 and existing credit; larger capacities do not create an immediate burst.
 
 ## Additional defensive effects (`0.81.0`, 2026-10-21)
@@ -618,7 +618,7 @@ host damage slider automatically.
 
 ## Rapid-hit budget (`0.53.0`, configurable in `0.55.0`)
 
-Historical introduction below: since `0.88.0`, default capacity is 75% and there
+Historical introduction below: since `0.97.1`, default capacity is 70% and there
 is no separate per-hit curve. Continuous refill and the existing ledger remain;
 current controls and minimum-one behavior are described above.
 

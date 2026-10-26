@@ -50,7 +50,7 @@
   "Default 4/s · 0.1..100/s\nFirst hit: no frequency reduction. Threshold = max(1, rate × window).": "Default 4/s · 0.1..100/s\nFirst hit: no frequency reduction. Threshold = max(1, rate × window).",
   "Reduction exponent": "Reduction exponent",
   "Stored burst (% HP)": "Stored burst (% HP)",
-  "Default 75% · 1..100% of victim max HP.\nOne shared reserve for heavy hits and barrages.": "Default 75% · 1..100% of victim max HP.\nOne shared reserve for heavy hits and barrages.",
+  "Default 70% · 1..100% of victim max HP.\nOne shared reserve for heavy hits and barrages.": "Default 70% · 1..100% of victim max HP.\nOne shared reserve for heavy hits and barrages.",
   "Rapid history: {0}s; full-damage threshold: {1} hits/s; reduction exponent: {2}; burst allowance: {3}% max HP.": "Rapid history: {0}s; full-damage threshold: {1} hits/s; reduction exponent: {2}; burst allowance: {3}% max HP.",
   "PvP Balance": "PvP Balance",
   "Debuffs / Dark Cloud": "Debuffs / Dark Cloud",

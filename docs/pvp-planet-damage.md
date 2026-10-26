@@ -95,7 +95,7 @@ settings therefore do not imply equal native input damage across these effects.
    `min(1, (max(1, rate × window) / recent hits)^exponent)`.
 5. All sources consume the same stored allowance. Capacity is configured burst %
    of victim maximum HP; refill is configured %/s times the **attacker's** current
-   role multiplier. A previously saved 20% reserve remains 20%; new default 75%.
+   role multiplier. A previously saved 20% reserve remains 20%; current default 70% (since `0.97.1`).
 6. The **victim's** current incoming-role multiplier applies, then the existing
    positive minimum of 1 before native shields. Fractional damage above 1 remains
    fractional; floating damage labels can differ from actual HP loss.

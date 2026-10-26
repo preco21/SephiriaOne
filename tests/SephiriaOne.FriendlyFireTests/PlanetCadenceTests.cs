@@ -76,7 +76,7 @@ internal static class PlanetCadenceTests
 
         // Every cadence history still pays into exactly one directed damage budget.
         Fresh(hp: 100);
-        check(Strike(Planet("Blue", 100)) == 75, "Planet can spend the ordinary shared reserve");
+        check(Strike(Planet("Blue", 100)) == 70, "Planet can spend the ordinary shared reserve");
         foreach (string name in Planets)
             check(Strike(Planet(name, 100)) == 1, "Another Planet gets no extra funded burst: " + name);
         check(Strike(new() { origin = source, damage = 100, fromType = EDamageFromType.Magic, id = "Skill_FireArrow" }) == 1,
