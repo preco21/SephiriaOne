@@ -1,4 +1,9 @@
 {
+  "Wait for the party's current floor-transition countdown to finish.": "Wait for the party's current floor-transition countdown to finish.",
+  "{0} request(s) use native floor travel; arrival is asynchronous.": "{0} request(s) use native floor travel; arrival is asynchronous.",
+  "Players already queued for travel were skipped.": "Players already queued for travel were skipped.",
+  "Cross-floor recovery unavailable: native travel compatibility check failed. See Player.log.": "Cross-floor recovery unavailable: native travel compatibility check failed. See Player.log.",
+  "Cross-floor recovery requires the host's destination floor to be fully generated and current.": "Cross-floor recovery requires the host's destination floor to be fully generated and current.",
   "Block Zombie HP potions": "Block Zombie HP potions",
   "Block Zombie HP potions: {0}.": "Block Zombie HP potions: {0}.",
   "Zombies cannot use HP potions.": "Zombies cannot use HP potions.",
@@ -990,7 +995,7 @@
   "lobby / future starts": "lobby / future starts",
   "Updated lobby dice allowance and balance by the grant difference. Spent dice were not refilled.": "Updated lobby dice allowance and balance by the grant difference. Spent dice were not refilled.",
   "The dice decrease would reclaim dice already spent. Use a smaller decrease or apply it on a fresh run. Nobody was changed.": "The dice decrease would reclaim dice already spent. Use a smaller decrease or apply it on a fresh run. Nobody was changed.",
-  "Host only: /one teleportall moves ready, living players on your current floor to your position. Loading players are skipped; it does not revive players or change floors.": "Host only: /one teleportall moves ready, living players on your current floor to your position. Loading players are skipped; it does not revive players or change floors.",
+  "Host only: /one teleportall brings ready, living players to your position, using native travel if they are on another floor. Loading or already-traveling players are skipped. Does not revive players.": "Host only: /one teleportall brings ready, living players to your position, using native travel if they are on another floor. Loading or already-traveling players are skipped. Does not revive players.",
   "Only the host can teleport all players.": "Only the host can teleport all players.",
   "Teleport all is already running.": "Teleport all is already running.",
   "The host must be alive and ready on a loaded floor to teleport the party.": "The host must be alive and ready on a loaded floor to teleport the party.",

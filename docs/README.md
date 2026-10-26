@@ -1,5 +1,10 @@
 # Development knowledge index
 
+[Cross-floor party recovery](teleport-all.md): 0.98.0 extends Teleport All with
+the native stage-transfer/position-override transaction for stranded players.
+Same-floor movement remains immediate; pending travel is never duplicated.
+Includes readiness/ownership guards, EN/KO feedback and installed contracts.
+
 [PvP stored-burst default](pvp-burst-audit.md): 0.97.1 reduces 저장 피해량 from
 75% to 70% of victim maximum HP. New/omitted values and resets follow 70%;
 explicit saved tuning and the balancing algorithms remain unchanged.

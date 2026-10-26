@@ -1,4 +1,9 @@
 {
+  "Wait for the party's current floor-transition countdown to finish.": "파티의 층 이동 카운트다운이 끝날 때까지 기다려 주세요.",
+  "{0} request(s) use native floor travel; arrival is asynchronous.": "{0}명은 층 이동 절차가 완료되면 도착합니다.",
+  "Players already queued for travel were skipped.": "이미 층 이동 대기 중인 플레이어는 제외했습니다.",
+  "Cross-floor recovery unavailable: native travel compatibility check failed. See Player.log.": "층 간 소환을 사용할 수 없습니다. 층 이동 호환성 검사에 실패했습니다. Player.log를 확인하세요.",
+  "Cross-floor recovery requires the host's destination floor to be fully generated and current.": "층 간 소환은 호스트의 현재 층 생성이 완전히 끝난 뒤에 사용할 수 있습니다.",
   "Block Zombie HP potions": "좀비 HP 포션 사용 금지",
   "Block Zombie HP potions: {0}.": "좀비 HP 포션 사용 금지: {0}.",
   "Zombies cannot use HP potions.": "좀비는 HP 포션을 사용할 수 없습니다.",
@@ -990,7 +995,7 @@
   "lobby / future starts": "로비 / 다음 시작",
   "Updated lobby dice allowance and balance by the grant difference. Spent dice were not refilled.": "로비 주사위 지급 한도와 보유량을 설정 차이만큼 변경했습니다. 사용한 주사위는 보충되지 않았습니다.",
   "The dice decrease would reclaim dice already spent. Use a smaller decrease or apply it on a fresh run. Nobody was changed.": "이미 사용한 주사위를 회수하게 되므로 줄일 수 없습니다. 감소량을 줄이거나 새 게임에서 적용하세요. 아무도 변경되지 않았습니다.",
-  "Host only: /one teleportall moves ready, living players on your current floor to your position. Loading players are skipped; it does not revive players or change floors.": "호스트 전용: /one teleportall로 같은 층에 있는 준비된 생존 플레이어를 호스트 위치로 이동시킵니다. 로딩 중인 플레이어는 제외되며, 부활이나 층 이동은 하지 않습니다.",
+  "Host only: /one teleportall brings ready, living players to your position, using native travel if they are on another floor. Loading or already-traveling players are skipped. Does not revive players.": "호스트 전용: /one teleportall로 준비된 생존 플레이어를 호스트 위치로 이동시킵니다. 다른 층의 플레이어는 게임의 층 이동 절차를 거칩니다. 로딩·이동 중인 플레이어는 제외되며 부활시키지는 않습니다.",
   "Only the host can teleport all players.": "호스트만 모든 플레이어를 순간이동시킬 수 있습니다.",
   "Teleport all is already running.": "전체 순간이동이 이미 진행 중입니다.",
   "The host must be alive and ready on a loaded floor to teleport the party.": "전체 순간이동을 하려면 호스트가 살아 있고, 층 로딩이 완료되어 있어야 합니다.",

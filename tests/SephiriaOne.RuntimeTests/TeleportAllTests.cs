@@ -24,11 +24,11 @@ internal static class TeleportAllTests
         check(SettingsActions.Execute("/one teleportall").Success && guest.PlayerAvatar.Teleports.Count == 1 && other.PlayerAvatar.Teleports.Count == 1,
             "Dead and loading players are skipped without queuing later movement");
         guest.PlayerAvatar.IsDead = false; other.connectionToClient.isReady = true;
-        guest.PlayerAvatar.currentFloorGuid = "other-floor";
+        guest.PlayerAvatar.loadingScreenType = 0;
         other.PlayerAvatar.loadingScreenType = 0;
         check(SettingsActions.Execute("/one teleportall").Success && guest.PlayerAvatar.Teleports.Count == 1 && other.PlayerAvatar.Teleports.Count == 1,
-            "Other-floor and traveling players cannot receive coordinates from the wrong floor");
-        guest.PlayerAvatar.currentFloorGuid = "town"; other.PlayerAvatar.loadingScreenType = -1;
+            "Traveling players cannot receive coordinates before loading completes");
+        guest.PlayerAvatar.loadingScreenType = -1; other.PlayerAvatar.loadingScreenType = -1;
         host.PlayerAvatar.transform.position = new Vector3(float.NaN, 0, 0);
         check(!SettingsActions.Execute("/one teleportall").Success && guest.PlayerAvatar.Teleports.Count == 1, "Invalid destination rejects before sending");
         host.PlayerAvatar.transform.position = new Vector3(3, 4, 0);

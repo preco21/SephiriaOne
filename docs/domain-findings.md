@@ -1,5 +1,12 @@
 # Sephiria domain findings
 
+Cross-floor recovery (`0.98.0`): use the server `DungeonManager.MoveFloor` overload
+with `overridePosition`; the client command drops that argument. Native travel
+waits, positions, updates occupancy/floor/loading SyncVars, fires entered-floor
+events and cleans up unused floors. Do not teleport coordinates or write floor
+GUIDs directly. Read the native pending queue before requesting travel: duplicate
+transactions are logged but still enqueued. See [teleport evidence](teleport-all.md).
+
 Zombie potion admission (`0.97.0`) must use the current round faction, including
 pending conversion, rather than the alive-only combat role helper. Recheck at
 native drink completion to close animation/conversion races; preserve native
