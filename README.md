@@ -14,7 +14,7 @@ ESC 메뉴 우상단에서 모드 메뉴를 열 수 있습니다.
 ## 설치 방법
 
 - [릴리즈](https://github.com/preco21/SephiriaOne/releases)에서 받은 ZIP 파일내 SephiriaOne 폴더를 압축 해제합니다.
-- 게임 설치 경로(Steam > `Sephiria` 우클릭 > 관리 > 로컬 파일 탐색)에서 `Sephiria/AddOns` 폴더를 찾아 위 내용물을 폴더째로 넣습니다. 만약 `AddOns` 폴더가 없다면 직접 생성합니다.
+- 게임 설치 경로(Steam > `Sephiria` 우클릭 > 관리 > 로컬 파일 탐색)에서 `Sephiria/AddOns` 폴더를 찾아 위 내용물을 폴더째로 넣습니다. 만약 `AddOns` 폴더가 없다면 직접 생성합니다. 최종 폴더 경로가 이렇게 되어야 합니다: `/Sephiria/AddOns/SephiriaOne`
 
 ## 모드 기능
 
