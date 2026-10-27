@@ -125,7 +125,7 @@ namespace SephiriaOne
         internal static string DescribeFriendlyFire(FriendlyFireSettings settings) =>
             L.F("Friendly fire: {0}; allied damage: {1}%.", L.T(settings.Enabled ? "on" : "off"), settings.Number) + " " +
             (settings.Enabled ? L.T("PvP recovery: HP Steal is disabled on friendly-fire hits.") + " " + DescribeRabbitPvpSharing(RabbitPotionsForDisplay) + " " : "") +
-            L.F("PvP cover: {0}; requested count: {1}. Safe space may reduce the actual count.", L.T(settings.Cover.Enabled ? "on" : "off"), settings.Cover.Count) + " " +
+            L.F("PvP cover: {0}; requested count: {1}. Safe space may reduce the actual count.", L.T(settings.Cover.Enabled ? "on" : "off"), settings.Cover.Count) + " " + PvpCoverRuntime.Describe() + " " +
             L.F("Combat Mode: {0}.", L.T(settings.CombatMode ? "on" : "off")) + " " +
             L.F("Infinite PvP HP potions: {0}.", L.T(settings.InfiniteHpPotions ? "on" : "off")) + " " +
             L.T("PvP potion consumption also applies to Rabbit. Grants are separate.") + " " +

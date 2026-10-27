@@ -1,6 +1,7 @@
 # Development knowledge index
 
-[Temporary PvP cover](pvp-cover.md): 0.100.0 adds default-off native cover with a
+[Temporary PvP cover](pvp-cover.md): 0.100.1 fixes the omitted authored lobby
+generator and adds placement diagnostics. Default-off native cover has a
 configurable count (12 by default, 1–32). Includes safe placement, host-only
 network spawning, debris-free cleanup, lifecycle tests and live-test limitations.
 The [initial investigation](pvp-cover-investigation.md) records other candidates.

@@ -1,6 +1,6 @@
 # Temporary PvP cover
 
-Implemented in 0.100.0 (2026-10-28). Host addon only; uses a registered native
+Implemented in 0.100.0; lobby fix in 0.100.1 (2026-10-28). Host addon only; uses a registered native
 barrel prefab and its native collision/network behaviour. No guest installation
 or additional assets. Static contracts and simulated lifecycle tests pass;
 stock-guest gameplay/collision has not been exercised in a live session here.
@@ -35,6 +35,8 @@ changing floors, session shutdown and addon unload remove owned roots.
 
 - Supports ordinary rooms in EnhancedProcedural, Fixed and Library tile-floor
   generators, plus supported native lobby rooms (including SingleRoom lobbies).
+  Since 0.100.1, also supports authored `FullyDesignedFloorGenerator` layouts
+  with the audited ground paths used by MultiZone and TheRabbittown.
   Boss-only and unknown/special single-room layouts are skipped.
 - The count is a maximum, not a quota forced onto an unsafe map. Narrow rooms,
   populated lobbies, geometry and protected interactions can reduce it to zero.
@@ -119,3 +121,40 @@ owned root or visual remains after stopping PvP.
 
 Native evidence and alternative candidates: [cover investigation](pvp-cover-investigation.md).
 Agents should consult this implementation document before the older design.
+
+## Lobby placement fix — 0.100.1
+
+The user's Player.log confirmed 0.100.0, enabled cover and friendly fire, and
+`MultiZone`/`TheRabbittown` waiting-area floors using `FullyDesignedFloorGenerator`.
+That class derives directly from `FloorGenerator`, not `TileFloorGenerator`.
+The original runtime cast rejected it before room search, prefab validation or
+diagnostic output. The addon therefore silently created no lobby cover.
+
+The runtime now retains the base floor type. The room adapter reads native
+authored bounds, resolves explicit ground/upper/wall/water tilemaps, and preserves
+the same positive-ground, hazard, collision and 5×5 bypass checks. Native authored
+props have a separate `props` list; its interactions and native map teleport
+destinations (including destination offsets) are protected too. Unknown layouts,
+missing ground, incompatible grids and boss arenas still fail closed.
+
+The UI and `/one friendlyfire status` show waiting/placement/actual-count/error
+states. Player.log gets one completion/skip summary per scope/count: floor type,
+room count, attempts and rejection counters. No repeated per-frame logs or
+new steady-state physics queries. Compatibility failure has its own status.
+
+Regression coverage now compiles the **production room adapter**, replacing the
+earlier always-safe room stub. Tests cover the lobby hierarchy, world offsets,
+missing cells, pits/water, authored interactions, teleport offsets, walls, missing
+ground, incompatible scale and existing procedural room types. The original
+lobby regression failed before the runtime fix. Lifecycle and native contract
+suites pass; no live deployment or guest test was performed for this patch.
+
+Evidence: unchanged installed DLL SHA-256 listed in the investigation; REA
+selected-member evidence `ev_b4c3f1dc31c41d34a082c1fb9bf80e9f1e1057144449a3fa8cfe60b26bd90d41`
+for the base/authored/tile floor types. Built-in asset hierarchy and tilemap
+trees confirm `Grid/Ground` (MultiZone), `Grid/Pit/Ground` (TheRabbittown), unit
+grids and matching wall/upper paths. Offline ground/wall-only clearance found
+297 and 5,334 potential 5×5 centers respectively; these are **not** live spawn
+counts and exclude other props/players/hazards. Root generator MonoBehaviour
+typetree decoding failed; bounds and prop-list contracts come from the installed
+managed code instead. Temporary asset inventories and private logs stay outside Git.

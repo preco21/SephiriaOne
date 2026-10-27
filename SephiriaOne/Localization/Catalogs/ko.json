@@ -1046,5 +1046,16 @@
   "1–32 · Safe space may reduce the count. Removed when PvP ends. Cover also blocks nonparticipants.": "1~32개 · 안전한 공간만 배치. PvP 종료 시 제거됩니다. 비참가자의 이동도 막습니다.",
   "Temporary PvP cover: /one friendlyfire cover on|off|reset; cover count <1..32>|reset. Default off, 12 obstacles. Safe space may reduce the actual count. /one save persists it.": "임시 PvP 엄폐물: /one friendlyfire cover on|off|reset; cover count <1..32>|reset. 기본 꺼짐, 12개. 안전한 공간이 부족하면 실제 수가 줄어듭니다. /one save로 저장합니다.",
   "PvP cover unavailable; off/reset remain available. See Player.log.": "PvP 엄폐물을 사용할 수 없습니다. off/reset은 가능합니다. Player.log를 확인하세요.",
-  "PvP cover: {0}; requested count: {1}. Safe space may reduce the actual count.": "PvP 엄폐물: {0}; 설정 개수: {1}. 안전한 공간이 부족하면 실제 수가 줄어듭니다."
+  "PvP cover: {0}; requested count: {1}. Safe space may reduce the actual count.": "PvP 엄폐물: {0}; 설정 개수: {1}. 안전한 공간이 부족하면 실제 수가 줄어듭니다.",
+  "Cover is off.": "엄폐물 꺼짐.",
+  "Cover is waiting for PvP to start.": "PvP 시작 시 엄폐물을 배치합니다.",
+  "Cover is waiting for the host's level to load.": "호스트의 레벨 로딩을 기다리는 중입니다.",
+  "Cover stopped after an error. See Player.log; toggle off/on to retry.": "오류로 엄폐물 배치가 중단되었습니다. Player.log 확인 후 껐다 켜서 다시 시도하세요.",
+  "Cover does not support this level layout.": "이 레벨 구조에는 엄폐물을 배치할 수 없습니다.",
+  "Cover is not placed in boss arenas.": "보스 전투 구역에는 엄폐물을 배치하지 않습니다.",
+  "Cover could not find a supported ground tilemap.": "엄폐물을 배치할 수 있는 바닥을 찾지 못했습니다.",
+  "Cover does not support this tile grid.": "이 타일 격자에는 엄폐물을 배치할 수 없습니다.",
+  "Cover found no eligible rooms on this level.": "이 레벨에서 엄폐물을 배치할 방을 찾지 못했습니다.",
+  "Placing cover: {0}/{1}.": "엄폐물 배치 중: {0}/{1}개.",
+  "Cover placed: {0}/{1}. Safe space may reduce the count.": "엄폐물 배치: {0}/{1}개. 안전한 공간이 부족하면 개수가 줄어듭니다."
 }

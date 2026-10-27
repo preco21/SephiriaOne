@@ -9,6 +9,7 @@ namespace SephiriaOne
     public sealed partial class SettingsPanel
     {
         private TMP_InputField coverCount;
+        private TMP_Text coverState;
         private bool coverCountDraft;
         private Slider friendlyDamage;
         private bool friendlyDraft;
@@ -18,10 +19,10 @@ namespace SephiriaOne
         {
             coverCountDraft = false;
             var outer = pageRoot;
-            var content = widgets.ScrollSection(outer, "CombatScroll", 10, 0, 273, PageHeight, 510);
+            var content = widgets.ScrollSection(outer, "CombatScroll", 10, 0, 273, PageHeight, 536);
             // Existing Combat rows use a 16-unit form origin. Align that origin
             // to the scroll content while retaining their shared layout values.
-            pageRoot = PanelWidgets.Rect(content, "CombatForm", -16, 0, 289, 510);
+            pageRoot = PanelWidgets.Rect(content, "CombatForm", -16, 0, 289, 536);
             combatResetKda = widgets.Button(pageRoot, "Reset K/D/A", 16, 0, 135, 24,
                 () => Execute("/one friendlyfire resetkda", true));
             reviveAll = widgets.Button(pageRoot, "Revive all players", 162, 0, 127, 24, () => Execute("/one reviveall", true));
@@ -44,6 +45,7 @@ namespace SephiriaOne
             changeButtons.Add(widgets.Button(pageRoot, "Apply", 203, 406, 70, 25,
                 () => Execute("/one friendlyfire cover count " + coverCount.text.Trim(), true, clearInputOnSuccess: () => coverCountDraft = false)));
             widgets.Text(pageRoot, "CoverHint", "1–32 · Safe space may reduce the count. Removed when PvP ends. Cover also blocks nonparticipants.", 16, 440, 257, 38, 10);
+            coverState = widgets.Text(pageRoot, "CoverState", "", 16, 484, 257, 42, 10);
             pageRoot = outer;
             BuildParticipantsEditor();
         }
@@ -83,6 +85,7 @@ namespace SephiriaOne
         private void RefreshCombat(SettingsSnapshot snapshot)
         {
             if (page != 9) return;
+            if (coverState) coverState.text = PvpCoverRuntime.Describe();
             if (coverCount && !coverCountDraft) coverCount.SetTextWithoutNotify(snapshot.FriendlyFire.Cover.Count.ToString(CultureInfo.InvariantCulture));
             if (giveLargePotions) giveLargePotions.interactable = LargePotionGrant.CanExecute;
             if (reviveAll) reviveAll.interactable = ReviveAllAction.CanExecute;

@@ -18,6 +18,8 @@ namespace SephiriaOne
         private readonly List<(float X, float Y)> accepted = new List<(float, float)>();
         private readonly Random random;
         private int nextRoom, attempts;
+        internal int Attempts => attempts;
+        internal int RoomCount => rooms.Count;
         internal bool Exhausted => rooms.Count == 0 || attempts >= MaximumAttempts;
         internal PvpCoverPlacement(List<Room> rooms, int seed)
         {

@@ -6,21 +6,21 @@ void Check(bool ok, string why) { checks++; if (!ok) throw new Exception(why); }
 var host = new PlayerSpawner(); PlayerSpawner.MultiplayerList.Add(host);
 TileFloorGenerator Floor(string guid)
 {
-    var floor = new TileFloorGenerator { guid = guid }; FloorGenerator.Floors[guid] = floor;
+    var floor = new EnhancedProceduralFloorGenerator { guid = guid }; FloorGenerator.Floors[guid] = floor;
     DungeonManager.Instance.generatedFloors[guid] = floor.DataOnServer; return floor;
 }
 var first = Floor("A");
 void Frame()
 {
-    int before = PvpCoverNative.Spawns, probesBefore = PvpCoverRooms.Probes;
+    int before = PvpCoverNative.Spawns, probesBefore = Physics2D.Queries;
     Time.frameCount++; PvpCoverRuntime.Tick();
-    Check(PvpCoverNative.Spawns - before <= 2 && PvpCoverRooms.Probes - probesBefore <= 2, "Bound work to two candidates per frame");
+    Check(PvpCoverNative.Spawns - before <= 2 && Physics2D.Queries - probesBefore <= 2, "Bound work to two candidates per frame");
 }
 void Fill() { for (int i = 0; i < 600; i++) Frame(); }
 void Count(int count) { SessionSettings.FriendlyFireForDisplay.Cover = new(true, count); PvpCoverRuntime.Tick(); }
 Fill(); Check(PvpCoverRuntime.ActiveCount == 12 && PvpCoverNative.Spawns == 12, "Initial cover quota");
-int probes = PvpCoverRooms.Probes, updates = PathGrid.Current.Updates;
-Fill(); Check(PvpCoverRooms.Probes == probes && PvpCoverNative.Spawns == 12, "No steady-state physics/spawn loop");
+int probes = Physics2D.Queries, updates = PathGrid.Current.Updates;
+Fill(); Check(Physics2D.Queries == probes && PvpCoverNative.Spawns == 12, "No steady-state physics/spawn loop");
 Check(updates == 1, "Batch native pathfinding update");
 long beforeAllocation = GC.GetAllocatedBytesForCurrentThread();
 for (int i = 0; i < 1000; i++) { Time.frameCount++; PvpCoverRuntime.Tick(); }
@@ -70,7 +70,26 @@ PvpCoverNative.FailRemove = true; SessionSettings.FriendlyFireForDisplay.Cover =
 Check(PvpCoverRuntime.ActiveCount == 12, "Failed removal stays owned");
 PvpCoverNative.FailRemove = false; Frame(); Check(PvpCoverRuntime.ActiveCount == 0 && PvpCoverNative.Owned.Count == 0, "Cleanup retry releases all roots");
 Count(12); Fill(); Mirror.NetworkServer.active = false; Frame(); Check(PvpCoverRuntime.ActiveCount == 0, "Session shutdown cleanup");
-Mirror.NetworkServer.active = true; PvpCoverRooms.Reject = true; Count(32); Fill();
-Check(PvpCoverRuntime.ActiveCount == 0, "Unsafe level stays empty"); probes = PvpCoverRooms.Probes; Fill();
-Check(PvpCoverRooms.Probes == probes, "Exhausted placement stops scanning");
+Mirror.NetworkServer.active = true; Physics2D.BlockAll = true; Count(32); Fill();
+Check(PvpCoverRuntime.ActiveCount == 0, "Unsafe level stays empty"); probes = Physics2D.Queries; Fill();
+Check(Physics2D.Queries == probes, "Exhausted placement stops scanning");
+Physics2D.BlockAll = false;
+var lobby = new FullyDesignedFloorGenerator { guid = "Lobby" };
+FloorGenerator.Floors[lobby.guid] = lobby;
+DungeonManager.Instance.generatedFloors[lobby.guid] = lobby.DataOnServer;
+host.PlayerAvatar.currentFloorGuid = lobby.guid;
+Count(12); Fill();
+Check(PvpCoverRuntime.ActiveCount == 12, "FullyDesigned multiplayer lobby receives configured cover");
+Check(PvpCoverRuntime.Describe().Contains("12/12"), "Actual placement count is visible");
+int reports = Debug.Logs.Count; Fill();
+Check(Debug.Logs.Count == reports, "Completed placement logs once, not every frame");
+SessionSettings.FriendlyFireForDisplay.Enabled = false; Frame();
+Check(lobby.floorRelatedNetworkObjects.Count == 0 && PvpCoverRuntime.Describe().Contains("waiting for PvP"), "Authored lobby cleanup and waiting status");
+SessionSettings.FriendlyFireForDisplay.Enabled = true;
+lobby.transform.Paths.Clear(); Frame();
+Check(PvpCoverRuntime.Describe().Contains("ground") && Debug.Logs.Last().Contains("reason="), "Unsupported authored map reports why no cover spawned");
+RoomAdapterTests.Run(Check);
+PvpCoverFeature.Available = false; Frame();
+Check(PvpCoverRuntime.Describe().Contains("unavailable"), "Compatibility failure is not reported as a loading delay");
+PvpCoverFeature.Available = true;
 Console.WriteLine($"Passed {checks} cover lifecycle checks.");

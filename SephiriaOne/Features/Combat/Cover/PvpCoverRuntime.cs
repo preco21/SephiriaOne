@@ -9,15 +9,28 @@ namespace SephiriaOne
     {
         private static readonly List<GameObject> objects = new List<GameObject>(PvpCoverSettings.MaximumCount);
         private static DungeonManager dungeon;
-        private static TileFloorGenerator floor;
+        private static FloorGenerator floor;
         private static object run;
         private static long generation, match;
         private static PvpCoverRooms rooms;
         private static GameObject prefab;
         private static Bounds dirtyBounds;
         private static bool dirty, working, failed;
-        private static int requested, issued, lastFrame = -1;
+        private static int requested, issued, lastFrame = -1, reportedCount = -1;
+        private enum State { Off, WaitingForPvp, WaitingForFloor, Searching, Complete, Unavailable, Incompatible, Failed }
+        private static State state;
         internal static int ActiveCount => objects.Count;
+        internal static string Describe()
+        {
+            if (state == State.Off) return L.T("Cover is off.");
+            if (state == State.WaitingForPvp) return L.T("Cover is waiting for PvP to start.");
+            if (state == State.WaitingForFloor) return L.T("Cover is waiting for the host's level to load.");
+            if (state == State.Incompatible) return L.T("PvP cover unavailable; off/reset remain available. See Player.log.");
+            if (state == State.Failed) return L.T("Cover stopped after an error. See Player.log; toggle off/on to retry.");
+            if (state == State.Unavailable) return L.T(rooms?.UnavailableReason ?? "Cover does not support this level layout.");
+            return state == State.Searching ? L.F("Placing cover: {0}/{1}.", ActiveCount, requested) :
+                L.F("Cover placed: {0}/{1}. Safe space may reduce the count.", ActiveCount, requested);
+        }
 
         internal static void Tick()
         {
@@ -27,20 +40,22 @@ namespace SephiriaOne
             {
                 var settings = SessionSettings.FriendlyFireForDisplay;
                 var current = DungeonManager.Instance;
-                if (!NetworkServer.active || !NetworkClient.active || !PvpCoverFeature.Available || !FriendlyFireFeature.Available ||
-                    !settings.Cover.Enabled || !settings.Enabled && !CombatMatchRuntime.IsRunning || !current || !current.isServer ||
+                if (!settings.Cover.Enabled) { Clear(); return; }
+                if (!settings.Enabled && !CombatMatchRuntime.IsRunning) { Clear(); state = State.WaitingForPvp; return; }
+                if (!PvpCoverFeature.Available || !FriendlyFireFeature.Available) { Clear(); state = State.Incompatible; return; }
+                if (!NetworkServer.active || !NetworkClient.active || !current || !current.isServer ||
                     !ReviveAllAction.IsRunOpen(current, SaveManager.CurrentRun))
-                { Clear(); return; }
+                { Clear(); state = State.WaitingForFloor; return; }
                 PlayerAvatar host = null;
                 if (NetworkServer.localConnection != null)
                     foreach (var player in PlayerSpawner.MultiplayerList)
                         if (player && player.PlayerAvatar && ReferenceEquals(player.connectionToClient, NetworkServer.localConnection))
                         { host = player.PlayerAvatar; break; }
-                var currentFloor = host && !string.IsNullOrEmpty(host.currentFloorGuid) ? FloorGenerator.FindByGuid(host.currentFloorGuid) as TileFloorGenerator : null;
+                var currentFloor = host && !string.IsNullOrEmpty(host.currentFloorGuid) ? FloorGenerator.FindByGuid(host.currentFloorGuid) : null;
                 if (!host || host.loadingScreenType >= 0 || !currentFloor || !currentFloor.GenerateSuccess || !currentFloor.isServer ||
-                    !currentFloor.ground || currentFloor.DataOnServer == null ||
+                    currentFloor.DataOnServer == null ||
                     !current.generatedFloors.TryGetValue(currentFloor.guid, out var data) || !ReferenceEquals(data, currentFloor.DataOnServer))
-                { Clear(); return; }
+                { Clear(); state = State.WaitingForFloor; return; }
                 if (!ReferenceEquals(dungeon, current) || !ReferenceEquals(run, SaveManager.CurrentRun) ||
                     generation != SessionSettings.ResourceGeneration || match != CombatMatchRuntime.MatchToken || !ReferenceEquals(floor, currentFloor))
                 {
@@ -50,7 +65,7 @@ namespace SephiriaOne
                     generation = SessionSettings.ResourceGeneration; match = CombatMatchRuntime.MatchToken;
                     bool lobby = host.Race && host.Race.lobbyStage && data.stageName == host.Race.lobbyStage.name;
                     rooms = new PvpCoverRooms(floor, lobby, UnityEngine.Random.Range(1, int.MaxValue));
-                    prefab = PvpCoverNative.Prefab();
+                    if (rooms.UnavailableReason == null) prefab = PvpCoverNative.Prefab();
                 }
                 if (failed) { if (objects.Count != 0) Cleanup(false); return; }
                 for (int i = objects.Count - 1; i >= 0; i--)
@@ -59,10 +74,12 @@ namespace SephiriaOne
                 if (requested != settings.Cover.Count)
                 {
                     requested = settings.Cover.Count;
+                    state = State.Searching;
                     while (objects.Count > requested) RemoveLast();
                     issued = Math.Min(issued, requested);
                     FlushPathfinding();
                 }
+                if (ReportCompletion()) return;
                 // Notifications may run repeatedly during a frame. Never multiply
                 // the work budget or refresh cover due to unrelated settings.
                 if (lastFrame == Time.frameCount || issued >= requested || rooms.Plan.Exhausted) return;
@@ -76,14 +93,26 @@ namespace SephiriaOne
                     }
                 // Native erosion can visit the whole graph. Coalesce all placement
                 // updates; do not perform one full erosion pass per barrel/frame.
-                if (issued >= requested || rooms.Plan.Exhausted) FlushPathfinding();
+                ReportCompletion();
             }
             catch (Exception error)
             {
-                Cleanup(false); failed = true;
+                Cleanup(false); failed = true; state = State.Failed;
                 Debug.LogWarning("[SephiriaOne] PvP cover stopped; cleanup requested: " + error);
             }
             finally { working = false; }
+        }
+        private static bool ReportCompletion()
+        {
+            if (issued < requested && !rooms.Plan.Exhausted) return false;
+            FlushPathfinding();
+            state = rooms.UnavailableReason == null ? State.Complete : State.Unavailable;
+            if (reportedCount != requested)
+            {
+                reportedCount = requested;
+                Debug.Log($"[SephiriaOne] PvP cover placement: floor={floor.name} ({floor.GetType().Name}); placed={objects.Count}/{requested}; rooms={rooms.Plan.RoomCount}; attempts={rooms.Plan.Attempts}; {rooms.Diagnostics}; reason={rooms.UnavailableReason ?? "complete"}");
+            }
+            return true;
         }
         private static void Dirty(Bounds bounds)
         { if (dirty) dirtyBounds.Encapsulate(bounds); else { dirty = true; dirtyBounds = bounds; } }
@@ -128,7 +157,7 @@ namespace SephiriaOne
             PvpCoverNative.PruneDestroyed();
             if (objects.Count != 0 || !resetScope) return;
             dungeon = null; floor = null; run = null; rooms = null; prefab = null;
-            requested = issued = 0; lastFrame = -1; failed = false;
+            requested = issued = 0; lastFrame = reportedCount = -1; failed = false; state = State.Off;
         }
     }
 }

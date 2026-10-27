@@ -1,5 +1,12 @@
 # Sephiria domain findings
 
+Lobby cover (`0.100.1`): native MultiZone/TheRabbittown waiting areas use
+`FullyDesignedFloorGenerator`, which is not a `TileFloorGenerator`. Do not cast
+all loaded host levels to the tile subclass. Authored `props` are separate from
+base `allProps`; map destinations use `TeleportPoint.GetTeleportTargetPosition`
+including offsets. Cover reads explicit ground tilemap paths and reports
+unsupported layouts instead of silently skipping. See [cover fix evidence](pvp-cover.md#lobby-placement-fix--01001).
+
 Temporary PvP cover (`0.100.0`) owns native server-spawned barrel roots and sets
 breakability before initial replication. Block `BreakForce` for owned props,
 since it ignores `CanBeBroken`; cleanup must not trigger detached client debris.

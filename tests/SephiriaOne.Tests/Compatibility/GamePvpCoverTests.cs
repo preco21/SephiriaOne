@@ -13,6 +13,18 @@ internal static class GamePvpCoverTests
         List<CodeInstruction> Code(Type type, string name) => PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(type, name)).ToList();
         bool Calls(IEnumerable<CodeInstruction> code, string type, string name) => code.Any(i => i.operand is MethodInfo m && m.DeclaringType?.Name == type && m.Name == name);
         Check((bool)AccessTools.Method(Mod("PvpCoverRooms"), "Validate").Invoke(null, null)!, "Supported room fields match installed game");
+        var authored = Game("FullyDesignedFloorGenerator");
+        Check(authored.BaseType == Game("FloorGenerator") && !Game("TileFloorGenerator").IsAssignableFrom(authored), "Native waiting-area generator is outside the tile-floor hierarchy");
+        var layoutConstructor = AccessTools.Constructor(Mod("PvpCoverRooms"), new[] { Game("FloorGenerator"), typeof(bool), typeof(int) });
+        var layoutCode = PatchProcessor.GetOriginalInstructions(layoutConstructor).ToList();
+        foreach (string field in new[] { "bottomLeft", "topRight", "props", "mapTeleportConnections" })
+            Check(layoutCode.Any(i => Equals(i.operand, AccessTools.Field(authored, field))), "Authored layout uses native " + field);
+        Check(Calls(layoutCode, "TeleportPoint", "GetTeleportTargetPosition"), "Protect actual native map destinations including their offsets");
+        foreach (string path in new[] { "Grid/Ground", "Grid/Pit/Ground", "Grid/WallCollider", "Grid/Upper" })
+            Check(layoutCode.Any(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, path)), "Audited authored tilemap path " + path);
+        var runtimeCode = Code(Mod("PvpCoverRuntime"), "Tick");
+        Check(!runtimeCode.Any(i => (i.opcode == OpCodes.Isinst || i.opcode == OpCodes.Castclass) && Equals(i.operand, Game("TileFloorGenerator"))), "Readiness no longer rejects authored lobby floors before placement");
+        Check(Calls(Code(Mod("PvpCoverRooms"), "Safe"), "Physics2D", "OverlapBox") && Calls(Code(Mod("PvpCoverRooms"), "Safe"), "Tilemap", "GetTile"), "Ground and collision safety remain required");
         var breakable = Game("BreakableProp");
         var canBreak = AccessTools.Field(breakable, "CanBeBroken");
         var setter = AccessTools.PropertySetter(breakable, "NetworkCanBeBroken");

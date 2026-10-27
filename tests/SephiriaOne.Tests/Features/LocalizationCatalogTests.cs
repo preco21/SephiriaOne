@@ -65,6 +65,11 @@ internal static class LocalizationCatalogTests
                 "Independent rate budget: stores 1 second and refills continuously. Includes supported secondary effects beyond active caps; denied attempts are skipped." })
                 Check(korean.ContainsKey(label), "Missing projectile spawn-rate control translation: " + label);
 
+            // Room diagnostics store lookup keys until they are shown in the UI.
+            foreach (string reason in new[] { "Cover does not support this level layout.", "Cover is not placed in boss arenas.",
+                "Cover could not find a supported ground tilemap.", "Cover does not support this tile grid.", "Cover found no eligible rooms on this level." })
+                Check(korean.ContainsKey(reason), "Missing cover layout diagnostic translation: " + reason);
+
             // Catch new explicit literal lookup sites that omitted their catalog entry.
             // Dynamic widget label arrays have separate installed-UI and feature checks.
             string sourceRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../SephiriaOne"));
