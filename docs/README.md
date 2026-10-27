@@ -1,5 +1,7 @@
 # Development knowledge index
 
+[PvP Combat Mode](pvp-combat-mode.md): 0.99.0 adds a default-off shared combat-state toggle for native menu/map-travel restrictions on stock guests. Includes counter-safe cleanup, native sprint/recovery side effects and explicit inventory-interaction limitations.
+
 [Silent automatic respawns](respawn-visuals.md#silent-automatic-recovery-0983-2026-10-27):
 0.98.3 removes respawn countdown/completion chat, bubbles and floating text.
 Shared delays and success-only pillar FX stay unchanged in all four PvP modes;

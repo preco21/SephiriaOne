@@ -1,5 +1,7 @@
 # Sephiria domain findings
 
+Combat Mode (`0.99.0`): stock clients consume replicated `UnitAvatar.isInBattle` for standard menu/map gates. It is a signed reference counter: preserve native zero-crossing callbacks and release owned state before avatar reinitialization. This also affects sprint/out-of-combat rules and cannot lock all direct interaction menus. See [native contracts and limitations](pvp-combat-mode.md).
+
 Automatic recovery presentation (`0.98.3`): the user confirmed revive FX works;
 shared respawn chat/bubbles/floating text are removed. Keep the unchanged
 `Restore` success boundary and native revive/pillar ordering. Zombie infection

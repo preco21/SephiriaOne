@@ -32,9 +32,9 @@ internal static class GameZombieTests
         Require(Calls("SettingsPanel", "RefreshZombie", "ZombieSurvivalCommand", "DescribeHumanModifier") &&
             Calls("ZombieSurvivalCommand", "DescribeModifiers", "ZombieSurvivalCommand", "DescribeHumanModifier"),
             "Panel and command status share the effective Human protection readout");
-        Require(Calls("CombatMatchRuntime", "BroadcastRespawnCountdown", "ZombieSurvivalMessages", "Conversion") &&
+        Require(Calls("CombatMatchRuntime", "LeaveDeath", "ZombieSurvivalMessages", "Conversion") &&
             !Calls("CombatMatchRuntime", "InfectZombie", "CombatMatchRuntime", "Broadcast") &&
-            !Calls("CombatMatchRuntime", "ZombieRevived", "CombatMatchRuntime", "Broadcast"), "Shared countdown owns the single conversion notice");
+            !Calls("CombatMatchRuntime", "ZombieRevived", "CombatMatchRuntime", "Broadcast"), "Completed death emits the single conversion notice without a respawn countdown");
         var speedUpdate = AccessTools.DeclaredMethod(addon.GetType("SephiriaOne.ZombieMovementSpeed", true)!, "Update");
         var avatar = speedUpdate.GetParameters()[0].ParameterType.Assembly.GetType("UnitAvatar", true)!;
         var speed = AccessTools.DeclaredField(avatar, "moveSpeed");

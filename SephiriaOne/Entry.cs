@@ -35,6 +35,7 @@ namespace SephiriaOne
                 ItemRestrictionFeature.Initialize();
                 FriendlyFireFeature.Initialize();
                 LobbyRegenFeature.Initialize();
+                CombatModeFeature.Initialize();
                 ReviveAllFeature.Initialize();
                 DeathmatchFeature.Initialize();
                 JarSpawnFeature.Initialize();
@@ -93,6 +94,7 @@ namespace SephiriaOne
                 EventSpawnFeature.Shutdown();
                 JarSpawnFeature.Shutdown();
                 FriendlyFireFeature.Shutdown();
+                CombatModeFeature.Shutdown();
                 LobbyRegenFeature.Shutdown();
                 ReviveAllFeature.Shutdown();
                 ItemRestrictionFeature.Shutdown();

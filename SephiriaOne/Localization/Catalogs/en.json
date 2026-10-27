@@ -1,4 +1,10 @@
 {
+  "Combat Mode": "Combat Mode",
+  "Combat Mode: {0}.": "Combat Mode: {0}.",
+  "Combat Mode unavailable; off/reset remain available. See Player.log.": "Combat Mode unavailable; off/reset remain available. See Player.log.",
+  "Host session is not ready.": "Host session is not ready.",
+  "Blocks Map/inventory shortcuts and map travel. Also affects sprint/recovery. Existing and special-interaction menus may remain open.": "Blocks Map/inventory shortcuts and map travel. Also affects sprint/recovery. Existing and special-interaction menus may remain open.",
+  "Combat Mode: /one friendlyfire combat-mode on|off|reset. Default off; participants use native combat menu/travel restrictions during PvP, including match countdowns. Real dungeon combat restrictions remain after disabling. /one save persists it.": "Combat Mode: /one friendlyfire combat-mode on|off|reset. Default off; participants use native combat menu/travel restrictions during PvP, including match countdowns. Real dungeon combat restrictions remain after disabling. /one save persists it.",
   "Wait for the party's current floor-transition countdown to finish.": "Wait for the party's current floor-transition countdown to finish.",
   "{0} request(s) use native floor travel; arrival is asynchronous.": "{0} request(s) use native floor travel; arrival is asynchronous.",
   "Players already queued for travel were skipped.": "Players already queued for travel were skipped.",

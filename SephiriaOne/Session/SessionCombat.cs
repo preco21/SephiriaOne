@@ -83,8 +83,16 @@ namespace SephiriaOne
             { message = L.T("HP potion hooks unavailable; off/reset remain available. See Player.log."); return false; }
             if (command.AutoPotion == true && !LargePotionGrant.Available)
             { message = L.T("Large Potion is unavailable; see Player.log."); return false; }
+            if (command.CombatMode == true && !CombatModeFeature.Available)
+            { message = L.T("Combat Mode unavailable; off/reset remain available. See Player.log."); return false; }
             if (command.BlockLobbyRegen == true && !LobbyRegenFeature.Available)
             { message = L.T("Lobby recovery hooks unavailable; off/reset remain available. See Player.log."); return false; }
+            if (command.CombatMode.HasValue)
+            {
+                if (!EnsureResourceScope()) { message = L.T("Host session is not ready."); return false; }
+                RecordFriendlyFire(command); DeathmatchChanged();
+                message = L.F("Combat Mode: {0}.", L.T(policy.FriendlyFire.CombatMode ? "on" : "off")); return true;
+            }
             if (interrupted)
             {
                 // Stopping a match and selecting its toggle are policy-only.
@@ -107,6 +115,7 @@ namespace SephiriaOne
         internal static string DescribeFriendlyFire(FriendlyFireSettings settings) =>
             L.F("Friendly fire: {0}; allied damage: {1}%.", L.T(settings.Enabled ? "on" : "off"), settings.Number) + " " +
             (settings.Enabled ? L.T("PvP recovery: HP Steal is disabled on friendly-fire hits.") + " " + DescribeRabbitPvpSharing(RabbitPotionsForDisplay) + " " : "") +
+            L.F("Combat Mode: {0}.", L.T(settings.CombatMode ? "on" : "off")) + " " +
             L.F("Infinite PvP HP potions: {0}.", L.T(settings.InfiniteHpPotions ? "on" : "off")) + " " +
             L.T("PvP potion consumption also applies to Rabbit. Grants are separate.") + " " +
             L.F("Automatic Large Potion: {0}.", L.T(settings.AutoPotion ? "on" : "off")) + " " +

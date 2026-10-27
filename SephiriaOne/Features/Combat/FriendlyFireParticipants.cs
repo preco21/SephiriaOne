@@ -120,6 +120,7 @@ namespace SephiriaOne
 
         internal static void Clear()
         {
+            CombatModeRuntime.Clear();
             FriendlyFireKda.ClearMatchups();
             receipts = new ConditionalWeakTable<PlayerAvatar, Receipt>();
             selected.Clear(); stale.Clear(); dungeon = null; run = null; dungeonId = 0; runGeneration = 0;
@@ -223,6 +224,7 @@ namespace SephiriaOne
         internal static Initialization Initializing(PlayerSpawner spawner)
         {
             if (!NetworkServer.active || !spawner) return default;
+            CombatModeRuntime.Release(spawner.PlayerAvatar);
             Lifetime lifetime = playerLifetimes.GetValue(spawner, createPlayerLifetime);
             lifetime.Generation++; lifetime.Initializing++; lifetime.Retired = true;
             Prune(); Changed(false);

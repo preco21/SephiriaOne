@@ -1,4 +1,10 @@
 {
+  "Combat Mode": "전투 모드",
+  "Combat Mode: {0}.": "전투 모드: {0}.",
+  "Combat Mode unavailable; off/reset remain available. See Player.log.": "전투 모드를 사용할 수 없습니다. 끄기·초기화는 가능합니다. Player.log를 확인하세요.",
+  "Host session is not ready.": "호스트 세션이 준비되지 않았습니다.",
+  "Blocks Map/inventory shortcuts and map travel. Also affects sprint/recovery. Existing and special-interaction menus may remain open.": "지도·인벤토리 단축키와 지도 이동을 제한하며 질주·회복에도 영향이 있습니다. 이미 열린 창과 일부 상호작용 메뉴는 예외입니다.",
+  "Combat Mode: /one friendlyfire combat-mode on|off|reset. Default off; participants use native combat menu/travel restrictions during PvP, including match countdowns. Real dungeon combat restrictions remain after disabling. /one save persists it.": "전투 모드: /one friendlyfire combat-mode on|off|reset. 기본 꺼짐. 경기 카운트다운을 포함한 PvP 중 참가자에게 기본 전투 메뉴·이동 제한을 적용합니다. 끈 뒤에도 실제 던전 전투의 제한은 유지됩니다. /one save로 저장합니다.",
   "Wait for the party's current floor-transition countdown to finish.": "파티의 층 이동 카운트다운이 끝날 때까지 기다려 주세요.",
   "{0} request(s) use native floor travel; arrival is asynchronous.": "{0}명은 층 이동 절차가 완료되면 도착합니다.",
   "Players already queued for travel were skipped.": "이미 층 이동 대기 중인 플레이어는 제외했습니다.",

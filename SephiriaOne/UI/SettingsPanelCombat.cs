@@ -23,6 +23,10 @@ namespace SephiriaOne
             BuildPvpSuppliesEditor();
             teleportAll = widgets.Button(pageRoot, "Teleport all players", 156, 145, 133, 25,
                 () => Execute("/one teleportall", true));
+            AddCheckbox("Combat Mode", 16, 278, 273, 21, s => s.FriendlyFire.CombatMode,
+                s => s.FriendlyFireAvailable && CombatModeFeature.Available, "/one friendlyfire combat-mode",
+                s => s.HostActive && s.SessionIdentity != null);
+            widgets.Text(pageRoot, "CombatModeHint", "Blocks Map/inventory shortcuts and map travel. Also affects sprint/recovery. Existing and special-interaction menus may remain open.", 16, 306, 273, 54, 10);
             BuildParticipantsEditor();
         }
 

@@ -65,13 +65,14 @@ internal static class GameFloatingTextTests
         Require(chat >= 0 && floating > chat && notice.Skip(chat + 1).Take(floating - chat - 1)
             .Any(i => i.operand is MethodInfo m && m.Name == "IsCurrent"),
             "chat stays first and participant lifetime is rechecked before optional floating output");
-        foreach (string key in new[] { "Respawn in: {0}s", "Bomb: {0}s" })
+        foreach (string key in new[] { "Bomb: {0}s" })
         {
             foreach (string lang in new[] { "en", "ko" })
             {
                 using var stream = addon.GetManifestResourceStream("SephiriaOne.Localization." + lang + ".json")!;
                 using var reader = new StreamReader(stream);
                 using var json = System.Text.Json.JsonDocument.Parse(reader.ReadToEnd());
+                Require(!json.RootElement.TryGetProperty("Respawn in: {0}s", out _), lang + " automatic respawn text remains removed");
                 Require(json.RootElement.TryGetProperty(key, out var value) && value.GetString()!.Contains("{0}"),
                     lang + " countdown preserves the numeric placeholder");
             }
