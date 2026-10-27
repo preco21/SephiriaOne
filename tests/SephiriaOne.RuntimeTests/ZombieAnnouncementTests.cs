@@ -48,27 +48,27 @@ internal static class ZombieAnnouncementTests
             human.DieCallback = _ => zombie.playerNameSource = "Renamed after death entry";
             var hit = new DamageInstance(); FriendlyFireRuntime.Attribute(zombie, human, hit); human.Die(0, hit);
             var bubbles = Bubbles(human);
-            check(bubbles.Length == 1 && bubbles[0].Contains("\"" + killerName + "\" infected you!") && bubbles[0].Contains("Zombie in 1s") &&
-                bubbles[0].Contains("hunt remaining [H] Humans"), "Conversion has one infector, actual timer and hunt instruction, using death-entry name: " + string.Join(" | ", bubbles));
+            check(bubbles.Length == 1 && bubbles[0].Contains("\"" + killerName + "\" infected you!") && bubbles[0].Contains("You are a Zombie") &&
+                bubbles[0].Contains("hunt remaining [H] Humans"), "Conversion has one infector and hunt instruction without a respawn timer, using death-entry name: " + string.Join(" | ", bubbles));
             check(!bubbles.Any(m => m.StartsWith("Respawn in:")), "Converted Human never receives the generic respawn countdown");
             check(CombatMatchRuntime.ZombieFactionMarker(FriendlyFireParticipants.Capture(human)) == "[Z]", "Pending conversion already shows Zombie marker");
             At(3.5f); check(Bubbles(human).Length == 1, "Repeated ticks do not duplicate conversion notice");
             At(4); check(!human.IsDead && CombatMatchRuntime.IsActiveZombie(human) && Bubbles(human).Length == 1,
                 "Successful conversion revival does not overwrite instruction with another role or generic bubble");
             human.DieCallback = null; human.Die(0, null);
-            check(Bubbles(human).Last() == "Respawn in: 1s", "Later ordinary Zombie death does not retain old infector or conversion notice");
+            check(Bubbles(human).Length == 1, "Later ordinary Zombie death sends no respawn or repeated conversion notice");
             At(5);
             var environmental = all.First(p => p != zombie && p != human);
             DungeonManager.Instance.ChatMessages.Clear();
             environmental.Die(0, null);
-            check(Bubbles(environmental).SequenceEqual(new[] { "Respawn in: 1s" }), "Unconverted environmental Human death keeps native mode countdown");
+            check(Bubbles(environmental).Length == 0, "Unconverted environmental Human death sends no respawn bubble");
             At(6);
             check(SettingsActions.Execute("/one zombie any-death on").Success, "Enable environmental conversion");
             DungeonManager.Instance.ChatMessages.Clear();
             environmental.Die(0, null);
             check(Bubbles(environmental).Length == 1 && Bubbles(environmental)[0].Contains("Infected!") &&
-                Bubbles(environmental)[0].Contains("Zombie in 1s") && !Bubbles(environmental)[0].Contains("infected you"),
-                "Opt-in environmental conversion combines countdown without inventing an infector");
+                Bubbles(environmental)[0].Contains("You are a Zombie") && !Bubbles(environmental)[0].Contains("infected you"),
+                "Opt-in environmental conversion announces the role without a timer or invented infector");
 
             all = New(); zombie = all.Single(CombatMatchRuntime.IsActiveZombie); human = all.First(p => p != zombie);
             DungeonManager.Instance.ChatMessages.Clear();
@@ -80,8 +80,8 @@ internal static class ZombieAnnouncementTests
             };
             hit = new DamageInstance(); FriendlyFireRuntime.Attribute(zombie, human, hit); human.Die(0, hit);
             DungeonManager.Instance.ChatCallback = null;
-            check(nestedTick && human.IsDead && Bubbles(human).Length == 1 && Bubbles(human)[0].Contains("Zombie in 0s"),
-                "Reentrant tick cannot revive or announce before death finalization; conversion uses actual remaining deadline");
+            check(nestedTick && human.IsDead && Bubbles(human).Length == 1 && Bubbles(human)[0].Contains("You are a Zombie"),
+                "Reentrant tick cannot revive or announce before death finalization; role notice contains no respawn timer");
             At(4.2f); check(!human.IsDead && Bubbles(human).Length == 1, "Expired conversion deadline recovers cleanly after native death completes");
 
             all = New(); zombie = all.Single(CombatMatchRuntime.IsActiveZombie); human = all.First(p => p != zombie);

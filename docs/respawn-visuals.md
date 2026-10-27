@@ -1,5 +1,34 @@
 # Automatic respawn pillar
 
+## Silent automatic recovery (0.98.3, 2026-10-27)
+
+After the user confirmed the revive FX works reliably, automatic PvP recovery
+no longer sends `Respawn in: ...`, `Respawned!`, or floating respawn text. This
+also removes success bubbles from interrupted/expired match cleanup. Native
+revive failures still report diagnostics; kill/matchup and match notices remain.
+Zombie conversion keeps a single infector/faction instruction without revival
+seconds. Play Tag's bomb instructions and timer are unchanged.
+
+The shared deadline remains three seconds for Deathmatch/Tournament and one
+second for Play Tag/Zombie Survival. `Restore`, `TryRevive` and `NativeReviveVisuals`
+are unchanged: the pillar is emitted only after a successful automatic revival
+and live scope/receipt checks. Manual revival and immediate stop cleanup retain
+their existing FX behavior. Ordinary friendly fire gains no new automatic revive.
+
+Removed the per-life displayed-second counter, repeated respawn text formatting
+and associated chat/floating sends. The one-time Zombie conversion notice uses
+a separate consumed flag, cleared before entering chat callbacks. No new timer,
+poll, network message, asset or guest addon requirement was introduced.
+
+Verification: Release build (zero warnings/errors), 14,816 runtime checks plus
+69 Bat lifecycle checks, and 50 localization checks pass. Host/guest fixtures
+cover all four modes, exact delays, success-only FX, simultaneous deaths,
+loading, disconnect/replacement, restart, manual revival, stop and FX failure.
+Existing kill attribution, Tournament terminal notices, bomb delivery and Zombie
+conversion callback tests pass. No live session or deployment was performed.
+
+## Original implementation
+
 Implemented in `0.50.0`, 2026-10-12, against the installed assembly fingerprint
 in [domain findings](domain-findings.md).
 
@@ -31,7 +60,8 @@ Manual revival/Revive All, stopped or expired matches' immediate cleanup, old
 connection timers and extra-life saves receive no added pillar. A loading player
 retains the original countdown deadline and emits the effect only when recovery
 can actually complete. Later ticks do not replay it. Existing recovery and
-respawn messages remain independent of optional FX delivery failures.
+respawn timing remains independent of optional FX delivery failures; respawn text
+was removed in 0.98.3 as described above.
 
 ## Native resource and transport evidence
 

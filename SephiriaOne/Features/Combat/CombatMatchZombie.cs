@@ -109,7 +109,8 @@ namespace SephiriaOne
                 Broadcast(null, message);
             }
             // Announcement callbacks can infect a Human or kill an initial Zombie.
-            // Keep the opening recipients frozen and preserve their death bubbles.
+            // Keep opening recipients frozen; preserve conversion alerts and
+            // avoid sending opening role instructions to dead players.
             for (int i = 0; i < initialPlayers.Count && IsZombieSurvival && current == token; i++)
             {
                 var entry = initialPlayers[i];
@@ -192,14 +193,14 @@ namespace SephiriaOne
             if (!zombieRound.Infect(index)) return;
             RetargetZombieBalance(Now);
             if (pending.TryGetValue(zombiePlayers[index].Subject.Player, out var respawn))
-            { respawn.ZombieConversion = true; respawn.ZombieInfector = infector; }
+            { respawn.ZombieConversionNoticePending = true; respawn.ZombieInfector = infector; }
             FriendlyFireKda.ForgetContributions(zombiePlayers[index].Subject.Player);
             RoleRevision++;
             UpdateZombieMovement(zombiePlayers[index]);
             if (!IsZombieSurvival || zombieRound == null) return;
             ZombieRoleVisuals.Update(zombiePlayers[index].Subject.Player);
-            // The shared death finalizer now sends the combined conversion and
-            // respawn message once attribution/any-death policy is complete.
+            // The shared death finalizer sends the one-time faction alert once
+            // attribution/any-death policy is complete, without a respawn timer.
         }
 
         private static void ZombieRevived(FriendlyFireParticipants.Receipt receipt, long match)

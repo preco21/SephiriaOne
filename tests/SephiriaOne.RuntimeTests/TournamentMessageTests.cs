@@ -38,12 +38,12 @@ internal static class TournamentMessageTests
         check(chat.Count == before + 4 && pair.All(p => Last(p).EndsWith("6s left")),
             "Delayed frames send only the current time, without replaying missed seconds");
         pair[0].IsDead = true; CombatMatchRuntime.Died(pair[0]);
-        check(Last(pair[0]) == "Respawn in: 3s" && Last(pair[1]) == End,
-            "Death immediately replaces both live statuses before sending the respawn bubble");
+        check(Last(pair[0]) == End && Last(pair[1]) == End,
+            "Death immediately retires both live statuses without a respawn bubble");
         int ended = chat.Count(x => x.Message == End);
         At(7.3f);
-        check(Last(pair[0]) == "Respawn in: 3s" && chat.Count(x => x.Message == End) == ended,
-            "Round settlement does not erase the dead fighter's replacement respawn message");
+        check(Last(pair[0]) == End && chat.Count(x => x.Message == End) == ended,
+            "Round settlement does not repeat the terminal notice");
         CombatMatchRuntime.Stop(true, false);
 
         players = New();
@@ -106,8 +106,8 @@ internal static class TournamentMessageTests
             CombatMatchRuntime.Died(players[0]);
         };
         At(4);
-        check(Last(players[0]) == "Respawn in: 3s" && Last(players[1]) == End,
-            "Death during status delivery preserves the new respawn bubble and invalidates remaining status sends");
+        check(Last(players[0]) == End && Last(players[1]) == End,
+            "Death during status delivery retires both statuses and invalidates remaining status sends");
         CombatMatchRuntime.Stop(true, false);
 
         players = New();
@@ -118,7 +118,7 @@ internal static class TournamentMessageTests
         };
         players[0].IsDead = true; CombatMatchRuntime.Died(players[0]);
         check(!CombatMatchRuntime.IsRunning && !players[0].IsDead &&
-            Last(players[0]) == "Respawned!" && Last(players[1]) == End,
+            Last(players[0]) == End && Last(players[1]) == End,
             "A stop during death-message retirement cannot schedule a stale respawn after cleanup");
 
         players = New();

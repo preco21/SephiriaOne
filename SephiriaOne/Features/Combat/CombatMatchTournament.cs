@@ -90,8 +90,8 @@ namespace SephiriaOne
                 firstDied |= a;
                 secondDied |= b;
             }
-            // Retire the pair's notices before the shared death service writes
-            // a respawn countdown. Later settlement must not overwrite it.
+            // Retire both opponent timers immediately with terminal notices.
+            // Automatic respawns are silent; later settlement must not repeat them.
             ClearTournamentMessages();
         }
 

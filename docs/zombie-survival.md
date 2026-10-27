@@ -258,27 +258,28 @@ names into messages of at most 120 characters for the stock chat receiver.
 Only initial Zombies receive opening role bubbles; Humans receive none.
 Opening recipients are captured before visual/chat callbacks. A Human infected
 inside one of those callbacks keeps their conversion notice, and a dead initial
-Zombie keeps their respawn notice instead of receiving an opening instruction.
+Zombie receives no opening instruction while dead.
 
-Confirmed conversions use the killer name captured at death entry and the shared
-respawn deadline. The current delay remains **one second**, not three:
+Confirmed conversions use the killer name captured at death entry. Since 0.98.3,
+the alert identifies the new faction without respawn text. The recovery delay
+remains **one second**, with the same success-only pillar FX:
 
 ```text
-[Z] "PlayerX" infected you! Reviving as Zombie in 1s - hunt remaining [H] Humans!
-[Z] "PlayerX"에게 감염됨! 1초 후 좀비로 부활 - 남은 [H] 인간을 사냥하세요!
+[Z] "PlayerX" infected you! You are a Zombie - hunt remaining [H] Humans!
+[Z] "PlayerX"에게 감염됨! 좀비가 되었습니다 - 남은 [H] 인간을 사냥하세요!
 ```
 
 Zombie-mode `Died` queues recovery but defers its initial announcement while a
 native death scope is open. `ConfirmedKill` records the attributed infector;
 `CompletedMatchDeath` handles opt-in environmental infection. `LeaveDeath` then
-sends the resolved countdown once. A reentrant tick cannot restore/announce that
+sends the resolved faction alert once. A reentrant tick cannot restore/announce that
 player before the death scope finishes. Conversion without an attributed killer
 uses a neutral "Infected!" message instead of inventing a name.
 
 Conversion fields belong to the existing per-life respawn entry, not a permanent
-player map. The combined bubble replaces the generic countdown; no generic
+player map. The faction alert is consumed before chat callbacks; no generic
 floating countdown, separate revival role instruction or `Respawned!` bubble
-overwrites it. Ordinary deaths and other modes keep their existing messages.
+overwrites it. Automatic respawns in every mode are silent since 0.98.3.
 Normal K/D/A kill logs and private matchup records remain separate and unchanged.
 Manual revival, stop, failed death/revival and session cleanup discard the entry.
 

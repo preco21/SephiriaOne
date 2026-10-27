@@ -1,5 +1,11 @@
 # Sephiria domain findings
 
+Automatic recovery presentation (`0.98.3`): the user confirmed revive FX works;
+shared respawn chat/bubbles/floating text are removed. Keep the unchanged
+`Restore` success boundary and native revive/pillar ordering. Zombie infection
+alerts are one-time faction messages without revival seconds. See
+[respawn presentation](respawn-visuals.md).
+
 Cross-floor recovery (`0.98.0`): use the server `DungeonManager.MoveFloor` overload
 with `overridePosition`; the client command drops that argument. Native travel
 waits, positions, updates occupancy/floor/loading SyncVars, fires entered-floor

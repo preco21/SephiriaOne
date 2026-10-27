@@ -26,9 +26,9 @@ namespace SephiriaOne
             return lines;
         }
 
-        internal static string Conversion(string infector, int seconds) => string.IsNullOrEmpty(infector)
-            ? L.F("[Z] Infected! Reviving as Zombie in {0}s - hunt remaining [H] Humans!", seconds)
-            : L.F("[Z] \"{0}\" infected you! Reviving as Zombie in {1}s - hunt remaining [H] Humans!", QuoteName(infector), seconds);
+        internal static string Conversion(string infector) => string.IsNullOrEmpty(infector)
+            ? L.T("[Z] Infected! You are a Zombie - hunt remaining [H] Humans!")
+            : L.F("[Z] \"{0}\" infected you! You are a Zombie - hunt remaining [H] Humans!", QuoteName(infector));
 
         private static string QuoteName(string name) => CombatNames.Safe(name).Replace('"', '\'');
     }

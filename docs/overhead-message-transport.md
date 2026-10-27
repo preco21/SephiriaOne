@@ -1,5 +1,12 @@
 # Overhead messages without chat history
 
+**Current behavior (0.98.3, 2026-10-27):** after the user confirmed revive FX is
+reliable, automatic respawn countdowns and completion notices were removed from
+chat, overhead bubbles and floating text. Timers and revive FX are unchanged.
+Zombie infection alerts contain no revive timer. Play Tag bomb presentation and
+other gameplay notices remain. See [silent recovery](respawn-visuals.md).
+The dated respawn prototype/emphasis sections below are historical evidence.
+
 Investigated 2026-10-18 against the installed Sephiria 1.0.33 assembly and addon
 `0.62.1`. The initial investigation changed no delivery behavior; the `0.63.0`
 prototype below now adds cosmetic countdown text while retaining chat/bubbles.
@@ -139,7 +146,7 @@ separate change after user confirmation that the visual trial is acceptable.
 | `NativePlayerChat.Show(player, text)` | None; deliberately sends a null avatar | Yes | That player's connection only |
 | Direct `PlayerAvatar.CreateChatBubble(text)` | Player-following chat bubble | No | Calling client only; no network dispatch |
 
-Respawn countdowns, Tournament opponent notices and Play Tag carrier notices use
+Tournament opponent notices and Play Tag carrier notices use
 the first path. Global announcements and rankings use chat-only broadcasts.
 Private killed-by/matchup and costume-role notices use the third path, preserving
 the player's current combat bubble. These private notices are not currently

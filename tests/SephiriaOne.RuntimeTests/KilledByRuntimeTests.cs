@@ -37,8 +37,8 @@ internal static class KilledByRuntimeTests
         {
             Begin("deathmatch"); Kill(host, guest);
             check(NativePlayerChat.Messages.Single() == (guest, "Killed by ‘Host’ (Matchup: Me 0–1 Opponent)") &&
-                DungeonManager.Instance.ChatMessages.Last(x => x.Player == guest).Message == "Respawn in: 3s",
-                "Deathmatch sends a private victim notice alongside the unchanged respawn bubble");
+                !DungeonManager.Instance.ChatMessages.Any(x => x.Player == guest),
+                "Deathmatch keeps the private killed-by notice without an automatic respawn bubble");
             At(6); Kill(guest, host);
             check(NativePlayerChat.Messages.Last() == (host, "Killed by ‘Guest’ (Matchup: Me 1–1 Opponent)"),
                 "Host receives the correct reverse record after the guest respawns");

@@ -34,7 +34,7 @@ internal static class DeathmatchTests
         check(guest.PlayerAvatar.IsDead, "Player remains dead for full three-second respawn countdown");
         At(6);
         check(!guest.PlayerAvatar.IsDead && guest.PlayerAvatar.ReviveRpcCalls == 1, "Respawn uses native revival RPC at three seconds");
-        check(chat.Where(x => x.Player == guest.PlayerAvatar).Select(x => x.Message).SequenceEqual(new[] { "Respawn in: 3s", "Respawn in: 2s", "Respawn in: 1s", "Respawned!" }), "Native avatar chat gets exact respawn countdown and replaces it on recovery");
+        check(!chat.Any(x => x.Player == guest.PlayerAvatar), "Automatic respawn emits no countdown or completion bubble");
         var damageEdit = SettingsActions.Execute("/one friendlyfire damage 75");
         check(damageEdit.Messages.Any(m => m.Contains("Friendly fire: on")), "Damage command reports the effective match toggle, not underlying preset state");
         check(FriendlyFireKda.Label(host.PlayerAvatar, "Host") == "Host(1/0/0)", "Damage edit during match preserves scoreboard identity and totals");

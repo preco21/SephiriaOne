@@ -92,8 +92,8 @@ internal static class PlayTagRuntimeTests
         check(DungeonManager.Instance.ChatMessages.Any(x => x.Message.Contains("before any pass")) &&
             !DungeonManager.Instance.ChatMessages.Any(x => x.Message.Contains("Friendly fire:")),
             "Initial expiry announces no fabricated passer or ordinary kill");
-        check(DungeonManager.Instance.ChatMessages.Last(x => x.Player == carrier).Message == "Respawned!",
-            "Final recovery replaces stale carrier instructions");
+        check(!DungeonManager.Instance.ChatMessages.Any(x => x.Player == carrier && x.Message == "Respawned!"),
+            "Final recovery does not send a respawn completion bubble");
 
         players = New(3); BeginAtThree(3); carrier = Carrier(players);
         var other = players.First(p => p != carrier);

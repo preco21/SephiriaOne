@@ -38,10 +38,9 @@ safe-area protection, invulnerability, guards and defenses remain in effect.
 - Every participating player death during the match gets a three-second respawn. Deaths during
   the opening countdown use the same timer; players already dead when starting
   get their timer immediately. Extra-life prevention is not a death.
-- Native avatar chat displays `Respawn in: 3s`, then `2s`, then `1s`. Each message
-  replaces the preceding bubble and also appears in native chat. `Respawned!`
-  replaces the final countdown after native full-HP revival. Messages use the
-  host's selected EN/KO language. No guest addon, assets or custom RPC is needed.
+- Since 0.98.3, automatic revival sends no respawn countdown, completion bubble,
+  or floating text. The three-second delay and success-only native white pillar
+  are unchanged; see [automatic respawn presentation](respawn-visuals.md).
 - At expiry, friendly fire turns off, pending dead players revive immediately,
   and chat lists up to five participants as `rank. nickname(K/D/A)`. Rank uses
   kills descending, deaths ascending, assists descending, then enrollment order.

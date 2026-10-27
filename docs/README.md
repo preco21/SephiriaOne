@@ -1,5 +1,10 @@
 # Development knowledge index
 
+[Silent automatic respawns](respawn-visuals.md#silent-automatic-recovery-0983-2026-10-27):
+0.98.3 removes respawn countdown/completion chat, bubbles and floating text.
+Shared delays and success-only pillar FX stay unchanged in all four PvP modes;
+Zombie infection keeps a one-time faction alert without revival seconds.
+
 [Cross-floor party recovery](teleport-all.md): 0.98.0 extends Teleport All with
 the native stage-transfer/position-override transaction for stranded players.
 Same-floor movement remains immediate; pending travel is never duplicated.
@@ -103,9 +108,8 @@ child provenance and spawn-throughput limits. Includes a measured counter-storag
 optimization in 0.90.3 and prioritized follow-ups; guest stutter cause unproven.
 
 [Respawn countdown emphasis](overhead-message-transport.md#respawn-countdown-emphasis-0902-2026-10-23):
-native cyan floating respawn text uses 125% size and bold markup. Chat/bubbles
-remain for comparison; the bitmap-font limitation and stock-guest evidence are
-documented. Bomb notices and countdown frequency are unchanged.
+historical cyan-text experiment with 125% size and bold markup. Respawn text
+was removed in 0.98.3 after the revive FX was confirmed; bomb notices remain.
 
 [October disconnect audit](disconnect-projectile-audit.md): observed Steam timeout
 after failed sends, projectile lifetime/ownership review, separate stale FrostTouch
@@ -305,8 +309,8 @@ Stock-client contracts pass; live combat readability still needs verification.
 
 Zombie notices: [faction markers and conversion bubbles](zombie-survival.md#faction-and-conversion-notices-0661-2026-10-19)
 use font-safe `[Z]` / `[H]`, name every initial Zombie, and send opening role
-bubbles only to them. Conversion combines infector, actual revival time and
-Zombie instructions into one bubble without generic respawn/floating overlap.
+bubbles only to them. Conversion keeps the infector and Zombie instructions;
+since 0.98.3 no revival timer or generic respawn text accompanies it.
 
 Zombie setup: [starting Zombie count](zombie-survival.md#starting-count-0660-2026-10-19)
 is configurable in the Zombie tab or `/one zombie count N|reset` (default 1).
@@ -342,9 +346,8 @@ paths inspected cannot provide uniform 3x–5x playback on stock guests; selecte
 shorter pauses or native boss skips remain narrower candidates. Research only.
 
 Prototype: [floating countdown text](overhead-message-transport.md#floating-countdown-prototype-0630)
-adds native cyan text for respawn seconds and the Play Tag bomb timer while
-retaining every existing chat/bubble notice. Native transport and fixture checks
-pass; live host/guest readability and delivery remain unverified.
+documents native cyan text and reliable chat/bubbles. Only Play Tag's bomb timer
+still uses both paths; respawn text was removed in 0.98.3.
 
 PvP tuning: [Dark Cloud](pvp-balancing.md#dark-cloud) now admits one strike per
 attacker/opponent every 2 seconds by default while balancing is enabled. Other effect
