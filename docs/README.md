@@ -1,5 +1,9 @@
 # Development knowledge index
 
+[Temporary PvP cover investigation](pvp-cover-investigation.md): verified stock
+networked barrels/tables, movement layers, strict debris-cleanup limits, safe
+placement design and pathfinding costs. Research only; no runtime feature added.
+
 [PvP Combat Mode](pvp-combat-mode.md): 0.99.0 adds a default-off shared combat-state toggle for native menu/map-travel restrictions on stock guests. Includes counter-safe cleanup, native sprint/recovery side effects and explicit inventory-interaction limitations.
 
 [Silent automatic respawns](respawn-visuals.md#silent-automatic-recovery-0983-2026-10-27):

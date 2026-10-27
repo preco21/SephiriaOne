@@ -1,5 +1,11 @@
 # Sephiria domain findings
 
+Temporary cover research: network registration and a damage hitbox do not prove
+player movement blocking. Audit Tile-layer colliders and break presentation;
+client-local detached debris cannot be removed by destroying its old network
+root. Native path region updates may also rerun whole-grid erosion. See
+[cover candidates and cleanup design](pvp-cover-investigation.md).
+
 Combat Mode (`0.99.0`): stock clients consume replicated `UnitAvatar.isInBattle` for standard menu/map gates. It is a signed reference counter: preserve native zero-crossing callbacks and release owned state before avatar reinitialization. This also affects sprint/out-of-combat rules and cannot lock all direct interaction menus. See [native contracts and limitations](pvp-combat-mode.md).
 
 Automatic recovery presentation (`0.98.3`): the user confirmed revive FX works;
