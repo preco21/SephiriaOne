@@ -6,6 +6,8 @@ namespace SephiriaOne
     {
         internal static bool Available = true;
     }
+    internal static class PvpCoverFeature { internal static bool Available = true; }
+    internal static class PvpCoverRuntime { internal static void Tick() { } internal static void Clear() { } }
     internal static class CombatModeFeature { internal static bool Available = true; }
     internal static class LobbyRegenFeature { internal static bool Available = true; }
 }

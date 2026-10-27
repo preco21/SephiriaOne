@@ -2,17 +2,26 @@ using System;
 using System.Globalization;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 namespace SephiriaOne
 {
     public sealed partial class SettingsPanel
     {
+        private TMP_InputField coverCount;
+        private bool coverCountDraft;
         private Slider friendlyDamage;
         private bool friendlyDraft;
         private Button reviveAll, combatResetKda, giveLargePotions, teleportAll;
 
         private void BuildCombatEditor()
         {
+            coverCountDraft = false;
+            var outer = pageRoot;
+            var content = widgets.ScrollSection(outer, "CombatScroll", 10, 0, 273, PageHeight, 510);
+            // Existing Combat rows use a 16-unit form origin. Align that origin
+            // to the scroll content while retaining their shared layout values.
+            pageRoot = PanelWidgets.Rect(content, "CombatForm", -16, 0, 289, 510);
             combatResetKda = widgets.Button(pageRoot, "Reset K/D/A", 16, 0, 135, 24,
                 () => Execute("/one friendlyfire resetkda", true));
             reviveAll = widgets.Button(pageRoot, "Revive all players", 162, 0, 127, 24, () => Execute("/one reviveall", true));
@@ -27,6 +36,15 @@ namespace SephiriaOne
                 s => s.FriendlyFireAvailable && CombatModeFeature.Available, "/one friendlyfire combat-mode",
                 s => s.HostActive && s.SessionIdentity != null);
             widgets.Text(pageRoot, "CombatModeHint", "Blocks Map/inventory shortcuts and map travel. Also affects sprint/recovery. Existing and special-interaction menus may remain open.", 16, 306, 273, 54, 10);
+            AddCheckbox("Temporary cover", 16, 372, 257, 24, s => s.FriendlyFire.Cover.Enabled,
+                s => s.FriendlyFireAvailable && PvpCoverFeature.Available, "/one friendlyfire cover",
+                s => s.HostActive && s.SessionIdentity != null);
+            widgets.Text(pageRoot, "CoverCount", "Obstacles / level", 16, 406, 120, 25, 11);
+            coverCount = widgets.Input(pageRoot, 142, 406, 55, _ => coverCountDraft = true);
+            changeButtons.Add(widgets.Button(pageRoot, "Apply", 203, 406, 70, 25,
+                () => Execute("/one friendlyfire cover count " + coverCount.text.Trim(), true, clearInputOnSuccess: () => coverCountDraft = false)));
+            widgets.Text(pageRoot, "CoverHint", "1–32 · Safe space may reduce the count. Removed when PvP ends. Cover also blocks nonparticipants.", 16, 440, 257, 38, 10);
+            pageRoot = outer;
             BuildParticipantsEditor();
         }
 
@@ -65,6 +83,7 @@ namespace SephiriaOne
         private void RefreshCombat(SettingsSnapshot snapshot)
         {
             if (page != 9) return;
+            if (coverCount && !coverCountDraft) coverCount.SetTextWithoutNotify(snapshot.FriendlyFire.Cover.Count.ToString(CultureInfo.InvariantCulture));
             if (giveLargePotions) giveLargePotions.interactable = LargePotionGrant.CanExecute;
             if (reviveAll) reviveAll.interactable = ReviveAllAction.CanExecute;
             // Travel is session-wide and does not depend on PvP compatibility

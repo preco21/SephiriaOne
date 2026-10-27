@@ -16,6 +16,7 @@ internal static class GameFriendlyFireCompatibilityTests
         GameAutonomousArtifactTests.Run(game, addon);
         GameLobbyRegenTests.Run(game, addon);
         GameCombatModeTests.Run(game, addon);
+        GamePvpCoverTests.Run(game, addon);
         Type Type(string name) => game.GetType(name, true)!;
         List<CodeInstruction> Code(string type, string method) => PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(Type(type), method)).ToList();
         bool Calls(IEnumerable<CodeInstruction> code, string owner, string method) => code.Any(i => i.operand is MethodInfo m && m.DeclaringType?.Name == owner && m.Name == method);

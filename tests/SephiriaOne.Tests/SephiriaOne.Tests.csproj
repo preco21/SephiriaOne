@@ -6,6 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../SephiriaOne/Features/Combat/Cover/PvpCoverSettings.cs" Link="PvpCoverSettings.cs" />
+    <Compile Include="../../SephiriaOne/Features/Combat/Cover/PvpCoverPlacement.cs" Link="PvpCoverPlacement.cs" />
     <Compile Include="../../SephiriaOne/Features/ProjectileLimits/ProjectileLimitSettings.cs" Link="ProjectileLimitSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/ProjectileLimits/ProjectileLimitCatalog.cs" Link="ProjectileLimitCatalog.cs" />
     <Compile Include="../../SephiriaOne/Features/ProjectileLimits/ProjectileLimitCommand.cs" Link="ProjectileLimitCommand.cs" />

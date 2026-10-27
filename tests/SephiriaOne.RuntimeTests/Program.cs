@@ -2,6 +2,8 @@ using Mirror;
 using SephiriaOne;
 
 int checks = 0;
+if (FriendlyFireCommand.Parse("/one friendlyfire cover on", out _) != FriendlyFireParseResult.Valid)
+    throw new Exception("Missing configurable PvP cover command");
 if (FriendlyFireCommand.Parse("/one friendlyfire combat-mode on", out _) != FriendlyFireParseResult.Valid)
     throw new Exception("Combat Mode command must be recognized.");
 if (FriendlyFireCommand.Parse("/one friendlyfire auto-potion on", out _) != FriendlyFireParseResult.Valid)
@@ -815,6 +817,7 @@ KilledByRuntimeTests.Run(Start, id => Add(id), Check);
 RespawnVisualTests.Run(Start, id => Add(id), Check);
 SilentRespawnTests.Run(Start, id => Add(id), Check);
 CombatModeTests.Run(Start, id => Add(id), Check);
+PvpCoverTests.Run(Check);
 FloatingCountdownTests.Run(Start, id => Add(id), Check);
 DeathmatchScoreResetTests.Run(Start, id => Add(id), Check);
         JarSpawnRuntimeTests.Run(Start, id => Add(id), Check);

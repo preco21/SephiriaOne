@@ -1,8 +1,9 @@
 # Development knowledge index
 
-[Temporary PvP cover investigation](pvp-cover-investigation.md): verified stock
-networked barrels/tables, movement layers, strict debris-cleanup limits, safe
-placement design and pathfinding costs. Research only; no runtime feature added.
+[Temporary PvP cover](pvp-cover.md): 0.100.0 adds default-off native cover with a
+configurable count (12 by default, 1–32). Includes safe placement, host-only
+network spawning, debris-free cleanup, lifecycle tests and live-test limitations.
+The [initial investigation](pvp-cover-investigation.md) records other candidates.
 
 [PvP Combat Mode](pvp-combat-mode.md): 0.99.0 adds a default-off shared combat-state toggle for native menu/map-travel restrictions on stock guests. Includes counter-safe cleanup, native sprint/recovery side effects and explicit inventory-interaction limitations.
 

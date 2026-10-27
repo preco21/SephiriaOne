@@ -1,5 +1,12 @@
 # Sephiria domain findings
 
+Temporary PvP cover (`0.100.0`) owns native server-spawned barrel roots and sets
+breakability before initial replication. Block `BreakForce` for owned props,
+since it ignores `CanBeBroken`; cleanup must not trigger detached client debris.
+`PathGrid.UpdateRegion` accepts queued refreshes during asynchronous scans, so
+checking `IsBuilt` before cleanup updates can leave stale blocked cells. See
+[implementation and tests](pvp-cover.md).
+
 Temporary cover research: network registration and a damage hitbox do not prove
 player movement blocking. Audit Tile-layer colliders and break presentation;
 client-local detached debris cannot be removed by destroying its old network

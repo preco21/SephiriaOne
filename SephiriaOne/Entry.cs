@@ -36,6 +36,7 @@ namespace SephiriaOne
                 FriendlyFireFeature.Initialize();
                 LobbyRegenFeature.Initialize();
                 CombatModeFeature.Initialize();
+                PvpCoverFeature.Initialize();
                 ReviveAllFeature.Initialize();
                 DeathmatchFeature.Initialize();
                 JarSpawnFeature.Initialize();
@@ -84,6 +85,7 @@ namespace SephiriaOne
                 if (owner.updates) { owner.updates.enabled = false; owner.updates = null; }
                 // Keep controllers/guards available if verified cleanup needs recovery.
                 DeathmatchFeature.Shutdown();
+                PvpCoverFeature.Shutdown();
                 BatCostumeFeature.Shutdown();
                 CollinFeature.Shutdown();
                 ExperienceFeature.Shutdown();

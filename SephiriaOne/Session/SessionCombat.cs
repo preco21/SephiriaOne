@@ -60,6 +60,10 @@ namespace SephiriaOne
             // matches or automatic supply state. Preset migration is separate.
             if (command.BlockRabbitInfinite.HasValue)
             { message = L.T("The Rabbit PvP override was removed. Use /one friendlyfire infinite-hp on|off; it controls HP potion consumption for all PvP participants. Automatic grants are separate."); return true; }
+            if (command.Cover.HasValue && !command.Cover.Value.IsValid)
+            { message = FriendlyFireCommand.Usage; return false; }
+            if (command.Cover?.Enabled == true && !PvpCoverFeature.Available)
+            { message = L.T("PvP cover unavailable; off/reset remain available. See Player.log."); return false; }
             if (command.Elements.HasValue && !command.Elements.Value.IsValid)
             { message = FriendlyFireCommand.Usage; return false; }
             if (command.Amplification.HasValue && !command.Amplification.Value.IsValid)
@@ -87,6 +91,12 @@ namespace SephiriaOne
             { message = L.T("Combat Mode unavailable; off/reset remain available. See Player.log."); return false; }
             if (command.BlockLobbyRegen == true && !LobbyRegenFeature.Available)
             { message = L.T("Lobby recovery hooks unavailable; off/reset remain available. See Player.log."); return false; }
+            if (command.Cover.HasValue)
+            {
+                if (!EnsureResourceScope()) { message = L.T("Host session is not ready."); return false; }
+                RecordFriendlyFire(command); DeathmatchChanged();
+                message = L.F("PvP cover: {0}; requested count: {1}. Safe space may reduce the actual count.", L.T(policy.FriendlyFire.Cover.Enabled ? "on" : "off"), policy.FriendlyFire.Cover.Count); return true;
+            }
             if (command.CombatMode.HasValue)
             {
                 if (!EnsureResourceScope()) { message = L.T("Host session is not ready."); return false; }
@@ -115,6 +125,7 @@ namespace SephiriaOne
         internal static string DescribeFriendlyFire(FriendlyFireSettings settings) =>
             L.F("Friendly fire: {0}; allied damage: {1}%.", L.T(settings.Enabled ? "on" : "off"), settings.Number) + " " +
             (settings.Enabled ? L.T("PvP recovery: HP Steal is disabled on friendly-fire hits.") + " " + DescribeRabbitPvpSharing(RabbitPotionsForDisplay) + " " : "") +
+            L.F("PvP cover: {0}; requested count: {1}. Safe space may reduce the actual count.", L.T(settings.Cover.Enabled ? "on" : "off"), settings.Cover.Count) + " " +
             L.F("Combat Mode: {0}.", L.T(settings.CombatMode ? "on" : "off")) + " " +
             L.F("Infinite PvP HP potions: {0}.", L.T(settings.InfiniteHpPotions ? "on" : "off")) + " " +
             L.T("PvP potion consumption also applies to Rabbit. Grants are separate.") + " " +

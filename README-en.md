@@ -31,6 +31,7 @@ Open the mod menu from the upper-right corner of the ESC menu.
 - [Adjust the probability multiplier for random event rooms](docs/random-events.md), including blood donation, obelisks, and magic fountains.
 - PvP features and modes: casual friendly fire, Deathmatch, Tournament, Play Tag, and Zombie Survival.
 - PvP balancing for more manageable damage, with participant selection and exclusions.
+- Temporary PvP cover with configurable obstacles per level, safe placement, and automatic cleanup when PvP ends (off by default).
 - Grant powerful Slates: Requital and Heaven. Heaven exists only as unused game data, but it works, so I added it.
 - Allow selling starting items, including the “마음의 짐” item.
 - Projectile optimization—a must-have when playing with 12+ players through the raid mod and lag-heavy builds such as Liberation, Ilonica, or Palas' Card.

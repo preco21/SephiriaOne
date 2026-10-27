@@ -1040,5 +1040,11 @@
   "Participants": "Participants",
   "PvP potion consumption also applies to Rabbit. Grants are separate.": "PvP potion consumption also applies to Rabbit. Grants are separate.",
   "During PvP, Infinite PvP HP potions controls consumption for every participant, including Wing-Eared Rabbit. Auto Large Potion grants are independent.": "During PvP, Infinite PvP HP potions controls consumption for every participant, including Wing-Eared Rabbit. Auto Large Potion grants are independent.",
-  "The Rabbit PvP override was removed. Use /one friendlyfire infinite-hp on|off; it controls HP potion consumption for all PvP participants. Automatic grants are separate.": "The Rabbit PvP override was removed. Use /one friendlyfire infinite-hp on|off; it controls HP potion consumption for all PvP participants. Automatic grants are separate."
+  "The Rabbit PvP override was removed. Use /one friendlyfire infinite-hp on|off; it controls HP potion consumption for all PvP participants. Automatic grants are separate.": "The Rabbit PvP override was removed. Use /one friendlyfire infinite-hp on|off; it controls HP potion consumption for all PvP participants. Automatic grants are separate.",
+  "Temporary cover": "Temporary cover",
+  "Obstacles / level": "Obstacles / level",
+  "1–32 · Safe space may reduce the count. Removed when PvP ends. Cover also blocks nonparticipants.": "1–32 · Safe space may reduce the count. Removed when PvP ends. Cover also blocks nonparticipants.",
+  "Temporary PvP cover: /one friendlyfire cover on|off|reset; cover count <1..32>|reset. Default off, 12 obstacles. Safe space may reduce the actual count. /one save persists it.": "Temporary PvP cover: /one friendlyfire cover on|off|reset; cover count <1..32>|reset. Default off, 12 obstacles. Safe space may reduce the actual count. /one save persists it.",
+  "PvP cover unavailable; off/reset remain available. See Player.log.": "PvP cover unavailable; off/reset remain available. See Player.log.",
+  "PvP cover: {0}; requested count: {1}. Safe space may reduce the actual count.": "PvP cover: {0}; requested count: {1}. Safe space may reduce the actual count."
 }

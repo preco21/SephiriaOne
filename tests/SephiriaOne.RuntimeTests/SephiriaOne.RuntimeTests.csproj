@@ -6,6 +6,8 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../SephiriaOne/Features/Combat/Cover/PvpCoverSettings.cs" Link="PvpCoverSettings.cs" />
+    <Compile Include="../../SephiriaOne/Features/Combat/Cover/PvpCoverPlacement.cs" Link="PvpCoverPlacement.cs" />
     <Compile Include="../../SephiriaOne/Features/Travel/TeleportAllAction.cs" Link="TeleportAllAction.cs" />
     <Compile Include="../../SephiriaOne/Features/Travel/NativeFloorTravel.cs" Link="NativeFloorTravel.cs" />
     <Compile Include="../../SephiriaOne/Session/SessionProjectiles.cs" Link="SessionProjectiles.cs" />

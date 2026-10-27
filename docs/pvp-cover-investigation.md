@@ -1,8 +1,10 @@
 # Temporary PvP cover investigation
 
-Investigated 2026-10-27 against the installed game. **Research/design only**:
-no runtime feature, command, setting or asset was added or deployed. Agents
-should refer to this document and other `docs/*` material before implementation.
+Investigated 2026-10-27 against the installed game. This records the initial
+research/design; the original investigation added no runtime behaviour. The
+subsequent **0.100.0 implementation** uses indestructible compact barrels with
+a configurable count: see [current controls, lifecycle and limits](pvp-cover.md).
+Agents should prefer that document for current behaviour.
 
 ## Conclusion
 
