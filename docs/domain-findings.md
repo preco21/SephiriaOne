@@ -1,5 +1,12 @@
 # Sephiria domain findings
 
+PvP cover (`0.101.0`): audited compact barrels/vegetable barrels/small table share
+a 3×3 clear bypass; all 79 installed costume movement circles have radius 0.25.
+Check every intersected tile when room and ground origins differ. Search budget
+and network-spawn budget are separate (16 candidates / two spawns per frame).
+Use the selected prop's collider offset, not a barrel-specific constant. See
+[catalog, safety evidence and runtime limits](pvp-cover.md#varied-props-and-placement-responsiveness--01010).
+
 PvP cover (`0.100.2`): monster eligibility is not placement eligibility. Native
 entrance/rest rooms can have `spawnMonster=false`, and a SingleRoom generator is
 not necessarily a boss or race lobby. Use actual bounds plus explicit boss and

@@ -3,8 +3,8 @@ using System.Collections.Generic;
 
 namespace SephiriaOne
 {
-    // Pure bounded placement policy. The Unity adapter checks a clear 5x5 bypass
-    // square, not just the barrel footprint: cover cannot seal a narrow route.
+    // Pure bounded placement policy. The Unity adapter checks a clear 3x3 bypass
+    // square, not just the compact prop footprint: cover cannot seal a narrow route.
     internal sealed class PvpCoverPlacement
     {
         internal readonly struct Room
@@ -27,18 +27,18 @@ namespace SephiriaOne
             for (int i = this.rooms.Count - 1; i > 0; i--)
             { int j = random.Next(i + 1); var swap = this.rooms[i]; this.rooms[i] = this.rooms[j]; this.rooms[j] = swap; }
         }
-        // One candidate per call: caller budgets at most two probes / frame.
+        // One candidate per call; the caller separately bounds search and spawns.
         internal bool TryNext(Func<float, float, bool> safe, out float x, out float y)
         {
             x = y = 0;
             if (Exhausted) return false;
             attempts++;
             var room = rooms[nextRoom++ % rooms.Count];
-            if (room.Right - room.Left < 8 || room.Top - room.Bottom < 8) return false;
-            x = room.Left + 3.5f + random.Next((int)(room.Right - room.Left) - 6);
-            y = room.Bottom + 3.5f + random.Next((int)(room.Top - room.Bottom) - 6);
+            if (room.Right - room.Left < 6 || room.Top - room.Bottom < 6) return false;
+            x = room.Left + 2.5f + random.Next((int)(room.Right - room.Left) - 4);
+            y = room.Bottom + 2.5f + random.Next((int)(room.Top - room.Bottom) - 4);
             foreach (var previous in accepted)
-                if (Math.Abs(previous.X - x) < 5 && Math.Abs(previous.Y - y) < 5) return false;
+                if (Math.Abs(previous.X - x) < 3 && Math.Abs(previous.Y - y) < 3) return false;
             if (!safe(x, y)) return false;
             accepted.Add((x, y)); return true;
         }

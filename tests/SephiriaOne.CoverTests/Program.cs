@@ -15,11 +15,23 @@ void Frame()
 {
     int before = PvpCoverNative.Spawns, probesBefore = Physics2D.Queries;
     Time.frameCount++; PvpCoverRuntime.Tick();
-    Check(PvpCoverNative.Spawns - before <= 2 && Physics2D.Queries - probesBefore <= 4, "Bound work to two candidates / four collision probes per frame");
+    Check(PvpCoverNative.Spawns - before <= 2 && Physics2D.Queries - probesBefore <= 32, "Bound search to 16 candidates / 32 collision probes and two network spawns per frame");
 }
 void Fill() { for (int i = 0; i < 600; i++) Frame(); }
 void Count(int count) { SessionSettings.FriendlyFireForDisplay.Cover = new(true, count); PvpCoverRuntime.Tick(); }
+int rejected = 0;
+Physics2D.BlockPoint = _ => ++rejected <= 14;
+Frame();
+Check(PvpCoverRuntime.ActiveCount > 0, "Several rejected candidates do not delay a valid placement across many frames");
+int sameFrameQueries = Physics2D.Queries;
+PvpCoverRuntime.Tick(); PvpCoverRuntime.Tick();
+Check(Physics2D.Queries == sameFrameQueries, "Repeated notifications cannot multiply the per-frame search budget");
+Physics2D.BlockPoint = null;
 Fill(); Check(PvpCoverRuntime.ActiveCount == 12 && PvpCoverNative.Spawns == 12, "Initial cover quota");
+Check(first.floorRelatedNetworkObjects.Take(5).Select(p => p.name).Distinct().Count() == 5,
+    "The first catalog cycle contains a shuffled variety instead of repeating one prop");
+Check(first.floorRelatedNetworkObjects.Skip(5).Take(5).Select(p => p.name).Distinct().Count() == 5,
+    "Later catalog cycles also contain every variant before repeating");
 int probes = Physics2D.Queries, updates = PathGrid.Current.Updates;
 Fill(); Check(Physics2D.Queries == probes && PvpCoverNative.Spawns == 12, "No steady-state physics/spawn loop");
 Check(updates == 1, "Batch native pathfinding update");
@@ -71,7 +83,9 @@ PvpCoverNative.FailRemove = true; SessionSettings.FriendlyFireForDisplay.Cover =
 Check(PvpCoverRuntime.ActiveCount == 12, "Failed removal stays owned");
 PvpCoverNative.FailRemove = false; Frame(); Check(PvpCoverRuntime.ActiveCount == 0 && PvpCoverNative.Owned.Count == 0, "Cleanup retry releases all roots");
 Count(12); Fill(); Mirror.NetworkServer.active = false; Frame(); Check(PvpCoverRuntime.ActiveCount == 0, "Session shutdown cleanup");
-Mirror.NetworkServer.active = true; Physics2D.BlockAll = true; Count(32); Fill();
+Mirror.NetworkServer.active = true; Physics2D.BlockAll = true; Count(32);
+for (int i = 0; i < 64; i++) Frame();
+Check(!PvpCoverRuntime.Describe().StartsWith("Placing"), "Fully rejected 1024-attempt search completes in at most 64 frames");
 Check(PvpCoverRuntime.ActiveCount == 0, "Unsafe level stays empty"); probes = Physics2D.Queries; Fill();
 Check(Physics2D.Queries == probes, "Exhausted placement stops scanning");
 Physics2D.BlockAll = false;

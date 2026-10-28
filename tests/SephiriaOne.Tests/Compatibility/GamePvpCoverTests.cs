@@ -40,8 +40,26 @@ internal static class GamePvpCoverTests
         Check(Code(breakable, "SerializeSyncVars").Any(i => Equals(i.operand, canBreak)) && Code(breakable, "DeserializeSyncVars").Any(i => Equals(i.operand, canBreak)), "Stock guests receive unbreakable flag including initial spawn");
         Check(Calls(Code(breakable, "OnRpcBreak"), "Transform", "SetParent"), "Native break creates detached fragments: never use for cleanup");
         var native = Mod("PvpCoverNative");
-        Check((uint)AccessTools.Field(native, "AssetId").GetRawConstantValue()! == 4148004312u, "Audited stock barrel identity");
+        var entries = (Array)AccessTools.Field(Mod("PvpCoverCatalog"), "Entries").GetValue(null)!;
+        var audited = new Dictionary<string, (uint AssetId, float Width, float Height, float OffsetY)>
+        {
+            ["DomitoryBarrel_0"] = (4148004312, .875f, .875f, .4375f),
+            ["DomitoryBarrel_2"] = (3412844843, .875f, 1, .5f),
+            ["DomitoryBarrel_3_Potato"] = (3401681619, .875f, .875f, .4375f),
+            ["DomitoryBarrel_4_Carrot"] = (1484013372, .875f, .875f, .4375f),
+            ["DomitoryTable_1"] = (2839126442, 1.35f, .8f, .4f)
+        };
+        foreach (var entry in entries)
+        {
+            T Field<T>(string name) => (T)AccessTools.Field(entry!.GetType(), name).GetValue(entry)!;
+            Check(audited.Remove(Field<string>("Id"), out var expected) &&
+                (Field<uint>("AssetId"), Field<float>("Width"), Field<float>("Height"), Field<float>("OffsetY")) == expected,
+                "Catalog matches audited stock asset identity and collision dimensions");
+        }
+        Check(audited.Count == 0, "Every audited compact cover variant is available");
+        Check(Calls(Code(native, "Center"), "Collider2D", "get_offset"), "Cleanup uses each prop's actual collision center");
         code = Code(native, "Spawn");
+        Check(Calls(code, "Collider2D", "get_offset"), "Spawn uses selected prop's collider offset rather than a barrel constant");
         int setAt = code.FindIndex(i => i.Calls(setter));
         int spawnAt = code.FindIndex(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "NetworkServer" && m.Name == "Spawn");
         Check(setAt >= 0 && spawnAt > setAt, "Unbreakable flag precedes native network spawn");

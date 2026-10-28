@@ -74,7 +74,7 @@ namespace UnityEngine
     }
     public static class LayerMask { public static int NameToLayer(string layer) => layer == "Blockable" ? 3 : 6; }
     public static class Time { public static int frameCount; }
-    public static class Random { public static int Range(int min, int max) => 12; }
+    public static class Random { private static readonly System.Random random = new(12); public static int Range(int min, int max) => random.Next(min, max); }
     public static class Debug
     {
         public static readonly List<string> Warnings = new(), Logs = new();
@@ -92,6 +92,7 @@ namespace UnityEngine.Tilemaps
         public Func<Vector3Int, bool> Contains = p => p.x >= 0 && p.y >= 0 && p.x < 100 && p.y < 100;
         public readonly TileBase Tile = new();
         public Vector3Int WorldToCell(Vector2 p) => new((int)Math.Floor(p.x - transform.position.x), (int)Math.Floor(p.y - transform.position.y));
+        public Vector3 CellToWorld(Vector3Int p) => transform.position + new Vector3(p.x, p.y, p.z);
         public TileBase GetTile(Vector3Int p) => Contains(p) ? Tile : null;
         public bool HasTile(Vector3Int p) => GetTile(p);
     }
@@ -192,10 +193,12 @@ namespace SephiriaOne
         internal static int Spawns, Removes, PrefabCalls; internal static bool FailPrefab, FailSpawn, FailRemove;
         internal static readonly HashSet<GameObject> Owned = new();
         internal static List<GameObject> Props(FloorGenerator floor) => floor.NativeProps;
-        internal static GameObject Prefab() { PrefabCalls++; if (FailPrefab) throw new Exception("asset changed"); return new(); }
+        internal static GameObject[] Prefabs()
+        { PrefabCalls++; if (FailPrefab) throw new Exception("asset changed"); return PvpCoverCatalog.Entries.Select(e => new GameObject { name = e.Id }).ToArray(); }
+        internal static Vector3 Center(GameObject instance) => instance.transform.position;
         internal static GameObject Spawn(FloorGenerator floor, GameObject prefab, Vector2 point, Action<GameObject> track)
         {
-            var obj = new GameObject(); obj.transform.position = point; track(obj); Owned.Add(obj); floor.NativeProps.Add(obj); floor.floorRelatedNetworkObjects.Add(obj); Spawns++;
+            var obj = new GameObject { name = prefab.name }; obj.transform.position = point; track(obj); Owned.Add(obj); floor.NativeProps.Add(obj); floor.floorRelatedNetworkObjects.Add(obj); Spawns++;
             if (FailSpawn) throw new Exception("spawn partly published"); return obj;
         }
         internal static void Remove(FloorGenerator floor, GameObject obj)

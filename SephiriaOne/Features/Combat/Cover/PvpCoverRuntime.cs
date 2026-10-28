@@ -13,7 +13,8 @@ namespace SephiriaOne
         private static object run;
         private static long generation, match;
         private static PvpCoverRooms rooms;
-        private static GameObject prefab;
+        private static GameObject[] prefabs;
+        private static int nextPrefab;
         private static Bounds dirtyBounds;
         private static bool dirty, working, failed;
         private static int requested, issued, lastFrame = -1, reportedCount = -1;
@@ -64,7 +65,7 @@ namespace SephiriaOne
                     dungeon = current; run = SaveManager.CurrentRun; floor = currentFloor;
                     generation = SessionSettings.ResourceGeneration; match = CombatMatchRuntime.MatchToken;
                     rooms = new PvpCoverRooms(floor, UnityEngine.Random.Range(1, int.MaxValue));
-                    if (rooms.UnavailableReason == null) prefab = PvpCoverNative.Prefab();
+                    if (rooms.UnavailableReason == null) { prefabs = PvpCoverNative.Prefabs(); ShufflePrefabs(); }
                 }
                 if (failed) { if (objects.Count != 0) Cleanup(false); return; }
                 for (int i = objects.Count - 1; i >= 0; i--)
@@ -83,11 +84,16 @@ namespace SephiriaOne
                 // the work budget or refresh cover due to unrelated settings.
                 if (lastFrame == Time.frameCount || issued >= requested || rooms.Plan.Exhausted) return;
                 lastFrame = Time.frameCount;
-                for (int probe = 0; probe < 2 && issued < requested && !rooms.Plan.Exhausted; probe++)
+                // Rejected positions are cheap compared with native instantiation.
+                // Search faster without increasing per-frame network spawn traffic.
+                int spawned = 0;
+                for (int probe = 0; probe < 16 && spawned < 2 && issued < requested && !rooms.Plan.Exhausted; probe++)
                     if (rooms.Plan.TryNext(rooms.Safe, out float x, out float y))
                     {
-                        var instance = PvpCoverNative.Spawn(floor, prefab, new Vector2(x, y), objects.Add);
+                        if (nextPrefab == prefabs.Length) ShufflePrefabs();
+                        PvpCoverNative.Spawn(floor, prefabs[nextPrefab++], new Vector2(x, y), objects.Add);
                         issued++;
+                        spawned++;
                         Dirty(new Bounds(new Vector3(x, y), new Vector3(3, 3, 1)));
                     }
                 // Native erosion can visit the whole graph. Coalesce all placement
@@ -100,6 +106,17 @@ namespace SephiriaOne
                 Debug.LogWarning("[SephiriaOne] PvP cover stopped; cleanup requested: " + error);
             }
             finally { working = false; }
+        }
+        private static void ShufflePrefabs()
+        {
+            // A random bag gives a visible mix without repeatedly drawing the
+            // same prop. Shuffle in place only once per catalog cycle.
+            for (int i = prefabs.Length - 1; i > 0; i--)
+            {
+                int j = UnityEngine.Random.Range(0, i + 1);
+                var swap = prefabs[i]; prefabs[i] = prefabs[j]; prefabs[j] = swap;
+            }
+            nextPrefab = 0;
         }
         private static bool ReportCompletion()
         {
@@ -133,7 +150,7 @@ namespace SephiriaOne
         private static void RemoveLast()
         {
             var instance = objects[objects.Count - 1];
-            if (instance) Dirty(new Bounds(instance.transform.position + new Vector3(0, 0.4375f), new Vector3(3, 3, 1)));
+            if (instance) Dirty(new Bounds(PvpCoverNative.Center(instance), new Vector3(3, 3, 1)));
             PvpCoverNative.Remove(floor, instance);
             objects.RemoveAt(objects.Count - 1);
         }
@@ -147,7 +164,7 @@ namespace SephiriaOne
                 var instance = objects[i];
                 try
                 {
-                    if (instance) Dirty(new Bounds(instance.transform.position + new Vector3(0, 0.4375f), new Vector3(3, 3, 1)));
+                    if (instance) Dirty(new Bounds(PvpCoverNative.Center(instance), new Vector3(3, 3, 1)));
                     PvpCoverNative.Remove(floor, instance); objects.RemoveAt(i);
                 }
                 catch (Exception error) { Debug.LogWarning("[SephiriaOne] PvP cover cleanup will retry: " + error.Message); }
@@ -155,7 +172,7 @@ namespace SephiriaOne
             FlushPathfinding();
             PvpCoverNative.PruneDestroyed();
             if (objects.Count != 0 || !resetScope) return;
-            dungeon = null; floor = null; run = null; rooms = null; prefab = null;
+            dungeon = null; floor = null; run = null; rooms = null; prefabs = null; nextPrefab = 0;
             requested = issued = 0; lastFrame = reportedCount = -1; failed = false; state = State.Off;
         }
     }

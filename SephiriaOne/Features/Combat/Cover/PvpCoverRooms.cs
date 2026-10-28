@@ -119,15 +119,23 @@ namespace SephiriaOne
             // actor bodies (TopdownRigidbody.UpdateAirLayer), not movement walls.
             // Both must clear the barrel footprint plus a margin, not the entire
             // bypass ring. Character movement itself uses BlockCharacterLayerMask.
-            var blocker = Physics2D.OverlapBox(point, new Vector2(5, 5), 0, CombatManager.BlockCharacterLayerMask);
+            // Stock costumes have a 0.5-unit movement diameter. Even the largest
+            // audited cover prop (1.35 wide) retains a 0.825-unit side bypass.
+            var blocker = Physics2D.OverlapBox(point, new Vector2(3, 3), 0, CombatManager.BlockCharacterLayerMask);
             if (blocker) { colliderRejected++; RecordBlocker(blocker); return false; }
-            blocker = Physics2D.OverlapBox(point, new Vector2(1.5f, 1.5f), 0,
+            blocker = Physics2D.OverlapBox(point, new Vector2(1.85f, 1.5f), 0,
                 (1 << LayerMask.NameToLayer("TopdownWorld_1F")) | (1 << LayerMask.NameToLayer("Blockable")));
             if (blocker) { occupiedRejected++; RecordBlocker(blocker); return false; }
-            for (int dx = -2; dx <= 2; dx++) for (int dy = -2; dy <= 2; dy++)
+            // Room origins need not align with the tile grid. Check every cell
+            // touched by the full bypass, not only nine point samples that can
+            // miss an unsupported edge on a fractionally offset map.
+            var min = ground.WorldToCell(point - new Vector2(1.5f, 1.5f));
+            var max = ground.WorldToCell(point + new Vector2(1.499f, 1.499f));
+            for (int cx = min.x; cx <= max.x; cx++) for (int cy = min.y; cy <= max.y; cy++)
             {
-                Vector2 sample = point + new Vector2(dx, dy);
-                TileBase tile = ground.GetTile(ground.WorldToCell(sample));
+                var cell = new Vector3Int(cx, cy, min.z);
+                Vector2 sample = ground.CellToWorld(cell) + new Vector3(0.5f, 0.5f);
+                TileBase tile = ground.GetTile(cell);
                 if (!tile || Hazard(tile) || Occupied(wall, sample) || Occupied(water, sample) || Occupied(cliffCollider, sample) ||
                     upperGround && Hazard(upperGround.GetTile(upperGround.WorldToCell(sample)))) { terrainRejected++; return false; }
             }

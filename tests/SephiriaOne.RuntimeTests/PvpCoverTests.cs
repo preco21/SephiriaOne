@@ -32,13 +32,15 @@ internal static class PvpCoverTests
         while (points.Count < 32 && !plan.Exhausted)
             if (plan.TryNext((x, y) => { probes++; return x < 60 || y > 110; }, out float x, out float y))
             {
-                check(x >= 3 && x <= 47 || x >= 103 && x <= 147, "Reserve room boundary");
+                check(x >= 2.5 && x <= 47.5 || x >= 102.5 && x <= 147.5, "Reserve room boundary");
                 check(x < 60 || y > 110, "Native safety veto respected");
-                foreach (var p in points) check(Math.Abs(p.X - x) >= 5 || Math.Abs(p.Y - y) >= 5, "Clear bypass rings never overlap cover");
+                foreach (var p in points) check(Math.Abs(p.X - x) >= 3 || Math.Abs(p.Y - y) >= 3, "Clear bypass rings never overlap cover");
                 points.Add((x, y));
             }
         check(points.Count == 32 && probes <= PvpCoverPlacement.MaximumAttempts, "Bounded spread can fill spacious rooms");
         check(points.Any(p => p.X < 60) && points.Any(p => p.X > 100), "Cover distributed across rooms");
+        plan = new PvpCoverPlacement(new() { new(0, 0, 6, 6) }, 17);
+        check(plan.TryNext((x, y) => true, out _, out _), "Compact props can fit a small open room without requiring an 8x8 room");
         plan = new PvpCoverPlacement(rooms, 3); probes = 0;
         while (!plan.Exhausted) check(!plan.TryNext((x, y) => { probes++; return false; }, out _, out _), "Unsafe room never spawns");
         check(probes == PvpCoverPlacement.MaximumAttempts && !plan.TryNext((x, y) => throw new Exception("extra probe"), out _, out _), "Search stops at hard attempt budget");

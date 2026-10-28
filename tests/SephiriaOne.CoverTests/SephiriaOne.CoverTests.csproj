@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../SephiriaOne/Features/Combat/Cover/PvpCoverCatalog.cs" Link="PvpCoverCatalog.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/Cover/PvpCoverRooms.cs" Link="PvpCoverRooms.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/Cover/PvpCoverRuntime.cs" Link="PvpCoverRuntime.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/Cover/PvpCoverSettings.cs" Link="PvpCoverSettings.cs" />

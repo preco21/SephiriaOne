@@ -10,6 +10,11 @@ internal static class RoomAdapterTests
         var entrance = new EnhancedProceduralFloorGenerator(); entrance.TestRoom.Metadata.spawnMonster = false;
         var entranceRooms = new PvpCoverRooms(entrance, 7);
         check(entranceRooms.Plan.RoomCount == 1 && entranceRooms.Safe(20.5f, 20.5f), "PvP entrance cover does not depend on native monster spawning");
+        entrance.ground.Contains = p => p.x >= 19 && p.x <= 21 && p.y >= 19 && p.y <= 21;
+        check(entranceRooms.Safe(20.5f, 20.5f), "A clear 3x3 ground square leaves a walkable bypass for compact props");
+        entrance.ground.Contains = p => p.x >= 20 && p.x <= 21 && p.y >= 19 && p.y <= 21;
+        check(!entranceRooms.Safe(20.5f, 20.5f), "A narrow route without a complete bypass remains unavailable");
+        entrance.ground.Contains = p => p.x >= 0 && p.x < 100 && p.y >= 0 && p.y < 100;
         var rest = new PvpCoverRooms(new SingleRoomFloorGenerator(), 7);
         check(rest.Plan.RoomCount == 1 && rest.Safe(20.5f, 20.5f), "Non-boss single-room rest floor supports PvP cover");
         var hurtbox = new Collider2D { Position = new Vector2(22.5f, 20.5f) }; hurtbox.gameObject.layer = 6;
@@ -17,7 +22,7 @@ internal static class RoomAdapterTests
         check(entranceRooms.Safe(20.5f, 20.5f), "Damage hitbox in bypass ring is not a movement wall");
         hurtbox.Position = new Vector2(20.5f, 20.5f);
         check(!entranceRooms.Safe(20.5f, 20.5f), "Do not overlap a damageable entity at the barrel footprint");
-        hurtbox.Position = new Vector2(22.5f, 20.5f); hurtbox.gameObject.layer = 12;
+        hurtbox.Position = new Vector2(22, 20.5f); hurtbox.gameObject.layer = 12;
         check(!entranceRooms.Safe(20.5f, 20.5f), "Physical wall still requires full bypass clearance");
         hurtbox.gameObject.layer = 3;
         check(entranceRooms.Safe(20.5f, 20.5f), "Grounded actor body on Blockable is not a movement wall in the bypass ring");
@@ -43,7 +48,12 @@ internal static class RoomAdapterTests
         check(rooms.Safe(4010.5f, 510.5f), "World-offset lobby ground accepted");
         check(!rooms.Safe(10.5f, 10.5f), "Empty world outside ground cannot be treated as walkable");
 
-        map.TestGround.Contains = p => p.x >= 0 && p.x < 30 && p.y >= 0 && p.y < 30 && !(p.x == 12 && p.y == 10);
+        map.TestGround.transform.position = map.transform.position + new Vector3(.6f, .6f);
+        map.TestGround.Contains = p => p.x >= 8 && p.x <= 10 && p.y >= 8 && p.y <= 10;
+        check(!rooms.Safe(4010.5f, 510.5f), "Fractional grid offsets cannot hide missing cells under the bypass edge");
+        map.TestGround.transform.position = map.transform.position;
+
+        map.TestGround.Contains = p => p.x >= 0 && p.x < 30 && p.y >= 0 && p.y < 30 && !(p.x == 11 && p.y == 10);
         check(!rooms.Safe(4010.5f, 510.5f), "A missing ground cell anywhere in bypass ring rejects cover");
         map.TestGround.Contains = p => p.x >= 0 && p.x < 30 && p.y >= 0 && p.y < 30;
         map.TestGround.Tile.Entity.type = GroundTileEntity.Type.Water;

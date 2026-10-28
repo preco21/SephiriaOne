@@ -1,6 +1,6 @@
 # Development knowledge index
 
-Latest cover follow-up: [0.100.2 entrance/rest eligibility and occupancy checks](pvp-cover.md#entrancerest-and-occupancy-follow-up--01002).
+Latest cover follow-up: [0.101.0 varied props and faster, less restrictive placement](pvp-cover.md#varied-props-and-placement-responsiveness--01010).
 Includes the 0.100.1 runtime failure evidence and remaining live verification.
 
 [Temporary PvP cover](pvp-cover.md): 0.100.1 fixes the omitted authored lobby

@@ -10,8 +10,6 @@ namespace SephiriaOne
     internal static class PvpCoverNative
     {
         private const string PatchId = "SephiriaOne.PvpCover";
-        private const string PropId = "DomitoryBarrel_0";
-        private const uint AssetId = 4148004312;
         internal static readonly FieldInfo AllProps = typeof(FloorGenerator).GetField("allProps", BindingFlags.Instance | BindingFlags.NonPublic);
         internal static List<GameObject> Props(FloorGenerator floor) => AllProps.GetValue(floor) as List<GameObject>;
         private static readonly HashSet<BreakableProp> owned = new HashSet<BreakableProp>(ReferenceComparer<BreakableProp>.Instance);
@@ -33,9 +31,16 @@ namespace SephiriaOne
         internal static void Uninstall() => new Harmony(PatchId).UnpatchAll(PatchId);
         private static bool AllowBreak(BreakableProp __instance) => !owned.Contains(__instance);
 
-        internal static GameObject Prefab()
+        internal static GameObject[] Prefabs()
         {
-            var entity = PropDatabase.FindPropById(PropId);
+            var entries = PvpCoverCatalog.Entries;
+            var prefabs = new GameObject[entries.Length];
+            for (int i = 0; i < entries.Length; i++) prefabs[i] = Prefab(entries[i]);
+            return prefabs;
+        }
+        private static GameObject Prefab(PvpCoverCatalog.Entry entry)
+        {
+            var entity = PropDatabase.FindPropById(entry.Id);
             var prefab = entity ? entity.propPrefab : null;
             var identity = prefab ? prefab.GetComponent<NetworkIdentity>() : null;
             var prop = prefab ? prefab.GetComponent<BreakableProp>() : null;
@@ -43,18 +48,20 @@ namespace SephiriaOne
             // Fail closed on asset updates: only the audited compact, registered
             // Tile-layer prop. Never edit the shared prefab or its network layout.
             if (!NetworkManager.singleton || !prefab || !prefab.activeSelf || !NetworkManager.singleton.spawnPrefabs.Contains(prefab) ||
-                !identity || identity.assetId != AssetId || identity.sceneId != 0 || identity.serverOnly || !prop || prop.GetType() != typeof(BreakableProp) ||
+                !identity || identity.assetId != entry.AssetId || identity.sceneId != 0 || identity.serverOnly || !prop || prop.GetType() != typeof(BreakableProp) ||
                 prop.IsBroken || !collider || collider.isTrigger || !collider.enabled || collider.gameObject.layer != LayerMask.NameToLayer("Tile") ||
-                collider.size != new Vector2(0.875f, 0.875f) || collider.offset != new Vector2(0, 0.4375f) ||
-                prefab.transform.localScale != Vector3.one || !string.IsNullOrEmpty(prop.id) || prop.exp != 0 || prop.sapphire != 0 ||
-                prop.droppableItems.Length != 0 || prefab.GetComponentInChildren<UpdateAstarProp>(true))
-                throw new InvalidOperationException("Audited cover barrel asset/collision contract changed.");
+                collider.transform != prefab.transform || collider.size != new Vector2(entry.Width, entry.Height) || collider.offset != new Vector2(0, entry.OffsetY) ||
+                prefab.transform.localScale != Vector3.one || prefab.transform.localRotation != Quaternion.identity ||
+                !string.IsNullOrEmpty(prop.id) || prop.exp != 0 || prop.sapphire != 0 ||
+                prop.droppableItems.Length != 0 || prefab.GetComponentInChildren<UpdateAstarProp>(true) || prefab.GetComponentInChildren<Interactable>(true))
+                throw new InvalidOperationException("Audited cover prop asset/collision contract changed: " + entry.Id);
             return prefab;
         }
 
         internal static GameObject Spawn(FloorGenerator floor, GameObject prefab, Vector2 point, Action<GameObject> track)
         {
-            GameObject instance = UnityEngine.Object.Instantiate(prefab, (Vector3)(point - new Vector2(0, 0.4375f)), Quaternion.identity);
+            Vector2 offset = prefab.GetComponent<BreakableProp>().connectCollider.offset;
+            GameObject instance = UnityEngine.Object.Instantiate(prefab, (Vector3)(point - offset), Quaternion.identity);
             track(instance);
             var prop = instance.GetComponent<BreakableProp>();
             owned.Add(prop);
@@ -69,6 +76,8 @@ namespace SephiriaOne
             NetworkServer.Spawn(instance);
             return instance;
         }
+        internal static Vector3 Center(GameObject instance) => instance.transform.position +
+            (Vector3)instance.GetComponent<BreakableProp>().connectCollider.offset;
         internal static void Remove(FloorGenerator floor, GameObject instance)
         {
             var prop = instance ? instance.GetComponent<BreakableProp>() : null;

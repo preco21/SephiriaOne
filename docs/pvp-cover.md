@@ -1,9 +1,10 @@
 # Temporary PvP cover
 
-Implemented in 0.100.0; room/occupancy follow-up in 0.100.2 (2026-10-28). Host addon only; uses a registered native
-barrel prefab and its native collision/network behaviour. No guest installation
-or additional assets. Static contracts and simulated lifecycle tests pass;
-stock-guest gameplay/collision has not been exercised in a live session here.
+Implemented in 0.100.0; varied props and faster placement in 0.101.0 (2026-10-29).
+Host addon only; uses registered native props and their native collision/network
+behaviour. No guest installation or additional assets. The user confirmed cover
+appears in the lobby and on a second run with 0.100.2. The new prop mix and tighter
+clearance have static/fixture coverage; stock-guest gameplay remains unverified here.
 
 ## Controls
 
@@ -20,7 +21,7 @@ cover**. Default **off**, requested count **12**, range **1–32 per host level*
 ```
 
 Changing the count does not stop a match. Lowering it immediately removes surplus
-owned barrels; raising it continues the bounded placement search. Existing cover
+owned props; raising it continues the bounded placement search. Existing cover
 is preserved where possible. `cover reset` disables it and restores count 12;
 `count reset` only restores the count. Saved changes use preset v56; older
 presets retain the default-off setting. This is independent of PvP balancing.
@@ -40,8 +41,11 @@ changing floors, session shutdown and addon unload remove owned roots.
   Boss arenas, unsupported generators and layouts without verified ground are skipped.
 - The count is a maximum, not a quota forced onto an unsafe map. Narrow rooms,
   populated lobbies, geometry and protected interactions can reduce it to zero.
-- Random candidates cycle through shuffled rooms. A room-edge margin, a clear
-  5×5 movement square, and separation between barrels preserve a walkable bypass
+- Random candidates cycle through shuffled rooms across the **whole host floor**,
+  not only the currently occupied room. Each shuffled five-prop bag contains
+  every variant once before starting the next bag.
+- A 2.5-unit room-edge margin, a clear 3×3 movement square, and three-unit
+  separation between prop centers preserve a walkable bypass
   around every compact obstacle. This conservative local clearance replaces a
   whole-map connectivity search. There is no additional fixed per-room count
   cap: spacing naturally limits density while allowing useful cover in a large
@@ -49,10 +53,12 @@ changing floors, session shutdown and addon unload remove owned roots.
 - Reserve four units around room teleport points, native floor spawn points,
   existing interactive props and current player positions, including corpses.
   Reject pits, water, walls, cliffs and native blocking colliders. Damage hitboxes
-  and grounded bodies/props on TopdownWorld_1F/Blockable must clear a 1.5×1.5
-  barrel footprint/margin; they
-  do not need to clear the entire 5×5 walkable bypass like physical obstacles.
-- The barrels use their original Tile-layer collider. They affect everyone in
+  and grounded bodies/props on TopdownWorld_1F/Blockable must clear a 1.85×1.5
+  footprint/margin; they
+  do not need to clear the entire 3×3 walkable bypass like physical obstacles.
+  Ground checks cover every tile touched by that square, including fractional
+  room/grid offsets (nine cells when aligned, up to sixteen otherwise).
+- The props use their original Tile-layer collider. They affect everyone in
   that level, including nonparticipants and monsters. They cannot selectively
   block only PvP participants on stock guests.
 - Preserve native projectile rules: ordinary colliding projectiles can be
@@ -63,11 +69,21 @@ changing floors, session shutdown and addon unload remove owned roots.
 
 ## Native ownership and cleanup
 
-Only `DomitoryBarrel_0` (asset ID `4148004312`) is used initially. It has an
-enabled non-trigger Tile-layer box collider, size `0.875 × 0.875`, offset
-`(0, 0.4375)`. Position the root below the selected clear-square center by that
-offset. Verify the prefab, stock spawn registration, collision and reward-free
-metadata before spawning; never change shared prefab assets.
+The compact catalog uses these stock props:
+
+| Prop ID | Asset ID | Collider size | Offset Y |
+|---|---:|---|---:|
+| `DomitoryBarrel_0` | 4148004312 | 0.875 × 0.875 | 0.4375 |
+| `DomitoryBarrel_2` | 3412844843 | 0.875 × 1 | 0.5 |
+| `DomitoryBarrel_3_Potato` | 3401681619 | 0.875 × 0.875 | 0.4375 |
+| `DomitoryBarrel_4_Carrot` | 1484013372 | 0.875 × 0.875 | 0.4375 |
+| `DomitoryTable_1` | 2839126442 | 1.35 × 0.8 | 0.4 |
+
+Each has one enabled non-trigger root Tile-layer box collider, offset X zero,
+unit scale and no rotation. Spawn and cleanup use the selected collider's actual
+offset. Validate every catalog entry and native spawn registration once per
+placement scope before publication; never change shared prefab assets. Reject
+changed identities/dimensions, rewards, interactables and `UpdateAstarProp`.
 
 `NetworkCanBeBroken = false` is set **before** `NetworkServer.Spawn`, so the
 initial state and late observers receive native indestructibility. These props
@@ -76,10 +92,10 @@ publication can fail, in both addon ownership and the native floor's `allProps`
 and `floorRelatedNetworkObjects` lists.
 
 Native `BreakForce` bypasses `CanBeBroken`; a narrow ownership guard prevents
-that method and `SetCanBeBroken` from breaking only these barrels. Natural props
+that method and `SetCanBeBroken` from breaking only these owned props. Natural props
 keep their original behaviour. Cleanup disables the host collider, calls native
 `NetworkServer.Destroy`, and removes both floor-list entries. Never use
-`BreakForce` or `RpcBreak` for cleanup: the native barrel has six client-local
+`BreakForce` or `RpcBreak` for cleanup: these props have five to nine client-local
 fragments which otherwise detach from the network root. Preventing that break
 path guarantees there are no broken remnants from this feature to strand.
 
@@ -92,10 +108,13 @@ per-client ownership or entity IDs are introduced.
 
 ## Performance and verification
 
-Placement runs at most **two candidate probes/spawns per rendered host frame**,
+Placement runs at most **16 candidates and two native spawns per host frame**,
 with **1,024 attempts per scope**, and stops when the quota/search is complete.
 Each candidate uses at most two collision probes (static bypass, then occupancy),
-so there are at most four collision probes per rendered frame.
+so there are at most 32 collision probes per frame. Repeated same-frame
+notifications cannot multiply this budget. A fully rejected search exhausts in
+64 frames, versus 512 before 0.101.0; actual elapsed time depends on frame rate
+and accepted spawns. Do not promise instant placement or a fixed wall-clock time.
 Ground/collision queries and room/interaction collection do not run during
 steady-state combat. Native graph erosion can touch the entire graph, so
 placement updates are coalesced into one region refresh; reductions/cleanup
@@ -222,3 +241,50 @@ was additionally inspected in
 installed-game tests anchor the grounded body layer and movement masks. Root
 generator typetree decoding still fails, so no full generator-asset decode or live collision execution is
 claimed. Raw assets, private logs and temporary inventories remain outside Git.
+
+## Varied props and placement responsiveness — 0.101.0
+
+The user confirmed that 0.100.2 cover appears in the lobby and a second run, but
+reported slow staged placement and overly sensitive clearance. They had initially
+checked only the current dungeon room; distribution is floor-wide. The latest
+logs confirm some placement rather than a solo/run-initialization failure:
+EntranceC6 placed 2–4/20, MultiZone 3–6/20 and Rabbittown 12/20, exhausting 1,024
+attempts. Wall/collider rejections dominated. These are observed counts for those
+searches, not expected quotas on those maps.
+
+The old 5×5 square was unnecessarily large for the audited compact props, and
+two candidates per frame spread rejection-heavy searches over many frames. The
+new 3×3 policy retains the four-unit portal/spawn/interaction/player exclusions,
+hazard checks and boss exclusion. Small rooms can be considered from 6×6 instead
+of 8×8, but still need verified ground and a full bypass. Count remains a maximum.
+
+All 79 installed `PlayerAvatarCostume` assets have movement collider radius 0.25
+and body scale 1. `PlayerAvatar` copies that radius onto its root movement circle;
+the native movement box uses its bounds minus 0.03. Even the widest allowed prop
+leaves 0.825 units of clear side bypass in a 3×3 square, compared with native player
+diameter 0.5. This does not guarantee passage for another addon that enlarges
+player collision. A regression also covers fractional tilemap origins: sampling
+just the center and eight neighbors can miss the outer ground edge, so validation
+now covers all intersected cells.
+
+The five catalog roots appear exactly once in both inspected stock network-manager
+spawn lists, with scene ID zero and serverOnly false. They use plain reward-free
+`BreakableProp`, unchanged server-to-client position replication and single-frame
+idle animations without events. Boxes/book props from the earlier audit lacked
+verified movement colliders, while stones/Grassland tables carried their own
+`UpdateAstarProp`; they remain excluded. Root-only cleanup and the force-break
+guard stay essential to avoid their detached fragments.
+
+Native evidence: REA parent
+`ev_f9d2eaf89565cb8a705b892556aef737ac02b358469d7e36e27e3ac53adfdf80`
+and matching installed assembly SHA-256 from the investigation. Built-in Unity
+asset trees establish the catalog dimensions, registration, scripts and costume
+radii. Temporary asset inventories and private logs remain outside Git.
+
+Regression tests observed failures before fixes for rejection-heavy frame delay,
+small safe areas, small open rooms, one-prop repetition and fractional grid
+clearance. Cover/runtime suites and installed-game compatibility checks validate
+the resulting code without deploying. Steady-state fixture ticks still allocate
+zero managed bytes; this is not a Unity performance benchmark. Live confirmation
+is still needed for the new mix, passage around tables, stock guest visibility
+and clean removal after stopping PvP or changing levels.
