@@ -63,8 +63,7 @@ namespace SephiriaOne
                     if (objects.Count != 0) return; // retain/retry failed native despawns
                     dungeon = current; run = SaveManager.CurrentRun; floor = currentFloor;
                     generation = SessionSettings.ResourceGeneration; match = CombatMatchRuntime.MatchToken;
-                    bool lobby = host.Race && host.Race.lobbyStage && data.stageName == host.Race.lobbyStage.name;
-                    rooms = new PvpCoverRooms(floor, lobby, UnityEngine.Random.Range(1, int.MaxValue));
+                    rooms = new PvpCoverRooms(floor, UnityEngine.Random.Range(1, int.MaxValue));
                     if (rooms.UnavailableReason == null) prefab = PvpCoverNative.Prefab();
                 }
                 if (failed) { if (objects.Count != 0) Cleanup(false); return; }

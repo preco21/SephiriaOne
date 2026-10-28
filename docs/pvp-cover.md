@@ -1,6 +1,6 @@
 # Temporary PvP cover
 
-Implemented in 0.100.0; lobby fix in 0.100.1 (2026-10-28). Host addon only; uses a registered native
+Implemented in 0.100.0; room/occupancy follow-up in 0.100.2 (2026-10-28). Host addon only; uses a registered native
 barrel prefab and its native collision/network behaviour. No guest installation
 or additional assets. Static contracts and simulated lifecycle tests pass;
 stock-guest gameplay/collision has not been exercised in a live session here.
@@ -33,11 +33,11 @@ changing floors, session shutdown and addon unload remove owned roots.
 
 ## Placement and limitations
 
-- Supports ordinary rooms in EnhancedProcedural, Fixed and Library tile-floor
-  generators, plus supported native lobby rooms (including SingleRoom lobbies).
+- Supports EnhancedProcedural, Fixed, Library and SingleRoom tile-floor layouts,
+  including non-monster entrance/rest rooms as of 0.100.2.
   Since 0.100.1, also supports authored `FullyDesignedFloorGenerator` layouts
   with the audited ground paths used by MultiZone and TheRabbittown.
-  Boss-only and unknown/special single-room layouts are skipped.
+  Boss arenas, unsupported generators and layouts without verified ground are skipped.
 - The count is a maximum, not a quota forced onto an unsafe map. Narrow rooms,
   populated lobbies, geometry and protected interactions can reduce it to zero.
 - Random candidates cycle through shuffled rooms. A room-edge margin, a clear
@@ -48,7 +48,10 @@ changing floors, session shutdown and addon unload remove owned roots.
   single-room lobby.
 - Reserve four units around room teleport points, native floor spawn points,
   existing interactive props and current player positions, including corpses.
-  Reject pits, water, walls, cliffs and native blocking colliders.
+  Reject pits, water, walls, cliffs and native blocking colliders. Damage hitboxes
+  and grounded bodies/props on TopdownWorld_1F/Blockable must clear a 1.5×1.5
+  barrel footprint/margin; they
+  do not need to clear the entire 5×5 walkable bypass like physical obstacles.
 - The barrels use their original Tile-layer collider. They affect everyone in
   that level, including nonparticipants and monsters. They cannot selectively
   block only PvP participants on stock guests.
@@ -91,6 +94,8 @@ per-client ownership or entity IDs are introduced.
 
 Placement runs at most **two candidate probes/spawns per rendered host frame**,
 with **1,024 attempts per scope**, and stops when the quota/search is complete.
+Each candidate uses at most two collision probes (static bypass, then occupancy),
+so there are at most four collision probes per rendered frame.
 Ground/collision queries and room/interaction collection do not run during
 steady-state combat. Native graph erosion can touch the entire graph, so
 placement updates are coalesced into one region refresh; reductions/cleanup
@@ -158,3 +163,62 @@ grids and matching wall/upper paths. Offline ground/wall-only clearance found
 counts and exclude other props/players/hazards. Root generator MonoBehaviour
 typetree decoding failed; bounds and prop-list contracts come from the installed
 managed code instead. Temporary asset inventories and private logs stay outside Git.
+
+## Entrance/rest and occupancy follow-up — 0.100.2
+
+The subsequent Player.log explicitly loaded 0.100.1. Cover was enabled and its
+runtime ran, but reported:
+
+- `Moleland_EntranceC6` (EnhancedProcedural): zero eligible rooms, zero attempts.
+- `Moleland_Anvil_Peace` (SingleRoom): zero eligible rooms, zero attempts.
+- `Moleland_HardBattle_2_Jail`: three rooms, 1,024 attempts, zero cover; 418
+  protected-position rejections and 606 collider rejections (a second attempt
+  reported 414/610). No terrain checks were reached on unreserved candidates.
+
+The entrance/rest failures were caused by policy copied from hostile-monster
+placement: require `Metadata.spawnMonster` outside a race lobby, and accept
+SingleRoom only as a race lobby. PvP cover now uses these generators' actual room
+bounds regardless of monster-spawn or race-lobby flags. The explicit native boss
+threat gate and every ground/physical-clearance/progression safety check remain.
+The obsolete lobby argument is removed from the room adapter.
+
+The combined collision probe also treated damage hitboxes as full movement
+obstacles. Native `CombatManager.BlockCharacterLayerMask` excludes
+`TopdownWorld_1F` and `Blockable`; bundled furniture such as chairs, tables and
+barricades have separate, larger layer-6 hurtboxes. Native `TopdownRigidbody.UpdateAirLayer`
+also assigns grounded actor bodies to Blockable (layer 3), while its movement
+queries use Tile/Cliff/Pit masks. Cover now keeps the full 5×5 bypass check for
+Tile/Cliff/Pit/Pit_Water colliders, and checks TopdownWorld_1F/Blockable separately
+within a 1.5×1.5 footprint (the barrel is 0.875×0.875). This avoids overlap while
+allowing nonblocking hurtboxes in the bypass ring. Player exclusion remains four
+units, and the 25-cell ground/hazard check is unchanged.
+
+**The exact collider responsible for the reported Jail search is unknown.** The
+old log recorded only a counter, not collider identity; the asset audit alone
+cannot reproduce a live physics scene. Do not claim the hurtbox refinement proves
+that specific map is fixed. Completion diagnostics now separate static collision
+from footprint occupancy and record the first blocking collider's name/type/layer
+once per search. No retries, global collision filtering, relaxed wall checks or
+removal of existing map props were introduced to force a quota.
+
+Regressions exercise the real production room adapter, including non-monster
+entrances, non-lobby rest rooms, PvP enabled both before and after entry, repeated
+off/on, boss exclusion, world-offset bounds, reserved teleport positions, nearby
+hurtboxes versus actual obstacles, footprint occupancy and cleanup. New tests
+failed before their respective fixes. Release build, cover/runtime fixtures and
+installed-game contracts run without deployment. Host/stock-guest gameplay remains
+unverified; the next live result should be checked using actual placed/requested
+counts and the new collider diagnostics.
+
+Native evidence: REA selected-member parent
+`ev_8308ea305b068c332cec098fa2b0c60a5abff19f2c187de959162dcf751d544b`
+(CombatManager, TileBasedRoomInstance, SingleRoomFloorGenerator), same installed
+assembly SHA-256/MVID as the earlier investigation. Native SingleRoom generation
+sets `floorInstance.size` to its tile dimensions and uses the floor transform as
+origin. Built-in collider/transform trees for the reported Jail/Anvil prefabs and
+67 referenced Jail props were inspected offline. `TopdownRigidbody` metadata
+was additionally inspected in
+`ev_471c77338f16ca6c4cb930c5dace46a6fb21ad0ee707383eda0b0fcf9c82f7cf`;
+installed-game tests anchor the grounded body layer and movement masks. Root
+generator typetree decoding still fails, so no full generator-asset decode or live collision execution is
+claimed. Raw assets, private logs and temporary inventories remain outside Git.

@@ -1,5 +1,8 @@
 # Development knowledge index
 
+Latest cover follow-up: [0.100.2 entrance/rest eligibility and occupancy checks](pvp-cover.md#entrancerest-and-occupancy-follow-up--01002).
+Includes the 0.100.1 runtime failure evidence and remaining live verification.
+
 [Temporary PvP cover](pvp-cover.md): 0.100.1 fixes the omitted authored lobby
 generator and adds placement diagnostics. Default-off native cover has a
 configurable count (12 by default, 1–32). Includes safe placement, host-only

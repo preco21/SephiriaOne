@@ -1,5 +1,12 @@
 # Sephiria domain findings
 
+PvP cover (`0.100.2`): monster eligibility is not placement eligibility. Native
+entrance/rest rooms can have `spawnMonster=false`, and a SingleRoom generator is
+not necessarily a boss or race lobby. Use actual bounds plus explicit boss and
+geometry guards. Distinguish physical blocker layers from TopdownWorld damage
+hitboxes when validating a walkable bypass. See [current cover follow-up](pvp-cover.md#entrancerest-and-occupancy-follow-up--01002)
+for confirmed log causes and the still-unidentified live Jail collider rejection.
+
 Lobby cover (`0.100.1`): native MultiZone/TheRabbittown waiting areas use
 `FullyDesignedFloorGenerator`, which is not a `TileFloorGenerator`. Do not cast
 all loaded host levels to the tile subclass. Authored `props` are separate from

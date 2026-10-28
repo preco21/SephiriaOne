@@ -15,7 +15,7 @@ internal static class GamePvpCoverTests
         Check((bool)AccessTools.Method(Mod("PvpCoverRooms"), "Validate").Invoke(null, null)!, "Supported room fields match installed game");
         var authored = Game("FullyDesignedFloorGenerator");
         Check(authored.BaseType == Game("FloorGenerator") && !Game("TileFloorGenerator").IsAssignableFrom(authored), "Native waiting-area generator is outside the tile-floor hierarchy");
-        var layoutConstructor = AccessTools.Constructor(Mod("PvpCoverRooms"), new[] { Game("FloorGenerator"), typeof(bool), typeof(int) });
+        var layoutConstructor = AccessTools.Constructor(Mod("PvpCoverRooms"), new[] { Game("FloorGenerator"), typeof(int) });
         var layoutCode = PatchProcessor.GetOriginalInstructions(layoutConstructor).ToList();
         foreach (string field in new[] { "bottomLeft", "topRight", "props", "mapTeleportConnections" })
             Check(layoutCode.Any(i => Equals(i.operand, AccessTools.Field(authored, field))), "Authored layout uses native " + field);
@@ -25,6 +25,11 @@ internal static class GamePvpCoverTests
         var runtimeCode = Code(Mod("PvpCoverRuntime"), "Tick");
         Check(!runtimeCode.Any(i => (i.opcode == OpCodes.Isinst || i.opcode == OpCodes.Castclass) && Equals(i.operand, Game("TileFloorGenerator"))), "Readiness no longer rejects authored lobby floors before placement");
         Check(Calls(Code(Mod("PvpCoverRooms"), "Safe"), "Physics2D", "OverlapBox") && Calls(Code(Mod("PvpCoverRooms"), "Safe"), "Tilemap", "GetTile"), "Ground and collision safety remain required");
+        Check(Calls(Code(Game("TopdownRigidbody"), "UpdateAirLayer"), "CombatManager", "get_BlockableLayer"), "Blockable includes grounded actors, not just static walls");
+        var movement = Code(Game("TopdownRigidbody"), "Update");
+        Check(Calls(movement, "CombatManager", "get_TileLayerMask") && Calls(movement, "CombatManager", "get_CliffLayerMask") &&
+            Calls(movement, "CombatManager", "get_PitLayerMask") && !Calls(movement, "CombatManager", "get_BlockableLayerMask"),
+            "Native movement blocks Tile/Cliff/Pit, not the actor/prop Blockable occupancy layer");
         var breakable = Game("BreakableProp");
         var canBreak = AccessTools.Field(breakable, "CanBeBroken");
         var setter = AccessTools.PropertySetter(breakable, "NetworkCanBeBroken");

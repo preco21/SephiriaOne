@@ -17,15 +17,16 @@ namespace SephiriaOne
         private readonly Tilemap ground, upperGround, wall, water, cliffCollider;
         private readonly List<Vector2> protectedPoints = new List<Vector2>();
         private readonly List<Transform> interactions = new List<Transform>();
-        private int reservedRejected, playerRejected, colliderRejected, terrainRejected;
+        private int reservedRejected, playerRejected, colliderRejected, occupiedRejected, terrainRejected;
+        private string firstBlocker;
         internal string UnavailableReason { get; private set; }
-        internal string Diagnostics => $"reserved={reservedRejected}; players={playerRejected}; colliders={colliderRejected}; terrain={terrainRejected}";
+        internal string Diagnostics => $"reserved={reservedRejected}; players={playerRejected}; colliders={colliderRejected}; occupied={occupiedRejected}; terrain={terrainRejected}; firstBlocker={firstBlocker ?? "none"}";
         internal readonly PvpCoverPlacement Plan;
         internal static bool Validate() => procedural?.FieldType == typeof(List<TileBasedRoomInstance>) &&
             library?.FieldType == typeof(List<LibraryFloorRoomInstance>) &&
             fixedRooms?.FieldType == typeof(Dictionary<Vector2Int, TileBasedRoomInstance>) && single?.FieldType == typeof(TileBasedRoomInstance);
 
-        internal PvpCoverRooms(FloorGenerator floor, bool lobby, int salt)
+        internal PvpCoverRooms(FloorGenerator floor, int salt)
         {
             this.floor = floor;
             var rooms = new List<PvpCoverPlacement.Room>();
@@ -46,7 +47,9 @@ namespace SephiriaOne
             { rooms.Add(new PvpCoverPlacement.Room(min.x, min.y, max.x, max.y)); if (teleport.HasValue) protectedPoints.Add(teleport.Value); }
             void TileRoom(TileBasedRoomInstance room)
             {
-                if (room?.Metadata == null || !room.Metadata.spawnMonster && !lobby) return;
+                // Cover follows PvP, not the monster-spawn policy. Entrances and
+                // rest rooms have usable ground with spawnMonster=false.
+                if (room?.Metadata == null) return;
                 Add(room.bottomLeft, room.topRight, room.bottomLeft + room.TeleportPoint);
             }
             if (floor.floorThreatType == EFloorThreatType.Boss || floor.DataOnServer.threatType == EFloorThreatType.Boss)
@@ -60,11 +63,11 @@ namespace SephiriaOne
                 else if (floor is LibraryFloorGenerator)
                     foreach (var room in (List<LibraryFloorRoomInstance>)library.GetValue(floor))
                     {
-                        if (room?.Metadata == null || !room.Metadata.spawnMonster) continue;
+                        if (room?.Metadata == null) continue;
                         Vector2 origin = (Vector2)floor.transform.position + (Vector2)room.pos;
                         Add(origin, origin + room.Size, origin + room.TeleportPoint);
                     }
-                else if (floor is SingleRoomFloorGenerator && lobby && single.GetValue(floor) is TileBasedRoomInstance room)
+                else if (floor is SingleRoomFloorGenerator && single.GetValue(floor) is TileBasedRoomInstance room && room.Metadata != null)
                 { Vector2 origin = floor.transform.position; Add(origin, origin + room.size, origin + room.TeleportPoint); }
                 else if (floor is FullyDesignedFloorGenerator designed)
                 {
@@ -111,11 +114,16 @@ namespace SephiriaOne
             foreach (var spawner in PlayerSpawner.MultiplayerList)
                 if (spawner && spawner.PlayerAvatar && spawner.PlayerAvatar.currentFloorGuid == floor.guid &&
                     ((Vector2)spawner.PlayerAvatar.transform.position - point).sqrMagnitude < 16) { playerRejected++; return false; }
-            // A continuous collider probe plus all ground cells of the bypass
-            // square. No blocking props, pits, water or cliffs can hide between samples.
-            if (Physics2D.OverlapBox(point, new Vector2(5, 5), 0,
-                CombatManager.BlockCharacterLayerMask | (1 << LayerMask.NameToLayer("Blockable")) |
-                (1 << LayerMask.NameToLayer("TopdownWorld_1F")))) { colliderRejected++; return false; }
+            // Preserve the full bypass around physical walls/props/hazards.
+            // TopdownWorld_1F contains DAMAGE hitboxes; Blockable includes grounded
+            // actor bodies (TopdownRigidbody.UpdateAirLayer), not movement walls.
+            // Both must clear the barrel footprint plus a margin, not the entire
+            // bypass ring. Character movement itself uses BlockCharacterLayerMask.
+            var blocker = Physics2D.OverlapBox(point, new Vector2(5, 5), 0, CombatManager.BlockCharacterLayerMask);
+            if (blocker) { colliderRejected++; RecordBlocker(blocker); return false; }
+            blocker = Physics2D.OverlapBox(point, new Vector2(1.5f, 1.5f), 0,
+                (1 << LayerMask.NameToLayer("TopdownWorld_1F")) | (1 << LayerMask.NameToLayer("Blockable")));
+            if (blocker) { occupiedRejected++; RecordBlocker(blocker); return false; }
             for (int dx = -2; dx <= 2; dx++) for (int dy = -2; dy <= 2; dy++)
             {
                 Vector2 sample = point + new Vector2(dx, dy);
@@ -124,6 +132,11 @@ namespace SephiriaOne
                     upperGround && Hazard(upperGround.GetTile(upperGround.WorldToCell(sample)))) { terrainRejected++; return false; }
             }
             return true;
+        }
+        private void RecordBlocker(Collider2D blocker)
+        {
+            // Capture once per bounded search, not once per rejected candidate.
+            if (firstBlocker == null) firstBlocker = $"{blocker.name}/{blocker.GetType().Name}/layer={blocker.gameObject.layer}";
         }
         private static bool Occupied(Tilemap map, Vector2 point) => map && map.HasTile(map.WorldToCell(point));
         private static bool Hazard(TileBase tile)

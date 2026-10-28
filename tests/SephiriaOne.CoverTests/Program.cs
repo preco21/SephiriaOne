@@ -10,11 +10,12 @@ TileFloorGenerator Floor(string guid)
     DungeonManager.Instance.generatedFloors[guid] = floor.DataOnServer; return floor;
 }
 var first = Floor("A");
+((EnhancedProceduralFloorGenerator)first).TestRoom.Metadata.spawnMonster = false;
 void Frame()
 {
     int before = PvpCoverNative.Spawns, probesBefore = Physics2D.Queries;
     Time.frameCount++; PvpCoverRuntime.Tick();
-    Check(PvpCoverNative.Spawns - before <= 2 && Physics2D.Queries - probesBefore <= 2, "Bound work to two candidates per frame");
+    Check(PvpCoverNative.Spawns - before <= 2 && Physics2D.Queries - probesBefore <= 4, "Bound work to two candidates / four collision probes per frame");
 }
 void Fill() { for (int i = 0; i < 600; i++) Frame(); }
 void Count(int count) { SessionSettings.FriendlyFireForDisplay.Cover = new(true, count); PvpCoverRuntime.Tick(); }
@@ -74,6 +75,17 @@ Mirror.NetworkServer.active = true; Physics2D.BlockAll = true; Count(32); Fill()
 Check(PvpCoverRuntime.ActiveCount == 0, "Unsafe level stays empty"); probes = Physics2D.Queries; Fill();
 Check(Physics2D.Queries == probes, "Exhausted placement stops scanning");
 Physics2D.BlockAll = false;
+var rest = new SingleRoomFloorGenerator { guid = "Rest" };
+rest.DataOnServer.stageName = "Anvil";
+FloorGenerator.Floors[rest.guid] = rest;
+DungeonManager.Instance.generatedFloors[rest.guid] = rest.DataOnServer;
+host.PlayerAvatar.currentFloorGuid = rest.guid;
+Count(12); Fill();
+Check(PvpCoverRuntime.ActiveCount == 12, "PvP already enabled when entering a non-lobby rest floor places cover");
+SessionSettings.FriendlyFireForDisplay.Enabled = false; Frame();
+Check(rest.floorRelatedNetworkObjects.Count == 0, "Non-lobby rest floor cleans up on PvP end");
+SessionSettings.FriendlyFireForDisplay.Enabled = true; Fill();
+Check(PvpCoverRuntime.ActiveCount == 12, "Enabling PvP while already in the rest floor places cover");
 var lobby = new FullyDesignedFloorGenerator { guid = "Lobby" };
 FloorGenerator.Floors[lobby.guid] = lobby;
 DungeonManager.Instance.generatedFloors[lobby.guid] = lobby.DataOnServer;

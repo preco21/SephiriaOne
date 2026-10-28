@@ -13,6 +13,7 @@ namespace UnityEngine
     }
     public class GameObject : Object
     {
+        public int layer;
         public readonly Transform transform = new();
         public readonly List<Interactable> Interactions = new();
         public T[] GetComponentsInChildren<T>(bool inactive) => Interactions.OfType<T>().ToArray();
@@ -50,15 +51,26 @@ namespace UnityEngine
         public void Encapsulate(Bounds other) { }
         public bool Intersects(Bounds other) => true;
     }
-    public class Collider2D : Object { }
+    public class Collider2D : Object
+    {
+        public readonly GameObject gameObject = new();
+        public Vector2 Position, Size = new(1, 1);
+    }
     public static class Physics2D
     {
         public static int Queries;
         public static bool BlockAll;
         public static Func<Vector2, bool> BlockPoint;
+        public static readonly List<Collider2D> Scene = new();
         private static readonly Collider2D collider = new();
         public static Collider2D OverlapBox(Vector2 point, Vector2 size, float rotation, int mask)
-        { Queries++; return BlockAll || BlockPoint?.Invoke(point) == true ? collider : null; }
+        {
+            Queries++;
+            if (BlockAll || BlockPoint?.Invoke(point) == true) return collider;
+            return Scene.Find(c => (mask & (1 << c.gameObject.layer)) != 0 &&
+                Math.Abs(c.Position.x - point.x) < (c.Size.x + size.x) / 2 &&
+                Math.Abs(c.Position.y - point.y) < (c.Size.y + size.y) / 2);
+        }
     }
     public static class LayerMask { public static int NameToLayer(string layer) => layer == "Blockable" ? 3 : 6; }
     public static class Time { public static int frameCount; }
@@ -125,7 +137,7 @@ public sealed class LibraryFloorRoomInstance
     public RoomMetadata Metadata = new(); public Vector2Int pos, Size = new(100, 100); public Vector2 TeleportPoint;
 }
 public sealed class EnhancedProceduralFloorGenerator : TileFloorGenerator
-{ private List<TileBasedRoomInstance> roomList = new() { new() }; }
+{ private List<TileBasedRoomInstance> roomList = new() { new() }; public TileBasedRoomInstance TestRoom => roomList[0]; }
 public sealed class FixedFloorGenerator : TileFloorGenerator
 { private Dictionary<Vector2Int, TileBasedRoomInstance> roomInstances = new() { [new(0, 0)] = new() }; }
 public sealed class LibraryFloorGenerator : TileFloorGenerator
