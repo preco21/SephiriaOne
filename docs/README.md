@@ -16,10 +16,10 @@ The [initial investigation](pvp-cover-investigation.md) records other candidates
 
 [PvP Combat Mode](pvp-combat-mode.md): 0.99.0 adds a default-off shared combat-state toggle for native menu/map-travel restrictions on stock guests. Includes counter-safe cleanup, native sprint/recovery side effects and explicit inventory-interaction limitations.
 
-[Silent automatic respawns](respawn-visuals.md#silent-automatic-recovery-0983-2026-10-27):
-0.98.3 removes respawn countdown/completion chat, bubbles and floating text.
-Shared delays and success-only pillar FX stay unchanged in all four PvP modes;
-Zombie infection keeps a one-time faction alert without revival seconds.
+[Floating-only respawn countdown](respawn-visuals.md#floating-only-countdown-restored-01021-2026-10-29):
+0.102.1 restores emphasized floating seconds after 0.98.3 removed both text paths.
+Chat/bubbles stay silent; delays and success-only pillar FX are unchanged across
+all four modes. Includes host/guest lifecycle and stale-countdown coverage.
 
 [Cross-floor party recovery](teleport-all.md): 0.98.0 extends Teleport All with
 the native stage-transfer/position-override transaction for stranded players.

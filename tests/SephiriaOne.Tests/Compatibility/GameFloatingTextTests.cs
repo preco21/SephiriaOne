@@ -65,18 +65,22 @@ internal static class GameFloatingTextTests
         Require(chat >= 0 && floating > chat && notice.Skip(chat + 1).Take(floating - chat - 1)
             .Any(i => i.operand is MethodInfo m && m.Name == "IsCurrent"),
             "chat stays first and participant lifetime is rechecked before optional floating output");
-        foreach (string key in new[] { "Bomb: {0}s" })
+        var respawn = Code(AccessTools.DeclaredMethod(runtime, "ShowRespawnCountdown"));
+        Require(respawn.Count(i => i.operand is MethodInfo m && m.DeclaringType == adapter && m.Name == "Show") == 1 &&
+            !respawn.Any(i => i.operand is MethodInfo m && (m.Name == "Broadcast" || m.Name.Contains("Chat"))) &&
+            respawn.Any(i => i.operand is FieldInfo f && f.Name == "ShownSecond"),
+            "respawn uses one deduplicated floating-only path, never chat or overhead bubbles");
+        foreach (string key in new[] { "Bomb: {0}s", "Respawn in: {0}s" })
         {
             foreach (string lang in new[] { "en", "ko" })
             {
                 using var stream = addon.GetManifestResourceStream("SephiriaOne.Localization." + lang + ".json")!;
                 using var reader = new StreamReader(stream);
                 using var json = System.Text.Json.JsonDocument.Parse(reader.ReadToEnd());
-                Require(!json.RootElement.TryGetProperty("Respawn in: {0}s", out _), lang + " automatic respawn text remains removed");
                 Require(json.RootElement.TryGetProperty(key, out var value) && value.GetString()!.Contains("{0}"),
                     lang + " countdown preserves the numeric placeholder");
             }
         }
-        Console.WriteLine("Verified stock floating-text payload, cosmetic-only receiver, owner inclusion, chat retention, EN/KO keys and fail-closed mutations (not live rendering).");
+        Console.WriteLine("Verified stock floating-text payload, cosmetic-only receiver, owner inclusion, floating-only respawn, retained bomb chat, EN/KO keys and fail-closed mutations (not live rendering).");
     }
 }

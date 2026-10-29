@@ -91,7 +91,7 @@ namespace SephiriaOne
                 secondDied |= b;
             }
             // Retire both opponent timers immediately with terminal notices.
-            // Automatic respawns are silent; later settlement must not repeat them.
+            // Automatic respawns send no chat; later settlement must not repeat it.
             ClearTournamentMessages();
         }
 

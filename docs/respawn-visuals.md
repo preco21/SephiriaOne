@@ -1,6 +1,36 @@
 # Automatic respawn pillar
 
-## Silent automatic recovery (0.98.3, 2026-10-27)
+## Floating-only countdown restored (0.102.1, 2026-10-29)
+
+The user clarified that the missing display is the floating countdown, not the
+overhead chat bubble. The 0.98.3 removal below unintentionally removed both
+presentation paths; the 0.102.0 Critical Damage patch did not change respawns.
+
+Restore only `NativePlayerFloatingText.Show(..., emphasize: true)` through the
+shared pending-respawn service. It displays localized `Respawn in: 3s/2s/1s`
+(`부활까지: 3초/2초/1초`) for Deathmatch/Tournament, and `1s` for Play Tag/Zombie
+Survival. The existing native RPC supports host and unmodified guest observers;
+trusted bold/125%-size styling is retained. No respawn chat/bubble, zero-second
+message, or completion message is sent. Zombie conversion retains its separate
+one-time faction notice. Play Tag's bomb messages are unchanged.
+
+The per-death `ShownSecond` field suppresses duplicate sends and is consumed
+before optional presentation. The helper checks current match/run, connection
+receipt, pending-death identity, participation, readiness and dead state. Initial
+display waits for native death/faction callbacks to complete; roster-discovered
+deaths use the same helper. Loading does not move the existing deadline or replay
+missed seconds. Manual revival, stop, replacement, disconnect and restart remove
+the pending record, which also ends countdown ownership. No new timer, scene
+scan or per-frame job is added; text is formatted only for a new shown second.
+
+The original 3s/1s delays and successful-revival pillar boundary are unchanged.
+Floating transport failures never block revival or enable chat fallback. Tests
+cover all four modes for host/guest, exact seconds and emphasis, silent chat,
+simultaneous/repeated deaths, readiness changes, stale lifecycle transitions,
+and independent floating/pillar failures. Installed contracts retain the native
+cosmetic transport, no-chat path and EN/KO keys. No deployment or live game test.
+
+## Historical silent automatic recovery (0.98.3, 2026-10-27)
 
 After the user confirmed the revive FX works reliably, automatic PvP recovery
 no longer sends `Respawn in: ...`, `Respawned!`, or floating respawn text. This
@@ -60,8 +90,8 @@ Manual revival/Revive All, stopped or expired matches' immediate cleanup, old
 connection timers and extra-life saves receive no added pillar. A loading player
 retains the original countdown deadline and emits the effect only when recovery
 can actually complete. Later ticks do not replay it. Existing recovery and
-respawn timing remains independent of optional FX delivery failures; respawn text
-was removed in 0.98.3 as described above.
+respawn timing remains independent of optional FX delivery failures. Respawn
+chat/bubbles remain removed; 0.102.1 restores only floating seconds as above.
 
 ## Native resource and transport evidence
 

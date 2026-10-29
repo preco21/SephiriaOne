@@ -40,7 +40,8 @@ internal static class FloatingCountdownTests
                 "Tag never emits the same displayed second twice");
             var recipient = tagPlayers.First(p => p != first.Player);
             Kill(first.Player, recipient);
-            check(!NativePlayerFloatingText.Messages.Any(m => m.Message.StartsWith("Respawn in:")), "Tag sends no floating respawn countdown");
+            check(NativePlayerFloatingText.Messages.Last() == (recipient, "Respawn in: 1s") && NativePlayerFloatingText.Styles.Last(),
+                "Tag displays the one-second floating respawn countdown with emphasis");
             int count = NativePlayerFloatingText.Messages.Count; At(4.5f);
             check(NativePlayerFloatingText.Messages.Count == count, "Transferred bomb emits no timer while victim awaits revival");
             At(5.3f); // Death occurred at 4.2; wait the full native one-second delay.

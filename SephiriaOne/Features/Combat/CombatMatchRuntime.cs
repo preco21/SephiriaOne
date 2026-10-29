@@ -16,6 +16,7 @@ namespace SephiriaOne
             internal HostPlayer Subject;
             internal FriendlyFireParticipants.Receipt Receipt;
             internal double At;
+            internal int ShownSecond;
             internal bool ZombieConversionNoticePending;
             internal string ZombieInfector;
         }
@@ -166,7 +167,7 @@ namespace SephiriaOne
                     if (IsZombieSurvival && dying.ContainsKey(player)) continue; // Wait for infection attribution/finalization.
                     if (!Connected(respawn.Subject, respawn.Receipt) || !Eligible(player) || !player.IsDead) { pending.Remove(player); continue; }
                     if (!respawn.Subject.IsReady) continue;
-                    if (now < respawn.At) continue;
+                    if (now < respawn.At) { ShowRespawnCountdown(respawn, now); continue; }
                     pending.Remove(player);
                     if (!Restore(respawn, current, out string failure))
                     {
@@ -262,10 +263,12 @@ namespace SephiriaOne
             if (!spawner || !ReferenceEquals(spawner.PlayerAvatar, player) || !PlayerSpawner.MultiplayerList.Contains(spawner)) return;
             var subject = new HostPlayer(spawner);
             int delay = IsPlayTag || IsZombieSurvival ? 1 : 3;
-            pending.Add(player, new Respawn { Subject = subject, Receipt = FriendlyFireParticipants.Capture(player), At = Now + delay });
+            var respawn = new Respawn { Subject = subject, Receipt = FriendlyFireParticipants.Capture(player), At = Now + delay };
+            pending.Add(player, respawn);
             var score = FriendlyFireKda.For(player);
             if (!participants.TryGetValue(score, out var entry)) participants.Add(score, entry = new Participant { Score = score, Order = participants.Count });
             entry.Name = CombatNames.Player(player);
+            ShowRespawnCountdown(respawn, Now);
         }
         internal static void Reviving(PlayerAvatar player)
         {
@@ -293,12 +296,15 @@ namespace SephiriaOne
             else if (IsZombieSurvival && CurrentScope && player && player.IsDead &&
                 pending.TryGetValue(player, out var respawn) && respawn.ZombieConversionNoticePending && Connected(respawn.Subject, respawn.Receipt))
             {
-                // Keep the one-time faction alert, without any respawn text.
+                // Keep the one-time faction alert, without a respawn bubble.
                 // Consume before chat callbacks can reenter or stop the match.
                 respawn.ZombieConversionNoticePending = false;
                 Broadcast(player, ZombieSurvivalMessages.Conversion(respawn.ZombieInfector));
             }
             else if (IsPlayTag && deathDepth == 0) AdvancePlayTag(Now);
+            // Native death and faction/kill callbacks have now completed. The
+            // cosmetic countdown has its own path and never enters chat/bubbles.
+            if (pending.TryGetValue(player, out var countdown)) ShowRespawnCountdown(countdown, Now);
             // Zombie victory is committed by infection but concluded on Tick.
             // A lethal reflected hit may finish this death before the enclosing
             // attack reaches its own victim's Die; recovery must include both.
@@ -376,6 +382,23 @@ namespace SephiriaOne
         }
         private static void FinishStop()
         { cleanup = null; dungeon = null; run = null; stopping = false; mode = MatchMode.None; ClearTournament(); ClearZombie(); SessionSettings.DeathmatchChanged(); }
+
+        private static void ShowRespawnCountdown(Respawn respawn, double now)
+        {
+            int seconds = Math.Max(0, (int)Math.Ceiling(respawn.At - now));
+            if (seconds == 0 || seconds == respawn.ShownSecond) return;
+            long current = token;
+            var player = respawn.Subject.Player;
+            if (!IsRunning || !CurrentScope || !Connected(respawn.Subject, respawn.Receipt) ||
+                !respawn.Subject.IsReady || !player.IsDead || dying.ContainsKey(player) || !Eligible(player)) return;
+            // Eligibility pruning can end a match. Keep this display owned by
+            // the same connection, match and death; no retry or separate timer.
+            if (!IsRunning || current != token || !CurrentScope ||
+                !pending.TryGetValue(player, out var latest) || !ReferenceEquals(latest, respawn)) return;
+            respawn.ShownSecond = seconds; // Consume before optional presentation can reenter.
+            try { NativePlayerFloatingText.Show(player, L.F("Respawn in: {0}s", seconds), emphasize: true); }
+            catch (Exception error) { Debug.LogWarning("[SephiriaOne] Optional respawn countdown failed: " + error); }
+        }
 
         private static void BroadcastCountdown(PlayerAvatar player, string message, string floating)
         {
