@@ -1,5 +1,10 @@
 # Development knowledge index
 
+[PvP Critical Damage limit](pvp-critical-damage.md): 0.102.0 adds an independent
+default-off 30/70 curve over the additional critical bonus, preserving native
++50%, special critical multipliers, PvE and original attack fields. Includes
+host-only UI/commands, v57 presets, native evidence and lifecycle tests.
+
 Latest cover follow-up: [0.101.1 final-boss isometric terrain and progression protection](pvp-cover.md#final-boss-placement-fix--01011).
 Includes the 0.100.1 runtime failure evidence and remaining live verification.
 

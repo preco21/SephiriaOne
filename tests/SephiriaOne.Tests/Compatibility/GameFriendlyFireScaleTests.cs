@@ -45,9 +45,9 @@ internal static class GameFriendlyFireScaleTests
         var refill = Code("ApplyFriendlyRefill");
         Require(apply.Any(i => Call(i, "SettingsPanel", "ClearFriendlyDamage")) && refill.Any(i => Call(i, "SettingsPanel", "ClearFriendlyRefill")),
             "Each successful Apply clears only its own draft, preserving the other pending field");
-        Require(balance.Count(i => Call(i, "PanelWidgets", "Input")) == 4 && !balance.Any(i => i.LoadsConstant("PvP refill (%/s)")) &&
+        Require(balance.Count(i => Call(i, "PanelWidgets", "Input")) == 6 && !balance.Any(i => i.LoadsConstant("PvP refill (%/s)")) &&
             Code("BuildPvpRapidEditor").Any(i => i.LoadsConstant("PvP refill (%/s)")),
-            "Balance holds guard, Perfect Guard and paired amplification inputs; refill is exclusively on Rapid Hits");
+            "Balance holds guard, Perfect Guard and paired amplification/critical inputs; refill is exclusively on Rapid Hits");
         Require(refill.Any(i => i.LoadsConstant("/one friendlyfire refill ")) && refill.Any(i => Call(i, "TMP_InputField", "get_text")) &&
             refill.Any(i => Call(i, "SettingsPanel", "Execute")), "Refill Apply uses exact text through the shared command");
         Require(!Code("EditFriendlyRefill").Any(i => Call(i, "SettingsPanel", "Execute")) &&

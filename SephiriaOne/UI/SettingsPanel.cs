@@ -222,6 +222,7 @@ namespace SephiriaOne
             friendlyGuardMp = null; friendlyGuardMpDraft = false;
             friendlyPerfectGuard = null; friendlyPerfectGuardDraft = false;
             friendlyAmplificationSoft = friendlyAmplificationHard = null; friendlyAmplificationDraft = false;
+            friendlyCriticalDamageSoft = friendlyCriticalDamageHard = null; friendlyCriticalDamageDraft = false;
             for (int i = 0; i < 4; i++)
             {
                 friendlyElementSoft[i] = friendlyElementHard[i] = null;
@@ -405,6 +406,7 @@ namespace SephiriaOne
             ClearFriendlyDamage(); ClearFriendlyRefill(); ClearFriendlyGuardMp();
             ClearFriendlyPerfectGuard();
             ClearFriendlyAmplification();
+            ClearFriendlyCriticalDamage();
             ClearFriendlyElements();
             ClearFriendlyLowerBound();
             ClearPvpRapid();

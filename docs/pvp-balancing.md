@@ -76,6 +76,10 @@ Finite dodge barriers and consumed lethal saves remain native.
 
 ## All Damage Amplified limit (`0.80.0`, 2026-10-21)
 
+[Optional Critical Damage curve](pvp-critical-damage.md) (`0.102.0`): default
+off, soft 30 / hard 70 additional bonus points. Native +50% and special critical
+multipliers remain; only permitted balanced PvP hits use the curve.
+
 [Optional amplification curve](pvp-amplification.md): soft 50% / hard 100%
 bonus defaults, initially off. PvP Balance and
 `/one friendlyfire amplification` control the native combined attacker/leader

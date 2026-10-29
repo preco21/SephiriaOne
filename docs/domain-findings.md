@@ -1,5 +1,13 @@
 # Sephiria domain findings
 
+Critical Damage limits (`0.102.0`, 2026-10-29) operate on the hit-local combined
+rate after companion contribution, before native special multiplier/rounding.
+`DamageInstance.Set` and the C-menu include a native +50%; the user-selected
+30/70 curve applies only above that base. Avoid changing the damage-instance
+field: Fire Needle uses it for projectile counts. Preserve execution ×2,
+Lake Spirit's multiplier and unrelated Kunai base-damage scaling. See
+[native boundaries, curve and verification](pvp-critical-damage.md).
+
 Final-boss PvP cover (`0.101.1`): QTemple_Boss3 uses 2×2 Isometric grids and three
 co-aligned top-ground layers. Use all four world-square corners and native cell
 centers; unit-grid assumptions miss this arena. Its authored props list omits

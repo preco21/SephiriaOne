@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>disable</Nullable><Optimize>true</Optimize></PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../SephiriaOne/Features/Combat/Cover/PvpCoverSettings.cs" Link="PvpCoverSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/CombatMatchRoles.cs" Link="CombatMatchRoles.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/ZombieSurvival/ZombieDynamicBalance.cs" Link="ZombieDynamicBalance.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/ZombieSurvival/ZombieSurvivalRound.cs" Link="ZombieSurvivalRound.cs" />

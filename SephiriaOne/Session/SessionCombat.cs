@@ -66,6 +66,8 @@ namespace SephiriaOne
             { message = L.T("PvP cover unavailable; off/reset remain available. See Player.log."); return false; }
             if (command.Elements.HasValue && !command.Elements.Value.IsValid)
             { message = FriendlyFireCommand.Usage; return false; }
+            if (command.CriticalDamage.HasValue && !command.CriticalDamage.Value.IsValid)
+            { message = FriendlyFireCommand.Usage; return false; }
             if (command.Amplification.HasValue && !command.Amplification.Value.IsValid)
             { message = FriendlyFireCommand.Usage; return false; }
             if (command.Rapid.HasValue && !command.Rapid.Value.IsValid)
@@ -151,6 +153,8 @@ namespace SephiriaOne
                 settings.Elements.GetLimit(PvpElement.Flame).SoftNumber, settings.Elements.GetLimit(PvpElement.Flame).HardNumber,
                 settings.Elements.GetLimit(PvpElement.Ice).SoftNumber, settings.Elements.GetLimit(PvpElement.Ice).HardNumber,
                 settings.Elements.GetLimit(PvpElement.Lightning).SoftNumber, settings.Elements.GetLimit(PvpElement.Lightning).HardNumber) + " " +
+            L.F("Critical Damage limit: {0}; soft {1}%, hard {2}% additional bonus (native +50% preserved; requires PvP balancing).",
+                L.T(settings.CriticalDamage.Enabled ? "on" : "off"), settings.CriticalDamage.SoftNumber, settings.CriticalDamage.HardNumber) + " " +
             L.F("All Damage Amplified limit: {0}; soft {1}%, hard {2}% bonus (100% = +100%; requires PvP balancing).",
                 L.T(settings.Amplification.Enabled ? "on" : "off"), settings.Amplification.SoftNumber, settings.Amplification.HardNumber) + " " +
             L.F("PvP DoT intervals (s): Burn {0}; Plasma Burn {1}; Frostbite {2}; Poison {3}.",

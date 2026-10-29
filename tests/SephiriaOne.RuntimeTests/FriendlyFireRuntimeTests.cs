@@ -6,6 +6,7 @@ internal static class FriendlyFireRuntimeTests
     internal static void CheckMatchIntervals(Action<bool, string> check)
     {
         CheckMatchAmplification(check);
+        CheckMatchCriticalDamage(check);
         CheckMatchElements(check);
         CheckRapidEdits(check, true);
         CheckPerfectGuardEdits(check, true);
@@ -77,6 +78,21 @@ internal static class FriendlyFireRuntimeTests
                 CombatMatchRuntime.RoleRevision == roles, "Amplification edits preserve live match, scores, budgets, frequency and roles: " + operation);
         check(SessionSettings.TryExecuteFriendlyFire(new FriendlyFireCommand(false, amplification:
             new PvpAmplificationChange(prior.Enabled, prior.SoftPercent, prior.HardPercent)), out _), "Restore match amplification settings");
+    }
+
+    private static void CheckMatchCriticalDamage(Action<bool, string> check)
+    {
+        var prior = SessionSettings.FriendlyFireForHit.CriticalDamage;
+        long token = CombatMatchRuntime.MatchToken, scores = FriendlyFireKda.Epoch,
+            balance = SessionSettings.CombatBalanceRevision, frequency = SessionSettings.CombatFrequencyRevision,
+            roles = CombatMatchRuntime.RoleRevision;
+        foreach (string operation in new[] { "limits 200 300", "on", "off", "reset" })
+            check(SettingsActions.Execute("/one friendlyfire critical-damage " + operation).Success &&
+                CombatMatchRuntime.IsRunning && CombatMatchRuntime.MatchToken == token && FriendlyFireKda.Epoch == scores &&
+                SessionSettings.CombatBalanceRevision == balance && SessionSettings.CombatFrequencyRevision == frequency &&
+                CombatMatchRuntime.RoleRevision == roles, "CriticalDamage edits preserve live match, scores, budgets, frequency and roles: " + operation);
+        check(SessionSettings.TryExecuteFriendlyFire(new FriendlyFireCommand(false, criticalDamage:
+            new PvpCriticalDamageChange(prior.Enabled, prior.SoftPercent, prior.HardPercent)), out _), "Restore match criticalDamage settings");
     }
 
     private static void CheckRapidEdits(Action<bool, string> check, bool matchRunning)
@@ -308,6 +324,21 @@ internal static class FriendlyFireRuntimeTests
         check(!SessionSettings.TryExecuteFriendlyFire(new FriendlyFireCommand(false, amplification: new PvpAmplificationChange(softPercent: 200)), out _) &&
             !SettingsActions.Execute("/one friendlyfire amplification limits 200 100").Success &&
             SessionSettings.FriendlyFireForHit.Amplification.Equals(amplification), "Invalid direct and parsed commands never partially apply");
+        check(SettingsActions.Execute("/one friendlyfire critical-damage limits 70.25 125.5").Success &&
+            SettingsActions.Execute("/one friendlyfire critical-damage on").Success &&
+            SessionSettings.FriendlyFireForHit.CriticalDamage.Enabled && SessionSettings.FriendlyFireForHit.CriticalDamage.SoftPercent == 70.25m &&
+            SessionSettings.FriendlyFireForHit.CriticalDamage.HardPercent == 125.5m &&
+            SessionSettings.CombatFrequencyRevision == frequencyRevision && SessionSettings.CombatBalanceRevision == balanceRevision && Score(host) == "P(1/0/0)",
+            "CriticalDamage applies immediately without resetting scores or budget/frequency revisions");
+        var criticalDamage = SessionSettings.FriendlyFireForHit.CriticalDamage;
+        check(host.hp == nativeHp && host.customStats.OrderBy(p => p.Key).SequenceEqual(nativeStats.OrderBy(p => p.Key)),
+            "CriticalDamage settings never write native player stats or health");
+        check(SessionSettings.ReadSnapshot().FriendlyFire.CriticalDamage.Equals(criticalDamage) &&
+            SettingsActions.Execute("/one friendlyfire status").Messages.Any(m => m.Contains("soft 70.25%, hard 125.5% additional bonus")),
+            "Snapshot and status report the exact paired bonus limits");
+        check(!SessionSettings.TryExecuteFriendlyFire(new FriendlyFireCommand(false, criticalDamage: new PvpCriticalDamageChange(softPercent: 200)), out _) &&
+            !SettingsActions.Execute("/one friendlyfire critical-damage limits 200 100").Success &&
+            SessionSettings.FriendlyFireForHit.CriticalDamage.Equals(criticalDamage), "Invalid direct and parsed commands never partially apply");
         check(SettingsActions.Execute("/one friendlyfire refill 125.5").Success &&
             SessionSettings.FriendlyFireForHit.RefillPercent == 125.5m && SessionSettings.CombatBalanceRevision == balanceRevision && Score(host) == "P(1/0/0)",
             "Refill edits reach hits immediately without resetting KDA or budget revision");
@@ -355,6 +386,7 @@ internal static class FriendlyFireRuntimeTests
         check(SessionSettings.FriendlyFireForHit.RefillPercent == 125.5m, "Run restart retains configured refill");
         check(SessionSettings.FriendlyFireForHit.DotIntervals.Equals(dotSettings), "Run restart retains all nine current effect intervals");
         check(SessionSettings.FriendlyFireForHit.Amplification.Equals(amplification), "Run restart retains exact amplification limits");
+        check(SessionSettings.FriendlyFireForHit.CriticalDamage.Equals(criticalDamage), "Run restart retains exact criticalDamage limits");
         check(SessionSettings.FriendlyFireForHit.Rapid.Equals(rapidSettings), "Run restart retains all configured rapid numbers");
         check(SessionSettings.FriendlyFireForHit.PerfectGuard.Equals(perfectGuardSettings), "Run restart retains inactive Perfect Guard multiplier");
         check(SessionSettings.FriendlyFireForHit.DotMaxDurationSeconds == 3.33m, "Run restart retains current duration");
@@ -383,6 +415,7 @@ internal static class FriendlyFireRuntimeTests
         check(SessionSettings.FriendlyFireForHit.HitFrequency, "Rejoined players immediately use current hit-frequency preference");
         check(SessionSettings.FriendlyFireForHit.DotIntervals.Equals(dotSettings), "Replacement connection gets all current DoT intervals, not stale per-player values");
         check(SessionSettings.FriendlyFireForHit.Amplification.Equals(amplification), "Replacement connection reads current amplification limits");
+        check(SessionSettings.FriendlyFireForHit.CriticalDamage.Equals(criticalDamage), "Replacement connection reads current criticalDamage limits");
         check(SessionSettings.FriendlyFireForHit.Rapid.Equals(rapidSettings), "Replacement connection uses current rapid numbers");
         check(SessionSettings.FriendlyFireForHit.PerfectGuard.Equals(perfectGuardSettings), "Replacement connection uses current Perfect Guard policy");
         check(SessionSettings.FriendlyFireForHit.DotMaxDurationSeconds == 3.33m, "Replacement connection uses current duration, not stale settings");
@@ -401,6 +434,7 @@ internal static class FriendlyFireRuntimeTests
         check(SessionSettings.FriendlyFireForHit.RefillPercent == 125.5m, "Saved refill restores after full controller restart");
         check(SessionSettings.FriendlyFireForHit.DotIntervals.Equals(dotSettings), "Saved intervals restore after full controller restart");
         check(SessionSettings.FriendlyFireForHit.Amplification.Equals(amplification), "Saved amplification limits restore alongside every other combat setting");
+        check(SessionSettings.FriendlyFireForHit.CriticalDamage.Equals(criticalDamage), "Saved criticalDamage limits restore alongside every other combat setting");
         check(SessionSettings.FriendlyFireForHit.Rapid.Equals(rapidSettings), "Saved rapid numbers restore exactly after controller restart");
         check(SessionSettings.FriendlyFireForHit.PerfectGuard.Equals(perfectGuardSettings), "Saved inactive Perfect Guard multiplier restores after controller restart");
         check(SessionSettings.FriendlyFireForHit.DotMaxDurationSeconds == 3.33m, "Saved duration restores after controller restart");
@@ -416,6 +450,7 @@ internal static class FriendlyFireRuntimeTests
         check(!SessionSettings.FriendlyFireForHit.HitFrequency, "Full reset restores hit-frequency default off");
         check(!SessionSettings.FriendlyFireForHit.DotIntervals.HasChanges, "Full reset restores all nine current per-effect defaults");
         check(!SessionSettings.FriendlyFireForHit.Amplification.HasChanges, "Full reset restores amplification off/50/100");
+        check(!SessionSettings.FriendlyFireForHit.CriticalDamage.HasChanges, "Full reset restores criticalDamage off/30/70");
         check(!SessionSettings.FriendlyFireForHit.Rapid.HasChanges, "Full reset restores all rapid defaults");
         check(!SessionSettings.FriendlyFireForHit.SuppressThorns, "Combat reset restores native Thorns");
         check(!SessionSettings.FriendlyFireForHit.ArtifactRate.HasChanges, "Combat reset restores artifact defaults");
@@ -448,6 +483,10 @@ internal static class FriendlyFireRuntimeTests
             !SettingsActions.Execute("/one friendlyfire amplification limits 10 20").Success &&
             SettingsActions.Execute("/one friendlyfire amplification off").Success && SettingsActions.Execute("/one friendlyfire amplification reset").Success,
             "Unavailable hooks reject amplification enable/limits but preserve off/reset recovery");
+        check(!SettingsActions.Execute("/one friendlyfire critical-damage on").Success &&
+            !SettingsActions.Execute("/one friendlyfire critical-damage limits 10 20").Success &&
+            SettingsActions.Execute("/one friendlyfire critical-damage off").Success && SettingsActions.Execute("/one friendlyfire critical-damage reset").Success,
+            "Unavailable hooks reject criticalDamage enable/limits but preserve off/reset recovery");
         check(!SettingsActions.Execute("/one friendlyfire hit-frequency on").Success &&
             SettingsActions.Execute("/one friendlyfire hit-frequency off").Success && SettingsActions.Execute("/one friendlyfire hit-frequency reset").Success,
             "Unavailable hooks reject frequency enable but retain off/reset recovery");

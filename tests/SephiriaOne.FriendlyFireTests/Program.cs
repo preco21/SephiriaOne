@@ -218,6 +218,7 @@ GuardTests.Run(Check);
 EvasionTests.Run(Check);
 DefensiveEffectTests.Run(Check);
 AmplificationTests.Run(Check);
+CriticalDamageTests.Run(Check);
 SpellTests.Run(Check);
 WeaponTargetingTests.Run(Check);
 FractionalDamageTests.Run(Check);

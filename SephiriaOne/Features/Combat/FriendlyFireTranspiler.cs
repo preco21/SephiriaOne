@@ -68,6 +68,7 @@ namespace SephiriaOne
             code.Insert(faction + 1, CodeInstruction.Call(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.AllowFaction)));
             code.Insert(contains + 1, CodeInstruction.Call(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.ProtectLeader)));
             code.Insert(equality + 1, CodeInstruction.Call(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.ProtectLeader)));
+            code = FriendlyFireCriticalDamageHooks.Rewrite(code, generator).ToList();
             return FriendlyFireDefensiveEffectHooks.Rewrite(FriendlyFireWhiteBreadHooks.Rewrite(FriendlyFireAmplificationHooks.Rewrite(
                 FriendlyFireEvasionHooks.Rewrite(FriendlyFireHarvestHooks.Rewrite(FriendlyFireGuardHooks.Rewrite(FriendlyFireActiveDefenseHooks.Rewrite(code)))))));
         }

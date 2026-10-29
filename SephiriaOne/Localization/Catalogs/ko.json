@@ -1057,5 +1057,9 @@
   "Cover does not support this tile grid.": "이 타일 격자에는 엄폐물을 배치할 수 없습니다.",
   "Cover found no eligible rooms on this level.": "이 레벨에서 엄폐물을 배치할 방을 찾지 못했습니다.",
   "Placing cover: {0}/{1}.": "엄폐물 배치 중: {0}/{1}개.",
-  "Cover placed: {0}/{1}. Safe space may reduce the count.": "엄폐물 배치: {0}/{1}개. 안전한 공간이 부족하면 개수가 줄어듭니다."
+  "Cover placed: {0}/{1}. Safe space may reduce the count.": "엄폐물 배치: {0}/{1}개. 안전한 공간이 부족하면 개수가 줄어듭니다.",
+  "Critical Damage limit": "치명타 피해 제한",
+  "Additional bonus; native +50% preserved.": "추가 보너스 기준 · 기본 +50% 유지.",
+  "Critical Damage limit: /one friendlyfire critical-damage on|off|reset; critical-damage limits <soft> <hard>. Default off, soft 30%, hard 70% additional bonus. Preserves native +50% and special critical multipliers. Use 0..10000 with up to 2 decimals and soft <= hard. Requires PvP balancing.": "치명타 피해 제한: /one friendlyfire critical-damage on|off|reset; critical-damage limits <시작> <최대>. 기본 꺼짐, 추가 보너스 완화 시작 30%, 최대 70%. 기본 +50%와 특수 치명타 배율은 유지합니다. 0..10000, 소수 둘째 자리까지, 시작 <= 최대. PvP 밸런싱을 켠 경우에만 적용됩니다.",
+  "Critical Damage limit: {0}; soft {1}%, hard {2}% additional bonus (native +50% preserved; requires PvP balancing).": "치명타 피해 제한: {0}; 추가 보너스 완화 시작 {1}%, 최대 {2}% (기본 +50% 유지 · PvP 밸런싱 필요)."
 }

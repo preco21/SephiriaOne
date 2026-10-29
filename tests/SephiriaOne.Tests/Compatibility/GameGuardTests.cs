@@ -116,7 +116,7 @@ internal static class GameGuardTests
         List<CodeInstruction> Panel(string name) => PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(panel, name)).ToList();
         var build = Panel("BuildPvpBalanceEditor"); var refresh = Panel("RefreshPvpBalance"); var apply = Panel("ApplyFriendlyGuardMp");
         Require(build.Any(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "Shield MP min (%)")) &&
-            build.Count(i => Call(i, "PanelWidgets", "Input")) == 4, "dedicated balancing section includes shield minimum, Perfect Guard and paired amplification inputs");
+            build.Count(i => Call(i, "PanelWidgets", "Input")) == 6, "dedicated balancing section includes shield minimum, Perfect Guard and paired amplification/critical inputs");
         Require(apply.Any(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "/one friendlyfire guard-mp ")) &&
             apply.Any(i => Call(i, "SettingsPanel", "Execute")) && apply.Any(i => Call(i, "SettingsPanel", "ClearFriendlyGuardMp")),
             "guard Apply uses shared command and clears only its own draft");

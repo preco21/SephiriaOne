@@ -4,6 +4,7 @@ namespace UnityEngine
 {
     public static class Mathf
     {
+        public static int RoundToInt(float value) => (int)MathF.Round(value);
         [MethodImpl(MethodImplOptions.NoInlining)] public static float Log(float value) => MathF.Log(value);
     }
 

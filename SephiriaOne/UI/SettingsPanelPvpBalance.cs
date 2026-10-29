@@ -14,13 +14,15 @@ namespace SephiriaOne
         private bool friendlyPerfectGuardDraft;
         private TMP_InputField friendlyAmplificationSoft, friendlyAmplificationHard;
         private bool friendlyAmplificationDraft;
+        private TMP_InputField friendlyCriticalDamageSoft, friendlyCriticalDamageHard;
+        private bool friendlyCriticalDamageDraft;
         private readonly TMP_InputField[] friendlyElementSoft = new TMP_InputField[4];
         private readonly TMP_InputField[] friendlyElementHard = new TMP_InputField[4];
         private readonly bool[] friendlyElementDraft = new bool[4];
 
         private void BuildPvpBalanceEditor()
         {
-            var content = widgets.ScrollSection(pageRoot, "BalanceScroll", 10, 0, 273, PageHeight, 900);
+            var content = widgets.ScrollSection(pageRoot, "BalanceScroll", 10, 0, 273, PageHeight, 1012);
             AddCheckbox("PvP balancing", 0, 0, 170, 25, s => s.FriendlyFire.Balance,
                 s => s.FriendlyFireAvailable, "/one friendlyfire balance", parent: content);
             widgets.Button(content, "Rapid Hits", 178, 0, 95, 25, () => SelectPage(PvpRapidPage));
@@ -41,7 +43,15 @@ namespace SephiriaOne
             friendlyAmplificationHard = widgets.Input(content, 98, 201, 90, EditFriendlyAmplification);
             changeButtons.Add(widgets.Button(content, "Apply", 196, 201, 77, 25, ApplyFriendlyAmplification));
             widgets.Text(content, "AmplificationHint", "Bonus %, not C-menu total.", 0, 232, 273, 18, 11);
-            BuildPvpLowerBound(PanelWidgets.Rect(content, "LowerBoundControls", 0, 264, 273, 238));
+            AddCheckbox("Critical Damage limit", 0, 264, 273, 25, s => s.FriendlyFire.CriticalDamage.Enabled,
+                s => s.FriendlyFireAvailable, "/one friendlyfire critical-damage", parent: content);
+            widgets.Text(content, "CriticalDamageSoft", "Soft bonus (%)", 0, 299, 90, 18, 11);
+            widgets.Text(content, "CriticalDamageHard", "Hard bonus (%)", 98, 299, 90, 18, 11);
+            friendlyCriticalDamageSoft = widgets.Input(content, 0, 320, 90, EditFriendlyCriticalDamage);
+            friendlyCriticalDamageHard = widgets.Input(content, 98, 320, 90, EditFriendlyCriticalDamage);
+            changeButtons.Add(widgets.Button(content, "Apply", 196, 320, 77, 25, ApplyFriendlyCriticalDamage));
+            widgets.Text(content, "CriticalDamageHint", "Additional bonus; native +50% preserved.", 0, 351, 273, 18, 11);
+            BuildPvpLowerBound(PanelWidgets.Rect(content, "LowerBoundControls", 0, 376, 273, 238));
             BuildPvpElementalEditor(content);
             BuildPvpDotEditor();
         }
@@ -60,19 +70,25 @@ namespace SephiriaOne
                 friendlyAmplificationSoft.SetTextWithoutNotify(snapshot.FriendlyFire.Amplification.SoftNumber);
                 friendlyAmplificationHard.SetTextWithoutNotify(snapshot.FriendlyFire.Amplification.HardNumber);
             }
+            friendlyCriticalDamageSoft.interactable = friendlyCriticalDamageHard.interactable = snapshot.CanMutate && snapshot.FriendlyFireAvailable;
+            if (!friendlyCriticalDamageDraft)
+            {
+                friendlyCriticalDamageSoft.SetTextWithoutNotify(snapshot.FriendlyFire.CriticalDamage.SoftNumber);
+                friendlyCriticalDamageHard.SetTextWithoutNotify(snapshot.FriendlyFire.CriticalDamage.HardNumber);
+            }
         }
 
         private void BuildPvpElementalEditor(RectTransform content)
         {
-            AddCheckbox("Elemental stat limits", 0, 510, 273, 25, s => s.FriendlyFire.Elements.Enabled,
+            AddCheckbox("Elemental stat limits", 0, 622, 273, 25, s => s.FriendlyFire.Elements.Enabled,
                 s => s.FriendlyFireAvailable, "/one friendlyfire elements", parent: content);
-            widgets.Text(content, "ElementSoft", "Soft limit", 0, 541, 88, 18, 11);
-            widgets.Text(content, "ElementHard", "Hard limit", 94, 541, 88, 18, 11);
+            widgets.Text(content, "ElementSoft", "Soft limit", 0, 653, 88, 18, 11);
+            widgets.Text(content, "ElementHard", "Hard limit", 94, 653, 88, 18, 11);
             string[] labels = { "Physical", "Flame", "Ice", "Lightning" };
             for (int i = 0; i < 4; i++)
             {
                 int index = i;
-                float y = 565 + i * 63;
+                float y = 677 + i * 63;
                 widgets.Text(content, "Element" + i, labels[i], 0, y, 273, 18, 11);
                 friendlyElementSoft[i] = widgets.Input(content, 0, y + 20, 88, text => friendlyElementDraft[index] = true);
                 friendlyElementHard[i] = widgets.Input(content, 94, y + 20, 88, text => friendlyElementDraft[index] = true);
@@ -81,7 +97,7 @@ namespace SephiriaOne
                     () => Execute("/one friendlyfire elements " + ((PvpElement)index).ToString().ToLowerInvariant() + " reset", true,
                         clearInputOnSuccess: () => ClearFriendlyElement(index))));
             }
-            widgets.Text(content, "ElementsHint", "Effective participant stats during balanced PvP; also affects their PvE damage. Saved stats unchanged.", 0, 821, 273, 48, 10);
+            widgets.Text(content, "ElementsHint", "Effective participant stats during balanced PvP; also affects their PvE damage. Saved stats unchanged.", 0, 933, 273, 48, 10);
         }
 
         private void RefreshPvpElements(SettingsSnapshot snapshot)
@@ -134,6 +150,16 @@ namespace SephiriaOne
             friendlyAmplificationDraft = false;
             if (friendlyAmplificationSoft) friendlyAmplificationSoft.SetTextWithoutNotify("");
             if (friendlyAmplificationHard) friendlyAmplificationHard.SetTextWithoutNotify("");
+        }
+        private void EditFriendlyCriticalDamage(string text) => friendlyCriticalDamageDraft = true;
+        private void ApplyFriendlyCriticalDamage() => Execute("/one friendlyfire critical-damage limits " +
+            friendlyCriticalDamageSoft.text.Trim() + " " + friendlyCriticalDamageHard.text.Trim(), true,
+            clearInputOnSuccess: ClearFriendlyCriticalDamage);
+        private void ClearFriendlyCriticalDamage()
+        {
+            friendlyCriticalDamageDraft = false;
+            if (friendlyCriticalDamageSoft) friendlyCriticalDamageSoft.SetTextWithoutNotify("");
+            if (friendlyCriticalDamageHard) friendlyCriticalDamageHard.SetTextWithoutNotify("");
         }
     }
 }

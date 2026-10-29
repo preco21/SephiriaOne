@@ -121,6 +121,9 @@ public class DamageInstance
     public bool isSystemDamage;
     public EDamageFailType failed;
     public float damage = 10;
+    public int criticalDamageRate = 50;
+    public float criticalDamageMultiplier = 1f;
+    public bool isCriticalAttack, isExecutionAttack;
     public float hpSteal;
     public float absoluteEvasionPercent;
     public bool UsedAbsoluteEvasion;
@@ -169,7 +172,8 @@ public partial class UnitAvatar : CombatBehaviour
     public float MaxHp { get; set; } = 100;
     public float Shield { [MethodImpl(MethodImplOptions.NoInlining)] get; set; }
     public float TrueDamage, Defense;
-    public int AllDamageBonus;
+    public int AllDamageBonus, CriticalDamageBonus, FollowerCriticalContribute;
+    public float ObservedCriticalDamage;
     public float ObservedAmplificationDamage;
     public int mp = 100;
     public bool IsMpShield;
@@ -193,6 +197,7 @@ public partial class UnitAvatar : CombatBehaviour
     }
     [MethodImpl(MethodImplOptions.NoInlining)] public int GetCustomStatUnsafe(string key) => key switch
     {
+        "FOLLOWERCRITICALCONTRIBUTE" => FollowerCriticalContribute,
         "PHYSICALDAMAGE" => ConvertedElementForTest(0),
         "FIREDAMAGE" => ConvertedElementForTest(1),
         "ICEDAMAGE" => ConvertedElementForTest(2),
@@ -276,6 +281,19 @@ public partial class UnitAvatar : CombatBehaviour
                 ObservedAmplificationDamage = amplified;
                 resolved += amplified;
             }
+            int criticalRate = damage.criticalDamageRate;
+            if (attacker != null && attacker.GetCustomStatUnsafe("FOLLOWERCRITICALCONTRIBUTE") > 0)
+            {
+                float contribution = attacker.NetworkLeader ? attacker.NetworkLeader.GetCustomStat(ECustomStat.CriticalDamageBonus) *
+                    attacker.GetCustomStatUnsafe("FOLLOWERCRITICALCONTRIBUTE") * 0.01f : 0f;
+                criticalRate += (int)contribution;
+            }
+            if (damage.criticalDamageMultiplier != 1f)
+                criticalRate = UnityEngine.Mathf.RoundToInt((float)criticalRate * damage.criticalDamageMultiplier);
+            float beforeCritical = resolved;
+            if (damage.isExecutionAttack) resolved += resolved * ((float)criticalRate / 100f) * 2f;
+            else if (damage.isCriticalAttack) resolved += resolved * ((float)criticalRate / 100f);
+            ObservedCriticalDamage = resolved - beforeCritical;
             float shieldDamage = 0, mpDamage = 0;
             if (resolved > 0)
             {

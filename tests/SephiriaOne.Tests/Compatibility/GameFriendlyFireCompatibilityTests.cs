@@ -63,8 +63,8 @@ internal static class GameFriendlyFireCompatibilityTests
         Require(search.Any(i => i.operand is FieldInfo f && f.Name == "IsDead") && Calls(search, "UnitAvatar", "get_IsInvulnerable") &&
             search.Any(i => i.operand is FieldInfo f && f.Name == "sightRadius"), "native target validity and sight range stay in force");
         var rewritten = ((IEnumerable<CodeInstruction>)AccessTools.Method(transpiler,"Rewrite").Invoke(null,new object[] { apply, generator })!).ToList();
-        Require(rewritten.Count(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "FriendlyFireRuntime") == 22,
-            "existing twenty-one combat/defense adapters and the Perfect Guard marker compose once");
+        Require(rewritten.Count(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "FriendlyFireRuntime") == 23,
+            "existing combat/defense adapters, Perfect Guard marker and critical limit compose once");
         foreach (string helper in new[] { "GuardMpCost", "SpendGuardMp", "GuardInfiniteMp", "MarkPerfectGuard", "ParryAllowed", "BeginParryMp", "AfterParryMp",
             "ActiveMpShieldCost", "SpendActiveShieldMp", "SpendPartialShieldMp", "AbsorbShield", "CounterAllowed" })
             Require(rewritten.Count(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "FriendlyFireRuntime" && m.Name == helper) == 1,

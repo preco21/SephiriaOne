@@ -93,6 +93,7 @@
     <Compile Include="../../SephiriaOne/Features/Combat/PvpLowerBoundSettings.cs" Link="PvpLowerBoundSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/PvpPerfectGuardSettings.cs" Link="PvpPerfectGuardSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/PvpAmplificationSettings.cs" Link="PvpAmplificationSettings.cs" />
+    <Compile Include="../../SephiriaOne/Features/Combat/PvpCriticalDamageSettings.cs" Link="PvpCriticalDamageSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/PvpDotSettings.cs" Link="PvpDotSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/Deathmatch*.cs" Exclude="../../SephiriaOne/Features/Combat/DeathmatchFeature.cs" Link="%(Filename)%(Extension)" />
     <Compile Include="../../SephiriaOne/Features/Combat/CombatMatch*.cs" Link="%(Filename)%(Extension)" />
