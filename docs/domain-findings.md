@@ -1,5 +1,12 @@
 # Sephiria domain findings
 
+Final-boss PvP cover (`0.101.1`): QTemple_Boss3 uses 2×2 Isometric grids and three
+co-aligned top-ground layers. Use all four world-square corners and native cell
+centers; unit-grid assumptions miss this arena. Its authored props list omits
+inactive victory exits and party teleports, so reserve hierarchy interactions,
+destinations and boss entry/return anchors once per scope. Boss threat metadata
+no longer excludes otherwise verified ground. See [native evidence and tests](pvp-cover.md#final-boss-placement-fix--01011).
+
 PvP cover (`0.101.0`): audited compact barrels/vegetable barrels/small table share
 a 3×3 clear bypass; all 79 installed costume movement circles have radius 0.25.
 Check every intersected tile when room and ground origins differ. Search budget

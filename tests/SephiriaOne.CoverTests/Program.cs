@@ -114,6 +114,25 @@ Check(lobby.floorRelatedNetworkObjects.Count == 0 && PvpCoverRuntime.Describe().
 SessionSettings.FriendlyFireForDisplay.Enabled = true;
 lobby.transform.Paths.Clear(); Frame();
 Check(PvpCoverRuntime.Describe().Contains("ground") && Debug.Logs.Last().Contains("reason="), "Unsupported authored map reports why no cover spawned");
+var finalBoss = new FullyDesignedFloorGenerator { guid = "FinalBoss", name = "QTemple_Boss3(Clone)",
+    bottomLeft = new Vector2(-25, -40), topRight = new Vector2(25, 90), floorThreatType = EFloorThreatType.Boss };
+finalBoss.DataOnServer.threatType = EFloorThreatType.Boss;
+finalBoss.TestGround.cellSize = new Vector3(2, 2, 0); finalBoss.TestGround.cellLayout = GridLayout.CellLayout.Isometric;
+finalBoss.TestGround.Contains = _ => false;
+var arena = new UnityEngine.Tilemaps.Tilemap { cellSize = new Vector3(2, 2, 0), cellLayout = GridLayout.CellLayout.Isometric,
+    Contains = p => p.x >= 20 && p.x < 35 && p.y >= 20 && p.y < 35 };
+arena.transform.Component = arena; finalBoss.transform.Paths["QQQGrid/QQQGround"] = arena.transform;
+FloorGenerator.Floors[finalBoss.guid] = finalBoss; DungeonManager.Instance.generatedFloors[finalBoss.guid] = finalBoss.DataOnServer;
+host.PlayerAvatar.currentFloorGuid = finalBoss.guid; host.PlayerAvatar.transform.position = new Vector3(1, 56);
+Count(12); Fill();
+Check(PvpCoverRuntime.ActiveCount == 12 && finalBoss.floorRelatedNetworkObjects.All(p => p.transform.position.y > 40),
+    "PvP already enabled on entry places the complete quota on final-phase isometric ground");
+SessionSettings.FriendlyFireForDisplay.Enabled = false; Frame();
+Check(finalBoss.floorRelatedNetworkObjects.Count == 0, "Stopping boss-arena PvP removes all owned cover");
+SessionSettings.FriendlyFireForDisplay.Enabled = true; Fill();
+Check(PvpCoverRuntime.ActiveCount == 12, "Enabling PvP while already in the final boss arena also places cover");
+host.PlayerAvatar.currentFloorGuid = second.guid; Frame();
+Check(finalBoss.floorRelatedNetworkObjects.Count == 0, "Leaving the final boss arena clears its cover");
 RoomAdapterTests.Run(Check);
 PvpCoverFeature.Available = false; Frame();
 Check(PvpCoverRuntime.Describe().Contains("unavailable"), "Compatibility failure is not reported as a loading delay");

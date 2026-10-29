@@ -15,12 +15,13 @@ namespace SephiriaOne
         private static readonly FieldInfo single = typeof(SingleRoomFloorGenerator).GetField("floorInstance", Fields);
         private readonly FloorGenerator floor;
         private readonly Tilemap ground, upperGround, wall, water, cliffCollider;
+        private readonly List<Tilemap> groundMaps = new List<Tilemap>(3);
         private readonly List<Vector2> protectedPoints = new List<Vector2>();
         private readonly List<Transform> interactions = new List<Transform>();
         private int reservedRejected, playerRejected, colliderRejected, occupiedRejected, terrainRejected;
         private string firstBlocker;
         internal string UnavailableReason { get; private set; }
-        internal string Diagnostics => $"reserved={reservedRejected}; players={playerRejected}; colliders={colliderRejected}; occupied={occupiedRejected}; terrain={terrainRejected}; firstBlocker={firstBlocker ?? "none"}";
+        internal string Diagnostics => $"reserved={reservedRejected}; players={playerRejected}; colliders={colliderRejected}; occupied={occupiedRejected}; terrain={terrainRejected}; firstBlocker={firstBlocker ?? "none"}; groundMaps={groundMaps.Count}; layout={ground?.cellLayout}; cellSize={ground?.cellSize}";
         internal readonly PvpCoverPlacement Plan;
         internal static bool Validate() => procedural?.FieldType == typeof(List<TileBasedRoomInstance>) &&
             library?.FieldType == typeof(List<LibraryFloorRoomInstance>) &&
@@ -43,6 +44,16 @@ namespace SephiriaOne
                 water = Map("Grid/Water");
             }
             else UnavailableReason = "Cover does not support this level layout.";
+            if (ground) groundMaps.Add(ground);
+            if (floor is FullyDesignedFloorGenerator)
+            {
+                // QTemple_Boss3 splits its playable top surface across these
+                // co-aligned layers. Lower decorative strata/bridges are excluded.
+                var lit = Map("Grid/Ground-Lit");
+                var finalArena = Map("QQQGrid/QQQGround");
+                if (lit) groundMaps.Add(lit);
+                if (finalArena) groundMaps.Add(finalArena);
+            }
             void Add(Vector2 min, Vector2 max, Vector2? teleport = null)
             { rooms.Add(new PvpCoverPlacement.Room(min.x, min.y, max.x, max.y)); if (teleport.HasValue) protectedPoints.Add(teleport.Value); }
             void TileRoom(TileBasedRoomInstance room)
@@ -52,30 +63,27 @@ namespace SephiriaOne
                 if (room?.Metadata == null) return;
                 Add(room.bottomLeft, room.topRight, room.bottomLeft + room.TeleportPoint);
             }
-            if (floor.floorThreatType == EFloorThreatType.Boss || floor.DataOnServer.threatType == EFloorThreatType.Boss)
-                UnavailableReason = "Cover is not placed in boss arenas.";
-            else
-            {
-                if (floor is EnhancedProceduralFloorGenerator)
-                    foreach (var room in (List<TileBasedRoomInstance>)procedural.GetValue(floor)) TileRoom(room);
-                else if (floor is FixedFloorGenerator)
-                    foreach (var room in ((Dictionary<Vector2Int, TileBasedRoomInstance>)fixedRooms.GetValue(floor)).Values) TileRoom(room);
-                else if (floor is LibraryFloorGenerator)
-                    foreach (var room in (List<LibraryFloorRoomInstance>)library.GetValue(floor))
-                    {
-                        if (room?.Metadata == null) continue;
-                        Vector2 origin = (Vector2)floor.transform.position + (Vector2)room.pos;
-                        Add(origin, origin + room.Size, origin + room.TeleportPoint);
-                    }
-                else if (floor is SingleRoomFloorGenerator && single.GetValue(floor) is TileBasedRoomInstance room && room.Metadata != null)
-                { Vector2 origin = floor.transform.position; Add(origin, origin + room.size, origin + room.TeleportPoint); }
-                else if (floor is FullyDesignedFloorGenerator designed)
+            // Threat metadata describes combat, not whether the floor has safe
+            // playable ground. Boss arenas use the same placement validation.
+            if (floor is EnhancedProceduralFloorGenerator)
+                foreach (var room in (List<TileBasedRoomInstance>)procedural.GetValue(floor)) TileRoom(room);
+            else if (floor is FixedFloorGenerator)
+                foreach (var room in ((Dictionary<Vector2Int, TileBasedRoomInstance>)fixedRooms.GetValue(floor)).Values) TileRoom(room);
+            else if (floor is LibraryFloorGenerator)
+                foreach (var room in (List<LibraryFloorRoomInstance>)library.GetValue(floor))
                 {
-                    Vector2 origin = floor.transform.position;
-                    Add(origin + designed.bottomLeft, origin + designed.topRight);
-                    foreach (var connection in designed.mapTeleportConnections)
-                        if (connection?.point) protectedPoints.Add(connection.point.GetTeleportTargetPosition());
+                    if (room?.Metadata == null) continue;
+                    Vector2 origin = (Vector2)floor.transform.position + (Vector2)room.pos;
+                    Add(origin, origin + room.Size, origin + room.TeleportPoint);
                 }
+            else if (floor is SingleRoomFloorGenerator && single.GetValue(floor) is TileBasedRoomInstance room && room.Metadata != null)
+            { Vector2 origin = floor.transform.position; Add(origin, origin + room.size, origin + room.TeleportPoint); }
+            else if (floor is FullyDesignedFloorGenerator designed)
+            {
+                Vector2 origin = floor.transform.position;
+                Add(origin + designed.bottomLeft, origin + designed.topRight);
+                foreach (var connection in designed.mapTeleportConnections)
+                    if (connection?.point) protectedPoints.Add(connection.point.GetTeleportTargetPosition());
             }
             var seen = new HashSet<Transform>();
             void ProtectInteractions(IEnumerable<GameObject> props)
@@ -90,17 +98,46 @@ namespace SephiriaOne
             ProtectInteractions(PvpCoverNative.Props(floor));
             // Scene-authored NPCs, portals and doors live in this separate list.
             if (floor is FullyDesignedFloorGenerator authored) ProtectInteractions(authored.props);
+            // Boss victory exits and party teleports are not necessarily in the
+            // authored props list. Scan once, including objects enabled later.
+            foreach (var component in floor.GetComponentsInChildren<MonoBehaviour>(true))
+            {
+                if (component is Interactable interaction && seen.Add(interaction.transform)) interactions.Add(interaction.transform);
+                else if (component is TeleportTogether teleport)
+                {
+                    protectedPoints.Add(teleport.transform.position);
+                    protectedPoints.Add(teleport.transform.position + teleport.offset);
+                }
+                else if (component is BossSpawner spawner)
+                {
+                    protectedPoints.Add((Vector2)spawner.transform.position + spawner.spawnOffset);
+                    protectedPoints.Add((Vector2)spawner.transform.position + spawner.bossRewardPosition);
+                }
+                else if (component is BossEnvironment_QQBoss bossEnvironment)
+                {
+                    if (bossEnvironment.qqqBossPoint) protectedPoints.Add(bossEnvironment.qqqBossPoint.position);
+                    if (bossEnvironment.qqqBossDramaticDieReturnPoint) protectedPoints.Add(bossEnvironment.qqqBossDramaticDieReturnPoint.position);
+                }
+            }
             foreach (var spawn in floor.spawnPoints) if (spawn) protectedPoints.Add(spawn.SpawnPoint);
-            // The bypass samples are one world unit apart, matching these native
-            // tile grids. Do not infer safety for a differently scaled map.
+            // Accept only the audited rectangular and isometric grids. All top
+            // surfaces must share a cell lattice before their tiles can be united.
             if (!ground) UnavailableReason = UnavailableReason ?? "Cover could not find a supported ground tilemap.";
-            else if (ground.cellSize.x != 1 || ground.cellSize.y != 1 ||
-                ground.transform.lossyScale.x != 1 || ground.transform.lossyScale.y != 1 ||
-                ground.transform.rotation != Quaternion.identity) UnavailableReason = "Cover does not support this tile grid.";
+            else foreach (var map in groundMaps)
+                if (!SupportedGrid(map) || map.cellLayout != ground.cellLayout || map.cellSize != ground.cellSize ||
+                    ((Vector2)map.GetCellCenterWorld(map.WorldToCell(ground.GetCellCenterWorld(Vector3Int.zero))) -
+                    (Vector2)ground.GetCellCenterWorld(Vector3Int.zero)).sqrMagnitude > 0.000001f)
+                { UnavailableReason = "Cover does not support this tile grid."; break; }
             if (UnavailableReason != null) rooms.Clear();
             else if (rooms.Count == 0) UnavailableReason = "Cover found no eligible rooms on this level.";
             Plan = new PvpCoverPlacement(rooms, floor.seed ^ salt);
         }
+        private static bool SupportedGrid(Tilemap map) =>
+            ((map.cellLayout == GridLayout.CellLayout.Rectangle && map.cellSize.x == 1 && map.cellSize.y == 1) ||
+             (map.cellLayout == GridLayout.CellLayout.Isometric && map.cellSize.x == 2 && map.cellSize.y == 2)) &&
+            map.cellSwizzle == GridLayout.CellSwizzle.XYZ && map.tileAnchor == new Vector3(0.5f, 0.5f, 0) &&
+            map.layoutGrid && map.layoutGrid.cellGap == Vector3.zero &&
+            map.transform.lossyScale.x == 1 && map.transform.lossyScale.y == 1 && map.transform.rotation == Quaternion.identity;
         private Tilemap Map(string path)
         {
             var child = floor.transform.Find(path);
@@ -126,17 +163,27 @@ namespace SephiriaOne
             blocker = Physics2D.OverlapBox(point, new Vector2(1.85f, 1.5f), 0,
                 (1 << LayerMask.NameToLayer("TopdownWorld_1F")) | (1 << LayerMask.NameToLayer("Blockable")));
             if (blocker) { occupiedRejected++; RecordBlocker(blocker); return false; }
-            // Room origins need not align with the tile grid. Check every cell
-            // touched by the full bypass, not only nine point samples that can
-            // miss an unsupported edge on a fractionally offset map.
-            var min = ground.WorldToCell(point - new Vector2(1.5f, 1.5f));
-            var max = ground.WorldToCell(point + new Vector2(1.499f, 1.499f));
-            for (int cx = min.x; cx <= max.x; cx++) for (int cy = min.y; cy <= max.y; cy++)
+            // Isometric axes are diagonal. Both pairs of world corners are
+            // needed to bound the cells beneath the complete 3x3 bypass.
+            var a = ground.WorldToCell(point - new Vector2(1.5f, 1.5f));
+            var b = ground.WorldToCell(point + new Vector2(1.499f, 1.499f));
+            var c = ground.WorldToCell(point + new Vector2(-1.5f, 1.499f));
+            var d = ground.WorldToCell(point + new Vector2(1.499f, -1.5f));
+            int minX = Math.Min(Math.Min(a.x, b.x), Math.Min(c.x, d.x)), maxX = Math.Max(Math.Max(a.x, b.x), Math.Max(c.x, d.x));
+            int minY = Math.Min(Math.Min(a.y, b.y), Math.Min(c.y, d.y)), maxY = Math.Max(Math.Max(a.y, b.y), Math.Max(c.y, d.y));
+            if ((long)maxX - minX > 7 || (long)maxY - minY > 7) { terrainRejected++; return false; }
+            for (int cx = minX; cx <= maxX; cx++) for (int cy = minY; cy <= maxY; cy++)
             {
-                var cell = new Vector3Int(cx, cy, min.z);
-                Vector2 sample = ground.CellToWorld(cell) + new Vector3(0.5f, 0.5f);
-                TileBase tile = ground.GetTile(cell);
-                if (!tile || Hazard(tile) || Occupied(wall, sample) || Occupied(water, sample) || Occupied(cliffCollider, sample) ||
+                Vector2 sample = ground.GetCellCenterWorld(new Vector3Int(cx, cy, a.z));
+                bool supported = false;
+                foreach (var map in groundMaps)
+                {
+                    if (!map.gameObject.activeInHierarchy) continue;
+                    var tile = map.GetTile(map.WorldToCell(sample));
+                    if (Hazard(tile)) { terrainRejected++; return false; }
+                    supported |= tile;
+                }
+                if (!supported || Occupied(wall, sample) || Occupied(water, sample) || Occupied(cliffCollider, sample) ||
                     upperGround && Hazard(upperGround.GetTile(upperGround.WorldToCell(sample)))) { terrainRejected++; return false; }
             }
             return true;

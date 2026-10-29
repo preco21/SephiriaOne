@@ -1,6 +1,7 @@
 # Temporary PvP cover
 
 Implemented in 0.100.0; varied props and faster placement in 0.101.0 (2026-10-29).
+Final-boss/isometric-floor support added in 0.101.1 (2026-10-29).
 Host addon only; uses registered native props and their native collision/network
 behaviour. No guest installation or additional assets. The user confirmed cover
 appears in the lobby and on a second run with 0.100.2. The new prop mix and tighter
@@ -38,7 +39,9 @@ changing floors, session shutdown and addon unload remove owned roots.
   including non-monster entrance/rest rooms as of 0.100.2.
   Since 0.100.1, also supports authored `FullyDesignedFloorGenerator` layouts
   with the audited ground paths used by MultiZone and TheRabbittown.
-  Boss arenas, unsupported generators and layouts without verified ground are skipped.
+  Since 0.101.1, verified boss arenas are eligible too, including QTemple_Boss3's
+  2×2 isometric top surfaces. Unsupported generators/grids and layouts without
+  verified ground are skipped.
 - The count is a maximum, not a quota forced onto an unsafe map. Narrow rooms,
   populated lobbies, geometry and protected interactions can reduce it to zero.
 - Random candidates cycle through shuffled rooms across the **whole host floor**,
@@ -52,12 +55,16 @@ changing floors, session shutdown and addon unload remove owned roots.
   single-room lobby.
 - Reserve four units around room teleport points, native floor spawn points,
   existing interactive props and current player positions, including corpses.
+  Include inactive hierarchy interactions, party-teleport sources/destinations,
+  boss spawn/reward anchors and final-boss scripted entry/return positions.
   Reject pits, water, walls, cliffs and native blocking colliders. Damage hitboxes
   and grounded bodies/props on TopdownWorld_1F/Blockable must clear a 1.85×1.5
   footprint/margin; they
   do not need to clear the entire 3×3 walkable bypass like physical obstacles.
-  Ground checks cover every tile touched by that square, including fractional
-  room/grid offsets (nine cells when aligned, up to sixteen otherwise).
+  Ground checks conservatively cover every tile beneath that square, including
+  fractional offsets and diagonal isometric axes. Only the audited 1×1 rectangular
+  and 2×2 isometric grids are supported, with no gaps, rotation, scale or axis
+  swizzling. Supplemental ground must share the same cell lattice and be active.
 - The props use their original Tile-layer collider. They affect everyone in
   that level, including nonparticipants and monsters. They cannot selectively
   block only PvP participants on stock guests.
@@ -288,3 +295,65 @@ the resulting code without deploying. Steady-state fixture ticks still allocate
 zero managed bytes; this is not a Unity performance benchmark. Live confirmation
 is still needed for the new mix, passage around tables, stock guest visibility
 and clean removal after stopping PvP or changing levels.
+
+## Final-boss placement fix — 0.101.1
+
+Player.log loaded 0.101.0 and repeatedly reported QTemple_Boss3 with 0/12 props,
+zero rooms and zero attempts: `Cover does not support this tile grid.` This was
+not exhaustion or a network-spawn failure. Two independent gates blocked it:
+the blanket Boss threat exclusion and the assumption that all terrain uses 1×1
+rectangular cells. The grid diagnostic overwrote the earlier boss rejection.
+
+The installed QTemple_Boss3 prefab (sharedassets0 root GO 94853) has authored
+bounds **(-25,-40)..(25,90)**, covering both boss arenas, and three co-aligned,
+active top-ground tilemaps on 2×2 Isometric grids (XYZ swizzle, zero gap,
+tile anchor (0.5,0.5,0)):
+
+| Path | Tile count | Purpose |
+|---|---:|---|
+| `Grid/Ground` | 32 | Part of the first arena |
+| `Grid/Ground-Lit` | 253 | Remaining first-arena surface |
+| `QQQGrid/QQQGround` | 225 | Final-phase arena |
+
+Reading only Grid/Ground would still miss most playable space even after removing
+the gates. Placement now combines only those audited top surfaces, rejecting
+inactive layers, mismatched lattices/anchors and unsupported geometry. Lower decorative
+Grid-B1…B4 strata and the separately activated bridge are not usable ground.
+Both pairs of the world-space clearance square's corners are transformed into
+cell coordinates; checking only opposite corners misses cells on diagonal axes.
+Native `GetCellCenterWorld` replaces the fixed half-unit offset. Cell probing is
+bounded to at most 64 cells per candidate; the existing 16-candidate/two-spawn
+frame budget, collision checks and 1,024-attempt search limit remain.
+
+The authored props list contains only six roots and misses the inactive victory
+exit and party teleports. A single hierarchy scan per placement scope now finds
+inactive `Interactable` objects as well as `TeleportTogether`, `BossSpawner` and
+`BossEnvironment_QQBoss` anchors. Important native positions relative to this
+floor root are: QQ/QQQ boss spawns (1,6)/(1,56), QQQ entry (1,50), return (1,6),
+party teleports (1,-25)→(1,-3) and (6,-29)→(1,51), entrance (1,-33), and the
+initially inactive victory exit (1,0.5). These keep four-unit protection without
+scanning the hierarchy during steady-state combat.
+
+Inspected native boss death coroutines relocate players between these areas;
+they do not modify the three ground maps. The final ground-crash object is visual,
+and the power-controlled bridge is separate. This is a bounded static finding,
+not a guarantee about another addon modifying terrain. Cover remains floor-wide,
+and native host-only spawn/despawn, ownership and cleanup are unchanged.
+
+Evidence: REA parent
+`ev_f1afb8c1eab66c5bce0df9f665ec922b410d8f3511cae136d545180d2ee89feb`
+(FullyDesignedFloorGenerator, BossEnvironment_QQBoss, ActivateObjectByPower,
+TeleportTogether, UnitAI_QQBoss and UnitAI_QQQBoss), matching the earlier installed
+assembly hash. Built-in asset trees establish the grids and layers. The authored
+generator was decoded after correcting locally generated string-array typetree
+nodes; the reader consumed exactly 580/580 bytes. This supersedes the earlier
+generator-decode limitation for this inspected prefab only. Raw assets/private
+logs and parser experiments remain outside Git.
+
+Regressions cover both boss threat fields, 2×2 diagonal clearance, missing side
+cells, split/secondary ground, inactive layers, hazards, misalignment/gaps/swizzle,
+and compensating anchor/position offsets that hide shifted cell boundaries;
+progression anchors, enabling before/after final-arena entry and cleanup on stop
+or leaving the arena. Native contract tests check the installed fields and cell
+center API. Build/tests run with deployment disabled. Live final-boss placement
+and stock-guest collision still require in-game verification.

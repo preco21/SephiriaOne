@@ -1,6 +1,6 @@
 # Development knowledge index
 
-Latest cover follow-up: [0.101.0 varied props and faster, less restrictive placement](pvp-cover.md#varied-props-and-placement-responsiveness--01010).
+Latest cover follow-up: [0.101.1 final-boss isometric terrain and progression protection](pvp-cover.md#final-boss-placement-fix--01011).
 Includes the 0.100.1 runtime failure evidence and remaining live verification.
 
 [Temporary PvP cover](pvp-cover.md): 0.100.1 fixes the omitted authored lobby

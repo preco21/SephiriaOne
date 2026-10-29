@@ -32,7 +32,7 @@ internal static class RoomAdapterTests
             entranceRooms.Diagnostics.Contains("firstBlocker="), "Diagnostics distinguish footprint occupancy from physical obstacles");
         Physics2D.Scene.Clear();
         var boss = new SingleRoomFloorGenerator { floorThreatType = EFloorThreatType.Boss };
-        check(new PvpCoverRooms(boss, 7).Plan.Exhausted, "Extending rest-room support does not opt boss arenas into cover");
+        check(new PvpCoverRooms(boss, 7).Plan.RoomCount == 1, "Boss threat metadata does not exclude a verified playable arena");
         entrance.transform.position = new Vector3(2500, 500); entrance.ground.transform.position = entrance.transform.position;
         entrance.TestRoom.bottomLeft = new Vector2(2500, 500); entrance.TestRoom.topRight = new Vector2(2600, 600);
         entrance.TestRoom.TeleportPoint = new Vector2(15, 10);
@@ -83,7 +83,7 @@ internal static class RoomAdapterTests
         check(rooms.Plan.Exhausted && rooms.UnavailableReason.Contains("grid"), "Unsupported scale reports reason");
         map.TestGround.cellSize = Vector3.one;
         map.floorThreatType = EFloorThreatType.Boss; rooms = new PvpCoverRooms(map, 7);
-        check(rooms.Plan.Exhausted && rooms.UnavailableReason.Contains("boss"), "Boss exclusion unchanged"); map.floorThreatType = default;
+        check(rooms.UnavailableReason == null && rooms.Safe(4010.5f, 510.5f), "Authored boss arena uses the same geometry checks"); map.floorThreatType = default;
         map.transform.Paths.Clear(); rooms = new PvpCoverRooms(map, 7);
         check(rooms.Plan.Exhausted && rooms.UnavailableReason.Contains("ground"), "Missing ground fails closed with a reason");
         map.transform.Paths["Grid/Pit/Ground"] = map.TestGround.transform; rooms = new PvpCoverRooms(map, 7);
@@ -93,5 +93,72 @@ internal static class RoomAdapterTests
             rooms = new PvpCoverRooms(native, 7);
             check(rooms.UnavailableReason == null && rooms.Safe(20.5f, 20.5f), "Retain procedural/fixed/library/single-room support: " + native.GetType().Name);
         }
+        FinalBoss(check);
+    }
+
+    private static void FinalBoss(Action<bool, string> check)
+    {
+        var map = new FullyDesignedFloorGenerator { name = "QTemple_Boss3(Clone)", floorThreatType = EFloorThreatType.Boss };
+        map.DataOnServer.threatType = EFloorThreatType.Boss;
+        map.transform.position = new Vector3(2000, 500);
+        map.TestGround.transform.position = map.transform.position;
+        map.TestGround.cellSize = new Vector3(2, 2, 0);
+        map.TestGround.cellLayout = GridLayout.CellLayout.Isometric;
+        var rooms = new PvpCoverRooms(map, 7);
+        check(rooms.UnavailableReason == null && rooms.Safe(2000, 540), "Final boss 2x2 isometric grid has playable ground");
+        // Opposite world corners alone map to the same isometric X cell.
+        // A missing side cell still lies underneath the full world-space bypass.
+        map.TestGround.Contains = p => p.x != 19 || p.y != 21;
+        check(!rooms.Safe(2000, 540), "All four world corners contribute to isometric clearance");
+        map.TestGround.Contains = _ => false;
+        var lit = new Tilemap { cellSize = new Vector3(2, 2, 0), cellLayout = GridLayout.CellLayout.Isometric };
+        lit.transform.position = map.transform.position; lit.transform.Component = lit;
+        map.transform.Paths["Grid/Ground-Lit"] = lit.transform;
+        rooms = new PvpCoverRooms(map, 7);
+        check(rooms.Safe(2000, 540), "Lit main-arena ground is an audited playable surface");
+        lit.gameObject.activeInHierarchy = false;
+        check(!rooms.Safe(2000, 540), "Inactive ground cannot authorize placement over empty space");
+        lit.gameObject.activeInHierarchy = true;
+        lit.Contains = p => p.x < 20;
+        map.TestGround.Contains = p => p.x >= 20;
+        check(rooms.Safe(2000, 540), "Adjacent ground layers together support the complete bypass");
+        var exit = new Interactable(); exit.transform.position = new Vector3(2000, 540);
+        map.Hierarchy.Add(exit); rooms = new PvpCoverRooms(map, 7);
+        check(!rooms.Safe(2000, 540), "Inactive victory exits outside authored props lists remain clear");
+        map.Hierarchy.Clear();
+        var teleport = new TeleportTogether { offset = new Vector3(0, 10) }; teleport.transform.position = new Vector3(2000, 530);
+        map.Hierarchy.Add(teleport); rooms = new PvpCoverRooms(map, 7);
+        check(!rooms.Safe(2000, 530) && !rooms.Safe(2000, 540), "Party teleport source and destination remain clear");
+        map.Hierarchy.Clear();
+        var spawner = new BossSpawner { spawnOffset = new Vector2(0, 10), bossRewardPosition = new Vector2(0, 15) };
+        spawner.transform.position = new Vector3(2000, 530); map.Hierarchy.Add(spawner);
+        rooms = new PvpCoverRooms(map, 7);
+        check(!rooms.Safe(2000, 540) && !rooms.Safe(2000, 545), "Boss spawn and reward anchors remain clear");
+        map.Hierarchy.Clear();
+        var transition = new BossEnvironment_QQBoss { qqqBossPoint = new Transform(), qqqBossDramaticDieReturnPoint = new Transform() };
+        transition.qqqBossPoint.position = new Vector3(2000, 540); transition.qqqBossDramaticDieReturnPoint.position = new Vector3(2000, 550);
+        map.Hierarchy.Add(transition); rooms = new PvpCoverRooms(map, 7);
+        check(!rooms.Safe(2000, 540) && !rooms.Safe(2000, 550), "Final-boss scripted entry and return positions remain clear");
+        map.Hierarchy.Clear(); map.TestGround.Contains = _ => false; lit.Contains = _ => false;
+        var finalGround = new Tilemap { cellSize = new Vector3(2, 2, 0), cellLayout = GridLayout.CellLayout.Isometric };
+        finalGround.transform.position = map.transform.position; finalGround.transform.Component = finalGround;
+        map.transform.Paths["QQQGrid/QQQGround"] = finalGround.transform;
+        rooms = new PvpCoverRooms(map, 7);
+        check(rooms.Safe(2000, 556), "The final-phase arena has its own supported top surface");
+        finalGround.Tile.Entity.type = GroundTileEntity.Type.Pit;
+        check(!rooms.Safe(2000, 556), "Supplemental ground never overrides hazard rejection");
+        finalGround.Tile.Entity.type = GroundTileEntity.Type.Normal;
+        finalGround.transform.position = map.transform.position + new Vector3(.25f, 0);
+        check(new PvpCoverRooms(map, 7).UnavailableReason?.Contains("grid") == true, "Misaligned ground lattices are not combined");
+        finalGround.transform.position = map.transform.position;
+        map.TestGround.layoutGrid.cellGap = new Vector3(.1f, 0);
+        check(new PvpCoverRooms(map, 7).Plan.Exhausted, "Gapped tile grids cannot imply continuous ground");
+        map.TestGround.layoutGrid.cellGap = Vector3.zero;
+        map.TestGround.cellSwizzle = GridLayout.CellSwizzle.XZY;
+        check(new PvpCoverRooms(map, 7).Plan.Exhausted, "A grid swizzle that moves terrain out of the XY plane is unsupported");
+        map.TestGround.cellSwizzle = GridLayout.CellSwizzle.XYZ;
+        finalGround.tileAnchor = new Vector3(.75f, .75f, 0);
+        finalGround.transform.position = map.transform.position + new Vector3(0, -.5f);
+        check(new PvpCoverRooms(map, 7).Plan.Exhausted, "Matching centers must not hide shifted ground-cell boundaries through a compensating anchor");
     }
 }

@@ -14,10 +14,12 @@ namespace UnityEngine
     public class GameObject : Object
     {
         public int layer;
+        public bool activeInHierarchy = true;
         public readonly Transform transform = new();
         public readonly List<Interactable> Interactions = new();
         public T[] GetComponentsInChildren<T>(bool inactive) => Interactions.OfType<T>().ToArray();
     }
+    public class MonoBehaviour : Object { }
     public class Transform : Object
     {
         public Vector3 position, lossyScale = Vector3.one;
@@ -39,10 +41,11 @@ namespace UnityEngine
         public static Vector2 operator -(Vector2 a, Vector2 b) => new(a.x - b.x, a.y - b.y);
     }
     public readonly record struct Vector2Int(int x, int y);
-    public readonly record struct Vector3Int(int x, int y, int z = 0);
+    public readonly record struct Vector3Int(int x, int y, int z = 0) { public static Vector3Int zero => new(0, 0, 0); }
     public readonly record struct Vector3(float x, float y, float z = 0)
     {
         public static Vector3 one => new(1, 1, 1);
+        public static Vector3 zero => new(0, 0, 0);
         public static Vector3 operator +(Vector3 a, Vector3 b) => new(a.x + b.x, a.y + b.y, a.z + b.z);
     }
     public struct Bounds
@@ -73,6 +76,12 @@ namespace UnityEngine
         }
     }
     public static class LayerMask { public static int NameToLayer(string layer) => layer == "Blockable" ? 3 : 6; }
+    public class GridLayout
+    {
+        public enum CellLayout { Rectangle, Hexagon, Isometric, IsometricZAsY }
+        public enum CellSwizzle { XYZ, XZY, YXZ, YZX, ZXY, ZYX }
+    }
+    public class Grid : Object { public Vector3 cellGap; }
     public static class Time { public static int frameCount; }
     public static class Random { private static readonly System.Random random = new(12); public static int Range(int min, int max) => random.Next(min, max); }
     public static class Debug
@@ -87,12 +96,24 @@ namespace UnityEngine.Tilemaps
     public class TileBase : UnityEngine.Object { public GroundTileEntity Entity = new(); }
     public class Tilemap : UnityEngine.Object
     {
+        public readonly GameObject gameObject = new();
         public readonly Transform transform = new();
         public Vector3 cellSize = Vector3.one;
+        public Vector3 tileAnchor = new(.5f, .5f, 0);
+        public GridLayout.CellLayout cellLayout;
+        public GridLayout.CellSwizzle cellSwizzle;
+        public Grid layoutGrid = new();
         public Func<Vector3Int, bool> Contains = p => p.x >= 0 && p.y >= 0 && p.x < 100 && p.y < 100;
         public readonly TileBase Tile = new();
-        public Vector3Int WorldToCell(Vector2 p) => new((int)Math.Floor(p.x - transform.position.x), (int)Math.Floor(p.y - transform.position.y));
-        public Vector3 CellToWorld(Vector3Int p) => transform.position + new Vector3(p.x, p.y, p.z);
+        public Vector3Int WorldToCell(Vector2 p)
+        {
+            float x = (p.x - transform.position.x) / cellSize.x, y = (p.y - transform.position.y) / cellSize.y;
+            return cellLayout == GridLayout.CellLayout.Isometric ? new((int)Math.Floor(x + y), (int)Math.Floor(y - x)) : new((int)Math.Floor(x), (int)Math.Floor(y));
+        }
+        private Vector3 World(float x, float y) => transform.position + (cellLayout == GridLayout.CellLayout.Isometric ?
+            new Vector3((x - y) * cellSize.x / 2, (x + y) * cellSize.y / 2) : new Vector3(x * cellSize.x, y * cellSize.y));
+        public Vector3 CellToWorld(Vector3Int p) => World(p.x, p.y);
+        public Vector3 GetCellCenterWorld(Vector3Int p) => World(p.x + tileAnchor.x, p.y + tileAnchor.y);
         public TileBase GetTile(Vector3Int p) => Contains(p) ? Tile : null;
         public bool HasTile(Vector3Int p) => GetTile(p);
     }
@@ -116,6 +137,9 @@ public enum EFloorThreatType { Normal, Boss }
 public sealed class FloorData { public string stageName = "Lobby"; public EFloorThreatType threatType; }
 public class FloorGenerator : UnityEngine.Object
 {
+    public readonly List<MonoBehaviour> Hierarchy = new();
+    public T[] GetComponentsInChildren<T>(bool includeInactive)
+    { if (!includeInactive) throw new Exception("Late-enabled progression interactions must be included"); return Hierarchy.OfType<T>().ToArray(); }
     public static readonly Dictionary<string, FloorGenerator> Floors = new();
     public static FloorGenerator FindByGuid(string guid) => Floors.GetValueOrDefault(guid);
     public string guid; public bool GenerateSuccess = true, isServer = true;
@@ -161,7 +185,10 @@ public sealed class FullyDesignedFloorGenerator : FloorGenerator
     { TestGround.transform.Component = TestGround; transform.Paths["Grid/Ground"] = TestGround.transform; }
 }
 public sealed class AreaSpawnPointProp : UnityEngine.Object { public Vector3 SpawnPoint; }
-public sealed class Interactable : UnityEngine.Object { public readonly Transform transform = new(); }
+public sealed class Interactable : UnityEngine.MonoBehaviour { public readonly Transform transform = new(); }
+public sealed class TeleportTogether : UnityEngine.MonoBehaviour { public readonly Transform transform = new(); public Vector3 offset; }
+public sealed class BossSpawner : UnityEngine.MonoBehaviour { public readonly Transform transform = new(); public Vector2 spawnOffset, bossRewardPosition; }
+public sealed class BossEnvironment_QQBoss : UnityEngine.MonoBehaviour { public Transform qqqBossPoint, qqqBossDramaticDieReturnPoint; }
 public sealed class DungeonManager : UnityEngine.Object
 {
     public static DungeonManager Instance = new(); public bool isServer = true;

@@ -20,8 +20,12 @@ internal static class GamePvpCoverTests
         foreach (string field in new[] { "bottomLeft", "topRight", "props", "mapTeleportConnections" })
             Check(layoutCode.Any(i => Equals(i.operand, AccessTools.Field(authored, field))), "Authored layout uses native " + field);
         Check(Calls(layoutCode, "TeleportPoint", "GetTeleportTargetPosition"), "Protect actual native map destinations including their offsets");
-        foreach (string path in new[] { "Grid/Ground", "Grid/Pit/Ground", "Grid/WallCollider", "Grid/Upper" })
+        foreach (string path in new[] { "Grid/Ground", "Grid/Pit/Ground", "Grid/WallCollider", "Grid/Upper", "Grid/Ground-Lit", "QQQGrid/QQQGround" })
             Check(layoutCode.Any(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, path)), "Audited authored tilemap path " + path);
+        foreach (var (type, field) in new[] { ("TeleportTogether", "offset"), ("BossSpawner", "spawnOffset"), ("BossSpawner", "bossRewardPosition"),
+            ("BossEnvironment_QQBoss", "qqqBossPoint"), ("BossEnvironment_QQBoss", "qqqBossDramaticDieReturnPoint") })
+            Check(layoutCode.Any(i => Equals(i.operand, AccessTools.Field(Game(type), field))), "Protect native progression anchor " + type + "." + field);
+        Check(Calls(Code(Mod("PvpCoverRooms"), "Safe"), "Tilemap", "GetCellCenterWorld"), "Terrain uses native isometric cell centers");
         var runtimeCode = Code(Mod("PvpCoverRuntime"), "Tick");
         Check(!runtimeCode.Any(i => (i.opcode == OpCodes.Isinst || i.opcode == OpCodes.Castclass) && Equals(i.operand, Game("TileFloorGenerator"))), "Readiness no longer rejects authored lobby floors before placement");
         Check(Calls(Code(Mod("PvpCoverRooms"), "Safe"), "Physics2D", "OverlapBox") && Calls(Code(Mod("PvpCoverRooms"), "Safe"), "Tilemap", "GetTile"), "Ground and collision safety remain required");
