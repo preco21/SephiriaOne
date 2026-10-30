@@ -1,10 +1,35 @@
 # Collected references
 
-Indexed 2026-10-09 (Asia/Seoul). These links consolidate material already recorded
-in repository investigations; this edit does not revalidate current external
-page contents. An external example is a research lead, not a compatibility
-contract for the installed game. Start with the [index](README.md) and verify
-native behavior against the installed assemblies/assets and current source.
+Initially indexed 2026-10-09 (Asia/Seoul). Official developer materials were
+checked and added on 2026-10-30; older entries retain their original inspection
+context. An external example is a research lead, not a compatibility contract
+for the installed game. Start with the [index](README.md) and verify native
+behavior against the installed assemblies/assets and current source.
+
+## Official developer guide and materials
+
+All contributors, including AI agents, must follow TEAM HORAY's
+[official guide and rules](https://github.com/team-horay/sephiria_modding/tree/main).
+Use these as the primary external reference; community examples supplement them.
+
+| Material | Use |
+| --- | --- |
+| [Official repository](https://github.com/team-horay/sephiria_modding/tree/main) / [English guide](https://github.com/team-horay/sephiria_modding/blob/main/README.en.md) | Developer rules and documentation entry point. |
+| [Getting started](https://github.com/team-horay/sephiria_modding/blob/main/docs/ko/getting-started.md) / [metadata](https://github.com/team-horay/sephiria_modding/blob/main/docs/ko/metadata.md) | Local setup, package metadata and dependencies. |
+| [DLL guide](https://github.com/team-horay/sephiria_modding/blob/main/docs/ko/dll-mods.md) | C# project setup, lifecycle and debugging. |
+| [API reference](https://github.com/team-horay/sephiria_modding/blob/main/docs/ko/api/README.md) | Public APIs, mod options and UI. |
+| [Examples and templates](https://github.com/team-horay/sephiria_modding/tree/main/examples) / [DLL sample](https://github.com/team-horay/sephiria_modding/tree/main/examples/dll-sample) | Official implementation starting points. |
+| [Localization](https://github.com/team-horay/sephiria_modding/blob/main/docs/ko/localization-mods.md) / [costumes](https://github.com/team-horay/sephiria_modding/blob/main/docs/ko/costume-mods.md) | Content formats and authoring. |
+| [Publishing](https://github.com/team-horay/sephiria_modding/blob/main/docs/ko/publishing.md) / [FAQ](https://github.com/team-horay/sephiria_modding/blob/main/docs/ko/faq.md) | Workshop distribution, DLL review and multiplayer requirements. |
+
+The developer rules require noncommercial mod creation/distribution and prohibit
+redistributing extracted game assets. Consult the full rules before contributing.
+
+The current [DLL guide](https://github.com/team-horay/sephiria_modding/blob/main/docs/ko/dll-mods.md)
+uses `WorkshopModBase` and `WorkshopLocal`; this project's existing loader uses
+`AddOns`. Historical host-only findings do not establish Workshop compatibility.
+Check the targeted game/API version and official multiplayer requirements before
+adapting examples or changing packaging.
 
 ## SDK, loading and implementation examples
 

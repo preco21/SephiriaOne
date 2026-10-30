@@ -2,6 +2,11 @@
 
 ## Research and implementation materials
 
+- All contributors, including AI agents, must follow TEAM HORAY's
+  [official modding guide and rules](https://github.com/team-horay/sephiria_modding/tree/main).
+  Consult the current developer guidance before implementing or distributing mods;
+  use the [official materials catalog](docs/references.md#official-developer-guide-and-materials)
+  for API documentation, examples, templates and publishing instructions.
 - Agents and contributors should use `docs/*` as shared research and working
   material. Start with [the documentation index](docs/README.md), then read
   [general findings](docs/general-findings.md), [domain findings](docs/domain-findings.md)

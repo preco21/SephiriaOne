@@ -39,6 +39,7 @@ Open the mod menu from the upper-right corner of the ESC menu.
 
 ## Development
 
+- All contributors, including AI agents, must follow the game developer's [official modding guide and rules](https://github.com/team-horay/sephiria_modding/tree/main) ([English](https://github.com/team-horay/sephiria_modding/blob/main/README.en.md)). Official API documentation, examples, and templates are listed in the [references](docs/references.md#official-developer-guide-and-materials).
 - Built with OpenAI Codex—Astra at `xhigh` reasoning effort—plus [superpowers](https://github.com/obra/superpowers) and [REA](https://github.com/morluto/rea).
 - [Visual Studio 2026](https://visualstudio.microsoft.com/downloads/) is required. Select the **.NET desktop development** sdk in the installer to build the project.
 - Development resources are available in the [documentation index](docs/README.md). The `docs/` folder contains general development knowledge, game-domain research, feature designs, and references. `AGENTS.md` directs other AI agents to consult these materials. If you have a GitHub account, use **Fork** in the upper-right corner to create your own copy.
@@ -48,7 +49,7 @@ Open the mod menu from the upper-right corner of the ESC menu.
 
 GNU Affero General Public License (AGPL)
 
-Anyone is free to redistribute, share, sell, and modify this project's code and build outputs.
+Anyone may redistribute, share, and modify this project's code and build outputs under the terms of the [license](LICENSE).
 
 ## Credits
 

@@ -39,6 +39,7 @@ ESC 메뉴 우상단에서 모드 메뉴를 열 수 있습니다.
 
 ## 개발 관련
 
+- 모든 기여자(AI 에이전트 포함)는 게임 개발사의 [공식 모드 제작 가이드와 규칙](https://github.com/team-horay/sephiria_modding/tree/main)을 따라야 합니다. 공식 API 문서, 예제 및 템플릿은 [참고 자료](docs/references.md#official-developer-guide-and-materials)에 정리했습니다.
 - OpenAI Codex - Astra `xhigh` effort + [superpowers](https://github.com/obra/superpowers) + [REA](https://github.com/morluto/rea)로 작업했습니다. 
 - [Visual Studio 2026](https://visualstudio.microsoft.com/downloads/)가 필요합니다. 설치시 인스톨러에서 `.Net desktop development` 개발 도구를 함께 설치해야 빌드가 가능합니다.
 - 개발 자료는 [문서 색인](docs/README.md)에서 찾을 수 있습니다. 일반 개발 지식, 게임 도메인 조사 결과, 기능별 설계와 참고 자료를 `docs/`에 정리했습니다. 다른 AI 에이전트도 이 자료를 참고하여 작업하도록 `AGENTS.md`에 안내되어 있습니다. GitHub 계정이 있다면 우상단 `Fork` 기능을 활용하여 손쉽게 사본을 만들 수 있습니다.
@@ -50,7 +51,7 @@ GNU Affero General Public License (AGPL)
 
 본 모드 수정시 더 많은 분들이 혜택을 누릴 수 있도록 소스코드를 공개해주시면 감사하겠습니다.
 
-누구나 본 프로젝트의 코드와 산출물의 재배포/공유/판매/변경을 자유롭게 할 수 있습니다.
+누구나 [라이선스](LICENSE) 조건에 따라 본 프로젝트의 코드와 산출물을 재배포/공유/변경할 수 있습니다.
 
 ## 크레딧 (Attribution)
 

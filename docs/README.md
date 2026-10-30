@@ -423,6 +423,10 @@ found the game still installed/loaded `0.57.0`, which predates those fixes.
 Agents and contributors can refer to `docs/*` for research, implementation
 materials, native game findings and references. Start here before repeating an
 investigation. Repository workflow and deployment rules are in [AGENTS.md](../AGENTS.md).
+All contributors, including AI agents, must follow the game developer's
+[official modding guide and rules](https://github.com/team-horay/sephiria_modding/tree/main).
+See the [official materials catalog](references.md#official-developer-guide-and-materials)
+for guides, API documentation, examples and templates.
 
 ## Start here
 
