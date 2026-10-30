@@ -1,5 +1,11 @@
 # Zombie Survival (0.98.2, 2026-10-27)
 
+## Timer default (0.102.3, 2026-10-31)
+
+New settings and `/one zombie duration reset` use **40 seconds**. Explicit
+saved durations remain respected; omitted durations inherit 40. The UI and
+next-match snapshot use the shared default without changing an active timer.
+
 ## Zombie HP-potion restriction (0.97.0)
 
 The **Block Zombie HP potions** checkbox in Zombie Survival defaults on.
@@ -300,8 +306,8 @@ independent Zombie refill/incoming-damage controls. Equivalent host commands:
 | `/one zombie start` | Capture eligible participants and begin a three-second countdown |
 | `/one zombie stop` | Cancel the match and recover pending dead participants |
 | `/one zombie status` or `help` | Show state/settings or command syntax |
-| `/one zombie duration 120` | Next match's duration; 3..3600 whole seconds, default 120 |
-| `/one zombie duration reset` | Restore 120 seconds |
+| `/one zombie duration 40` | Next match's duration; 3..3600 whole seconds, default 40 |
+| `/one zombie duration reset` | Restore 40 seconds |
 | `/one zombie count N` | Starting Zombies for the next match; positive whole number, default 1 |
 | `/one zombie count reset` | Restore one starting Zombie |
 | `/one zombie any-death on` / `off` / `reset` | Convert on any completed Human death; default/reset off |

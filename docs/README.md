@@ -274,7 +274,7 @@ Existing levels and XP remain intact; changes apply at the next native XP grant.
 `/one slates auto on|off`, `count N`, `give`, `reset`; Requital remains the default.
 Automatic gifts are tracked by exact instance ID for retraction.
 
-[Infinite PvP HP potions](pvp-potions.md): separate default-on
+[Infinite PvP HP potions](pvp-potions.md): separate default-off (since 0.102.3)
 toggle in Combat → Supplies or `/one friendlyfire infinite-hp on|off|reset`.
 Active combat participants retain regular/Large HP potions with native self-healing;
 Sample/MP potions and Rabbit-only mechanics remain separate. Shared participation,

@@ -21,7 +21,7 @@ internal static class RequitalSettingsTests
                 policy.RecordRequital(setting);
                 Check(SessionPolicy.TryReadPreset(policy.ToPresetText(), out var saved, out _) &&
                     saved.Requital.Equals(setting), "Slate policy roundtrips at every valid value");
-                Check(saved.FriendlyFire.InfiniteHpPotions && !saved.CollinStartingArtifact && !saved.ItemUnlock,
+                Check(!saved.FriendlyFire.InfiniteHpPotions && !saved.CollinStartingArtifact && !saved.ItemUnlock,
                     "Slate policy isolated from other gifts and restrictions");
                 Check(RequitalCommand.Parse("/one slates auto reset", out command) == RequitalParseResult.Valid &&
                     !setting.Apply(command).Automatic && setting.Apply(command).Count == count, "Auto reset retains configured count");

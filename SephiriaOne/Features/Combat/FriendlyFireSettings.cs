@@ -25,8 +25,7 @@ namespace SephiriaOne
         public bool HitFrequency { get; }
         private readonly bool disableAutoPotion;
         public bool AutoPotion => !disableAutoPotion;
-        private readonly bool finiteHpPotions;
-        public bool InfiniteHpPotions => !finiteHpPotions;
+        public bool InfiniteHpPotions { get; }
         public bool BlockLobbyRegen { get; }
         public bool CombatMode { get; }
         public PvpCoverSettings Cover { get; }
@@ -53,10 +52,10 @@ namespace SephiriaOne
         public float DotMaxDuration => (dotDurationOffset + DefaultDotDurationHundredths) / 100f;
         public string DotMaxDurationNumber => DotMaxDurationSeconds.ToString("0.##", CultureInfo.InvariantCulture);
         public bool HasDotDurationChanges => dotDurationOffset != 0;
-        public bool HasChanges => Enabled || Balance || SuppressThorns || HitFrequency || !AutoPotion || !InfiniteHpPotions || BlockLobbyRegen || CombatMode || Cover.HasChanges || damageOffset != 0 || refillOffset != 0 || guardMpOffset != 0 || DotIntervals.HasChanges || Elements.HasChanges || CriticalDamage.HasChanges || Amplification.HasChanges || Rapid.HasChanges || PerfectGuard.HasChanges || HasDotDurationChanges || ArtifactRate.HasChanges || LowerBound.HasChanges;
+        public bool HasChanges => Enabled || Balance || SuppressThorns || HitFrequency || !AutoPotion || InfiniteHpPotions || BlockLobbyRegen || CombatMode || Cover.HasChanges || damageOffset != 0 || refillOffset != 0 || guardMpOffset != 0 || DotIntervals.HasChanges || Elements.HasChanges || CriticalDamage.HasChanges || Amplification.HasChanges || Rapid.HasChanges || PerfectGuard.HasChanges || HasDotDurationChanges || ArtifactRate.HasChanges || LowerBound.HasChanges;
         public FriendlyFireSettings(bool enabled, decimal damagePercent, bool balance = false, bool blockLobbyRegen = false,
             decimal refillPercent = DefaultRefillPercent, decimal guardMpPercent = DefaultGuardMpPercent, PvpDotSettings dotIntervals = default,
-            bool hitFrequency = false, bool autoPotion = true, bool infiniteHpPotions = true, PvpAmplificationSettings amplification = default,
+            bool hitFrequency = false, bool autoPotion = true, bool infiniteHpPotions = false, PvpAmplificationSettings amplification = default,
             PvpRapidSettings rapid = default, PvpPerfectGuardSettings perfectGuard = default,
             decimal dotMaxDurationSeconds = DefaultDotMaxDurationSeconds, PvpArtifactRateSettings artifactRate = default, bool suppressThorns = false, PvpLowerBoundSettings lowerBound = default, PvpElementalSettings elements = default, bool combatMode = false, PvpCoverSettings cover = default, PvpCriticalDamageSettings criticalDamage = default)
         {
@@ -75,13 +74,13 @@ namespace SephiriaOne
             PerfectGuard = perfectGuard;
             ArtifactRate = artifactRate; LowerBound = lowerBound;
             SuppressThorns = suppressThorns;
-            HitFrequency = hitFrequency; disableAutoPotion = !autoPotion; finiteHpPotions = !infiniteHpPotions;
+            HitFrequency = hitFrequency; disableAutoPotion = !autoPotion; InfiniteHpPotions = infiniteHpPotions;
         }
         public static bool ValidPercent(decimal percent) => percent >= 0 && percent <= 300 && percent * 100 == decimal.Truncate(percent * 100);
         public static bool ValidRefillPercent(decimal percent) => percent >= 1 && ValidPercent(percent);
         public static bool ValidGuardMpPercent(decimal percent) => percent <= 100 && ValidPercent(percent);
         private FriendlyFireSettings(FriendlyFireSettings source, bool enabled)
-        { Cover = source.Cover; CombatMode = source.CombatMode; Enabled = enabled; Balance = source.Balance; HitFrequency = source.HitFrequency; disableAutoPotion = source.disableAutoPotion; finiteHpPotions = source.finiteHpPotions; BlockLobbyRegen = source.BlockLobbyRegen; damageOffset = source.damageOffset; refillOffset = source.refillOffset; guardMpOffset = source.guardMpOffset; DotIntervals = source.DotIntervals; Elements = source.Elements; CriticalDamage = source.CriticalDamage; Amplification = source.Amplification; Rapid = source.Rapid; PerfectGuard = source.PerfectGuard; dotDurationOffset = source.dotDurationOffset; ArtifactRate = source.ArtifactRate; SuppressThorns = source.SuppressThorns; LowerBound = source.LowerBound; }
+        { Cover = source.Cover; CombatMode = source.CombatMode; Enabled = enabled; Balance = source.Balance; HitFrequency = source.HitFrequency; disableAutoPotion = source.disableAutoPotion; InfiniteHpPotions = source.InfiniteHpPotions; BlockLobbyRegen = source.BlockLobbyRegen; damageOffset = source.damageOffset; refillOffset = source.refillOffset; guardMpOffset = source.guardMpOffset; DotIntervals = source.DotIntervals; Elements = source.Elements; CriticalDamage = source.CriticalDamage; Amplification = source.Amplification; Rapid = source.Rapid; PerfectGuard = source.PerfectGuard; dotDurationOffset = source.dotDurationOffset; ArtifactRate = source.ArtifactRate; SuppressThorns = source.SuppressThorns; LowerBound = source.LowerBound; }
         // Deathmatch reads this at hit time; keep toggle overlays in integer space.
         public FriendlyFireSettings WithEnabled(bool enabled) => new FriendlyFireSettings(this, enabled);
         public FriendlyFireSettings Apply(FriendlyFireCommand command) => command.Reset ? default :
@@ -225,7 +224,7 @@ namespace SephiriaOne
             { command = new FriendlyFireCommand(false, blockRabbitInfinite: !parts[3].Equals("off", StringComparison.OrdinalIgnoreCase)); return FriendlyFireParseResult.Valid; }
             if (parts.Length == 4 && op == "infinite-hp" && (parts[3].Equals("on", StringComparison.OrdinalIgnoreCase) ||
                 parts[3].Equals("off", StringComparison.OrdinalIgnoreCase) || parts[3].Equals("reset", StringComparison.OrdinalIgnoreCase)))
-            { command = new FriendlyFireCommand(false, infiniteHpPotions: !parts[3].Equals("off", StringComparison.OrdinalIgnoreCase)); return FriendlyFireParseResult.Valid; }
+            { command = new FriendlyFireCommand(false, infiniteHpPotions: parts[3].Equals("on", StringComparison.OrdinalIgnoreCase)); return FriendlyFireParseResult.Valid; }
             if (parts.Length == 4 && op == "rapid" && parts[3].Equals("reset", StringComparison.OrdinalIgnoreCase))
             { command = new FriendlyFireCommand(false, rapid: new PvpRapidChange(reset: true)); return FriendlyFireParseResult.Valid; }
             if (parts.Length == 4 && op == "artifact-rate" && (parts[3].Equals("on", StringComparison.OrdinalIgnoreCase) ||

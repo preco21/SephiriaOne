@@ -33,7 +33,7 @@ internal static class ZombieSurvivalControlsTests
         Mirror.NetworkServer.active = true;
         check(SettingsActions.Execute("/one zombie block-hp reset").Success && SessionSettings.ZombieBlockHpPotions,
             "HP restriction reset restores default");
-        check(SessionSettings.ZombieDuration == 120 && !SessionSettings.ZombieAnyDeath &&
+        check(SessionSettings.ZombieDuration == 40 && !SessionSettings.ZombieAnyDeath &&
             SessionSettings.ZombieModifiers.Equals(new CombatRoleSettings(true, 3m, true, 30m)), "Zombie defaults match confirmed settings");
         foreach (string op in new[] { "duration 37", "any-death on", "refill x3.25", "damage 45.5%", "refill off", "damage off" })
             check(SettingsActions.Execute("/one zombie " + op).Success, "Zombie command accepts " + op);
@@ -46,7 +46,7 @@ internal static class ZombieSurvivalControlsTests
             policy.ZombieModifiers.Equals(SessionSettings.ZombieModifiers), "Zombie settings round-trip without runtime team state");
         foreach (string op in new[] { "duration reset", "any-death reset", "refill reset", "damage reset" })
             check(SettingsActions.Execute("/ONE ZOMBIE " + op).Success, "Zombie reset accepts " + op);
-        check(!SessionSettings.ZombieAnyDeath && SessionSettings.ZombieDuration == 120 &&
+        check(!SessionSettings.ZombieAnyDeath && SessionSettings.ZombieDuration == 40 &&
             SessionSettings.ZombieModifiers.Equals(new CombatRoleSettings(true, 3m, true, 30m)), "Resets restore defaults");
         foreach (string op in new[] { "duration 2", "duration 3601", "duration 1.5", "duration -3", "duration +3", "duration x3",
             "any-death 1", "refill 0", "refill 10.01", "refill 1.001", "refill 2.000", "refill +2", "refill NaN",
@@ -58,7 +58,7 @@ internal static class ZombieSurvivalControlsTests
         Mirror.NetworkServer.active = true;
         for (int i = 1; i <= 30; i++)
         {
-            check(SessionPolicy.TryReadPreset("SephiriaOne preset v" + i + "\n", out var old, out _) && old.ZombieDuration == 120 &&
+            check(SessionPolicy.TryReadPreset("SephiriaOne preset v" + i + "\n", out var old, out _) && old.ZombieDuration == 40 &&
                 !old.ZombieAnyDeath && old.ZombieModifiers.Equals(new CombatRoleSettings(true, 3m, true, 30m)), "Older preset defaults Zombie policy: v" + i);
             check(!SessionPolicy.TryReadPreset("SephiriaOne preset v" + i + "\nzombie any-death 1\n", out _, out _), "Older preset cannot smuggle Zombie command: v" + i);
         }

@@ -1,5 +1,13 @@
 # PvP potion supplies and consumption
 
+## Defaults update (0.102.3, 2026-10-31)
+
+Infinite PvP HP potions now default **off**. Per-option reset and full
+friendly-fire reset restore off. Explicit saved `infinite-hp 0`/`1` choices
+remain respected; omitted settings inherit off. Enabled preferences serialize
+as `friendlyfire infinite-hp 1` using the existing v37 schema.
+Auto Large Potion remains enabled by default and independent of consumption.
+
 ## Zombie use restriction (0.97.0)
 
 Zombie Survival's default-on `/one zombie block-hp` is a separate **admission**
@@ -134,7 +142,7 @@ The full installed-game contract suite passes against the current game and
 footer overlap and default-on checkbox recovery direction.
 
 
-## Infinite HP potions (0.71.0; default changed in 0.72.0)
+## Infinite HP potions (0.71.0; defaults updated through 0.102.3)
 
 Corrected in `0.77.1` (2026-10-21): PvP retention, zero MP cost and suppression
 of Survival's 5-point random-stat bonus now use the same guarded drink policy.
@@ -142,10 +150,11 @@ Previously only retention used PvP eligibility; Survival and MP still depended
 on the independent Rabbit settings.
 
 **Combat → Supplies → Infinite PvP HP potions** / `/one friendlyfire infinite-hp
-on|off|reset` is a separate toggle, default **on**. `/one save` stores it in preset
-v37. Explicit saved `infinite-hp 0` remains off; omitted settings inherit on.
-Both per-option reset and full friendly-fire reset restore on. Earlier saves
-that omitted the old off default cannot distinguish an opt-out from no preference.
+on|off|reset` is a separate toggle, default **off** since 0.102.3. `/one save`
+stores nondefault preferences in preset v37. Explicit saved choices remain
+respected; omitted settings inherit off. Both per-option reset and full
+friendly-fire reset restore off. Earlier saves that omitted the former on
+default cannot distinguish an opt-in from no preference.
 It does not require PvP balancing or enable the automatic Large Potion grant.
 
 Active combat participants of any costume retain ordinary HP potions (ID 0) and
