@@ -163,13 +163,16 @@ namespace SephiriaOne
 
         public void AddScrollbar(ScrollRect scroll, Transform parent, float x, float y, float width, float height)
         {
+            const float arrowExpansion = 2f;
+            float arrowSize = width + arrowExpansion;
+            float arrowX = -arrowExpansion * 0.5f;
             float bottom = ((RectTransform)parent).rect.height - y - height;
             var rail = Rect(parent, "Scrollbar", x, y, width, height);
             rail.anchorMin = Vector2.zero; rail.anchorMax = new Vector2(0, 1);
             rail.offsetMin = new Vector2(x, bottom); rail.offsetMax = new Vector2(x + width, -y);
-            var track = Rect(rail, "Track", 0, width + 2, width, height - 2 * (width + 2));
+            var track = Rect(rail, "Track", 0, arrowSize + 2, width, height - 2 * (arrowSize + 2));
             Stretch(track);
-            track.offsetMin = new Vector2(0, width + 2); track.offsetMax = new Vector2(0, -width - 2);
+            track.offsetMin = new Vector2(0, arrowSize + 2); track.offsetMax = new Vector2(0, -arrowSize - 2);
             PanelSurface.Add(track.gameObject, new Color32(25, 39, 55, 255), 4);
             var bar = rail.gameObject.AddComponent<Scrollbar>();
             var handle = Rect(track, "Handle", 0, 0, 0, 0);
@@ -181,12 +184,13 @@ namespace SephiriaOne
             // Native AutoHide now hides the complete rail, including both arrows.
             // Keep the viewport fixed, avoiding width/reflow oscillation.
             scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
-            var up = ScrollArrow(scroll, rail, 0, 0, width, 1);
+            // Slightly wider end buttons visually balance the filled track.
+            var up = ScrollArrow(scroll, rail, arrowX, 0, arrowSize, 1);
             up.anchorMin = new Vector2(0, 1); up.anchorMax = Vector2.one;
-            up.sizeDelta = new Vector2(0, width);
-            var down = ScrollArrow(scroll, rail, 0, 0, width, -1);
+            up.sizeDelta = new Vector2(arrowExpansion, arrowSize);
+            var down = ScrollArrow(scroll, rail, arrowX, 0, arrowSize, -1);
             down.anchorMin = down.pivot = Vector2.zero; down.anchorMax = new Vector2(1, 0);
-            down.anchoredPosition = Vector2.zero; down.sizeDelta = new Vector2(0, width);
+            down.anchoredPosition = new Vector2(arrowX, 0); down.sizeDelta = new Vector2(arrowExpansion, arrowSize);
         }
 
         private RectTransform ScrollArrow(ScrollRect scroll, Transform parent, float x, float y, float size, int direction)
@@ -194,7 +198,7 @@ namespace SephiriaOne
             var button = Button(parent, "", x, y, size, size, null);
             button.name = direction > 0 ? "ScrollUp" : "ScrollDown";
             button.gameObject.AddComponent<PanelScrollArrow>().Configure(scroll, direction);
-            var icon = Rect(button.transform, "Arrow", 3, 3, size - 6, size - 6).gameObject.AddComponent<PanelSectionIcon>();
+            var icon = Rect(button.transform, "Arrow", 2.5f, 2.5f, size - 5, size - 5).gameObject.AddComponent<PanelSectionIcon>();
             icon.Configure(direction > 0 ? PanelSectionSymbol.Up : PanelSectionSymbol.Down, Ink);
             return (RectTransform)button.transform;
         }

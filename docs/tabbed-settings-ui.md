@@ -4,6 +4,16 @@ Introduced in `0.39.0`, following the user's approval of option 2 from the
 [UI comparison](ui-revamp-investigation.md). The window uses the installed
 Unity uGUI/TextMeshPro components and the existing settings services.
 
+## Scrollbar arrow sizing (0.102.2, 2026-10-30)
+
+Shared up/down buttons are 16×16 UI units around the unchanged 14-unit bar,
+centered with one unit of overhang per side. Arrow icon bounds grow from 8×8
+to 11×11. Track insets retain the two-unit gap below/above the larger buttons.
+This covers navigation, inner sections and dropdowns through `AddScrollbar`;
+whole-rail auto-hide and existing click handling remain unchanged. No polling
+or new UI objects are added. Build and existing presentation contracts verified;
+live rendering was not inspected and the addon was not deployed.
+
 ## Scroll layout and dropdown cursor fixes (`0.95.1`, 2026-10-25)
 
 - Each shared scrollbar now has one fixed-width rail. The track and both arrow
