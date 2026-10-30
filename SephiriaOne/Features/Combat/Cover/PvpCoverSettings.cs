@@ -5,7 +5,7 @@ namespace SephiriaOne
 {
     internal readonly struct PvpCoverSettings
     {
-        public const int DefaultCount = 12, MaximumCount = 32;
+        public const int DefaultCount = 20, MaximumCount = 32;
         private readonly int countOffset;
         public bool Enabled { get; }
         public int Count => DefaultCount + countOffset;

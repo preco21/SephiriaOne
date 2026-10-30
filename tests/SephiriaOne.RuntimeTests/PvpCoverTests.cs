@@ -5,7 +5,7 @@ internal static class PvpCoverTests
     internal static void Run(Action<bool, string> check)
     {
         var policy = new SessionPolicy();
-        check(!policy.FriendlyFire.Cover.Enabled && policy.FriendlyFire.Cover.Count == 12, "Cover defaults off / 12");
+        check(!policy.FriendlyFire.Cover.Enabled && policy.FriendlyFire.Cover.Count == 20, "Cover defaults off / 20");
         foreach (string text in new[] { "on", "off", "reset", "count 1", "count 32", "count reset" })
         {
             check(FriendlyFireCommand.Parse("/one friendlyfire cover " + text, out var command) == FriendlyFireParseResult.Valid, "Cover parses " + text);
@@ -23,7 +23,7 @@ internal static class PvpCoverTests
         check(SessionPolicy.TryReadPreset("SephiriaOne preset v55\n", out parsed, out _) && !parsed.FriendlyFire.Cover.Enabled, "Old preset keeps cover off");
         check(!SessionPolicy.TryReadPreset("SephiriaOne preset v55\nfriendlyfire cover 1\n", out _, out _), "Old schema rejects cover row");
         policy.Record(new FriendlyFireCommand(false, cover: new PvpCoverChange(reset: true)));
-        check(!policy.FriendlyFire.Cover.HasChanges, "Cover reset restores defaults");
+        check(!policy.FriendlyFire.Cover.HasChanges && policy.FriendlyFire.Cover.Count == 20, "Cover reset restores defaults");
 
         var rooms = new List<PvpCoverPlacement.Room> { new(0, 0, 50, 50), new(100, 100, 150, 150) };
         var plan = new PvpCoverPlacement(rooms, 17);

@@ -2,6 +2,8 @@
 
 Implemented in 0.100.0; varied props and faster placement in 0.101.0 (2026-10-29).
 Final-boss/isometric-floor support added in 0.101.1 (2026-10-29).
+Default requested count raised to 20 in 0.102.4 (2026-10-31); explicit saved
+counts remain respected and omitted counts inherit the new default.
 Host addon only; uses registered native props and their native collision/network
 behaviour. No guest installation or additional assets. The user confirmed cover
 appears in the lobby and on a second run with 0.100.2. The new prop mix and tighter
@@ -10,7 +12,7 @@ clearance have static/fixture coverage; stock-guest gameplay remains unverified 
 ## Controls
 
 In **PvP 전투 / PvP Combat**, scroll the left column to **임시 엄폐물 / Temporary
-cover**. Default **off**, requested count **12**, range **1–32 per host level**.
+cover**. Default **off**, requested count **20**, range **1–32 per host level**.
 
 ```text
 /one friendlyfire cover on
@@ -23,7 +25,7 @@ cover**. Default **off**, requested count **12**, range **1–32 per host level*
 
 Changing the count does not stop a match. Lowering it immediately removes surplus
 owned props; raising it continues the bounded placement search. Existing cover
-is preserved where possible. `cover reset` disables it and restores count 12;
+is preserved where possible. `cover reset` disables it and restores count 20;
 `count reset` only restores the count. Saved changes use preset v56; older
 presets retain the default-off setting. This is independent of PvP balancing.
 

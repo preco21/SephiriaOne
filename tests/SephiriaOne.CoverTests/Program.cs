@@ -27,13 +27,13 @@ int sameFrameQueries = Physics2D.Queries;
 PvpCoverRuntime.Tick(); PvpCoverRuntime.Tick();
 Check(Physics2D.Queries == sameFrameQueries, "Repeated notifications cannot multiply the per-frame search budget");
 Physics2D.BlockPoint = null;
-Fill(); Check(PvpCoverRuntime.ActiveCount == 12 && PvpCoverNative.Spawns == 12, "Initial cover quota");
+Fill(); Check(PvpCoverRuntime.ActiveCount == 20 && PvpCoverNative.Spawns == 20, "Initial cover quota");
 Check(first.floorRelatedNetworkObjects.Take(5).Select(p => p.name).Distinct().Count() == 5,
     "The first catalog cycle contains a shuffled variety instead of repeating one prop");
 Check(first.floorRelatedNetworkObjects.Skip(5).Take(5).Select(p => p.name).Distinct().Count() == 5,
     "Later catalog cycles also contain every variant before repeating");
 int probes = Physics2D.Queries, updates = PathGrid.Current.Updates;
-Fill(); Check(Physics2D.Queries == probes && PvpCoverNative.Spawns == 12, "No steady-state physics/spawn loop");
+Fill(); Check(Physics2D.Queries == probes && PvpCoverNative.Spawns == 20, "No steady-state physics/spawn loop");
 Check(updates == 1, "Batch native pathfinding update");
 long beforeAllocation = GC.GetAllocatedBytesForCurrentThread();
 for (int i = 0; i < 1000; i++) { Time.frameCount++; PvpCoverRuntime.Tick(); }
