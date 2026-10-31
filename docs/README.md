@@ -1,5 +1,11 @@
 # Development knowledge index
 
+[Sephiria 1.1.0 beta compatibility](beta-110-compatibility.md): 0.107.0 adapts
+player initialization, combat, resource/item contracts, presentation and Ice
+Weapon projectile guards to workshop-beta build 26324456. Includes verification
+commands and remaining live checks; see the focused [combat](beta-110-combat.md),
+[item](beta-110-items.md) and [presentation](beta-110-presentation.md) audits.
+
 [Shared match countdown cadence](overhead-message-transport.md#shared-match-timer-cadence--01060-2026-11-01):
 0.106.0 reduces Zombie/Tag/Tournament timer chat to every five seconds, then each
 of the final five seconds. Keeps role markers/bomb text and adds independently

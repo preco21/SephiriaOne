@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using HarmonyLib;
 
 const string expectedGameHash = "c57a0daeab8e8d0af7066a344133eec4c57d8f303fd9e25da9410fbfc4cf1510";
+const string betaGameHash = "383a0d5ea9218b797d6eacd1f67964a73606ba50572b7af2d10ac5357b621d01";
 if (args.Length != 2)
     throw new ArgumentException("Arguments: <installed game Managed directory> <freshly built addon DLL>");
 string managed = Path.GetFullPath(args[0]);
@@ -20,7 +21,7 @@ string gamePath = Path.Combine(managed, "Assembly-CSharp.dll");
 using (var stream = File.OpenRead(gamePath))
 {
     string hash = Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant();
-    if (hash != expectedGameHash)
+    if (hash != expectedGameHash && hash != betaGameHash)
         throw new Exception($"Installed assembly fingerprint changed: {hash}. Audit contracts before updating the expected hash.");
 }
 var game = Assembly.LoadFrom(gamePath);
@@ -141,6 +142,10 @@ Test("Ice Weapon denials preserve loop timing and skip every spawn-dependent ope
         var guarded = rewritten.Skip(call + 5).Take(continuation - call - 5).ToList();
         Check(guarded.Count(i => i.StoresField(swingId)) == 1,
             "Denied shots must skip the FROSTRELIC mutation: " + contract.source);
+        var critical = AccessTools.Field(game.GetType("ProjectileBase", true), "additionalCriticalDamageRate");
+        if (original.Any(i => i.LoadsConstant("FROSTRELICCRITICALDAMAGE")))
+            Check(guarded.Count(i => i.StoresField(critical)) == 1,
+                "Denied beta shots skip critical configuration; accepted shots retain it: " + contract.source);
         if (contract.source == "ice-hammer")
         {
             var active = AccessTools.Field(game.GetType("Charm_IceHammer", true), "activeBullets");
@@ -165,6 +170,31 @@ Test("Ice Weapon denials preserve loop timing and skip every spawn-dependent ope
                 increment.Any(i => i.opcode == OpCodes.Stloc_S),
                 "Denied Bow amplification consumes its loop iteration");
         }
+    }
+});
+
+Test("Beta Ice Weapon critical tails reject drift and retain the legacy continuation", () =>
+{
+    foreach (var emitter in emitters.Where(e => Field<string?>(e, "Source") is "ice-air-slash" or "ice-spear" or "ice-bow"))
+    {
+        var method = Field<MethodInfo>(emitter, "Method");
+        var original = PatchProcessor.GetOriginalInstructions(method, out var generator).ToList();
+        int key = original.FindIndex(i => i.LoadsConstant("FROSTRELICCRITICALDAMAGE"));
+        if (key < 0) continue; // Older game bodies are already tested directly.
+        foreach (int index in new[] { key, key + 1, key + 2, key + 3 })
+        {
+            var drift = original.Select(i => new CodeInstruction(i)).ToList();
+            drift[index].opcode = OpCodes.Nop; drift[index].operand = null;
+            Reject(() => Invoke(Hook("ValidateEmitter"), drift, emitter),
+                "Changed beta critical key/getter/arithmetic/store must reject installation");
+        }
+        var legacy = original.Select(i => new CodeInstruction(i)).ToList();
+        int swing = key - 5;
+        legacy.RemoveRange(swing + 1, 8);
+        legacy.RemoveAt(swing - 2); // Legacy Spawn leaves only one receiver.
+        Invoke(Hook("ValidateEmitter"), legacy, emitter);
+        IlStackVerifier.Verify(method, Rewrite(emitter, legacy, generator));
+        checks++;
     }
 });
 
@@ -262,8 +292,7 @@ foreach (var emitter in emitters.Where(e => Field<MemberInfo?>(e, "GuardTail") !
         int deniedIndex = rewritten.FindIndex(i => i.labels.Contains(denied));
         int acceptedIndex = rewritten.FindIndex(i => i.labels.Contains(accepted));
         MemberInfo tail = Field<MemberInfo>(emitter, "GuardTail");
-        int tailIndex = rewritten.FindIndex(i => tail is MethodInfo tailMethod
-            ? i.Calls(tailMethod) : i.StoresField((FieldInfo)tail));
+        int tailIndex = ((int[])Invoke(Hook("FindTails"), rewritten, emitter)!)[0];
         Check(deniedIndex == tailIndex + 1 && acceptedIndex == call + 5,
             "Null jumps directly after the audited configuration tail; success preserves native configuration");
         Check(deniedIndex < rewritten.Count - 1, "Denial must continue the method instead of skipping its native tail");

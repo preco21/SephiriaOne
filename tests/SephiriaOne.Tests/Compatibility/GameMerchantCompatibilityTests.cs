@@ -35,7 +35,9 @@ internal static class GameMerchantCompatibilityTests
         int allocation = create.FindIndex(i => i.opcode == OpCodes.Newobj && i.operand is ConstructorInfo c && c.DeclaringType?.Name == "SaveData");
         int replace = create.FindIndex(i => i.opcode == OpCodes.Stsfld && i.operand is FieldInfo f && f.Name == "currentRun");
         Require(allocation >= 0 && replace > allocation, "Fresh native runs must replace SaveData identity; re-audit merchant run caching.");
-        var restart = IteratorCode(RequiredMethod(network, "RestartGameCoroutine", typeof(bool)));
+        var placement = game.GetType("ERestartPlacement");
+        var restart = IteratorCode(RequiredMethod(network, "RestartGameCoroutine",
+            placement == null ? new[] { typeof(bool) } : new[] { typeof(bool), placement }));
         int fresh = restart.FindIndex(i => i.operand is MethodInfo m && m.Name == "CreateNewTMP");
         int clear = restart.FindIndex(i => i.operand is MethodInfo m && m.Name == "ClearNetworkObjects");
         int load = restart.FindIndex(i => i.operand is MethodInfo m && m.Name == "NewGame");

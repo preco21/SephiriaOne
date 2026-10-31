@@ -26,7 +26,14 @@ internal static class GameFriendlyFireParticipantTests
         }
         Signature(spawner, "OnDestroy", typeof(void), false);
         Signature(spawner, "OnStartServer", typeof(void), false);
-        Signature(spawner, "Initialize", typeof(bool), false, typeof(int), typeof(string), typeof(string), typeof(int));
+        Type initialization = addon.GetType("SephiriaOne.NativePlayerInitialization", true)!;
+        var initialize = (MethodInfo)AccessTools.Method(initialization, "ResolveInitialize").Invoke(null, new object[] { spawner })!;
+        Require(initialize.ReturnType == typeof(bool) && !initialize.IsStatic &&
+            initialize.GetParameters().Take(4).Select(p => p.ParameterType).SequenceEqual(new[] { typeof(int), typeof(string), typeof(string), typeof(int) }),
+            "shared initialization adapter resolves native player inputs");
+        Type? placement = game.GetType("ERestartPlacement");
+        Require(initialize.GetParameters().Length == (placement == null ? 4 : 5) &&
+            (placement == null || initialize.GetParameters()[4].ParameterType == placement), "audited placement-aware initialization boundary");
         Signature(manager, "OnServerDisconnect", typeof(void), false, connection);
         foreach (string name in new[] { "OnStartServer", "OnStopServer", "OnStopClient" })
             Signature(manager, name, typeof(void), false);
@@ -56,8 +63,14 @@ internal static class GameFriendlyFireParticipantTests
         var stopServer = Code(networkManager, "StopServer");
         Require(Call(stopServer, "OnStopServer") >= 0 && Call(stopServer, "OnStopServer") < Call(stopServer, "Shutdown"),
             "server stop callback precedes shutdown");
-        Require(Call(Code(spawner, "RestartNewGame"), "Initialize") >= 0 &&
+        var restart = AccessTools.DeclaredMethod(spawner, "RestartNewGame", placement == null
+            ? new[] { typeof(int) } : new[] { typeof(int), placement });
+        Require(restart != null && PatchProcessor.GetOriginalInstructions(restart).Any(i => i.Calls(initialize)) &&
             Call(Code(player, "LocalEquipCostume"), "Initialize") < 0, "run initialization differs from wardrobe changes");
+        foreach (string name in new[] { "FriendlyFireParticipantHooks", "StartingResourceHooks", "InventoryResourceHooks" })
+            Require(Code(addon.GetType("SephiriaOne." + name, true)!, "Install").Any(i =>
+                i.operand is MethodInfo m && m.DeclaringType == initialization && m.Name == "ResolveInitialize"),
+                name + " installs at the shared initialization boundary");
         Require(Call(Code(manager, "OnStartServer"), "NotifyStartGameServerside") < Call(Code(manager, "OnStartServer"), "NewGame") &&
             Call(Code(manager, "NewGame"), "NotifyStartSessionServerside") >= 0, "server and run start event boundaries");
         Type hooks = addon.GetType("SephiriaOne.FriendlyFireHooks", true)!;

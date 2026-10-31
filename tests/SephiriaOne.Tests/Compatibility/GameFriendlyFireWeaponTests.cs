@@ -51,9 +51,14 @@ internal static class GameFriendlyFireWeaponTests
             blade.Any(i => Field(i, "magicBladePrefab")) && blade.Any(i => i.LoadsConstant(5f)) && blade.Any(i => Calls(i, "Bullet", "SetHomingTarget")),
             "Adamah initial targeting retains native feature/range/assignment");
         var shield = Code("WeaponSimple_SwordAndShield", "Update");
+        var fireWithBonus = shield.FindIndex(i => Calls(i, "ComboEffect_FlameSword", "FireSwordWithBonus"));
+        bool nativeFlameFire = fireWithBonus < 0 ? shield.Any(i => Calls(i, "ComboEffect_FlameSword", "FireSword")) :
+            fireWithBonus >= 2 && shield[fireWithBonus - 2].LoadsConstant(0) && shield[fireWithBonus - 1].LoadsConstant(0) &&
+            ((MethodInfo)shield[fireWithBonus].operand).GetParameters().Select(p => p.ParameterType.FullName)
+                .SequenceEqual(new[] { "UnityEngine.Vector3", "System.Boolean", "System.Boolean" });
         Require(shield.Any(i => Calls(i, "NetworkBehaviour", "get_isServer")) && shield.Any(i => Field(i, "solisMissioType")) &&
             shield.Any(i => Field(i, "throwSwordIntervalTimer")) && shield.Any(i => i.LoadsConstant("FLAMESWORD")) &&
-            shield.Any(i => i.LoadsConstant("solisMissioThrowSwordDistance")) && shield.Any(i => Calls(i, "ComboEffect_FlameSword", "FireSword")),
+            shield.Any(i => i.LoadsConstant("solisMissioThrowSwordDistance")) && nativeFlameFire,
             "Solis Missio native host, combo, timer and range gates remain");
         foreach (string mine in new[] { "BulletMoveModule_CrossbowMine", "BulletMoveModule_CrossbowMineHoming" })
             Require(Code(mine, "SetMotionData").Any(i => Field(i, "hostileLayers")), mine + " caches native mask at spawn");

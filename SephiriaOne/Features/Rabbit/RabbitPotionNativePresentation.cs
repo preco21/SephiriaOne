@@ -88,11 +88,18 @@ namespace SephiriaOne
             bool Visual(IEnumerable<CodeInstruction> body, bool healing)
             {
                 var list = body.ToList();
-                string[] expected = healing ? new[] { "CreateDrinkVisual", "CreateInstance", "To3DAttributes", "set3DAttributes", "start", "release", "get_Pool", "Spawn" } :
-                    new[] { "CreateInstance", "To3DAttributes", "set3DAttributes", "start", "release" };
+                // 1.1 routes instance creation through the native missing-event
+                // guard. It still starts/releases one instance at this position.
+                Type soundManager = typeof(PotionEffect).Assembly.GetType("SoundManager");
+                string factory = Calls(list).Any(m => m.DeclaringType == soundManager && m.Name == "TryCreateSoundInstance")
+                    ? "TryCreateSoundInstance" : "CreateInstance";
+                string[] expected = healing ? new[] { "CreateDrinkVisual", factory, "To3DAttributes", "set3DAttributes", "start", "release", "get_Pool", "Spawn" } :
+                    new[] { factory, "To3DAttributes", "set3DAttributes", "start", "release" };
                 return Calls(list).Select(m => m.Name).SequenceEqual(expected) && Calls(list).All(m =>
                     m.DeclaringType == typeof(PotionEffect) && m.Name == "CreateDrinkVisual" ||
                     m.DeclaringType?.FullName == "FMODUnity.RuntimeManager" && m.Name == "CreateInstance" ||
+                    m.DeclaringType == soundManager && m.Name == "TryCreateSoundInstance" && m.ReturnType == typeof(bool) &&
+                        m.GetParameters().Select(p => p.ParameterType.FullName).SequenceEqual(new[] { "FMODUnity.EventReference", "FMOD.Studio.EventInstance&" }) ||
                     m.DeclaringType?.FullName == "FMODUnity.RuntimeUtils" && m.Name == "To3DAttributes" ||
                     m.DeclaringType?.FullName == "FMOD.Studio.EventInstance" && (m.Name == "set3DAttributes" || m.Name == "start" || m.Name == "release") ||
                     m.DeclaringType == typeof(SpriteFx) && m.Name == "get_Pool" ||

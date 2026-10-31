@@ -1,5 +1,11 @@
 using SephiriaOne;
 
+if (args.Length == 3 && args[0] == "--compatibility-report")
+{
+    Environment.ExitCode = GameCompatibilityReport.Run(args[1], args[2]) ? 0 : 1;
+    return;
+}
+
 string GradientAlice = NameGradient.Format("Alice");
 string GradientBob = NameGradient.Format("Bob");
 int checks = 0;
@@ -39,6 +45,7 @@ Equal(null, state.Next("", "Bob", true), "Uninitialized network name waits for g
 Equal(null, state.Next("Bob", "", true), "Missing profile name does not rename the player");
 
 Console.WriteLine($"Passed {checks} multiplayer name synchronization checks.");
+Console.WriteLine($"Passed {NativePlayerInitializationTests.Run()} native initialization adapter checks.");
 Console.WriteLine($"Passed {PanelDraftTests.Run()} panel draft isolation checks.");
 Console.WriteLine($"Passed {PanelControlLifetimeTests.Run()} panel control lifetime checks.");
 Console.WriteLine($"Passed {ReconciliationTests.Run()} shared reconciliation checks.");

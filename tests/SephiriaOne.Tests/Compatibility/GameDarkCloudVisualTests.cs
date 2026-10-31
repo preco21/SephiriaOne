@@ -52,7 +52,8 @@ internal static class GameDarkCloudVisualTests
             "native area ring is client-owned presentation, not host-synchronized visibility");
         var animation = Code(Method(visual, "Attack"));
         Require(animation.Any(i => Calls(i, "SetValue")) && animation.Any(i => i.operand is MethodInfo m &&
-            m.DeclaringType?.Name == "StudioEventEmitter" && m.Name == "Play"), "native strike includes cloud animation and attack audio");
+            (m.DeclaringType?.FullName == "FMODUnity.StudioEventEmitter" && m.Name == "Play" ||
+             m.DeclaringType == game.GetType("SoundManager") && m.Name == "PlaySoundEmitter")), "native strike includes cloud animation and attack audio");
         Require(Code(cloud.TypeInitializer!).Any(i => i.opcode == OpCodes.Ldftn && Equals(i.operand, Method(cloud, "Invoke" + bodyName))),
             "unmodified clients register the target receiver");
         var hooks = addon.GetType("SephiriaOne.FriendlyFireDarkCloudVisualHooks", true)!;

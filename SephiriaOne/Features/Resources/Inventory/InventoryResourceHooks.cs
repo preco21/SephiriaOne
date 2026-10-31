@@ -45,7 +45,7 @@ namespace SephiriaOne
             var instance = new Harmony(Owner);
             try
             {
-                var initialize = AccessTools.DeclaredMethod(typeof(PlayerSpawner), "Initialize", new[] { typeof(int), typeof(string), typeof(string), typeof(int) });
+                var initialize = NativePlayerInitialization.ResolveInitialize(typeof(PlayerSpawner));
                 var save = AccessTools.DeclaredMethod(typeof(PlayerSpawner), nameof(PlayerSpawner.SaveCurrentSessionData), Type.EmptyTypes);
                 if (initialize == null || initialize.ReturnType != typeof(bool) || save == null || save.ReturnType != typeof(void))
                     throw new MissingMethodException("The native inventory initialization/save boundary changed.");

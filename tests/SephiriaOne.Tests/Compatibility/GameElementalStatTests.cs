@@ -31,7 +31,12 @@ internal static class GameElementalStatTests
         foreach (string key in new[] { "PHYSICALDAMAGE", "FIREDAMAGE", "ICEDAMAGE", "LIGHTNINGDAMAGE" })
             Require(index.Count(i => i.LoadsConstant(key)) == 1, "native element key " + key);
         var readers = ((IEnumerable<MethodInfo>)AccessTools.Method(hooks, "NativeReaders").Invoke(null, null)!).ToArray();
-        Require(readers.Length == 11 && readers.Distinct().Count() == 11, "all audited derivation, progression and C-menu readers are preserved");
+        var scriptRegistration = PatchProcessor.GetOriginalInstructions(AccessTools.Method(game.GetType("MiniscriptGlobal", true)!, "Initialize")).ToList();
+        bool hasLocalPredicate = scriptRegistration.Any(i => i.LoadsConstant("localPlayerHasCustomStatUnsafe"));
+        int expectedReaders = hasLocalPredicate ? 12 : 11;
+        Require(readers.Length == expectedReaders && readers.Distinct().Count() == expectedReaders, "all audited derivation, progression and C-menu readers are preserved");
+        Require(readers.Count(m => m.DeclaringType?.FullName == "MiniscriptGlobal+<>c") == (hasLocalPredicate ? 2 : 1),
+            "both all-player and beta local-player script predicates preserve uncapped progression stats");
         Require(readers.Any(m => m.DeclaringType?.FullName == "MiniscriptGlobal+<>c"), "deferred script body is preserved, not registration only");
         var rewrite = AccessTools.Method(hooks, "RewriteNativeReads");
         foreach (var reader in readers)

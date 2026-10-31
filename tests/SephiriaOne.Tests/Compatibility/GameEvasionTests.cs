@@ -19,8 +19,11 @@ internal static class GameEvasionTests
         Require(patched.Count == native.Count + 1 && patched.Count(i => Call(i, "FriendlyFireRuntime", "EvasionChance")) == 1 && cap > 0,
             "exactly one scalar chance adapter is added");
         int formula = native.FindIndex(i => Call(i, "Mathf", "Log"));
+        int helperCall = native.FindIndex(i => Call(i, "UnitAvatar", "GetEvasionChancePercent"));
+        bool extracted = helperCall >= 0;
         int ignore = native.FindIndex(i => Text(i, "IGNOREEVASION"));
-        Require(cap == formula + 4 && cap < ignore && native[cap].IsStloc(), "cap precedes native lower clamp and attacker anti-Evasion");
+        Require(cap == (extracted ? helperCall + 1 : formula + 4) && cap < ignore && native[cap].IsStloc(),
+            "cap adapts only final stat-derived chance before attacker anti-Evasion");
         for (int i = 0; i < native.Count; i++)
         {
             var mapped = patched[i < cap ? i : i + 1];
@@ -43,13 +46,33 @@ internal static class GameEvasionTests
             catch (TargetInvocationException e) when (e.InnerException is InvalidOperationException) { rejected = true; }
             Require(rejected, why);
         }
-        Reject(native.Where(i => !Call(i, "Mathf", "Log")), "missing native formula rejects installation");
-        Reject(native.Concat(new[] { native[formula] }), "duplicate formula cannot be patched ambiguously");
+        if (extracted)
+        {
+            var helper = (MethodInfo)native[helperCall].operand;
+            var helperCode = PatchProcessor.GetOriginalInstructions(helper).ToList();
+            var validate = AccessTools.DeclaredMethod(addon.GetType("SephiriaOne.FriendlyFireEvasionHooks", true)!, "ValidateChanceHelper");
+            bool Valid(IEnumerable<CodeInstruction> input) => (bool)validate.Invoke(null, new object[] { input })!;
+            Require(Valid(helperCode), "extracted helper formula, signed rate modifier and lower clamp are audited");
+            foreach (float constant in new[] { 6200f, 0.8f, 10000f })
+                Require(!Valid(helperCode.Select(i => i.LoadsConstant(constant) ? new CodeInstruction(OpCodes.Ldc_R4, constant + 1) : i)),
+                    "helper formula drift rejects " + constant);
+            Require(!Valid(helperCode.Where(i => !Text(i, "EVASIONRATEREDUCTION"))), "new native rate modifier cannot be lost");
+            Require(!Valid(helperCode.Select(i => i.opcode == OpCodes.Add ? new CodeInstruction(OpCodes.Sub) : i)),
+                "signed native rate-modifier arithmetic cannot drift");
+            Require(!Valid(helperCode.Where(i => i.opcode != OpCodes.Ret)), "helper must return the native chance");
+            Reject(native.Where(i => !i.Calls(helper)), "missing helper rejects installation");
+            Reject(native.Concat(new[] { native[helperCall] }), "duplicate helper cannot be patched ambiguously");
+        }
+        else
+        {
+            Reject(native.Where(i => !Call(i, "Mathf", "Log")), "missing native formula rejects installation");
+            Reject(native.Concat(new[] { native[formula] }), "duplicate formula cannot be patched ambiguously");
+            Reject(native.Select(i => i.LoadsConstant(6200f) ? new CodeInstruction(OpCodes.Ldc_R4, 6000f) : i), "formula scale changes require reaudit");
+            Reject(native.Select(i => i.LoadsConstant(0.8f) ? new CodeInstruction(OpCodes.Ldc_R4, 0.9f) : i), "formula multiplier changes require reaudit");
+            Reject(native.Select(i => i.LoadsConstant(10000f) ? new CodeInstruction(OpCodes.Ldc_R4, 20000f) : i), "native stat clamp changes require reaudit");
+        }
         Reject(native.Where(i => !Text(i, "IGNOREEVASION")), "changed anti-Evasion ordering requires reaudit");
         Reject(native.Where(i => !Call(i, "Random", "Range")), "missing native roll requires reaudit");
-        Reject(native.Select(i => i.LoadsConstant(6200f) ? new CodeInstruction(OpCodes.Ldc_R4, 6000f) : i), "formula scale changes require reaudit");
-        Reject(native.Select(i => i.LoadsConstant(0.8f) ? new CodeInstruction(OpCodes.Ldc_R4, 0.9f) : i), "formula multiplier changes require reaudit");
-        Reject(native.Select(i => i.LoadsConstant(10000f) ? new CodeInstruction(OpCodes.Ldc_R4, 20000f) : i), "native stat clamp changes require reaudit");
         var changed = native.Select(i => new CodeInstruction(i)).ToList();
         changed[cap].opcode = OpCodes.Pop; changed[cap].operand = null;
         Reject(changed, "missing chance local cannot corrupt the native evaluation stack");

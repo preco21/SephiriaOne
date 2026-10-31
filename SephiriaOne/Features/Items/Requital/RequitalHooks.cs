@@ -17,6 +17,18 @@ namespace SephiriaOne
             {
                 var restock = AccessTools.DeclaredMethod(typeof(GridInventory), nameof(GridInventory.RestockStartingItem), new[] { typeof(int) });
                 var restart = AccessTools.DeclaredMethod(typeof(PlayerSpawner), nameof(PlayerSpawner.RestartNewGame), new[] { typeof(int) });
+                // 1.1.0 keeps the old entry as a wrapper; placement-aware restarts
+                // initialize and restock in the new overload. Resolve by name so
+                // the same guard can still validate the earlier game contract.
+                var placement = typeof(PlayerSpawner).Assembly.GetType("ERestartPlacement");
+                if (placement != null)
+                {
+                    var placedRestart = AccessTools.DeclaredMethod(typeof(PlayerSpawner), nameof(PlayerSpawner.RestartNewGame),
+                        new[] { typeof(int), placement });
+                    if (!placement.IsEnum || restart == null || placedRestart == null ||
+                        PatchProcessor.GetOriginalInstructions(restart).Count(i => i.Calls(placedRestart)) != 1) return false;
+                    restart = placedRestart;
+                }
                 return restock != null && restart != null &&
                     PatchProcessor.GetOriginalInstructions(restock).Any(i => i.operand is FieldInfo field && field.Name == "startingItems") &&
                     PatchProcessor.GetOriginalInstructions(restock).Count(i => i.Calls(AddItem)) == 1 &&

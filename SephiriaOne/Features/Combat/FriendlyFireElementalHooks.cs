@@ -91,10 +91,27 @@ namespace SephiriaOne
             var deferred = scripts?.GetNestedTypes(BindingFlags.Public | BindingFlags.NonPublic)
                 .SelectMany(t => t.GetMethods(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
                 .Where(m => m.GetMethodBody() != null && PatchProcessor.GetOriginalInstructions(m).Any(i => i.Calls(UnsafeRead))).ToArray();
-            if (deferred == null || deferred.Length != 1 ||
-                !PatchProcessor.GetOriginalInstructions(deferred[0]).Any(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "statName")))
+            var initialize = scripts == null ? null : AccessTools.DeclaredMethod(scripts, "Initialize");
+            var registration = initialize == null ? new List<CodeInstruction>() : PatchProcessor.GetOriginalInstructions(initialize).ToList();
+            var audited = new List<MethodInfo>();
+            foreach (string intrinsic in new[] { "anyPlayerHasCustomStatUnsafe", "localPlayerHasCustomStatUnsafe" })
+            {
+                var starts = Enumerable.Range(0, registration.Count).Where(i => registration[i].opcode == OpCodes.Ldstr &&
+                    Equals(registration[i].operand, intrinsic)).ToArray();
+                // The local-player predicate was added in 1.1.0; the existing
+                // all-player predicate remains mandatory on both builds.
+                if (starts.Length == 0 && intrinsic == "localPlayerHasCustomStatUnsafe") continue;
+                int start = starts.Length == 1 ? starts[0] : -1;
+                var body = start < 0 ? null : registration.Skip(start + 1).Take(32).FirstOrDefault(i => i.opcode == OpCodes.Ldftn)?.operand as MethodInfo;
+                var bodyCode = body == null ? new List<CodeInstruction>() : PatchProcessor.GetOriginalInstructions(body).ToList();
+                if (body == null || deferred == null || !deferred.Contains(body) || bodyCode.Count(i => i.Calls(UnsafeRead)) != 1 ||
+                    !bodyCode.Any(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "statName")))
+                    throw new InvalidOperationException("Native elemental script-stat registration changed: " + intrinsic);
+                audited.Add(body);
+            }
+            if (deferred == null || deferred.Length != audited.Count || audited.Distinct().Count() != audited.Count)
                 throw new InvalidOperationException("Native elemental script-stat predicate changed.");
-            yield return deferred[0];
+            foreach (var predicate in audited) yield return predicate;
         }
 
         internal static IEnumerable<CodeInstruction> RewriteNativeReads(IEnumerable<CodeInstruction> instructions)

@@ -27,6 +27,7 @@ void Reset()
         type = EItemType.StoneTablet, rarity = EItemRarity.Eternal, activeType = EItemActiveType.Hidden };
     RequitalRuntime.Initialize(); RequitalRuntime.Load();
 }
+Check(RequitalHooks.ValidateNative(), "beta restart wrapper retains the placement overload's guarded restock");
 Reset();
 var player = Player();
 RequitalRuntime.Tick();

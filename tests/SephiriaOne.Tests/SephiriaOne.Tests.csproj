@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../SephiriaOne/Infrastructure/NativePlayerInitialization.cs" Link="NativePlayerInitialization.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/Cover/PvpCoverSettings.cs" Link="PvpCoverSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/Cover/PvpCoverPlacement.cs" Link="PvpCoverPlacement.cs" />
     <Compile Include="../../SephiriaOne/Features/ProjectileLimits/ProjectileLimitSettings.cs" Link="ProjectileLimitSettings.cs" />

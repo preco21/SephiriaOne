@@ -14,8 +14,8 @@ namespace SephiriaOne
             new StartingArtifact(1171, "Item_BloodofObrus_Name", "Blood of Obrus")
         };
 
-        // CostumeDatabase loads before ItemDatabase. Call only after all databases
-        // are ready, before any player is initialized or the costume UI is opened.
+        // The database order differs across game versions. Call only after all
+        // databases are ready, before player initialization or costume UI reads.
         public static void Apply()
         {
             foreach (StartingArtifact artifact in Artifacts) artifact.Apply();

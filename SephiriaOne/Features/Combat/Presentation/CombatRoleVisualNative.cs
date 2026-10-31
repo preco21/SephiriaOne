@@ -10,16 +10,13 @@ namespace SephiriaOne
     internal static class CombatRoleVisualNative
     {
         internal const uint AssetId = 4098245047;
-        private const string GameHash = "C57A0DAEAB8E8D0AF7066A344133EEC4C57D8F303FD9E25DA9410FBFC4CF1510";
-        private const string MirrorHash = "C391C91BA860C537692C185B1075F4219EC83FA71A11990A2B51C13876AB7440";
         internal static readonly Action<CharacterDebuff> ClientUpdate = (Action<CharacterDebuff>)Delegate.CreateDelegate(
             typeof(Action<CharacterDebuff>), typeof(CharacterDebuff).GetMethod("OnUpdate_Client", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.DeclaredOnly));
 
         // Client/server separation, disabled-component startup/serialization,
         // prefab spawning and native destruction all form this safety boundary.
         internal static bool ValidateNativeCode() =>
-            NativeAssemblyContract.Matches(typeof(CharacterDebuff).Assembly, GameHash) &&
-            NativeAssemblyContract.Matches(typeof(NetworkClient).Assembly, MirrorHash);
+            NativeAssemblyContract.MatchesPresentationPair(typeof(CharacterDebuff).Assembly, typeof(NetworkClient).Assembly);
 
         internal static CharacterDebuff_ChimDamage ValidateAndGetPrefab()
         {

@@ -73,6 +73,7 @@ public sealed class DungeonManager : UnityEngine.Object
     public void BoundOnServer(int id, int player) { }
     public void OwnRestrictionOnServer(int id, ERestrictedOwnType kind) { }
 }
+public enum ERestartPlacement { Default, FirstStage }
 public sealed class PlayerSpawner : UnityEngine.Object
 {
     public static readonly List<PlayerSpawner> MultiplayerList = new();
@@ -81,7 +82,9 @@ public sealed class PlayerSpawner : UnityEngine.Object
     public string playerGuid = Guid.NewGuid().ToString();
     public PlayerAvatar PlayerAvatar;
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public void RestartNewGame(int screen) => PlayerAvatar.Inventory.RestockStartingItem(currentPlayerIdx);
+    public void RestartNewGame(int screen) => RestartNewGame(screen, ERestartPlacement.Default);
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    public void RestartNewGame(int screen, ERestartPlacement placement) => PlayerAvatar.Inventory.RestockStartingItem(currentPlayerIdx);
 }
 public class UnitAvatar : UnityEngine.Object { }
 public sealed class PlayerAvatar : UnitAvatar

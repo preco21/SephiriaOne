@@ -11,8 +11,7 @@ namespace SephiriaOne
         {
             Prefix(harmony, typeof(PlayerSpawner), "OnDestroy", Type.EmptyTypes, nameof(BeforeDestroy));
             Prefix(harmony, typeof(PlayerSpawner), "OnStartServer", Type.EmptyTypes, nameof(BeforeSpawn));
-            var initialize = Require(typeof(PlayerSpawner), "Initialize", typeof(bool), false,
-                new[] { typeof(int), typeof(string), typeof(string), typeof(int) });
+            var initialize = NativePlayerInitialization.ResolveInitialize(typeof(PlayerSpawner));
             harmony.Patch(initialize, prefix: Hook(nameof(BeforeInitialize)), finalizer: Hook(nameof(AfterInitialize), Priority.Last));
             Prefix(harmony, typeof(HorayNetworkManager), "OnServerDisconnect", new[] { typeof(NetworkConnectionToClient) }, nameof(BeforeDisconnect));
             Prefix(harmony, typeof(HorayNetworkManager), "OnStopServer", Type.EmptyTypes, nameof(BeforeStop));

@@ -8,6 +8,34 @@ internal static class GameGuardTests
     {
         var avatar = game.GetType("UnitAvatar", true)!;
         var native = PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(avatar, "ApplyDamage"), out var generator).ToList();
+        var defense = AccessTools.DeclaredMethod(avatar, "ApplyDefense", new[] { typeof(float), typeof(int), typeof(int) });
+        if (defense != null)
+        {
+            var transpiler = addon.GetType("SephiriaOne.FriendlyFireTranspiler", true)!;
+            var validate = AccessTools.DeclaredMethod(transpiler, "ValidateDefenseHelper");
+            var defenseCode = PatchProcessor.GetOriginalInstructions(defense).ToList();
+            bool Valid(IEnumerable<CodeInstruction> code) => (bool)validate.Invoke(null, new object[] { code })!;
+            if (!Valid(defenseCode) || Valid(defenseCode.Where(i => !i.LoadsConstant("TOUGHNESS"))) ||
+                Valid(defenseCode.Select(i => i.LoadsConstant(1f) ? new CodeInstruction(OpCodes.Ldc_R4, 2f) : i)) ||
+                Valid(defenseCode.Select(i => i.opcode == OpCodes.Sub ? new CodeInstruction(OpCodes.Add) : i)))
+                throw new Exception("Guard MP contract: extracted defense requires native Toughness/minimum and subtraction arithmetic");
+            var validateCaller = AccessTools.DeclaredMethod(transpiler, "Validate");
+            bool CallerValid(IEnumerable<CodeInstruction> code) => (bool)validateCaller.Invoke(null, new object[] { code })!;
+            int call = native.FindIndex(i => i.Calls(defense));
+            var wrongAmount = native.Select(i => new CodeInstruction(i)).ToList();
+            wrongAmount[call - 3] = new CodeInstruction(OpCodes.Ldloc, 65535);
+            if (!CallerValid(native) || CallerValid(native.Where(i => !i.Calls(defense))) ||
+                CallerValid(native.Concat(new[] { native[call] })) || CallerValid(wrongAmount))
+                throw new Exception("Guard MP contract: extracted defense requires one exact damage-local call before shields");
+            var combined = ((IEnumerable<CodeInstruction>)AccessTools.DeclaredMethod(transpiler, "Rewrite")
+                .Invoke(null, new object[] { native, generator })!).ToList();
+            int combinedDefense = combined.FindIndex(i => i.Calls(defense));
+            int scale = combined.FindIndex(i => i.operand is MethodInfo m && m.Name == "Scale" && m.DeclaringType?.Name == "FriendlyFireRuntime");
+            int shieldRead = combined.FindIndex(combinedDefense, i => i.operand is MethodInfo m && m.Name == "get_Shield" && m.DeclaringType == avatar);
+            if (scale != combinedDefense + 3 || shieldRead != scale + 3 || !combined[combinedDefense + 1].IsStloc() ||
+                !combined[scale - 1].IsLdloc() || !combined[scale + 1].IsStloc())
+                throw new Exception("Guard MP contract: one scaling adapter follows extracted defense and precedes shield absorption");
+        }
         var useMp = AccessTools.DeclaredMethod(avatar, "UseMp", new[] { typeof(int) });
         var rewrite = AccessTools.DeclaredMethod(addon.GetType("SephiriaOne.FriendlyFireGuardHooks", true)!, "Rewrite");
         List<CodeInstruction> Rewrite(IEnumerable<CodeInstruction> code) =>

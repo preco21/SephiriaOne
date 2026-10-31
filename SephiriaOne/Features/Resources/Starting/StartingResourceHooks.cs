@@ -49,8 +49,7 @@ namespace SephiriaOne
             var instance = new Harmony(Owner);
             try
             {
-                MethodInfo initialize = AccessTools.DeclaredMethod(typeof(PlayerSpawner), "Initialize",
-                    new[] { typeof(int), typeof(string), typeof(string), typeof(int) });
+                MethodInfo initialize = NativePlayerInitialization.ResolveInitialize(typeof(PlayerSpawner));
                 MethodInfo departure = AccessTools.DeclaredMethod(typeof(DungeonManager), nameof(DungeonManager.LoadStageAndMove), new[] { typeof(string) });
                 MethodInfo disconnect = AccessTools.DeclaredMethod(typeof(HorayNetworkManager), nameof(HorayNetworkManager.OnServerDisconnect), new[] { typeof(NetworkConnectionToClient) });
                 if (initialize == null || initialize.ReturnType != typeof(bool) || departure == null ||

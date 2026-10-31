@@ -204,6 +204,7 @@ public partial class UnitAvatar : CombatBehaviour
         "LIGHTNINGDAMAGE" => ConvertedElementForTest(3),
         "MPSHIELD" => IsMpShield ? 1 : 0,
         "IGNOREEVASION" => IgnoreEvasion,
+        "EVASIONRATEREDUCTION" => EvasionRateReduction,
         "ABSOLUTEEVASION" => AbsoluteEvasion,
         "INFINITYMP" => InfiniteMp ? 1 : 0,
         _ => 0

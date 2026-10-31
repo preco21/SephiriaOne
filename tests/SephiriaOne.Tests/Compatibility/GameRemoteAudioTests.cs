@@ -6,6 +6,7 @@ internal static class GameRemoteAudioTests
 {
     internal static void Run(Assembly game, Assembly addon)
     {
+        GamePresentationAudioTests.Run(game);
         void Check(bool ok, string why) { if (!ok) throw new Exception("Remote audio: " + why); }
         var rabbit = addon.GetType("SephiriaOne.RabbitPotionNativeHooks", true)!;
         Check((bool)AccessTools.Method(rabbit, "ValidateHealPresentation").Invoke(null, null)!, "Native potion audio/visual contract");
@@ -17,7 +18,7 @@ internal static class GameRemoteAudioTests
         var heal = Code("PotionEffect_Regeneration", "CreateDrinkVisual");
         bool Validate(List<CodeInstruction> s, List<CodeInstruction> r, List<CodeInstruction> b, List<CodeInstruction> d, List<CodeInstruction> h) =>
             (bool)AccessTools.Method(rabbit, "ValidateHealPresentationCode").Invoke(null, new object[] { s, r, b, d, h })!;
-        foreach (string mutation in new[] { "hash", "owner", "payload", "receiver", "audio", "heal" })
+        foreach (string mutation in new[] { "hash", "owner", "payload", "receiver", "factory", "audio", "heal" })
         {
             var s = sender.Select(i => new CodeInstruction(i)).ToList(); var r = reader.Select(i => new CodeInstruction(i)).ToList();
             var b = body.Select(i => new CodeInstruction(i)).ToList(); var d = drink.Select(i => new CodeInstruction(i)).ToList();
@@ -26,6 +27,7 @@ internal static class GameRemoteAudioTests
             if (mutation == "owner") { int at = s.FindIndex(i => i.operand is MethodInfo m && m.Name == "SendRPCInternal"); s[at - 1] = new(OpCodes.Ldc_I4_0); }
             if (mutation == "payload") r.RemoveAll(i => i.operand is MethodInfo m && m.Name == "ReadVector3");
             if (mutation == "receiver") b.Add(new CodeInstruction(OpCodes.Call, AccessTools.Method(game.GetType("UnitAvatar"), "HealPercent", new[] { typeof(float) })));
+            if (mutation == "factory") d.RemoveAll(i => i.operand is MethodInfo m && m.Name is "CreateInstance" or "TryCreateSoundInstance");
             if (mutation == "audio") d.RemoveAll(i => i.operand is MethodInfo m && m.Name == "start");
             if (mutation == "heal") h.RemoveAll(i => i.operand is FieldInfo f && f.Name == "regenerationSoundEvent");
             Check(!Validate(s, r, b, d, h), "Reject changed heal contract: " + mutation);

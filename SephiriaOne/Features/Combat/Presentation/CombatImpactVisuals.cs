@@ -114,6 +114,8 @@ namespace SephiriaOne
             Type t = m.DeclaringType;
             return t == typeof(FMODUnity.EventReference) && m.Name == "get_IsNull" ||
                 t == typeof(FMODUnity.RuntimeManager) && m.Name == "PlayOneShot" ||
+                t == typeof(SoundManager) && m.Name == "PlayOneShot" && m.ReturnType == typeof(void) &&
+                    m.GetParameters().Select(p => p.ParameterType).SequenceEqual(new[] { typeof(FMODUnity.EventReference), typeof(Vector3) }) ||
                 t == typeof(SpriteFx) && (m.Name == "get_Pool" || m.Name == "SetBodyYPos" || m.Name == "SetRotation" || m.Name == "SetScale" || m.Name == "SetTransparentOnMultiplayer") ||
                 t == typeof(ObjectPoolingFactory<SpriteFx>) && m.Name == "Spawn" ||
                 t == typeof(UnityEngine.Random) && (m.Name == "Range" || m.Name == "get_insideUnitCircle") ||

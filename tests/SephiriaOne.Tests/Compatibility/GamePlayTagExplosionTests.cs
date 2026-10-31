@@ -15,6 +15,24 @@ internal static class GamePlayTagExplosionTests
         var mirror = bullet.BaseType!.BaseType!.Assembly;
         var server = mirror.GetType("Mirror.NetworkServer", true)!;
         var client = mirror.GetType("Mirror.NetworkClient", true)!;
+        var blink = game.GetType("BulletMoveModule_BlinkToTargetPosition", true)!;
+        var rotation = AccessTools.DeclaredField(blink, "rotateBodyToDirection");
+        if (rotation != null)
+        {
+            var guard = AccessTools.DeclaredMethod(adapter, "ValidateBlinkRotation");
+            Require(guard != null, "beta client body rotation is explicitly guarded on the prefab");
+            var sample = System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(blink);
+            Require((bool)guard!.Invoke(null, new[] { sample })!, "disabled native body rotation accepted");
+            rotation.SetValue(sample, true);
+            Require(!(bool)guard.Invoke(null, new[] { sample })!, "changed native body rotation fails closed");
+            var rotationCode = Code(blink, "ApplyBodyAngle");
+            Require(rotationCode[0].opcode == OpCodes.Ldarg_0 && Equals(rotationCode[1].operand, rotation) &&
+                rotationCode[2].Branches(out Label? rotationEnd) && rotationEnd.HasValue,
+                "new client callback returns before any work when the serialized rotation option is false");
+            Require(Calls(Code(blink, "OnStartClient")).Count(m => m.Name == "ApplyBodyAngle") == 1 &&
+                !Calls(rotationCode).Any(m => m.Name is "Move" or "AttackOnServer" or "ApplyDamage" or "OnSpawn"),
+                "new client startup only applies optional body rotation");
+        }
         Require((bool)AccessTools.DeclaredMethod(adapter, "ValidateNativeCode").Invoke(null, null)!, "audited game and Mirror fingerprints");
         var hash = AccessTools.DeclaredMethod(addon.GetType("SephiriaOne.NativeAssemblyContract", true), "Matches");
         Require(!(bool)hash.Invoke(null, new object[] { game, new string('0', 64) })!, "changed assembly fails closed");

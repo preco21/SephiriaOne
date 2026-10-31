@@ -6,6 +6,7 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../SephiriaOne/Infrastructure/NativePlayerInitialization.cs" Link="NativePlayerInitialization.cs" />
     <Compile Include="../../SephiriaOne/Features/Resources/Starting/*.cs" Link="Source/Starting/%(Filename)%(Extension)" />
     <Compile Include="../../SephiriaOne/Features/Resources/ResourceCommand.cs" Link="Source/ResourceCommand.cs" />
     <Compile Include="../../SephiriaOne/Features/Resources/ResourcePolicy.cs" Link="Source/ResourcePolicy.cs" />

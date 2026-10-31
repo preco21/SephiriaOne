@@ -71,6 +71,8 @@ namespace UnityEngine
 
 namespace SephiriaOne
 {
+    internal static class CombatModeFeature { internal static void Initialize() => LifecycleProbe.Initialize("CombatMode"); internal static void Shutdown() => LifecycleProbe.Shutdown("CombatMode"); }
+    internal static class PvpCoverFeature { internal static void Initialize() => LifecycleProbe.Initialize("PvpCover"); internal static void Shutdown() => LifecycleProbe.Shutdown("PvpCover"); }
     internal sealed class MultiplayerNameController : UnityEngine.Component { }
     internal sealed class ModChatCommands : UnityEngine.Component { }
     internal sealed class SessionSettingsController : UnityEngine.Component { }

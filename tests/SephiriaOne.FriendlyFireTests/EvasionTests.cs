@@ -118,6 +118,32 @@ internal static class EvasionTests
         long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
         check(allocated == 0, "Balanced Evasion adds no warmed per-hit allocation");
         Console.WriteLine("Balanced Evasion: " + allocated + " bytes / 1000 warmed hits");
+        var beta = new HarmonyLib.Harmony("SephiriaOne.Tests.BetaEvasion");
+        var betaRoll = HarmonyLib.AccessTools.DeclaredMethod(typeof(UnitAvatar), nameof(UnitAvatar.BetaEvasionRoll));
+        try
+        {
+            beta.Patch(betaRoll, transpiler: new HarmonyLib.HarmonyMethod(typeof(FriendlyFireEvasionHooks), nameof(FriendlyFireEvasionHooks.Rewrite)));
+            Fresh(); target.EvasionRateReduction = 100;
+            check(target.GetEvasionChancePercent() > 100, "Beta native helper and C-menu retain signed rate modifier without the PvP cap");
+            bool Roll(float roll)
+            {
+                UnityEngine.Random.NextValue = roll;
+                var result = EApplyDamageResult.Success;
+                FriendlyFireRuntime.BeforeHit(target, hit, ref result, out var state);
+                try { return target.BetaEvasionRoll(source); }
+                finally { FriendlyFireRuntime.AfterHit(null, state); }
+            }
+            check(!Roll(60) && Roll(50), "Beta caller caps the final modified stat chance at 50 percent");
+            target.EvasionRateReduction = -50;
+            check(Roll(30) && !Roll(40), "Beta negative rate modifier precedes the cap, retaining native roughly 38 percent chance");
+            target.EvasionRateReduction = 100; source.IgnoreEvasion = 50;
+            check(Roll(25) && !Roll(26), "Beta attacker anti-Evasion follows the final chance cap");
+            target.EvasionRateReduction = -200; source.IgnoreEvasion = 0;
+            check(!Roll(1), "Beta lower clamp survives a negative final native probability");
+            target.EvasionRateReduction = 100; SessionSettings.FriendlyFireForHit = new(true, 100);
+            check(Roll(100), "Beta balancing-off chance remains native including its rate modifier");
+        }
+        finally { beta.Unpatch(betaRoll, HarmonyLib.HarmonyPatchType.Transpiler, beta.Id); }
         FriendlyFireParticipants.Clear(); CombatMatchRuntime.PairRule = null; CombatMatchRuntime.Chaser = null;
         Mirror.NetworkServer.active = true; UnityEngine.Random.NextValue = 100;
         SessionSettings.FriendlyFireForHit = default;

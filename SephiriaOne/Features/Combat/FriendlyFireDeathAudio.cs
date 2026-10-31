@@ -145,7 +145,9 @@ namespace SephiriaOne
                 code[3].operand is Label afterSound && code[8].labels.Contains(afterSound) &&
                 code[4].opcode == OpCodes.Ldarg_0 && code[5].opcode == OpCodes.Ldfld && IsSoundField(code[5].operand) &&
                 code[6].opcode == OpCodes.Ldarg_3 && code[7].opcode == OpCodes.Call &&
-                code[7].operand is MethodInfo play && play.DeclaringType?.FullName == "FMODUnity.RuntimeManager" && play.Name == "PlayOneShot" &&
+                code[7].operand is MethodInfo play &&
+                (play.DeclaringType?.FullName == "FMODUnity.RuntimeManager" || play.DeclaringType == typeof(BulletDestroyModule).Assembly.GetType("SoundManager")) &&
+                play.Name == "PlayOneShot" &&
                 play.ReturnType == typeof(void) && play.GetParameters().Select(p => p.ParameterType.FullName)
                     .SequenceEqual(new[] { "FMODUnity.EventReference", "UnityEngine.Vector3" });
         }
@@ -165,6 +167,7 @@ namespace SephiriaOne
             int end = code.FindIndex(i => i.labels.Contains(target));
             var audio = code.Select((i, index) => (i, index)).Where(x => x.i.operand is MethodInfo m &&
                 (m.DeclaringType?.FullName == "FMODUnity.RuntimeManager" && m.Name == "CreateInstance" ||
+                 m.DeclaringType == typeof(PlayerSpawner).Assembly.GetType("SoundManager") && m.Name == "TryCreateSoundInstance" ||
                  m.DeclaringType?.FullName == "FMOD.Studio.EventInstance" && (m.Name == "start" || m.Name == "release"))).ToList();
             return audio.Count == 3 && audio.All(x => x.index > gate && x.index < end) &&
                 code.Any(i => i.operand is FieldInfo f && f.DeclaringType == typeof(PlayerSpawner) && f.Name == "dieSoundEvent");

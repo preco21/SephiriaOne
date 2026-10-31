@@ -57,9 +57,11 @@ namespace SephiriaOne
             var startup = PatchProcessor.GetOriginalInstructions(start);
             int created = startup.FindIndex(i => i.opcode == OpCodes.Stfld && i.operand is FieldInfo f && f.Name == "darkCloudObject");
             int ownerGate = startup.FindIndex(i => i.operand is MethodInfo m && m.Name == "get_isOwned");
-            return created >= 0 && ownerGate > created &&
-                Calls(PatchProcessor.GetOriginalInstructions(attack)).Select(m => m.Name)
-                    .SequenceEqual(new[] { "Range", "SetValue", "SetValue", "SetValue", "Play" }) &&
+            var attackCalls = Calls(PatchProcessor.GetOriginalInstructions(attack)).ToList();
+            return created >= 0 && ownerGate > created && attackCalls.Count == 5 &&
+                attackCalls.Take(4).Select(m => m.Name).SequenceEqual(new[] { "Range", "SetValue", "SetValue", "SetValue" }) &&
+                (attackCalls[4].DeclaringType?.FullName == "FMODUnity.StudioEventEmitter" && attackCalls[4].Name == "Play" ||
+                 attackCalls[4].DeclaringType == type.Assembly.GetType("SoundManager") && attackCalls[4].Name == "PlaySoundEmitter") &&
                 ValidateCode(PatchProcessor.GetOriginalInstructions(sender), PatchProcessor.GetOriginalInstructions(receiver), PatchProcessor.GetOriginalInstructions(body));
         }
 

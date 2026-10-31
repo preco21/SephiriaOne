@@ -158,8 +158,36 @@ namespace SephiriaOne
                 emitter.GuardTail is MethodInfo method ? code[i].Calls(method) :
                 emitter.GuardTail is FieldInfo field && code[i].StoresField(field)).ToArray();
             if (tails.Length != emitter.Calls) throw new InvalidOperationException("Native secondary guard tail changed: " + emitter.Method);
+            if (emitter.Source == "ice-air-slash" || emitter.Source == "ice-spear" || emitter.Source == "ice-bow")
+            {
+                int tail = tails[0];
+                if (tail < 2 || tail + 1 >= code.Count)
+                    throw new InvalidOperationException("Native Ice Weapon configuration boundary changed: " + emitter.Method);
+                // Beta keeps the bullet on the evaluation stack after swingId
+                // to add its Ice Weapon critical bonus. A rejected spawn must
+                // skip that whole configuration, then retain the native cadence.
+                const string criticalKey = "FROSTRELICCRITICALDAMAGE";
+                bool critical = code.Any(i => Text(i, criticalKey));
+                if (critical || code[tail - 2].opcode == OpCodes.Dup || code[tail + 1].opcode == OpCodes.Dup)
+                {
+                    var field = AccessTools.Field(typeof(ProjectileBase), "additionalCriticalDamageRate");
+                    var owner = AccessTools.PropertyGetter(typeof(Charm_Basic), "NetworkAvatar");
+                    var stat = AccessTools.DeclaredMethod(typeof(UnitAvatar), "GetCustomStatUnsafe", new[] { typeof(string) });
+                    OpCode ownerLoad = emitter.Source == "ice-bow" ? OpCodes.Ldarg_0 : OpCodes.Ldloc_1;
+                    if (tail + 9 >= code.Count || !critical || code[tail - 2].opcode != OpCodes.Dup ||
+                        !Text(code[tail - 1], "FROSTRELIC") || code[tail + 1].opcode != OpCodes.Dup ||
+                        field == null || !code[tail + 2].LoadsField(field) || code[tail + 3].opcode != ownerLoad ||
+                        owner == null || !code[tail + 4].Calls(owner) || !Text(code[tail + 5], criticalKey) ||
+                        stat == null || !code[tail + 6].Calls(stat) || code[tail + 7].opcode != OpCodes.Add ||
+                        !code[tail + 8].StoresField(field))
+                        throw new InvalidOperationException("Native Ice Weapon critical configuration changed: " + emitter.Method);
+                    tails[0] = tail + 8;
+                }
+            }
             return tails;
         }
+        private static bool Text(CodeInstruction instruction, string value) =>
+            instruction.opcode == OpCodes.Ldstr && Equals(instruction.operand, value);
         internal static IEnumerable<CodeInstruction> Rewrite(IEnumerable<CodeInstruction> instructions, ILGenerator generator, MethodBase __originalMethod)
         {
             Emitter emitter = Emitters().Single(e => e.Method == __originalMethod);

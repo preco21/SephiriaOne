@@ -15,9 +15,8 @@ namespace SephiriaOne
         internal const float VisualScale = 2f;
         private const string PrefabName = "MoneyWhirlwind";
         private const uint AssetId = 2358477907;
-        private const string GameHash = "C57A0DAEAB8E8D0AF7066A344133EEC4C57D8F303FD9E25DA9410FBFC4CF1510";
-        private const string MirrorHash = "C391C91BA860C537692C185B1075F4219EC83FA71A11990A2B51C13876AB7440";
         private static readonly FieldInfo AttackCallback = typeof(Bullet).GetField("onAttack", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly FieldInfo BodyRotation = typeof(BulletMoveModule_BlinkToTargetPosition).GetField("rotateBodyToDirection");
         private static GameObject owned;
         private static DungeonManager dungeon;
         private static SaveData run;
@@ -133,7 +132,12 @@ namespace SephiriaOne
         }
 
         internal static bool ValidateNativeCode() => AttackCallback != null &&
-            NativeAssemblyContract.Matches(typeof(Bullet).Assembly, GameHash) && NativeAssemblyContract.Matches(typeof(NetworkClient).Assembly, MirrorHash);
+            NativeAssemblyContract.MatchesPresentationPair(typeof(Bullet).Assembly, typeof(NetworkClient).Assembly);
+
+        // Beta adds a client startup/SyncVar rotation callback. The audited
+        // stock prefab leaves it off; retain the stable build's absent field.
+        private static bool ValidateBlinkRotation(BulletMoveModule move) => BodyRotation == null ||
+            BodyRotation.FieldType == typeof(bool) && Equals(BodyRotation.GetValue(move), false);
 
         private static bool ValidatePrefab(Bullet prefab)
         {
@@ -166,6 +170,7 @@ namespace SephiriaOne
             var move = prefab.MoveModule;
             var destroy = prefab.DestroyModule;
             if (!move || move.GetType() != typeof(BulletMoveModule_BlinkToTargetPosition) || move.destroyOnGrounded || move.destroyOnPitFalling || move.isFallingWithDelay ||
+                !ValidateBlinkRotation(move) ||
                 !destroy || destroy.GetType() != typeof(BulletDestroyModule_DestroyImmediate) || !destroy.destroySound.IsNull || destroy.destroyFxPrefab ||
                 destroy.destroyFxPrefabList.Count != 0 || destroy.breakFxFragments.Count != 0) return false;
             var actor = prefab.GetComponent<TopdownActorRenderingMetadata>();

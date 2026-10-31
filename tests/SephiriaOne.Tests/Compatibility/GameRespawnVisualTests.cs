@@ -44,7 +44,9 @@ internal static class GameRespawnVisualTests
         Require(!show.Any(i => i.operand is MethodInfo m && new[] { "Revive", "ReviveAnotherPlayer", "RpcRevived", "ApplyDamage", "SetHp" }.Contains(m.Name)),
             "visual adapter never calls gameplay revival or changes HP");
         var ui = game.GetType("UI_ReviveEffect", true)!;
-        Require(Code(AccessTools.DeclaredMethod(ui, "OnOpened")).Any(i => i.operand is MethodInfo m && m.Name == "Play") &&
+        Require(Code(AccessTools.DeclaredMethod(ui, "OnOpened")).Any(i => i.operand is MethodInfo m &&
+            (m.DeclaringType?.FullName == "FMODUnity.StudioEventEmitter" && m.Name == "Play" ||
+             m.DeclaringType == game.GetType("SoundManager") && m.Name == "PlaySoundEmitter")) &&
             Code(AccessTools.DeclaredMethod(ui, "Update")).Any(i => i.operand is MethodInfo m && m.Name == "Close"),
             "native visual includes its documented brief flash/sound and automatic close");
         var runtime = addon.GetType("SephiriaOne.CombatMatchRuntime", true)!;

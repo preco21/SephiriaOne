@@ -20,6 +20,28 @@ namespace UnityEngine
 public partial class UnitAvatar
 {
     public int Evasion, IgnoreEvasion, AbsoluteEvasion;
+    public int EvasionRateReduction;
     public bool EvasionDisabled;
     public Action<DamageInstance> OnEvade;
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    public float GetEvasionChancePercent()
+    {
+        float stat = GetCustomStat(ECustomStat.Evasion);
+        if (stat > 10000f) stat = 10000f;
+        float chance = 100f * UnityEngine.Mathf.Log(stat / 6200f + 1f) * 0.8f;
+        int modifier = GetCustomStatUnsafe("EVASIONRATEREDUCTION");
+        if (modifier != 0) chance = chance * (float)(100 + modifier) / 100f;
+        if (chance < 0f) chance = 0f;
+        return chance;
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    public bool BetaEvasionRoll(UnitAvatar attacker)
+    {
+        float chance = GetEvasionChancePercent();
+        int ignore = attacker.GetCustomStatUnsafe("IGNOREEVASION");
+        if (ignore > 0) chance -= chance * ((float)ignore / 100f);
+        return chance >= UnityEngine.Random.Range(0f, 100f);
+    }
 }

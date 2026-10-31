@@ -19,7 +19,7 @@ internal static class GameRabbitArtifactCompatibilityTests
         int costumeLoad = Call(loader, "CostumeDatabase", "Initialize");
         int itemLoad = Call(loader, "ItemDatabase", "Initialize");
         int ready = Call(loader, "HorayModAPI", "NotifyAllModDatabasesReady");
-        Require(costumeLoad >= 0 && itemLoad > costumeLoad && ready > itemLoad,
+        Require(costumeLoad >= 0 && itemLoad >= 0 && ready > costumeLoad && ready > itemLoad,
             "database-ready registration must occur after both native databases exist");
         var feature = addon.GetType("SephiriaOne.RabbitStartingArtifactFeature", true)!;
         var entry = addon.GetType("SephiriaOne.Entry", true)!;
@@ -56,7 +56,10 @@ internal static class GameRabbitArtifactCompatibilityTests
             Field(removeCode, "startingItems") >= 0 && Call(removeCode, "Item", "DestroyItemInstance") >= 0,
             "cleanup must remove pending/full-inventory, temporary and dropped costume instances");
 
-        var restart = Code("PlayerSpawner", "RestartNewGame");
+        var placement = game.GetType("ERestartPlacement");
+        var restartMethod = AccessTools.DeclaredMethod(Type("PlayerSpawner"), "RestartNewGame",
+            placement == null ? new[] { typeof(int) } : new[] { typeof(int), placement })!;
+        var restart = PatchProcessor.GetOriginalInstructions(restartMethod).ToList();
         Require(Call(restart, "PlayerSpawner", "Initialize") >= 0 &&
             Call(restart, "GridInventory", "RestockStartingItem") > Call(restart, "PlayerSpawner", "Initialize"),
             "new runs must restock the current starting-item list after player initialization");
@@ -70,7 +73,7 @@ internal static class GameRabbitArtifactCompatibilityTests
             .Single(t => t.Name.StartsWith("<RestartGameCoroutine>", StringComparison.Ordinal));
         var reset = PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(restartIterator, "MoveNext")).ToList();
         Require(Call(reset, "GridInventory", "ForceRemoveAll") >= 0 &&
-            Call(reset, "PlayerSpawner", "RestartNewGame") > Call(reset, "GridInventory", "ForceRemoveAll"),
+            reset.FindIndex(i => Equals(i.operand, restartMethod)) > Call(reset, "GridInventory", "ForceRemoveAll"),
             "old saved-run item IDs must be cleared before the next costume restock");
         Require(Field(Code("UI_CostumePanel", "UpdateData"), "startingItems") >= 0 &&
             Call(Code("UI_CostumePanel", "UpdateData"), "UI_ItemIcon", "SetItem") >= 0,

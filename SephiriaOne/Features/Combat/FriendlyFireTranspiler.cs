@@ -32,16 +32,27 @@ namespace SephiriaOne
             int contains = followers < 0 ? -1 : code.FindIndex(followers, i => Call(i, typeof(Mirror.SyncList<UnitAvatar>), "Contains"));
             int faction = code.FindIndex(i => Call(i, typeof(CombatManager), "ContainsAttackableFaction"));
             int toughness = code.FindIndex(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "TOUGHNESS"));
-            int shield = toughness < 0 ? -1 : code.FindIndex(toughness, i => Call(i, typeof(UnitAvatar), "get_Shield"));
+            // 1.1.0 moved defense, true damage, Toughness and the minimum-one
+            // clamp into ApplyDefense. Keep scaling at its caller, before shields.
+            var defense = AccessTools.DeclaredMethod(typeof(UnitAvatar), "ApplyDefense", new[] { typeof(float), typeof(int), typeof(int) });
+            var defenseCalls = Enumerable.Range(0, code.Count).Where(i => defense != null && code[i].Calls(defense)).ToArray();
+            bool extractedDefense = toughness < 0 && defenseCalls.Length == 1 && !defense.IsStatic && defense.ReturnType == typeof(float) &&
+                ValidateDefenseHelper(PatchProcessor.GetOriginalInstructions(defense));
+            int defenseEnd = extractedDefense ? defenseCalls[0] : toughness;
+            int shield = defenseEnd < 0 ? -1 : code.FindIndex(defenseEnd, i => Call(i, typeof(UnitAvatar), "get_Shield"));
             int mpShield = shield < 0 ? -1 : code.FindIndex(shield, i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "MPSHIELD"));
             if (!(leader >= 0 && equality > leader && equality < followers && contains > followers && contains < faction && faction < end &&
-                end < beforeAttack && beforeLeader < toughness && shield > toughness) ||
-                equality - leader > 4 || contains - followers > 3 || shield - toughness > 28 || code[shield - 1].opcode != OpCodes.Ldarg_0 ||
+                end < beforeAttack && beforeLeader < defenseEnd && shield > defenseEnd) ||
+                equality - leader > 4 || contains - followers > 3 || shield - defenseEnd > 28 || code[shield - 1].opcode != OpCodes.Ldarg_0 ||
                 mpShield <= shield || mpShield - shield > 45 || code[mpShield - 1].opcode != OpCodes.Ldarg_0)
                 throw new InvalidOperationException("Friendly-fire guard/scale anchors changed.");
             int store = shield - 2;
-            while (store > toughness && code[store].opcode == OpCodes.Nop) store--;
-            if (!code[store].IsStloc() || !code.Skip(toughness).Take(store - toughness).Any(i => i.opcode == OpCodes.Ldc_R4 && Equals(i.operand, 1f)))
+            while (store > defenseEnd && code[store].opcode == OpCodes.Nop) store--;
+            if (!code[store].IsStloc() || (extractedDefense ? store != defenseEnd + 1 || defenseEnd < 4 ||
+                    code[defenseEnd - 4].opcode != OpCodes.Ldarg_0 || !code[defenseEnd - 3].IsLdloc() ||
+                    !code[defenseEnd - 2].IsLdloc() || !code[defenseEnd - 1].IsLdloc() ||
+                    !SameLocal(code[defenseEnd - 3], code[store]) :
+                !code.Skip(toughness).Take(store - toughness).Any(i => i.opcode == OpCodes.Ldc_R4 && Equals(i.operand, 1f))))
                 throw new InvalidOperationException("Native minimum damage clamp changed.");
             // NaN/negative values introduced by native calculations can bypass
             // the positive-damage block entirely. Sanitize its common exit too,
@@ -71,6 +82,34 @@ namespace SephiriaOne
             code = FriendlyFireCriticalDamageHooks.Rewrite(code, generator).ToList();
             return FriendlyFireDefensiveEffectHooks.Rewrite(FriendlyFireWhiteBreadHooks.Rewrite(FriendlyFireAmplificationHooks.Rewrite(
                 FriendlyFireEvasionHooks.Rewrite(FriendlyFireHarvestHooks.Rewrite(FriendlyFireGuardHooks.Rewrite(FriendlyFireActiveDefenseHooks.Rewrite(code)))))));
+        }
+        internal static bool ValidateDefenseHelper(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = instructions.Where(i => i.opcode != OpCodes.Nop).ToList();
+            int toughness = code.FindIndex(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "TOUGHNESS"));
+            int follower = code.FindIndex(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, "FOLLOWERDEFENSE"));
+            // The extracted helper must return the same damage argument after
+            // Toughness subtraction and the native minimum-one clamp.
+            bool StoreDamage(CodeInstruction i) => (i.opcode == OpCodes.Starg || i.opcode == OpCodes.Starg_S) &&
+                (i.operand is ParameterInfo p ? p.Position == 0 : Convert.ToInt32(i.operand) == 1);
+            return toughness > 0 && toughness + 15 == code.Count && follower > 0 && follower < toughness &&
+                Call(code[follower - 1], typeof(UnitAvatar), "get_NetworkLeader") &&
+                Call(code[follower + 1], typeof(UnitAvatar), "GetCustomStatUnsafe") &&
+                code.Any(i => Call(i, typeof(UnitAvatar), "GetDamageReduction")) &&
+                code[toughness - 1].IsLdarg(0) && Call(code[toughness + 1], typeof(UnitAvatar), "GetCustomStatUnsafe") &&
+                code[toughness + 2].IsStloc() && code[toughness + 3].IsLdarg(1) &&
+                SameLocal(code[toughness + 4], code[toughness + 2]) && code[toughness + 5].opcode == OpCodes.Conv_R4 &&
+                code[toughness + 6].opcode == OpCodes.Sub && StoreDamage(code[toughness + 7]) &&
+                code[toughness + 8].IsLdarg(1) && code[toughness + 9].LoadsConstant(1f) &&
+                (code[toughness + 10].opcode == OpCodes.Bge_Un || code[toughness + 10].opcode == OpCodes.Bge_Un_S) &&
+                code[toughness + 10].operand is Label end && code[toughness + 13].labels.Contains(end) &&
+                code[toughness + 11].LoadsConstant(1f) && StoreDamage(code[toughness + 12]) &&
+                code[toughness + 13].IsLdarg(1) && code[toughness + 14].opcode == OpCodes.Ret;
+        }
+        private static bool SameLocal(CodeInstruction load, CodeInstruction store)
+        {
+            var expected = LoadLocal(store);
+            return load.opcode == expected.opcode && Equals(load.operand, expected.operand);
         }
         private static int BeforeAttackInvoke(List<CodeInstruction> code, string name, Type signature)
         {

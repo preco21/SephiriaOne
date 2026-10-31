@@ -14,10 +14,12 @@ internal static class GameExperienceCompatibilityTests
         var grant = AccessTools.DeclaredMethod(level, "LocalAddExp", new[] { typeof(int) });
         var initialize = AccessTools.DeclaredMethod(level, "LocalInitialize", new[] { typeof(int), typeof(int) });
         var setter = AccessTools.PropertySetter(level, "NetworkcurrentExp");
-        foreach (var pair in new[] { ("Exp", "Update"), ("MagicFountain", "Update"),
+        foreach (var pair in new[] { ("Exp", "Update"),
+            ("UI_DevCommandlinePanel", "OnSubmitCommand"),
             ("PlayerSpawner", "RestorePreservedRejoinables") })
             Require(Code(AccessTools.DeclaredMethod(game.GetType(pair.Item1), pair.Item2)).Any(i => i.Calls(add)),
                 "All native source grants converge: " + pair);
+        VerifyFountainGrant(game, add);
         Require(Code(grant).Any(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "FarmAbilityController" && m.Name == "AddExp"),
             "Blocking character XP must also skip its forwarded ability XP");
         Require(Code(initialize).Any(i => i.Calls(setter)) && !Code(initialize).Any(i => i.Calls(grant)),
@@ -47,6 +49,31 @@ internal static class GameExperienceCompatibilityTests
             Require(Code(AccessTools.DeclaredMethod(entry, pair.Item1)).Any(i => i.Calls(AccessTools.DeclaredMethod(feature, pair.Item2))),
                 "XP hook lifetime: " + pair);
         Console.WriteLine("Verified native XP grant sources, host/stock-client boundary, saved-level exclusion, XP writes, synchronization and hook lifetime (not live multiplayer).");
+    }
+    private static void VerifyFountainGrant(Assembly game, MethodInfo add)
+    {
+        var fountain = game.GetType("MagicFountain", true)!;
+        var request = fountain.GetNestedType("Request", BindingFlags.NonPublic);
+        if (request == null)
+        {
+            Require(Code(AccessTools.DeclaredMethod(fountain, "Update")).Any(i => i.Calls(add)),
+                "Legacy fountain reward converges on AddExp");
+            return;
+        }
+        var server = AccessTools.DeclaredMethod(fountain, "ServerRequest",
+            new[] { game.GetType("PlayerAvatar", true)!, request, typeof(int) });
+        Require(server != null, "Beta fountain retains its exact server request boundary");
+        var code = Code(server!);
+        int collect = code.FindIndex(i => i.operand is MethodInfo m &&
+            m.DeclaringType?.Name == "MagicFountainProgress" && m.Name == "TryCollect");
+        int grant = code.FindIndex(i => i.Calls(add));
+        Require(collect >= 0 && grant > collect && code.Count(i => i.Calls(add)) == 1 &&
+            code.Any(i => i.operand is MethodInfo m && m.DeclaringType?.FullName == "Mirror.NetworkServer" && m.Name == "get_active") &&
+            code.Any(i => i.operand is MethodInfo m && m.DeclaringType == fountain && m.Name == "IsInRange"),
+            "Fountain collection remains a guarded server grant through AddExp");
+        Require(Code(AccessTools.DeclaredMethod(fountain, "OnChoice")).Any(i => i.Calls(server)) &&
+            Code(AccessTools.DeclaredMethod(fountain, "UserCode_CmdRequest__Request__Int32__NetworkConnectionToClient"))
+                .Any(i => i.Calls(server)), "Host and stock-guest fountain choices converge on the server reward path");
     }
     private static List<CodeInstruction> Code(MethodBase method) => PatchProcessor.GetOriginalInstructions(method).ToList();
     private static void Require(bool condition, string message) { if (!condition) throw new Exception("XP contract: " + message); }

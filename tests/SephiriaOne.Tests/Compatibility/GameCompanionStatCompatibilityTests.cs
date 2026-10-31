@@ -21,8 +21,12 @@ internal static class GameCompanionStatCompatibilityTests
         OwnerRead(attack, "FOLLOWERATTACKSPEED", "get_NetworkLeader", "GetCustomStatUnsafe");
         Require(attack.Any(i => i.opcode == OpCodes.Add), "Owner attack speed remains additive to companion's own speed");
         var damage = Code("UnitAvatar", "ApplyDamage");
-        foreach (string key in new[] { "FOLLOWERCRITICAL", "FOLLOWERCRITICALCONTRIBUTE", "FOLLOWERDAMAGE", "FOLLOWERDEFENSE" })
+        foreach (string key in new[] { "FOLLOWERCRITICAL", "FOLLOWERCRITICALCONTRIBUTE", "FOLLOWERDAMAGE" })
             OwnerRead(damage, key, "get_NetworkLeader", key == "FOLLOWERCRITICAL" ? "GetCustomStat" : "GetCustomStatUnsafe");
+        var defenseCall = damage.SingleOrDefault(i => i.operand is MethodInfo m && m.DeclaringType == game.GetType("UnitAvatar") && m.Name == "ApplyDefense");
+        var defense = defenseCall == null ? damage : PatchProcessor.GetOriginalInstructions((MethodInfo)defenseCall.operand).ToList();
+        OwnerRead(defense, "FOLLOWERDEFENSE", "get_NetworkLeader", "GetCustomStatUnsafe");
+        Require(defense.Any(i => Calls(i, "GetDamageReduction")), "Companion defense remains in the native reduction calculation");
         int critical = damage.FindIndex(i => i.LoadsConstant("FOLLOWERCRITICAL"));
         Require(damage[critical + 2].opcode == OpCodes.Conv_R4 && damage[critical + 3].LoadsConstant(100f) &&
             damage[critical + 4].opcode == OpCodes.Div, "Companion critical chance uses hundredths of percentage points");
