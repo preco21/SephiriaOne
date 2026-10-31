@@ -9,6 +9,56 @@ behaviour. No guest installation or additional assets. The user confirmed cover
 appears in the lobby and on a second run with 0.100.2. The new prop mix and tighter
 clearance have static/fixture coverage; stock-guest gameplay remains unverified here.
 
+## Dense placement and displacement — 0.104.0, 2026-10-31
+
+The user's updated policy permits portal obstruction. Broad four-metre player,
+interaction and portal exclusions are removed. Half-unit sampling, a one-unit
+room-edge margin and a **1.55 × 1.2 m** envelope replace the 3×3 bypass policy.
+This fits the largest audited 1.35×1 prop with clearance; it does not increase
+the configured count or replace the existing five-prop variety. No global
+connectivity/bypass guarantee is made. Physical walls, pits/water/cliffs, native
+movement-layer triggers and small unavoidable spawn/boss-return landing areas
+remain protected. Nonphysical portal triggers do not reserve empty space.
+
+For an occupied candidate, plan distinct nearby safe destinations for **all**
+current-floor occupants, including nonparticipants. Read each actual movement
+collider's world bounds and offset; oversized/unreadable bodies fail closed.
+Check both destinations and the swept rectangular relocation corridor for
+terrain, walls, native props and other bodies. No player moves unless every
+required destination can be planned within the bounded search.
+
+Use native `CombatBehaviour.ReqSetPosition` instead of applying forces or writing
+transforms. Its remote branch sends an owner TargetRpc; it is asynchronous.
+Subscribe to `OnSetPositionServerside` before sending, require the exact native
+teleport acknowledgement **and** host-observed arrival, then recheck current
+occupancy immediately before `NetworkServer.Spawn`. Native movement can also move
+followers, so their colliders are checked too. One pending placement waits up
+to two seconds; no acknowledgement/clearance means skip it rather than create an
+overlapping prop. A guest merely walking clear does not acknowledge the request.
+
+An already-sent native RPC cannot be recalled. Keep its world-space destination
+reserved after placement timeout, cancellation, loading/readiness changes and
+floor/run-coordinate reuse until acknowledged arrival or connection/avatar
+invalidation. Do not send another displacement to that player while it remains
+outstanding. This bounded reservation can conservatively reduce placement if
+native acknowledgement/arrival is never observed. It never creates cover or
+retries a teleport by itself. Unload detaches callbacks after all cover is removed.
+Scope changes stop sending moves/spawning immediately, including changes made
+inside synchronous native movement callbacks.
+
+The existing owned-root/native despawn cleanup remains unchanged. Count/default
+20, 1–32 limits, native guest replication and PvP mode selection are unchanged.
+
+Validation: production-linked cover fixtures cover nine overlapping players,
+late acknowledgement, ordinary movement before acknowledgement, loading and
+reconnection, floor-coordinate reuse, cancellation, exhausted-search completion,
+reentrant setting edits, large bodies and hazard triggers. Installed-game
+contracts verify native TargetRpc/acknowledgement and collider paths. Evidence
+uses the same installed SHA-256 documented below; REA identity
+`ev_aea169428da293348307f450974cc2ab8e7f1ef5e1cb1308299bbf37b345fac7`.
+These are static/fixture checks, not live guest collision verification. No build
+was deployed. Earlier dated safety descriptions below are historical.
+
 ## Controls
 
 In **PvP 전투 / PvP Combat**, scroll the left column to **임시 엄폐물 / Temporary
@@ -44,29 +94,18 @@ changing floors, session shutdown and addon unload remove owned roots.
   Since 0.101.1, verified boss arenas are eligible too, including QTemple_Boss3's
   2×2 isometric top surfaces. Unsupported generators/grids and layouts without
   verified ground are skipped.
-- The count is a maximum, not a quota forced onto an unsafe map. Narrow rooms,
-  populated lobbies, geometry and protected interactions can reduce it to zero.
+- The count is a maximum, not a quota forced onto an unsafe map. Unsupported ground,
+  physical geometry or unavailable safe player destinations can reduce it.
 - Random candidates cycle through shuffled rooms across the **whole host floor**,
   not only the currently occupied room. Each shuffled five-prop bag contains
   every variant once before starting the next bag.
-- A 2.5-unit room-edge margin, a clear 3×3 movement square, and three-unit
-  separation between prop centers preserve a walkable bypass
-  around every compact obstacle. This conservative local clearance replaces a
-  whole-map connectivity search. There is no additional fixed per-room count
-  cap: spacing naturally limits density while allowing useful cover in a large
-  single-room lobby.
-- Reserve four units around room teleport points, native floor spawn points,
-  existing interactive props and current player positions, including corpses.
-  Include inactive hierarchy interactions, party-teleport sources/destinations,
-  boss spawn/reward anchors and final-boss scripted entry/return positions.
-  Reject pits, water, walls, cliffs and native blocking colliders. Damage hitboxes
-  and grounded bodies/props on TopdownWorld_1F/Blockable must clear a 1.85×1.5
-  footprint/margin; they
-  do not need to clear the entire 3×3 walkable bypass like physical obstacles.
-  Ground checks conservatively cover every tile beneath that square, including
-  fractional offsets and diagonal isometric axes. Only the audited 1×1 rectangular
-  and 2×2 isometric grids are supported, with no gaps, rotation, scale or axis
-  swizzling. Supplemental ground must share the same cell lattice and be active.
+- Use the compact envelope and safe displacement policy described above; portals
+  can be blocked. Native floor spawn and scripted boss-return anchors retain only
+  small landing reservations, not four-metre exclusion circles.
+- Ground checks cover every tile under the actual envelope, including fractional
+  offsets and diagonal axes. Only audited 1×1 rectangular and 2×2 isometric grids
+  are supported, with no gaps, rotation, scale or swizzling. Supplemental ground
+  must share the lattice and be active.
 - The props use their original Tile-layer collider. They affect everyone in
   that level, including nonparticipants and monsters. They cannot selectively
   block only PvP participants on stock guests.
@@ -119,13 +158,16 @@ per-client ownership or entity IDs are introduced.
 
 Placement runs at most **16 candidates and two native spawns per host frame**,
 with **1,024 attempts per scope**, and stops when the quota/search is complete.
-Each candidate uses at most two collision probes (static bypass, then occupancy),
-so there are at most 32 collision probes per frame. Repeated same-frame
-notifications cannot multiply this budget. A fully rejected search exhausts in
-64 frames, versus 512 before 0.101.0; actual elapsed time depends on frame rate
-and accepted spawns. Do not promise instant placement or a fixed wall-clock time.
-Ground/collision queries and room/interaction collection do not run during
-steady-state combat. Native graph erosion can touch the entire graph, so
+A buffered nonallocating collision query replaces the two broad probes. Extra
+player relocation searches have a shared **64-probe budget per frame**, not per
+player or candidate. At most one placement waits for native movement; repeated
+same-frame notifications cannot multiply work. The search still stops after
+1,024 attempts; a final-attempt pending placement is polled until completion or
+timeout. No ground/physics scanning runs after placement completes. Stable cover
+fixture updates allocate zero bytes over 1,000 ticks. Outstanding movement
+receipts are capped at 32 and only need small identity/arrival checks. Physics
+transforms are synchronized only during placement, including after local moves
+and spawns. Native graph erosion can touch the entire graph, so
 placement updates are coalesced into one region refresh; reductions/cleanup
 also coalesce removals. `PathGrid.UpdateRegion` queues changes during native
 asynchronous scans; do not gate it on `IsBuilt` and silently lose those changes.

@@ -14,8 +14,8 @@ var first = Floor("A");
 void Frame()
 {
     int before = PvpCoverNative.Spawns, probesBefore = Physics2D.Queries;
-    Time.frameCount++; PvpCoverRuntime.Tick();
-    Check(PvpCoverNative.Spawns - before <= 2 && Physics2D.Queries - probesBefore <= 32, "Bound search to 16 candidates / 32 collision probes and two network spawns per frame");
+    Time.frameCount++; Time.realtimeSinceStartup += .02f; PvpCoverRuntime.Tick();
+    Check(PvpCoverNative.Spawns - before <= 2 && Physics2D.Queries - probesBefore <= 100, "Bound search to 16 candidates / bounded relocation probes and two network spawns per frame");
 }
 void Fill() { for (int i = 0; i < 600; i++) Frame(); }
 void Count(int count) { SessionSettings.FriendlyFireForDisplay.Cover = new(true, count); PvpCoverRuntime.Tick(); }
@@ -36,7 +36,7 @@ int probes = Physics2D.Queries, updates = PathGrid.Current.Updates;
 Fill(); Check(Physics2D.Queries == probes && PvpCoverNative.Spawns == 20, "No steady-state physics/spawn loop");
 Check(updates == 1, "Batch native pathfinding update");
 long beforeAllocation = GC.GetAllocatedBytesForCurrentThread();
-for (int i = 0; i < 1000; i++) { Time.frameCount++; PvpCoverRuntime.Tick(); }
+for (int i = 0; i < 1000; i++) { Time.frameCount++; Time.realtimeSinceStartup += .02f; PvpCoverRuntime.Tick(); }
 long allocation = GC.GetAllocatedBytesForCurrentThread() - beforeAllocation;
 Check(allocation == 0, "Stable cover lifecycle has no managed allocations");
 Console.WriteLine($"Cover lifecycle: {allocation} bytes/1000 stable ticks (native APIs stubbed).");
@@ -133,6 +133,9 @@ SessionSettings.FriendlyFireForDisplay.Enabled = true; Fill();
 Check(PvpCoverRuntime.ActiveCount == 12, "Enabling PvP while already in the final boss arena also places cover");
 host.PlayerAvatar.currentFloorGuid = second.guid; Frame();
 Check(finalBoss.floorRelatedNetworkObjects.Count == 0, "Leaving the final boss arena clears its cover");
+PendingPlacementTests.Run(Check, host);
+SessionSettings.FriendlyFireForDisplay.Cover = new(true, 12);
+DisplacementTests.Run(Check);
 RoomAdapterTests.Run(Check);
 PvpCoverFeature.Available = false; Frame();
 Check(PvpCoverRuntime.Describe().Contains("unavailable"), "Compatibility failure is not reported as a loading delay");

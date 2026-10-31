@@ -1,7 +1,7 @@
 namespace SephiriaOne
 {
     // Audited stock props only. Physics dimensions are part of the compatibility
-    // contract: placement reserves a 3x3 bypass and a 1.85x1.5 occupied footprint.
+    // contract: placement reserves a compact 1.55x1.2 envelope.
     internal static class PvpCoverCatalog
     {
         internal readonly struct Entry

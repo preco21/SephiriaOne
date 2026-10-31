@@ -37,6 +37,7 @@ namespace UnityEngine
         public static implicit operator Vector3(Vector2 v) => new(v.x, v.y);
         public static implicit operator Vector2(Vector2Int v) => new(v.x, v.y);
         public static implicit operator Vector2(Vector3 v) => new(v.x, v.y);
+        public static Vector2 operator *(Vector2 a, float b) => new(a.x * b, a.y * b);
         public static Vector2 operator +(Vector2 a, Vector2 b) => new(a.x + b.x, a.y + b.y);
         public static Vector2 operator -(Vector2 a, Vector2 b) => new(a.x - b.x, a.y - b.y);
     }
@@ -44,13 +45,16 @@ namespace UnityEngine
     public readonly record struct Vector3Int(int x, int y, int z = 0) { public static Vector3Int zero => new(0, 0, 0); }
     public readonly record struct Vector3(float x, float y, float z = 0)
     {
+        public float sqrMagnitude => x*x + y*y + z*z;
+        public static Vector3 operator -(Vector3 a, Vector3 b) => new(a.x-b.x,a.y-b.y,a.z-b.z);
         public static Vector3 one => new(1, 1, 1);
         public static Vector3 zero => new(0, 0, 0);
         public static Vector3 operator +(Vector3 a, Vector3 b) => new(a.x + b.x, a.y + b.y, a.z + b.z);
     }
     public struct Bounds
     {
-        public Bounds(Vector3 center, Vector3 size) { }
+        public Vector3 center, size;
+        public Bounds(Vector3 center, Vector3 size) { this.center = center; this.size = size; }
         public void Encapsulate(Bounds other) { }
         public bool Intersects(Bounds other) => true;
     }
@@ -58,7 +62,12 @@ namespace UnityEngine
     {
         public readonly GameObject gameObject = new();
         public Vector2 Position, Size = new(1, 1);
+        public bool isTrigger, enabled = true;
+        public PlayerAvatar Owner;
+        public Bounds bounds => new(Position + (Owner ? (Vector2)Owner.transform.position : Vector2.zero), Size);
+        public T GetComponentInParent<T>() where T : class => Owner as T;
     }
+    public class CircleCollider2D : Collider2D { }
     public static class Physics2D
     {
         public static int Queries;
@@ -66,6 +75,20 @@ namespace UnityEngine
         public static Func<Vector2, bool> BlockPoint;
         public static readonly List<Collider2D> Scene = new();
         private static readonly Collider2D collider = new();
+        public static void SyncTransforms() { }
+        public static int OverlapBox(Vector2 point, Vector2 size, float angle, ContactFilter2D filter, Collider2D[] results)
+        {
+            Queries++;
+            if (BlockAll || BlockPoint?.Invoke(point) == true) { results[0] = collider; return 1; }
+            int mask = filter.layerMask;
+            int count = 0;
+            foreach (var c in Scene)
+                if (c.enabled && !c.Destroyed && (mask & (1 << c.gameObject.layer)) != 0 &&
+                    Math.Abs(c.bounds.center.x - point.x) < (c.Size.x + size.x) / 2 &&
+                    Math.Abs(c.bounds.center.y - point.y) < (c.Size.y + size.y) / 2)
+                { results[count++] = c; if (count == results.Length) break; }
+            return count;
+        }
         public static Collider2D OverlapBox(Vector2 point, Vector2 size, float rotation, int mask)
         {
             Queries++;
@@ -75,6 +98,7 @@ namespace UnityEngine
                 Math.Abs(c.Position.y - point.y) < (c.Size.y + size.y) / 2);
         }
     }
+    public struct ContactFilter2D { public bool useLayerMask, useTriggers; public int layerMask; }
     public static class LayerMask { public static int NameToLayer(string layer) => layer == "Blockable" ? 3 : 6; }
     public class GridLayout
     {
@@ -82,7 +106,7 @@ namespace UnityEngine
         public enum CellSwizzle { XYZ, XZY, YXZ, YZX, ZXY, ZYX }
     }
     public class Grid : Object { public Vector3 cellGap; }
-    public static class Time { public static int frameCount; }
+    public static class Time { public static int frameCount; public static float realtimeSinceStartup; }
     public static class Random { private static readonly System.Random random = new(12); public static int Range(int min, int max) => random.Next(min, max); }
     public static class Debug
     {
@@ -120,7 +144,13 @@ namespace UnityEngine.Tilemaps
 }
 namespace Mirror
 {
-    public static class NetworkServer { public static bool active = true; public static readonly object localConnection = new(); }
+    public class NetworkConnectionToClient { public int connectionId; public bool isReady = true; }
+    public static class NetworkServer
+    {
+        public static bool active = true;
+        public static readonly NetworkConnectionToClient localConnection = new();
+        public static readonly Dictionary<int, NetworkConnectionToClient> connections = new() { [0] = localConnection };
+    }
     public static class NetworkClient { public static bool active = true; }
 }
 public static class CombatManager { public const int BlockCharacterLayerMask = 1 << 12; }
@@ -197,12 +227,27 @@ public sealed class DungeonManager : UnityEngine.Object
 public static class SaveManager { public static object CurrentRun = new(); }
 public sealed class Stage : UnityEngine.Object { public Stage() { name = "Lobby"; } }
 public sealed class Race : UnityEngine.Object { public Stage lobbyStage = new(); }
-public sealed class PlayerAvatar : UnityEngine.Object
-{ public string currentFloorGuid = "A"; public int loadingScreenType = -1; public Race Race = new(); public readonly Transform transform = new(); }
+public class UnitAvatar : UnityEngine.Object { }
+public class BreakableProp : UnityEngine.Object { }
+public class TopdownRigidbody : UnityEngine.Object { public CircleCollider2D MovementCollider = new() { Size = new Vector2(.5f,.5f) }; }
+public sealed class PlayerAvatar : UnitAvatar
+{
+    public string currentFloorGuid = "A"; public int loadingScreenType = -1;
+    public Race Race = new(); public readonly Transform transform = new();
+    public Mirror.NetworkConnectionToClient connectionToClient = Mirror.NetworkServer.localConnection;
+    public TopdownRigidbody TopdownRigidbody = new();
+    public bool Deferred; public int Requests; public Vector3? Requested;
+    public Action OnRequest;
+    public event Action<Vector3, bool> OnSetPositionServerside;
+    public void AcknowledgeRequested() => OnSetPositionServerside?.Invoke(Requested.Value, true);
+    public PlayerAvatar() { TopdownRigidbody.MovementCollider.Owner = this; }
+    public void ReqSetPosition(Vector3 point, bool teleport)
+    { Requests++; Requested = point; if (!Deferred) { transform.position = point; AcknowledgeRequested(); } OnRequest?.Invoke(); }
+}
 public sealed class PlayerSpawner : UnityEngine.Object
 {
     public static readonly List<PlayerSpawner> MultiplayerList = new();
-    public PlayerAvatar PlayerAvatar = new(); public object connectionToClient = Mirror.NetworkServer.localConnection;
+    public PlayerAvatar PlayerAvatar = new(); public Mirror.NetworkConnectionToClient connectionToClient = Mirror.NetworkServer.localConnection;
 }
 namespace SephiriaOne
 {

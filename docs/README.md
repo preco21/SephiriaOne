@@ -1,5 +1,10 @@
 # Development knowledge index
 
+[Dense PvP cover](pvp-cover.md#dense-placement-and-displacement--01040-2026-10-31):
+0.104.0 allows portal obstruction, uses compact footprint checks and safely
+relocates overlapping players through native acknowledged movement. Includes
+bounded search, outstanding destination reservations and cleanup regressions.
+
 [Autonomous artifact range](pvp-autonomous-artifacts.md#owner-centered-range--01030-2026-10-31):
 0.103.0 limits automatic PvP attacks to 5 m from the live owner while balancing
 is active. Configurable UI/command covers the seven audited artifacts and Dark
@@ -16,7 +21,7 @@ Includes the 0.100.1 runtime failure evidence and remaining live verification.
 
 [Temporary PvP cover](pvp-cover.md): 0.100.1 fixes the omitted authored lobby
 generator and adds placement diagnostics. Default-off native cover has a
-configurable count (12 by default, 1–32). Includes safe placement, host-only
+configurable count (20 by default, 1–32). Includes safe placement, host-only
 network spawning, debris-free cleanup, lifecycle tests and live-test limitations.
 The [initial investigation](pvp-cover-investigation.md) records other candidates.
 

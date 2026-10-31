@@ -1043,7 +1043,7 @@
   "The Rabbit PvP override was removed. Use /one friendlyfire infinite-hp on|off; it controls HP potion consumption for all PvP participants. Automatic grants are separate.": "토끼 전용 PvP 예외 설정은 제거되었습니다. /one friendlyfire infinite-hp on|off로 모든 PvP 참가자의 HP 포션 소모를 설정하세요. 자동 지급은 별도입니다.",
   "Temporary cover": "임시 엄폐물",
   "Obstacles / level": "레벨당 엄폐물 수",
-  "1–32 · Safe space may reduce the count. Removed when PvP ends. Cover also blocks nonparticipants.": "1~32개 · 안전한 공간만 배치. PvP 종료 시 제거됩니다. 비참가자의 이동도 막습니다.",
+  "1–32 · May block portals and move players aside. Removed when PvP ends. Blocks nonparticipants too.": "1~32개 · 포털 차단 및 플레이어 위치 이동 가능. PvP 종료 시 제거. 비참가자도 막습니다.",
   "Temporary PvP cover: /one friendlyfire cover on|off|reset; cover count <1..32>|reset. Default off, 20 obstacles. Safe space may reduce the actual count. /one save persists it.": "임시 PvP 엄폐물: /one friendlyfire cover on|off|reset; cover count <1..32>|reset. 기본 꺼짐, 20개. 안전한 공간이 부족하면 실제 수가 줄어듭니다. /one save로 저장합니다.",
   "PvP cover unavailable; off/reset remain available. See Player.log.": "PvP 엄폐물을 사용할 수 없습니다. off/reset은 가능합니다. Player.log를 확인하세요.",
   "PvP cover: {0}; requested count: {1}. Safe space may reduce the actual count.": "PvP 엄폐물: {0}; 설정 개수: {1}. 안전한 공간이 부족하면 실제 수가 줄어듭니다.",

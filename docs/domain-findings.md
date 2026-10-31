@@ -1,5 +1,13 @@
 # Sephiria domain findings
 
+Dense cover (`0.104.0`): `ReqSetPosition` sends a remote owner TargetRpc; a request
+is not proof of arrival. `OnSetPositionServerside` also reports the guest's
+`CmdTeleportEvent`. Reserve world-space destinations until matching acknowledgement
+and observed arrival, even after placement cancellation/loading/floor changes:
+the native RPC has no floor GUID guard and run coordinates can be reused.
+Compact prop placement may obstruct portals by user request; retain actual
+body/wall/hazard checks and native despawn cleanup. See [current policy](pvp-cover.md#dense-placement-and-displacement--01040-2026-10-31).
+
 Critical Damage limits (`0.102.0`, 2026-10-29) operate on the hit-local combined
 rate after companion contribution, before native special multiplier/rounding.
 `DamageInstance.Set` and the C-menu include a native +50%; the user-selected

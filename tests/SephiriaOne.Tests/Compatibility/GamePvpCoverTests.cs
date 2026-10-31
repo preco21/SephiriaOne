@@ -17,18 +17,18 @@ internal static class GamePvpCoverTests
         Check(authored.BaseType == Game("FloorGenerator") && !Game("TileFloorGenerator").IsAssignableFrom(authored), "Native waiting-area generator is outside the tile-floor hierarchy");
         var layoutConstructor = AccessTools.Constructor(Mod("PvpCoverRooms"), new[] { Game("FloorGenerator"), typeof(int) });
         var layoutCode = PatchProcessor.GetOriginalInstructions(layoutConstructor).ToList();
-        foreach (string field in new[] { "bottomLeft", "topRight", "props", "mapTeleportConnections" })
+        foreach (string field in new[] { "bottomLeft", "topRight" })
             Check(layoutCode.Any(i => Equals(i.operand, AccessTools.Field(authored, field))), "Authored layout uses native " + field);
-        Check(Calls(layoutCode, "TeleportPoint", "GetTeleportTargetPosition"), "Protect actual native map destinations including their offsets");
+        Check(!Calls(layoutCode, "TeleportPoint", "GetTeleportTargetPosition"), "Portal destinations no longer reserve placement zones");
         foreach (string path in new[] { "Grid/Ground", "Grid/Pit/Ground", "Grid/WallCollider", "Grid/Upper", "Grid/Ground-Lit", "QQQGrid/QQQGround" })
             Check(layoutCode.Any(i => i.opcode == OpCodes.Ldstr && Equals(i.operand, path)), "Audited authored tilemap path " + path);
-        foreach (var (type, field) in new[] { ("TeleportTogether", "offset"), ("BossSpawner", "spawnOffset"), ("BossSpawner", "bossRewardPosition"),
+        foreach (var (type, field) in new[] { ("BossSpawner", "spawnOffset"), ("BossSpawner", "bossRewardPosition"),
             ("BossEnvironment_QQBoss", "qqqBossPoint"), ("BossEnvironment_QQBoss", "qqqBossDramaticDieReturnPoint") })
             Check(layoutCode.Any(i => Equals(i.operand, AccessTools.Field(Game(type), field))), "Protect native progression anchor " + type + "." + field);
-        Check(Calls(Code(Mod("PvpCoverRooms"), "Safe"), "Tilemap", "GetCellCenterWorld"), "Terrain uses native isometric cell centers");
+        Check(Calls(Code(Mod("PvpCoverRooms"), "Grounded"), "Tilemap", "GetCellCenterWorld"), "Terrain uses native isometric cell centers");
         var runtimeCode = Code(Mod("PvpCoverRuntime"), "Tick");
         Check(!runtimeCode.Any(i => (i.opcode == OpCodes.Isinst || i.opcode == OpCodes.Castclass) && Equals(i.operand, Game("TileFloorGenerator"))), "Readiness no longer rejects authored lobby floors before placement");
-        Check(Calls(Code(Mod("PvpCoverRooms"), "Safe"), "Physics2D", "OverlapBox") && Calls(Code(Mod("PvpCoverRooms"), "Safe"), "Tilemap", "GetTile"), "Ground and collision safety remain required");
+        Check(Calls(Code(Mod("PvpCoverRooms"), "ClearSpace"), "Physics2D", "OverlapBox") && Calls(Code(Mod("PvpCoverRooms"), "Grounded"), "Tilemap", "GetTile"), "Ground and collision safety remain required");
         Check(Calls(Code(Game("TopdownRigidbody"), "UpdateAirLayer"), "CombatManager", "get_BlockableLayer"), "Blockable includes grounded actors, not just static walls");
         var movement = Code(Game("TopdownRigidbody"), "Update");
         Check(Calls(movement, "CombatManager", "get_TileLayerMask") && Calls(movement, "CombatManager", "get_CliffLayerMask") &&
@@ -78,6 +78,22 @@ internal static class GamePvpCoverTests
         Check(Calls(code, "PathGrid", "UpdateRegion") && !Calls(code, "PathGrid", "get_IsBuilt"), "Do not drop refreshes during scans");
         code = Code(Mod("PvpCoverFeature"), "Shutdown");
         Check(Calls(code, "PvpCoverRuntime", "get_ActiveCount") && code.Any(i => i.opcode == OpCodes.Throw), "Unload stops while cleanup is pending");
+        var combat = Game("CombatBehaviour");
+        Check(Calls(Code(combat, "ReqSetPosition"), "CombatBehaviour", "TargetSetPosition"), "Guest relocation uses native owner TargetRpc");
+        Check(Calls(Code(combat, "SetPosition"), "CombatBehaviour", "CmdTeleportEvent"), "Guest executed movement reports native server event");
+        var acknowledgement = Code(combat, "UserCode_CmdTeleportEvent__Vector3__Boolean");
+        Check(acknowledgement.Any(i => i.operand is MethodInfo m && m.Name == "Invoke" && m.DeclaringType?.Name.StartsWith("Action") == true),
+            "Native command publishes movement acknowledgement");
+        var requests = Mod("PvpCoverMoveRequests");
+        var send = Code(requests, "Send");
+        Check(send.FindIndex(i => i.operand is MethodInfo m && m.Name == "add_OnSetPositionServerside") >= 0 &&
+            send.FindIndex(i => i.operand is MethodInfo m && m.Name == "add_OnSetPositionServerside") <
+            send.FindIndex(i => i.operand is MethodInfo m && m.Name == "ReqSetPosition"), "Subscribe before sending movement");
+        Check(Calls(Code(Mod("PvpCoverRuntime"), "Tick"), "PvpCoverMoveRequests", "Reconcile") &&
+            Calls(Code(Mod("PvpCoverRooms"), "ClearSpace"), "PvpCoverMoveRequests", "Blocks"), "Outstanding movement reserves future landing space");
+        Check(Calls(Code(Mod("PvpCoverFeature"), "Shutdown"), "PvpCoverMoveRequests", "Shutdown"), "Unload detaches native movement callbacks");
+        Check(Calls(Code(Mod("PvpCoverRooms"), "Body"), "TopdownRigidbody", "get_MovementCollider") &&
+            Calls(Code(Mod("PvpCoverRooms"), "Body"), "Collider2D", "get_bounds"), "Actual scaled movement collider bounds determine player clearance");
         Console.WriteLine($"Passed {checks} installed-game PvP cover contracts.");
     }
 }

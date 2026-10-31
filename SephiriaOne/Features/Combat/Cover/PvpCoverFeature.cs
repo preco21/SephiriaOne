@@ -20,6 +20,7 @@ namespace SephiriaOne
             PvpCoverRuntime.Clear();
             if (PvpCoverRuntime.ActiveCount != 0)
                 throw new InvalidOperationException("PvP cover cleanup is pending; keep native guards and the controller loaded for retry.");
+            PvpCoverMoveRequests.Shutdown();
             Uninstall();
         }
     }

@@ -6,7 +6,7 @@ using UnityEngine.Tilemaps;
 
 namespace SephiriaOne
 {
-    internal sealed class PvpCoverRooms
+    internal sealed partial class PvpCoverRooms
     {
         private const BindingFlags Fields = BindingFlags.Instance | BindingFlags.NonPublic;
         private static readonly FieldInfo procedural = typeof(EnhancedProceduralFloorGenerator).GetField("roomList", Fields);
@@ -17,11 +17,10 @@ namespace SephiriaOne
         private readonly Tilemap ground, upperGround, wall, water, cliffCollider;
         private readonly List<Tilemap> groundMaps = new List<Tilemap>(3);
         private readonly List<Vector2> protectedPoints = new List<Vector2>();
-        private readonly List<Transform> interactions = new List<Transform>();
-        private int reservedRejected, playerRejected, colliderRejected, occupiedRejected, terrainRejected;
+        private int reservedRejected, colliderRejected, occupiedRejected, terrainRejected;
         private string firstBlocker;
         internal string UnavailableReason { get; private set; }
-        internal string Diagnostics => $"reserved={reservedRejected}; players={playerRejected}; colliders={colliderRejected}; occupied={occupiedRejected}; terrain={terrainRejected}; firstBlocker={firstBlocker ?? "none"}; groundMaps={groundMaps.Count}; layout={ground?.cellLayout}; cellSize={ground?.cellSize}";
+        internal string Diagnostics => $"reserved={reservedRejected}; colliders={colliderRejected}; occupied={occupiedRejected}; terrain={terrainRejected}; firstBlocker={firstBlocker ?? "none"}; groundMaps={groundMaps.Count}; layout={ground?.cellLayout}; cellSize={ground?.cellSize}";
         internal readonly PvpCoverPlacement Plan;
         internal static bool Validate() => procedural?.FieldType == typeof(List<TileBasedRoomInstance>) &&
             library?.FieldType == typeof(List<LibraryFloorRoomInstance>) &&
@@ -54,14 +53,13 @@ namespace SephiriaOne
                 if (lit) groundMaps.Add(lit);
                 if (finalArena) groundMaps.Add(finalArena);
             }
-            void Add(Vector2 min, Vector2 max, Vector2? teleport = null)
-            { rooms.Add(new PvpCoverPlacement.Room(min.x, min.y, max.x, max.y)); if (teleport.HasValue) protectedPoints.Add(teleport.Value); }
+            void Add(Vector2 min, Vector2 max) => rooms.Add(new PvpCoverPlacement.Room(min.x, min.y, max.x, max.y));
             void TileRoom(TileBasedRoomInstance room)
             {
                 // Cover follows PvP, not the monster-spawn policy. Entrances and
                 // rest rooms have usable ground with spawnMonster=false.
                 if (room?.Metadata == null) return;
-                Add(room.bottomLeft, room.topRight, room.bottomLeft + room.TeleportPoint);
+                Add(room.bottomLeft, room.topRight);
             }
             // Threat metadata describes combat, not whether the floor has safe
             // playable ground. Boss arenas use the same placement validation.
@@ -74,41 +72,20 @@ namespace SephiriaOne
                 {
                     if (room?.Metadata == null) continue;
                     Vector2 origin = (Vector2)floor.transform.position + (Vector2)room.pos;
-                    Add(origin, origin + room.Size, origin + room.TeleportPoint);
+                    Add(origin, origin + room.Size);
                 }
             else if (floor is SingleRoomFloorGenerator && single.GetValue(floor) is TileBasedRoomInstance room && room.Metadata != null)
-            { Vector2 origin = floor.transform.position; Add(origin, origin + room.size, origin + room.TeleportPoint); }
+            { Vector2 origin = floor.transform.position; Add(origin, origin + room.size); }
             else if (floor is FullyDesignedFloorGenerator designed)
             {
                 Vector2 origin = floor.transform.position;
                 Add(origin + designed.bottomLeft, origin + designed.topRight);
-                foreach (var connection in designed.mapTeleportConnections)
-                    if (connection?.point) protectedPoints.Add(connection.point.GetTeleportTargetPosition());
             }
-            var seen = new HashSet<Transform>();
-            void ProtectInteractions(IEnumerable<GameObject> props)
-            {
-                foreach (var prop in props)
-                {
-                    if (!prop) continue;
-                    foreach (var interaction in prop.GetComponentsInChildren<Interactable>(true))
-                        if (seen.Add(interaction.transform)) interactions.Add(interaction.transform);
-                }
-            }
-            ProtectInteractions(PvpCoverNative.Props(floor));
-            // Scene-authored NPCs, portals and doors live in this separate list.
-            if (floor is FullyDesignedFloorGenerator authored) ProtectInteractions(authored.props);
-            // Boss victory exits and party teleports are not necessarily in the
-            // authored props list. Scan once, including objects enabled later.
+            // Portals/interactions may be obstructed. Keep only compact landing
+            // reservations for unavoidable native spawn and scripted boss moves.
             foreach (var component in floor.GetComponentsInChildren<MonoBehaviour>(true))
             {
-                if (component is Interactable interaction && seen.Add(interaction.transform)) interactions.Add(interaction.transform);
-                else if (component is TeleportTogether teleport)
-                {
-                    protectedPoints.Add(teleport.transform.position);
-                    protectedPoints.Add(teleport.transform.position + teleport.offset);
-                }
-                else if (component is BossSpawner spawner)
+                if (component is BossSpawner spawner)
                 {
                     protectedPoints.Add((Vector2)spawner.transform.position + spawner.spawnOffset);
                     protectedPoints.Add((Vector2)spawner.transform.position + spawner.bossRewardPosition);
@@ -146,29 +123,21 @@ namespace SephiriaOne
         internal bool Safe(float x, float y)
         {
             Vector2 point = new Vector2(x, y);
-            foreach (var reserved in protectedPoints) if ((reserved - point).sqrMagnitude < 16) { reservedRejected++; return false; }
-            foreach (var interaction in interactions) if (interaction && ((Vector2)interaction.position - point).sqrMagnitude < 16) { reservedRejected++; return false; }
-            foreach (var spawner in PlayerSpawner.MultiplayerList)
-                if (spawner && spawner.PlayerAvatar && spawner.PlayerAvatar.currentFloorGuid == floor.guid &&
-                    ((Vector2)spawner.PlayerAvatar.transform.position - point).sqrMagnitude < 16) { playerRejected++; return false; }
-            // Preserve the full bypass around physical walls/props/hazards.
-            // TopdownWorld_1F contains DAMAGE hitboxes; Blockable includes grounded
-            // actor bodies (TopdownRigidbody.UpdateAirLayer), not movement walls.
-            // Both must clear the barrel footprint plus a margin, not the entire
-            // bypass ring. Character movement itself uses BlockCharacterLayerMask.
-            // Stock costumes have a 0.5-unit movement diameter. Even the largest
-            // audited cover prop (1.35 wide) retains a 0.825-unit side bypass.
-            var blocker = Physics2D.OverlapBox(point, new Vector2(3, 3), 0, CombatManager.BlockCharacterLayerMask);
-            if (blocker) { colliderRejected++; RecordBlocker(blocker); return false; }
-            blocker = Physics2D.OverlapBox(point, new Vector2(1.85f, 1.5f), 0,
-                (1 << LayerMask.NameToLayer("TopdownWorld_1F")) | (1 << LayerMask.NameToLayer("Blockable")));
-            if (blocker) { occupiedRejected++; RecordBlocker(blocker); return false; }
+            foreach (var reserved in protectedPoints)
+                if (Math.Abs(reserved.x - x) < 1.05f && Math.Abs(reserved.y - y) < .85f)
+                { reservedRejected++; return false; }
+            return ClearSpace(point, CoverSize, true);
+        }
+
+        internal bool Grounded(Vector2 point, Vector2 size)
+        {
+            Vector2 half = size * .5f;
             // Isometric axes are diagonal. Both pairs of world corners are
-            // needed to bound the cells beneath the complete 3x3 bypass.
-            var a = ground.WorldToCell(point - new Vector2(1.5f, 1.5f));
-            var b = ground.WorldToCell(point + new Vector2(1.499f, 1.499f));
-            var c = ground.WorldToCell(point + new Vector2(-1.5f, 1.499f));
-            var d = ground.WorldToCell(point + new Vector2(1.499f, -1.5f));
+            // needed to bound the cells beneath the requested physical footprint.
+            var a = ground.WorldToCell(point - half);
+            var b = ground.WorldToCell(point + half - new Vector2(.001f, .001f));
+            var c = ground.WorldToCell(point + new Vector2(-half.x, half.y - .001f));
+            var d = ground.WorldToCell(point + new Vector2(half.x - .001f, -half.y));
             int minX = Math.Min(Math.Min(a.x, b.x), Math.Min(c.x, d.x)), maxX = Math.Max(Math.Max(a.x, b.x), Math.Max(c.x, d.x));
             int minY = Math.Min(Math.Min(a.y, b.y), Math.Min(c.y, d.y)), maxY = Math.Max(Math.Max(a.y, b.y), Math.Max(c.y, d.y));
             if ((long)maxX - minX > 7 || (long)maxY - minY > 7) { terrainRejected++; return false; }

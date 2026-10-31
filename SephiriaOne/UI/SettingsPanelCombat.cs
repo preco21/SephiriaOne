@@ -44,7 +44,7 @@ namespace SephiriaOne
             coverCount = widgets.Input(pageRoot, 142, 406, 55, _ => coverCountDraft = true);
             changeButtons.Add(widgets.Button(pageRoot, "Apply", 203, 406, 70, 25,
                 () => Execute("/one friendlyfire cover count " + coverCount.text.Trim(), true, clearInputOnSuccess: () => coverCountDraft = false)));
-            widgets.Text(pageRoot, "CoverHint", "1–32 · Safe space may reduce the count. Removed when PvP ends. Cover also blocks nonparticipants.", 16, 440, 257, 38, 10);
+            widgets.Text(pageRoot, "CoverHint", "1–32 · May block portals and move players aside. Removed when PvP ends. Blocks nonparticipants too.", 16, 440, 257, 38, 10);
             coverState = widgets.Text(pageRoot, "CoverState", "", 16, 484, 257, 42, 10);
             pageRoot = outer;
             BuildParticipantsEditor();

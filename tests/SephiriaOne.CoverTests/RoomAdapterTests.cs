@@ -6,6 +6,12 @@ internal static class RoomAdapterTests
 {
     internal static void Run(Action<bool, string> check)
     {
+        var dense = new FullyDesignedFloorGenerator { guid = "Dense" };
+        var portal = new Interactable(); portal.transform.position = new Vector3(20, 20);
+        dense.Hierarchy.Add(portal);
+        dense.TestGround.Contains = p => p.x >= 19 && p.x <= 20 && p.y >= 19 && p.y <= 20;
+        check(new PvpCoverRooms(dense, 7).Safe(20, 20),
+            "Dense cover uses its footprint on a narrow strip and may block a portal");
         check(PvpCoverRooms.Validate(), "Native room field fixture contracts");
         var entrance = new EnhancedProceduralFloorGenerator(); entrance.TestRoom.Metadata.spawnMonster = false;
         var entranceRooms = new PvpCoverRooms(entrance, 7);
@@ -13,7 +19,7 @@ internal static class RoomAdapterTests
         entrance.ground.Contains = p => p.x >= 19 && p.x <= 21 && p.y >= 19 && p.y <= 21;
         check(entranceRooms.Safe(20.5f, 20.5f), "A clear 3x3 ground square leaves a walkable bypass for compact props");
         entrance.ground.Contains = p => p.x >= 20 && p.x <= 21 && p.y >= 19 && p.y <= 21;
-        check(!entranceRooms.Safe(20.5f, 20.5f), "A narrow route without a complete bypass remains unavailable");
+        check(!entranceRooms.Safe(20.5f, 20.5f), "A narrow route without a complete footprint remains unavailable");
         entrance.ground.Contains = p => p.x >= 0 && p.x < 100 && p.y >= 0 && p.y < 100;
         var rest = new PvpCoverRooms(new SingleRoomFloorGenerator(), 7);
         check(rest.Plan.RoomCount == 1 && rest.Safe(20.5f, 20.5f), "Non-boss single-room rest floor supports PvP cover");
@@ -23,13 +29,25 @@ internal static class RoomAdapterTests
         hurtbox.Position = new Vector2(20.5f, 20.5f);
         check(!entranceRooms.Safe(20.5f, 20.5f), "Do not overlap a damageable entity at the barrel footprint");
         hurtbox.Position = new Vector2(22, 20.5f); hurtbox.gameObject.layer = 12;
-        check(!entranceRooms.Safe(20.5f, 20.5f), "Physical wall still requires full bypass clearance");
+        check(entranceRooms.Safe(20.5f, 20.5f), "A nearby wall no longer requires a full bypass ring");
+        hurtbox.Position = new Vector2(21.5f, 20.5f);
+        check(!entranceRooms.Safe(20.5f, 20.5f), "Physical wall may not intersect the actual cover envelope");
+        hurtbox.Position = new Vector2(22, 20.5f);
         hurtbox.gameObject.layer = 3;
         check(entranceRooms.Safe(20.5f, 20.5f), "Grounded actor body on Blockable is not a movement wall in the bypass ring");
         hurtbox.Position = new Vector2(20.5f, 20.5f);
         check(!entranceRooms.Safe(20.5f, 20.5f), "Do not overlap grounded actor bodies or Blockable props at the footprint");
         check(entranceRooms.Diagnostics.Contains("occupied=2") && entranceRooms.Diagnostics.Contains("colliders=1") &&
             entranceRooms.Diagnostics.Contains("firstBlocker="), "Diagnostics distinguish footprint occupancy from physical obstacles");
+        hurtbox.isTrigger = true; hurtbox.gameObject.layer = 12;
+        check(!entranceRooms.Safe(20.5f, 20.5f), "Native movement/hazard trigger remains a blocker");
+        hurtbox.gameObject.layer = 6;
+        check(entranceRooms.Safe(20.5f, 20.5f), "Nonphysical portal trigger is allowed");
+        var untracked = new PlayerAvatar { currentFloorGuid = entrance.guid };
+        untracked.transform.position = new Vector3(20.5f,20.5f);
+        Physics2D.Scene.Add(untracked.TopdownRigidbody.MovementCollider);
+        untracked.TopdownRigidbody.MovementCollider.gameObject.layer = 3;
+        check(!entranceRooms.Safe(20.5f,20.5f), "Unregistered player collider cannot be ignored");
         Physics2D.Scene.Clear();
         var boss = new SingleRoomFloorGenerator { floorThreatType = EFloorThreatType.Boss };
         check(new PvpCoverRooms(boss, 7).Plan.RoomCount == 1, "Boss threat metadata does not exclude a verified playable arena");
@@ -37,7 +55,7 @@ internal static class RoomAdapterTests
         entrance.TestRoom.bottomLeft = new Vector2(2500, 500); entrance.TestRoom.topRight = new Vector2(2600, 600);
         entrance.TestRoom.TeleportPoint = new Vector2(15, 10);
         entranceRooms = new PvpCoverRooms(entrance, 7);
-        check(entranceRooms.Safe(2520.5f, 520.5f) && !entranceRooms.Safe(2515, 510), "Procedural bounds and reserved teleports use native world offsets");
+        check(entranceRooms.Safe(2520.5f, 520.5f) && entranceRooms.Safe(2515, 510), "Procedural bounds use world offsets without reserving map teleport destinations");
         Physics2D.BlockAll = false;
         var map = new FullyDesignedFloorGenerator();
         map.transform.position = new Vector3(4000, 500);
@@ -49,12 +67,12 @@ internal static class RoomAdapterTests
         check(!rooms.Safe(10.5f, 10.5f), "Empty world outside ground cannot be treated as walkable");
 
         map.TestGround.transform.position = map.transform.position + new Vector3(.6f, .6f);
-        map.TestGround.Contains = p => p.x >= 8 && p.x <= 10 && p.y >= 8 && p.y <= 10;
-        check(!rooms.Safe(4010.5f, 510.5f), "Fractional grid offsets cannot hide missing cells under the bypass edge");
+        map.TestGround.Contains = p => p.x >= 9 && p.x <= 9 && p.y >= 9 && p.y <= 10;
+        check(!rooms.Safe(4010.5f, 510.5f), "Fractional grid offsets cannot hide missing cells under the footprint edge");
         map.TestGround.transform.position = map.transform.position;
 
         map.TestGround.Contains = p => p.x >= 0 && p.x < 30 && p.y >= 0 && p.y < 30 && !(p.x == 11 && p.y == 10);
-        check(!rooms.Safe(4010.5f, 510.5f), "A missing ground cell anywhere in bypass ring rejects cover");
+        check(!rooms.Safe(4010.5f, 510.5f), "A missing ground cell under the footprint rejects cover");
         map.TestGround.Contains = p => p.x >= 0 && p.x < 30 && p.y >= 0 && p.y < 30;
         map.TestGround.Tile.Entity.type = GroundTileEntity.Type.Water;
         check(!rooms.Safe(4010.5f, 510.5f), "Water rejected");
@@ -64,12 +82,12 @@ internal static class RoomAdapterTests
         var interaction = new Interactable(); interaction.transform.position = new Vector3(4010.5f, 510.5f);
         var prop = new GameObject(); prop.Interactions.Add(interaction); map.props.Add(prop);
         rooms = new PvpCoverRooms(map, 7);
-        check(!rooms.Safe(4010.5f, 510.5f), "Authored props list reserves native NPC/menu/portal interactions");
+        check(rooms.Safe(4010.5f, 510.5f), "Nonphysical NPC/menu/portal interactions no longer reserve wide zones");
         interaction.transform.position = new Vector3(4020, 520);
         check(rooms.Safe(4010.5f, 510.5f), "Moving native interaction updates protected position");
         var teleport = new TeleportPoint(); teleport.transform.position = new Vector3(4000, 500); teleport.offset = new Vector3(10.5f, 10.5f);
         map.mapTeleportConnections.Add(new() { point = teleport }); rooms = new PvpCoverRooms(map, 7);
-        check(!rooms.Safe(4010.5f, 510.5f), "Map destination offset is reserved");
+        check(rooms.Safe(4010.5f, 510.5f), "Map portal destinations are eligible for cover");
         map.mapTeleportConnections.Clear(); map.props.Clear();
         map.spawnPoints.Add(new() { SpawnPoint = new Vector3(4010.5f, 510.5f) }); rooms = new PvpCoverRooms(map, 7);
         check(!rooms.Safe(4010.5f, 510.5f), "Native spawn point reserved"); map.spawnPoints.Clear();
@@ -107,8 +125,8 @@ internal static class RoomAdapterTests
         var rooms = new PvpCoverRooms(map, 7);
         check(rooms.UnavailableReason == null && rooms.Safe(2000, 540), "Final boss 2x2 isometric grid has playable ground");
         // Opposite world corners alone map to the same isometric X cell.
-        // A missing side cell still lies underneath the full world-space bypass.
-        map.TestGround.Contains = p => p.x != 19 || p.y != 21;
+        // A missing side cell still lies underneath the full world-space footprint.
+        map.TestGround.Contains = p => p.x != 19 || p.y != 20;
         check(!rooms.Safe(2000, 540), "All four world corners contribute to isometric clearance");
         map.TestGround.Contains = _ => false;
         var lit = new Tilemap { cellSize = new Vector3(2, 2, 0), cellLayout = GridLayout.CellLayout.Isometric };
@@ -121,14 +139,14 @@ internal static class RoomAdapterTests
         lit.gameObject.activeInHierarchy = true;
         lit.Contains = p => p.x < 20;
         map.TestGround.Contains = p => p.x >= 20;
-        check(rooms.Safe(2000, 540), "Adjacent ground layers together support the complete bypass");
+        check(rooms.Safe(2000, 540), "Adjacent ground layers together support the complete footprint");
         var exit = new Interactable(); exit.transform.position = new Vector3(2000, 540);
         map.Hierarchy.Add(exit); rooms = new PvpCoverRooms(map, 7);
-        check(!rooms.Safe(2000, 540), "Inactive victory exits outside authored props lists remain clear");
+        check(rooms.Safe(2000, 540), "Inactive victory exits do not exclude cover");
         map.Hierarchy.Clear();
         var teleport = new TeleportTogether { offset = new Vector3(0, 10) }; teleport.transform.position = new Vector3(2000, 530);
         map.Hierarchy.Add(teleport); rooms = new PvpCoverRooms(map, 7);
-        check(!rooms.Safe(2000, 530) && !rooms.Safe(2000, 540), "Party teleport source and destination remain clear");
+        check(rooms.Safe(2000, 530) && rooms.Safe(2000, 540), "Party portals may be obstructed");
         map.Hierarchy.Clear();
         var spawner = new BossSpawner { spawnOffset = new Vector2(0, 10), bossRewardPosition = new Vector2(0, 15) };
         spawner.transform.position = new Vector3(2000, 530); map.Hierarchy.Add(spawner);

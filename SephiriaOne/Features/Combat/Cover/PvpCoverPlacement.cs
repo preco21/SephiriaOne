@@ -3,8 +3,8 @@ using System.Collections.Generic;
 
 namespace SephiriaOne
 {
-    // Pure bounded placement policy. The Unity adapter checks a clear 3x3 bypass
-    // square, not just the compact prop footprint: cover cannot seal a narrow route.
+    // Bounded half-unit sampling; reserve the compact audited prop envelope.
+    // Native geometry and player displacement are handled by the Unity adapter.
     internal sealed class PvpCoverPlacement
     {
         internal readonly struct Room
@@ -27,6 +27,7 @@ namespace SephiriaOne
             for (int i = this.rooms.Count - 1; i > 0; i--)
             { int j = random.Next(i + 1); var swap = this.rooms[i]; this.rooms[i] = this.rooms[j]; this.rooms[j] = swap; }
         }
+        internal void Release(float x, float y) => accepted.Remove((x, y));
         // One candidate per call; the caller separately bounds search and spawns.
         internal bool TryNext(Func<float, float, bool> safe, out float x, out float y)
         {
@@ -34,11 +35,11 @@ namespace SephiriaOne
             if (Exhausted) return false;
             attempts++;
             var room = rooms[nextRoom++ % rooms.Count];
-            if (room.Right - room.Left < 6 || room.Top - room.Bottom < 6) return false;
-            x = room.Left + 2.5f + random.Next((int)(room.Right - room.Left) - 4);
-            y = room.Bottom + 2.5f + random.Next((int)(room.Top - room.Bottom) - 4);
+            if (room.Right - room.Left < 2 || room.Top - room.Bottom < 2) return false;
+            x = room.Left + 1f + random.Next((int)((room.Right - room.Left - 2) * 2) + 1) * .5f;
+            y = room.Bottom + 1f + random.Next((int)((room.Top - room.Bottom - 2) * 2) + 1) * .5f;
             foreach (var previous in accepted)
-                if (Math.Abs(previous.X - x) < 3 && Math.Abs(previous.Y - y) < 3) return false;
+                if (Math.Abs(previous.X - x) < 1.55f && Math.Abs(previous.Y - y) < 1.2f) return false;
             if (!safe(x, y)) return false;
             accepted.Add((x, y)); return true;
         }
