@@ -44,8 +44,8 @@ internal static class ZombieSurvivalRuntimeTests
         var zombie = all.Single(CombatMatchRuntime.IsActiveZombie);
         var humans = all.Where(p => p != zombie).ToArray();
         bool NormalSpeed(PlayerAvatar p) => Math.Abs(p.moveSpeed - 4.4f) < .00001f;
-        bool ZombieSpeed(PlayerAvatar p) => Math.Abs(p.moveSpeed - 4.4f * .7f) < .00001f;
-        check(ZombieSpeed(zombie) && humans.All(NormalSpeed), "Only the initial Zombie has 30% slower synchronized base movement");
+        bool ZombieSpeed(PlayerAvatar p) => Math.Abs(p.moveSpeed - 4.4f * .65f) < .00001f;
+        check(ZombieSpeed(zombie) && humans.All(NormalSpeed), "Only the initial Zombie has 35% slower synchronized base movement");
         check(all.All(p => !CombatMatchRuntime.BlocksZombieHpPotions(p)),
             "Initial Zombie population retains normal PvP potion admission");
         check(SettingsActions.Execute("/one zombie block-hp off").Success && !CombatMatchRuntime.BlocksZombieHpPotions(zombie) &&
@@ -202,9 +202,9 @@ internal static class ZombieSurvivalRuntimeTests
         all = New();
         foreach (var player in all) player.NetworkmoveSpeed = 7.25f;
         Begin(); zombie = all.Single(CombatMatchRuntime.IsActiveZombie);
-        check(Math.Abs(zombie.moveSpeed - 5.075f) < .00001f, "Penalty uses the actual baseline, not a hardcoded native speed");
+        check(Math.Abs(zombie.moveSpeed - 4.7125f) < .00001f, "Penalty uses the actual baseline, not a hardcoded native speed");
         zombie.NetworkmoveSpeed = 10f; At(4);
-        check(zombie.moveSpeed == 7f, "External base-speed replacement is scaled once from its new value");
+        check(zombie.moveSpeed == 6.5f, "External base-speed replacement is scaled once from its new value");
         CombatMatchRuntime.Stop(true, false);
         check(zombie.moveSpeed == 10f && all.Where(p => p != zombie).All(p => p.moveSpeed == 7.25f),
             "Cleanup restores the latest baseline and leaves other players alone");

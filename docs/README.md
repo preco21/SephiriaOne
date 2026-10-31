@@ -98,7 +98,8 @@ only above the match's captured starting Zombie count. Independent of supplies, 
 EN/KO controls and v54 preset persistence.
 
 [Zombie movement penalty](zombie-survival.md#zombie-movement-penalty-0970): Zombies
-walk/run at 70% through the native base-speed SyncVar, with role-owned restoration,
+walk/run at 65% (35% slower since 0.105.1) through the native base-speed SyncVar,
+with role-owned restoration,
 existing roster lifecycle and no repeat writes. Other movement modifiers remain
 native; includes EN/KO status and stock-client contract checks.
 

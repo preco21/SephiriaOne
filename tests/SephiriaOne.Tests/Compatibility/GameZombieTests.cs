@@ -56,7 +56,7 @@ internal static class GameZombieTests
             Calls("CombatMatchRuntime", "UpdateZombieMovement", "CombatMatchRuntime", "IsZombieVisualCurrent") &&
             Calls("CombatMatchRuntime", "ClearZombie", "ZombieMovementSpeed", "Update"),
             "Movement uses replicated values, existing role/receipt gating and common cleanup");
-        Require(panel.Any(i => Equals(i.operand, "[Z] Movement speed: 70%.")), "Zombie panel discloses the fixed movement rule");
+        Require(panel.Any(i => Equals(i.operand, "[Z] Movement speed: 65%.")), "Zombie panel discloses the fixed movement rule");
         Require(panel.Any(i => Equals(i.operand, "/one zombie block-hp")) &&
             Calls("RabbitPotionNativeHooks", "AllowZombiePotionUse", "CombatMatchRuntime", "BlocksZombieHpPotions") &&
             Calls("RabbitPotionNativeHooks", "RejectZombiePotionCompletion", "CombatMatchRuntime", "BlocksZombieHpPotions") &&

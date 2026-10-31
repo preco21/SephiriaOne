@@ -26,7 +26,7 @@ namespace SephiriaOne
                 L.T(settings.IncomingEnabled ? "ON" : "OFF"), incoming) + " " +
                 (SessionSettings.ZombieDynamicBalance ? DescribeHumanModifier() + " " : "") +
                 L.F("Convert on any Human death: {0}.", L.T(SessionSettings.ZombieAnyDeath ? "ON" : "OFF")) + " " +
-                L.T("[Z] Movement speed: 70%.") + " " +
+                L.T("[Z] Movement speed: 65%.") + " " +
                 L.F("Block Zombie HP potions: {0}.", L.T(SessionSettings.ZombieBlockHpPotions ? "ON" : "OFF"));
         }
         internal static bool Execute(string[] parts, out bool success, out string message)

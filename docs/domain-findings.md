@@ -83,7 +83,7 @@ Zombie potion admission (`0.97.0`) must use the current round faction, including
 pending conversion, rather than the alive-only combat role helper. Recheck at
 native drink completion to close animation/conversion races; preserve native
 catch/unwield cleanup before all drink events and decrement. This is distinct
-from PvP consumption and supply grants. Zombie movement now uses 70% of the
+from PvP consumption and supply grants. Zombie movement uses 65% (since `0.105.1`) of the
 owned native base speed. Since 0.98.2, potion admission also compares the current
 population (including pending/dead Zombies) with the match's captured starting
 count, not the editable next-match setting. See [Zombie Survival](zombie-survival.md).

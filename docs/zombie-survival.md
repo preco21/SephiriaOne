@@ -87,7 +87,8 @@ completion blocks remain covered. The default-on policy and presets are unchange
 
 ## Zombie movement penalty (0.97.0)
 
-Current Zombies walk/run at **70% of normal speed** (30% slower; previously 80%). This fixed role rule is
+Since `0.105.1` (2026-10-31), Zombies walk/run at **65% of normal speed**
+(35% slower, increased from 30%). This fixed role rule is
 independent of dynamic balancing and the general PvP-balancing toggle. Humans,
 spectators, countdown entrants and other modes keep native movement. The Zombie
 panel and `/one zombie status` describe the rule in English/Korean; there is no
