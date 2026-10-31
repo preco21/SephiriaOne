@@ -405,14 +405,13 @@ namespace SephiriaOne
             long current = token, chaser = RoleRevision;
             var bomb = tagBomb;
             var receipt = FriendlyFireParticipants.Capture(player);
-            Broadcast(player, message); // Retained during the floating-text trial.
+            if (message != null) Broadcast(player, message);
             if (!FriendlyFireParticipants.IsCurrent(receipt) || !IsRunning || current != token || !CurrentScope) return;
             // Chat hooks can transfer the bomb without changing the match token.
             // Its countdown must still belong to the same living carrier.
             if (!IsPlayTag || player.IsDead || bomb == null || !ReferenceEquals(bomb, tagBomb) || chaser != RoleRevision ||
                 bomb.Resolved || bomb.AwaitingRespawn || bomb.IsDue(Now) || !ReferenceEquals(tagPlayers[bomb.Carrier].Subject.Player, player)) return;
-            try { NativePlayerFloatingText.Show(player, floating); }
-            catch (Exception error) { Debug.LogWarning("[SephiriaOne] Optional countdown presentation failed: " + error); }
+            ShowCountdownText(player, floating);
         }
 
         private static void Broadcast(PlayerAvatar player, string message)

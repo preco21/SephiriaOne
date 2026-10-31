@@ -159,9 +159,8 @@ namespace SephiriaOne
                 if (zombieRound.IsZombie(i)) CombatRoleVisuals.Update(zombiePlayers[i].Subject.Player);
             }
             if (!IsZombieSurvival || current != token) return;
-            if (remaining != zombieTimeShown && (remaining <= 5 || remaining % 5 == 0))
+            if (TakeCountdownNotice(remaining, ref zombieTimeShown))
             {
-                zombieTimeShown = remaining;
                 Broadcast(null, L.F("[Zombie Survival] {0}s left. [H] Humans: {1}; [Z] Zombies: {2}.", remaining, zombieRound.Humans, zombiePlayers.Count - zombieRound.Humans));
             }
         }

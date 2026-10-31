@@ -1,5 +1,54 @@
 # Overhead messages without chat history
 
+## Shared match timer cadence — 0.106.0 (2026-11-01)
+
+Zombie Survival, Play Tag and Tournament now share `TakeCountdownNotice`:
+initial/current time once, then every five elapsed displayed seconds while more
+than five remain; five, four, three, two and one are eligible each second. Timer
+expiry is handled by the mode, with no zero-second notice. A delayed frame sends
+only its current value; there is no catch-up replay or modulo boundary that can
+be missed entirely. For a 17-second timer: 17, 12, 7, 5, 4, 3, 2, 1.
+
+- Zombie Survival keeps its existing global team-count/time announcement and
+  persistent green X markers. The shared elapsed-time gate replaces exact
+  multiples of five, making non-round durations and delayed frames consistent.
+- Play Tag's carrier instruction/chat uses the slower gate, while `Bomb: Ns`
+  floating text continues once per displayed second. The chaser X remains
+  independent. Transfers reset notice ownership and send the new fuse after
+  the existing successful respawn; no timer is emitted during pending revival.
+- Tournament's two fighters receive opponent-only floating text every displayed
+  second: `[Tournament] Opponent: "name"` / `[토너먼트] 상대: "이름"`.
+  The start message already supplies the initial duration. Remaining-time chat
+  then uses the five-second/final-five cadence. Spectators get no player label.
+  Opening 3/2/1 announcements and rematch/round context remain unchanged.
+
+`CombatMatchCountdowns` supplies the allocation-free notice gate and optional
+native floating-text wrapper. Existing role/pair fields own last shown seconds;
+there is no additional controller, coroutine, deferred message queue or
+per-frame string formatting. Tournament validates token, pair revision, phase,
+receipts, readiness and living state after each chat/text callback. Death,
+pairing changes, disconnect, stop and scope changes prevent further stale
+labels; subsequent pairs receive a fresh schedule. Exceptions in optional text
+cannot block timer chat, match resolution or recovery.
+
+Stock-guest limitation: these are refreshed native `RpcShowDamageParticle`
+texts, not a new permanent attached text object. Each starts near the current
+player position, then drifts/fades. Already emitted particles cannot be recalled
+or extended from the host and unreliable packets can be lost. Stop new emissions
+immediately; their brief native fade completes normally. Native chat remains for
+periodic timers/important announcements. Zombie/chaser X markers really do
+follow their role owners continuously. No custom asset or guest addon is added.
+
+Verification covers 17/30-second timers in all three modes, the five-second
+boundary, repeated and delayed frames, independent text refresh, Korean labels,
+transfers/respawns, new pairings/rematches and reentrant stop/death from either
+chat or floating-text dispatch. The existing native payload/receiver validation
+is retained. Non-deploying build and executable/native contract checks are used;
+live host/guest readability and fade timing still require gameplay validation.
+Release 0.106.0 builds with zero warnings/errors; 17,897 runtime checks plus
+69 Bat lifecycle checks and portable/localization/installed contracts pass.
+Independent read-only review found no actionable regression. Nothing deployed.
+
 **Current behavior (0.98.3, 2026-10-27):** after the user confirmed revive FX is
 reliable, automatic respawn countdowns and completion notices were removed from
 chat, overhead bubbles and floating text. Timers and revive FX are unchanged.

@@ -35,7 +35,10 @@ internal static class FloatingCountdownTests
             check(NativePlayerFloatingText.Styles.Single() == false, "Bomb timer keeps its normal floating style");
             check(DungeonManager.Instance.ChatMessages.Any(m => m.Player == first.Player && m.Message.Contains("Pass the bomb")),
                 "Tag still sends the full bomb instruction through chat/bubble");
+            int notices = DungeonManager.Instance.ChatMessages.Count;
             At(3.2f); At(4); At(4.2f);
+            check(DungeonManager.Instance.ChatMessages.Count == notices,
+                "Tag keeps floating seconds live without repeating its overhead notice before five seconds pass");
             check(NativePlayerFloatingText.Messages.Select(m => m.Message).SequenceEqual(new[] { "Bomb: 30s", "Bomb: 29s" }),
                 "Tag never emits the same displayed second twice");
             var recipient = tagPlayers.First(p => p != first.Player);
@@ -54,14 +57,14 @@ internal static class FloatingCountdownTests
             tagPlayers = Begin("tag");
             NativePlayerFloatingText.Messages.Clear();
             DungeonManager.Instance.ChatCallback = () => { DungeonManager.Instance.ChatCallback = null; CombatMatchRuntime.Stop(true, false); };
-            At(4);
+            At(8);
             check(NativePlayerFloatingText.Messages.Count == 0 && !CombatMatchRuntime.IsRunning,
                 "Match stop during bomb chat dispatch prevents subsequent floating output");
 
             tagPlayers = Begin("tag"); first = NativePlayerFloatingText.Messages.Single();
             recipient = tagPlayers.First(p => p != first.Player); NativePlayerFloatingText.Messages.Clear();
             DungeonManager.Instance.ChatCallback = () => { DungeonManager.Instance.ChatCallback = null; Kill(first.Player, recipient); };
-            At(4);
+            At(8);
             check(recipient.IsDead && CombatMatchRuntime.IsRunning && NativePlayerFloatingText.Messages.All(m =>
                 m.Player != first.Player || !m.Message.StartsWith("Bomb:")),
                 "Bomb transfer during chat prevents a stale timer on the former carrier");
@@ -84,11 +87,13 @@ namespace SephiriaOne
         internal static readonly List<(PlayerAvatar Player, string Message)> Messages = new();
         internal static readonly List<bool> Styles = new();
         internal static bool Fail;
+        internal static Action AfterShow;
         internal static void Show(PlayerAvatar player, string message, bool emphasize = false)
         {
             if (Fail) throw new InvalidOperationException("optional floating text unavailable");
             Messages.Add((player, message));
             Styles.Add(emphasize);
+            var callback = AfterShow; AfterShow = null; callback?.Invoke();
         }
     }
 }

@@ -10,6 +10,7 @@ internal static class TournamentMessageTests
             var players = new List<PlayerAvatar> { start().PlayerAvatar };
             for (uint i = 2; i <= count; i++) players.Add(add(i).PlayerAvatar);
             for (int i = 0; i < players.Count; i++) players[i].playerNameSource = "Fighter" + i;
+            NativePlayerFloatingText.Messages.Clear();
             At(0);
             SettingsActions.Execute("/one tournament duration 10");
             check(SettingsActions.Execute("/one tournament start").Success, "Prepare tournament bubble lifecycle");
@@ -28,20 +29,25 @@ internal static class TournamentMessageTests
         check(chat.Count == before, "Initial start bubble is not duplicated within its first second");
         At(4);
         foreach (var player in pair)
-            check(Last(player) == $"[Tournament] Opponent: \"{pair.Single(p => p != player).playerNameSource}\" | 9s left",
-                "Active fighters see their own opponent and live remaining time");
-        check(chat.Count == before + 2 && players.Except(pair).All(p => !chat.Any(x => x.Player == p)),
-            "Only two fighters receive active status, never spectators");
+            check(NativePlayerFloatingText.Messages.Last(x => x.Player == player).Message ==
+                $"[Tournament] Opponent: \"{pair.Single(p => p != player).playerNameSource}\"",
+                "Opponent identity refreshes without a timer chat on quiet seconds");
+        check(chat.Count == before && players.Except(pair).All(p => !chat.Any(x => x.Player == p)),
+            "Quiet seconds do not send overhead status to fighters or spectators");
+        int floating = NativePlayerFloatingText.Messages.Count;
         At(4.1f); At(4.9f);
-        check(chat.Count == before + 2, "Multiple updates within the same second do not resend status");
+        check(chat.Count == before && NativePlayerFloatingText.Messages.Count == floating,
+            "Multiple updates within one second cannot resend opponent text");
         At(7.2f);
-        check(chat.Count == before + 4 && pair.All(p => Last(p).EndsWith("6s left")),
-            "Delayed frames send only the current time, without replaying missed seconds");
+        check(chat.Count == before, "Six seconds remaining still respects the five-second notice interval");
+        At(8.2f);
+        check(chat.Count == before + 2 && pair.All(p => Last(p).EndsWith("5s left")),
+            "Final five seconds start immediate per-second notices without catch-up spam");
         pair[0].IsDead = true; CombatMatchRuntime.Died(pair[0]);
         check(Last(pair[0]) == End && Last(pair[1]) == End,
             "Death immediately retires both live statuses without a respawn bubble");
         int ended = chat.Count(x => x.Message == End);
-        At(7.3f);
+        At(8.3f);
         check(Last(pair[0]) == End && chat.Count(x => x.Message == End) == ended,
             "Round settlement does not repeat the terminal notice");
         CombatMatchRuntime.Stop(true, false);
@@ -50,8 +56,8 @@ internal static class TournamentMessageTests
         At(4); At(13);
         check(players.All(p => DungeonManager.Instance.ChatMessages.Any(x => x.Player == p && x.Message == End) &&
             !Last(p).Contains("s left")), "Timeout replaces both timers before a possible next-pair countdown");
-        At(13.2f); At(16.2f); At(17.2f);
-        check(players.All(p => Last(p).EndsWith("9s left")), "A rematch starts with a fresh status timer");
+        At(13.2f); At(16.2f); At(17.2f); At(21.2f);
+        check(players.All(p => Last(p).EndsWith("5s left")), "A rematch starts with a fresh status timer");
         SettingsActions.Execute("/one tournament stop");
         check(players.All(p => Last(p) == End), "Stop replaces both active bubbles through nonempty native messages");
         int stopped = DungeonManager.Instance.ChatMessages.Count;
@@ -71,10 +77,10 @@ internal static class TournamentMessageTests
         check(notices.All(x => x.Player != departed && x.Player != replacement) &&
             notices.Any(x => x.Player == pair[1] && x.Message == End),
             "Withdrawal clears the connected opponent without messaging an old or reused connection");
-        At(7.2f); At(8.2f);
+        At(7.2f); At(8.2f); At(12.2f);
         pair = players.Where(p => p != departed).ToArray();
         foreach (var player in pair)
-            check(Last(player) == $"[Tournament] Opponent: \"{pair.Single(p => p != player).playerNameSource}\" | 9s left",
+            check(Last(player) == $"[Tournament] Opponent: \"{pair.Single(p => p != player).playerNameSource}\" | 5s left",
                 "New pairing replaces the previous opponent identity");
         CombatMatchRuntime.Stop(true, false);
 
@@ -84,9 +90,23 @@ internal static class TournamentMessageTests
             DungeonManager.Instance.ChatCallback = null;
             CombatMatchRuntime.Stop(true, false);
         };
-        At(4);
+        At(8);
         check(!CombatMatchRuntime.IsRunning && players.All(p => Last(p) == End),
             "Reentrant stop while sending first status cannot send stale status to the second fighter");
+
+        players = New();
+        int labels = NativePlayerFloatingText.Messages.Count;
+        NativePlayerFloatingText.AfterShow = () => CombatMatchRuntime.Stop(true, false);
+        At(4);
+        check(!CombatMatchRuntime.IsRunning && NativePlayerFloatingText.Messages.Count == labels + 1 && players.All(p => Last(p) == End),
+            "Stop during a quiet-second opponent label invalidates the second send and clears both chat owners");
+
+        players = New(); labels = NativePlayerFloatingText.Messages.Count;
+        NativePlayerFloatingText.AfterShow = () => { players[0].IsDead = true; CombatMatchRuntime.Died(players[0]); };
+        At(4);
+        check(NativePlayerFloatingText.Messages.Count(m => m.Message.StartsWith("[Tournament] Opponent:")) == labels + 1 && players.All(p => Last(p) == End),
+            "Death during opponent text invalidates remaining pair labels without a timer-chat trigger");
+        CombatMatchRuntime.Stop(true, false);
 
         players = New();
         DungeonManager.Instance.ChatCallback = () =>
@@ -105,7 +125,7 @@ internal static class TournamentMessageTests
             players[0].IsDead = true;
             CombatMatchRuntime.Died(players[0]);
         };
-        At(4);
+        At(8);
         check(Last(players[0]) == End && Last(players[1]) == End,
             "Death during status delivery retires both statuses and invalidates remaining status sends");
         CombatMatchRuntime.Stop(true, false);

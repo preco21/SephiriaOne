@@ -1,5 +1,12 @@
 # Sephiria domain findings
 
+Match presentation (`0.106.0`): keep periodic chat cadence separate from
+continuous role/identity refresh. Use elapsed displayed seconds, not modulo
+milestones, so delayed frames cannot miss a whole notice. Consume timestamps
+before native callbacks and revalidate pair/receipt after each send. Refreshed
+native floating particles cannot be recalled; stop emissions and allow their
+native fade. See [timer and opponent-text paths](overhead-message-transport.md#shared-match-timer-cadence--01060-2026-11-01).
+
 Shared combat role presentation (`0.105.0`): Zombie and Play Tag use one owned
 stock Chim visual adapter; a match/connection/role predicate controls lifetime.
 Keep one-shot transition generations separate from persistent marker recovery.

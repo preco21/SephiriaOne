@@ -14,6 +14,7 @@ namespace SephiriaOne
         private static string tagPreviousName;
         private static bool tagNaturalStop;
         private static int tagShown = -1;
+        private static int tagNoticeShown = -1;
         internal static bool IsPlayTag => mode == MatchMode.PlayTag && IsRunning;
         internal static bool CanStartPlayTag => CanStart && EligibleTournamentCount() >= 2;
         internal static bool StartPlayTag(out string message) => Start(MatchMode.PlayTag, out message);
@@ -53,6 +54,7 @@ namespace SephiriaOne
             }
             if (chosen < 0) { Stop(true, true); return; }
             tagBomb = new PlayTagBomb(tagPlayers.Count, chosen, duration, now);
+            tagShown = tagNoticeShown = -1;
             tagAssignment++;
             RoleRevision++;
             Broadcast(null, tagRoundLimit == 1 ? L.T("Play Tag start!") : L.F("[Play Tag] Round {0}/{1} start!", tagRound, tagRoundLimit));
@@ -92,7 +94,7 @@ namespace SephiriaOne
                 !ReferenceEquals(tagPlayers[from].Receipt, killer) || !ReferenceEquals(tagPlayers[to].Receipt, victim) ||
                 !tagBomb.TryPass(from, to, Now)) return;
             RoleRevision++;
-            tagShown = -1;
+            tagShown = tagNoticeShown = -1;
             tagPreviousName = CombatNames.Player(killer.Player);
             tagAssignment++;
             Broadcast(killer.Player, L.T("Bomb passed!"));
@@ -107,7 +109,7 @@ namespace SephiriaOne
             if (IsZombieSurvival) { ZombieRevived(receipt, match); return; }
             if (tagBomb == null || !CurrentTagRevival(receipt, match, out int index) || receipt.Player.IsDead ||
                 !tagBomb.ArmAfterRespawn(index, Now)) return;
-            tagShown = -1;
+            tagShown = tagNoticeShown = -1;
         }
 
         internal static void ReviveFailed(FriendlyFireParticipants.Receipt receipt, long match)
@@ -136,7 +138,9 @@ namespace SephiriaOne
             int seconds = tagBomb.Remaining(now);
             if (seconds == tagShown) return;
             tagShown = seconds;
-            BroadcastCountdown(player, L.F("Bomb: {0}s. Pass the bomb by defeating another player!", seconds), L.F("Bomb: {0}s", seconds));
+            string notice = TakeCountdownNotice(seconds, ref tagNoticeShown)
+                ? L.F("Bomb: {0}s. Pass the bomb by defeating another player!", seconds) : null;
+            BroadcastCountdown(player, notice, L.F("Bomb: {0}s", seconds));
         }
 
         internal static bool IsPlayTagExplosion(PlayerAvatar player) => ReferenceEquals(player, tagExplosionVictim);
@@ -187,7 +191,7 @@ namespace SephiriaOne
             foreach (var entry in tagPlayers)
                 if (Connected(entry.Subject, entry.Receipt)) Broadcast(entry.Subject.Player, "");
             ClearPlayTagVisuals();
-            tagBomb = null; tagPlayers.Clear(); tagRoster.Clear(); tagShown = -1; tagPreviousName = null;
+            tagBomb = null; tagPlayers.Clear(); tagRoster.Clear(); tagShown = tagNoticeShown = -1; tagPreviousName = null;
             tagRound = tagRoundLimit = 0;
             RoleRevision++;
             if (!preserveExplosion) PlayTagExplosion.Reset();

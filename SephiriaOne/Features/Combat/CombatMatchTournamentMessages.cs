@@ -5,18 +5,21 @@ namespace SephiriaOne
     internal static partial class CombatMatchRuntime
     {
         private static int tournamentTimeShown = -1;
+        private static int tournamentNoticeShown = -1;
         private static long tournamentMessageRevision;
         private static RosterEntry tournamentFirstNotice, tournamentSecondNotice;
 
         private static void ShowTournamentStatus(double now)
         {
+            if (!IsTournament || phase != Phase.Active) return;
             int seconds = (int)Math.Ceiling(endsAt - now);
             if (seconds <= 0 || seconds == tournamentTimeShown) return;
             tournamentTimeShown = seconds;
-            SendTournamentMessages("[Tournament] Opponent: \"{0}\" | {1}s left", seconds, 0);
+            SendTournamentMessages("[Tournament] Opponent: \"{0}\" | {1}s left", seconds, 0,
+                TakeCountdownNotice(seconds, ref tournamentNoticeShown), floating: true);
         }
 
-        private static void SendTournamentMessages(string format, int seconds, int round)
+        private static void SendTournamentMessages(string format, int seconds, int round, bool notice = true, bool floating = false)
         {
             if (first < 0 || second < 0 || !IsTournament) return;
             var a = tournamentPlayers[first]; var b = tournamentPlayers[second];
@@ -26,10 +29,14 @@ namespace SephiriaOne
             // Register ownership before native callbacks; a nested death/stop
             // can replace the message already sent and cancel the other send.
             tournamentFirstNotice = a;
-            Broadcast(a.Subject.Player, L.F(format, CombatNames.Player(b.Subject.Player), seconds, round));
+            if (notice) Broadcast(a.Subject.Player, L.F(format, CombatNames.Player(b.Subject.Player), seconds, round));
+            if (!CanSendTournamentMessages(a, b, current, revision, expected)) return;
+            if (floating) ShowCountdownText(a.Subject.Player, L.F("[Tournament] Opponent: \"{0}\"", CombatNames.Player(b.Subject.Player)));
             if (!CanSendTournamentMessages(a, b, current, revision, expected)) return;
             tournamentSecondNotice = b;
-            Broadcast(b.Subject.Player, L.F(format, CombatNames.Player(a.Subject.Player), seconds, round));
+            if (notice) Broadcast(b.Subject.Player, L.F(format, CombatNames.Player(a.Subject.Player), seconds, round));
+            if (!CanSendTournamentMessages(a, b, current, revision, expected)) return;
+            if (floating) ShowCountdownText(b.Subject.Player, L.F("[Tournament] Opponent: \"{0}\"", CombatNames.Player(a.Subject.Player)));
         }
 
         private static bool CanSendTournamentMessages(RosterEntry a, RosterEntry b, long current, long revision, Phase expected) =>
@@ -42,14 +49,14 @@ namespace SephiriaOne
         private static void ForgetTournamentMessages()
         {
             tournamentFirstNotice = tournamentSecondNotice = null;
-            tournamentTimeShown = -1;
+            tournamentTimeShown = tournamentNoticeShown = -1;
             tournamentMessageRevision++;
         }
 
         private static void ClearTournamentMessages()
         {
             var a = tournamentFirstNotice; var b = tournamentSecondNotice;
-            tournamentTimeShown = -1;
+            tournamentTimeShown = tournamentNoticeShown = -1;
             long current = token, revision = ++tournamentMessageRevision;
             // Stock Chat AND RpcChat reject empty/whitespace messages. A short
             // terminal notice replaces the old clock on unmodified guests and

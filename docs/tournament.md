@@ -1,5 +1,10 @@
 # Temporary Tournament (0.47.0)
 
+Current presentation since `0.106.0`: [opponent-only floating text with periodic timer chat](overhead-message-transport.md#shared-match-timer-cadence--01060-2026-11-01).
+Opponents refresh once per second; time notices use five-second intervals above
+five remaining, then every second. The older per-second chat design below is
+historical. Native particles fade naturally after emission stops.
+
 Open `/one ui` → **Tournament / 토너먼트**. Set round seconds, then use Start,
 Stop or Reset K/D/A. Participant checkboxes, Select All and Reset selection use
 the same list as Combat and Deathmatch. Host commands:

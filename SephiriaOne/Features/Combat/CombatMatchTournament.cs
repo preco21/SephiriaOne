@@ -154,8 +154,10 @@ namespace SephiriaOne
                 phase = Phase.Active;
                 endsAt = now + duration;
                 SessionSettings.DeathmatchChanged();
-                tournamentTimeShown = duration;
+                tournamentNoticeShown = duration; tournamentTimeShown = -1;
+                long current = token;
                 PairMessage(true, duration);
+                if (current == token) ShowTournamentStatus(now);
             }
         }
 

@@ -1,5 +1,10 @@
 # Development knowledge index
 
+[Shared match countdown cadence](overhead-message-transport.md#shared-match-timer-cadence--01060-2026-11-01):
+0.106.0 reduces Zombie/Tag/Tournament timer chat to every five seconds, then each
+of the final five seconds. Keeps role markers/bomb text and adds independently
+refreshed Tournament opponent text using the stock guest cosmetic channel.
+
 [Play Tag role visuals](play-tag.md#chaser-and-detonation-visuals--01050-2026-10-31):
 0.105.0 reuses the persistent green X for the chaser, sends one small assignment
 flash and reserves a single 2×-scale Leaf Explosion for detonation. Shared

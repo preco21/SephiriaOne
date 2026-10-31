@@ -61,16 +61,19 @@ internal static class GameFloatingTextTests
         var runtime = addon.GetType("SephiriaOne.CombatMatchRuntime", true)!;
         var notice = Code(AccessTools.DeclaredMethod(runtime, "BroadcastCountdown"));
         int chat = notice.FindIndex(i => i.operand is MethodInfo m && m.Name == "Broadcast");
-        int floating = notice.FindIndex(i => i.operand is MethodInfo m && m.DeclaringType == adapter && m.Name == "Show");
+        int floating = notice.FindIndex(i => i.operand is MethodInfo m && m.Name == "ShowCountdownText");
         Require(chat >= 0 && floating > chat && notice.Skip(chat + 1).Take(floating - chat - 1)
             .Any(i => i.operand is MethodInfo m && m.Name == "IsCurrent"),
             "chat stays first and participant lifetime is rechecked before optional floating output");
+        Require(Code(AccessTools.DeclaredMethod(runtime, "ShowCountdownText")).Count(i =>
+            i.operand is MethodInfo m && m.DeclaringType == adapter && m.Name == "Show") == 1,
+            "shared periodic text uses the existing native cosmetic adapter once");
         var respawn = Code(AccessTools.DeclaredMethod(runtime, "ShowRespawnCountdown"));
         Require(respawn.Count(i => i.operand is MethodInfo m && m.DeclaringType == adapter && m.Name == "Show") == 1 &&
             !respawn.Any(i => i.operand is MethodInfo m && (m.Name == "Broadcast" || m.Name.Contains("Chat"))) &&
             respawn.Any(i => i.operand is FieldInfo f && f.Name == "ShownSecond"),
             "respawn uses one deduplicated floating-only path, never chat or overhead bubbles");
-        foreach (string key in new[] { "Bomb: {0}s", "Respawn in: {0}s" })
+        foreach (string key in new[] { "Bomb: {0}s", "Respawn in: {0}s", "[Tournament] Opponent: \"{0}\"" })
         {
             foreach (string lang in new[] { "en", "ko" })
             {
@@ -78,7 +81,7 @@ internal static class GameFloatingTextTests
                 using var reader = new StreamReader(stream);
                 using var json = System.Text.Json.JsonDocument.Parse(reader.ReadToEnd());
                 Require(json.RootElement.TryGetProperty(key, out var value) && value.GetString()!.Contains("{0}"),
-                    lang + " countdown preserves the numeric placeholder");
+                    lang + " localized text preserves its placeholder");
             }
         }
         Console.WriteLine("Verified stock floating-text payload, cosmetic-only receiver, owner inclusion, floating-only respawn, retained bomb chat, EN/KO keys and fail-closed mutations (not live rendering).");

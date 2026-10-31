@@ -1,5 +1,10 @@
 # Zombie Survival (0.98.2, 2026-10-27)
 
+Since `0.106.0`, [round timer notices share the five-second/final-five policy](overhead-message-transport.md#shared-match-timer-cadence--01060-2026-11-01)
+with Play Tag and Tournament. Elapsed displayed time replaces exact five-second
+milestones, including delayed frames and non-round durations. Role X markers
+remain continuous; respawn timing and floating countdowns are unchanged.
+
 ## Timer default (0.102.3, 2026-10-31)
 
 New settings and `/one zombie duration reset` use **40 seconds**. Explicit

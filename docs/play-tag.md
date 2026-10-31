@@ -1,5 +1,9 @@
 # Play Tag
 
+Since `0.106.0`, [carrier timer chat uses five-second/final-five updates](overhead-message-transport.md#shared-match-timer-cadence--01060-2026-11-01).
+The floating bomb timer still refreshes each second and the green X follows the
+current carrier independently. Transfers and new rounds reset notice cadence.
+
 Host-controlled bomb tag shares the friendly-fire match infrastructure. Research
 began against addon `0.55.2`; implementation follows the behavior-preserving
 `0.55.3` optimization pass. The game was not launched or deployed during this

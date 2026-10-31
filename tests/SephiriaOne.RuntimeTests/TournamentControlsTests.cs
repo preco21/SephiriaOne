@@ -95,8 +95,13 @@ internal static class TournamentControlsTests
                 "Tournament sends localized round-start text with player and duration placeholders");
             UnityEngine.Time.unscaledTime = 4; CombatMatchRuntime.Tick();
             foreach (var player in new[] { host.PlayerAvatar, guest.PlayerAvatar })
+                check(NativePlayerFloatingText.Messages.Any(x => x.Player == player && x.Message ==
+                    $"[토너먼트] 상대: \"{(player == host.PlayerAvatar ? "Guest" : "Host")}\""),
+                    "Korean opponent identity is refreshed independently of timer chat");
+            UnityEngine.Time.unscaledTime = 8; CombatMatchRuntime.Tick();
+            foreach (var player in new[] { host.PlayerAvatar, guest.PlayerAvatar })
                 check(DungeonManager.Instance.ChatMessages.Any(x => x.Player == player && x.Message ==
-                    $"[토너먼트] 상대: \"{(player == host.PlayerAvatar ? "Guest" : "Host")}\" | 남은 시간: 9초"),
+                    $"[토너먼트] 상대: \"{(player == host.PlayerAvatar ? "Guest" : "Host")}\" | 남은 시간: 5초"),
                     "Both fighters receive localized live opponent and time status");
             UnityEngine.Time.unscaledTime = 13; CombatMatchRuntime.Tick();
             check(DungeonManager.Instance.ChatMessages.Count(x => x.Message == "[토너먼트] 경기가 종료되었습니다.") == 2,

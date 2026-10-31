@@ -13,7 +13,7 @@ namespace SephiriaOne
             ClearPlayTagVisuals();
             token++; tagRound++;
             phase = Phase.BetweenRounds;
-            tagBomb = null; tagShown = -1; tagPreviousName = null;
+            tagBomb = null; tagShown = tagNoticeShown = -1; tagPreviousName = null;
             RoleRevision++;
             FriendlyFireParticipants.InvalidateCombat();
             SessionSettings.DeathmatchChanged();
