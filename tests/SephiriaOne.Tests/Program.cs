@@ -73,6 +73,7 @@ Console.WriteLine($"Passed {PvpPerfectGuardSettingsTests.Run()} PvP Perfect Guar
 Console.WriteLine($"Passed {PvpDotSettingsTests.Run()} PvP DoT interval checks.");
 Console.WriteLine($"Passed {PvpDotDurationTests.Run()} PvP DoT duration checks.");
 Console.WriteLine($"Passed {PvpArtifactRateTests.Run()} autonomous artifact policy checks.");
+Console.WriteLine($"Passed {PvpArtifactRangeTests.Run()} autonomous artifact range policy checks.");
 Console.WriteLine($"Passed {PvpThornsTests.Run()} PvP Thorns policy checks.");
 Console.WriteLine($"Passed {PvpLowerBoundTests.Run()} PvP lower-bound policy checks.");
 Console.WriteLine($"Passed {PvpDotScheduleTests.Run()} PvP debuff schedule checks.");

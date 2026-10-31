@@ -1062,5 +1062,9 @@
   "Additional bonus; native +50% preserved.": "Additional bonus; native +50% preserved.",
   "Critical Damage limit: /one friendlyfire critical-damage on|off|reset; critical-damage limits <soft> <hard>. Default off, soft 30%, hard 70% additional bonus. Preserves native +50% and special critical multipliers. Use 0..10000 with up to 2 decimals and soft <= hard. Requires PvP balancing.": "Critical Damage limit: /one friendlyfire critical-damage on|off|reset; critical-damage limits <soft> <hard>. Default off, soft 30%, hard 70% additional bonus. Preserves native +50% and special critical multipliers. Use 0..10000 with up to 2 decimals and soft <= hard. Requires PvP balancing.",
   "Critical Damage limit: {0}; soft {1}%, hard {2}% additional bonus (native +50% preserved; requires PvP balancing).": "Critical Damage limit: {0}; soft {1}%, hard {2}% additional bonus (native +50% preserved; requires PvP balancing).",
-  "Respawn in: {0}s": "Respawn in: {0}s"
+  "Respawn in: {0}s": "Respawn in: {0}s",
+  "Automatic artifact range (m)": "Automatic artifact range (m)",
+  "From owner; includes Dark Cloud. Balance on only.": "From owner; includes Dark Cloud. Balance on only.",
+  "Autonomous artifact range: /one friendlyfire artifact-range <0.5..50>|reset (meters, default 5). Requires PvP balancing; includes Dark Cloud. Direct weapons and magic books are excluded.": "Autonomous artifact range: /one friendlyfire artifact-range <0.5..50>|reset (meters, default 5). Requires PvP balancing; includes Dark Cloud. Direct weapons and magic books are excluded.",
+  "Autonomous artifact range: {0} m from owner (includes Dark Cloud; requires PvP balancing).": "Autonomous artifact range: {0} m from owner (includes Dark Cloud; requires PvP balancing)."
 }

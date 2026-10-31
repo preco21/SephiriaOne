@@ -1,9 +1,86 @@
-# Autonomous artifact hit-rate limit
+# Autonomous artifact PvP limits
+
+## Owner-centered range — 0.103.0, 2026-10-31
+
+While friendly fire and PvP balancing are enabled, automatic offensive artifacts
+can affect hostile players only within **5 m of their current owner**. Configure
+**PvP Balance → Artifacts / Debuffs → Automatic artifact range (m)** or use:
+
+```text
+/one friendlyfire artifact-range 5
+/one friendlyfire artifact-range reset
+/one save
+```
+
+The radius accepts **0.5–50 m**, up to two decimal places. Reset restores 5 m.
+This is part of balancing, independent of the optional artifact hit-rate limit
+and Dark Cloud's own tick interval. Native shorter ranges still apply. A target
+exactly on the configured boundary is allowed. Distance is measured from the
+owner's live world position, not a projectile, cached origin or remote cloud.
+
+Coverage is the seven exact identities in the table below **plus Dark Cloud
+(`Ability_DarkCloud`)**. The shared host-side hostility rules apply in casual
+friendly fire, Deathmatch, Tournament, Play Tag and Zombie Survival. Monsters,
+direct/special weapon attacks, magic books, manual skills, planets, companions,
+other Ice Weapons, and unrelated proc-only/retaliation effects keep their native
+range. Guillotine is the explicitly included Ice Weapon exception. Echo's shared
+native pulse uses the same range even when a parry accelerates it.
+
+### Native boundaries
+
+- Target selection uses the shared owner-distance predicate; Chakram uses its
+  mask equivalent. Fire Feather homing also loses out-of-range player targets.
+- The central authoritative hit scope checks the exact damage identity before
+  guard costs and ordinary hit callbacks, then rechecks at final admission.
+  Owner movement between emission and impact cannot extend the effective range.
+- Dark Cloud rejects the entire out-of-range strike before reserving its tick
+  clock. Its attack callback is checked again, so Blazing Stormcloud cannot apply
+  Burn after a synchronous callback moves either character out of range.
+- Echo and Chakram can apply a debuff even after native damage fails. Their
+  exact `ApplyDebuff` sites, together with Earring, Meteor and Feather callbacks,
+  therefore have the same live range guard. Already applied DoT retains its
+  existing duration, stacking and tick policy.
+- Earring's `AttackCoroutine` prunes its cached player targets before each new
+  volley. Guillotine's `RpcCreateGuillotine` sender checks each delayed blade
+  before acquiring a writer or publishing the RPC. No network object is deleted,
+  and no spawn call is made to return a surprising null value.
+- Already issued visual effects finish normally. In particular, Ice Bat's native
+  two-sprite RPC can continue its second cosmetic emission; each authoritative
+  impact still respects current range. This is an effective attack-range limit,
+  not a guarantee that every in-flight visual vanishes at the boundary.
+
+Only the host needs the addon. Existing native attack/FX replication is retained;
+no new guest scripts, assets or messages are introduced. Live edits apply without
+restarting matches or changing cadence clocks. Preset **v58** stores a nondefault
+`friendlyfire artifact-range N` row; older presets and omitted values inherit
+5 m. Other settings and match overlays preserve the radius.
+
+### Performance and verification
+
+Range checks use squared distance and exact source identities. There is no new
+per-frame scan, roster cache or range timer. Cached volley filtering runs only
+where the native attack already prunes its targets. Warmed selector/impact fixture
+checks allocate zero bytes. Existing session/connection admission owns lifecycle
+validation, so no range-specific stale connection state needs cleanup.
+
+The installed assembly evidence is SHA-256
+`c57a0daeab8e8d0af7066a344133eec4c57d8f303fd9e25da9410fbfc4cf1510`;
+REA inspection `ev_aea169428da293348307f450974cc2ab8e7f1ef5e1cb1308299bbf37b345fac7`.
+Installed-game contracts validate selectors, callback rewrites, delayed senders,
+and the co-installed Harmony API surface. Executable regression coverage includes
+the inclusive boundary, moving owners, cached volleys, secondary statuses,
+mixed PvE/PvP targets, homing, live commands in all four match modes, preset
+compatibility and allocation checks. Release build, combat/runtime, settings,
+localization and panel checks passed. These checks are not a live multiplayer
+playtest; verify host and unmodified guest behavior in game before calling the
+presentation validated. No build was deployed.
+
+## Hit-rate limit
 
 Added in **0.86.0**, 2026-10-22. Host-only; uses existing native damage and
 replication paths for unmodified guests. No custom client assets or messages.
 
-**`0.89.1` correction:** Dark Cloud is excluded from this limiter. The earlier
+**`0.89.1` correction:** Dark Cloud is excluded from the hit-rate limiter. The earlier
 implementation treated it as another autonomous attack and used the longer of
 the two intervals. That made the general setting override its dedicated control.
 Dark Cloud now uses only `/one friendlyfire dot dark-cloud N` (default 2s since `0.94.2`).

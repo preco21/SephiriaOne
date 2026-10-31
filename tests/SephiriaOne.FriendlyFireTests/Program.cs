@@ -20,6 +20,7 @@ ConfigurableRapidTests.Run(Check);
 PeriodicRecoveryTests.Run(Check);
 PerfectGuardTests.Run(Check);
 ArtifactRateTests.Run(Check);
+ArtifactRangeTests.Run(Check);
 ThornsTests.Run(Check);
 MinimumDamageTests.Run(Check);
 SessionSettings.FriendlyFireForHit = default;

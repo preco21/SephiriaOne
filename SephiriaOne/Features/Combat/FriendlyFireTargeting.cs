@@ -66,11 +66,11 @@ namespace SephiriaOne
         }
 
         internal static bool HomingTargetAllowed(UnitAvatar source, EDamageFromType type, UnitAvatar target, Bullet bullet) =>
-            UsesFriendlyHoming(bullet) ? ItemHitTarget(source, type, target) :
+            UsesFriendlyHoming(bullet) ? ItemHitTarget(source, type, target) && AutonomousHomingWithinRange(bullet, target) :
             CombatManager.ContainsAttackableFaction(source.GetHostileFactionLayers(type), target.faction);
 
         internal static bool HomingTargetLost(UnitAvatar target, Bullet bullet) => target.IsDead ||
-            UsesFriendlyHoming(bullet) && FriendlyTargetLost(bullet.NetworkOwner, target);
+            UsesFriendlyHoming(bullet) && (FriendlyTargetLost(bullet.NetworkOwner, target) || !AutonomousHomingWithinRange(bullet, target));
 
         private static bool FriendlyTargetLost(UnitAvatar source, UnitAvatar target) =>
             NetworkServer.active && IsPlayerTeamPair(source, target) && !CanAffectTeam(source, target);

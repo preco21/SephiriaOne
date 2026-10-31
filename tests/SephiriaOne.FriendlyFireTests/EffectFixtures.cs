@@ -30,6 +30,8 @@ public partial class Charm_Basic : UnityEngine.Object
     public bool Activated;
     public bool Ready = true;
     public DamageInstance Damage;
+    public CharacterDebuff AutonomousDebuff = new();
+    public bool ApplyAutonomousStatus;
 }
 public class WeaponAddonCommon_BurnRing : Charm_Basic
 {
@@ -38,11 +40,13 @@ public class WeaponAddonCommon_BurnRing : Charm_Basic
 }
 public class Charm_FireFeather : Charm_Basic
 {
+    [MethodImpl(MethodImplOptions.NoInlining)] public void OnAttackFeather() => Target.ApplyDebuff(AutonomousDebuff, NetworkAvatar);
     [MethodImpl(MethodImplOptions.NoInlining)] public bool SearchTarget() =>
         Target && !Target.IsDead && CombatManager.ContainsAttackableFaction(Target.GetHostileFactionLayers(EDamageFromType.None), NetworkAvatar.faction);
 }
 public class Charm_FlameGround_Meteor : Charm_Basic
 {
+    [MethodImpl(MethodImplOptions.NoInlining)] public void HandleAttack() => Target.ApplyDebuff(AutonomousDebuff, NetworkAvatar);
     [MethodImpl(MethodImplOptions.NoInlining)] public bool SearchTarget() =>
         Target && !Target.IsDead && CombatManager.ContainsAttackableFaction(Target.GetHostileFactionLayers(EDamageFromType.None), NetworkAvatar.faction);
     [MethodImpl(MethodImplOptions.NoInlining)] public void OnUpdate() =>
@@ -91,6 +95,21 @@ public class Charm_IceBat : Charm_Basic
 }
 public class Charm_ElectricEarring : Charm_Basic
 {
+    public int Emissions;
+    public List<UnitAvatar> CachedTargets = new();
+    public IEnumerator AttackCoroutine(int count)
+    {
+        // Mirrors the native snapshot followed by per-volley RemoveAll/Count.
+        var targets = new List<UnitAvatar>(CachedTargets);
+        for (int i = 0; i < count; i++)
+        {
+            targets.RemoveAll(t => !t || t.IsDead);
+            if (targets.Count == 0) break;
+            if (NetworkAvatar) Emissions++;
+            yield return null;
+        }
+    }
+    [MethodImpl(MethodImplOptions.NoInlining)] public void HandleAttack() => Target.ApplyDebuff(AutonomousDebuff, NetworkAvatar);
     [MethodImpl(MethodImplOptions.NoInlining)] public bool SearchTarget() =>
         Target && !Target.IsDead && CombatManager.ContainsAttackableFaction(Target.GetHostileFactionLayers(EDamageFromType.None), NetworkAvatar.faction);
     [MethodImpl(MethodImplOptions.NoInlining)] public void OnUpdate() =>
@@ -107,7 +126,11 @@ public class Charm_EchoOfTheGlacier : Charm_Basic
 {
     [MethodImpl(MethodImplOptions.NoInlining)] public bool SearchTarget() =>
         Target && !Target.IsDead && CombatManager.ContainsAttackableFaction(Target.GetHostileFactionLayers(EDamageFromType.None), NetworkAvatar.faction);
-    [MethodImpl(MethodImplOptions.NoInlining)] public void CreateFrostbite() => ((CombatBehaviour)Target).ApplyDamage(Damage);
+    [MethodImpl(MethodImplOptions.NoInlining)] public void CreateFrostbite()
+    {
+        ((CombatBehaviour)Target).ApplyDamage(Damage);
+        if (ApplyAutonomousStatus) Target.ApplyDebuff(AutonomousDebuff, NetworkAvatar);
+    }
 }
 public class Charm_GrowthParry : Charm_Basic
 {
@@ -116,8 +139,20 @@ public class Charm_GrowthParry : Charm_Basic
 }
 public class Charm_Guillotine : Charm_Basic
 {
+    public int Emissions;
+    [MethodImpl(MethodImplOptions.NoInlining)] public void RpcCreateGuillotine(UnitAvatar target, UnityEngine.Vector3 pos, float damage, bool isFireRelic)
+    {
+        var writer = NetworkWriterPool.Get();
+        SendRPCInternal(writer);
+    }
+    [MethodImpl(MethodImplOptions.NoInlining)] private void SendRPCInternal(object writer) => Emissions++;
     [MethodImpl(MethodImplOptions.NoInlining)] public bool FindTargetsInRange() =>
         Target && !Target.IsDead && CombatManager.ContainsAttackableFaction(Target.GetHostileFactionLayers(EDamageFromType.None), NetworkAvatar.faction);
+}
+public static class NetworkWriterPool
+{
+    private static readonly object Writer = new();
+    [MethodImpl(MethodImplOptions.NoInlining)] public static object Get() => Writer;
 }
 public class Charm_IceHammer : Charm_Basic
 {
@@ -261,5 +296,6 @@ public class Charm_FireChakram : Charm_Basic
         long ownFaction = FactionMask;
         if (ownFaction == 0) return;
         Selected = Target && !Target.IsDead && (Target.GetHostileFactionLayers(EDamageFromType.None) & ownFaction) != 0;
+        if (Selected && ApplyAutonomousStatus) Target.ApplyDebuff(AutonomousDebuff, NetworkAvatar);
     }
 }

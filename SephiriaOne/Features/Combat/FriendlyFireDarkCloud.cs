@@ -6,7 +6,8 @@ namespace SephiriaOne
 {
     internal static partial class FriendlyFireRuntime
     {
-        internal static bool CanShowDarkCloudStrike(PlayerAvatar source, PlayerAvatar victim) => CanAffectTeam(source, victim);
+        internal static bool CanShowDarkCloudStrike(PlayerAvatar source, PlayerAvatar victim) =>
+            CanAffectTeam(source, victim) && WithinAutonomousArtifactRange(source, victim);
 
         private sealed class DarkCloudTargets
         {
@@ -42,6 +43,7 @@ namespace SephiriaOne
             // keep the same limit after death as long as that connection is current.
             var settings = SessionSettings.FriendlyFireForHit;
             if (!settings.Enabled || !settings.Balance || !settings.HasDamage || !CanAffectTeam(source, victim)) return true;
+            if (!WithinAutonomousArtifactRange(source, victim)) return false;
 
             var attacker = FriendlyFireParticipants.Capture(source);
             var defender = FriendlyFireParticipants.Capture(victim);

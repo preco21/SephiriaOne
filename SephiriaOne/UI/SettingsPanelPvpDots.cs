@@ -25,13 +25,15 @@ namespace SephiriaOne
             widgets.Text(pageRoot, "DotHeading", "Artifacts / Debuffs", 312, 0, 272, 24, 13);
             const float height = PageHeight - 32;
             const int thornsHeight = 34;
-            const int durationOffset = thornsHeight + ArtifactRateEditorHeight;
+            const int artifactRateOffset = thornsHeight + ArtifactRangeEditorHeight;
+            const int durationOffset = artifactRateOffset + ArtifactRateEditorHeight;
             const int durationHeight = durationOffset + 80;
             var content = widgets.ScrollSection(pageRoot, "DotIntervals", 312, 32, 258, height,
                 durationHeight + PvpDotSettings.Count * 62);
             AddCheckbox("Suppress Thorns", 4, 0, 250, 25, s => s.FriendlyFire.SuppressThorns,
                 s => s.FriendlyFireAvailable, "/one friendlyfire suppress-thorns", parent: content);
-            BuildPvpArtifactRate(PanelWidgets.Rect(content, "ArtifactControls", 0, thornsHeight, 258, ArtifactRateEditorHeight));
+            BuildPvpArtifactRange(PanelWidgets.Rect(content, "ArtifactRangeControls", 0, thornsHeight, 258, ArtifactRangeEditorHeight));
+            BuildPvpArtifactRate(PanelWidgets.Rect(content, "ArtifactControls", 0, artifactRateOffset, 258, ArtifactRateEditorHeight));
             widgets.Text(content, "DotDurationLabel", "Burn-family max duration (s)", 4, durationOffset, 250, 20, 12);
             pvpDotDuration = widgets.Input(content, 4, durationOffset + 24, 56, _ => pvpDotDurationDraft = true);
             changeButtons.Add(widgets.Button(content, "Apply", 66, durationOffset + 24, 62, 25, ApplyPvpDotDuration));
@@ -55,6 +57,7 @@ namespace SephiriaOne
         private void RefreshPvpDots(SettingsSnapshot snapshot)
         {
             RefreshPvpArtifactRate(snapshot);
+            RefreshPvpArtifactRange(snapshot);
             if (pvpDotDuration)
             {
                 pvpDotDuration.interactable = snapshot.CanMutate && snapshot.FriendlyFireAvailable;
@@ -94,6 +97,6 @@ namespace SephiriaOne
             pvpDotDurationDraft = false; pvpDotDurationLast = -1;
             if (pvpDotDuration) pvpDotDuration.SetTextWithoutNotify("");
         }
-        private void ClearPvpDots() { ClearPvpArtifactRate(); ClearPvpDotDuration(); foreach (var row in pvpDotEditors) ClearPvpDot(row); }
+        private void ClearPvpDots() { ClearPvpArtifactRange(); ClearPvpArtifactRate(); ClearPvpDotDuration(); foreach (var row in pvpDotEditors) ClearPvpDot(row); }
     }
 }

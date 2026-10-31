@@ -8,7 +8,14 @@ namespace SephiriaOne
         internal static int Index(DamageInstance damage)
         {
             if (damage == null || damage.fromType != EDamageFromType.None || damage.damageType != EDamageType.Projectile) return -1;
-            switch (damage.id)
+            return Index(damage.id);
+        }
+        internal static bool HasRangeLimit(DamageInstance damage) => damage != null &&
+            damage.fromType == EDamageFromType.None && damage.damageType == EDamageType.Projectile &&
+            (damage.id == "Ability_DarkCloud" || Index(damage.id) >= 0);
+        internal static int Index(string id)
+        {
+            switch (id)
             {
                 case "Charm_Guillotine": return 0; // Both ice and converted fire.
                 case "Charm_ElectricEarring": return 1;

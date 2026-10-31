@@ -98,7 +98,7 @@ namespace SephiriaOne
                     InArtifactDamage = __state.InArtifactDamage || ReferenceEquals(damage, artifactDamage),
                     AttackerReceipt = FriendlyFireParticipants.Capture(attacker), VictimReceipt = FriendlyFireParticipants.Capture(TeamOwner(__instance)),
                     ParticipantEpoch = FriendlyFireParticipants.Epoch };
-                if (settings.Balance && !AutonomousArtifactReady(settings.ArtifactRate))
+                if (settings.Balance && (!ArtifactHitWithinRange(current) || !AutonomousArtifactReady(settings.ArtifactRate)))
                 { __result = EApplyDamageResult.Fail_Absolute; return false; }
             }
             catch (Exception error) { Warn(error); }
@@ -144,7 +144,7 @@ namespace SephiriaOne
             FriendlyFireParticipants.IsCurrent(hit.AttackerReceipt) &&
             (hit.VictimReceipt == null || FriendlyFireParticipants.IsCurrent(hit.VictimReceipt)) &&
             CanAffectTeam(hit.Source, hit.Victim) && hit.ParticipantEpoch == FriendlyFireParticipants.Epoch &&
-            !ThornsSuppressed(hit.Damage, hit.Victim);
+            !ThornsSuppressed(hit.Damage, hit.Victim) && ArtifactHitWithinRange(hit);
 
         // The native all-dead callback emits an irreversible game-over RPC.
         // Keep only this exact friendly-fire death recoverable; no global

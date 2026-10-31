@@ -1,5 +1,11 @@
 # Development knowledge index
 
+[Autonomous artifact range](pvp-autonomous-artifacts.md#owner-centered-range--01030-2026-10-31):
+0.103.0 limits automatic PvP attacks to 5 m from the live owner while balancing
+is active. Configurable UI/command covers the seven audited artifacts and Dark
+Cloud, with selector, homing, impact, secondary-status and delayed-volley guards.
+Includes exclusions, v58 presets, native contracts and multiplayer-test limits.
+
 [PvP Critical Damage limit](pvp-critical-damage.md): 0.102.0 adds an independent
 default-off 30/70 curve over the additional critical bonus, preserving native
 +50%, special critical multipliers, PvE and original attack fields. Includes

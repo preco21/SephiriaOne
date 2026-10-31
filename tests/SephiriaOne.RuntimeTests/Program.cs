@@ -818,6 +818,7 @@ RespawnVisualTests.Run(Start, id => Add(id), Check);
 SilentRespawnTests.Run(Start, id => Add(id), Check);
 CombatModeTests.Run(Start, id => Add(id), Check);
 PvpCoverTests.Run(Check);
+PvpArtifactRangeControlsTests.Run(Start, id => Add(id), Check);
 FloatingCountdownTests.Run(Start, id => Add(id), Check);
 DeathmatchScoreResetTests.Run(Start, id => Add(id), Check);
         JarSpawnRuntimeTests.Run(Start, id => Add(id), Check);

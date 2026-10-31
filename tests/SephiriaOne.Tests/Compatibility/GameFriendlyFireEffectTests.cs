@@ -18,19 +18,25 @@ internal static class GameFriendlyFireEffectTests
         foreach (var selector in selectors)
         {
             var code = PatchProcessor.GetOriginalInstructions(selector).ToList();
-            var rewritten = ((IEnumerable<CodeInstruction>)AccessTools.Method(hooks, "RewriteSelector").Invoke(null, new object[] { code })!).ToList();
-            Require(code.Count == rewritten.Count && Calls(rewritten, "FriendlyFireRuntime", "ItemTarget"), selector + " retains the native body and replaces only its filter");
+            bool ranged = (bool)AccessTools.Method(hooks, "UsesAutonomousRange").Invoke(null, new object[] { selector })!;
+            bool expected = new[] { "Charm_FireFeather", "Charm_FlameGround_Meteor", "Charm_IceBat", "Charm_ElectricEarring",
+                "Charm_EchoOfTheGlacier", "Charm_Guillotine" }.Contains(selector.DeclaringType!.Name) ||
+                selector.DeclaringType.DeclaringType?.Name == "ComboEffect_DarkCloud";
+            Require(ranged == expected, "Only explicitly audited autonomous selectors receive range enforcement");
+            string rewrite = ranged ? "RewriteAutonomousSelector" : "RewriteSelector";
+            var rewritten = ((IEnumerable<CodeInstruction>)AccessTools.Method(hooks, rewrite).Invoke(null, new object[] { code })!).ToList();
+            Require(code.Count == rewritten.Count && Calls(rewritten, "FriendlyFireRuntime", ranged ? "AutonomousArtifactTarget" : "ItemTarget"), selector + " retains the native body and replaces only its filter");
             Require(rewritten.Count(i => i.operand is MethodInfo m && m.DeclaringType?.Name == "FriendlyFireRuntime") == 1, "exactly one target helper");
             var changed = code.Select(i => new CodeInstruction(i)).ToList();
             changed.RemoveAt(changed.FindIndex(i => i.operand is MethodInfo m && m.Name == "GetHostileFactionLayers"));
             bool rejected = false;
-            try { _ = AccessTools.Method(hooks, "RewriteSelector").Invoke(null, new object[] { changed }); }
+            try { _ = AccessTools.Method(hooks, rewrite).Invoke(null, new object[] { changed }); }
             catch (TargetInvocationException error) when (error.InnerException is InvalidOperationException) { rejected = true; }
             Require(rejected, selector + " rejects a changed target contract");
         }
         var chakram = Code("Charm_FireChakram", "OnUpdate");
         var mappedChakram = ((IEnumerable<CodeInstruction>)AccessTools.Method(hooks, "RewriteChakram").Invoke(null, new object[] { chakram })!).ToList();
-        Require(Calls(mappedChakram, "FriendlyFireRuntime", "ItemTargetMask") && Calls(mappedChakram, "UnitAvatar", "ApplyDebuff") &&
+        Require(Calls(mappedChakram, "FriendlyFireRuntime", "AutonomousArtifactTargetMask") && Calls(mappedChakram, "UnitAvatar", "ApplyDebuff") &&
             Calls(mappedChakram, "CombatBehaviour", "ApplyDamage") && Calls(mappedChakram, "UnitAvatar", "GetHostileFactionLayers"),
             "chakram changes only the victim mask and retains attack mask/damage/debuff calls");
         var apply = Code("UnitAvatar", "ApplyDebuff");

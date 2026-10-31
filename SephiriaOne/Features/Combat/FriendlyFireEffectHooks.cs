@@ -47,11 +47,14 @@ namespace SephiriaOne
             if (debuff == null || debuff.ReturnType != typeof(void) || selectors.Any(m => m == null) || chakram == null ||
                 refresh == null || refresh.ReturnType != typeof(void))
                 throw new InvalidOperationException("Native friendly-fire item/debuff entry points changed.");
-            foreach (var selector in selectors) RewriteSelector(PatchProcessor.GetOriginalInstructions(selector)).ToList();
+            foreach (var selector in selectors)
+                (UsesAutonomousRange(selector) ? RewriteAutonomousSelector(PatchProcessor.GetOriginalInstructions(selector)) :
+                    RewriteSelector(PatchProcessor.GetOriginalInstructions(selector))).ToList();
             RewriteChakram(PatchProcessor.GetOriginalInstructions(chakram)).ToList();
             FriendlyFireDebuffBalanceHooks.Install(harmony);
             foreach (var selector in selectors)
-                harmony.Patch(selector, transpiler: new HarmonyMethod(typeof(FriendlyFireEffectHooks), nameof(RewriteSelector)));
+                harmony.Patch(selector, transpiler: new HarmonyMethod(typeof(FriendlyFireEffectHooks),
+                    UsesAutonomousRange(selector) ? nameof(RewriteAutonomousSelector) : nameof(RewriteSelector)));
             harmony.Patch(chakram, transpiler: new HarmonyMethod(typeof(FriendlyFireEffectHooks), nameof(RewriteChakram)));
             harmony.Patch(debuff, prefix: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.BeforeDebuff)),
                 finalizer: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.AfterDebuff)));
@@ -71,6 +74,18 @@ namespace SephiriaOne
 
         internal static IEnumerable<CodeInstruction> RewriteSelector(IEnumerable<CodeInstruction> instructions) =>
             RewriteFaction(instructions, EDamageFromType.None, nameof(FriendlyFireRuntime.ItemTarget));
+
+        internal static bool UsesAutonomousRange(MethodInfo method)
+        {
+            var type = method.DeclaringType;
+            return type == typeof(Charm_FireFeather) || type == typeof(Charm_FlameGround_Meteor) ||
+                type == typeof(Charm_IceBat) || type == typeof(Charm_ElectricEarring) ||
+                type == typeof(Charm_EchoOfTheGlacier) || type == typeof(Charm_Guillotine) ||
+                type.DeclaringType == typeof(ComboEffect_DarkCloud);
+        }
+
+        internal static IEnumerable<CodeInstruction> RewriteAutonomousSelector(IEnumerable<CodeInstruction> instructions) =>
+            RewriteFaction(instructions, EDamageFromType.None, nameof(FriendlyFireRuntime.AutonomousArtifactTarget));
 
         internal static List<CodeInstruction> RewriteFaction(IEnumerable<CodeInstruction> instructions, EDamageFromType type, string helper)
         {
@@ -108,7 +123,7 @@ namespace SephiriaOne
                 throw new InvalidOperationException("Native chakram mask boundaries changed.");
             code[mask].opcode = OpCodes.Nop; code[mask].operand = null;
             code[mask + 2].opcode = OpCodes.Call;
-            code[mask + 2].operand = AccessTools.Method(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.ItemTargetMask));
+            code[mask + 2].operand = AccessTools.Method(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.AutonomousArtifactTargetMask));
             code.InsertRange(mask + 2, new[] { new CodeInstruction(OpCodes.Ldarg_0),
                 new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(Charm_Basic), "NetworkAvatar")) });
             return code;

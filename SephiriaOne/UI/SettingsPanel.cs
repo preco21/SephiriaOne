@@ -234,6 +234,7 @@ namespace SephiriaOne
             pvpRapidLastBurst = pvpRapidLastRefill = pvpRapidLastExponent = -1;
             pvpDotEditors.Clear();
             pvpArtifactInterval = null; pvpArtifactReset = null; pvpArtifactDraft = false; pvpArtifactLast = -1;
+            pvpArtifactRange = null; pvpArtifactRangeReset = null; pvpArtifactRangeDraft = false; pvpArtifactRangeLast = -1;
             pvpDotDuration = null; pvpDotDurationReset = null; pvpDotDurationDraft = false; pvpDotDurationLast = -1;
             playTagRounds = playTagRefill = playTagIncoming = null;
             playTagDurationDraft = playTagRoundsDraft = playTagRefillDraft = playTagIncomingDraft = false;

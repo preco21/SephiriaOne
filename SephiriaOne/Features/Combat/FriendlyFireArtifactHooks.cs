@@ -37,6 +37,15 @@ namespace SephiriaOne
             yield return AccessTools.DeclaredMethod(typeof(ComboEffect_DarkCloud), "FireLightning");
         }
 
+        internal static IEnumerable<MethodInfo> AutonomousDebuffCallers()
+        {
+            yield return AccessTools.DeclaredMethod(typeof(Charm_EchoOfTheGlacier), "CreateFrostbite");
+            yield return AccessTools.DeclaredMethod(typeof(Charm_FireChakram), "OnUpdate");
+            yield return AccessTools.DeclaredMethod(typeof(Charm_ElectricEarring), "HandleAttack");
+            yield return AccessTools.DeclaredMethod(typeof(Charm_FlameGround_Meteor), "HandleAttack");
+            yield return AccessTools.DeclaredMethod(typeof(Charm_FireFeather), "OnAttackFeather");
+        }
+
         internal static void Install(Harmony harmony)
         {
             var cloud = AccessTools.DeclaredMethod(typeof(ComboEffect_DarkCloud), "FireLightning", new[] { typeof(UnitAvatar), typeof(int) });
@@ -47,6 +56,8 @@ namespace SephiriaOne
             foreach (var m in BattleReaders()) patches.Add(new KeyValuePair<MethodInfo, string>(m, nameof(RewriteBattle)));
             foreach (var m in NearestCallers()) patches.Add(new KeyValuePair<MethodInfo, string>(m, nameof(RewriteNearestCalls)));
             foreach (var m in DamageProcs()) patches.Add(new KeyValuePair<MethodInfo, string>(m, nameof(RewriteDamageProc)));
+            foreach (var m in AutonomousDebuffCallers()) patches.Add(new KeyValuePair<MethodInfo, string>(m, nameof(RewriteAutonomousDebuff)));
+            patches.Add(new KeyValuePair<MethodInfo, string>(cloud, nameof(RewriteDarkCloudCallback)));
             patches.Add(new KeyValuePair<MethodInfo, string>(AccessTools.DeclaredMethod(typeof(DaggerGrowthBullet), "HitCheck"), nameof(RewriteDagger)));
             patches.Add(new KeyValuePair<MethodInfo, string>(AccessTools.DeclaredMethod(typeof(IceSword), "Update"), nameof(RewriteIceSword)));
             patches.Add(new KeyValuePair<MethodInfo, string>(AccessTools.DeclaredMethod(typeof(Charm_AttackChim), "HandleAddedDebuffOnTarget"), nameof(RewriteDebuffProc)));
@@ -60,6 +71,7 @@ namespace SephiriaOne
             }
             foreach (var patch in patches) harmony.Patch(patch.Key, transpiler: new HarmonyMethod(typeof(FriendlyFireArtifactHooks), patch.Value));
             harmony.Patch(cloud, prefix: new HarmonyMethod(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.BeforeDarkCloudStrike)));
+            FriendlyFireArtifactRangeHooks.Install(harmony);
         }
 
         internal static bool ValidateDarkCloudStrike(IEnumerable<CodeInstruction> instructions)
@@ -94,6 +106,26 @@ namespace SephiriaOne
         internal static IEnumerable<CodeInstruction> RewriteDebuffProc(IEnumerable<CodeInstruction> instructions) =>
             FriendlyFireTargetingHooks.ReplaceCall(instructions, AccessTools.DeclaredMethod(typeof(UnitAvatar), "ApplyDebuff", new[] { typeof(CharacterDebuff), typeof(UnitAvatar) }),
                 nameof(FriendlyFireRuntime.ApplyArtifactDebuff), 1);
+
+        internal static IEnumerable<CodeInstruction> RewriteAutonomousDebuff(IEnumerable<CodeInstruction> instructions) =>
+            FriendlyFireTargetingHooks.ReplaceCall(instructions, AccessTools.DeclaredMethod(typeof(UnitAvatar), "ApplyDebuff", new[] { typeof(CharacterDebuff), typeof(UnitAvatar) }),
+                nameof(FriendlyFireRuntime.ApplyAutonomousArtifactDebuff), 1);
+
+        internal static IEnumerable<CodeInstruction> RewriteDarkCloudCallback(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = instructions.Select(i => new CodeInstruction(i)).ToList();
+            var invoke = AccessTools.Method(typeof(Action<UnitAvatar>), "Invoke");
+            var calls = Enumerable.Range(0, code.Count).Where(i => code[i].Calls(invoke)).ToArray();
+            if (calls.Length != 1 || code[calls[0]].blocks.Count != 0)
+                throw new InvalidOperationException("Native Dark Cloud callback contract changed.");
+            int index = calls[0];
+            var owner = new CodeInstruction(OpCodes.Ldarg_0);
+            owner.labels.AddRange(code[index].labels); code[index].labels.Clear();
+            code[index].opcode = OpCodes.Call;
+            code[index].operand = AccessTools.Method(typeof(FriendlyFireRuntime), nameof(FriendlyFireRuntime.InvokeDarkCloudAttack));
+            code.Insert(index, owner);
+            return code;
+        }
 
         internal static IEnumerable<CodeInstruction> RewriteDagger(IEnumerable<CodeInstruction> instructions) =>
             FriendlyFireEffectHooks.RewriteFaction(instructions, EDamageFromType.DirectAttack, nameof(FriendlyFireRuntime.ItemHitTarget));
