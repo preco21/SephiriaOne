@@ -1,5 +1,10 @@
 # Development knowledge index
 
+[Play Tag role visuals](play-tag.md#chaser-and-detonation-visuals--01050-2026-10-31):
+0.105.0 reuses the persistent green X for the chaser, sends one small assignment
+flash and reserves a single 2×-scale Leaf Explosion for detonation. Shared
+Zombie/Tag presentation, stock-guest transport and lifecycle verification.
+
 [Dense PvP cover](pvp-cover.md#dense-placement-and-displacement--01040-2026-10-31):
 0.104.0 allows portal obstruction, uses compact footprint checks and safely
 relocates overlapping players through native acknowledged movement. Includes

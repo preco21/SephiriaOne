@@ -10,6 +10,7 @@ namespace SephiriaOne
         {
             // A new combat token rejects delayed death/revival notifications from
             // the previous round. Keep roster, pending recovery and score objects.
+            ClearPlayTagVisuals();
             token++; tagRound++;
             phase = Phase.BetweenRounds;
             tagBomb = null; tagShown = -1; tagPreviousName = null;

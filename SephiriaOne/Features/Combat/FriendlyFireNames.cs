@@ -83,7 +83,7 @@ namespace SephiriaOne
                 {
                     // Also isolate loader/JIT failures before the optional
                     // adapter's own try/catch from match recovery and KDA.
-                    try { FriendlyFireDeathVisuals.Show(visual); }
+                    try { CombatImpactVisuals.Show(visual); }
                     catch (Exception error) { Warn(error); }
                     try { FriendlyFireDeathAudio.Show(visual); }
                     catch (Exception error) { Warn(error); }

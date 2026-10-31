@@ -7,7 +7,7 @@ using Mirror;
 
 namespace SephiriaOne
 {
-    internal static class ZombieVisualNative
+    internal static class CombatRoleVisualNative
     {
         internal const uint AssetId = 4098245047;
         private const string GameHash = "C57A0DAEAB8E8D0AF7066A344133EEC4C57D8F303FD9E25DA9410FBFC4CF1510";

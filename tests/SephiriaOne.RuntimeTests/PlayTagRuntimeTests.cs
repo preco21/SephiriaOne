@@ -24,7 +24,7 @@ internal static class PlayTagRuntimeTests
             var all = new List<PlayerAvatar> { start().PlayerAvatar };
             for (uint i = 2; i <= count; i++) all.Add(add(i).PlayerAvatar);
             for (int i = 0; i < all.Count; i++) all[i].playerNameSource = "P" + (i + 1);
-            PlayTagExplosion.Shown.Clear(); NativePlayerChat.Messages.Clear();
+            PlayTagExplosion.Shown.Clear(); NativePlayerChat.Messages.Clear(); CombatImpactVisuals.Assignments.Clear();
             At(0); return all.ToArray();
         }
         bool Begin() => (bool)begin.Invoke(null, new object[] { null });
@@ -46,7 +46,12 @@ internal static class PlayTagRuntimeTests
         players = New(3);
         check(Begin(), "Play Tag starts using the shared runtime");
         check(!SessionSettings.FriendlyFireForHit.Enabled, "Tag countdown blocks friendly fire");
+        check(CombatRoleVisuals.Visible.Count == 0 && CombatImpactVisuals.Assignments.Count == 0 && PlayTagExplosion.Shown.Count == 0,
+            "Opening countdown has no premature carrier marker, transition or explosion");
         At(3);
+        check(CombatRoleVisuals.Visible.SetEquals(new[] { Carrier(players) }), "Active Play Tag carrier gets one persistent role marker");
+        check(CombatImpactVisuals.Assignments.SequenceEqual(new[] { Carrier(players) }) && PlayTagExplosion.Shown.Count == 0,
+            "Initial assignment sends one subtle impact and never Leaf Explosion");
         check(players.All(a => players.All(b => a == b || CombatMatchRuntime.AllowsPair(a, b))),
             "Every enrolled pair can fight in active Tag");
         var guardBomb = Bomb(); long guardToken = CombatMatchRuntime.MatchToken, guardEpoch = FriendlyFireKda.Epoch;
@@ -63,11 +68,22 @@ internal static class PlayTagRuntimeTests
             CombatMatchRuntime.IsRunning && ReferenceEquals(guardBomb, Bomb()) && CombatMatchRuntime.MatchToken == guardToken &&
             FriendlyFireKda.Epoch == guardEpoch, "DoT edit preserves Tag bomb/fuse, score epoch and match identity");
         var recipient = players.First(p => p != carrier);
+        At(3); At(3);
+        check(CombatImpactVisuals.Assignments.Count == 1 && CombatRoleVisuals.Visible.SetEquals(new[] { carrier }),
+            "Repeated ticks and live balancing edits do not recreate the assignment event");
         long epoch = FriendlyFireKda.Epoch;
         Kill(carrier, recipient);
+        check(CombatRoleVisuals.Visible.SetEquals(new[] { recipient }) &&
+            CombatImpactVisuals.Assignments.SequenceEqual(new[] { carrier, recipient }) && PlayTagExplosion.Shown.Count == 0,
+            "Transfer removes the old marker, marks the dead recipient, and emits only one transition");
         check(FriendlyFireKda.Epoch == epoch && recipient.IsDead, "A pass preserves combat receipts and the ordinary death");
         At(3.5f); check(recipient.IsDead, "Tag waits the full one-second respawn delay");
         At(4); check(!recipient.IsDead, "Tag revives after one second");
+        check(CombatImpactVisuals.Assignments.Count == 2 && CombatRoleVisuals.Visible.SetEquals(new[] { recipient }),
+            "Revival retains the role marker without replaying assignment");
+        CombatRoleVisuals.Visible.Clear(); At(4);
+        check(CombatImpactVisuals.Assignments.Count == 2 && CombatRoleVisuals.Visible.SetEquals(new[] { recipient }),
+            "Native marker loss restores only the persistent visual, not its assignment pulse");
         check(DungeonManager.Instance.ChatMessages.Last(x => x.Player == recipient).Message.Contains("24s"),
             "Recipient receives the reduced fuse after revival");
         At(27.9f); check(CombatMatchRuntime.IsRunning, "Recipient fuse begins after revival");
@@ -76,6 +92,8 @@ internal static class PlayTagRuntimeTests
         check(!SessionSettings.FriendlyFireForHit.Enabled && SessionSettings.FriendlyFireForHit.GuardMpPercent == 15,
             "Ended Tag retains only guard preference, not active PvP scaling");
         check(PlayTagExplosion.Shown.SequenceEqual(new[] { recipient }), "Explosion presentation is emitted exactly once");
+        check(CombatRoleVisuals.Visible.Count == 0 && CombatImpactVisuals.Assignments.Count == 2,
+            "Bomb resolution removes the persistent marker without an extra role transition");
         At(29); check(PlayTagExplosion.Shown.Count == 1, "Later ticks cannot replay the consumed explosion");
         check(PlayTagExplosion.Owned, "Natural match end preserves the animation until its own completion");
         check(CombatMatchRuntime.Start(out _) && !PlayTagExplosion.Owned,
@@ -83,11 +101,11 @@ internal static class PlayTagRuntimeTests
         CombatMatchRuntime.Stop(true, false);
 
         players = New(3); BeginAtThree(3); carrier = Carrier(players);
-        int visuals = FriendlyFireDeathVisuals.Shown, audio = FriendlyFireDeathAudio.Shown;
+        int visuals = CombatImpactVisuals.Shown, audio = FriendlyFireDeathAudio.Shown;
         At(6);
         check(carrier.Lifecycle.SequenceEqual(new[] { "RpcDie", "RpcRevive" }) && PlayTagExplosion.Shown.Single() == carrier,
             "Living timeout uses one native death followed by shared recovery");
-        check(FriendlyFireDeathVisuals.Shown == visuals && FriendlyFireDeathAudio.Shown == audio,
+        check(CombatImpactVisuals.Shown == visuals && FriendlyFireDeathAudio.Shown == audio,
             "Special bomb death suppresses default red death presentation and observer audio");
         check(DungeonManager.Instance.ChatMessages.Any(x => x.Message.Contains("before any pass")) &&
             !DungeonManager.Instance.ChatMessages.Any(x => x.Message.Contains("Friendly fire:")),
@@ -145,9 +163,13 @@ internal static class PlayTagRuntimeTests
         At(20);
         check(recipient.IsDead && Bomb().AwaitingRespawn && Bomb().Remaining(20) == 24,
             "Loading recipient preserves unarmed fuse without extending an armed holding");
+        check(CombatRoleVisuals.Visible.Count == 0 && CombatImpactVisuals.Assignments.Count == 2,
+            "Loading hides an unavailable marker without replaying assignment");
         recipient.spawner.connectionToClient.isReady = true; At(21);
         check(!recipient.IsDead && !Bomb().AwaitingRespawn && Bomb().Remaining(21) == 24,
             "Successful delayed native revival arms a full reduced fuse");
+        check(CombatRoleVisuals.Visible.SetEquals(new[] { recipient }) && CombatImpactVisuals.Assignments.Count == 2,
+            "Readiness restoration recreates only the marker, not the one-shot transition");
         CombatMatchRuntime.Stop(true, false);
 
         players = New(2); BeginAtThree(); carrier = Carrier(players); recipient = players.First(p => p != carrier);
@@ -274,6 +296,7 @@ internal static class PlayTagRuntimeTests
         FriendlyFireParticipants.Retire(carrier.spawner); At(6);
         check(!CombatMatchRuntime.IsRunning && PlayTagExplosion.Shown.Count == 0,
             "Carrier disconnect safely stops without transferring its fuse to a new connection");
+        check(CombatRoleVisuals.Visible.Count == 0, "Carrier reconnect cannot retain the previous connection's marker");
 
         players = New(3); BeginAtThree(); carrier = Carrier(players); recipient = players.First(p => p != carrier);
         string passerName = carrier.playerNameSource;
@@ -297,6 +320,8 @@ internal static class PlayTagRuntimeTests
             Kill(carrier, recipient);
             check(!CombatMatchRuntime.IsRunning && recipient.Lifecycle.SequenceEqual(new[] { "RpcDie", "RpcRevive" }) &&
                 PlayTagExplosion.Shown.Count == 0, "Selection/master edit inside native death recovers after RpcDie: " + action);
+            check(CombatRoleVisuals.Visible.Count == 0 && CombatImpactVisuals.Assignments.Count == 1,
+                "Interrupted death cannot create a transferred role visual: " + action);
         }
 
         foreach (string transition in new[] { "restart", "save", "dungeon", "authority", "settlement" })
@@ -314,6 +339,7 @@ internal static class PlayTagRuntimeTests
             At(40);
             check(!CombatMatchRuntime.IsRunning && recipient.ReviveCalls == 0 && PlayTagExplosion.Shown.Count == 0,
                 "Tag timers and old-run recovery never cross " + transition);
+            check(CombatRoleVisuals.Visible.Count == 0, "Role markers are cleared on " + transition);
         }
 
         players = New(2); BeginAtThree(); carrier = Carrier(players); recipient = players.First(p => p != carrier);
@@ -333,6 +359,18 @@ internal static class PlayTagRuntimeTests
         CombatMatchRuntime.ConfirmedKill(oldKiller, oldVictim, oldMatch);
         check(Bomb().Carrier == before && !Bomb().AwaitingRespawn, "An old connection receipt cannot transfer even within the current match");
         CombatMatchRuntime.Stop(true, false);
+
+        players = New(2); check(Begin(), "Start match for reentrant marker cleanup");
+        CombatRoleVisuals.AfterUpdate = () => CombatMatchRuntime.Stop(true, false);
+        At(3);
+        check(!CombatMatchRuntime.IsRunning && CombatRoleVisuals.Visible.Count == 0 && CombatImpactVisuals.Assignments.Count == 0,
+            "Stop during marker creation cannot emit a stale assignment flash");
+
+        players = New(2); BeginAtThree(); carrier = Carrier(players); recipient = players.First(p => p != carrier);
+        CombatRoleVisuals.AfterUpdate = () => CombatMatchRuntime.Stop(true, false);
+        Kill(carrier, recipient);
+        check(!CombatMatchRuntime.IsRunning && CombatRoleVisuals.Visible.Count == 0 && CombatImpactVisuals.Assignments.Count == 1,
+            "Stop while retiring the old carrier prevents new marker/flash ownership");
 
         players = New(5); BeginAtThree(3600);
         for (int i = 0; i < 20; i++) CombatMatchRuntime.Tick();

@@ -49,7 +49,7 @@ internal static class ZombieStartingCountTests
             var players = New(scenario.Item1);
             check(Count(scenario.Item2.ToString()) && SettingsActions.Execute("/one zombie start").Success, "Start configured Zombie roster");
             At(3);
-            check(Zombies(players) == scenario.Item3 && ZombieRoleVisuals.Visible.Count == scenario.Item3,
+            check(Zombies(players) == scenario.Item3 && CombatRoleVisuals.Visible.Count == scenario.Item3,
                 "Unique initial Zombies and visuals clamp to roster while retaining one Human");
             check(players.All(p => !CombatMatchRuntime.BlocksZombieHpPotions(p)),
                 "Clamped starting population retains normal potion admission");
@@ -62,7 +62,7 @@ internal static class ZombieStartingCountTests
             check(players.All(p => !CombatMatchRuntime.BlocksZombieHpPotions(p)),
                 "Editing next-match count does not change the active potion threshold");
             CombatMatchRuntime.Stop(true, false);
-            check(ZombieRoleVisuals.Visible.Count == 0, "Stopping clears all initial role visuals");
+            check(CombatRoleVisuals.Visible.Count == 0, "Stopping clears all initial role visuals");
             check(SettingsActions.Execute("/one zombie start").Success, "Next match uses updated count");
             At(6); check(Zombies(players) == 1, "Next match adopts count without stale teams");
         }

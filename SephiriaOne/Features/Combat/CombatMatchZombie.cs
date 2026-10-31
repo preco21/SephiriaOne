@@ -100,7 +100,7 @@ namespace SephiriaOne
             {
                 UpdateZombieMovement(initialPlayers[i]);
                 if (!IsZombieSurvival || current != token) return;
-                ZombieRoleVisuals.Update(initialPlayers[i].Subject.Player);
+                CombatRoleVisuals.Update(initialPlayers[i].Subject.Player);
             }
             if (!IsZombieSurvival || current != token) return;
             foreach (string message in ZombieSurvivalMessages.Starting(initialNames))
@@ -156,7 +156,7 @@ namespace SephiriaOne
             {
                 UpdateZombieMovement(zombiePlayers[i]);
                 if (!IsZombieSurvival || current != token) return;
-                if (zombieRound.IsZombie(i)) ZombieRoleVisuals.Update(zombiePlayers[i].Subject.Player);
+                if (zombieRound.IsZombie(i)) CombatRoleVisuals.Update(zombiePlayers[i].Subject.Player);
             }
             if (!IsZombieSurvival || current != token) return;
             if (remaining != zombieTimeShown && (remaining <= 5 || remaining % 5 == 0))
@@ -198,7 +198,7 @@ namespace SephiriaOne
             RoleRevision++;
             UpdateZombieMovement(zombiePlayers[index]);
             if (!IsZombieSurvival || zombieRound == null) return;
-            ZombieRoleVisuals.Update(zombiePlayers[index].Subject.Player);
+            CombatRoleVisuals.Update(zombiePlayers[index].Subject.Player);
             // The shared death finalizer sends the one-time faction alert once
             // attribution/any-death policy is complete, without a respawn timer.
         }
@@ -228,7 +228,7 @@ namespace SephiriaOne
         private static void ClearZombie()
         {
             foreach (var entry in zombiePlayers) entry.Movement.Update(entry.Subject.Player, false);
-            ZombieRoleVisuals.Clear();
+            CombatRoleVisuals.Clear();
             zombieBalance = default;
             zombieRound = null; zombieScores = null; zombieNames = null; zombieOutcome = null; zombieTimeShown = -1; zombieStartingCount = 0;
             zombiePlayers.Clear(); zombieRoster.Clear(); RoleRevision++;

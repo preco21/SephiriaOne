@@ -12,7 +12,7 @@ internal static class PlayTagRoundsTests
         {
             var players = new[] { start().PlayerAvatar, add(2).PlayerAvatar, add(3).PlayerAvatar };
             for (int i = 0; i < players.Length; i++) players[i].playerNameSource = "R" + (i + 1);
-            PlayTagExplosion.Shown.Clear(); At(0);
+            PlayTagExplosion.Shown.Clear(); CombatImpactVisuals.Assignments.Clear(); At(0);
             check(SettingsActions.Execute("/one tag rounds " + rounds).Success && SettingsActions.Execute("/one tag duration 3").Success &&
                 CombatMatchRuntime.StartPlayTag(out _), "Start configured multi-round Tag");
             At(3); return players;
@@ -34,6 +34,8 @@ internal static class PlayTagRoundsTests
             !DungeonManager.Instance.ChatMessages.Any(x => x.Message.Contains("Top 5")), "Intermediate round preserves FX and does not publish final standings");
         check(CombatMatchRuntime.MatchToken != firstToken && !CombatMatchRuntime.IsActiveChaser(carrier),
             "Round boundary invalidates old combat callbacks and chaser bonuses");
+        check(CombatRoleVisuals.Visible.Count == 0 && CombatImpactVisuals.Assignments.Count == 1,
+            "Between-round recovery removes carrier visuals without a new assignment");
         At(7);
         check(all.All(p => !p.IsDead) && Bomb() == null && CombatMatchRuntime.DescribePlayTag().Contains("2/2"),
             "All pending participants recover before round two countdown");
@@ -45,6 +47,9 @@ internal static class PlayTagRoundsTests
             SessionSettings.FriendlyFireForHit.Enabled && FriendlyFireKda.For(others[0]).Kills == 1,
             "New random carrier gets fresh bomb state while KDA survives countdown activation");
         var newCarrier = all[Bomb().Carrier]; var target = all.First(p => p != newCarrier);
+        check(CombatRoleVisuals.Visible.SetEquals(new[] { newCarrier }) &&
+            CombatImpactVisuals.Assignments.SequenceEqual(new[] { carrier, newCarrier }),
+            "Every round owns one new marker/transition, even if the same player is chosen again");
         target.IsDead = true;
         CombatMatchRuntime.ConfirmedKill(FriendlyFireParticipants.Capture(newCarrier), FriendlyFireParticipants.Capture(target), firstToken);
         check(!Bomb().AwaitingRespawn && all[Bomb().Carrier] == newCarrier, "Previous round token cannot pass the new bomb"); target.IsDead = false;
@@ -52,6 +57,8 @@ internal static class PlayTagRoundsTests
         check(!CombatMatchRuntime.IsRunning && PlayTagExplosion.Shown.Count == 2 && all.All(p => !p.IsDead) &&
             DungeonManager.Instance.ChatMessages.Count(x => x.Message.Contains("Top 5")) == 1,
             "Configured final explosion ends match, recovers players and publishes one scoreboard");
+        check(CombatRoleVisuals.Visible.Count == 0 && CombatImpactVisuals.Assignments.Count == 2,
+            "Final multi-round cleanup leaves no carrier marker or duplicate transition");
         check(DungeonManager.Instance.ChatMessages.Any(x => x.Message.Contains(others[0].playerNameSource + "(1/0/0)")),
             "Final leaderboard includes earlier-round kills");
 

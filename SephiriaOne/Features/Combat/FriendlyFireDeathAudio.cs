@@ -48,7 +48,7 @@ namespace SephiriaOne
                     initialized = true;
                     // The existing adapter audits this same cosmetic sender,
                     // receiver, serializer and base module (including its audio).
-                    if (!FriendlyFireDeathVisuals.Validate() || !ValidateSoundPlayback() || !ValidateLocalDeathSound())
+                    if (!CombatImpactVisuals.Validate() || !ValidateSoundPlayback() || !ValidateLocalDeathSound())
                         throw new InvalidOperationException("Native impact audio transport changed.");
                     targetSend = AccessTools.DeclaredMethod(typeof(NetworkBehaviour), "SendTargetRPCInternal",
                         new[] { typeof(NetworkConnection), typeof(string), typeof(int), typeof(NetworkWriter), typeof(int) });

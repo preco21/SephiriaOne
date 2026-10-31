@@ -9,8 +9,8 @@ internal static class GameZombieVisualTests
         void Require(bool value, string why) { if (!value) throw new Exception("Zombie visual contract: " + why); }
         List<CodeInstruction> Code(Type type, string name) => PatchProcessor.GetOriginalInstructions(AccessTools.DeclaredMethod(type, name)).ToList();
         IEnumerable<MethodInfo> Calls(IEnumerable<CodeInstruction> code) => code.Select(i => i.operand).OfType<MethodInfo>();
-        var adapter = addon.GetType("SephiriaOne.ZombieRoleVisuals", true)!;
-        var native = addon.GetType("SephiriaOne.ZombieVisualNative", true)!;
+        var adapter = addon.GetType("SephiriaOne.CombatRoleVisuals", true)!;
+        var native = addon.GetType("SephiriaOne.CombatRoleVisualNative", true)!;
         Require((uint)AccessTools.Field(native, "AssetId").GetRawConstantValue()! == 4098245047,
             "Green X uses the registered native Chim carrier, not Poison particles");
         var debuff = game.GetType("CharacterDebuff", true)!;

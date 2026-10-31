@@ -19,7 +19,7 @@ void Reset()
     DungeonManager.Instance = new(); Bullet.Pool = new();
     UnityEngine.Debug.Messages.Clear();
     UnityEngine.Debug.Fail = HostStateAdapter.Fail = false;
-    FriendlyFireDeathAudio.Reset(); FriendlyFireDeathVisuals.Compatible = true;
+    FriendlyFireDeathAudio.Reset(); CombatImpactVisuals.Compatible = true;
     // Real native IL is validated by GameRemoteAudioTests. Here inject only the
     // validated sender to execute production audience/payload/failure handling.
     HarmonyLib.AccessTools.Field(typeof(FriendlyFireDeathAudio), "initialized").SetValue(null, true);

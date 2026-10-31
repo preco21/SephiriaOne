@@ -1,10 +1,74 @@
-# Play Tag (0.61.0, 2026-10-18)
+# Play Tag
 
 Host-controlled bomb tag shares the friendly-fire match infrastructure. Research
 began against addon `0.55.2`; implementation follows the behavior-preserving
 `0.55.3` optimization pass. The game was not launched or deployed during this
 work; native-code/asset evidence and automated checks do not prove live guest
 rendering or audio playback.
+
+## Chaser and detonation visuals — 0.105.0 (2026-10-31)
+
+The current chaser carries the same persistent green X used by Zombie Survival.
+Initial assignment and successful transfers also send one small red impact
+flash (0.75 native visual scale). Leaf Explosion is reserved for bomb detonation:
+one cosmetic instance at **2× native visual scale**, with one original embedded
+audio sequence. This implements the requested stronger final event through size,
+not overlapping explosion objects or increased damage.
+
+`CombatMatchRoleVisuals` supplies the current role/receipt/match predicate.
+`Presentation/CombatRoleVisuals` and `CombatRoleVisualNative` generalize the
+existing Zombie adapter: a registered `CHIM_DAMAGE` cosmetic clone (asset ID
+4098245047), stock looping `BuffFx_Chim`, target-following on stock guests and an
+explicit host visual update. No actual debuff, stack, expiry damage, targeting
+or movement stat is applied. The underlying native marker can also appear from
+a real Chim debuff; it is not a unique or newly supplied art asset.
+
+The former death-impact adapter is now `Presentation/CombatImpactVisuals`.
+Existing death visuals retain their 4× scale/death requirement. Assignment uses
+the same audited `BroadcastDestroyBullet` cosmetic RPC with
+`PlayerDefaultBigBullet`, no fake projectile and no extra audio. Both living
+initial carriers and dead transfer recipients can receive the small flash.
+Assignment generation is consumed before native presentation dispatch; ordinary
+ticks, native marker replacement, readiness restoration and revival never
+replay it. A temporarily unavailable optional impact is skipped, not retried.
+
+A transfer removes the previous marker immediately and attaches the new one
+while its owner awaits the existing one-second respawn. Loading removes the
+marker and readiness can restore it. Detonation, round boundaries, interruption,
+participant/session invalidation and unload clear marker ownership using native
+network destruction. Receipt/token checks reject stale or reentrant callbacks.
+There is one marker for the current carrier, no extra per-player controller and
+no repeated spawn/RPC stream for its steady visual. Warmed unchanged Tag ticks
+and the native adapter fixture remain allocation-free.
+
+The enlarged final blast keeps the existing `PlayTagBomb.ConsumeExplosion`
+once-only gate and owned `MoneyWhirlwind` cleanup. The instance scale is set
+before `NetworkServer.Spawn`. Installed Mirror `SendSpawnMessage` (method token
+0x0600033f) writes actual `Transform.localScale` into `SpawnMessage.scale`;
+`NetworkClient.ApplySpawnPayload` (0x0600017c) applies it before client callbacks.
+These tokens are build-local to Mirror MVID
+`d28b66cd-63fb-4b94-9fdb-389dd1eb7ca6`, SHA-256
+`c391c91ba860c537692c185b1075f4219ec83fa71a11990a2b51c13876ab7440`.
+REA retained member evidence: `ev_384d3add6fc3fb13d0e54c4d9b31978c8a06eb32142e6a7211877e85e17c12c4`.
+The existing exact game/Mirror/prefab validation remains in force. Guest
+collision safety still uses the stock behavior described below, rather than
+assuming server-side component flags are serialized. Neither explosion damage
+nor ordinary kill audio routing changes.
+
+Verification: runtime integration (17,859 checks plus 69 Bat lifecycle checks),
+role adapter (36 checks; zero bytes/10,000 stable updates), friendly-fire hooks
+(15,825), remote-audio routing (44), bomb policy (20,680), and portable/installed
+native contracts including shared impact payload and initial spawn scale.
+Non-deploying Release build passes with zero warnings/errors. Independent
+read-only review found no actionable regression. Tests include transfer while dead, respawn,
+loading, marker loss, reconnect, repeated ticks, settings/session interruption,
+multiple rounds and stop callbacks during marker creation/retirement.
+
+These native paths support host-only installation and stock guests. Live
+host/guest visual appearance is still unverified: check the green X following
+both carriers, one small flash per pass, exactly one larger audible explosion
+per round and immediate marker removal on stop. No deployment is part of this
+change. Existing fuse, respawn, round and combat rules are unchanged.
 
 ## Controls
 

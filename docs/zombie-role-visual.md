@@ -281,3 +281,13 @@ while moving, dying and reviving; stop/rejoin must remove it; ordinary Chim and
 Poison must retain gameplay behavior. The native Chim visual can also appear
 from a real debuff, so it is not an exclusive Zombie symbol. No deployment or
 game launch is part of this change.
+
+## Shared role presentation — 0.105.0 (2026-10-31)
+
+`ZombieRoleVisuals` / `ZombieVisualNative` moved into `Combat/Presentation` as
+`CombatRoleVisuals` / `CombatRoleVisualNative`. Zombie selection, infection,
+readiness, receipt and cleanup semantics are unchanged. The shared predicate
+now also recognizes the current Play Tag carrier, including the carrier waiting
+to revive. Modes remain exclusive; their shared stop path clears owned visuals.
+See [Play Tag role and detonation visuals](play-tag.md#chaser-and-detonation-visuals--01050-2026-10-31)
+for lifecycle tests, the subtle assignment pulse and enlarged final blast.

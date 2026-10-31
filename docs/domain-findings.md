@@ -1,5 +1,12 @@
 # Sephiria domain findings
 
+Shared combat role presentation (`0.105.0`): Zombie and Play Tag use one owned
+stock Chim visual adapter; a match/connection/role predicate controls lifetime.
+Keep one-shot transition generations separate from persistent marker recovery.
+Mirror's initial SpawnMessage carries local scale, so a single 2×-scale
+MoneyWhirlwind enlarges the Leaf Explosion for stock guests without duplicating
+its embedded sound. See [Play Tag evidence and limits](play-tag.md#chaser-and-detonation-visuals--01050-2026-10-31).
+
 Dense cover (`0.104.0`): `ReqSetPosition` sends a remote owner TargetRpc; a request
 is not proof of arrival. `OnSetPositionServerside` also reports the guest's
 `CmdTeleportEvent`. Reserve world-space destinations until matching acknowledgement

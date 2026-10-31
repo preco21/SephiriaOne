@@ -81,7 +81,7 @@ public class CharacterDebuff : UnityEngine.Object
     internal void ClientFrame()
     {
         ClientUpdates++; transform.position = NetworkTarget.transform.position;
-        if (SephiriaOne.ZombieVisualNative.FailUpdate) throw new InvalidOperationException("client update failure");
+        if (SephiriaOne.CombatRoleVisualNative.FailUpdate) throw new InvalidOperationException("client update failure");
     }
 }
 public class CharacterDebuff_Poison : CharacterDebuff { }
@@ -121,11 +121,11 @@ namespace SephiriaOne
     {
         internal static long MatchToken = 1;
         internal static readonly HashSet<PlayerAvatar> Zombies = new();
-        internal static bool IsZombieVisualCurrent(PlayerAvatar player, FriendlyFireParticipants.Receipt receipt, long match) =>
+        internal static bool IsCombatRoleVisualCurrent(PlayerAvatar player, FriendlyFireParticipants.Receipt receipt, long match) =>
             NetworkServer.active && MatchToken != 0 && match == MatchToken && Zombies.Contains(player) && receipt != null &&
             ReferenceEquals(receipt, FriendlyFireParticipants.Capture(player));
     }
-    internal static class ZombieVisualNative
+    internal static class CombatRoleVisualNative
     {
         internal static bool FailContract, FailUpdate;
         internal static int Validations;

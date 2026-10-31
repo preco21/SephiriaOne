@@ -6,7 +6,7 @@ internal static class GameFriendlyFireDeathVisualTests
 {
     internal static void Run(Assembly game, Assembly addon)
     {
-        var hooks = addon.GetType("SephiriaOne.FriendlyFireDeathVisuals", true)!;
+        var hooks = addon.GetType("SephiriaOne.CombatImpactVisuals", true)!;
         var native = game.GetType("DungeonManager", true)!;
         var sender = AccessTools.DeclaredMethod(native, "RpcBulletDestroyed");
         var receiver = AccessTools.DeclaredMethod(native, "InvokeUserCode_RpcBulletDestroyed__UInt32__Boolean__String__Vector3__Single__Single__Single");
@@ -34,13 +34,20 @@ internal static class GameFriendlyFireDeathVisualTests
             Require(!(bool)AccessTools.DeclaredMethod(hooks, "ValidateCode").Invoke(null, new object[] { send, read, receive, fx })!, "rejects changed " + mutation);
         }
         Require(Code(native.TypeInitializer!).Any(i => Equals(i.operand, receiver)), "receiver registered on stock guests");
-        var show = Code(AccessTools.DeclaredMethod(hooks, "Show"));
+        foreach (var (name, scale, dead) in new[] { ("Show", 4f, 1), ("ShowAssignment", .75f, 0) })
+        {
+            var entry = Code(AccessTools.DeclaredMethod(hooks, name));
+            int shared = entry.FindIndex(i => i.operand is MethodInfo m && m.Name == "ShowImpact");
+            Require(shared >= 2 && entry[shared - 2].opcode == OpCodes.Ldc_R4 && Equals(entry[shared - 2].operand, scale) &&
+                entry[shared - 1].LoadsConstant(dead), name + " uses its intended scale/death requirement through the shared transport");
+        }
+        var show = Code(AccessTools.DeclaredMethod(hooks, "ShowImpact"));
         int broadcast = show.FindIndex(i => i.operand is MethodInfo m && m.Name == "BroadcastDestroyBullet");
         Require(broadcast >= 9 && show[broadcast - 6].LoadsConstant(0) &&
             show[broadcast - 5].LoadsConstant("PlayerDefaultBigBullet") &&
             show[broadcast - 2].opcode == OpCodes.Ldc_R4 && Equals(show[broadcast - 2].operand, 0f) &&
-            show[broadcast - 1].opcode == OpCodes.Ldc_R4 && Equals(show[broadcast - 1].operand, 4f),
-            "red burst uses fixed native identity, no transparency, zero angle and four-times visual scale");
+            show[broadcast - 1].opcode == OpCodes.Ldarg_1,
+            "red burst uses fixed native identity, no transparency, zero angle and the selected event's visual scale");
         Require(show.Any(i => i.operand is MethodInfo m && m.Name == "BroadcastDestroyBullet") &&
             !show.Any(i => i.operand is MethodInfo m && new[] { "RpcDie", "ApplyDamage", "Spawn", "RpcCreateCastFx", "DestroySelf" }.Contains(m.Name)),
             "emits only visual notification without creating/destroying a projectile or replaying death");

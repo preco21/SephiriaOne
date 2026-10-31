@@ -12,6 +12,7 @@ namespace SephiriaOne
     // guest safety comes from the audited stock code/layers, not unsynchronized flags.
     internal static class PlayTagExplosion
     {
+        internal const float VisualScale = 2f;
         private const string PrefabName = "MoneyWhirlwind";
         private const uint AssetId = 2358477907;
         private const string GameHash = "C57A0DAEAB8E8D0AF7066A344133EEC4C57D8F303FD9E25DA9410FBFC4CF1510";
@@ -82,6 +83,9 @@ namespace SephiriaOne
                 bullet.SetDamage(0);
                 bullet.NetworkcanBeTransparentOnMultiplayer = false;
                 bullet.spawnedPrefabName = PrefabName;
+                // Mirror's initial SpawnMessage carries root scale to stock
+                // clients. One larger visual retains one native audio sequence.
+                instance.transform.localScale = prefab.transform.localScale * VisualScale;
                 // Keep all native NetworkBehaviours in their original order. The
                 // animation's frame-16 Destroy still calls the empty native destroy
                 // module, sending normal network destruction without a damage event.

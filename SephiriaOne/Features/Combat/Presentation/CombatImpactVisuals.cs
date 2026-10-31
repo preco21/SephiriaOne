@@ -10,7 +10,7 @@ namespace SephiriaOne
 {
     // Broadcast only a native impact animation. No projectile, damage, fake
     // death, casting state or guest addon protocol participates in this path.
-    internal static class FriendlyFireDeathVisuals
+    internal static class CombatImpactVisuals
     {
         private const string BulletName = "PlayerDefaultBigBullet";
         private const string EffectName = "PlayerDefaultBigBulletDestroyFx";
@@ -21,21 +21,24 @@ namespace SephiriaOne
 
         internal static void Reset() { initialized = available = warned = false; }
 
-        internal static void Show(PlayerAvatar player)
+        internal static void Show(PlayerAvatar player) => ShowImpact(player, Scale, true);
+        internal static void ShowAssignment(PlayerAvatar player) => ShowImpact(player, .75f, false);
+
+        private static void ShowImpact(PlayerAvatar player, float scale, bool requireDeath)
         {
             try
             {
                 var dungeon = DungeonManager.Instance;
-                if (!Mirror.NetworkServer.active || !player || !player.isServer || !player.IsDead ||
+                if (!Mirror.NetworkServer.active || !player || !player.isServer || (requireDeath && !player.IsDead) ||
                     !dungeon || !dungeon.isServer) return;
                 if (!initialized)
                 {
                     initialized = true;
-                    if (!Validate()) throw new InvalidOperationException("Native death visual transport changed.");
+                    if (!Validate()) throw new InvalidOperationException("Native impact visual transport changed.");
                     available = true;
                 }
                 if (!available) return;
-                // Recheck current assets/pools on each death, never retain a
+                // Recheck current assets/pools on each event, never retain a
                 // previous run's initialized prefab or any scene object.
                 var bullet = Bullet.Pool?.GetPrefab(BulletName);
                 var module = bullet ? bullet.DestroyModule : null;
@@ -56,14 +59,14 @@ namespace SephiriaOne
                 if (!Finite(position.x) || !Finite(position.y) || !Finite(position.z) || !Finite(height)) return;
                 // false bypasses party-effects transparency. The owner retains
                 // their native crash plus this smaller, separate red burst.
-                dungeon.BroadcastDestroyBullet(player.netId, false, BulletName, position, height, 0f, Scale);
+                dungeon.BroadcastDestroyBullet(player.netId, false, BulletName, position, height, 0f, scale);
             }
             catch (Exception error)
             {
                 available = false;
                 if (warned) return;
                 warned = true;
-                Debug.LogWarning("[SephiriaOne] Multiplayer death FX unavailable; combat and recovery remain active: " + error);
+                Debug.LogWarning("[SephiriaOne] Multiplayer impact FX unavailable; combat and recovery remain active: " + error);
             }
         }
 

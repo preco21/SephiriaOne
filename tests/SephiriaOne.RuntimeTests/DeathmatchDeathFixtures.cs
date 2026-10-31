@@ -24,8 +24,10 @@ namespace SephiriaOne
         internal static bool Show(PlayerAvatar player, string message)
         { if (!Available) return false; Messages.Add((player, message)); return true; }
     }
-    internal static class FriendlyFireDeathVisuals
+    internal static class CombatImpactVisuals
     {
+        internal static readonly List<PlayerAvatar> Assignments = new();
+        internal static void ShowAssignment(PlayerAvatar player) => Assignments.Add(player);
         internal static int Shown;
         internal static void Show(PlayerAvatar player) { Shown++; }
     }

@@ -8,9 +8,9 @@ namespace SephiriaOne
 {
     // A stock network prefab is only a presentation carrier. Never register it
     // with UnitAvatar.Debuffs or invoke InitializeAndSpawn/ApplyStatus.
-    internal static class ZombieRoleVisuals
+    internal static class CombatRoleVisuals
     {
-        private const string PatchId = "SephiriaOne.ZombieRoleVisuals";
+        private const string PatchId = "SephiriaOne.CombatRoleVisuals";
         private sealed class Marker
         {
             internal CharacterDebuff_ChimDamage Effect;
@@ -31,7 +31,7 @@ namespace SephiriaOne
             if (clearing || failed || !player) return;
             var receipt = FriendlyFireParticipants.Capture(player);
             long match = CombatMatchRuntime.MatchToken;
-            bool current = CombatMatchRuntime.IsZombieVisualCurrent(player, receipt, match);
+            bool current = CombatMatchRuntime.IsCombatRoleVisualCurrent(player, receipt, match);
             if (markers.TryGetValue(player, out var marker) &&
                 (!current || !marker.Effect || marker.Match != match || !ReferenceEquals(marker.Receipt, receipt)))
             {
@@ -45,7 +45,7 @@ namespace SephiriaOne
                 {
                     // Registration is session-owned: recheck it on each creation,
                     // while expensive code checks and binding stay once per load.
-                    var prefab = ZombieVisualNative.ValidateAndGetPrefab();
+                    var prefab = CombatRoleVisualNative.ValidateAndGetPrefab();
                     marker = new Marker { Receipt = receipt, Match = match };
                     // Publish ownership before native spawning can invoke callbacks.
                     marker.Effect = UnityEngine.Object.Instantiate(prefab, player.transform.position, Quaternion.identity);
@@ -63,7 +63,7 @@ namespace SephiriaOne
                     try { NetworkServer.Spawn(marker.Effect.gameObject); }
                     finally { marker.Spawning = false; }
                     // Native callbacks may have ended/replaced the match mid-spawn.
-                    if (marker.Retired || !CombatMatchRuntime.IsZombieVisualCurrent(player, receipt, match))
+                    if (marker.Retired || !CombatMatchRuntime.IsCombatRoleVisualCurrent(player, receipt, match))
                     {
                         if (markers.TryGetValue(player, out var live) && ReferenceEquals(live, marker)) markers.Remove(player);
                         Retire(marker); return;
@@ -78,7 +78,7 @@ namespace SephiriaOne
                 // Do not replay ambiguous failed spawns every frame.
                 if (marker != null) Retire(marker);
                 failed = true; Clear();
-                Debug.LogWarning("[SephiriaOne] Zombie role visual unavailable; match gameplay continues: " + error);
+                Debug.LogWarning("[SephiriaOne] Combat role visual unavailable; match gameplay continues: " + error);
             }
         }
 
@@ -86,15 +86,15 @@ namespace SephiriaOne
         {
             if (checkedNative) return !failed;
             checkedNative = true;
-            if (!ZombieVisualNative.ValidateNativeCode()) throw new InvalidOperationException("Native Zombie visual contract changed.");
-            updateClient = ZombieVisualNative.ClientUpdate;
+            if (!CombatRoleVisualNative.ValidateNativeCode()) throw new InvalidOperationException("Native combat role visual contract changed.");
+            updateClient = CombatRoleVisualNative.ClientUpdate;
             harmony = new Harmony(PatchId);
             harmony.Patch(AccessTools.DeclaredMethod(typeof(CharacterDebuff), "OnStartServer"),
-                prefix: new HarmonyMethod(typeof(ZombieRoleVisuals), nameof(BeforeGameplay)));
+                prefix: new HarmonyMethod(typeof(CombatRoleVisuals), nameof(BeforeGameplay)));
             // Never enter Chim's damage-on-expiry path, even if another native
             // cleanup path requests it. Retire uses network destruction instead.
             harmony.Patch(AccessTools.DeclaredMethod(typeof(CharacterDebuff), "Destroy"),
-                prefix: new HarmonyMethod(typeof(ZombieRoleVisuals), nameof(BeforeGameplay)));
+                prefix: new HarmonyMethod(typeof(CombatRoleVisuals), nameof(BeforeGameplay)));
             return true;
         }
 
@@ -133,7 +133,7 @@ namespace SephiriaOne
             catch (Exception error)
             {
                 if (effect) UnityEngine.Object.Destroy(effect.gameObject);
-                Debug.LogWarning("[SephiriaOne] Zombie role visual cleanup: " + error);
+                Debug.LogWarning("[SephiriaOne] Combat role visual cleanup: " + error);
             }
             finally { owned.Remove(effect); marker.Effect = null; }
         }
@@ -142,7 +142,7 @@ namespace SephiriaOne
         {
             Clear();
             if (owned.Count != 0)
-                throw new InvalidOperationException("Zombie visual spawn is finishing a native callback; retry unload after it completes.");
+                throw new InvalidOperationException("Combat visual spawn is finishing a native callback; retry unload after it completes.");
             harmony?.UnpatchAll(PatchId); harmony = null;
             updateClient = null; checkedNative = failed = false;
         }

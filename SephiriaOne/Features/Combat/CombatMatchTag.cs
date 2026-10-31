@@ -53,9 +53,11 @@ namespace SephiriaOne
             }
             if (chosen < 0) { Stop(true, true); return; }
             tagBomb = new PlayTagBomb(tagPlayers.Count, chosen, duration, now);
+            tagAssignment++;
             RoleRevision++;
             Broadcast(null, tagRoundLimit == 1 ? L.T("Play Tag start!") : L.F("[Play Tag] Round {0}/{1} start!", tagRound, tagRoundLimit));
             ShowPlayTagCarrier(now);
+            RefreshPlayTagVisuals();
         }
 
         private static void AdvancePlayTag(double now)
@@ -75,6 +77,7 @@ namespace SephiriaOne
             if (tagBomb == null) { AdvancePlayTagRound(now, ready); return; }
             if (tagBomb.IsDue(now)) { ExplodePlayTag(now); return; }
             ShowPlayTagCarrier(now);
+            RefreshPlayTagVisuals();
         }
 
         // Called only after native normal completion AND successful KDA completion.
@@ -91,8 +94,10 @@ namespace SephiriaOne
             RoleRevision++;
             tagShown = -1;
             tagPreviousName = CombatNames.Player(killer.Player);
+            tagAssignment++;
             Broadcast(killer.Player, L.T("Bomb passed!"));
             if (tagBomb.AwaitingRespawn) Broadcast(victim.Player, L.T("You have the bomb. Fuse begins after respawn."));
+            RefreshPlayTagVisuals();
             // Immediate third receipt is consumed by LeaveDeath after RpcDie and
             // all nested native death scopes complete, before any revival.
         }
@@ -141,9 +146,12 @@ namespace SephiriaOne
             if (tagBomb == null || !tagBomb.ConsumeExplosion(now)) return;
             long current = token;
             var victim = tagPlayers[tagBomb.Carrier].Subject.Player;
+            ClearPlayTagVisuals();
+            if (!IsPlayTag || current != token || !CurrentScope) return;
             string message = tagBomb.PreviousCarrier < 0 ? L.F("Play Tag: {0}'s bomb exploded before any pass.", CombatNames.Player(victim)) :
                 L.F("'{0}' was blown up by '{1}'s bomb.", CombatNames.Player(victim), tagPreviousName);
             Broadcast(null, message);
+            if (!IsPlayTag || current != token || !CurrentScope) return;
             try { PlayTagExplosion.Show(victim); }
             catch (Exception error) { UnityEngine.Debug.LogWarning("[SephiriaOne] Play Tag explosion presentation failed: " + error); }
             var previous = tagExplosionVictim;
@@ -178,6 +186,7 @@ namespace SephiriaOne
             // countdowns through the stock avatar-chat path.
             foreach (var entry in tagPlayers)
                 if (Connected(entry.Subject, entry.Receipt)) Broadcast(entry.Subject.Player, "");
+            ClearPlayTagVisuals();
             tagBomb = null; tagPlayers.Clear(); tagRoster.Clear(); tagShown = -1; tagPreviousName = null;
             tagRound = tagRoundLimit = 0;
             RoleRevision++;

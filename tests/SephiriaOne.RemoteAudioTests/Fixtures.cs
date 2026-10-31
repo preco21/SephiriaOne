@@ -115,7 +115,7 @@ public class NativeGuid
 }
 namespace SephiriaOne
 {
-    internal static class FriendlyFireDeathVisuals { internal static bool Compatible = true; internal static bool Validate() => Compatible; }
+    internal static class CombatImpactVisuals { internal static bool Compatible = true; internal static bool Validate() => Compatible; }
     internal static class HostStateAdapter
     {
         internal static bool Fail;

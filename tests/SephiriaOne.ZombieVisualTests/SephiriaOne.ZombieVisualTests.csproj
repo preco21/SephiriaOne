@@ -2,6 +2,6 @@
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>disable</Nullable></PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Lib.Harmony" Version="2.4.2" />
-    <Compile Include="../../SephiriaOne/Features/Combat/ZombieSurvival/ZombieRoleVisuals.cs" Link="ZombieRoleVisuals.cs" />
+    <Compile Include="../../SephiriaOne/Features/Combat/Presentation/CombatRoleVisuals.cs" Link="CombatRoleVisuals.cs" />
   </ItemGroup>
 </Project>

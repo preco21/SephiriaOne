@@ -43,6 +43,15 @@ internal static class GamePlayTagExplosionTests
             "guest player movement filters terrain rather than Default-layer cosmetic colliders");
         Require(!Calls(Code(client, "SpawnPrefab")).Any(m => m.Name is "OnSpawn" or "Initialize"), "stock network spawn does not invoke weapon/pool initialization or camera shake");
         Require(Calls(Code(client, "SpawnPrefab")).Any(m => m.Name == "Instantiate"), "stock network registration instantiates the selected native prefab");
+        var sendSpawn = Code(server, "SendSpawnMessage");
+        int writeScale = sendSpawn.FindIndex(i => i.opcode == OpCodes.Stfld && i.operand is FieldInfo f && f.Name == "scale");
+        Require(writeScale > 0 && sendSpawn[writeScale - 1].operand is MethodInfo readScale && readScale.Name == "get_localScale",
+            "native SpawnMessage carries the host instance's actual local scale");
+        var receiveSpawn = Code(client, "ApplySpawnPayload");
+        int applyScale = receiveSpawn.FindIndex(i => i.operand is MethodInfo m && m.Name == "set_localScale");
+        int clientCallbacks = receiveSpawn.FindIndex(i => i.operand is MethodInfo m && m.Name == "InvokeIdentityCallbacks");
+        Require(applyScale > 0 && receiveSpawn[applyScale - 1].operand is FieldInfo scaleField && scaleField.Name == "scale" && clientCallbacks > applyScale,
+            "unmodified guest applies the transmitted scale before client startup callbacks");
         var manager = mirror.GetType("Mirror.NetworkManager", true)!;
         Require(Calls(Code(manager, "FinishStartHost")).Any(m => m.Name == "RegisterClientMessages") &&
             Calls(Code(manager, "RegisterClientMessages")).Any(m => m.Name == "RegisterPrefab"), "host startup registers the serialized stock prefab collection");
@@ -55,6 +64,13 @@ internal static class GamePlayTagExplosionTests
         int expose = show.FindIndex(i => i.operand is MethodInfo m && m.DeclaringType == server && m.Name == "Spawn");
         Require(isolate >= 0 && expose > isolate, "server isolation completes before network exposure");
         var create = Code(adapter!, "CreateCosmeticInstance");
+        int scaled = create.FindIndex(i => i.operand is MethodInfo m && m.Name == "set_localScale");
+        Require(scaled >= 3 && create[scaled - 1].operand is MethodInfo multiply && multiply.Name == "op_Multiply" &&
+            create[scaled - 2].opcode == OpCodes.Ldc_R4 && Equals(create[scaled - 2].operand, 2f) &&
+            create[scaled - 3].operand is MethodInfo prefabScale && prefabScale.Name == "get_localScale",
+            "one cosmetic instance uses twice the native prefab scale before exposure");
+        Require(Calls(show).Count(m => m.DeclaringType == server && m.Name == "Spawn") == 1 &&
+            Calls(create).Count(m => m.Name == "Instantiate") == 1, "larger detonation does not duplicate network entities or embedded sound");
         Require(Calls(create).Any(m => m.Name == "set_enabled") && Calls(create).Any(m => m.Name == "ClearTargetFaction") &&
             Calls(create).Any(m => m.Name == "SetOwner") && Calls(create).Any(m => m.Name == "SetDamage"), "owned instance disables physical/combat paths and clears ownership, factions and damage");
         var adapterCode = adapter!.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)

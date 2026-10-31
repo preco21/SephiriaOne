@@ -11,7 +11,7 @@ internal static class ZombieSurvivalRuntimeTests
         add(2);
         check(SettingsActions.Execute("/one zombie start").Success, "Zombie Survival starts with two current participants");
         check(!SessionSettings.FriendlyFireForHit.Enabled, "Zombie countdown blocks PvP combat");
-        check(ZombieRoleVisuals.Visible.Count == 0, "Countdown has no Zombie role indicators");
+        check(CombatRoleVisuals.Visible.Count == 0, "Countdown has no Zombie role indicators");
         CombatMatchRuntime.Stop(true, false);
 
         var harmony = new Harmony("Zombie.integration.tests");
@@ -55,7 +55,7 @@ internal static class ZombieSurvivalRuntimeTests
         int speedWrites = zombie.MovementWrites;
         for (int i = 0; i < 50; i++) CombatMatchRuntime.Tick();
         check(zombie.MovementWrites == speedWrites && ZombieSpeed(zombie), "Stable ticks do not stack the penalty or send more speed updates");
-        check(ZombieRoleVisuals.Visible.SetEquals(new[] { zombie }), "Only the initial Zombie owns a sustained role visual");
+        check(CombatRoleVisuals.Visible.SetEquals(new[] { zombie }), "Only the initial Zombie owns a sustained role visual");
         check(CombatMatchRuntime.AllowsPair(zombie, humans[0]) && CombatMatchRuntime.AllowsPair(humans[0], zombie) &&
             !CombatMatchRuntime.AllowsPair(humans[0], humans[1]) && !CombatMatchRuntime.AllowsPair(zombie, zombie), "Only opposite teams are hostile");
         var late = add(20).PlayerAvatar;
@@ -68,7 +68,7 @@ internal static class ZombieSurvivalRuntimeTests
         check(ZombieSpeed(humans[0]), "Conversion owns the speed penalty before the native respawn");
         check(CombatMatchRuntime.BlocksZombieHpPotions(humans[0]) && CombatMatchRuntime.BlocksZombieHpPotions(zombie),
             "Population growth blocks both initial and converted Zombies immediately, before revival");
-        check(ZombieRoleVisuals.Visible.Contains(humans[0]), "Infection indicator starts during pending conversion and follows the corpse");
+        check(CombatRoleVisuals.Visible.Contains(humans[0]), "Infection indicator starts during pending conversion and follows the corpse");
         check(humans[0].IsDead && !CombatMatchRuntime.IsActiveZombie(humans[0]) &&
             !CombatMatchRuntime.AllowsPair(humans[0], humans[1]), "Infected Human is not combat active before revival");
         check(FriendlyFireKda.For(zombie).Kills == 1 && FriendlyFireKda.For(humans[0]).Deaths == 1, "Conversion retains shared kill/death credit");
@@ -97,7 +97,7 @@ internal static class ZombieSurvivalRuntimeTests
         check(!CombatMatchRuntime.IsRunning && !humans[2].IsDead && !SessionSettings.FriendlyFireForHit.Enabled &&
             Messages("Zombies win!") && all.All(p => Messages(p.Name + " - [Z] Zombie (")), "Last infection ends match, restores pending players and reports every final team");
         check(all.All(p => CombatMatchRuntime.IncomingRoleScale(p) == 1 && CombatMatchRuntime.RefillRoleScale(p) == 1), "End removes every role bonus immediately");
-        check(ZombieRoleVisuals.Visible.Count == 0, "Natural conclusion removes every Zombie visual");
+        check(CombatRoleVisuals.Visible.Count == 0, "Natural conclusion removes every Zombie visual");
         check(all.All(NormalSpeed), "Natural conclusion immediately restores every original movement speed");
         check(all.All(p => !CombatMatchRuntime.BlocksZombieHpPotions(p)), "Natural conclusion removes all faction potion restrictions");
 
@@ -166,15 +166,15 @@ internal static class ZombieSurvivalRuntimeTests
         PlayerSpawner.MultiplayerList.Remove(human.spawner); var replacement = add(human.netId).PlayerAvatar;
         CombatMatchRuntime.Revived(old, oldToken); At(4);
         check(!CombatMatchRuntime.IsRunning && !CombatMatchRuntime.IsActiveZombie(replacement) && !Messages("Zombies win!"), "Reconnect cancels without inheriting team or declaring victory");
-        check(ZombieRoleVisuals.Visible.Count == 0, "Reconnected participant never inherits a stale visual");
+        check(CombatRoleVisuals.Visible.Count == 0, "Reconnected participant never inherits a stale visual");
         check(all.All(NormalSpeed) && NormalSpeed(replacement), "Reconnect restores old objects and cannot transfer a speed penalty to replacements");
 
         all = New(); Begin(); zombie = all.Single(CombatMatchRuntime.IsActiveZombie);
         zombie.spawner.connectionToClient.isReady = false; At(4);
-        check(CombatMatchRuntime.IsRunning && !ZombieRoleVisuals.Visible.Contains(zombie), "Loading removes a temporarily unavailable target's indicator");
+        check(CombatMatchRuntime.IsRunning && !CombatRoleVisuals.Visible.Contains(zombie), "Loading removes a temporarily unavailable target's indicator");
         check(NormalSpeed(zombie), "Unavailable players temporarily regain native movement");
         zombie.spawner.connectionToClient.isReady = true; At(5);
-        check(ZombieRoleVisuals.Visible.SetEquals(new[] { zombie }), "Readiness restores only the current Zombie indicator");
+        check(CombatRoleVisuals.Visible.SetEquals(new[] { zombie }), "Readiness restores only the current Zombie indicator");
         check(ZombieSpeed(zombie), "Ready Zombie resumes exactly one speed penalty");
 
         foreach (string interrupt in new[] { "selection", "toggle", "stop", "run", "authority" })
@@ -188,7 +188,7 @@ internal static class ZombieSurvivalRuntimeTests
             else Mirror.NetworkServer.active = false;
             At(4);
             check(!CombatMatchRuntime.IsRunning && CombatMatchRuntime.IncomingRoleScale(zombie) == 1, "Zombie cleanup on " + interrupt);
-            check(ZombieRoleVisuals.Visible.Count == 0, "Zombie visual cleanup on " + interrupt);
+            check(CombatRoleVisuals.Visible.Count == 0, "Zombie visual cleanup on " + interrupt);
             check(all.All(NormalSpeed), "Speed restores on " + interrupt);
             check(all.All(p => !CombatMatchRuntime.BlocksZombieHpPotions(p)), "Potion admission restores on " + interrupt);
             if (interrupt is "selection" or "toggle" or "stop") check(!human.IsDead, "Stop recovers pending Human on " + interrupt);
