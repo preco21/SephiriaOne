@@ -6,6 +6,8 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../SephiriaOne/Features/Combat/MaxHp/PvpMaxHpProjection.cs" Link="PvpMaxHpProjection.cs" />
+    <Compile Include="../../SephiriaOne/Features/Combat/MaxHp/PvpMaxHpRuntime.cs" Link="PvpMaxHpRuntime.cs" />
     <Compile Include="../../SephiriaOne/Infrastructure/NativePlayerInitialization.cs" Link="NativePlayerInitialization.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/Cover/PvpCoverSettings.cs" Link="PvpCoverSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/Cover/PvpCoverPlacement.cs" Link="PvpCoverPlacement.cs" />
@@ -89,6 +91,7 @@
     <Compile Include="../../SephiriaOne/Session/Presets/PresetStore.cs" Link="Source/Session/Presets/PresetStore.cs" />
     <Compile Include="../../SephiriaOne/Session/Presets/SessionPresetCommands.cs" Link="Source/Session/Presets/SessionPresetCommands.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/FriendlyFireSettings.cs" Link="FriendlyFireSettings.cs" />
+    <Compile Include="../../SephiriaOne/Features/Combat/PvpMaxHpSettings.cs" Link="PvpMaxHpSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/PvpRapidSettings.cs" Link="PvpRapidSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/PvpArtifactRateSettings.cs" Link="PvpArtifactRateSettings.cs" />
     <Compile Include="../../SephiriaOne/Features/Combat/PvpArtifactRangeSettings.cs" Link="PvpArtifactRangeSettings.cs" />

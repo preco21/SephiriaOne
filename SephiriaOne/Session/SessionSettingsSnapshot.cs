@@ -90,6 +90,8 @@ namespace SephiriaOne
                     (JarSpawnFeature.Available ? "" : L.T(" Mystic Jar hooks unavailable; see Player.log.")));
                 lines.Add(DescribeFriendlyFire(sameSession ? CombatMatchRuntime.Effective(policy.FriendlyFire) : default) +
                     (FriendlyFireFeature.Available ? "" : L.T(" Friendly-fire hooks unavailable; see Player.log.")));
+                if (!PvpMaxHpFeature.Available)
+                    lines.Add(L.T("Max HP normalization unavailable; off/reset remain available. See Player.log."));
                 lines.Add(DescribeItemUnlock(sameSession && policy.ItemUnlock) +
                     (ItemRestrictionFeature.Available ? "" : L.T(" Item restriction hooks unavailable; see Player.log.")));
                 lines.Add(DescribeExperience(sameSession ? policy.Experience : default));
@@ -239,7 +241,7 @@ namespace SephiriaOne
                 sameSession ? policy.EventSpawns : default, EventSpawnFeature.Available, combatPlayers, selectedPlayers,
                 sameSession ? policy.Requital : default, RequitalRuntime.Available,
                 sameSession ? policy.Experience : default, ExperienceFeature.Available,
-                sameSession ? policy.Projectiles : default, ProjectileLimitFeature.Available);
+                sameSession ? policy.Projectiles : default, ProjectileLimitFeature.Available, PvpMaxHpFeature.Available);
         }
 
         private static readonly string[] ChoiceSnapshotNames = { "item", "weapon", "miracle" };

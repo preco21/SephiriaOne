@@ -348,6 +348,7 @@ namespace SephiriaOne
             try
             {
                 SessionSettings.EndDeathmatch();
+                PvpMaxHpRuntime.Clear(); // Restore native health before draining pending revivals.
                 if (announce && same && CurrentScope && zombieResults != null)
                     foreach (string line in zombieResults) Broadcast(null, line);
                 else if (announce && same && CurrentScope)

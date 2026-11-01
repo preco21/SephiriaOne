@@ -34,6 +34,7 @@ namespace SephiriaOne
                 MerchantFeature.Initialize();
                 ItemRestrictionFeature.Initialize();
                 FriendlyFireFeature.Initialize();
+                PvpMaxHpFeature.Initialize();
                 LobbyRegenFeature.Initialize();
                 CombatModeFeature.Initialize();
                 PvpCoverFeature.Initialize();
@@ -85,6 +86,7 @@ namespace SephiriaOne
                 if (owner.updates) { owner.updates.enabled = false; owner.updates = null; }
                 // Keep controllers/guards available if verified cleanup needs recovery.
                 DeathmatchFeature.Shutdown();
+                PvpMaxHpFeature.Shutdown();
                 PvpCoverFeature.Shutdown();
                 BatCostumeFeature.Shutdown();
                 CollinFeature.Shutdown();

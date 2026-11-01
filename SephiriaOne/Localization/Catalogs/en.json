@@ -1067,5 +1067,13 @@
   "Automatic artifact range (m)": "Automatic artifact range (m)",
   "From owner; includes Dark Cloud. Balance on only.": "From owner; includes Dark Cloud. Balance on only.",
   "Autonomous artifact range: /one friendlyfire artifact-range <0.5..50>|reset (meters, default 5). Requires PvP balancing; includes Dark Cloud. Direct weapons and magic books are excluded.": "Autonomous artifact range: /one friendlyfire artifact-range <0.5..50>|reset (meters, default 5). Requires PvP balancing; includes Dark Cloud. Direct weapons and magic books are excluded.",
-  "Autonomous artifact range: {0} m from owner (includes Dark Cloud; requires PvP balancing).": "Autonomous artifact range: {0} m from owner (includes Dark Cloud; requires PvP balancing)."
+  "Autonomous artifact range: {0} m from owner (includes Dark Cloud; requires PvP balancing).": "Autonomous artifact range: {0} m from owner (includes Dark Cloud; requires PvP balancing).",
+  "Max HP normalization": "Max HP normalization",
+  "Baseline (HP)": "Baseline (HP)",
+  "Soft +HP": "Soft +HP",
+  "Hard +HP": "Hard +HP",
+  "Baseline + bonus HP. Requires PvP balancing.\nDefaults: 150 unchanged; 200 → 187.5; final cap 200.\nPreserves current HP %. Also affects participants' PvE.": "Baseline + bonus HP. Requires PvP balancing.\nDefaults: 150 unchanged; 200 → 187.5; final cap 200.\nPreserves current HP %. Also affects participants' PvE.",
+  "Max HP normalization: /one friendlyfire max-hp on|off|reset; max-hp limits <baseline> <soft-bonus> <hard-bonus>. Default off, baseline 100 HP, soft +50 HP, hard +100 HP. Baseline 1..10000; bonuses 0..10000 with up to 2 decimals and soft <= hard. Requires PvP balancing. Preserves current HP percentage; participant PvE is also affected.": "Max HP normalization: /one friendlyfire max-hp on|off|reset; max-hp limits <baseline> <soft-bonus> <hard-bonus>. Default off, baseline 100 HP, soft +50 HP, hard +100 HP. Baseline 1..10000; bonuses 0..10000 with up to 2 decimals and soft <= hard. Requires PvP balancing. Preserves current HP percentage; participant PvE is also affected.",
+  "Max HP normalization: {0}; baseline {1} HP, soft +{2} HP, hard +{3} HP (requires PvP balancing). Preserves current HP percentage; participant PvE is also affected.": "Max HP normalization: {0}; baseline {1} HP, soft +{2} HP, hard +{3} HP (requires PvP balancing). Preserves current HP percentage; participant PvE is also affected.",
+  "Max HP normalization unavailable; off/reset remain available. See Player.log.": "Max HP normalization unavailable; off/reset remain available. See Player.log."
 }

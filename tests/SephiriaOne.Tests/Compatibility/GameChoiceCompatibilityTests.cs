@@ -15,6 +15,7 @@ internal static class GameChoiceCompatibilityTests
         };
         var game = Assembly.LoadFrom(Path.Combine(managed, "Assembly-CSharp.dll"));
         var addon = Assembly.LoadFrom(Path.GetFullPath(addonPath));
+        GameMaxHpTests.Run(game, addon);
         GameLifecycleCompatibilityTests.Run(game, addon);
         GameNameCompatibilityTests.Run(game, addon);
         GamePanelCompatibilityTests.Run(game, addon);

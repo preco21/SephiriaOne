@@ -57,6 +57,7 @@ namespace SephiriaOne
             tagShown = tagNoticeShown = -1;
             tagAssignment++;
             RoleRevision++;
+            PvpMaxHpRuntime.Tick();
             Broadcast(null, tagRoundLimit == 1 ? L.T("Play Tag start!") : L.F("[Play Tag] Round {0}/{1} start!", tagRound, tagRoundLimit));
             ShowPlayTagCarrier(now);
             RefreshPlayTagVisuals();

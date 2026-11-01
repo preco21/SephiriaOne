@@ -819,6 +819,8 @@ SilentRespawnTests.Run(Start, id => Add(id), Check);
 CombatModeTests.Run(Start, id => Add(id), Check);
 PvpCoverTests.Run(Check);
 PvpArtifactRangeControlsTests.Run(Start, id => Add(id), Check);
+PvpMaxHpControlsTests.Run(Start, id => Add(id), Check);
+PvpMaxHpRuntimeTests.Run(Start, id => Add(id), Check);
 FloatingCountdownTests.Run(Start, id => Add(id), Check);
 MatchCountdownCadenceTests.Run(Start, id => Add(id), Check);
 DeathmatchScoreResetTests.Run(Start, id => Add(id), Check);

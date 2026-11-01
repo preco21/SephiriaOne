@@ -11,6 +11,7 @@ namespace SephiriaOne
 
         private static void NotifySettingsChanged()
         {
+            PvpMaxHpRuntime.Tick();
             CombatModeRuntime.Tick();
             PvpCoverRuntime.Tick();
             if (SettingsChanged == null) return;

@@ -8,7 +8,7 @@ namespace SephiriaOne
     public sealed class SessionSettingsController : MonoBehaviour
     {
         private void OnEnable() => SessionSettings.Start();
-        private void LateUpdate() { SessionSettings.Synchronize(); CombatMatchRuntime.Tick(); CombatModeRuntime.Tick(); PvpCoverRuntime.Tick(); PvpPotionSupplies.Tick(); RequitalRuntime.Tick(); }
+        private void LateUpdate() { SessionSettings.Synchronize(); CombatMatchRuntime.Tick(); PvpMaxHpRuntime.Tick(); CombatModeRuntime.Tick(); PvpCoverRuntime.Tick(); PvpPotionSupplies.Tick(); RequitalRuntime.Tick(); }
         private void OnDisable() => SessionSettings.Stop();
     }
 
@@ -82,6 +82,7 @@ namespace SephiriaOne
         private static void ClearScope()
         {
             CombatMatchRuntime.Stop(false, false);
+            PvpMaxHpRuntime.Clear();
             CombatModeRuntime.Clear();
             PvpCoverRuntime.Clear();
             FriendlyFireParticipants.Clear();

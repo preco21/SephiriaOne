@@ -1,5 +1,10 @@
 # Development knowledge index
 
+[PvP Max HP normalization](pvp-max-hp.md): 0.108.0 adds default-off baseline
+100 / soft +50 / hard +100 limits using the shared curve, current-HP percentage
+preservation, native guest replication, save-safe temporary projection and
+shared participant/mode cleanup. Includes EN/KO UI, commands and v59 presets.
+
 [Rabbit PvP MP admission](pvp-potions.md#rabbit-mp-admission-hardening-01071-2026-11-02):
 0.107.1 centralizes the potion-use decision and closes free native-heal fallback
 when required Rabbit/PvP context validation fails. Finite PvP retains the configured

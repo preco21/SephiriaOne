@@ -61,6 +61,10 @@ internal static class LocalizationCatalogTests
                 Check(korean.ContainsKey(label), "Missing Rapid Hits control translation: " + label);
             foreach (string label in new[] { "Perfect Guard MP multiplier", "Native MP cost (x)", "When on, shield MP minimum does not apply." })
                 Check(korean.ContainsKey(label), "Missing Perfect Guard control translation: " + label);
+            foreach (string label in new[] { "Max HP normalization", "Baseline (HP)", "Soft +HP", "Hard +HP",
+                "Baseline + bonus HP. Requires PvP balancing.\nDefaults: 150 unchanged; 200 → 187.5; final cap 200.\nPreserves current HP %. Also affects participants' PvE.",
+                "Max HP normalization unavailable; off/reset remain available. See Player.log." })
+                Check(korean.ContainsKey(label), "Missing Max HP control translation: " + label);
             foreach (string label in new[] { "Limit secondary spawn rate", "Creations / player / s", "Creations / source / s", "Reset spawn rates",
                 "Independent rate budget: stores 1 second and refills continuously. Includes supported secondary effects beyond active caps; denied attempts are skipped." })
                 Check(korean.ContainsKey(label), "Missing projectile spawn-rate control translation: " + label);

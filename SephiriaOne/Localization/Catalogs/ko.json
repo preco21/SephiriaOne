@@ -1067,5 +1067,13 @@
   "Automatic artifact range (m)": "자동 공격 아티팩트 사거리 (m)",
   "From owner; includes Dark Cloud. Balance on only.": "보유자 기준, 먹구름 포함. PvP 밸런싱 중에만 적용.",
   "Autonomous artifact range: /one friendlyfire artifact-range <0.5..50>|reset (meters, default 5). Requires PvP balancing; includes Dark Cloud. Direct weapons and magic books are excluded.": "자동 공격 아티팩트 사거리: /one friendlyfire artifact-range <0.5..50>|reset (m, 기본 5). PvP 밸런싱 중 적용하며 먹구름을 포함합니다. 직접 무기 공격과 마법책은 제외됩니다.",
-  "Autonomous artifact range: {0} m from owner (includes Dark Cloud; requires PvP balancing).": "자동 공격 아티팩트 사거리: 보유자 기준 {0}m (먹구름 포함, PvP 밸런싱 중 적용)."
+  "Autonomous artifact range: {0} m from owner (includes Dark Cloud; requires PvP balancing).": "자동 공격 아티팩트 사거리: 보유자 기준 {0}m (먹구름 포함, PvP 밸런싱 중 적용).",
+  "Max HP normalization": "최대 체력 제한",
+  "Baseline (HP)": "기준 체력",
+  "Soft +HP": "완화 시작 +체력",
+  "Hard +HP": "최대 +체력",
+  "Baseline + bonus HP. Requires PvP balancing.\nDefaults: 150 unchanged; 200 → 187.5; final cap 200.\nPreserves current HP %. Also affects participants' PvE.": "기준 + 추가 체력. PvP 밸런싱 중에만 적용.\n기본값: 150 이하 유지 · 200 → 187.5 · 최종 최대 200.\n현재 체력 비율 유지. 참가자의 PvE에도 적용됩니다.",
+  "Max HP normalization: /one friendlyfire max-hp on|off|reset; max-hp limits <baseline> <soft-bonus> <hard-bonus>. Default off, baseline 100 HP, soft +50 HP, hard +100 HP. Baseline 1..10000; bonuses 0..10000 with up to 2 decimals and soft <= hard. Requires PvP balancing. Preserves current HP percentage; participant PvE is also affected.": "최대 체력 제한: /one friendlyfire max-hp on|off|reset; max-hp limits <기준> <추가 완화 시작> <추가 최대>. 기본 꺼짐, 기준 체력 100, 완화 시작 +50, 최대 +100. 기준 1..10000, 추가 값 0..10000, 소수 둘째 자리까지, 시작 <= 최대. PvP 밸런싱 중에만 적용됩니다. 현재 체력 비율을 유지하며 참가자의 PvE에도 적용됩니다.",
+  "Max HP normalization: {0}; baseline {1} HP, soft +{2} HP, hard +{3} HP (requires PvP balancing). Preserves current HP percentage; participant PvE is also affected.": "최대 체력 제한: {0}; 기준 체력 {1}, 완화 시작 +{2}, 최대 +{3} (PvP 밸런싱 필요). 현재 체력 비율을 유지하며 참가자의 PvE에도 적용됩니다.",
+  "Max HP normalization unavailable; off/reset remain available. See Player.log.": "최대 체력 제한을 사용할 수 없습니다. 끄기/초기화는 가능합니다. Player.log를 확인하세요."
 }

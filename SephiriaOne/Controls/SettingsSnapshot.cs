@@ -96,6 +96,7 @@ namespace SephiriaOne
         public bool JarSpawnsAvailable { get; }
         public FriendlyFireSettings FriendlyFire { get; }
         public bool FriendlyFireAvailable { get; }
+        public bool MaxHpAvailable { get; }
         public IReadOnlyList<FriendlyFirePlayerSnapshot> FriendlyFirePlayers { get; }
         public int FriendlyFireSelectedCount { get; }
         public ExperienceSettings Experience { get; }
@@ -138,7 +139,7 @@ namespace SephiriaOne
             bool collinStartingArtifact = false, bool collinAvailable = false,
             EventSpawnSettings eventSpawns = default, bool eventSpawnsAvailable = false,
             IEnumerable<FriendlyFirePlayerSnapshot> friendlyFirePlayers = null, int friendlyFireSelectedCount = 0, RequitalSettings requital = default, bool requitalAvailable = false, ExperienceSettings experience = default, bool experienceAvailable = false,
-            ProjectileLimitSettings projectiles = default, bool projectilesAvailable = false)
+            ProjectileLimitSettings projectiles = default, bool projectilesAvailable = false, bool maxHpAvailable = false)
         {
             Experience = experience; ExperienceAvailable = experienceAvailable;
             Projectiles = projectiles; ProjectilesAvailable = projectilesAvailable;
@@ -150,6 +151,7 @@ namespace SephiriaOne
             BatHpSteal = batHpSteal; BatAvailable = batAvailable;
             CollinStartingArtifact = collinStartingArtifact; CollinAvailable = collinAvailable;
             FriendlyFire = friendlyFire; FriendlyFireAvailable = friendlyFireAvailable;
+            MaxHpAvailable = maxHpAvailable;
             FriendlyFirePlayers = friendlyFirePlayers == null ? (IReadOnlyList<FriendlyFirePlayerSnapshot>)System.Array.Empty<FriendlyFirePlayerSnapshot>() :
                 new List<FriendlyFirePlayerSnapshot>(friendlyFirePlayers).AsReadOnly();
             FriendlyFireSelectedCount = friendlyFireSelectedCount;

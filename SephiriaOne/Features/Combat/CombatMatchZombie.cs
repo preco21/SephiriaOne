@@ -103,6 +103,7 @@ namespace SephiriaOne
                 CombatRoleVisuals.Update(initialPlayers[i].Subject.Player);
             }
             if (!IsZombieSurvival || current != token) return;
+            PvpMaxHpRuntime.Tick();
             foreach (string message in ZombieSurvivalMessages.Starting(initialNames))
             {
                 if (!IsZombieSurvival || current != token) return;

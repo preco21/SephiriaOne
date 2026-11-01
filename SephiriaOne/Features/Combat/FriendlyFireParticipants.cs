@@ -100,6 +100,7 @@ namespace SephiriaOne
             Prune();
             if (value) selected.Add(receipt); else selected.Remove(receipt);
             Changed(true);
+            PvpMaxHpRuntime.Tick();
             return true;
         }
 
@@ -110,16 +111,18 @@ namespace SephiriaOne
             selected.Clear();
             for (int i = 0; i < values.Count; i++) selected.Add(values[i]);
             Changed(true);
+            PvpMaxHpRuntime.Tick();
             return true;
         }
 
         internal static void ResetSelection()
         {
-            EnsureScope(); selected.Clear(); Changed(true);
+            EnsureScope(); selected.Clear(); Changed(true); PvpMaxHpRuntime.Tick();
         }
 
         internal static void Clear()
         {
+            PvpMaxHpRuntime.Clear();
             CombatModeRuntime.Clear();
             FriendlyFireKda.ClearMatchups();
             receipts = new ConditionalWeakTable<PlayerAvatar, Receipt>();
@@ -175,6 +178,7 @@ namespace SephiriaOne
             foreach (Receipt receipt in stale) selected.Remove(receipt);
             stale.Clear(); Changed(false);
             CombatMatchRuntime.SelectionChanged();
+            PvpMaxHpRuntime.Tick();
         }
 
         private static Lifetime NewPlayerLifetime(PlayerSpawner _) => new Lifetime();
@@ -192,6 +196,7 @@ namespace SephiriaOne
         internal static void Retire(PlayerSpawner spawner)
         {
             if (ReferenceEquals(spawner, null)) return;
+            PvpMaxHpRuntime.Release(spawner.PlayerAvatar);
             Lifetime lifetime = playerLifetimes.GetValue(spawner, createPlayerLifetime);
             lifetime.Retired = true; lifetime.Generation++;
             Prune(); Changed(false);
@@ -200,6 +205,7 @@ namespace SephiriaOne
         internal static void Retire(NetworkConnectionToClient connection)
         {
             if (connection == null) return;
+            PvpMaxHpRuntime.ReleaseConnection(connection);
             Lifetime lifetime = connectionLifetimes.GetValue(connection, createConnectionLifetime);
             lifetime.Retired = true; lifetime.Generation++;
             Prune(); Changed(false);
@@ -208,6 +214,7 @@ namespace SephiriaOne
         internal static void Connected(NetworkConnectionToClient connection)
         {
             if (connection == null) return;
+            PvpMaxHpRuntime.ReleaseConnection(connection);
             Lifetime lifetime = connectionLifetimes.GetValue(connection, createConnectionLifetime);
             lifetime.Retired = false; lifetime.Generation++;
             Prune(); Changed(false);
@@ -216,6 +223,7 @@ namespace SephiriaOne
         internal static void Spawned(PlayerSpawner spawner)
         {
             if (ReferenceEquals(spawner, null)) return;
+            PvpMaxHpRuntime.Release(spawner.PlayerAvatar);
             Lifetime lifetime = playerLifetimes.GetValue(spawner, createPlayerLifetime);
             lifetime.Retired = false; lifetime.Generation++;
             Prune(); Changed(false);
@@ -225,6 +233,7 @@ namespace SephiriaOne
         {
             if (!NetworkServer.active || !spawner) return default;
             CombatModeRuntime.Release(spawner.PlayerAvatar);
+            PvpMaxHpRuntime.Release(spawner.PlayerAvatar);
             Lifetime lifetime = playerLifetimes.GetValue(spawner, createPlayerLifetime);
             lifetime.Generation++; lifetime.Initializing++; lifetime.Retired = true;
             Prune(); Changed(false);

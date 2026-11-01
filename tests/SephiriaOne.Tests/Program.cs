@@ -73,6 +73,7 @@ Console.WriteLine($"Passed {FriendlyFirePolicyTests.Run()} friendly-fire policy/
 Console.WriteLine($"Passed {FriendlyFireRefillTests.Run()} configurable PvP refill checks.");
 Console.WriteLine($"Passed {FriendlyFireGuardSettingsTests.Run()} PvP guard setting checks.");
 Console.WriteLine($"Passed {PvpAmplificationSettingsTests.Run()} PvP amplification setting checks.");
+Console.WriteLine($"Passed {PvpMaxHpSettingsTests.Run()} PvP Max HP setting checks.");
 Console.WriteLine($"Passed {PvpCriticalDamageSettingsTests.Run()} PvP critical damage setting checks.");
 Console.WriteLine($"Passed {PvpElementalSettingsTests.Run()} PvP elemental setting checks.");
 Console.WriteLine($"Passed {PvpRapidSettingsTests.Run()} PvP rapid-hit setting checks.");
