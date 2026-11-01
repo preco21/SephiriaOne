@@ -16,8 +16,9 @@ namespace SephiriaOne
         internal static float EvasionChance(float nativeChance)
         {
             if (!current.Friendly || !(current.Victim is PlayerAvatar) || !NetworkServer.active ||
-                !SessionSettings.FriendlyFireForHit.Balance || !CurrentHitPermitted()) return nativeChance;
-            return Math.Min(nativeChance, 50f);
+                !CurrentHitPermitted()) return nativeChance;
+            var settings = SessionSettings.FriendlyFireForHit;
+            return settings.Balance ? settings.Evasion.Limit(nativeChance) : nativeChance;
         }
     }
 

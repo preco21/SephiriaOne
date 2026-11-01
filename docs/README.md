@@ -1,5 +1,9 @@
 # Development knowledge index
 
+[PvP Evasion limits](pvp-evasion.md): 0.109.0 replaces the fixed cap with a
+configurable, default-on 30% soft / 50% hard dodge-chance curve. Includes live
+UI/commands, v60 presets, unchanged PvE/item dodges and native/fixture verification.
+
 [PvP Max HP normalization](pvp-max-hp.md): 0.108.0 adds default-off baseline
 100 / soft +50 / hard +100 limits using the shared curve, current-HP percentage
 preservation, native guest replication, save-safe temporary projection and
@@ -429,10 +433,9 @@ extend existing homing to verified crossbow, wand, Dark Veil, Formless Dance,
 Adamah and enhanced Mini Ballista projectiles. Scoped weapon searches and live
 mine proximity checks share existing participant/mode policy and native transport.
 
-Combat balancing: [Evasion's 50% cap](pvp-balancing.md#evasion-cap-0604-2026-10-17)
-limits stat-derived dodge chance before attacker anti-Evasion during eligible
-PvP hits. Low chances, guaranteed item dodges, native stats/UI and PvE remain
-unchanged. It uses the existing balancing toggle and shared match policy.
+Combat balancing: [configurable Evasion curve](pvp-evasion.md) replaces the original
+fixed 50% cap with default-on soft 30% / hard 50% chance limits before anti-Evasion.
+Guaranteed item dodges, native stats/UI and PvE remain unchanged.
 
 Combat fix: [Liberation projectile homing](friendly-fire-liberation.md) adds its
 four elemental bullets to shared hostile-player acquisition and target loss,

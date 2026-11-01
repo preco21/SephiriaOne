@@ -820,6 +820,7 @@ CombatModeTests.Run(Start, id => Add(id), Check);
 PvpCoverTests.Run(Check);
 PvpArtifactRangeControlsTests.Run(Start, id => Add(id), Check);
 PvpMaxHpControlsTests.Run(Start, id => Add(id), Check);
+PvpEvasionControlsTests.Run(Start, id => Add(id), Check);
 PvpMaxHpRuntimeTests.Run(Start, id => Add(id), Check);
 FloatingCountdownTests.Run(Start, id => Add(id), Check);
 MatchCountdownCadenceTests.Run(Start, id => Add(id), Check);

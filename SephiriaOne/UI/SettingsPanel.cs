@@ -223,6 +223,8 @@ namespace SephiriaOne
             friendlyPerfectGuard = null; friendlyPerfectGuardDraft = false;
             friendlyAmplificationSoft = friendlyAmplificationHard = null; friendlyAmplificationDraft = false;
             friendlyCriticalDamageSoft = friendlyCriticalDamageHard = null; friendlyCriticalDamageDraft = false;
+            friendlyEvasionSoft = friendlyEvasionHard = null; friendlyEvasionDraft = false;
+            friendlyEvasionApply = friendlyEvasionReset = null;
             friendlyMaxHpBaseline = friendlyMaxHpSoft = friendlyMaxHpHard = null; friendlyMaxHpDraft = false;
             friendlyMaxHpApply = friendlyMaxHpReset = null; friendlyMaxHpAvailability = null;
             for (int i = 0; i < 4; i++)
@@ -410,6 +412,7 @@ namespace SephiriaOne
             ClearFriendlyPerfectGuard();
             ClearFriendlyAmplification();
             ClearFriendlyCriticalDamage();
+            ClearFriendlyEvasion();
             ClearFriendlyMaxHp();
             ClearFriendlyElements();
             ClearFriendlyLowerBound();

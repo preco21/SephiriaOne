@@ -118,7 +118,6 @@
   "Dark Cloud (s)": "먹구름 (초)",
   "PvP effect intervals (s): Wound {0}; Lightning/Shock {1}; Freeze damage {2}; Chim {3}; Dark Cloud {4}.": "PvP 효과 간격(초): 상처 {0}; 번개/감전 {1}; 빙결 피해 {2}; 침 {3}; 먹구름 {4}.",
   "PvP balancing: /one friendlyfire balance on|off. Default off; heavy hits and barrages share a recoverable burst allowance. Debuff and Dark Cloud damage intervals remain configurable; Freeze stun is preserved.": "PvP 밸런스 보정: /one friendlyfire balance on|off. 기본 꺼짐. 큰 한 방과 연속 타격이 지속 충전되는 피해 저장량을 공유합니다. 디버프와 먹구름의 피해 간격은 각각 설정할 수 있으며 빙결 기절은 유지됩니다.",
-  "PvP Evasion: stat-based dodge chance is capped at 50% before anti-Evasion; guaranteed item dodges are unchanged.": "PvP 회피: 스탯에 따른 회피 확률은 회피 무시 적용 전에 최대 50%로 제한됩니다. 아이템의 확정 회피 효과는 유지됩니다.",
   "Hit-frequency scaling": "연타 피해 보정",
   "Hit-frequency scaling: {0} (requires PvP balancing).": "연타 피해 보정: {0} (PvP 밸런스 보정 필요).",
   "Hit-frequency scaling: /one friendlyfire hit-frequency on|off|reset. Default off; direct hits, other incidental hits and each Planet type have separate rate histories, with one shared damage allowance. Requires PvP balancing.": "연타 피해 보정: /one friendlyfire hit-frequency on|off|reset. 기본 꺼짐. 직접 공격, 기타 부가 피해, 각 행성 종류의 연타 횟수는 따로 계산하며, 피해 허용량은 공유합니다. PvP 밸런스 보정이 필요합니다.",
@@ -1075,5 +1074,11 @@
   "Baseline + bonus HP. Requires PvP balancing.\nDefaults: 150 unchanged; 200 → 187.5; final cap 200.\nPreserves current HP %. Also affects participants' PvE.": "기준 + 추가 체력. PvP 밸런싱 중에만 적용.\n기본값: 150 이하 유지 · 200 → 187.5 · 최종 최대 200.\n현재 체력 비율 유지. 참가자의 PvE에도 적용됩니다.",
   "Max HP normalization: /one friendlyfire max-hp on|off|reset; max-hp limits <baseline> <soft-bonus> <hard-bonus>. Default off, baseline 100 HP, soft +50 HP, hard +100 HP. Baseline 1..10000; bonuses 0..10000 with up to 2 decimals and soft <= hard. Requires PvP balancing. Preserves current HP percentage; participant PvE is also affected.": "최대 체력 제한: /one friendlyfire max-hp on|off|reset; max-hp limits <기준> <추가 완화 시작> <추가 최대>. 기본 꺼짐, 기준 체력 100, 완화 시작 +50, 최대 +100. 기준 1..10000, 추가 값 0..10000, 소수 둘째 자리까지, 시작 <= 최대. PvP 밸런싱 중에만 적용됩니다. 현재 체력 비율을 유지하며 참가자의 PvE에도 적용됩니다.",
   "Max HP normalization: {0}; baseline {1} HP, soft +{2} HP, hard +{3} HP (requires PvP balancing). Preserves current HP percentage; participant PvE is also affected.": "최대 체력 제한: {0}; 기준 체력 {1}, 완화 시작 +{2}, 최대 +{3} (PvP 밸런싱 필요). 현재 체력 비율을 유지하며 참가자의 PvE에도 적용됩니다.",
-  "Max HP normalization unavailable; off/reset remain available. See Player.log.": "최대 체력 제한을 사용할 수 없습니다. 끄기/초기화는 가능합니다. Player.log를 확인하세요."
+  "Max HP normalization unavailable; off/reset remain available. See Player.log.": "최대 체력 제한을 사용할 수 없습니다. 끄기/초기화는 가능합니다. Player.log를 확인하세요.",
+  "Evasion chance limit": "회피 확률 제한",
+  "Soft chance (%)": "완화 시작 확률 (%)",
+  "Hard chance (%)": "최대 확률 (%)",
+  "Dodge chance, not raw Evasion. Anti-Evasion applies afterward. PvE and guaranteed item dodges unchanged.": "회피 스탯이 아닌 확률을 제한합니다. 이후 상대의 회피 무시가 적용됩니다. PvE와 아이템의 확정 회피는 유지됩니다.",
+  "PvP Evasion limit: {0}; soft {1}%, hard {2}% dodge chance before anti-Evasion (requires PvP balancing).": "PvP 회피 제한: {0}; 완화 시작 {1}%, 최대 {2}% 회피 확률 (상대의 회피 무시 적용 전, PvP 밸런스 보정 필요).",
+  "PvP Evasion: /one friendlyfire evasion on|off|reset; evasion limits <soft> <hard>. Default on, soft 30%, hard 50% dodge chance before anti-Evasion. Use 0..100 with up to 2 decimals and soft <= hard. Requires PvP balancing; PvE and guaranteed item dodges stay native.": "PvP 회피: /one friendlyfire evasion on|off|reset; evasion limits <완화 시작> <최대>. 기본 켜짐, 완화 시작 30%, 최대 50% 회피 확률 (상대의 회피 무시 적용 전). 0~100, 소수점 둘째 자리까지, 완화 시작 <= 최대. PvP 밸런스 보정이 필요하며 PvE와 아이템의 확정 회피는 유지됩니다."
 }

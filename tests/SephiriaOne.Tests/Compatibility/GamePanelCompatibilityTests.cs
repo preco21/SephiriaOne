@@ -12,6 +12,7 @@ internal static class GamePanelCompatibilityTests
         GameRapidPanelTests.Run(addon);
         GamePerfectGuardPanelTests.Run(addon);
         GameMaxHpPanelTests.Run(addon);
+        GameEvasionPanelTests.Run(addon);
         GameLowerBoundPanelTests.Run(addon);
         GameProjectileRatePanelTests.Run(addon);
         GamePanelPresentationTests.Run(addon);

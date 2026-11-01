@@ -22,7 +22,7 @@ namespace SephiriaOne
 
         private void BuildPvpBalanceEditor()
         {
-            var content = widgets.ScrollSection(pageRoot, "BalanceScroll", 10, 0, 273, PageHeight, 1282);
+            var content = widgets.ScrollSection(pageRoot, "BalanceScroll", 10, 0, 273, PageHeight, 1462);
             AddCheckbox("PvP balancing", 0, 0, 170, 25, s => s.FriendlyFire.Balance,
                 s => s.FriendlyFireAvailable, "/one friendlyfire balance", parent: content);
             widgets.Button(content, "Rapid Hits", 178, 0, 95, 25, () => SelectPage(PvpRapidPage));
@@ -51,14 +51,16 @@ namespace SephiriaOne
             friendlyCriticalDamageHard = widgets.Input(content, 98, 320, 90, EditFriendlyCriticalDamage);
             changeButtons.Add(widgets.Button(content, "Apply", 196, 320, 77, 25, ApplyFriendlyCriticalDamage));
             widgets.Text(content, "CriticalDamageHint", "Additional bonus; native +50% preserved.", 0, 351, 273, 18, 11);
-            BuildPvpMaxHpEditor(PanelWidgets.Rect(content, "MaxHpControls", 0, 376, 273, 260));
-            BuildPvpLowerBound(PanelWidgets.Rect(content, "LowerBoundControls", 0, 646, 273, 238));
+            BuildPvpEvasionEditor(PanelWidgets.Rect(content, "EvasionControls", 0, 376, 273, 170));
+            BuildPvpMaxHpEditor(PanelWidgets.Rect(content, "MaxHpControls", 0, 556, 273, 260));
+            BuildPvpLowerBound(PanelWidgets.Rect(content, "LowerBoundControls", 0, 826, 273, 238));
             BuildPvpElementalEditor(content);
             BuildPvpDotEditor();
         }
 
         private void RefreshPvpBalance(SettingsSnapshot snapshot)
         {
+            RefreshPvpEvasion(snapshot);
             RefreshPvpMaxHp(snapshot);
             RefreshPvpLowerBound(snapshot);
             RefreshPvpElements(snapshot);
@@ -82,15 +84,15 @@ namespace SephiriaOne
 
         private void BuildPvpElementalEditor(RectTransform content)
         {
-            AddCheckbox("Elemental stat limits", 0, 892, 273, 25, s => s.FriendlyFire.Elements.Enabled,
+            AddCheckbox("Elemental stat limits", 0, 1072, 273, 25, s => s.FriendlyFire.Elements.Enabled,
                 s => s.FriendlyFireAvailable, "/one friendlyfire elements", parent: content);
-            widgets.Text(content, "ElementSoft", "Soft limit", 0, 923, 88, 18, 11);
-            widgets.Text(content, "ElementHard", "Hard limit", 94, 923, 88, 18, 11);
+            widgets.Text(content, "ElementSoft", "Soft limit", 0, 1103, 88, 18, 11);
+            widgets.Text(content, "ElementHard", "Hard limit", 94, 1103, 88, 18, 11);
             string[] labels = { "Physical", "Flame", "Ice", "Lightning" };
             for (int i = 0; i < 4; i++)
             {
                 int index = i;
-                float y = 947 + i * 63;
+                float y = 1127 + i * 63;
                 widgets.Text(content, "Element" + i, labels[i], 0, y, 273, 18, 11);
                 friendlyElementSoft[i] = widgets.Input(content, 0, y + 20, 88, text => friendlyElementDraft[index] = true);
                 friendlyElementHard[i] = widgets.Input(content, 94, y + 20, 88, text => friendlyElementDraft[index] = true);
@@ -99,7 +101,7 @@ namespace SephiriaOne
                     () => Execute("/one friendlyfire elements " + ((PvpElement)index).ToString().ToLowerInvariant() + " reset", true,
                         clearInputOnSuccess: () => ClearFriendlyElement(index))));
             }
-            widgets.Text(content, "ElementsHint", "Effective participant stats during balanced PvP; also affects their PvE damage. Saved stats unchanged.", 0, 1203, 273, 48, 10);
+            widgets.Text(content, "ElementsHint", "Effective participant stats during balanced PvP; also affects their PvE damage. Saved stats unchanged.", 0, 1383, 273, 48, 10);
         }
 
         private void RefreshPvpElements(SettingsSnapshot snapshot)

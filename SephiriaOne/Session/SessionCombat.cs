@@ -66,6 +66,8 @@ namespace SephiriaOne
             { message = L.T("PvP cover unavailable; off/reset remain available. See Player.log."); return false; }
             if (command.Elements.HasValue && !command.Elements.Value.IsValid)
             { message = FriendlyFireCommand.Usage; return false; }
+            if (command.Evasion.HasValue && !command.Evasion.Value.IsValid)
+            { message = FriendlyFireCommand.Usage; return false; }
             if (command.CriticalDamage.HasValue && !command.CriticalDamage.Value.IsValid)
             { message = FriendlyFireCommand.Usage; return false; }
             if (command.MaxHp.HasValue && !command.MaxHp.Value.IsValid)
@@ -111,6 +113,13 @@ namespace SephiriaOne
                 RecordFriendlyFire(command); DeathmatchChanged();
                 message = L.F("Combat Mode: {0}.", L.T(policy.FriendlyFire.CombatMode ? "on" : "off")); return true;
             }
+            if (command.Evasion.HasValue)
+            {
+                // Hit-local policy: do not wait for stat writes or loading guests.
+                if (!EnsureResourceScope()) { message = L.T("Host session is not ready."); return false; }
+                RecordFriendlyFire(command); DeathmatchChanged();
+                message = DescribeEvasion(policy.FriendlyFire.Evasion); return true;
+            }
             if (command.MaxHp.HasValue)
             {
                 // Policy-only edits must allow restoration while a guest is loading
@@ -147,6 +156,7 @@ namespace SephiriaOne
             L.T("PvP potion consumption also applies to Rabbit. Grants are separate.") + " " +
             L.F("Automatic Large Potion: {0}.", L.T(settings.AutoPotion ? "on" : "off")) + " " +
             L.F("PvP balancing: {0}.", L.T(settings.Balance ? "on" : "off")) + " " +
+            DescribeEvasion(settings.Evasion) + " " +
             DescribeMaxHp(settings.MaxHp) + " " +
             L.F("PvP lower-bound assistance: {0}; reference {1}% opponent max HP; shared bonus refill {2}% max HP/s (requires PvP balancing).",
                 L.T(settings.LowerBound.Enabled ? "on" : "off"), settings.LowerBound.ReferenceNumber, settings.LowerBound.RefillNumber) + " " +
@@ -187,6 +197,10 @@ namespace SephiriaOne
             DescribeDebuffSchedules(settings.DotIntervals) + " " +
             L.F("Block lobby HP/MP recovery: {0}.", L.T(settings.BlockLobbyRegen ? "on" : "off")) +
             (settings.BlockLobbyRegen && !LobbyRegenFeature.Available ? " " + L.T("Lobby recovery hooks unavailable; off/reset remain available. See Player.log.") : "");
+
+        private static string DescribeEvasion(PvpEvasionSettings settings) =>
+            L.F("PvP Evasion limit: {0}; soft {1}%, hard {2}% dodge chance before anti-Evasion (requires PvP balancing).",
+                L.T(settings.Enabled ? "on" : "off"), settings.SoftNumber, settings.HardNumber);
 
         private static string DescribeMaxHp(PvpMaxHpSettings settings) =>
             L.F("Max HP normalization: {0}; baseline {1} HP, soft +{2} HP, hard +{3} HP (requires PvP balancing). Preserves current HP percentage; participant PvE is also affected.",

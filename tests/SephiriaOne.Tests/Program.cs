@@ -75,6 +75,7 @@ Console.WriteLine($"Passed {FriendlyFireGuardSettingsTests.Run()} PvP guard sett
 Console.WriteLine($"Passed {PvpAmplificationSettingsTests.Run()} PvP amplification setting checks.");
 Console.WriteLine($"Passed {PvpMaxHpSettingsTests.Run()} PvP Max HP setting checks.");
 Console.WriteLine($"Passed {PvpCriticalDamageSettingsTests.Run()} PvP critical damage setting checks.");
+Console.WriteLine($"Passed {PvpEvasionSettingsTests.Run()} PvP Evasion setting checks.");
 Console.WriteLine($"Passed {PvpElementalSettingsTests.Run()} PvP elemental setting checks.");
 Console.WriteLine($"Passed {PvpRapidSettingsTests.Run()} PvP rapid-hit setting checks.");
 Console.WriteLine($"Passed {PvpPerfectGuardSettingsTests.Run()} PvP Perfect Guard setting checks.");

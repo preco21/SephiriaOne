@@ -248,6 +248,10 @@ toggle still uses the existing stop/recovery semantics.
 
 ## Evasion cap (`0.60.4`, 2026-10-17)
 
+Updated in 0.109.0: [configurable soft/hard Evasion limits](pvp-evasion.md) replace
+the fixed cap below. Defaults are enabled, soft 30%, hard 50% dodge chance.
+The original native-path audit below remains relevant.
+
 User-approved limit: while balancing is enabled for an eligible PvP hit, cap
 the victim's **stat-derived dodge chance at 50%**. A native 20% chance remains
 20%; a native chance of about 77% becomes 50%. Attacker anti-Evasion then reduces

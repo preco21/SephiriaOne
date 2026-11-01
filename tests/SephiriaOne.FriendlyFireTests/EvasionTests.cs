@@ -16,11 +16,32 @@ internal static class EvasionTests
             source = new(); target = new() { Evasion = 10000 };
             hit = new() { origin = source, damage = 1 };
         }
+        Fresh(); target.Evasion = 5000; UnityEngine.Random.NextValue = 46;
+        check(target.ApplyDamage(hit) == EApplyDamageResult.Success,
+            "Default Evasion curve softens native chance above 30 percent before the 50 percent hard cap");
         Fresh();
         check(target.ApplyDamage(hit) == EApplyDamageResult.Success && target.Hp < 100,
             "Balanced PvP caps max-stat Evasion below a 60 percent dodge roll");
         check(target.GetCustomStat(ECustomStat.Evasion) == 10000 && UnityEngine.Random.Calls == 1,
             "Evasion cap does not change native stat values or add RNG draws");
+        Fresh(); SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, evasion: new(false));
+        check(target.ApplyDamage(hit) == EApplyDamageResult.Fail_Block,
+            "Limiter off restores native dodge even while balancing stays enabled");
+        SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, evasion: new(true, 10, 20));
+        UnityEngine.Random.NextValue = 21;
+        check(target.ApplyDamage(hit) == EApplyDamageResult.Success, "Live custom hard cap is used on the next hit");
+        UnityEngine.Random.NextValue = 20;
+        check(target.ApplyDamage(hit) == EApplyDamageResult.Fail_Block, "Custom hard-cap boundary retains native roll comparison");
+        Fresh(); SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, evasion: new(true, 0, 0));
+        UnityEngine.Random.NextValue = 1;
+        check(target.ApplyDamage(hit) == EApplyDamageResult.Success, "Zero limits disable only stat-based dodge");
+        target.AbsoluteEvasion = 100;
+        check(target.ApplyDamage(hit) == EApplyDamageResult.Fail_Block, "Zero stat cap does not suppress guaranteed item dodge");
+        Fresh(); target.Evasion = 5000; source.IgnoreEvasion = 50; UnityEngine.Random.NextValue = 23;
+        check(target.ApplyDamage(hit) == EApplyDamageResult.Success,
+            "Anti-Evasion follows the softened chance, not the original probability");
+        Fresh(); target.OnCalculateDamage = _ => SessionSettings.FriendlyFireForHit = new(true, 100, balance: true, evasion: new(false));
+        check(target.ApplyDamage(hit) == EApplyDamageResult.Fail_Block, "Live limiter disable inside native callback takes effect immediately");
         Fresh(); UnityEngine.Random.NextValue = 50;
         int evades = 0; target.OnEvade = _ => evades++;
         check(target.ApplyDamage(hit) == EApplyDamageResult.Fail_Block && evades == 1 && target.Hp == 100,
@@ -111,6 +132,7 @@ internal static class EvasionTests
         target.OnCalculateDamage = null; hit.origin = new UnitAvatar { faction = "enemy" }; hit.targetFactionLayers = -1;
         check(target.ApplyDamage(hit) == EApplyDamageResult.Fail_Block, "Exception leaves no cap scope in the next PvE hit");
         Fresh();
+        target.Evasion = 5000;
         void Strike() { Time.time++; target.Hp = 100; target.ApplyDamage(hit); }
         for (int i = 0; i < 1000; i++) Strike();
         long before = GC.GetAllocatedBytesForCurrentThread();
@@ -135,7 +157,10 @@ internal static class EvasionTests
             }
             check(!Roll(60) && Roll(50), "Beta caller caps the final modified stat chance at 50 percent");
             target.EvasionRateReduction = -50;
-            check(Roll(30) && !Roll(40), "Beta negative rate modifier precedes the cap, retaining native roughly 38 percent chance");
+            check(Roll(30) && !Roll(40), "Beta signed rate modifier precedes diminishing returns over the native chance");
+            target.EvasionRateReduction = 0; target.Evasion = 5000;
+            check(!Roll(46), "Beta extracted native chance uses the same 30/50 curve as the public inline path");
+            target.Evasion = 10000;
             target.EvasionRateReduction = 100; source.IgnoreEvasion = 50;
             check(Roll(25) && !Roll(26), "Beta attacker anti-Evasion follows the final chance cap");
             target.EvasionRateReduction = -200; source.IgnoreEvasion = 0;

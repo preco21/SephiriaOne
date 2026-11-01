@@ -842,7 +842,9 @@ applies attacker `IGNOREEVASION`. Per-hit `absoluteEvasionPercent` and barrier
 Dash protection invokes `OnEvade` earlier too; a first-match callback lookup is
 not sufficient to identify the stat/barrier boundary. For PvP-only adjustments,
 transform the chance in the current hit rather than patching generic stat reads
-or random-number generation. See [50% Evasion cap and native contracts](pvp-balancing.md#evasion-cap-0604-2026-10-17).
+or random-number generation. See [configurable Evasion curve and native contracts](pvp-evasion.md).
+Since 0.109.0 the existing hit-local adapter uses the shared soft/hard curve,
+default on/30/50 chance percentages, before anti-Evasion. Native stats stay intact.
 
 Guard cost has another distinct boundary in `UnitAvatar.ApplyDamage`: native
 base 10f is reduced by `GuardResist`, halved by perfect guard, then processed by
