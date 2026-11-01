@@ -1,5 +1,10 @@
 # Development knowledge index
 
+[Rabbit PvP MP admission](pvp-potions.md#rabbit-mp-admission-hardening-01071-2026-11-02):
+0.107.1 centralizes the potion-use decision and closes free native-heal fallback
+when required Rabbit/PvP context validation fails. Finite PvP retains the configured
+Rabbit fee; infinite PvP waives it. Includes reproduced cases and live-test limits.
+
 [RaidRaid port investigation](raidraid-port-investigation.md): research-only
 feature matrix, host-only gameplay versus optional client chat/profile UI,
 network/lifecycle/performance risks, omitted systems, recommended phases and

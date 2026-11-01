@@ -6,6 +6,7 @@ int passed = 0, failed = 0;
 void Check(string name, Action action)
 {
     RabbitPotionFeature.Shutdown();
+    UnityEngine.Debug.Warnings.Clear();
     NetworkServer.active = true;
     NetworkServer.connections.Clear();
     PlayerSpawner.MultiplayerList.Clear();
@@ -37,6 +38,7 @@ TensionTests.Run(Check, Assert, Setup, Install);
 ZombiePotionTests.Run(Check, Assert, Setup, Install);
 PvpSharedHealTests.Run(Check, Assert, () => Setup(), Install);
 PvpInfinitePotionTests.Run(Check, Assert, Setup, Install);
+PvpRabbitMpTests.Run(Check, Assert, Setup, Install);
 Check("PvP infinite HP potion works without Rabbit costume or options", () =>
 {
     var source = Setup(); source.player.currentCostume = "Mole";
@@ -167,7 +169,8 @@ Check("mid-drink reset, stale connection and changed run fail closed", () =>
     player.OnPotionEvent = null;
     player.spawner.connectionToClient.identity.Owner = nearby.spawner;
     controller.RunDrink();
-    Assert(item.Quantity == 0 && nearby.Heals.Count == 0, "Stale connection authorized");
+    Assert(item.Quantity == 1 && nearby.Heals.Count == 0 && player.Heals.Count == 2,
+        "Stale connection must cancel completion without consuming or healing");
 });
 Check("dungeon replacement during effect fails closed even with same run object", () =>
 {
@@ -205,7 +208,7 @@ Check("standard HP potion stays infinite but Sample consumes normally", () =>
         Assert(item.Quantity == (id == 37 ? 2 : 3), "Wrong consumption policy for stock id: " + id);
     }
     var zero = Setup(); zero.item.Quantity = 0; zero.controller.RunDrink();
-    Assert(zero.item.Quantity == -1, "Empty item intercepted");
+    Assert(zero.item.Quantity == 0 && zero.player.Heals.Count == 0, "Empty item must not produce a free heal or negative quantity");
 });
 Check("shared healing uses each recipient's native penalty and HP cap", () =>
 {
@@ -439,7 +442,8 @@ Check("live guest ownership is required and inactive client stays native", () =>
     var stale = Setup(); NetworkServer.connections.Remove(PlayerSpawner.MultiplayerList.Count);
     var passive = new PassiveObject_PotionAndRandomStat(); passive.Enable(stale.player);
     stale.controller.RunDrink();
-    Assert(stale.player.mp == 30 && stale.item.Quantity == 2 && passive.StatGains == 1, "Disconnected source intercepted");
+    Assert(stale.player.mp == 30 && stale.item.Quantity == 3 && passive.StatGains == 0 && stale.player.Heals.Count == 0,
+        "Disconnected completion must not bypass the required fee or run native effects against stale state");
     var client = Setup(); NetworkServer.active = false; client.controller.RunDrink();
     Assert(client.player.mp == 30 && client.item.Quantity == 2, "Client applied host fee");
 });

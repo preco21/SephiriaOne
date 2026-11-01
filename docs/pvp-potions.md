@@ -1,5 +1,50 @@
 # PvP potion supplies and consumption
 
+## Rabbit MP admission hardening (0.107.1, 2026-11-02)
+
+The saved host preset had Rabbit MP charging enabled at **50 MP**, with PvP
+infinite HP potions off. The installed 0.107.0 assembly and current source both
+already charge that fee on a fully valid finite-PvP drink. The available log does
+not identify which validation failed during the reported use; do not describe
+this as a confirmed live reproduction or assume that all PvP drinks waived MP.
+
+The audit reproduced a separate, relevant bypass: `CaptureContext` returned
+null during inventory initialization or invalid controller/connection ownership,
+and `DrinkAtCompletion` then called native drinking anyway. Healing and potion
+events proceeded without the required Rabbit fee or Survival policy. Old tests
+even expected native fallback for a disconnected or empty-item completion.
+
+`HpPotionUsePolicy` now resolves the configured Rabbit settings, consumption
+rule and MP fee together. At the authoritative controller completion:
+
+- Finite PvP charges Rabbit's configured fee once (50 in this preset) and consumes
+  the potion. Insufficient MP cancels healing, events and consumption.
+- Infinite PvP waives the fee, retains the potion and suppresses Survival using
+  the existing current-participant receipt and callback checks.
+- A required policy with incomplete source/participant/slot/item validation
+  cancels through the verified native catch/unwield cleanup. It cannot silently
+  fall back to a free heal or write to a stale player's MP. The reason is logged
+  once per failure category per addon load; readiness, ownership and wield failures
+  have distinct diagnostics. A later valid drink resolves afresh.
+
+No fee is reserved at animation start or refunded after native callbacks.
+Regeneration Sample, non-HP potions, direct/non-controller effect calls, clients
+and drinks with no applicable addon policy retain their existing behavior. The
+Zombie restriction still runs first. Costume MP costs remain configurable, and
+automatic session-start/respawn Large Potion grants remain independent.
+
+The guard adds no per-frame work or new network messages. Source-linked tests
+cover Small/Large, host/guest, exact/insufficient MP, live infinite toggles,
+initialization recovery and rejected stale state; existing death, nested-use,
+Sample, Survival, sharing and supply tests remain relevant. These fixtures do not
+establish that the unobserved live trigger is resolved; verify a finite 50 MP
+drink in-game and inspect any new `HP potion cancelled` warning if it fails.
+
+Verification: 462 potion-hook checks plus 12 localized alerts, 17,897 runtime/session
+checks plus 69 Bat checks, clean Release build, installed-beta native contracts and
+41 HarmonyX 2.9 API references passed. Independent review found no blocking issue.
+Nothing was deployed.
+
 ## Defaults update (0.102.3, 2026-10-31)
 
 Infinite PvP HP potions now default **off**. Per-option reset and full

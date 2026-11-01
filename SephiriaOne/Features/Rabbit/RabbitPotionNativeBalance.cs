@@ -11,6 +11,24 @@ namespace SephiriaOne
     {
         [ThreadStatic] private static Stack<DrinkContext> completions;
         private sealed class RejectedDrink : Exception { }
+        private enum DrinkContextFailure
+        {
+            None = 0, Source = 1, Participant = 2, Slot = 4, Item = 8,
+            Readiness = 16, Ownership = 32, Wield = 64
+        }
+        private static int rejectedContextWarnings;
+
+        private static DrinkContext IncompleteDrinkContext(bool required, DrinkContextFailure reason)
+        {
+            if (!required) return null; // Direct/non-controller effects retain their existing behavior.
+            if ((rejectedContextWarnings & (int)reason) == 0)
+            {
+                rejectedContextWarnings |= (int)reason;
+                UnityEngine.Debug.LogWarning("[SephiriaOne] HP potion cancelled: required potion policy could not validate " +
+                    reason + ". No healing, potion consumption or MP fee was applied. This reason is logged once per addon load.");
+            }
+            throw new RejectedDrink();
+        }
 
         private static bool ValidateMpSetter()
         {
@@ -80,14 +98,13 @@ namespace SephiriaOne
             // This call stays inside the validated native catch-all, before both controller event and decrement.
             // No state is reserved at animation start, so cancellation cannot charge or replay anything.
             RejectZombiePotionCompletion(potion);
-            DrinkContext context = CaptureContext(potion, instanceId, allowDead: true);
+            DrinkContext context = CaptureContext(potion, instanceId, allowDead: true, requireCompletePolicy: true);
             // A pending animation may reach the native consumer after death. Reject before any
             // event or MP charge rather than falling through to unprotected native consumption.
             if (context != null && context.Player.IsDead) throw new RejectedDrink();
-            if (context != null && context.Settings.ConsumeMp && context.Settings.MpCostPerDrink > 0 &&
-                !CurrentPvpPolicy(context))
+            if (context != null && context.MpCost > 0)
             {
-                int cost = context.Settings.MpCostPerDrink;
+                int cost = context.MpCost;
                 int balance = context.Player.mp;
                 if (balance < cost)
                 {

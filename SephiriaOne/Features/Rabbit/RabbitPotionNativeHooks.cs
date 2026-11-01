@@ -33,6 +33,7 @@ namespace SephiriaOne
             public DungeonManager Dungeon;
             public string Floor;
             public RabbitPotionSettings Settings;
+            public int MpCost;
             public bool RabbitInfiniteAllowed;
             public string Costume;
             public FriendlyFireParticipants.Receipt PvpReceipt;
@@ -97,6 +98,7 @@ namespace SephiriaOne
             catch (Exception error) { Debug.LogWarning("[SephiriaOne] Rabbit potion hook removal failed: " + error); }
             drinks?.Clear();
             completions?.Clear();
+            rejectedContextWarnings = 0;
             ResetHealVisuals();
             ResetHealPresentation();
         }
@@ -175,7 +177,8 @@ namespace SephiriaOne
             drinks.Push(__state);
         }
 
-        private static DrinkContext CaptureContext(WieldingPotion potion, int instanceId, bool allowDead = false)
+        private static DrinkContext CaptureContext(WieldingPotion potion, int instanceId, bool allowDead = false,
+            bool requireCompletePolicy = false)
         {
             if (!Available || !NetworkServer.active || !potion || !potion.isServer || potion.netId == 0 ||
                 potion.effect == null || potion.effect.GetType() != typeof(PotionEffect_Regeneration) ||
@@ -183,48 +186,66 @@ namespace SephiriaOne
             ItemController controller = potion.NetworkController;
             PlayerAvatar player = controller?.Avatar as PlayerAvatar;
             PlayerSpawner spawner = player?.spawner;
-            if (!SourceReady(potion, controller, player, spawner, allowDead)) return null;
-            // One native completion scope; costume mechanics never spill into PvP-only drinks.
-            RabbitPotionSettings settings = player.currentCostume == "HolyRabbit" ? SessionSettings.RabbitPotionsForUse : default;
-            HpPotionRule rule = PvpPotionPolicy.RuleFor(player);
-            var pvpReceipt = rule == HpPotionRule.PvpInfinite ? FriendlyFireParticipants.Capture(player) : null;
-            if (pvpReceipt == null && !settings.Infinite && !settings.Share && !settings.ConsumeMp && !settings.SuppressSurvival) return null;
+            if (!player) return null;
+            // Resolve retention and MP together, before optional context validation.
+            // Failure to capture a required policy must not silently grant a free native heal.
+            HpPotionUsePolicy policy = PvpPotionPolicy.ResolveUse(player);
+            if (!policy.RequiresContext) return null;
+            DrinkContextFailure failure = SourceFailure(potion, controller, player, spawner, allowDead);
+            if (failure != DrinkContextFailure.None)
+                return IncompleteDrinkContext(requireCompletePolicy, failure);
+            var pvpReceipt = policy.Rule == HpPotionRule.PvpInfinite ? FriendlyFireParticipants.Capture(player) : null;
+            if (policy.Rule == HpPotionRule.PvpInfinite && pvpReceipt == null)
+                return IncompleteDrinkContext(requireCompletePolicy, DrinkContextFailure.Participant);
             GridInventory inventory = player.Inventory;
             int selected = controller.SelectedQuickSlotIdx;
-            if (selected < 0 || selected >= controller.quickSlotTable.Count) return null;
+            if (selected < 0 || selected >= controller.quickSlotTable.Count)
+                return IncompleteDrinkContext(requireCompletePolicy, DrinkContextFailure.Slot);
             int slot = controller.quickSlotTable[selected].idx;
             NewItemOwnInstance item = inventory.FindItem(inventory.IdxToPos(slot));
             if (item == null || item.Quantity <= 0 || item.InstanceID != instanceId ||
-                item.EntityID != potion.entityID) return null;
+                item.EntityID != potion.entityID)
+                return IncompleteDrinkContext(requireCompletePolicy, DrinkContextFailure.Item);
             return new DrinkContext { Potion = potion, Effect = potion.effect, Controller = controller,
                 Player = player, Spawner = spawner, Connection = spawner.connectionToClient, Inventory = inventory, Item = item,
                 InstanceId = instanceId, EntityId = potion.entityID, Slot = slot, Run = SaveManager.CurrentRun,
-                Dungeon = DungeonManager.Instance, Floor = player.currentFloorGuid, Settings = settings, Costume = player.currentCostume, PvpReceipt = pvpReceipt,
-                RabbitInfiniteAllowed = settings.Infinite && rule == HpPotionRule.Costume };
+                Dungeon = DungeonManager.Instance, Floor = player.currentFloorGuid, Settings = policy.Rabbit,
+                MpCost = policy.MpCost, Costume = player.currentCostume, PvpReceipt = pvpReceipt,
+                RabbitInfiniteAllowed = policy.CostumeInfinite };
         }
 
         private static bool SourceReady(WieldingPotion potion, ItemController controller, PlayerAvatar player, PlayerSpawner spawner,
-            bool allowDead = false)
+            bool allowDead = false) => SourceFailure(potion, controller, player, spawner, allowDead) == DrinkContextFailure.None;
+
+        private static DrinkContextFailure SourceFailure(WieldingPotion potion, ItemController controller, PlayerAvatar player,
+            PlayerSpawner spawner, bool allowDead)
         {
-            return PlayerReady(controller, player, spawner, allowDead) &&
-                (ReferenceEquals(controller.NetworkcurrentWieldingItem, potion) ||
-                    (allowDead && player.IsDead && !controller.NetworkcurrentWieldingItem));
+            DrinkContextFailure failure = PlayerFailure(controller, player, spawner, allowDead);
+            if (failure != DrinkContextFailure.None) return failure;
+            return ReferenceEquals(controller.NetworkcurrentWieldingItem, potion) ||
+                (allowDead && player.IsDead && !controller.NetworkcurrentWieldingItem)
+                ? DrinkContextFailure.None : DrinkContextFailure.Wield;
         }
 
-        private static bool PlayerReady(ItemController controller, PlayerAvatar player, PlayerSpawner spawner, bool allowDead = false)
+        private static bool PlayerReady(ItemController controller, PlayerAvatar player, PlayerSpawner spawner, bool allowDead = false) =>
+            PlayerFailure(controller, player, spawner, allowDead) == DrinkContextFailure.None;
+
+        private static DrinkContextFailure PlayerFailure(ItemController controller, PlayerAvatar player, PlayerSpawner spawner, bool allowDead)
         {
             if (!controller || !controller.isServer || controller.netId == 0 ||
                 !ReferenceEquals(controller.Avatar, player) ||
                 !player || (player.IsDead && !allowDead) || !spawner ||
-                !ReferenceEquals(spawner.PlayerAvatar, player) || !HostStateAdapter.IsReady(spawner) ||
-                !PlayerSpawner.MultiplayerList.Contains(spawner)) return false;
+                !ReferenceEquals(spawner.PlayerAvatar, player) || !PlayerSpawner.MultiplayerList.Contains(spawner))
+                return DrinkContextFailure.Source;
+            if (!HostStateAdapter.IsReady(spawner)) return DrinkContextFailure.Readiness;
             var connection = spawner.connectionToClient;
             if (connection == null || !connection.isReady || connection.identity == null ||
                 !connection.identity.TryGetComponent<PlayerSpawner>(out PlayerSpawner owner) ||
-                !ReferenceEquals(owner, spawner) || !ReferenceEquals(controller.connectionToClient, connection)) return false;
+                !ReferenceEquals(owner, spawner) || !ReferenceEquals(controller.connectionToClient, connection))
+                return DrinkContextFailure.Ownership;
             foreach (var entry in NetworkServer.connections)
-                if (ReferenceEquals(entry.Value, connection)) return true;
-            return false;
+                if (ReferenceEquals(entry.Value, connection)) return DrinkContextFailure.None;
+            return DrinkContextFailure.Ownership;
         }
 
         private static bool Current(DrinkContext context, bool retainDeath = false)

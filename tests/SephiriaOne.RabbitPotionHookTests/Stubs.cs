@@ -22,7 +22,11 @@ namespace UnityEngine
         public static implicit operator Vector2(Vector3 value) => new(value.x, value.y);
     }
     public readonly record struct Color(float r, float g, float b, float a = 1f);
-    public static class Debug { public static void LogWarning(object message) { } }
+    public static class Debug
+    {
+        public static readonly List<string> Warnings = new();
+        public static void LogWarning(object message) => Warnings.Add(message.ToString());
+    }
 }
 namespace Mirror
 {
