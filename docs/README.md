@@ -1,5 +1,12 @@
 # Development knowledge index
 
+[RaidRaid port investigation](raidraid-port-investigation.md): research-only
+feature matrix, host-only gameplay versus optional client chat/profile UI,
+network/lifecycle/performance risks, omitted systems, recommended phases and
+a proposed “레이드” section. Detailed evidence: [scaling/rewards](raidraid-scaling-investigation.md),
+[encounters](raidraid-encounters-investigation.md),
+[multiplayer/items/UI](raidraid-multiplayer-investigation.md).
+
 [Sephiria 1.1.0 beta compatibility](beta-110-compatibility.md): 0.107.0 adapts
 player initialization, combat, resource/item contracts, presentation and Ice
 Weapon projectile guards to workshop-beta build 26324456. Includes verification

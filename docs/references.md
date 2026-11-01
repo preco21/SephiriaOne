@@ -31,6 +31,22 @@ uses `WorkshopModBase` and `WorkshopLocal`; this project's existing loader uses
 Check the targeted game/API version and official multiplayer requirements before
 adapting examples or changing packaging.
 
+## RaidRaid behavioral reference
+
+Investigated 2026-11-01 using the installed RaidRaid 3.324.0 DLL and loader,
+REA managed metadata/CIL/call evidence, private decompilation and the current
+Sephiria 1.1.0 beta. Exact hashes, scope and findings are in the
+[port investigation](raidraid-port-investigation.md). This is research material,
+not a source-code dependency or a claim that all reference behavior is safe to copy.
+
+- [Community introduction, 2026-08-29](https://gall.dcinside.com/mgallery/board/view/?id=sephiria&no=30270):
+  supplied by the user; historical feature overview by a tester. The installed
+  binary takes precedence for current implementation details.
+- [Scaling/rewards](raidraid-scaling-investigation.md),
+  [encounters](raidraid-encounters-investigation.md) and
+  [multiplayer/items/UI](raidraid-multiplayer-investigation.md): focused evidence
+  and implementation gates for future contributors.
+
 ## SDK, loading and implementation examples
 
 These were collected in [development notes](development-notes.md#reference-material-collected).
