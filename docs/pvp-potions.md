@@ -41,9 +41,32 @@ establish that the unobserved live trigger is resolved; verify a finite 50 MP
 drink in-game and inspect any new `HP potion cancelled` warning if it fails.
 
 Verification: 462 potion-hook checks plus 12 localized alerts, 17,897 runtime/session
-checks plus 69 Bat checks, clean Release build, installed-beta native contracts and
+checks plus 69 Bat checks, clean Release build, installed-game native contracts and
 41 HarmonyX 2.9 API references passed. Independent review found no blocking issue.
 Nothing was deployed.
+
+### Live clarification and installed-build check (2026-11-02)
+
+The host confirmed that the potion count decreases during the reported PvP use,
+and the 50 MP fee works outside PvP. This narrows the symptom to fee admission or
+subsequent MP changes during active combat; it is not evidence of a supply/grant
+failure. It does not establish that 0.107.1 fixes the live trigger.
+
+The newly read Player.log still identifies the running addon as **0.107.0**.
+The installed game is now Steam **public**, build **25253592**, rather than the
+earlier workshop beta. REA identifies Assembly-CSharp SHA-256
+`c57a0daeab8e8d0af7066a344133eec4c57d8f303fd9e25da9410fbfc4cf1510`, MVID
+`ccf97024-28bd-48f1-9666-c768c2bd4b2b`. Reinspection confirms that potion completion
+still invokes `WieldingPotion.Drink` inside the same native catch/unwield boundary.
+The current installed-game contract suite, 462 potion fixtures and 12 localized
+alerts pass. These results should not be labeled a new beta-runtime verification.
+
+No further gameplay change was made from this clarification. The next live check
+must first confirm the loaded addon version, then compare finite-PvP and non-PvP
+uses with the same Small/Large potion, costume and 50 MP setting. If charging still
+fails, capture the new readiness/ownership/wield warning, if any. The existing log
+does not record authoritative before/after MP values, so it cannot distinguish a
+missing debit from subsequent MP recovery.
 
 ## Defaults update (0.102.3, 2026-10-31)
 
